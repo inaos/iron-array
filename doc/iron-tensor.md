@@ -17,6 +17,7 @@ Goal of the project is to develop a math library written in C that operates on *
 	* N-dimensional array (Tensor)
 * Data-Compression:
 	* Loss-less compression (leverage c-blosc2 for CPU)
+	* Auto-tuning tools to select the right compression algorithm and level for the problem
 	* Lossy compression (for random-data); operate on compressed data (e.g. based on Vector quantization)
 	* Uncompressed in-memory (leverage Intel MKL, CUDA, OpenCL etc.)
 * Custom operators on data-structures
