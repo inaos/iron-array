@@ -6,6 +6,12 @@ This is a working document to brainstorm and define: scope, features and priorit
 
 Goal of the project is to develop a math library written in C that operates on **compressed** data-structures. With the following feature-set:
 
+* High-level API's
+	* Java
+		* Vectorized Streams?
+	* Python
+	* R (later)
+	* ...
 * Math Operations/Features:
 	* Focus on traditional linear algebra 
 	* BLAS/LAPACK
@@ -29,6 +35,8 @@ Goal of the project is to develop a math library written in C that operates on *
 	* FGPA 
 * Persistence
 	* Optionally persistent (e.g. via mmap / lmdb.. nvram.. persistent memory)
+
+![](irontensor_overview.jpg)
 
 ## Use-Cases
 
@@ -78,3 +86,5 @@ Rest to be defined.
 * https://github.com/astojanov/Clover
 * https://arxiv.org/pdf/1706.10283
 * http://bitmagic.io/sparse-vector-search.html?cn=ZmxleGlibGVfcmVjcw%3D%3D&refsrc=email
+* https://www.anandtech.com/show/13047/ngd-launches-catalina-2-programmable-ssds
+
