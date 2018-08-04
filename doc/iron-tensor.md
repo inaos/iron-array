@@ -23,6 +23,8 @@ Goal of the project is to develop a math library written in C that operates on *
 	* ND4J
 	* JBlas
 	* Numpy
+	  * Broadcasting
+	  * Tabluar data
 	* SciPy
 	* Armadillo
 	* Eigen
@@ -85,8 +87,19 @@ Goal of the project is to develop a math library written in C that operates on *
 Due to the fact that everybody worries about machine-learning and artificial intelligence that space is very crowded. Therefore I'd like to start with more traditional use-cases.
 
 1. **Linear algebra**: My main customer has lots of pricing and simulation engines. Older ones written in Java and Matlab, newer ones written in Python and R. Most of those applications make use of linear algebra one or the other way and most of the time the hot-spot's are related to linear algebra computations or other numeric code.
+- Subset BLAS 1,2,3
+- Subset LAPACK (e.g. Transponse)
+- Only dense for first release
+
 2. **Monte-Carlo simulations**: For Monte-Carlo simulations we could leverage vector quantization, where we operate on lossy data. I have a customer which has at least two applications which could benefit from this, given the precision loss is not too high.
-3. ...
+- Probablility Distributions
+- Vector quantization
+
+3. Sliding window statistics 
+- Pandas
+
+4. Example from Spark
+- Numerical 
 
 However, linear algebra is as well at the core of machine-learning etc.. 
 so in the future that could be an option too.
