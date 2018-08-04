@@ -149,6 +149,12 @@ Todo
 * GPU, commercial
 * FPGA, commercial
 
+### Disclosures
+
+* Include blosc boundaries
+* Persistence
+* ...
+
 ## Priorities and Outlook
 
 1. Create a minimum viable product (MVP), that supports: 
