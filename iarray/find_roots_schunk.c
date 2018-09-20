@@ -7,15 +7,15 @@
 #include "iarray.h"
 
 /*
-  Example program demonstrating how to execute an expression with super-chunks as operands.
+  Example program demonstrating how to execute find roots in a super-chunk.
 
   To compile this program:
 
-  $ gcc -O3 iarray.c -o iarray -lblosc
+  $ gcc -O3 find_roots_schunk.c -o find_roots_schunk -lblosc
 
   To run:
 
-  $ ./iarray
+  $ ./find_roots_schunk
   ...
 
 */
@@ -97,7 +97,7 @@ void find_root(const double *x, const double *y,
 }
 
 
-int compute_vectors(void) {
+int find_roots(void) {
   const size_t isize = CHUNKSIZE * sizeof(double);
   double buffer_x[CHUNKSIZE];
   double buffer_y[CHUNKSIZE];
@@ -220,7 +220,7 @@ int main() {
 
   blosc_init();
 
-  compute_vectors();
+  find_roots();
 
   blosc_destroy();
 
