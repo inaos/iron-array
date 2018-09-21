@@ -1,5 +1,5 @@
 # We start by creating an executable (will convert into a library later on)
-add_executable(iarray iarray.c)
+add_executable(iarray iarray.c tinyexpr.c)
 target_link_libraries(iarray blosc_shared)
 
 # examples

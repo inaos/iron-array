@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "blosc.h"
 #include "iarray.h"
+#include "tinyexpr.h"
 
 /*
   Example program demonstrating how to execute an expression with super-chunks as operands.
@@ -26,7 +27,7 @@ const float MB = 1024 * KB;
 const float GB = 1024 * MB;
 
 
-const int NCHUNKS = 500;
+const int NCHUNKS = 50;
 const int CHUNKSIZE = 200 * 1000;  // fits well in modern L3 caches
 const int NELEM = NCHUNKS * CHUNKSIZE;  // multiple of CHUNKSIZE for now
 const int NTHREADS = 4;
@@ -166,6 +167,28 @@ int main() {
   blosc2_free_schunk(sc_y);
 
   blosc_destroy();
+
+  double x1, y1;
+  /* Store variable names and pointers. */
+  te_variable vars[] = {{"x", &x1}, {"y", &y1}};
+
+  int err;
+  /* Compile the expression with variables. */
+  te_expr *expr = te_compile("sqrt(x^2+y^2)", vars, 2, &err);
+
+  if (expr) {
+    x1 = 3; y1 = 4;
+    const double h1 = te_eval(expr); /* Returns 5. */
+    printf("h1: %f\n", h1);
+
+    x1 = 5; y1 = 12;
+    const double h2 = te_eval(expr); /* Returns 13. */
+    printf("h2: %f\n", h2);
+
+    te_free(expr);
+  } else {
+    printf("Parse error at %d\n", err);
+  }
 
   return retcode;
 }
