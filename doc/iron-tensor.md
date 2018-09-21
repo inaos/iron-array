@@ -173,4 +173,21 @@ Rest to be defined.
 * https://arxiv.org/pdf/1706.10283
 * http://bitmagic.io/sparse-vector-search.html?cn=ZmxleGlibGVfcmVjcw%3D%3D&refsrc=email
 * https://www.anandtech.com/show/13047/ngd-launches-catalina-2-programmable-ssds
+* https://software.intel.com/en-us/mkl-developer-reference-c-mkl-jit-create-gemm
+* https://github.com/pytorch/glow/blob/405e632ef138f1d49db9c3181182f7efd837bccc/lib/Backends/CPU/libjit/libjit_matmul.cpp
+* https://github.com/codeplea/tinyexpr
+* http://www.singularsys.com/jep/
+* https://github.com/topics/math-expressions
+* https://github.com/topics/expression-evaluator?l=c
+* https://github.com/killme2008/aviator
+* https://github.com/cdman/fast-java-expr-eval
+* https://github.com/AlaskanEmily/dcjit
+* https://pypi.org/project/pytest-benchmark/
+* https://www.gnu.org/software/libjit/
+* https://www.gnu.org/software/lightning/
+* https://corsix.github.io/dynasm-doc/index.html
+* https://www.eclipse.org/omr/
+
+
+
 
