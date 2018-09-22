@@ -1,6 +1,7 @@
 #ifndef IARRAY_PRIVATE_H_
 #define IARRAY_PRIVATE_H_
 
+#include <stddef.h>
 #include "iarray.h"
 
 typedef enum iarray_operation_type_e {
