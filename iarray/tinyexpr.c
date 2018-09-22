@@ -68,7 +68,8 @@ typedef struct state {
     const char *start;
     const char *next;
     int type;
-    union {double value; const double *bound; const void *function;};
+	double scalar;
+    union {iarray_temporary_t *value; const iarray_temporary_t **bound; const void *function;};
     void *context;
 
     const te_variable *lookup;
@@ -241,7 +242,7 @@ void next_token(state *s) {
 
         /* Try reading a number. */
         if ((s->next[0] >= '0' && s->next[0] <= '9') || s->next[0] == '.') {
-            s->value = strtod(s->next, (char**)&s->next);
+            s->scalar = strtod(s->next, (char**)&s->next);
             s->type = TOK_NUMBER;
         } else {
             /* Look for a variable or builtin function call. */
@@ -308,7 +309,8 @@ static te_expr *base(state *s) {
     switch (TYPE_MASK(s->type)) {
         case TOK_NUMBER:
             ret = new_expr(TE_CONSTANT, 0);
-            ret->value = s->value;
+			//ret->value = ina_mempool_dalloc(mp, sizeof(iarray_temporary_t)); /* FIXME: for now we have to allocate a scalar for every chunk */
+            ret->value->scalar_value.d = s->scalar;
             next_token(s);
             break;
 
@@ -387,7 +389,7 @@ static te_expr *base(state *s) {
         default:
             ret = new_expr(0, 0);
             s->type = TOK_ERROR;
-            ret->value = NAN;
+            ret->value = NULL;
             break;
     }
 
@@ -460,7 +462,7 @@ static te_expr *factor(state *s) {
     te_expr *ret = power(s);
 
     while (s->type == TOK_INFIX && (s->function == pow)) {
-        te_fun2 t = s->function;
+        te_fun2 t = (te_fun2)s->function;
         next_token(s);
         ret = NEW_EXPR(TE_FUNCTION2 | TE_FLAG_PURE, ret, power(s));
         ret->function = t;
@@ -477,7 +479,7 @@ static te_expr *term(state *s) {
     te_expr *ret = factor(s);
 
     while (s->type == TOK_INFIX && (s->function == mul || s->function == divide || s->function == fmod)) {
-        te_fun2 t = s->function;
+        te_fun2 t = (te_fun2)s->function;
         next_token(s);
         ret = NEW_EXPR(TE_FUNCTION2 | TE_FLAG_PURE, ret, factor(s));
         ret->function = t;
@@ -492,7 +494,7 @@ static te_expr *expr(state *s) {
     te_expr *ret = term(s);
 
     while (s->type == TOK_INFIX && (s->function == add || s->function == sub)) {
-        te_fun2 t = s->function;
+        te_fun2 t = (te_fun2)s->function;
         next_token(s);
         ret = NEW_EXPR(TE_FUNCTION2 | TE_FLAG_PURE, ret, term(s));
         ret->function = t;
@@ -516,12 +518,13 @@ static te_expr *list(state *s) {
 }
 
 
-#define TE_FUN(...) ((double(*)(__VA_ARGS__))n->function)
+//#define TE_FUN(...) ((double(*)(__VA_ARGS__))n->function)
+#define TE_FUN(...) ( (iarray_temporary_t*(*)(__VA_ARGS__))n->function )
 #define M(e) te_eval(n->parameters[e])
 
 
-double te_eval(const te_expr *n) {
-    if (!n) return NAN;
+iarray_temporary_t *te_eval(const te_expr *n) {
+    if (!n) return NULL;
 
     switch(TYPE_MASK(n->type)) {
         case TE_CONSTANT: return n->value;
@@ -532,31 +535,31 @@ double te_eval(const te_expr *n) {
             printf("Arity: %d\n", ARITY(n->type));
             switch(ARITY(n->type)) {
                 case 0: return TE_FUN(void)();
-                case 1: return TE_FUN(double)(M(0));
-                case 2: return TE_FUN(double, double)(M(0), M(1));
-                case 3: return TE_FUN(double, double, double)(M(0), M(1), M(2));
-                case 4: return TE_FUN(double, double, double, double)(M(0), M(1), M(2), M(3));
-                case 5: return TE_FUN(double, double, double, double, double)(M(0), M(1), M(2), M(3), M(4));
-                case 6: return TE_FUN(double, double, double, double, double, double)(M(0), M(1), M(2), M(3), M(4), M(5));
-                case 7: return TE_FUN(double, double, double, double, double, double, double)(M(0), M(1), M(2), M(3), M(4), M(5), M(6));
-                default: return NAN;
+                case 1: return TE_FUN(iarray_temporary_t*)(M(0));
+                case 2: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*)(M(0), M(1));
+                case 3: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(M(0), M(1), M(2));
+                case 4: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(M(0), M(1), M(2), M(3));
+                case 5: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(M(0), M(1), M(2), M(3), M(4));
+                case 6: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(M(0), M(1), M(2), M(3), M(4), M(5));
+                case 7: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(M(0), M(1), M(2), M(3), M(4), M(5), M(6));
+                default: return NULL;
             }
 
         case TE_CLOSURE0: case TE_CLOSURE1: case TE_CLOSURE2: case TE_CLOSURE3:
         case TE_CLOSURE4: case TE_CLOSURE5: case TE_CLOSURE6: case TE_CLOSURE7:
             switch(ARITY(n->type)) {
                 case 0: return TE_FUN(void*)(n->parameters[0]);
-                case 1: return TE_FUN(void*, double)(n->parameters[1], M(0));
-                case 2: return TE_FUN(void*, double, double)(n->parameters[2], M(0), M(1));
-                case 3: return TE_FUN(void*, double, double, double)(n->parameters[3], M(0), M(1), M(2));
-                case 4: return TE_FUN(void*, double, double, double, double)(n->parameters[4], M(0), M(1), M(2), M(3));
-                case 5: return TE_FUN(void*, double, double, double, double, double)(n->parameters[5], M(0), M(1), M(2), M(3), M(4));
-                case 6: return TE_FUN(void*, double, double, double, double, double, double)(n->parameters[6], M(0), M(1), M(2), M(3), M(4), M(5));
-                case 7: return TE_FUN(void*, double, double, double, double, double, double, double)(n->parameters[7], M(0), M(1), M(2), M(3), M(4), M(5), M(6));
-                default: return NAN;
+                case 1: return TE_FUN(void*, iarray_temporary_t*)(n->parameters[1], M(0));
+                case 2: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*)(n->parameters[2], M(0), M(1));
+                case 3: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(n->parameters[3], M(0), M(1), M(2));
+                case 4: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(n->parameters[4], M(0), M(1), M(2), M(3));
+                case 5: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(n->parameters[5], M(0), M(1), M(2), M(3), M(4));
+                case 6: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(n->parameters[6], M(0), M(1), M(2), M(3), M(4), M(5));
+                case 7: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(n->parameters[7], M(0), M(1), M(2), M(3), M(4), M(5), M(6));
+                default: return NULL;
             }
 
-        default: return NAN;
+        default: return NULL;
     }
 
 }
@@ -581,7 +584,7 @@ static void optimize(te_expr *n) {
             }
         }
         if (known) {
-            const double value = te_eval(n);
+            const iarray_temporary_t *value = te_eval(n);
             te_free_parameters(n);
             n->type = TE_CONSTANT;
             n->value = value;
@@ -614,14 +617,14 @@ te_expr *te_compile(const char *expression, const te_variable *variables, int va
 }
 
 
-double te_interp(const char *expression, int *error) {
+iarray_temporary_t *te_interp(const char *expression, int *error) {
     te_expr *n = te_compile(expression, 0, 0, error);
-    double ret;
+	iarray_temporary_t *ret;
     if (n) {
         ret = te_eval(n);
         te_free(n);
     } else {
-        ret = NAN;
+        ret = NULL;
     }
     return ret;
 }
