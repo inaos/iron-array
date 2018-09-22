@@ -83,6 +83,7 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 {
 	//*temp = ina_mempool_dalloc(expr->mp, sizeof(iarray_temporary_t));
 	*temp = malloc(sizeof(iarray_temporary_t));
+	(*temp)->dtshape = malloc(sizeof(iarray_dtshape_t));
 	size_t size = 0;
 	iarray_temporary_shape_size(dtshape, &size);
 	//(*temp)->dtshape = ina_mempool_dalloc(expr->mp, sizeof(iarray_temporary_dtshape_t));
@@ -322,13 +323,26 @@ int main() {
 
   blosc_destroy();
 
-  double x1, y1;
-  /* Store variable names and pointers. */
-  te_variable vars[] = {{"x", &x1}, {"y", &y1}};
+  iarray_temporary_t *x1, *y1;
+  iarray_dtshape_t shape = {
+			.ndim = 0,
+			.dims = NULL,
+			.dtype = IARRAY_DATA_TYPE_DOUBLE,
+	};
+   iarray_temporary_new(NULL, NULL, &shape, &x1);
+   iarray_temporary_new(NULL, NULL, &shape, &y1);
+
+	double var1 = 5;
+	x1->scalar_value.d = var1;
+	double var2 = 3.;
+	y1->scalar_value.d = var2;
+
+	/* Store variable names and pointers. */
+  te_variable vars[] = {{"x", x1}, {"y", y1}};
 
   int err;
   /* Compile the expression with variables. */
-  te_expr *expr = te_compile("x+y", vars, 2, &err);
+  te_expr *expr = te_compile("x + y", vars, 2, &err);
 
   if (expr) {
     x1 = 3; y1 = 4;
