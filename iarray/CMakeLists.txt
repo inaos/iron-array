@@ -5,3 +5,6 @@ target_link_libraries(iarray blosc_shared)
 # examples
 add_executable(find_roots_schunk find_roots_schunk.c)
 target_link_libraries(find_roots_schunk blosc_shared)
+
+add_executable(test test.c)
+add_executable(test2 test2.c)

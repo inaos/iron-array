@@ -1,4 +1,4 @@
-# IronTensor
+# IronArray
 
 This is a working document to brainstorm and define: scope, features and priorities of the project.
 
@@ -10,11 +10,32 @@ Goal of the project is to develop a math library written in C that operates on *
 
 ### High-level API's
 
+#### 1 Priority
+
 * Java
-	* Vectorized Streams?
 * Python
-* R (later)
+
+#### 2 Priority
+
+* R
 * ...
+
+### Supported Data-Types
+
+Long term we want to support all native C data-types, but we implement in stages.
+
+#### 1 Priority
+
+* `double`
+* `float`
+
+#### 2 Priority
+
+* `int32`
+* `char` -> `bool` -> `int8`
+* `int64`
+* ...
+
 
 ### Supported Math Operations
 
@@ -164,6 +185,41 @@ Todo
 
 
 Rest to be defined.
+
+## Implementation decisions for MVP
+
+This section is to document design decisions.
+
+### Python API
+
+* Support expressions as strings
+* No explicit syntactic sugar, will come later
+* 
+
+### Java API
+
+* Fluent API with syntactic sugar -> avoid temporaries
+* Support expression as string 
+* The Java wrapper should create a string from the API calls in the first release
+
+### C API
+
+* Expression (string) based
+* Byte-code will be considered in the second release
+
+
+
+### Memory management
+
+* We decided to use mmap allocated memory (linked to a file, for future persistence) to store the blosc chunks
+* We plan to leverage inac mempool to manage the blosc chunks, however we need to make sure that the mempool does not allocate more memory than required.
+* We decided to create a benchmark for this
+
+### Array layout in memory
+
+* Use row-major (C convention) - same as numpy
+* Index order also same as numpy 
+
 
 ## Input and Links:
 
