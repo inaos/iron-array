@@ -34,6 +34,15 @@ struct iarray_container_s {
 	} scalar_value;
 };
 
+INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val)
+{
+	if (val->dtshape->dims > 2) {
+		/* FIXME: raise error */
+		return 1;
+	}
+	return 0;
+}
+
 INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val)
 {
 	//iarray_container_t *c = ina_mempool_dalloc(e->mp, sizeof(iarray_container_t));
