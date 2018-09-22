@@ -34,7 +34,7 @@ extern "C" {
 
 typedef struct te_expr {
     int type;
-    union {double value; const double *bound; const void *function;};
+    union { iarray_temporary_t *value; const iarray_temporary_t **bound; const void *function;};
     void *parameters[1];
 } te_expr;
 
@@ -62,14 +62,14 @@ typedef struct te_variable {
 
 /* Parses the input expression, evaluates it, and frees it. */
 /* Returns NaN on error. */
-double te_interp(const char *expression, int *error);
+iarray_temporary_t *te_interp(const char *expression, int *error);
 
 /* Parses the input expression and binds variables. */
 /* Returns NULL on error. */
 te_expr *te_compile(const char *expression, const te_variable *variables, int var_count, int *error);
 
 /* Evaluates the expression. */
-double te_eval(const te_expr *n);
+iarray_temporary_t *te_eval(const te_expr *n);
 
 /* Prints debugging information on the syntax tree. */
 void te_print(const te_expr *n);
