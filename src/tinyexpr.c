@@ -35,8 +35,6 @@ For log = natural log uncomment the next line. */
 /* #define TE_NAT_LOG */
 
 #include "iarray.h"
-#include "iarray_functors.h"
-
 #include "tinyexpr.h"
 #include <stdlib.h>
 #include <math.h>
@@ -309,7 +307,7 @@ static te_expr *base(state *s) {
     switch (TYPE_MASK(s->type)) {
         case TOK_NUMBER:
             ret = new_expr(TE_CONSTANT, 0);
-			//ret->value = ina_mempool_dalloc(mp, sizeof(iarray_temporary_t)); /* FIXME: for now we have to allocate a scalar for every chunk */
+			ret->value = ina_mempool_dalloc(NULL, sizeof(iarray_temporary_t)); /* FIXME: for now we have to allocate a scalar for every chunk */
             ret->value->scalar_value.d = s->scalar;
             next_token(s);
             break;

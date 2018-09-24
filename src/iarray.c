@@ -14,12 +14,9 @@
 
 
 #define NCHUNKS  50
-#define CHUNKSIZE (200 * 1000)  // fits well in modern L3 caches
+#define CHUNKSIZE (200 * 100)  // fits well in modern L3 caches
 #define NELEM (NCHUNKS * CHUNKSIZE)  // multiple of CHUNKSIZE for now
 #define NTHREADS  4
-
-typedef void* ina_mempool_t;
-#define ina_mempool_dalloc(mp, size)
 
 struct iarray_expression_s {
 	ina_mempool_t *mp;
@@ -36,7 +33,7 @@ struct iarray_container_s {
 
 INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val)
 {
-	if (val->dtshape->dims > 2) {
+	if (val->dtshape->ndim > 2) {
 		/* FIXME: raise error */
 		return 1;
 	}
@@ -45,12 +42,12 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
 
 INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val)
 {
-	//iarray_container_t *c = ina_mempool_dalloc(e->mp, sizeof(iarray_container_t));
-	//c->dtshape = ina_mempool_dalloc(e->mp, sizeof(iarray_dtshape_t));
-	//c->dtshape->ndim = 0;
-	//c->dtshape->dims = NULL;
-	//c->dtshape->dtype = IARRAY_DATA_TYPE_FLOAT;
-	//c->scalar_value.f = val;
+	iarray_container_t *c = ina_mempool_dalloc(e->mp, sizeof(iarray_container_t));
+	c->dtshape = ina_mempool_dalloc(e->mp, sizeof(iarray_dtshape_t));
+	c->dtshape->ndim = 0;
+	c->dtshape->dims = NULL;
+	c->dtshape->dtype = IARRAY_DATA_TYPE_FLOAT;
+	c->scalar_value.f = val;
 	return 0;
 }
 
@@ -90,23 +87,24 @@ ina_rc_t iarray_temporary_shape_size(iarray_dtshape_t *temp_dtshape, size_t *tem
 
 ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, iarray_dtshape_t *dtshape, iarray_temporary_t **temp)
 {
-	//*temp = ina_mempool_dalloc(expr->mp, sizeof(iarray_temporary_t));
-	*temp = malloc(sizeof(iarray_temporary_t));
+	*temp = ina_mempool_dalloc(expr->mp, sizeof(iarray_temporary_t));
 	(*temp)->dtshape = malloc(sizeof(iarray_dtshape_t));
 	size_t size = 0;
 	iarray_temporary_shape_size(dtshape, &size);
-	//(*temp)->dtshape = ina_mempool_dalloc(expr->mp, sizeof(iarray_temporary_dtshape_t));
+	(*temp)->dtshape = ina_mempool_dalloc(expr->mp, sizeof(iarray_dtshape_t));
 	memcpy((*temp)->dtshape, dtshape, sizeof(iarray_dtshape_t));
 	(*temp)->size = size;
 	if (c != NULL) {
 		memcpy(&(*temp)->scalar_value, &c->scalar_value, sizeof(double));
 	}
-	//(*temp)->data = ina_mempool_dalloc(expr->mp, (*temp)->size);
+	if (size > 0) {
+		(*temp)->data = ina_mempool_dalloc(expr->mp, (*temp)->size);
+	}
 
 	return 0;
 }
 
-ina_rc_t _iarray_op_add(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs, iarray_temporary_t **out)
+iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *rhs)
 {
 	int scalar = 0;
 	iarray_dtshape_t shape;
@@ -114,6 +112,9 @@ ina_rc_t _iarray_op_add(iarray_expression_t *expr, iarray_temporary_t *lhs, iarr
 	iarray_operation_type_t op_type = IARRAY_OPERATION_TYPE_BLAS1;
 	iarray_temporary_t *scalar_tmp = NULL;
 	iarray_temporary_t *scalar_lhs = NULL;
+	iarray_temporary_t *out;
+	iarray_expression_t expr; /* temp hack */
+	memset(&expr, 0, sizeof(iarray_expression_t));
 
 	if (lhs->dtshape->ndim == 0 || rhs->dtshape->ndim == 0) { /* scalar test */
 		if (lhs->dtshape->ndim == 0) {
@@ -141,35 +142,35 @@ ina_rc_t _iarray_op_add(iarray_expression_t *expr, iarray_temporary_t *lhs, iarr
 		/* FIXME: matrix/vector and matrix/matrix addition */
 	}
 
-	iarray_temporary_new(expr, NULL, &shape, out);
+	iarray_temporary_new(&expr, NULL, &shape, &out);
 
 	switch (shape.dtype) {
 		case IARRAY_DATA_TYPE_DOUBLE: 
 		{
-			int len = (int)(*out)->size / sizeof(double);
+			int len = (int)out->size / sizeof(double);
 			if (scalar) {
 				for (int i = 0; i < len; ++i) {
-					((double*)(*out)->data)[i] = ((double*)scalar_lhs->data)[i] + scalar_tmp->scalar_value.d;
+					((double*)out->data)[i] = ((double*)scalar_lhs->data)[i] + scalar_tmp->scalar_value.d;
 				}
 			}
 			else {
 				for (int i = 0; i < len; ++i) {
-					((double*)(*out)->data)[i] = ((double*)lhs->data)[i] + ((double*)rhs->data)[i];
+					((double*)out->data)[i] = ((double*)lhs->data)[i] + ((double*)rhs->data)[i];
 				}
 			}
 		}
 		break;
 		case IARRAY_DATA_TYPE_FLOAT:
 		{
-			int len = (int)(*out)->size / sizeof(float);
+			int len = (int)out->size / sizeof(float);
 			if (scalar) {
 				for (int i = 0; i < len; ++i) {
-					((float*)(*out)->data)[i] = ((float*)scalar_lhs->data)[i] + scalar_tmp->scalar_value.f;
+					((float*)out->data)[i] = ((float*)scalar_lhs->data)[i] + scalar_tmp->scalar_value.f;
 				}
 			}
 			else {
 				for (int i = 0; i < len; ++i) {
-					((float*)(*out)->data)[i] = ((float*)lhs->data)[i] + ((float*)rhs->data)[i];
+					((float*)out->data)[i] = ((float*)lhs->data)[i] + ((float*)rhs->data)[i];
 				}
 			}
 		}
@@ -246,7 +247,7 @@ void fill_buffer_y(const double *x, double *y) {
 }
 
 
-int main() {
+int main(int argc, char **argv) {
   printf("Blosc version info: %s (%s)\n",
          BLOSC_VERSION_STRING, BLOSC_VERSION_DATE);
 
@@ -262,7 +263,7 @@ int main() {
   int nchunk;
   blosc_timestamp_t last, current;
   double ttotal;
-  double prev_value;
+  //double prev_value;
 
   /* Create a super-chunk container for input (X values) */
   cparams.typesize = sizeof(double);
@@ -289,10 +290,10 @@ int main() {
   blosc_set_timestamp(&current);
   ttotal = blosc_elapsed_secs(last, current);
   printf("Time for filling X values (compressed): %.3g s, %.1f MB/s\n",
-         ttotal, sc_x->nbytes / (ttotal * MB));
+         ttotal, (double)(sc_x->nbytes / (ttotal * MB)));
   printf("Compression for X values: %.1f MB -> %.1f MB (%.1fx)\n",
-         sc_x->nbytes / MB, sc_x->cbytes / MB,
-         (1. * sc_x->nbytes) / sc_x->cbytes);
+         (double)(sc_x->nbytes / MB), (double)(sc_x->cbytes / MB),
+         (double)((1. * sc_x->nbytes) / sc_x->cbytes));
 
   // Compute the plain y vector
   static double y[NELEM];
@@ -322,7 +323,7 @@ int main() {
   printf("Time for computing and filling Y values (compressed): %.3g s, %.1f MB/s\n",
          ttotal, sc_y->nbytes / (ttotal * MB));
   printf("Compression for Y values: %.1f MB -> %.1f MB (%.1fx)\n",
-         sc_y->nbytes / MB, sc_y->cbytes / MB,
+         (double)(sc_y->nbytes / MB), (double)(sc_y->cbytes / MB),
          (1. * sc_y->nbytes) / sc_y->cbytes);
 
 
@@ -333,13 +334,15 @@ int main() {
   blosc_destroy();
 
   iarray_temporary_t *x1, *y1;
+  iarray_expression_t iexpr;
+  memset(&iexpr, 0, sizeof(iarray_expression_t));
   iarray_dtshape_t shape = {
 			.ndim = 0,
 			.dims = NULL,
 			.dtype = IARRAY_DATA_TYPE_DOUBLE,
 	};
-   iarray_temporary_new(NULL, NULL, &shape, &x1);
-   iarray_temporary_new(NULL, NULL, &shape, &y1);
+   iarray_temporary_new(&iexpr, NULL, &shape, &x1);
+   iarray_temporary_new(&iexpr, NULL, &shape, &y1);
 
 	double var1 = 5;
 	x1->scalar_value.d = var1;
@@ -347,18 +350,18 @@ int main() {
 	y1->scalar_value.d = var2;
 
 	/* Store variable names and pointers. */
-  te_variable vars[] = {{"x", x1}, {"y", y1}};
+  te_variable vars[] = {{"x", &x1}, {"y", &y1}};
 
   int err;
   /* Compile the expression with variables. */
   te_expr *expr = te_compile("x + y", vars, 2, &err);
 
   if (expr) {
-    x1 = 3; y1 = 4;
+    x1->scalar_value.d = 3; y1->scalar_value.d = 4;
     const iarray_temporary_t *h1 = te_eval(expr); /* Returns 5. */
     //printf("h1: %f\n", h1);
 
-    x1 = 5; y1 = 12;
+    x1->scalar_value.d = 5; y1->scalar_value.d = 12;
     const iarray_temporary_t *h2 = te_eval(expr); /* Returns 13. */
     //printf("h2: %f\n", h2);
 
