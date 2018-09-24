@@ -5,8 +5,7 @@
 #ifndef PROJECT_IARRAY_H
 #define PROJECT_IARRAY_H
 
-#define INA_API(x)
-typedef int ina_rc_t;
+#include <libinac/lib.h>
 
 typedef struct iarray_context_s iarray_context_t;
 

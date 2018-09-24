@@ -25,6 +25,7 @@
 #ifndef __TINYEXPR_H__
 #define __TINYEXPR_H__
 
+#include "iarray_private.h"
 
 #ifdef __cplusplus
 extern "C" {

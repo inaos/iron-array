@@ -26,6 +26,7 @@ ina_rc_t iarray_container_shape_size(iarray_dtshape_t *dtshape, size_t *size);
 
 ina_rc_t iarray_temporary_shape_size(iarray_dtshape_t *temp_dtshape, size_t *temp_size);
 
-ina_rc_t _iarray_op_add(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs, iarray_temporary_t **out);
+/* FIXME: since we want to keep the changes to tinyexpr as little as possible we deviate from our usual function decls */
+iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *rhs);
 
 #endif
