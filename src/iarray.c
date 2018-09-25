@@ -162,6 +162,12 @@ INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx, iarray_dtshape_t *dtshape, 
 	return INA_SUCCESS;
 }
 
+INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx, iarray_container_t *c, iarray_slice_param_t *params, iarray_container_t **container)
+{
+
+	return INA_SUCCESS;
+}
+
 INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e)
 {
 	INA_VERIFY_NOT_NULL(ctx);
@@ -198,6 +204,27 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const ch
 	return INA_SUCCESS;
 }
 
+INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val)
+{
+	iarray_container_t *c = ina_mempool_dalloc(e->mp, sizeof(iarray_container_t));
+	c->dtshape = ina_mempool_dalloc(e->mp, sizeof(iarray_dtshape_t));
+	c->dtshape->ndim = 0;
+	c->dtshape->dims = NULL;
+	c->dtshape->dtype = IARRAY_DATA_TYPE_DOUBLE;
+	c->scalar_value.d = val;
+	return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
+{
+	return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, iarray_container_t **ret)
+{
+	return INA_SUCCESS;
+}
+
 ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)
 {
 	size_t type_size = 0;
@@ -219,12 +246,12 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 {
 	*temp = ina_mempool_dalloc(expr->mp, sizeof(iarray_temporary_t));
 	(*temp)->dtshape = ina_mempool_dalloc(expr->mp, sizeof(iarray_dtshape_t));
-	memcpy((*temp)->dtshape, dtshape, sizeof(iarray_dtshape_t));
+	ina_mem_cpy((*temp)->dtshape, dtshape, sizeof(iarray_dtshape_t));
 	size_t size = 0;
 	iarray_shape_size(dtshape, &size);
 	(*temp)->size = size;
 	if (c != NULL) {
-		memcpy(&(*temp)->scalar_value, &c->scalar_value, sizeof(double));
+		ina_mem_cpy(&(*temp)->scalar_value, &c->scalar_value, sizeof(double));
 	}
 	if (size > 0) {
 		(*temp)->data = ina_mempool_dalloc(expr->mp, size);
@@ -237,26 +264,26 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 {
 	int scalar = 0;
 	iarray_dtshape_t dtshape;
-	memset(&dtshape, 0, sizeof(iarray_dtshape_t));
+	ina_mem_set(&dtshape, 0, sizeof(iarray_dtshape_t));
 	iarray_operation_type_t op_type = IARRAY_OPERATION_TYPE_BLAS1;
 	iarray_temporary_t *scalar_tmp = NULL;
 	iarray_temporary_t *scalar_lhs = NULL;
 	iarray_temporary_t *out;
 	iarray_expression_t expr; /* temp hack */
-	memset(&expr, 0, sizeof(iarray_expression_t));
+	ina_mem_set(&expr, 0, sizeof(iarray_expression_t));
 
 	if (lhs->dtshape->ndim == 0 || rhs->dtshape->ndim == 0) { /* scalar test */
 		if (lhs->dtshape->ndim == 0) {
 			dtshape.dtype = rhs->dtshape->dtype;
 			dtshape.ndim = rhs->dtshape->ndim;
-			memcpy(dtshape.dims, rhs->dtshape->dims, sizeof(int) * dtshape.ndim);
+			ina_mem_cpy(dtshape.dims, rhs->dtshape->dims, sizeof(int) * dtshape.ndim);
 			scalar_tmp = lhs;
 			scalar_lhs = rhs;
 		}
 		else {
 			dtshape.dtype = lhs->dtshape->dtype;
 			dtshape.ndim = lhs->dtshape->ndim;
-			memcpy(dtshape.dims, lhs->dtshape->dims, sizeof(int) * dtshape.ndim);
+			ina_mem_cpy(dtshape.dims, lhs->dtshape->dims, sizeof(int) * dtshape.ndim);
 			scalar_tmp = rhs;
 			scalar_lhs = lhs;
 		}
@@ -265,7 +292,7 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 	else if (lhs->dtshape->ndim == 1 && rhs->dtshape->ndim == 1) { /* vector vector test */
 		dtshape.dtype = lhs->dtshape->dtype;
 		dtshape.ndim = lhs->dtshape->ndim;
-		memcpy(dtshape.dims, lhs->dtshape->dims, sizeof(int)*lhs->dtshape->ndim);
+		ina_mem_cpy(dtshape.dims, lhs->dtshape->dims, sizeof(int)*lhs->dtshape->ndim);
 	}
 	else {
 		/* FIXME: matrix/vector and matrix/matrix addition */
@@ -464,7 +491,7 @@ int main(int argc, char **argv) {
 
   iarray_temporary_t *x1, *y1;
   iarray_expression_t iexpr;
-  memset(&iexpr, 0, sizeof(iarray_expression_t));
+  ina_mem_set(&iexpr, 0, sizeof(iarray_expression_t));
   iarray_dtshape_t shape = {
 			.ndim = 0,
 			.dims = NULL,
