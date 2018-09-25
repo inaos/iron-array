@@ -5,7 +5,8 @@
 #ifndef PROJECT_IARRAY_H
 #define PROJECT_IARRAY_H
 
-#include <libinac/lib.h>
+#include <blosc.h>
+#include <libinac/libinac.h>
 
 typedef struct iarray_context_s iarray_context_t;
 
