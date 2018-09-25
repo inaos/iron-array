@@ -34,7 +34,7 @@ For log = base 10 log do nothing
 For log = natural log uncomment the next line. */
 /* #define TE_NAT_LOG */
 
-#include "iarray.h"
+#include <libiarray/iarray.h>
 #include "tinyexpr.h"
 #include <stdlib.h>
 #include <math.h>

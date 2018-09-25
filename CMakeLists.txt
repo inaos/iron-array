@@ -29,6 +29,8 @@ inac_version("1.0.0")
 inac_add_dependency(inac "1.0.0")
 inac_add_contrib_lib(tinyexpr)
 
+add_subdirectory(contribs/c-blosc2)
+include_directories(contribs/c-blosc2/blosc)
 
 file(GLOB src ${SRC_DIR}/*.c)
 add_library(iarray_c ${src})
@@ -37,7 +39,7 @@ set_target_properties(
         PROPERTIES
         COMPILE_DEFINITIONS INA_LIB=1)
 
-inac_merge_static_libs(iarray iarray_c ${INAC_LIBS})
+inac_merge_static_libs(iarray iarray_c blosc_static ${INAC_LIBS})
 
 #inac_add_tests(inac)
 #inac_add_benchmarks(inac)
