@@ -18,6 +18,11 @@
 #define NELEM (NCHUNKS * CHUNKSIZE)  // multiple of CHUNKSIZE for now
 #define NTHREADS  4
 
+struct iarray_context_s {
+	iarray_config_t *cfg;
+	/* FIXME: track expressions -> list */
+};
+
 struct iarray_expression_s {
 	ina_mempool_t *mp;
 
@@ -31,13 +36,155 @@ struct iarray_container_s {
 	} scalar_value;
 };
 
+static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *shape, iarray_data_type_t dtype, iarray_container_t **c)
+{
+	*c = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
+	INA_RETURN_IF_NULL(c);
+	(*c)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
+	ina_mem_cpy((*c)->dtshape, shape, sizeof(iarray_dtshape_t));
+	/* FIXME: blosc init container */
+	return INA_SUCCESS;
+}
+
+static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
+{
+	/* FIXME: blosc set container */
+	return INA_SUCCESS;
+}
+
+static ina_rc_t _iarray_container_fill_double(iarray_container_t *c, double value)
+{
+	/* FIXME: blosc set container */
+	return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_ctx_new(iarray_config_t *cfg, iarray_context_t **ctx)
+{
+	INA_VERIFY_NOT_NULL(ctx);
+	*ctx = ina_mem_alloc(sizeof(iarray_context_t));
+	INA_RETURN_IF_NULL(ctx);
+	(*ctx)->cfg = ina_mem_alloc(sizeof(iarray_config_t));
+	ina_mem_cpy((*ctx)->cfg, cfg, sizeof(iarray_config_t));
+	return INA_SUCCESS;
+}
+
+INA_API(void) iarray_ctx_free(iarray_context_t **ctx)
+{
+	INA_FREE_CHECK(ctx);
+	INA_MEM_FREE_SAFE((*ctx)->cfg);
+	INA_MEM_FREE_SAFE(ctx);
+}
+
+INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx, iarray_dtshape_t *dtshape, int start, int stop, int step, iarray_data_type_t dtype, iarray_container_t **container)
+{
+	INA_VERIFY_NOT_NULL(ctx);
+	INA_VERIFY_NOT_NULL(dtshape);
+	INA_VERIFY_NOT_NULL(container);
+
+	_iarray_container_new(ctx, dtshape, dtype, container);
+	/* implement arange */
+
+	return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_data_type_t dtype, iarray_container_t **container)
+{
+	INA_VERIFY_NOT_NULL(ctx);
+	INA_VERIFY_NOT_NULL(dtshape);
+	INA_VERIFY_NOT_NULL(container);
+
+	_iarray_container_new(ctx, dtshape, dtype, container);
+
+	switch (dtype) {
+		case IARRAY_DATA_TYPE_DOUBLE:
+			_iarray_container_fill_double(*container, 0.0);
+			break;
+		case IARRAY_DATA_TYPE_FLOAT:
+			_iarray_container_fill_float(*container, 0.0f);
+			break;
+	}
+
+	return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_data_type_t dtype, iarray_container_t **container)
+{
+	INA_VERIFY_NOT_NULL(ctx);
+	INA_VERIFY_NOT_NULL(dtshape);
+	INA_VERIFY_NOT_NULL(container);
+
+	_iarray_container_new(ctx, dtshape, dtype, container);
+
+	switch (dtype) {
+	case IARRAY_DATA_TYPE_DOUBLE:
+		_iarray_container_fill_double(*container, 1.0);
+		break;
+	case IARRAY_DATA_TYPE_FLOAT:
+		_iarray_container_fill_float(*container, 1.0f);
+		break;
+	}
+
+	return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx, iarray_dtshape_t *dtshape, float value, iarray_container_t **container)
+{
+	INA_VERIFY_NOT_NULL(ctx);
+	INA_VERIFY_NOT_NULL(dtshape);
+	INA_VERIFY_NOT_NULL(container);
+
+	_iarray_container_new(ctx, dtshape, IARRAY_DATA_TYPE_FLOAT, container);
+
+	_iarray_container_fill_float(*container, value);
+
+	return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx, iarray_dtshape_t *dtshape, double value, iarray_container_t **container)
+{
+	INA_VERIFY_NOT_NULL(ctx);
+	INA_VERIFY_NOT_NULL(dtshape);
+	INA_VERIFY_NOT_NULL(container);
+
+	_iarray_container_new(ctx, dtshape, IARRAY_DATA_TYPE_DOUBLE, container);
+
+	_iarray_container_fill_double(*container, value);
+
+	return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_rng_t rng, iarray_data_type_t dtype, iarray_container_t **container)
+{
+	INA_VERIFY_NOT_NULL(ctx);
+	INA_VERIFY_NOT_NULL(dtshape);
+	INA_VERIFY_NOT_NULL(container);
+
+	return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e)
+{
+	INA_VERIFY_NOT_NULL(ctx);
+	INA_VERIFY_NOT_NULL(e);
+	*e = ina_mem_alloc(sizeof(iarray_expression_t));
+	INA_RETURN_IF_NULL(e);
+	return INA_SUCCESS;
+}
+
+INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
+{
+	INA_VERIFY_NOT_NULL(ctx);
+	INA_FREE_CHECK(e);
+	INA_MEM_FREE_SAFE(e);
+}
+
 INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val)
 {
 	if (val->dtshape->ndim > 2) {
 		/* FIXME: raise error */
 		return 1;
 	}
-	return 0;
+	return INA_SUCCESS;
 }
 
 INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val)
@@ -48,7 +195,7 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const ch
 	c->dtshape->dims = NULL;
 	c->dtshape->dtype = IARRAY_DATA_TYPE_FLOAT;
 	c->scalar_value.f = val;
-	return 0;
+	return INA_SUCCESS;
 }
 
 ina_rc_t iarray_container_shape_size(iarray_dtshape_t *dtshape, size_t *size)
@@ -65,7 +212,7 @@ ina_rc_t iarray_container_shape_size(iarray_dtshape_t *dtshape, size_t *size)
 	for (int i = 0; i < dtshape->ndim; ++i) {
 		*size += dtshape->dims[i] * type_size;
 	}
-	return 0;
+	return INA_SUCCESS;
 }
 
 ina_rc_t iarray_temporary_shape_size(iarray_dtshape_t *temp_dtshape, size_t *temp_size)
@@ -82,7 +229,7 @@ ina_rc_t iarray_temporary_shape_size(iarray_dtshape_t *temp_dtshape, size_t *tem
 	for (int i = 0; i < temp_dtshape->ndim; ++i) {
 		*temp_size += temp_dtshape->dims[i] * type_size;
 	}
-	return 0;
+	return INA_SUCCESS;
 }
 
 ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, iarray_dtshape_t *dtshape, iarray_temporary_t **temp)
@@ -101,7 +248,7 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 		(*temp)->data = ina_mempool_dalloc(expr->mp, (*temp)->size);
 	}
 
-	return 0;
+	return INA_SUCCESS;
 }
 
 iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *rhs)
@@ -177,7 +324,7 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 		break;
 	}
 
-	return 0;
+	return INA_SUCCESS;
 }
 
 /*
