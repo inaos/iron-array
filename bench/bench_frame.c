@@ -1,6 +1,6 @@
 
 #include <stdlib.h>
-#include <libinac/lib.h>
+#include <libinac/libinac.h>
 
 /*
  * Idea of this benchmark is to compare different implementations of the cblosc2 frames
