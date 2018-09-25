@@ -21,9 +21,6 @@ typedef void* ina_mempool_t;
 #define INA_FREE_CHECK(ptrptr)
 #define INA_MEM_FREE_SAFE(ptrptr)
 
-inline void* ina_mempool_dalloc(ina_mempool_t *mp, size_t size)
-{
-	return malloc(size);
-}
+void* ina_mempool_dalloc(ina_mempool_t *mp, size_t size);
 
 #endif
