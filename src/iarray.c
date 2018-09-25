@@ -3,6 +3,7 @@
 //
 
 #include <stdio.h>
+#include <stdbool.h>
 #include "iarray.h"
 #include "iarray_private.h"
 #include "tinyexpr.h"
@@ -223,7 +224,8 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 
 iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *rhs)
 {
-	int scalar = 0;
+	bool scalar = false;
+	bool scalar_vector = false;
 	iarray_dtshape_t dtshape;
 	memset(&dtshape, 0, sizeof(iarray_dtshape_t));
 	iarray_operation_type_t op_type = IARRAY_OPERATION_TYPE_BLAS1;
@@ -233,7 +235,13 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 	iarray_expression_t expr; /* temp hack */
 	memset(&expr, 0, sizeof(iarray_expression_t));
 
-	if (lhs->dtshape->ndim == 0 || rhs->dtshape->ndim == 0) { /* scalar test */
+	if (lhs->dtshape->ndim == 0 && rhs->dtshape->ndim == 0) {   /* scalar-scalar */
+		dtshape.dtype = rhs->dtshape->dtype;
+		dtshape.ndim = rhs->dtshape->ndim;
+		memcpy(dtshape.dims, rhs->dtshape->dims, sizeof(int) * dtshape.ndim);
+		scalar = true;
+	}
+	else if (lhs->dtshape->ndim == 0 || rhs->dtshape->ndim == 0) {   /* scalar-vector */
 		if (lhs->dtshape->ndim == 0) {
 			dtshape.dtype = rhs->dtshape->dtype;
 			dtshape.ndim = rhs->dtshape->ndim;
@@ -248,9 +256,9 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 			scalar_tmp = rhs;
 			scalar_lhs = lhs;
 		}
-		scalar = 1;
+		scalar_vector = true;
 	}
-	else if (lhs->dtshape->ndim == 1 && rhs->dtshape->ndim == 1) { /* vector vector test */
+	else if (lhs->dtshape->ndim == 1 && rhs->dtshape->ndim == 1) { /* vector-vector */
 		dtshape.dtype = lhs->dtshape->dtype;
 		dtshape.ndim = lhs->dtshape->ndim;
 		memcpy(dtshape.dims, lhs->dtshape->dims, sizeof(int)*lhs->dtshape->ndim);
@@ -266,6 +274,9 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 		{
 			int len = (int)out->size / sizeof(double);
 			if (scalar) {
+					out->scalar_value.d = lhs->scalar_value.d + rhs->scalar_value.d;
+			}
+			else if (scalar_vector) {
 				for (int i = 0; i < len; ++i) {
 					((double*)out->data)[i] = ((double*)scalar_lhs->data)[i] + scalar_tmp->scalar_value.d;
 				}
@@ -281,6 +292,9 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 		{
 			int len = (int)out->size / sizeof(float);
 			if (scalar) {
+				out->scalar_value.f = lhs->scalar_value.f + rhs->scalar_value.f;
+			}
+			else if (scalar_vector) {
 				for (int i = 0; i < len; ++i) {
 					((float*)out->data)[i] = ((float*)scalar_lhs->data)[i] + scalar_tmp->scalar_value.f;
 				}
@@ -294,7 +308,7 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 		break;
 	}
 
-	return INA_SUCCESS;
+	return out;
 }
 
 
@@ -323,11 +337,13 @@ int main(int argc, char **argv) {
 	te_expr *expr = te_compile("x + y", vars, 2, &err);
 
 	if (expr) {
-		x1->scalar_value.d = 3; y1->scalar_value.d = 4;
+		x1->scalar_value.d = 3;
+		y1->scalar_value.d = 4;
 		const iarray_temporary_t *h1 = te_eval(expr); /* Returns 5. */
-		//printf("h1: %f\n", h1);
+		//printf("h1: %f\n", h1->size);
 
-		x1->scalar_value.d = 5; y1->scalar_value.d = 12;
+		x1->scalar_value.d = 5;
+		y1->scalar_value.d = 12;
 		const iarray_temporary_t *h2 = te_eval(expr); /* Returns 13. */
 		//printf("h2: %f\n", h2);
 
