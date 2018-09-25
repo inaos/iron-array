@@ -2,7 +2,7 @@
 #define IARRAY_PRIVATE_H_
 
 #include <stddef.h>
-#include "iarray.h"
+#include <libiarray/iarray.h>
 
 typedef enum iarray_operation_type_e {
 	IARRAY_OPERATION_TYPE_BLAS1,

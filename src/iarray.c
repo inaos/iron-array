@@ -3,9 +3,9 @@
 //
 
 #include <stdio.h>
-#include "iarray.h"
+#include <libiarray/iarray.h>
 #include "iarray_private.h"
-#include "tinyexpr.h"
+#include <contribs/tinyexpr/tinyexpr.h>
 
 struct iarray_context_s {
 	iarray_config_t *cfg;
