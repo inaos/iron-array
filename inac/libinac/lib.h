@@ -5,7 +5,7 @@
 
 #include <stdlib.h>
 
-#define INA_API(x)
+#define INA_API(x) x  // FIXME: make the function public?
 #define INA_SUCCESS 0
 typedef int ina_rc_t;
 

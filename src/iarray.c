@@ -198,9 +198,9 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const ch
 	return INA_SUCCESS;
 }
 
-ina_rc_t iarray_container_shape_size(iarray_dtshape_t *dtshape, size_t *size)
+ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)
 {
-	size_t type_size;
+	size_t type_size = 0;
 	switch (dtshape->dtype) {
 		case IARRAY_DATA_TYPE_DOUBLE:
 			type_size = sizeof(double);
@@ -215,37 +215,19 @@ ina_rc_t iarray_container_shape_size(iarray_dtshape_t *dtshape, size_t *size)
 	return INA_SUCCESS;
 }
 
-ina_rc_t iarray_temporary_shape_size(iarray_dtshape_t *temp_dtshape, size_t *temp_size)
-{
-	size_t type_size;
-	switch (temp_dtshape->dtype) {
-		case IARRAY_DATA_TYPE_DOUBLE:
-			type_size = sizeof(double);
-			break;
-		case IARRAY_DATA_TYPE_FLOAT:
-			type_size = sizeof(float);
-			break;
-	}
-	for (int i = 0; i < temp_dtshape->ndim; ++i) {
-		*temp_size += temp_dtshape->dims[i] * type_size;
-	}
-	return INA_SUCCESS;
-}
-
 ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, iarray_dtshape_t *dtshape, iarray_temporary_t **temp)
 {
 	*temp = ina_mempool_dalloc(expr->mp, sizeof(iarray_temporary_t));
-	(*temp)->dtshape = malloc(sizeof(iarray_dtshape_t));
-	size_t size = 0;
-	iarray_temporary_shape_size(dtshape, &size);
 	(*temp)->dtshape = ina_mempool_dalloc(expr->mp, sizeof(iarray_dtshape_t));
 	memcpy((*temp)->dtshape, dtshape, sizeof(iarray_dtshape_t));
+	size_t size = 0;
+	iarray_shape_size(dtshape, &size);
 	(*temp)->size = size;
 	if (c != NULL) {
 		memcpy(&(*temp)->scalar_value, &c->scalar_value, sizeof(double));
 	}
 	if (size > 0) {
-		(*temp)->data = ina_mempool_dalloc(expr->mp, (*temp)->size);
+		(*temp)->data = ina_mempool_dalloc(expr->mp, size);
 	}
 
 	return INA_SUCCESS;
@@ -254,8 +236,8 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *rhs)
 {
 	int scalar = 0;
-	iarray_dtshape_t shape;
-	memset(&shape, 0, sizeof(iarray_dtshape_t));
+	iarray_dtshape_t dtshape;
+	memset(&dtshape, 0, sizeof(iarray_dtshape_t));
 	iarray_operation_type_t op_type = IARRAY_OPERATION_TYPE_BLAS1;
 	iarray_temporary_t *scalar_tmp = NULL;
 	iarray_temporary_t *scalar_lhs = NULL;
@@ -265,33 +247,33 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 
 	if (lhs->dtshape->ndim == 0 || rhs->dtshape->ndim == 0) { /* scalar test */
 		if (lhs->dtshape->ndim == 0) {
-			shape.dtype = rhs->dtshape->dtype;
-			shape.ndim = rhs->dtshape->ndim;
-			memcpy(shape.dims, rhs->dtshape->dims, sizeof(int)*rhs->dtshape->ndim);
+			dtshape.dtype = rhs->dtshape->dtype;
+			dtshape.ndim = rhs->dtshape->ndim;
+			memcpy(dtshape.dims, rhs->dtshape->dims, sizeof(int) * dtshape.ndim);
 			scalar_tmp = lhs;
 			scalar_lhs = rhs;
 		}
 		else {
-			shape.dtype = lhs->dtshape->dtype;
-			shape.ndim = lhs->dtshape->ndim;
-			memcpy(shape.dims, lhs->dtshape->dims, sizeof(int)*lhs->dtshape->ndim);
+			dtshape.dtype = lhs->dtshape->dtype;
+			dtshape.ndim = lhs->dtshape->ndim;
+			memcpy(dtshape.dims, lhs->dtshape->dims, sizeof(int) * dtshape.ndim);
 			scalar_tmp = rhs;
 			scalar_lhs = lhs;
 		}
 		scalar = 1;
 	}
 	else if (lhs->dtshape->ndim == 1 && rhs->dtshape->ndim == 1) { /* vector vector test */
-		shape.dtype = lhs->dtshape->dtype;
-		shape.ndim = lhs->dtshape->ndim;
-		memcpy(shape.dims, lhs->dtshape->dims, sizeof(int)*lhs->dtshape->ndim);
+		dtshape.dtype = lhs->dtshape->dtype;
+		dtshape.ndim = lhs->dtshape->ndim;
+		memcpy(dtshape.dims, lhs->dtshape->dims, sizeof(int)*lhs->dtshape->ndim);
 	}
 	else {
 		/* FIXME: matrix/vector and matrix/matrix addition */
 	}
 
-	iarray_temporary_new(&expr, NULL, &shape, &out);
+	iarray_temporary_new(&expr, NULL, &dtshape, &out);
 
-	switch (shape.dtype) {
+	switch (dtshape.dtype) {
 		case IARRAY_DATA_TYPE_DOUBLE: 
 		{
 			int len = (int)out->size / sizeof(double);
@@ -326,6 +308,7 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 
 	return INA_SUCCESS;
 }
+
 
 /*
   Example program demonstrating how to execute an expression with super-chunks as operands.
@@ -410,7 +393,6 @@ int main(int argc, char **argv) {
   int nchunk;
   blosc_timestamp_t last, current;
   double ttotal;
-  //double prev_value;
 
   /* Create a super-chunk container for input (X values) */
   cparams.typesize = sizeof(double);
