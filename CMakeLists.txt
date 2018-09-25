@@ -41,9 +41,10 @@ set_target_properties(
 
 inac_merge_static_libs(iarray iarray_c blosc_static ${INAC_LIBS})
 
-#inac_add_tests(inac)
-#inac_add_benchmarks(inac)
-#inac_add_tools(inac)
+#inac_add_tests(iarray)
+#inac_add_benchmarks(iarray)
+#inac_add_tools(iarray)
+#inac_add_examples(iarray)
 
 if (MSVC)
     install(TARGETS iarray
@@ -54,21 +55,5 @@ else()
             DESTINATION lib
             COMPONENT libraries)
 endif()
-
-install(TARGETS ${INAC_TOOLS}
-        DESTINATION bin
-        COMPONENT bninaries)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/libiarray
-        DESTINATION include
-        FILES_MATCHING
-        PATTERN *.h)
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/libiarray
-        DESTINATION include
-        FILES_MATCHING
-        PATTERN *.h)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/doc/
-        DESTINATION doc
-        FILES_MATCHING
-        PATTERN *.md)
 
 inac_package()
