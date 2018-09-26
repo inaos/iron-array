@@ -31,13 +31,20 @@ typedef enum iarray_data_type_e {
 typedef struct iarray_dtshape_s {
 	iarray_data_type_t dtype;
 	int ndim; /* IF ndim = 0 THEN it is a scalar */
-	int *dims;
+	int dims[8];  // a fixed size simplify code and should enough for most IronArray cases
 } iarray_dtshape_t;
 
 typedef struct iarray_slice_param_s {
 	int axis;
 	int idx;
 } iarray_slice_param_t;
+
+typedef struct iarray_variable_s {
+	const char *name;
+	const void *address;
+	iarray_dtshape_t dtshape;
+	void *context;
+} iarray_variable_t;
 
 INA_API(ina_rc_t) iarray_ctx_new(iarray_config_t *cfg, iarray_context_t **ctx);
 INA_API(void) iarray_ctx_free(iarray_context_t **ctx);
@@ -59,6 +66,8 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
 
-INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, iarray_container_t **ret);
+// INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, iarray_container_t **ret);
+INA_API(ina_rc_t) iarray_eval(char* expr, iarray_variable_t vars[], int vars_count, iarray_variable_t out, int *err);
+
 
 #endif //PROJECT_IARRAY_H

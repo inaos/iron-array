@@ -180,16 +180,16 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
 	return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val)
-{
-	iarray_container_t *c = ina_mempool_dalloc(e->mp, sizeof(iarray_container_t));
-	c->dtshape = ina_mempool_dalloc(e->mp, sizeof(iarray_dtshape_t));
-	c->dtshape->ndim = 0;
-	c->dtshape->dims = NULL;
-	c->dtshape->dtype = IARRAY_DATA_TYPE_FLOAT;
-	c->scalar_value.f = val;
-	return INA_SUCCESS;
-}
+//INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val)
+//{
+//	iarray_container_t *c = ina_mempool_dalloc(e->mp, sizeof(iarray_container_t));
+//	c->dtshape = ina_mempool_dalloc(e->mp, sizeof(iarray_dtshape_t));
+//	c->dtshape->ndim = 0;
+//	c->dtshape->dims = NULL;
+//	c->dtshape->dtype = IARRAY_DATA_TYPE_FLOAT;
+//	c->scalar_value.f = val;
+//	return INA_SUCCESS;
+//}
 
 INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val)
 {
@@ -229,7 +229,8 @@ ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)
 	return INA_SUCCESS;
 }
 
-ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, iarray_dtshape_t *dtshape, iarray_temporary_t **temp)
+ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, iarray_dtshape_t *dtshape,
+		iarray_temporary_t **temp)
 {
 	*temp = ina_mempool_dalloc(expr->mp, sizeof(iarray_temporary_t));
 	(*temp)->dtshape = ina_mempool_dalloc(expr->mp, sizeof(iarray_dtshape_t));
@@ -238,7 +239,8 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 	iarray_shape_size(dtshape, &size);
 	(*temp)->size = size;
 	if (c != NULL) {
-		ina_mem_cpy(&(*temp)->scalar_value, &c->scalar_value, sizeof(double));
+        // FIXME: support float values too
+	    ina_mem_cpy(&(*temp)->scalar_value, &c->scalar_value, sizeof(double));
 	}
 	if (size > 0) {
 		(*temp)->data = ina_mempool_dalloc(expr->mp, size);
@@ -251,6 +253,7 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 {
 	bool scalar = false;
 	bool scalar_vector = false;
+	bool vector_vector = false;
 	iarray_dtshape_t dtshape;
 	ina_mem_set(&dtshape, 0, sizeof(iarray_dtshape_t));
 	iarray_operation_type_t op_type = IARRAY_OPERATION_TYPE_BLAS1;
@@ -287,6 +290,8 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 		dtshape.dtype = lhs->dtshape->dtype;
 		dtshape.ndim = lhs->dtshape->ndim;
 		ina_mem_cpy(dtshape.dims, lhs->dtshape->dims, sizeof(int)*lhs->dtshape->ndim);
+		memcpy(dtshape.dims, lhs->dtshape->dims, sizeof(int)*lhs->dtshape->ndim);
+		vector_vector = true;
 	}
 	else {
 		/* FIXME: matrix/vector and matrix/matrix addition */
@@ -299,17 +304,21 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 		{
 			int len = (int)out->size / sizeof(double);
 			if (scalar) {
-					out->scalar_value.d = lhs->scalar_value.d + rhs->scalar_value.d;
+				out->scalar_value.d = lhs->scalar_value.d + rhs->scalar_value.d;
 			}
 			else if (scalar_vector) {
 				for (int i = 0; i < len; ++i) {
 					((double*)out->data)[i] = ((double*)scalar_lhs->data)[i] + scalar_tmp->scalar_value.d;
 				}
 			}
-			else {
+			else if (vector_vector) {
 				for (int i = 0; i < len; ++i) {
 					((double*)out->data)[i] = ((double*)lhs->data)[i] + ((double*)rhs->data)[i];
 				}
+			}
+			else {
+				printf("DTshape combination not supported yet\n");
+				return NULL;
 			}
 		}
 		break;
@@ -324,10 +333,14 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 					((float*)out->data)[i] = ((float*)scalar_lhs->data)[i] + scalar_tmp->scalar_value.f;
 				}
 			}
-			else {
+			else if (vector_vector) {
 				for (int i = 0; i < len; ++i) {
 					((float*)out->data)[i] = ((float*)lhs->data)[i] + ((float*)rhs->data)[i];
 				}
+			}
+			else {
+				printf("DTshape combination not supported yet\n");
+				return NULL;
 			}
 		}
 		break;
@@ -337,22 +350,24 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 }
 
 
-int main(int argc, char **argv) {
+int scalar_scalar()
+{
 	iarray_temporary_t *x1, *y1;
 	iarray_expression_t iexpr;
 	memset(&iexpr, 0, sizeof(iarray_expression_t));
-	iarray_dtshape_t shape = {
+	iarray_dtshape_t xshape = {
 			.ndim = 0,
-			.dims = NULL,
 			.dtype = IARRAY_DATA_TYPE_DOUBLE,
 	};
-	iarray_temporary_new(&iexpr, NULL, &shape, &x1);
-	iarray_temporary_new(&iexpr, NULL, &shape, &y1);
+	iarray_dtshape_t yshape = {
+			.ndim = 0,
+			.dtype = IARRAY_DATA_TYPE_DOUBLE,
+	};
+	iarray_temporary_new(&iexpr, NULL, &xshape, &x1);
+	iarray_temporary_new(&iexpr, NULL, &yshape, &y1);
 
-	double var1 = 5;
-	x1->scalar_value.d = var1;
-	double var2 = 3.;
-	y1->scalar_value.d = var2;
+	x1->scalar_value.d = 5.;
+	y1->scalar_value.d = 3.;
 
 	/* Store variable names and pointers. */
 	te_variable vars[] = {{"x", &x1}, {"y", &y1}};
@@ -362,15 +377,12 @@ int main(int argc, char **argv) {
 	te_expr *expr = te_compile("x + y", vars, 2, &err);
 
 	if (expr) {
-		x1->scalar_value.d = 3;
-		y1->scalar_value.d = 4;
-		const iarray_temporary_t *h1 = te_eval(expr); /* Returns 5. */
-		//printf("h1: %f\n", h1->size);
+		const iarray_temporary_t *h1 = te_eval(expr);
+		printf("h1: %f\n", h1->scalar_value.d);
 
-		x1->scalar_value.d = 5;
-		y1->scalar_value.d = 12;
-		const iarray_temporary_t *h2 = te_eval(expr); /* Returns 13. */
-		//printf("h2: %f\n", h2);
+		x1->scalar_value.d = 10.;
+		const iarray_temporary_t *h2 = te_eval(expr);
+		printf("h2: %f\n", h2->scalar_value.d);
 
 		te_free(expr);
 	} else {
@@ -378,4 +390,162 @@ int main(int argc, char **argv) {
 	}
 
 	return 0;
+}
+
+int scalar_vector()
+{
+	iarray_temporary_t *x1, *y1;
+	iarray_expression_t iexpr;
+	memset(&iexpr, 0, sizeof(iarray_expression_t));
+	iarray_dtshape_t xshape = {
+			.ndim = 0,
+			.dtype = IARRAY_DATA_TYPE_DOUBLE,
+	};
+	iarray_dtshape_t yshape = {
+			.ndim = 1,
+			.dims = {100},
+			.dtype = IARRAY_DATA_TYPE_DOUBLE,
+	};
+	iarray_temporary_new(&iexpr, NULL, &xshape, &x1);
+	iarray_temporary_new(&iexpr, NULL, &yshape, &y1);
+
+	x1->scalar_value.d = 5.;
+	for (int i = 0; i < 100; i++) {
+		((double*)y1->data)[i] = 3.;
+	}
+
+	/* Store variable names and pointers. */
+	te_variable vars[] = {{"x", &x1}, {"y", &y1}};
+
+	int err;
+	/* Compile the expression with variables. */
+	te_expr *expr = te_compile("x + y", vars, 2, &err);
+
+	if (expr) {
+		const iarray_temporary_t *h1 = te_eval(expr);
+		printf("h1: %f, %f\n", ((double*)h1->data)[0], ((double*)h1->data)[99]);
+
+		x1->scalar_value.d = 10.;
+		const iarray_temporary_t *h2 = te_eval(expr);
+		printf("h2: %f, %f\n", ((double*)h2->data)[0], ((double*)h2->data)[99]);
+
+		te_free(expr);
+	} else {
+		printf("Parse error at %d\n", err);
+	}
+
+	return 0;
+}
+
+int vector_vector()
+{
+	iarray_temporary_t *x1, *y1;
+	iarray_expression_t iexpr;
+	memset(&iexpr, 0, sizeof(iarray_expression_t));
+	iarray_dtshape_t xshape = {
+			.ndim = 1,
+			.dims = {100},
+			.dtype = IARRAY_DATA_TYPE_DOUBLE,
+	};
+	iarray_dtshape_t yshape = {
+			.ndim = 1,
+			.dims = {100},
+			.dtype = IARRAY_DATA_TYPE_DOUBLE,
+	};
+	iarray_temporary_new(&iexpr, NULL, &xshape, &x1);
+	iarray_temporary_new(&iexpr, NULL, &yshape, &y1);
+
+	double var1 = 5.;
+	for (int i = 0; i < 100; i++) {
+		((double*)x1->data)[i] = var1;
+	}
+	double var2 = 3.;
+	for (int i = 0; i < 100; i++) {
+		((double*)y1->data)[i] = var2;
+	}
+
+	/* Store variable names and pointers. */
+	te_variable vars[] = {{"x", &x1}, {"y", &y1}};
+
+	int err;
+	/* Compile the expression with variables. */
+	te_expr *expr = te_compile("x + y", vars, 2, &err);
+
+	if (expr) {
+		const iarray_temporary_t *h1 = te_eval(expr);
+		printf("h1: %f, %f\n", ((double*)h1->data)[0], ((double*)h1->data)[99]);
+
+		for (int i = 0; i < 100; i++) {
+			((double*)x1->data)[i] = 10.;
+		}
+		const iarray_temporary_t *h2 = te_eval(expr);
+		printf("h2: %f, %f\n", ((double*)h2->data)[0], ((double*)h2->data)[99]);
+
+		te_free(expr);
+	} else {
+		printf("Parse error at %d\n", err);
+	}
+
+	return 0;
+}
+
+ina_rc_t chunked_eval(char* expr, te_variable vars[], int vars_count, iarray_temporary_t *tmp_out, int *err)
+{
+	/* Compile the expression with variables. */
+	te_expr *texpr = te_compile(expr, vars, vars_count, err);
+	const iarray_temporary_t *h2 = te_eval(texpr);
+	memcpy(tmp_out->data, h2->data, sizeof(tmp_out->data));
+	return 0;
+}
+
+ina_rc_t iarray_eval(char* expr, iarray_variable_t vars[], int vars_count, iarray_variable_t out, int *err)
+{
+	// Get the X operand
+	blosc2_schunk *sc_x = (blosc2_schunk*)vars[0].address;
+	// Create a super-chunk container for storing out values
+	blosc2_schunk *sc_out = (blosc2_schunk*)out.address;
+
+	// Create temporaries for evaluating the expression
+	iarray_expression_t iexpr;
+	memset(&iexpr, 0, sizeof(iarray_expression_t));
+	iarray_temporary_t *tmp_x, *tmp_out;
+	iarray_dtshape_t shape_x = {
+			.ndim = 1,
+			.dims = {sc_x->chunksize / sc_x->typesize},
+			.dtype = IARRAY_DATA_TYPE_DOUBLE,
+	};
+	iarray_dtshape_t shape_out = {
+			.ndim = 1,
+			.dims = {sc_out->chunksize / sc_out->typesize},
+			.dtype = IARRAY_DATA_TYPE_DOUBLE,
+	};
+
+	iarray_temporary_new(&iexpr, NULL, &shape_x, &tmp_x);
+	iarray_temporary_new(&iexpr, NULL, &shape_out, &tmp_out);
+	te_variable tmp_vars[] = {{"x", tmp_x}};
+
+	size_t isize = (size_t)sc_x->chunksize;
+	for (int nchunk = 0; nchunk < sc_x->nchunks; nchunk++) {
+		int dsize = blosc2_schunk_decompress_chunk(sc_x, nchunk, tmp_x->data, isize);
+		if (dsize<0) {
+			printf("Decompression error.  Error code: %d\n", dsize);
+			return dsize;
+		}
+		chunked_eval(expr, tmp_vars, vars_count, tmp_out, err);
+		blosc2_schunk_append_buffer(sc_out, tmp_out->data, isize);
+	}
+	return 0;
+}
+
+
+int main(int argc, char **argv) {
+
+	printf("** scalar-scalar:\n");
+	int retcode = scalar_scalar();
+	printf("** scalar-vector:\n");
+	retcode = scalar_vector();
+	printf("** vector-vector:\n");
+	retcode = vector_vector();
+
+	return retcode;
 }
