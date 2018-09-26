@@ -530,7 +530,7 @@ iarray_temporary_t *te_eval(const te_expr *n) {
 
         case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:
         case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:
-            printf("Arity: %d\n", ARITY(n->type));
+            //printf("Arity: %d\n", ARITY(n->type));
             switch(ARITY(n->type)) {
                 case 0: return TE_FUN(void)();
                 case 1: return TE_FUN(iarray_temporary_t*)(M(0));
