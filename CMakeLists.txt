@@ -16,7 +16,7 @@ target_link_libraries(iarray blosc_shared)
 add_executable(find_roots_schunk ${SRC}/find_roots_schunk.c)
 target_link_libraries(find_roots_schunk blosc_shared)
 
-add_executable(vectors ${SRC}/vectors.c)
+add_executable(vectors ${SRC}/iarray.c ${SRC}/tinyexpr.c ${LIBINAC}/libinac.c ${SRC}/vectors.c)
 target_link_libraries(vectors blosc_shared)
 
 add_executable(test ${SRC}/test.c)
