@@ -489,56 +489,57 @@ int vector_vector()
 	return 0;
 }
 
-ina_rc_t chunked_eval(char* expr, te_variable vars[], int vars_count, iarray_temporary_t *tmp_out, int *err)
+INA_API(ina_rc_t) iarray_eval(char* expr, iarray_variable_t vars[], int vars_count, iarray_variable_t out, int *err)
 {
-	/* Compile the expression with variables. */
-	te_expr *texpr = te_compile(expr, vars, vars_count, err);
-	const iarray_temporary_t *h2 = te_eval(texpr);
-	memcpy(tmp_out->data, h2->data, sizeof(tmp_out->data));
-	return 0;
-}
-
-ina_rc_t iarray_eval(char* expr, iarray_variable_t vars[], int vars_count, iarray_variable_t out, int *err)
-{
-	// Get the X operand
+	// Get the super-chunk container for the X operand
 	blosc2_schunk *sc_x = (blosc2_schunk*)vars[0].address;
-	// Create a super-chunk container for storing out values
+	// Get the super-chunk container for the Y operand
+	blosc2_schunk *sc_y = (blosc2_schunk*)vars[1].address;
+	// Get the super-chunk container for storing out values
 	blosc2_schunk *sc_out = (blosc2_schunk*)out.address;
 
 	// Create temporaries for evaluating the expression
-	iarray_expression_t iexpr;
-	memset(&iexpr, 0, sizeof(iarray_expression_t));
-	iarray_temporary_t *tmp_x, *tmp_out;
+	iarray_temporary_t *tmp_x;
 	iarray_dtshape_t shape_x = {
 			.ndim = 1,
 			.dims = {sc_x->chunksize / sc_x->typesize},
 			.dtype = IARRAY_DATA_TYPE_DOUBLE,
 	};
-	iarray_dtshape_t shape_out = {
+	iarray_temporary_t *tmp_y;
+	iarray_dtshape_t shape_y = {
 			.ndim = 1,
-			.dims = {sc_out->chunksize / sc_out->typesize},
+			.dims = {sc_y->chunksize / sc_y->typesize},
 			.dtype = IARRAY_DATA_TYPE_DOUBLE,
 	};
 
+	// Create and compile the expression
+	iarray_expression_t iexpr;
+	memset(&iexpr, 0, sizeof(iarray_expression_t));
 	iarray_temporary_new(&iexpr, NULL, &shape_x, &tmp_x);
-	iarray_temporary_new(&iexpr, NULL, &shape_out, &tmp_out);
-	te_variable tmp_vars[] = {{"x", tmp_x}};
+	iarray_temporary_new(&iexpr, NULL, &shape_y, &tmp_y);
+	te_variable tmp_vars[] = {{"x", &tmp_x}, {"y", &tmp_y}};
+	te_expr *texpr = te_compile(expr, tmp_vars, vars_count, err);
 
 	size_t isize = (size_t)sc_x->chunksize;
 	for (int nchunk = 0; nchunk < sc_x->nchunks; nchunk++) {
 		int dsize = blosc2_schunk_decompress_chunk(sc_x, nchunk, tmp_x->data, isize);
-		if (dsize<0) {
+		if (dsize < 0) {
 			printf("Decompression error.  Error code: %d\n", dsize);
 			return dsize;
 		}
-		chunked_eval(expr, tmp_vars, vars_count, tmp_out, err);
-		blosc2_schunk_append_buffer(sc_out, tmp_out->data, isize);
+		dsize = blosc2_schunk_decompress_chunk(sc_y, nchunk, tmp_y->data, isize);
+		if (dsize < 0) {
+			printf("Decompression error.  Error code: %d\n", dsize);
+			return dsize;
+		}
+		const iarray_temporary_t *expr_out = te_eval(texpr);
+		blosc2_schunk_append_buffer(sc_out, expr_out->data, isize);
 	}
 	return 0;
 }
 
 
-int main(int argc, char **argv) {
+int _main(int argc, char **argv) {
 
 	printf("** scalar-scalar:\n");
 	int retcode = scalar_scalar();
