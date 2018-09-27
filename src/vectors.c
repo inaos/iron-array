@@ -63,7 +63,7 @@ void fill_sc_x(blosc2_schunk* sc_x, const size_t isize)
 
 double poly(const double x)
 {
-	return (x-1.35)*(x-4.45)*(x-8.5);
+	return (x-1.35) * (x-4.45) * (x-8.5);
 }
 
 // Compute and fill Y values in regular array
@@ -161,15 +161,15 @@ int main(int argc, char** argv)
 			(sc_y->nbytes/MB), (sc_y->cbytes/MB),
 			(1.*sc_y->nbytes)/sc_y->cbytes);
 
-
 	// Check IronArray performance
 	iarray_variable_t vars[] = {{"x", sc_x}, {"y", sc_y}};
 	blosc2_schunk *sc_out = blosc2_new_schunk(cparams, dparams, NULL);
 	iarray_variable_t out = {"out", sc_out};
-	int err;
 
+	int err;
 	blosc_set_timestamp(&last);
 	iarray_eval("x + y", vars, 2, out, &err);
+	//vector_vector();
 	blosc_set_timestamp(&current);
 	ttotal = blosc_elapsed_secs(last, current);
 	printf("\n");
