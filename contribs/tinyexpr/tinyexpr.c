@@ -632,7 +632,7 @@ static void pn (const te_expr *n, int depth) {
     printf("%*s", depth, "");
 
     switch(TYPE_MASK(n->type)) {
-    case TE_CONSTANT: printf("%f\n", n->value); break;
+    case TE_CONSTANT: printf("%f\n", n->value->scalar_value.d); break;
     case TE_VARIABLE: printf("bound %p\n", n->bound); break;
 
     case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:

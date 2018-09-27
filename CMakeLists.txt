@@ -48,6 +48,9 @@ inac_merge_static_libs(iarray iarray_c blosc_static ${INAC_LIBS})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 find_package(MKL)
 
+add_executable(vectors ${SRC}/iarray.c ${SRC}/tinyexpr.c ${LIBINAC}/libinac.c ${SRC}/vectors.c)
+target_link_libraries(vectors blosc_shared)
+
 if (MSVC)
     install(TARGETS iarray
             DESTINATION libs
