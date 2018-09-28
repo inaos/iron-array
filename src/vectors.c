@@ -63,7 +63,7 @@ void fill_sc_x(blosc2_schunk* sc_x, const size_t isize)
 
 double poly(const double x)
 {
-	return (x-1.35) * (x-4.45) * (x-8.5);
+	return (x - 1.35) * (x - 4.45) * (x - 8.5);
 }
 
 // Compute and fill Y values in regular array
@@ -168,17 +168,21 @@ int main(int argc, char** argv)
 
 	int err;
 	blosc_set_timestamp(&last);
-	iarray_eval("x + y", vars, 2, out, &err);
-	//vector_vector();
+	// iarray_eval("x + y", vars, 2, out, &err);
+	iarray_eval("(x - 1.35) * (x - 4.45) * (x - 8.5)", vars, 2, out, &err);
 	blosc_set_timestamp(&current);
 	ttotal = blosc_elapsed_secs(last, current);
 	printf("\n");
-	printf("Time for computing Y values using iarray:  %.3g s, %.1f MB/s\n",
-			ttotal, (sc_x->nbytes + sc_y->nbytes) / (ttotal * MB));    // 2 super-chunks involved
+	printf("Time for computing and filling OUT values using iarray:  %.3g s, %.1f MB/s\n",
+			ttotal, (sc_x->nbytes + sc_out->nbytes) / (ttotal * MB));    // 2 super-chunks involved
+	printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
+			(sc_out->nbytes/MB), (sc_out->cbytes/MB),
+			(1.*sc_out->nbytes)/sc_out->cbytes);
 
 	// Free resources
 	blosc2_free_schunk(sc_x);
 	blosc2_free_schunk(sc_y);
+	blosc2_free_schunk(sc_out);
 
 	blosc_destroy();
 
