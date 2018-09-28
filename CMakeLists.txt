@@ -45,6 +45,14 @@ inac_merge_static_libs(iarray iarray_c blosc_static ${INAC_LIBS})
 #inac_add_tools(iarray)
 #inac_add_examples(iarray)
 
+# We start by creating an executable (will convert into a library later on)
+#add_executable(iarray ${SRC}/iarray.c ${SRC}/tinyexpr.c ${LIBINAC}/libinac.c)
+#target_link_libraries(iarray blosc_shared)
+
+# examples
+#add_executable(find_roots_schunk ${SRC}/find_roots_schunk.c)
+#target_link_libraries(find_roots_schunk blosc_shared)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 find_package(MKL)
 
