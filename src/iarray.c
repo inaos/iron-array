@@ -296,25 +296,32 @@ static iarray_temporary_t* _iarray_op(iarray_temporary_t *lhs, iarray_temporary_
 				}
 			}
 			else if (scalar_vector) {
+				double dscalar = scalar_tmp->scalar_value.d;
+				double *odata = (double*)out->data;
+				double *ldata = (double*)scalar_lhs->data;
 				switch(op) {
 				case IARRAY_OPERATION_TYPE_ADD:
+#pragma omp parallel for
 					for (int i = 0; i < len; ++i) {
-						((double*)out->data)[i] = ((double*)scalar_lhs->data)[i] + scalar_tmp->scalar_value.d;
+						odata[i] = ldata[i] + dscalar;
 					}
 					break;
 				case IARRAY_OPERATION_TYPE_SUB:
+#pragma omp parallel for
 					for (int i = 0; i < len; ++i) {
-						((double*)out->data)[i] = ((double*)scalar_lhs->data)[i] - scalar_tmp->scalar_value.d;
+						odata[i] = ldata[i] - dscalar;
 					}
 					break;
 				case IARRAY_OPERATION_TYPE_MUL:
+#pragma omp parallel for
 					for (int i = 0; i < len; ++i) {
-						((double*)out->data)[i] = ((double*)scalar_lhs->data)[i] * scalar_tmp->scalar_value.d;
+						odata[i] = ldata[i] * dscalar;
 					}
 					break;
 				case IARRAY_OPERATION_TYPE_DIVIDE:
+#pragma omp parallel for
 					for (int i = 0; i < len; ++i) {
-						((double*)out->data)[i] = ((double*)scalar_lhs->data)[i] / scalar_tmp->scalar_value.d;
+						odata[i] = ldata[i] / dscalar;
 					}
 					break;
 				default:
@@ -324,21 +331,25 @@ static iarray_temporary_t* _iarray_op(iarray_temporary_t *lhs, iarray_temporary_
 			else if (vector_vector) {
 				switch(op) {
 				case IARRAY_OPERATION_TYPE_ADD:
+#pragma omp for
 					for (int i = 0; i < len; ++i) {
 						((double*)out->data)[i] = ((double*)lhs->data)[i] + ((double*)rhs->data)[i];
 					}
 					break;
 				case IARRAY_OPERATION_TYPE_SUB:
+#pragma omp for
 					for (int i = 0; i < len; ++i) {
 						((double*)out->data)[i] = ((double*)lhs->data)[i] - ((double*)rhs->data)[i];
 					}
 					break;
 				case IARRAY_OPERATION_TYPE_MUL:
+#pragma omp for
 					for (int i = 0; i < len; ++i) {
 						((double*)out->data)[i] = ((double*)lhs->data)[i] * ((double*)rhs->data)[i];
 					}
 					break;
 				case IARRAY_OPERATION_TYPE_DIVIDE:
+#pragma omp for
 					for (int i = 0; i < len; ++i) {
 						((double*)out->data)[i] = ((double*)lhs->data)[i] / ((double*)rhs->data)[i];
 					}

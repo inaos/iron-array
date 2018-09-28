@@ -17,6 +17,13 @@ include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMA
 #target_link_libraries(find_roots_schunk blosc_shared)
 
 add_executable(vectors ${SRC}/iarray.c ${SRC}/tinyexpr.c ${LIBINAC}/libinac.c ${SRC}/vectors.c)
+# Playing with OpenMP (available mainly on GCC)
+if (UNIX AND NOT CMAKE_C_COMPILER_ID STREQUAL Clang)
+    set_property(
+            TARGET vectors
+            APPEND PROPERTY LINK_FLAGS "-fopenmp")
+endif ()
+
 target_link_libraries(vectors blosc_shared)
 
 add_executable(test ${SRC}/test.c)
