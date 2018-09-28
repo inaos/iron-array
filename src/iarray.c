@@ -224,14 +224,14 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 	return INA_SUCCESS;
 }
 
-iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *rhs)
+static iarray_temporary_t* _iarray_op(iarray_temporary_t *lhs, iarray_temporary_t *rhs, iarray_optype_t op)
 {
 	bool scalar = false;
 	bool scalar_vector = false;
 	bool vector_vector = false;
 	iarray_dtshape_t dtshape;
 	memset(&dtshape, 0, sizeof(iarray_dtshape_t));
-	iarray_operation_type_t op_type = IARRAY_OPERATION_TYPE_BLAS1;
+	iarray_blas_type_t op_type = IARRAY_OPERATION_TYPE_BLAS1;
 	iarray_temporary_t *scalar_tmp = NULL;
 	iarray_temporary_t *scalar_lhs = NULL;
 	iarray_temporary_t *out;
@@ -286,8 +286,29 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 				}
 			}
 			else if (vector_vector) {
-				for (int i = 0; i < len; ++i) {
-					((double*)out->data)[i] = ((double*)lhs->data)[i] + ((double*)rhs->data)[i];
+				switch(op) {
+				case IARRAY_OPERATION_TYPE_ADD:
+					for (int i = 0; i < len; ++i) {
+						((double*)out->data)[i] = ((double*)lhs->data)[i] + ((double*)rhs->data)[i];
+					}
+					break;
+				case IARRAY_OPERATION_TYPE_SUB:
+					for (int i = 0; i < len; ++i) {
+						((double*)out->data)[i] = ((double*)lhs->data)[i] - ((double*)rhs->data)[i];
+					}
+					break;
+				case IARRAY_OPERATION_TYPE_MUL:
+					for (int i = 0; i < len; ++i) {
+						((double*)out->data)[i] = ((double*)lhs->data)[i] * ((double*)rhs->data)[i];
+					}
+					break;
+				case IARRAY_OPERATION_TYPE_DIVIDE:
+					for (int i = 0; i < len; ++i) {
+						((double*)out->data)[i] = ((double*)lhs->data)[i] / ((double*)rhs->data)[i];
+					}
+					break;
+				default:
+					printf("Operation not supported yet");
 				}
 			}
 			else {
@@ -323,11 +344,30 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 	return out;
 }
 
+iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *rhs)
+{
+	return _iarray_op(lhs, rhs, IARRAY_OPERATION_TYPE_ADD);
+}
+
+iarray_temporary_t* _iarray_op_sub(iarray_temporary_t *lhs, iarray_temporary_t *rhs)
+{
+	return _iarray_op(lhs, rhs, IARRAY_OPERATION_TYPE_SUB);
+}
+
+iarray_temporary_t* _iarray_op_mul(iarray_temporary_t *lhs, iarray_temporary_t *rhs)
+{
+	return _iarray_op(lhs, rhs, IARRAY_OPERATION_TYPE_MUL);
+}
+
+iarray_temporary_t* _iarray_op_divide(iarray_temporary_t *lhs, iarray_temporary_t *rhs)
+{
+	return _iarray_op(lhs, rhs, IARRAY_OPERATION_TYPE_DIVIDE);
+}
 
 int scalar_scalar()
 {
 	iarray_temporary_t *x1, *y1;
-	iarray_expression_t iexpr;
+	iarray_expression_t iexpr;  // FIXME
 	memset(&iexpr, 0, sizeof(iarray_expression_t));
 	iarray_dtshape_t xshape = {
 			.ndim = 0,
@@ -501,11 +541,11 @@ INA_API(ina_rc_t) iarray_eval(char* expr, iarray_variable_t vars[], int vars_cou
 			printf("Decompression error.  Error code: %d\n", dsize);
 			return dsize;
 		}
-		dsize = blosc2_schunk_decompress_chunk(sc_y, nchunk, tmp_y->data, isize);
-		if (dsize < 0) {
-			printf("Decompression error.  Error code: %d\n", dsize);
-			return dsize;
-		}
+//		dsize = blosc2_schunk_decompress_chunk(sc_y, nchunk, tmp_y->data, isize);
+//		if (dsize < 0) {
+//			printf("Decompression error.  Error code: %d\n", dsize);
+//			return dsize;
+//		}
 		const iarray_temporary_t *expr_out = te_eval(texpr);
 		blosc2_schunk_append_buffer(sc_out, expr_out->data, isize);
 	}
@@ -513,7 +553,7 @@ INA_API(ina_rc_t) iarray_eval(char* expr, iarray_variable_t vars[], int vars_cou
 }
 
 
-int _main(int argc, char **argv) {
+int _main_(int argc, char **argv) {
 
 	printf("** scalar-scalar:\n");
 	int retcode = scalar_scalar();
