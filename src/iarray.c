@@ -304,11 +304,47 @@ static iarray_temporary_t* _iarray_op(iarray_temporary_t *lhs, iarray_temporary_
 		{
 			int len = (int)out->size / sizeof(double);
 			if (scalar) {
-				out->scalar_value.d = lhs->scalar_value.d + rhs->scalar_value.d;
+				switch(op) {
+				case IARRAY_OPERATION_TYPE_ADD:
+					out->scalar_value.d = lhs->scalar_value.d + rhs->scalar_value.d;
+					break;
+				case IARRAY_OPERATION_TYPE_SUB:
+					out->scalar_value.d = lhs->scalar_value.d - rhs->scalar_value.d;
+					break;
+				case IARRAY_OPERATION_TYPE_MUL:
+					out->scalar_value.d = lhs->scalar_value.d * rhs->scalar_value.d;
+					break;
+				case IARRAY_OPERATION_TYPE_DIVIDE:
+					out->scalar_value.d = lhs->scalar_value.d / rhs->scalar_value.d;
+					break;
+				default:
+					printf("Operation not supported yet");
+				}
 			}
 			else if (scalar_vector) {
-				for (int i = 0; i < len; ++i) {
-					((double*)out->data)[i] = ((double*)scalar_lhs->data)[i] + scalar_tmp->scalar_value.d;
+				switch(op) {
+				case IARRAY_OPERATION_TYPE_ADD:
+					for (int i = 0; i < len; ++i) {
+						((double*)out->data)[i] = ((double*)scalar_lhs->data)[i] + scalar_tmp->scalar_value.d;
+					}
+					break;
+				case IARRAY_OPERATION_TYPE_SUB:
+					for (int i = 0; i < len; ++i) {
+						((double*)out->data)[i] = ((double*)scalar_lhs->data)[i] - scalar_tmp->scalar_value.d;
+					}
+					break;
+				case IARRAY_OPERATION_TYPE_MUL:
+					for (int i = 0; i < len; ++i) {
+						((double*)out->data)[i] = ((double*)scalar_lhs->data)[i] * scalar_tmp->scalar_value.d;
+					}
+					break;
+				case IARRAY_OPERATION_TYPE_DIVIDE:
+					for (int i = 0; i < len; ++i) {
+						((double*)out->data)[i] = ((double*)scalar_lhs->data)[i] / scalar_tmp->scalar_value.d;
+					}
+					break;
+				default:
+					printf("Operation not supported yet");
 				}
 			}
 			else if (vector_vector) {
