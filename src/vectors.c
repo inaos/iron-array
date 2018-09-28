@@ -24,7 +24,7 @@
 #define GB (1024 * MB)
 
 #define NCHUNKS  50
-#define CHUNKSIZE (200 * 100)  // fits well in modern L3 caches
+#define CHUNKSIZE (200 * 1000)  // fits well in modern L3 caches
 #define NELEM (NCHUNKS * CHUNKSIZE)  // multiple of CHUNKSIZE for now
 #define NTHREADS  4
 
@@ -106,6 +106,7 @@ int main(int argc, char** argv)
 	cparams.clevel = 5;
 	cparams.filters[0] = BLOSC_TRUNC_PREC;
 	cparams.filters_meta[0] = 23;  // treat doubles as floats
+	//cparams.blocksize = CHUNKSIZE;
 	cparams.nthreads = NTHREADS;
 	dparams.nthreads = NTHREADS;
 
