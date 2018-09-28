@@ -160,6 +160,10 @@ int main(int argc, char** argv)
 	printf("Compression for Y values: %.1f MB -> %.1f MB (%.1fx)\n",
 			(sc_y->nbytes/MB), (sc_y->cbytes/MB),
 			(1.*sc_y->nbytes)/sc_y->cbytes);
+	dsize = blosc2_schunk_decompress_chunk(sc_y, 0, buffer_y, isize);
+	printf("first value of Y: %f\n", buffer_y[0]);
+	dsize = blosc2_schunk_decompress_chunk(sc_y, sc_y->nchunks - 1, buffer_y, isize);
+	printf("last value of Y: %f\n", buffer_y[CHUNKSIZE - 1]);
 
 	// Check IronArray performance
 	iarray_variable_t vars[] = {{"x", sc_x}, {"y", sc_y}};
@@ -178,6 +182,10 @@ int main(int argc, char** argv)
 	printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
 			(sc_out->nbytes/MB), (sc_out->cbytes/MB),
 			(1.*sc_out->nbytes)/sc_out->cbytes);
+	dsize = blosc2_schunk_decompress_chunk(sc_out, 0, buffer_y, isize);
+	printf("first value of OUT: %f\n", buffer_y[0]);
+	dsize = blosc2_schunk_decompress_chunk(sc_out, sc_out->nchunks - 1, buffer_y, isize);
+	printf("last value of OUT: %f\n", buffer_y[CHUNKSIZE - 1]);
 
 	// Free resources
 	blosc2_free_schunk(sc_x);
