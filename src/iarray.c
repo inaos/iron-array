@@ -604,13 +604,11 @@ INA_API(ina_rc_t) iarray_eval(char* expr, iarray_variable_t vars[], int nvars, i
 	// Get the super-chunk container for storing out values
 	blosc2_schunk *sc_out = (blosc2_schunk*)out.address;
 
+	// Allocate space for temporaries
 	iarray_expression_t iexpr;
 	memset(&iexpr, 0, sizeof(iarray_expression_t));
-	//iarray_temporary_t **temp_vars = malloc((size_t)nvars * sizeof(void*));
 	iarray_temporary_t **temp_vars = ina_mempool_dalloc(iexpr.mp, (size_t)nvars * sizeof(void*));
-	//te_variable *te_vars = calloc((size_t)nvars, sizeof(te_variable));
 	te_variable *te_vars = ina_mempool_dalloc(iexpr.mp, (size_t)nvars * sizeof(te_variable));
-	memset(te_vars, 0, (size_t)nvars * sizeof(te_variable));
 	for (int nvar = 0; nvar < nvars; nvar++) {
 		blosc2_schunk *schunk = (blosc2_schunk*)vars[0].address;
 		iarray_dtshape_t shape_var = {
@@ -621,6 +619,8 @@ INA_API(ina_rc_t) iarray_eval(char* expr, iarray_variable_t vars[], int nvars, i
 		iarray_temporary_new(&iexpr, NULL, &shape_var, &temp_vars[nvar]);
 		te_vars[nvar].name = vars[nvar].name;
 		te_vars[nvar].address = &temp_vars[nvar];
+		te_vars[nvar].type = TE_VARIABLE;
+		te_vars[nvar].context = NULL;
 	}
 
 	// Create and compile the expression
