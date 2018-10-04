@@ -57,6 +57,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 find_package(MKL)
 
 add_executable(vectors ${SRC}/iarray.c ${SRC}/tinyexpr.c ${LIBINAC}/libinac.c ${SRC}/vectors.c)
+add_executable(vectors-float ${SRC}/iarray.c ${SRC}/tinyexpr.c ${LIBINAC}/libinac.c ${SRC}/vectors-float.c)
 # Playing with OpenMP (available mainly on GCC)
 if (UNIX AND NOT CMAKE_C_COMPILER_ID STREQUAL Clang)
     set_property(
@@ -65,6 +66,7 @@ if (UNIX AND NOT CMAKE_C_COMPILER_ID STREQUAL Clang)
 endif ()
 
 target_link_libraries(vectors blosc_shared)
+target_link_libraries(vectors-float blosc_shared)
 
 if (MSVC)
     install(TARGETS iarray

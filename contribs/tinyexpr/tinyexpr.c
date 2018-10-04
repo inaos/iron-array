@@ -320,6 +320,7 @@ static te_expr *base(state *s) {
 			ret->value->dtshape = ina_mempool_dalloc(NULL, sizeof(iarray_dtshape_t));
 			memcpy(ret->value->dtshape, &sshape, sizeof(iarray_dtshape_t));
             ret->value->scalar_value.d = s->scalar;
+            //ret->value->scalar_value.f = (float)s->scalar;
             next_token(s);
             break;
 
