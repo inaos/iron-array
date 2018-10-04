@@ -173,8 +173,8 @@ int main(int argc, char** argv)
 
 	int err;
 	blosc_set_timestamp(&last);
-	// iarray_eval("x + y", vars, 2, out, &err);
-	iarray_eval("(x - 1.35) * (x - 4.45) * (x - 8.5)", vars, 2, out, &err);
+	//iarray_eval("x + y", vars, 2, out, &err);
+	iarray_eval("(x - 1.35) * (x - 4.45) * (x - 8.5)", vars, 1, out, &err);
 	blosc_set_timestamp(&current);
 	ttotal = blosc_elapsed_secs(last, current);
 	printf("\n");
