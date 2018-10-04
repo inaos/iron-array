@@ -550,7 +550,7 @@ int vector_vector()
 	return 0;
 }
 
-INA_API(ina_rc_t) iarray_eval(char* expr, iarray_variable_t vars[], int vars_count, iarray_variable_t out, int *err)
+INA_API(ina_rc_t) _iarray_eval(char* expr, iarray_variable_t vars[], int vars_count, iarray_variable_t out, int *err)
 {
 	// Get the super-chunk container for the X operand
 	blosc2_schunk *sc_x = (blosc2_schunk*)vars[0].address;
@@ -598,6 +598,54 @@ INA_API(ina_rc_t) iarray_eval(char* expr, iarray_variable_t vars[], int vars_cou
 	}
 	return 0;
 }
+
+INA_API(ina_rc_t) iarray_eval(char* expr, iarray_variable_t vars[], int nvars, iarray_variable_t out, int *err)
+{
+	// Get the super-chunk container for storing out values
+	blosc2_schunk *sc_out = (blosc2_schunk*)out.address;
+
+	iarray_expression_t iexpr;
+	memset(&iexpr, 0, sizeof(iarray_expression_t));
+	//iarray_temporary_t **temp_vars = malloc((size_t)nvars * sizeof(void*));
+	iarray_temporary_t **temp_vars = ina_mempool_dalloc(iexpr.mp, (size_t)nvars * sizeof(void*));
+	//te_variable *te_vars = calloc((size_t)nvars, sizeof(te_variable));
+	te_variable *te_vars = ina_mempool_dalloc(iexpr.mp, (size_t)nvars * sizeof(te_variable));
+	memset(te_vars, 0, (size_t)nvars * sizeof(te_variable));
+	for (int nvar = 0; nvar < nvars; nvar++) {
+		blosc2_schunk *schunk = (blosc2_schunk*)vars[0].address;
+		iarray_dtshape_t shape_var = {
+				.ndim = 1,
+				.dims = {schunk->chunksize / schunk->typesize},
+				.dtype = IARRAY_DATA_TYPE_DOUBLE,
+		};
+		iarray_temporary_new(&iexpr, NULL, &shape_var, &temp_vars[nvar]);
+		te_vars[nvar].name = vars[nvar].name;
+		te_vars[nvar].address = &temp_vars[nvar];
+	}
+
+	// Create and compile the expression
+	te_expr *texpr = te_compile(expr, te_vars, nvars, err);
+
+	// Evaluate the expression for all the chunks in variables
+	blosc2_schunk *schunk = (blosc2_schunk*)vars[0].address;  // get the super-chunk of the first variable
+	size_t isize = (size_t)schunk->chunksize;
+	for (int nchunk = 0; nchunk < schunk->nchunks; nchunk++) {
+		// Decompress chunks in variables into temporaries
+		for (int nvar = 0; nvar < nvars; nvar++) {
+			int dsize = blosc2_schunk_decompress_chunk(schunk, nchunk, temp_vars[nvar]->data, isize);
+			if (dsize < 0) {
+				printf("Decompression error.  Error code: %d\n", dsize);
+				return dsize;
+			}
+		}
+		const iarray_temporary_t *expr_out = te_eval(texpr);
+		blosc2_schunk_append_buffer(sc_out, expr_out->data, isize);
+	}
+	free(temp_vars);  // FIXME: do a recursive free
+	free(te_vars);
+	return 0;
+}
+
 
 
 int _main_(int argc, char **argv) {
