@@ -1,5 +1,5 @@
 //
-// Created by Francesc Alted on 25/09/2018.
+// Created by Francesc Alted on 04/10/2018.
 //
 
 /*
@@ -7,7 +7,7 @@
 
   To compile this program:
 
-  $ gcc -O3 vectors.c -o vectors -lblosc
+  $ gcc -O3 vectors-float.c -o vectors-float -lblosc
 
   To run:
 
@@ -29,9 +29,9 @@
 #define NTHREADS  4
 
 // Fill X values in regular array
-int fill_x(double* x)
+int fill_x(float* x)
 {
-	double incx = 10./NELEM;
+	float incx = 10.f/NELEM;
 
 	/* Fill even values between 0 and 10 */
 	for (int i = 0; i<NELEM; i++) {
@@ -41,9 +41,9 @@ int fill_x(double* x)
 }
 
 // Compute and fill X values in a buffer
-void fill_buffer(double* x, int nchunk)
+void fill_buffer(float* x, int nchunk)
 {
-	double incx = 10./NELEM;
+	float incx = 10.f/NELEM;
 
 	for (int i = 0; i<CHUNKSIZE; i++) {
 		x[i] = incx*(nchunk*CHUNKSIZE+i);
@@ -52,7 +52,7 @@ void fill_buffer(double* x, int nchunk)
 
 void fill_sc_x(blosc2_schunk* sc_x, const size_t isize)
 {
-	double buffer_x[CHUNKSIZE];
+	float buffer_x[CHUNKSIZE];
 
 	/* Fill with even values between 0 and 10 */
 	for (int nchunk = 0; nchunk<NCHUNKS; nchunk++) {
@@ -61,13 +61,13 @@ void fill_sc_x(blosc2_schunk* sc_x, const size_t isize)
 	}
 }
 
-double poly(const double x)
+float poly(const float x)
 {
-	return (x - 1.35) * (x - 4.45) * (x - 8.5);
+	return (x - 1.35f) * (x - 4.45f) * (x - 8.5f);
 }
 
 // Compute and fill Y values in regular array
-void compute_y(const double* x, double* y)
+void compute_y(const float* x, float* y)
 {
 	for (int i = 0; i<NELEM; i++) {
 		y[i] = poly(x[i]);
@@ -75,7 +75,7 @@ void compute_y(const double* x, double* y)
 }
 
 // Compute and fill Y values in a buffer
-void fill_buffer_y(const double* x, double* y)
+void fill_buffer_y(const float* x, float* y)
 {
 	for (int i = 0; i<CHUNKSIZE; i++) {
 		y[i] = poly(x[i]);
@@ -89,9 +89,9 @@ int main(int argc, char** argv)
 
 	blosc_init();
 
-	const size_t isize = CHUNKSIZE*sizeof(double);
-	double buffer_x[CHUNKSIZE];
-	double buffer_y[CHUNKSIZE];
+	const size_t isize = CHUNKSIZE*sizeof(float);
+	float buffer_x[CHUNKSIZE];
+	float buffer_y[CHUNKSIZE];
 	int dsize;
 	blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
 	blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
@@ -101,17 +101,15 @@ int main(int argc, char** argv)
 	double ttotal;
 
 	/* Create a super-chunk container for input (X values) */
-	cparams.typesize = sizeof(double);
+	cparams.typesize = sizeof(float);
 	cparams.compcode = BLOSC_LZ4;
 	cparams.clevel = 9;
-	cparams.filters[0] = BLOSC_TRUNC_PREC;
-	cparams.filters_meta[0] = 23;  // treat doubles as floats
 	//cparams.blocksize = CHUNKSIZE;
 	cparams.nthreads = NTHREADS;
 	dparams.nthreads = NTHREADS;
 
 	// Fill the plain x operand
-	static double x[NELEM];
+	static float x[NELEM];
 	blosc_set_timestamp(&last);
 	fill_x(x);
 	blosc_set_timestamp(&current);
@@ -132,7 +130,7 @@ int main(int argc, char** argv)
 			((double) sc_x->nbytes/sc_x->cbytes));
 
 	// Compute the plain y vector
-	static double y[NELEM];
+	static float y[NELEM];
 	blosc_set_timestamp(&last);
 	compute_y(x, y);
 	blosc_set_timestamp(&current);
@@ -173,8 +171,8 @@ int main(int argc, char** argv)
 
 	int err;
 	blosc_set_timestamp(&last);
-	//iarray_eval("x + y", vars, 2, out, IARRAY_DATA_TYPE_DOUBLE, &err);
-	iarray_eval("(x - 1.35) * (x - 4.45) * (x - 8.5)", vars, 1, out, IARRAY_DATA_TYPE_DOUBLE, &err);
+	//iarray_eval("x + y", vars, 2, out, IARRAY_DATA_TYPE_FLOAT, &err);
+	iarray_eval("(x - 1.35) * (x - 4.45) * (x - 8.5)", vars, 1, out, IARRAY_DATA_TYPE_FLOAT, &err);
 	blosc_set_timestamp(&current);
 	ttotal = blosc_elapsed_secs(last, current);
 	printf("\n");
