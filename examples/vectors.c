@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 	/* Create a super-chunk container for input (X values) */
 	cparams.typesize = sizeof(double);
 	cparams.compcode = BLOSC_LZ4;
-	cparams.clevel = 5;
+	cparams.clevel = 9;
 	cparams.filters[0] = BLOSC_TRUNC_PREC;
 	cparams.filters_meta[0] = 23;  // treat doubles as floats
 	//cparams.blocksize = CHUNKSIZE;

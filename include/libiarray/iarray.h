@@ -30,8 +30,8 @@ typedef enum iarray_data_type_e {
 
 typedef struct iarray_dtshape_s {
 	iarray_data_type_t dtype;
-	int ndim; /* IF ndim = 0 THEN it is a scalar */
-	int dims[8];  // a fixed size simplify code and should enough for most IronArray cases
+	int ndim;     /* IF ndim = 0 THEN it is a scalar */
+	int dims[8];  // a fixed size simplifies the code and should be enough for most IronArray cases
 } iarray_dtshape_t;
 
 typedef struct iarray_slice_param_s {
