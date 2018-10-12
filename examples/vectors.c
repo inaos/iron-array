@@ -178,7 +178,7 @@ int main(int argc, char** argv)
 	blosc_set_timestamp(&current);
 	ttotal = blosc_elapsed_secs(last, current);
 	printf("\n");
-	printf("Time for computing and filling OUT values using iarray:  %.3g s, %.1f MB/s\n",
+	printf("Time for computing and filling OUT values using iarray (chunk eval):  %.3g s, %.1f MB/s\n",
 			ttotal, sc_out->nbytes / (ttotal * MB));
 	printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
 			(sc_out->nbytes/MB), (sc_out->cbytes/MB),
@@ -198,7 +198,7 @@ int main(int argc, char** argv)
 	blosc_set_timestamp(&current);
 	ttotal = blosc_elapsed_secs(last, current);
 	printf("\n");
-	printf("Time for computing and filling OUT values using iarray:  %.3g s, %.1f MB/s\n",
+	printf("Time for computing and filling OUT values using iarray (block eval):  %.3g s, %.1f MB/s\n",
 			ttotal, sc_out->nbytes / (ttotal * MB));
 	printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
 			(sc_out->nbytes/MB), (sc_out->cbytes/MB),
