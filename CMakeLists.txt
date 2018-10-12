@@ -46,6 +46,9 @@ inac_merge_static_libs(iarray iarray_c blosc_static ${INAC_LIBS})
 #inac_add_tools(iarray)
 #inac_add_examples(iarray)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
+find_package(MKL)
+
 if (MSVC)
     install(TARGETS iarray
             DESTINATION libs
