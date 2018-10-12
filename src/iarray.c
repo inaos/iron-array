@@ -333,13 +333,13 @@ static iarray_temporary_t* _iarray_op(iarray_temporary_t *lhs, iarray_temporary_
 					}
 					break;
 				case IARRAY_OPERATION_TYPE_SUB:
-#pragma omp parallel for
+//#pragma omp parallel for
 					for (int i = 0; i < len; ++i) {
 						odata[i] = ldata[i] - dscalar;
 					}
 					break;
 				case IARRAY_OPERATION_TYPE_MUL:
-#pragma omp parallel for
+//#pragma omp parallel for
 					for (int i = 0; i < len; ++i) {
 						odata[i] = ldata[i] * dscalar;
 					}
@@ -740,6 +740,7 @@ INA_API(ina_rc_t) iarray_eval_block(char* expr, iarray_variable_t vars[], int nv
 	size_t corrected_blocksize = blocksize;
 	int corrected_nitems = nitems;
 	for (int nchunk = 0; nchunk < nchunks; nchunk++) {
+//#pragma omp parallel for schedule(dynamic)
 		for (int nblock = 0; nblock < nblocks_in_chunk; nblock++) {
 			if ((nblock + 1 == nblocks_in_chunk) && (nblock + 1) * blocksize > chunksize) {
 				corrected_blocksize = chunksize - nblock * blocksize;
