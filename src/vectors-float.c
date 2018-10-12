@@ -104,7 +104,7 @@ int main(int argc, char** argv)
 	cparams.typesize = sizeof(float);
 	cparams.compcode = BLOSC_LZ4;
 	cparams.clevel = 9;
-	//cparams.blocksize = CHUNKSIZE;
+	cparams.blocksize = 16 * (int)KB;
 	cparams.nthreads = NTHREADS;
 	dparams.nthreads = NTHREADS;
 
@@ -165,6 +165,7 @@ int main(int argc, char** argv)
 	printf("last value of Y: %f\n", buffer_y[CHUNKSIZE - 1]);
 
 	// Check IronArray performance
+	// First for chunk evaluator
 	iarray_variable_t vars[] = {{"x", sc_x}, {"y", sc_y}};
 	blosc2_schunk *sc_out = blosc2_new_schunk(cparams, dparams, NULL);
 	iarray_variable_t out = {"out", sc_out};
@@ -172,7 +173,7 @@ int main(int argc, char** argv)
 	int err;
 	blosc_set_timestamp(&last);
 	//iarray_eval("x + y", vars, 2, out, IARRAY_DATA_TYPE_FLOAT, &err);
-	iarray_eval("(x - 1.35) * (x - 4.45) * (x - 8.5)", vars, 1, out, IARRAY_DATA_TYPE_FLOAT, &err);
+	iarray_eval_chunk("(x - 1.35) * (x - 4.45) * (x - 8.5)", vars, 1, out, IARRAY_DATA_TYPE_FLOAT, &err);
 	blosc_set_timestamp(&current);
 	ttotal = blosc_elapsed_secs(last, current);
 	printf("\n");
@@ -181,10 +182,31 @@ int main(int argc, char** argv)
 	printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
 			(sc_out->nbytes/MB), (sc_out->cbytes/MB),
 			(1.*sc_out->nbytes)/sc_out->cbytes);
-	dsize = blosc2_schunk_decompress_chunk(sc_out, 0, buffer_y, isize);
-	printf("first value of OUT: %f\n", buffer_y[0]);
-	dsize = blosc2_schunk_decompress_chunk(sc_out, sc_out->nchunks - 1, buffer_y, isize);
-	printf("last value of OUT: %f\n", buffer_y[CHUNKSIZE - 1]);
+//	dsize = blosc2_schunk_decompress_chunk(sc_out, 0, buffer_y, isize);
+//	printf("first value of OUT: %f\n", buffer_y[0]);
+//	dsize = blosc2_schunk_decompress_chunk(sc_out, sc_out->nchunks - 1, buffer_y, isize);
+//	printf("last value of OUT: %f\n", buffer_y[CHUNKSIZE - 1]);
+
+	// Then for block evaluator
+	blosc2_free_schunk(sc_out);
+	sc_out = blosc2_new_schunk(cparams, dparams, NULL);
+	iarray_variable_t out2 = {"out", sc_out};
+	blosc_set_timestamp(&last);
+	//iarray_eval("x + y", vars, 2, out, IARRAY_DATA_TYPE_FLOAT, &err);
+	iarray_eval_block("(x - 1.35) * (x - 4.45) * (x - 8.5)", vars, 1, out2, IARRAY_DATA_TYPE_FLOAT, &err);
+	blosc_set_timestamp(&current);
+	ttotal = blosc_elapsed_secs(last, current);
+	printf("\n");
+	printf("Time for computing and filling OUT values using iarray:  %.3g s, %.1f MB/s\n",
+			ttotal, sc_out->nbytes / (ttotal * MB));
+	printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
+			(sc_out->nbytes/MB), (sc_out->cbytes/MB),
+			(1.*sc_out->nbytes)/sc_out->cbytes);
+//	dsize = blosc2_schunk_decompress_chunk(sc_out, 0, buffer_y, isize);
+//	printf("first value of OUT: %f\n", buffer_y[0]);
+//	dsize = blosc2_schunk_decompress_chunk(sc_out, sc_out->nchunks - 1, buffer_y, isize);
+//	printf("last value of OUT: %f\n", buffer_y[CHUNKSIZE - 1]);
+
 
 	// Free resources
 	blosc2_free_schunk(sc_x);
