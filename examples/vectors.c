@@ -26,7 +26,7 @@
 #define NCHUNKS  50
 #define CHUNKSIZE (200 * 1000)  // fits well in modern L3 caches
 #define NELEM (NCHUNKS * CHUNKSIZE)  // multiple of CHUNKSIZE for now
-#define NTHREADS  4
+#define NTHREADS  2
 
 // Fill X values in regular array
 int fill_x(double* x)
@@ -89,14 +89,13 @@ int main(int argc, char** argv)
 
 	blosc_init();
 
-	const size_t isize = CHUNKSIZE*sizeof(double);
+	const size_t isize = CHUNKSIZE * sizeof(double);
 	double buffer_x[CHUNKSIZE];
 	double buffer_y[CHUNKSIZE];
 	int dsize;
 	blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
 	blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
 	blosc2_schunk *sc_x, *sc_y;
-	int nchunk;
 	blosc_timestamp_t last, current;
 	double ttotal;
 
@@ -145,9 +144,9 @@ int main(int argc, char** argv)
 	// Create a super-chunk container and compute y values
 	sc_y = blosc2_new_schunk(cparams, dparams, NULL);
 	blosc_set_timestamp(&last);
-	for (nchunk = 0; nchunk<sc_x->nchunks; nchunk++) {
+	for (int nchunk = 0; nchunk < sc_x->nchunks; nchunk++) {
 		dsize = blosc2_schunk_decompress_chunk(sc_x, nchunk, buffer_x, isize);
-		if (dsize<0) {
+		if (dsize < 0) {
 			printf("Decompression error.  Error code: %d\n", dsize);
 			return dsize;
 		}
@@ -174,12 +173,12 @@ int main(int argc, char** argv)
 	int err;
 	blosc_set_timestamp(&last);
 	//iarray_eval("x + y", vars, 2, out, IARRAY_DATA_TYPE_DOUBLE, &err);
-	iarray_eval("(x - 1.35) * (x - 4.45) * (x - 8.5)", vars, 1, out, IARRAY_DATA_TYPE_DOUBLE, &err);
+	iarray_eval_block("(x - 1.35) * (x - 4.45) * (x - 8.5)", vars, 1, out, IARRAY_DATA_TYPE_DOUBLE, &err);
 	blosc_set_timestamp(&current);
 	ttotal = blosc_elapsed_secs(last, current);
 	printf("\n");
 	printf("Time for computing and filling OUT values using iarray:  %.3g s, %.1f MB/s\n",
-			ttotal, (sc_x->nbytes + sc_out->nbytes) / (ttotal * MB));    // 2 super-chunks involved
+			ttotal, sc_out->nbytes / (ttotal * MB));
 	printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
 			(sc_out->nbytes/MB), (sc_out->cbytes/MB),
 			(1.*sc_out->nbytes)/sc_out->cbytes);
