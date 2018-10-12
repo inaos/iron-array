@@ -177,7 +177,7 @@ int main(int argc, char** argv)
 	ttotal = blosc_elapsed_secs(last, current);
 	printf("\n");
 	printf("Time for computing and filling OUT values using iarray:  %.3g s, %.1f MB/s\n",
-			ttotal, (sc_x->nbytes + sc_out->nbytes) / (ttotal * MB));    // 2 super-chunks involved
+			ttotal, sc_out->nbytes / (ttotal * MB));
 	printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
 			(sc_out->nbytes/MB), (sc_out->cbytes/MB),
 			(1.*sc_out->nbytes)/sc_out->cbytes);

@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include "iarray.h"
 #include "iarray_private.h"
 #include "tinyexpr.h"
@@ -618,7 +619,7 @@ int vector_vector()
 	return 0;
 }
 
-INA_API(ina_rc_t) iarray_eval(char* expr, iarray_variable_t vars[], int nvars, iarray_variable_t out,
+INA_API(ina_rc_t) iarray_eval_chunk(char* expr, iarray_variable_t vars[], int nvars, iarray_variable_t out,
 		iarray_data_type_t dtype, int *err)
 {
 	// Get the super-chunk container for storing out values
@@ -647,11 +648,12 @@ INA_API(ina_rc_t) iarray_eval(char* expr, iarray_variable_t vars[], int nvars, i
 	te_expr *texpr = te_compile(expr, te_vars, nvars, err);
 
 	// Evaluate the expression for all the chunks in variables
-	blosc2_schunk *schunk = (blosc2_schunk*)vars[0].address;  // get the super-chunk of the first variable
-	size_t isize = (size_t)schunk->chunksize;
-	for (int nchunk = 0; nchunk < schunk->nchunks; nchunk++) {
+	blosc2_schunk *first_schunk = (blosc2_schunk*)vars[0].address;  // get the super-chunk of the first variable
+	size_t isize = (size_t)first_schunk->chunksize;
+	for (int nchunk = 0; nchunk < first_schunk->nchunks; nchunk++) {
 		// Decompress chunks in variables into temporaries
 		for (int nvar = 0; nvar < nvars; nvar++) {
+			blosc2_schunk *schunk = (blosc2_schunk*)vars[nvar].address;  // get the super-chunk of the first variable
 			int dsize = blosc2_schunk_decompress_chunk(schunk, nchunk, temp_vars[nvar]->data, isize);
 			if (dsize < 0) {
 				printf("Decompression error.  Error code: %d\n", dsize);
@@ -661,6 +663,81 @@ INA_API(ina_rc_t) iarray_eval(char* expr, iarray_variable_t vars[], int nvars, i
 		const iarray_temporary_t *expr_out = te_eval(texpr);
 		blosc2_schunk_append_buffer(sc_out, expr_out->data, isize);
 	}
+	free(temp_vars);  // FIXME: do a recursive free
+	free(te_vars);
+	return 0;
+}
+
+
+INA_API(ina_rc_t) iarray_eval_block(char* expr, iarray_variable_t vars[], int nvars, iarray_variable_t out,
+		iarray_data_type_t dtype, int *err)
+{
+	// Get the super-chunk container for storing out values
+	blosc2_schunk *sc_out = (blosc2_schunk*)out.address;
+	// Get info about the blocksize and other info about chunks in super-chunk vars
+	// FIXME: what happens when the different operands have different blocksizes?
+	blosc2_schunk *first_schunk = (blosc2_schunk*)vars[0].address;  // get the super-chunk of the first variable
+	int typesize = first_schunk->typesize;
+	int nchunks = first_schunk->nchunks;
+	size_t chunksize, cbytes, blocksize;
+	blosc_cbuffer_sizes(first_schunk->data[0], &chunksize, &cbytes, &blocksize);
+
+	// Allocate space for temporaries
+	iarray_expression_t iexpr;
+	memset(&iexpr, 0, sizeof(iarray_expression_t));
+	iarray_temporary_t **temp_vars = ina_mempool_dalloc(iexpr.mp, (size_t)nvars * sizeof(void*));
+	te_variable *te_vars = ina_mempool_dalloc(iexpr.mp, (size_t)nvars * sizeof(te_variable));
+	for (int nvar = 0; nvar < nvars; nvar++) {
+		iarray_dtshape_t shape_var = {
+				.ndim = 1,
+				.dims = {(int)blocksize / typesize},
+				.dtype = dtype,
+		};
+		iarray_temporary_new(&iexpr, NULL, &shape_var, &temp_vars[nvar]);
+		te_vars[nvar].name = vars[nvar].name;
+		te_vars[nvar].address = &temp_vars[nvar];
+		te_vars[nvar].type = TE_VARIABLE;
+		te_vars[nvar].context = NULL;
+	}
+
+	// Create buffer for output chunk
+	int8_t *outbuf = ina_mempool_dalloc(iexpr.mp, chunksize);
+
+	// Create and compile the expression
+	te_expr *texpr = te_compile(expr, te_vars, nvars, err);
+
+	// Evaluate the expression for all the chunks in variables
+	int nblocks_in_chunk = (int)chunksize / (int)blocksize;
+	if (nblocks_in_chunk * blocksize < chunksize) {
+		nblocks_in_chunk += 1;
+	}
+	int nitems = (int)blocksize / typesize;
+	size_t corrected_blocksize = blocksize;
+	int corrected_nitems = nitems;
+	for (int nchunk = 0; nchunk < nchunks; nchunk++) {
+		for (int nblock = 0; nblock < nblocks_in_chunk; nblock++) {
+			if ((nblock + 1 == nblocks_in_chunk) && (nblock + 1) * blocksize > chunksize) {
+				corrected_blocksize = chunksize - nblock * blocksize;
+				corrected_nitems = (int)corrected_blocksize / typesize;
+			}
+			// Decompress blocks in variables into temporaries
+			for (int nvar = 0; nvar < nvars; nvar++) {
+				blosc2_schunk *schunk = (blosc2_schunk*)vars[nvar].address;
+				uint8_t *chunk = schunk->data[nchunk];
+				int dsize = blosc_getitem(chunk, nblock * nitems, corrected_nitems, temp_vars[nvar]->data);
+				if (dsize < 0) {
+					printf("Decompression error.  Error code: %d\n", dsize);
+					return dsize;
+				}
+			}
+			// Evaluate the expression for this block
+			const iarray_temporary_t *expr_out = te_eval(texpr);
+			memcpy(outbuf + nblock * blocksize, expr_out->data, corrected_blocksize);
+		}
+		blosc2_schunk_append_buffer(sc_out, outbuf, (size_t)chunksize);
+	}
+
+	free(outbuf);
 	free(temp_vars);  // FIXME: do a recursive free
 	free(te_vars);
 	return 0;
