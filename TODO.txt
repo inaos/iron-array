@@ -1,0 +1,8 @@
+Tentative renamings that we should ponder about
+-----------------------------------------------
+
+schunk->typesize  -> schunk->itemsize
+
+   // there is no notion of 'type' in c-blosc2
+   // Unfortunately, typesize is being used extensively in c-blosc already,
+   // so doing the renaming does not seem like a good idea.
