@@ -25,7 +25,6 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
 endif()
 include("${CMAKE_BINARY_DIR}/inac.cmake")
 
-inac_version("1.0.0")
 inac_add_dependency(inac "1.0.0")
 inac_add_contrib_lib(tinyexpr)
 
