@@ -24,7 +24,7 @@ find_path(MKL_ROOT_DIR
 	include/mkl.h
 	PATHS
 	$ENV{MKLROOT}
-	/opt/intel/mkl/
+	/opt/intel/compilers_and_libraries/linux/mkl
 	"C:/IntelSWTools/compilers_and_libraries/windows/mkl/"
 	/Library/Frameworks/Intel_MKL.framework/Versions/Current/lib/universal
 )
@@ -35,8 +35,19 @@ find_path(MKL_INCLUDE_DIR
 	${MKL_ROOT_DIR}/include
 )
 
+if(WIN32)
+        set(MKL_SEARCH_LIB mkl_core.lib)
+        set(MKL_LIBS mkl_core.lib mkl_sequential.lib)
+elseif(APPLE)
+        set(MKL_LIBS )
+else() # Linux
+        set(MKL_SEARCH_LIB libmkl_core.a)
+        set(MKL_LIBS libmkl_core.a libmkl_sequential.a)
+endif()
+
+
 find_path(MKL_LIB_SEARCHPATH
-	mkl_core.lib
+	${MKL_SEARCH_LIB}
 	PATHS
 	${MKL_ROOT_DIR}/lib/intel64
 )
@@ -46,7 +57,7 @@ if(WIN32)
 elseif(APPLE)
 	set(MKL_LIBS )
 else() # Linux
-	set(MKL_LIBS )
+	set(MKL_LIBS libmkl_core.a libmkl_sequential.a)
 endif()
 
 foreach (LIB ${MKL_LIBS})
@@ -58,7 +69,7 @@ foreach (LIB ${MKL_LIBS})
 	endif()
 endforeach()
 
-set(MKL_INCLUDE_DIRS ${MKL_LIBRARIES})
+set(MKL_INCLUDE_DIRS ${MKL_INCLUDE_DIR})
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(MKL DEFAULT_MSG MKL_LIBRARIES MKL_INCLUDE_DIRS)
