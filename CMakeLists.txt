@@ -28,6 +28,9 @@ include("${CMAKE_BINARY_DIR}/inac.cmake")
 inac_add_dependency(inac "1.0.0")
 inac_add_contrib_lib(tinyexpr)
 
+set(LIBINAC ${CMAKE_SOURCE_DIR}/inac/libinac)
+set(SRC ${CMAKE_SOURCE_DIR}/src)
+set(BENCH ${CMAKE_SOURCE_DIR}/bench)
 add_subdirectory(contribs/c-blosc2)
 include_directories(contribs/c-blosc2/blosc)
 
@@ -70,12 +73,14 @@ if (UNIX AND NOT CMAKE_C_COMPILER_ID STREQUAL Clang)
             TARGET vectors
             APPEND PROPERTY LINK_FLAGS "-fopenmp")
 endif ()
-add_executable(vectors ${SRC}/vectors.c)
-add_executable(vectors-float ${SRC}/vectors-float.c)
+add_executable(vectors ${BENCH}/vectors.c)
+add_executable(vectors-float ${BENCH}/vectors-float.c)
 
 target_link_libraries(vectors LINK_PUBLIC iarray blosc_shared)
 target_link_libraries(vectors-float LINK_PUBLIC iarray blosc_shared)
 
+add_executable(test ${BENCH}/test.c)
+add_executable(test2 ${BENCH}/test2.c)
 if (MSVC)
     install(TARGETS iarray
             DESTINATION libs
