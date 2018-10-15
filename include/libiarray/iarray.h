@@ -70,6 +70,4 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
 INA_API(ina_rc_t) iarray_eval_chunk(char* expr, iarray_variable_t vars[], int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
 INA_API(ina_rc_t) iarray_eval_block(char* expr, iarray_variable_t vars[], int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
 
-int vector_vector();  // TODO: just a test, so remove it
-
 #endif //PROJECT_IARRAY_H
