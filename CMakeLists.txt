@@ -6,6 +6,7 @@ add_subdirectory(c-blosc2)
 set(LIBINAC ${CMAKE_SOURCE_DIR}/inac/libinac)
 set(SRC ${CMAKE_SOURCE_DIR}/src)
 set(BENCH ${CMAKE_SOURCE_DIR}/bench)
+set(TESTS ${CMAKE_SOURCE_DIR}/tests)
 
 include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac" "${CMAKE_SOURCE_DIR}")
 
@@ -35,5 +36,5 @@ add_executable(vectors-float ${BENCH}/vectors-float.c)
 target_link_libraries(vectors LINK_PUBLIC iarray blosc_shared)
 target_link_libraries(vectors-float LINK_PUBLIC iarray blosc_shared)
 
-add_executable(test ${BENCH}/test.c)
-add_executable(test2 ${BENCH}/test2.c)
+add_executable(test_eval_chunk ${TESTS}/test_eval_chunk.c)
+target_link_libraries(test_eval_chunk LINK_PUBLIC iarray blosc_shared)
