@@ -333,13 +333,13 @@ static iarray_temporary_t* _iarray_op(iarray_temporary_t *lhs, iarray_temporary_
 					}
 					break;
 				case IARRAY_OPERATION_TYPE_SUB:
-//#pragma omp parallel for
+#pragma omp parallel for
 					for (int i = 0; i < len; ++i) {
 						odata[i] = ldata[i] - dscalar;
 					}
 					break;
 				case IARRAY_OPERATION_TYPE_MUL:
-//#pragma omp parallel for
+#pragma omp parallel for
 					for (int i = 0; i < len; ++i) {
 						odata[i] = ldata[i] * dscalar;
 					}
@@ -505,145 +505,6 @@ iarray_temporary_t* _iarray_op_divide(iarray_temporary_t *lhs, iarray_temporary_
 	return _iarray_op(lhs, rhs, IARRAY_OPERATION_TYPE_DIVIDE);
 }
 
-int scalar_scalar()
-{
-	iarray_temporary_t *x1, *y1;
-	iarray_expression_t iexpr;  // FIXME
-	memset(&iexpr, 0, sizeof(iarray_expression_t));
-	iarray_dtshape_t xshape = {
-			.ndim = 0,
-			.dtype = IARRAY_DATA_TYPE_DOUBLE,
-	};
-	iarray_dtshape_t yshape = {
-			.ndim = 0,
-			.dtype = IARRAY_DATA_TYPE_DOUBLE,
-	};
-	iarray_temporary_new(&iexpr, NULL, &xshape, &x1);
-	iarray_temporary_new(&iexpr, NULL, &yshape, &y1);
-
-	x1->scalar_value.d = 5.;
-	y1->scalar_value.d = 3.;
-
-	/* Store variable names and pointers. */
-	te_variable vars[] = {{"x", &x1}, {"y", &y1}};
-
-	int err;
-	/* Compile the expression with variables. */
-	te_expr *expr = te_compile("x + y", vars, 2, &err);
-
-	if (expr) {
-		const iarray_temporary_t *h1 = te_eval(expr);
-		printf("h1: %f\n", h1->scalar_value.d);
-
-		x1->scalar_value.d = 10.;
-		const iarray_temporary_t *h2 = te_eval(expr);
-		printf("h2: %f\n", h2->scalar_value.d);
-
-		te_free(expr);
-	} else {
-		printf("Parse error at %d\n", err);
-	}
-
-	return 0;
-}
-
-int scalar_vector()
-{
-	iarray_temporary_t *x1, *y1;
-	iarray_expression_t iexpr;
-	memset(&iexpr, 0, sizeof(iarray_expression_t));
-	iarray_dtshape_t xshape = {
-			.ndim = 0,
-			.dtype = IARRAY_DATA_TYPE_DOUBLE,
-	};
-	iarray_dtshape_t yshape = {
-			.ndim = 1,
-			.dims = {100},
-			.dtype = IARRAY_DATA_TYPE_DOUBLE,
-	};
-	iarray_temporary_new(&iexpr, NULL, &xshape, &x1);
-	iarray_temporary_new(&iexpr, NULL, &yshape, &y1);
-
-	x1->scalar_value.d = 5.;
-	for (int i = 0; i < 100; i++) {
-		((double*)y1->data)[i] = 3.;
-	}
-
-	/* Store variable names and pointers. */
-	te_variable vars[] = {{"x", &x1}, {"y", &y1}};
-
-	int err;
-	/* Compile the expression with variables. */
-	te_expr *expr = te_compile("x + y", vars, 2, &err);
-
-	if (expr) {
-		const iarray_temporary_t *h1 = te_eval(expr);
-		printf("h1: %f, %f\n", ((double*)h1->data)[0], ((double*)h1->data)[99]);
-
-		x1->scalar_value.d = 10.;
-		const iarray_temporary_t *h2 = te_eval(expr);
-		printf("h2: %f, %f\n", ((double*)h2->data)[0], ((double*)h2->data)[99]);
-
-		te_free(expr);
-	} else {
-		printf("Parse error at %d\n", err);
-	}
-
-	return 0;
-}
-
-int vector_vector()
-{
-	iarray_temporary_t *x1, *y1;
-	iarray_expression_t iexpr;
-	memset(&iexpr, 0, sizeof(iarray_expression_t));
-	iarray_dtshape_t xshape = {
-			.ndim = 1,
-			.dims = {100},
-			.dtype = IARRAY_DATA_TYPE_DOUBLE,
-	};
-	iarray_dtshape_t yshape = {
-			.ndim = 1,
-			.dims = {100},
-			.dtype = IARRAY_DATA_TYPE_DOUBLE,
-	};
-	iarray_temporary_new(&iexpr, NULL, &xshape, &x1);
-	iarray_temporary_new(&iexpr, NULL, &yshape, &y1);
-
-	double var1 = 5.;
-	for (int i = 0; i < 100; i++) {
-		((double*)x1->data)[i] = var1;
-	}
-	double var2 = 3.;
-	for (int i = 0; i < 100; i++) {
-		((double*)y1->data)[i] = var2;
-	}
-
-	/* Store variable names and pointers. */
-	te_variable vars[] = {{"x", &x1}, {"y", &y1}};
-
-	int err;
-	/* Compile the expression with variables. */
-	te_expr *expr = te_compile("x + y", vars, 2, &err);
-
-	if (expr) {
-		const iarray_temporary_t *h1 = te_eval(expr);
-		printf("h1: %f, %f\n", ((double*)h1->data)[0], ((double*)h1->data)[99]);
-
-		for (int i = 0; i < 100; i++) {
-			((double*)x1->data)[i] = 10.;
-		}
-		const iarray_temporary_t *h2 = te_eval(expr);
-		printf("h2: %f, %f\n", ((double*)h2->data)[0], ((double*)h2->data)[99]);
-
-		te_free(expr);
-	} else {
-		printf("Parse error at %d\n", err);
-	}
-
-	return 0;
-}
-
 INA_API(ina_rc_t) iarray_eval_chunk(char* expr, iarray_variable_t vars[], int nvars, iarray_variable_t out,
 		iarray_data_type_t dtype, int *err)
 {
@@ -767,17 +628,4 @@ INA_API(ina_rc_t) iarray_eval_block(char* expr, iarray_variable_t vars[], int nv
 	free(temp_vars);  // FIXME: do a recursive free
 	free(te_vars);
 	return 0;
-}
-
-
-int _main_(int argc, char **argv) {
-
-	printf("** scalar-scalar:\n");
-	int retcode = scalar_scalar();
-	printf("** scalar-vector:\n");
-	retcode = scalar_vector();
-	printf("** vector-vector:\n");
-	retcode = vector_vector();
-
-	return retcode;
 }
