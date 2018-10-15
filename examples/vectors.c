@@ -17,16 +17,18 @@
 */
 
 #include <stdio.h>
+#include <math.h>
+#include <stdbool.h>
 #include "iarray.h"
 
 #define KB (1024.)
 #define MB (1024 * KB)
 #define GB (1024 * MB)
 
-#define NCHUNKS  50
-#define CHUNKSIZE (200 * 1000)  // fits well in modern L3 caches
-#define NELEM (NCHUNKS * CHUNKSIZE)  // multiple of CHUNKSIZE for now
-#define NTHREADS 2
+#define NCHUNKS  100
+#define NITEMS_CHUNK (200 * 1000)  // fits well in modern L3 caches
+#define NELEM (NCHUNKS * NITEMS_CHUNK)  // multiple of NITEMS_CHUNKS for now
+#define NTHREADS 1
 
 // Fill X values in regular array
 int fill_x(double* x)
@@ -45,14 +47,14 @@ void fill_buffer(double* x, int nchunk)
 {
 	double incx = 10./NELEM;
 
-	for (int i = 0; i<CHUNKSIZE; i++) {
-		x[i] = incx*(nchunk*CHUNKSIZE+i);
+	for (int i=0; i<NITEMS_CHUNK; i++) {
+		x[i] = incx*(nchunk * NITEMS_CHUNK + i);
 	}
 }
 
 void fill_sc_x(blosc2_schunk* sc_x, const size_t isize)
 {
-	double buffer_x[CHUNKSIZE];
+	double buffer_x[NITEMS_CHUNK];
 
 	/* Fill with even values between 0 and 10 */
 	for (int nchunk = 0; nchunk<NCHUNKS; nchunk++) {
@@ -77,9 +79,33 @@ void compute_y(const double* x, double* y)
 // Compute and fill Y values in a buffer
 void fill_buffer_y(const double* x, double* y)
 {
-	for (int i = 0; i<CHUNKSIZE; i++) {
+	for (int i = 0; i<NITEMS_CHUNK; i++) {
 		y[i] = poly(x[i]);
 	}
+}
+
+// Check that two super-chunks with the same partitions are equal
+boolean_t test_schunks_equal(blosc2_schunk* sc1, blosc2_schunk* sc2) {
+	size_t chunksize = (size_t)sc1->chunksize;
+	int nitems_in_chunk = (int)chunksize / sc1->typesize;
+	double *buffer_sc1 = malloc(chunksize);
+	double *buffer_sc2 = malloc(chunksize);
+	for (int nchunk=0; nchunk < sc1->nchunks; nchunk++) {
+		int dsize = blosc2_schunk_decompress_chunk(sc1, nchunk, buffer_sc1, chunksize);
+		dsize = blosc2_schunk_decompress_chunk(sc2, nchunk, buffer_sc2, chunksize);
+		for (int nelem=0; nelem < nitems_in_chunk; nelem++) {
+			double vdiff = fabs(buffer_sc1[nelem] - buffer_sc2[nelem]);
+			if (vdiff > 1e-6) {
+				printf("Values differ in (%d nchunk, %d nelem) (diff: %f)\n", nchunk, nelem, vdiff);
+				free(buffer_sc1);
+				free(buffer_sc2);
+				return false;
+			}
+		}
+	}
+	free(buffer_sc1);
+	free(buffer_sc2);
+	return true;
 }
 
 int main(int argc, char** argv)
@@ -89,10 +115,9 @@ int main(int argc, char** argv)
 
 	blosc_init();
 
-	const size_t isize = CHUNKSIZE * sizeof(double);
-	double buffer_x[CHUNKSIZE];
-	double buffer_y[CHUNKSIZE];
-	int dsize;
+	const size_t isize = NITEMS_CHUNK * sizeof(double);
+	double buffer_x[NITEMS_CHUNK];
+	double buffer_y[NITEMS_CHUNK];
 	blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
 	blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
 	blosc2_schunk *sc_x, *sc_y;
@@ -115,8 +140,8 @@ int main(int argc, char** argv)
 	fill_x(x);
 	blosc_set_timestamp(&current);
 	ttotal = blosc_elapsed_secs(last, current);
-	printf("Time for filling X values: %.3g s, %.1f MB/s\n",
-			ttotal, sizeof(x)/(ttotal*MB));
+//	printf("Time for filling X values: %.3g s, %.1f MB/s\n",
+//			ttotal, sizeof(x)/(ttotal*MB));
 
 	// Create and fill a super-chunk for the x operand
 	sc_x = blosc2_new_schunk(cparams, dparams, NULL);
@@ -124,11 +149,11 @@ int main(int argc, char** argv)
 	fill_sc_x(sc_x, isize);
 	blosc_set_timestamp(&current);
 	ttotal = blosc_elapsed_secs(last, current);
-	printf("Time for filling X values (compressed): %.3g s, %.1f MB/s\n",
-			ttotal, (sc_x->nbytes/(ttotal*MB)));
-	printf("Compression for X values: %.1f MB -> %.1f MB (%.1fx)\n",
-			(sc_x->nbytes/MB), (sc_x->cbytes/MB),
-			((double) sc_x->nbytes/sc_x->cbytes));
+//	printf("Time for filling X values (compressed): %.3g s, %.1f MB/s\n",
+//			ttotal, (sc_x->nbytes/(ttotal*MB)));
+//	printf("Compression for X values: %.1f MB -> %.1f MB (%.1fx)\n",
+//			(sc_x->nbytes/MB), (sc_x->cbytes/MB),
+//			((double) sc_x->nbytes/sc_x->cbytes));
 
 	// Compute the plain y vector
 	static double y[NELEM];
@@ -145,7 +170,7 @@ int main(int argc, char** argv)
 	sc_y = blosc2_new_schunk(cparams, dparams, NULL);
 	blosc_set_timestamp(&last);
 	for (int nchunk = 0; nchunk < sc_x->nchunks; nchunk++) {
-		dsize = blosc2_schunk_decompress_chunk(sc_x, nchunk, buffer_x, isize);
+		int dsize = blosc2_schunk_decompress_chunk(sc_x, nchunk, buffer_x, isize);
 		if (dsize < 0) {
 			printf("Decompression error.  Error code: %d\n", dsize);
 			return dsize;
@@ -160,10 +185,6 @@ int main(int argc, char** argv)
 	printf("Compression for Y values: %.1f MB -> %.1f MB (%.1fx)\n",
 			(sc_y->nbytes/MB), (sc_y->cbytes/MB),
 			(1.*sc_y->nbytes)/sc_y->cbytes);
-//	dsize = blosc2_schunk_decompress_chunk(sc_y, 0, buffer_y, isize);
-//	printf("first value of Y: %f\n", buffer_y[0]);
-//	dsize = blosc2_schunk_decompress_chunk(sc_y, sc_y->nchunks - 1, buffer_y, isize);
-//	printf("last value of Y: %f\n", buffer_y[CHUNKSIZE - 1]);
 
 	// Check IronArray performance
 	// First for chunk evaluator
@@ -183,10 +204,11 @@ int main(int argc, char** argv)
 	printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
 			(sc_out->nbytes/MB), (sc_out->cbytes/MB),
 			(1.*sc_out->nbytes)/sc_out->cbytes);
-	dsize = blosc2_schunk_decompress_chunk(sc_out, 0, buffer_y, isize);
-	printf("first value of OUT: %f\n", buffer_y[0]);
-	dsize = blosc2_schunk_decompress_chunk(sc_out, sc_out->nchunks - 1, buffer_y, isize);
-	printf("last value of OUT: %f\n", buffer_y[CHUNKSIZE - 1]);
+
+	// Check that we are getting the same results than through manual computation
+	if (!test_schunks_equal(sc_y, sc_out)) {
+		return -1;
+	}
 
 	// Then for block evaluator
 	blosc2_free_schunk(sc_out);
@@ -203,10 +225,11 @@ int main(int argc, char** argv)
 	printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
 			(sc_out->nbytes/MB), (sc_out->cbytes/MB),
 			(1.*sc_out->nbytes)/sc_out->cbytes);
-	dsize = blosc2_schunk_decompress_chunk(sc_out, 0, buffer_y, isize);
-	printf("first value of OUT: %f\n", buffer_y[0]);
-	dsize = blosc2_schunk_decompress_chunk(sc_out, sc_out->nchunks - 1, buffer_y, isize);
-	printf("last value of OUT: %f\n", buffer_y[CHUNKSIZE - 1]);
+
+	// Check that we are getting the same results than through manual computation
+	if (!test_schunks_equal(sc_y, sc_out)) {
+		return -1;
+	}
 
 	// Free resources
 	blosc2_free_schunk(sc_x);
