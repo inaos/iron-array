@@ -573,9 +573,9 @@ INA_API(ina_rc_t) iarray_eval_block(char* expr, iarray_variable_t vars[], int nv
 		nblocks_in_chunk += 1;
 	}
 	int nitems = (int)blocksize / typesize;
-	size_t corrected_blocksize = blocksize;
-	int corrected_nitems = nitems;
 	for (int nchunk = 0; nchunk < nchunks; nchunk++) {
+		size_t corrected_blocksize = blocksize;
+		int corrected_nitems = nitems;
 //#pragma omp parallel for schedule(dynamic)
 		for (int nblock = 0; nblock < nblocks_in_chunk; nblock++) {
 			if ((nblock + 1 == nblocks_in_chunk) && (nblock + 1) * blocksize > chunksize) {
