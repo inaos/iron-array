@@ -28,6 +28,11 @@ include("${CMAKE_BINARY_DIR}/inac.cmake")
 inac_add_dependency(inac "1.0.0")
 inac_add_contrib_lib(tinyexpr)
 
+set(LIBINAC ${CMAKE_SOURCE_DIR}/inac/libinac)
+set(SRC ${CMAKE_SOURCE_DIR}/src)
+set(BENCH ${CMAKE_SOURCE_DIR}/bench)
+set(TESTS ${CMAKE_SOURCE_DIR}/tests)
+<<<<<<< HEAD
 add_subdirectory(contribs/c-blosc2)
 include_directories(contribs/c-blosc2/blosc)
 
@@ -37,7 +42,11 @@ set_target_properties(
         iarray_c
         PROPERTIES
         COMPILE_DEFINITIONS INA_LIB=1)
+=======
+>>>>>>> d7e270395d28195545f3ff6e75ec2331bd1941e3
 
+include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac"
+        "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/c-blosc2/blosc")
 inac_merge_static_libs(iarray iarray_c blosc_static ${INAC_LIBS})
 
 #inac_add_tests(iarray)
@@ -45,9 +54,39 @@ inac_merge_static_libs(iarray iarray_c blosc_static ${INAC_LIBS})
 #inac_add_tools(iarray)
 #inac_add_examples(iarray)
 
+# We start by creating an executable (will convert into a library later on)
+#add_executable(iarray ${SRC}/iarray.c ${SRC}/tinyexpr.c ${LIBINAC}/libinac.c)
+#target_link_libraries(iarray blosc_shared)
+
+# examples
+#add_executable(find_roots_schunk ${SRC}/find_roots_schunk.c)
+#target_link_libraries(find_roots_schunk blosc_shared)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 find_package(MKL)
 
+add_library(iarray ${SRC}/iarray.c ${SRC}/tinyexpr.c ${LIBINAC}/libinac.c)
+## FIXME: attempt at using a shared library for both iarray and c-blosc2
+#add_library(iarray SHARED ${SRC}/iarray.c ${SRC}/tinyexpr.c ${LIBINAC}/libinac.c)
+#set_target_properties(iarray PROPERTIES PUBLIC_HEADER include/iarray.h)
+#target_include_directories(iarray PRIVATE include)
+
+# Playing with OpenMP (available mainly on GCC)
+if (UNIX AND NOT CMAKE_C_COMPILER_ID STREQUAL Clang)
+    set_property(
+            TARGET vectors
+            APPEND PROPERTY LINK_FLAGS "-fopenmp")
+endif ()
+add_executable(vectors ${BENCH}/vectors.c)
+add_executable(vectors-float ${BENCH}/vectors-float.c)
+
+target_link_libraries(vectors LINK_PUBLIC iarray blosc_shared)
+target_link_libraries(vectors-float LINK_PUBLIC iarray blosc_shared)
+
+add_executable(test_eval_chunk ${TESTS}/test_eval_chunk.c)
+target_link_libraries(test_eval_chunk LINK_PUBLIC iarray blosc_shared)
+add_executable(test ${BENCH}/test.c)
+add_executable(test2 ${BENCH}/test2.c)
 if (MSVC)
     install(TARGETS iarray
             DESTINATION libs
@@ -59,3 +98,4 @@ else()
 endif()
 
 inac_package()
+

@@ -220,10 +220,13 @@ static const te_variable *find_lookup(const state *s, const char *name, int len)
 
 
 #define add _iarray_op_add
+#define sub _iarray_op_sub
+#define mul _iarray_op_mul
+#define divide _iarray_op_divide
 //static double add(double a, double b) {return a + b;}
-static double sub(double a, double b) {return a - b;}
-static double mul(double a, double b) {return a * b;}
-static double divide(double a, double b) {return a / b;}
+//static double sub(double a, double b) {return a - b;}
+//static double mul(double a, double b) {return a * b;}
+//static double divide(double a, double b) {return a / b;}
 static double negate(double a) {return -a;}
 static double comma(double a, double b) {(void)a; return b;}
 
@@ -307,8 +310,17 @@ static te_expr *base(state *s) {
     switch (TYPE_MASK(s->type)) {
         case TOK_NUMBER:
             ret = new_expr(TE_CONSTANT, 0);
-			ret->value = ina_mempool_dalloc(NULL, sizeof(iarray_temporary_t)); /* FIXME: for now we have to allocate a scalar for every chunk */
+			ret->value = ina_mempool_dalloc(NULL, sizeof(iarray_temporary_t));  /* FIXME: for now we have to allocate a scalar for every chunk */
+			memset(ret->value, 0, sizeof(iarray_temporary_t));
+			// Make this an actual scalar
+			iarray_dtshape_t sshape = {
+					.ndim = 0,
+					.dtype = IARRAY_DATA_TYPE_DOUBLE,
+			};
+			ret->value->dtshape = ina_mempool_dalloc(NULL, sizeof(iarray_dtshape_t));
+			memcpy(ret->value->dtshape, &sshape, sizeof(iarray_dtshape_t));
             ret->value->scalar_value.d = s->scalar;
+            //ret->value->scalar_value.f = (float)s->scalar;
             next_token(s);
             break;
 
@@ -530,7 +542,7 @@ iarray_temporary_t *te_eval(const te_expr *n) {
 
         case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:
         case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:
-            printf("Arity: %d\n", ARITY(n->type));
+            //printf("Arity: %d\n", ARITY(n->type));
             switch(ARITY(n->type)) {
                 case 0: return TE_FUN(void)();
                 case 1: return TE_FUN(iarray_temporary_t*)(M(0));
@@ -632,7 +644,7 @@ static void pn (const te_expr *n, int depth) {
     printf("%*s", depth, "");
 
     switch(TYPE_MASK(n->type)) {
-    case TE_CONSTANT: printf("%f\n", n->value); break;
+    case TE_CONSTANT: printf("%f\n", n->value->scalar_value.d); break;
     case TE_VARIABLE: printf("bound %p\n", n->bound); break;
 
     case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:
