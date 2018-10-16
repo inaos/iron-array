@@ -42,6 +42,8 @@ set_target_properties(
         PROPERTIES
         COMPILE_DEFINITIONS INA_LIB=1)
 
+include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac"
+        "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/c-blosc2/blosc")
 inac_merge_static_libs(iarray iarray_c blosc_static ${INAC_LIBS})
 
 #inac_add_tests(iarray)
@@ -60,8 +62,6 @@ inac_merge_static_libs(iarray iarray_c blosc_static ${INAC_LIBS})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 find_package(MKL)
 
-add_executable(vectors ${SRC}/iarray.c ${SRC}/tinyexpr.c ${LIBINAC}/libinac.c ${SRC}/vectors.c)
-add_executable(vectors-float ${SRC}/iarray.c ${SRC}/tinyexpr.c ${LIBINAC}/libinac.c ${SRC}/vectors-float.c)
 add_library(iarray ${SRC}/iarray.c ${SRC}/tinyexpr.c ${LIBINAC}/libinac.c)
 ## FIXME: attempt at using a shared library for both iarray and c-blosc2
 #add_library(iarray SHARED ${SRC}/iarray.c ${SRC}/tinyexpr.c ${LIBINAC}/libinac.c)
