@@ -15,6 +15,7 @@ typedef struct iarray_container_s iarray_container_t;
 typedef struct iarray_expression_s iarray_expression_t;
 
 typedef struct iarray_config_s {
+	int max_num_threads; /* Maximum number of threads to use */
 	void *cparams;
 } iarray_config_t;
 
@@ -39,12 +40,9 @@ typedef struct iarray_slice_param_s {
 	int idx;
 } iarray_slice_param_t;
 
-typedef struct iarray_variable_s {
-	const char *name;
-	const void *address;
-	iarray_dtshape_t dtshape;
-	void *context;
-} iarray_variable_t;
+typedef enum iarray_bind_flags_e {
+	IARRAY_BIND_UPDATE_CONTAINER
+} iarray_bind_flags_t;
 
 INA_API(ina_rc_t) iarray_ctx_new(iarray_config_t *cfg, iarray_context_t **ctx);
 INA_API(void) iarray_ctx_free(iarray_context_t **ctx);
@@ -60,7 +58,7 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx, iarray_container_t *c, iar
 
 INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e);
 INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e);
-INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val);
+INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val, int flags); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
 INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val);
 INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val);
 

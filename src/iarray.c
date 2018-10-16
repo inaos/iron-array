@@ -17,6 +17,8 @@ struct iarray_expression_s {
 
 struct iarray_container_s {
 	iarray_dtshape_t *dtshape;
+	// caterva_array pointer
+	// blosc2_frame *frame;, will be in the caterva struct
 	union {
 		float f;
 		double d;
