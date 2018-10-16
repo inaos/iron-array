@@ -65,13 +65,11 @@ endif ()
 add_executable(vectors ${BENCH}/vectors.c)
 add_executable(vectors-float ${BENCH}/vectors-float.c)
 
-message(STATUS "DEBUG3: ${INAC_DEPENDENCY_LIBS}")
-
-target_link_libraries(vectors LINK_PUBLIC iarray_c blosc_static tinyexpr.lib ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
-target_link_libraries(vectors-float LINK_PUBLIC iarray_c blosc_static tinyexpr.lib ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+target_link_libraries(vectors LINK_PUBLIC iarray_c blosc_static tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+target_link_libraries(vectors-float LINK_PUBLIC iarray_c blosc_static tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 add_executable(test_eval_chunk ${TESTS}/test_eval_chunk.c)
-target_link_libraries(test_eval_chunk LINK_PUBLIC iarray_c blosc_static tinyexpr.lib ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+target_link_libraries(test_eval_chunk LINK_PUBLIC iarray_c blosc_static tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 add_executable(test ${BENCH}/test.c)
 add_executable(test2 ${BENCH}/test2.c)
