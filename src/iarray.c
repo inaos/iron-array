@@ -6,6 +6,8 @@
 #include <contribs/tinyexpr/tinyexpr.h>
 #include "iarray_private.h"
 
+#include <stdbool.h>
+
 struct iarray_context_s {
 	iarray_config_t *cfg;
 	/* FIXME: track expressions -> list */
@@ -13,6 +15,7 @@ struct iarray_context_s {
 
 struct iarray_expression_s {
 	ina_mempool_t *mp;
+	ina_str_t expr;
 };
 
 struct iarray_container_s {
@@ -54,6 +57,9 @@ INA_API(ina_rc_t) iarray_ctx_new(iarray_config_t *cfg, iarray_context_t **ctx)
 	INA_RETURN_IF_NULL(ctx);
 	(*ctx)->cfg = ina_mem_alloc(sizeof(iarray_config_t));
 	ina_mem_cpy((*ctx)->cfg, cfg, sizeof(iarray_config_t));
+	if (!(cfg->flags & IARRAY_EXPR_EVAL_BLOCK) && !(cfg->flags & IARRAY_EXPR_EVAL_CHUNK)) {
+        (*ctx)->cfg->flags |= IARRAY_EXPR_EVAL_CHUNK;
+	}
 	return INA_SUCCESS;
 }
 
@@ -173,7 +179,7 @@ INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
 	INA_MEM_FREE_SAFE(e);
 }
 
-INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val)
+INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val, int flags)
 {
 	if (val->dtshape->ndim > 2) {
 		/* FIXME: raise error */
@@ -198,7 +204,6 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
 	iarray_container_t *c = ina_mempool_dalloc(e->mp, sizeof(iarray_container_t));
 	c->dtshape = ina_mempool_dalloc(e->mp, sizeof(iarray_dtshape_t));
 	c->dtshape->ndim = 0;
-	c->dtshape->dims = NULL;
 	c->dtshape->dtype = IARRAY_DATA_TYPE_DOUBLE;
 	c->scalar_value.d = val;
 	return INA_SUCCESS;
@@ -206,11 +211,15 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 {
+    e->expr = ina_str_new_fromcstr(expr);
 	return INA_SUCCESS;
 }
 
 INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, iarray_container_t **ret)
 {
+	if (ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
+
+	}
 	return INA_SUCCESS;
 }
 
@@ -234,8 +243,10 @@ ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)
 ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, iarray_dtshape_t *dtshape,
 		iarray_temporary_t **temp)
 {
-	*temp = ina_mempool_dalloc(expr->mp, sizeof(iarray_temporary_t));
-	(*temp)->dtshape = ina_mempool_dalloc(expr->mp, sizeof(iarray_dtshape_t));
+	//FIXME: *temp = ina_mempool_dalloc(expr->mp, sizeof(iarray_temporary_t));
+	*temp = ina_mem_alloc(sizeof(iarray_temporary_t));
+	//FIXME: (*temp)->dtshape = ina_mempool_dalloc(expr->mp, sizeof(iarray_dtshape_t));
+	(*temp)->dtshape = ina_mem_alloc(sizeof(iarray_dtshape_t));
 	ina_mem_cpy((*temp)->dtshape, dtshape, sizeof(iarray_dtshape_t));
 	size_t size = 0;
 	iarray_shape_size(dtshape, &size);
@@ -245,7 +256,8 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 	    ina_mem_cpy(&(*temp)->scalar_value, &c->scalar_value, sizeof(double));
 	}
 	if (size > 0) {
-		(*temp)->data = ina_mempool_dalloc(expr->mp, size);
+		//FIXME: (*temp)->data = ina_mempool_dalloc(expr->mp, size);
+		(*temp)->data = ina_mem_alloc(size);
 	}
 
 	return INA_SUCCESS;
@@ -257,8 +269,7 @@ static iarray_temporary_t* _iarray_op(iarray_temporary_t *lhs, iarray_temporary_
 	bool scalar_vector = false;
 	bool vector_vector = false;
 	iarray_dtshape_t dtshape;
-	iarray_operation_type_t op_type = IARRAY_OPERATION_TYPE_BLAS1;
-	ina_mem_set(&dtshape, 0, sizeof(iarray_dtshape_t));
+    ina_mem_set(&dtshape, 0, sizeof(iarray_dtshape_t));
 	iarray_blas_type_t op_type = IARRAY_OPERATION_TYPE_BLAS1;
 	iarray_temporary_t *scalar_tmp = NULL;
 	iarray_temporary_t *scalar_lhs = NULL;
@@ -507,7 +518,7 @@ iarray_temporary_t* _iarray_op_divide(iarray_temporary_t *lhs, iarray_temporary_
 	return _iarray_op(lhs, rhs, IARRAY_OPERATION_TYPE_DIVIDE);
 }
 
-INA_API(ina_rc_t) iarray_eval_chunk(char* expr, iarray_variable_t vars[], int nvars, iarray_variable_t out,
+INA_API(ina_rc_t) iarray_eval_chunk(char* expr, iarray_variable_t *vars, int nvars, iarray_variable_t out,
 		iarray_data_type_t dtype, int *err)
 {
 	// Get the super-chunk container for storing out values
@@ -516,8 +527,10 @@ INA_API(ina_rc_t) iarray_eval_chunk(char* expr, iarray_variable_t vars[], int nv
 	// Allocate space for temporaries
 	iarray_expression_t iexpr;
 	memset(&iexpr, 0, sizeof(iarray_expression_t));
-	iarray_temporary_t **temp_vars = ina_mempool_dalloc(iexpr.mp, (size_t)nvars * sizeof(void*));
-	te_variable *te_vars = ina_mempool_dalloc(iexpr.mp, (size_t)nvars * sizeof(te_variable));
+	//FIXME: iarray_temporary_t **temp_vars = ina_mempool_dalloc(iexpr.mp, (size_t)nvars * sizeof(void*));
+	iarray_temporary_t **temp_vars = ina_mem_alloc((size_t)nvars * sizeof(void*));
+	//FIXME: te_variable *te_vars = ina_mempool_dalloc(iexpr.mp, (size_t)nvars * sizeof(te_variable));
+	te_variable *te_vars = ina_mem_alloc((size_t)nvars * sizeof(te_variable));
 	for (int nvar = 0; nvar < nvars; nvar++) {
 		blosc2_schunk *schunk = (blosc2_schunk*)vars[0].address;
 		iarray_dtshape_t shape_var = {
@@ -551,12 +564,12 @@ INA_API(ina_rc_t) iarray_eval_chunk(char* expr, iarray_variable_t vars[], int nv
 		const iarray_temporary_t *expr_out = te_eval(texpr);
 		blosc2_schunk_append_buffer(sc_out, expr_out->data, isize);
 	}
-	free(temp_vars);  // FIXME: do a recursive free
-	free(te_vars);
+	ina_mem_free(temp_vars);  // FIXME: do a recursive free
+	ina_mem_free(te_vars);
 	return 0;
 }
 
-INA_API(ina_rc_t) iarray_eval_block(char* expr, iarray_variable_t vars[], int nvars, iarray_variable_t out,
+INA_API(ina_rc_t) iarray_eval_block(char* expr, iarray_variable_t *vars, int nvars, iarray_variable_t out,
 		iarray_data_type_t dtype, int *err)
 {
 	// Get the super-chunk container for storing out values
@@ -572,8 +585,10 @@ INA_API(ina_rc_t) iarray_eval_block(char* expr, iarray_variable_t vars[], int nv
 	// Allocate space for temporaries
 	iarray_expression_t iexpr;
 	memset(&iexpr, 0, sizeof(iarray_expression_t));
-	iarray_temporary_t **temp_vars = ina_mempool_dalloc(iexpr.mp, (size_t)nvars * sizeof(void*));
-	te_variable *te_vars = ina_mempool_dalloc(iexpr.mp, (size_t)nvars * sizeof(te_variable));
+	//FIXME: iarray_temporary_t **temp_vars = ina_mempool_dalloc(iexpr.mp, (size_t)nvars * sizeof(void*));
+	iarray_temporary_t **temp_vars = ina_mem_alloc((size_t)nvars * sizeof(void*));
+	//FIXME: te_variable *te_vars = ina_mempool_dalloc(iexpr.mp, (size_t)nvars * sizeof(te_variable));
+	te_variable *te_vars = ina_mem_alloc((size_t)nvars * sizeof(te_variable));
 	for (int nvar = 0; nvar < nvars; nvar++) {
 		iarray_dtshape_t shape_var = {
 				.ndim = 1,
@@ -588,7 +603,8 @@ INA_API(ina_rc_t) iarray_eval_block(char* expr, iarray_variable_t vars[], int nv
 	}
 
 	// Create buffer for output chunk
-	int8_t *outbuf = ina_mempool_dalloc(iexpr.mp, chunksize);
+	//FIXME: int8_t *outbuf = ina_mempool_dalloc(iexpr.mp, chunksize);
+	int8_t *outbuf = ina_mem_alloc(chunksize);
 
 	// Create and compile the expression
 	te_expr *texpr = te_compile(expr, te_vars, nvars, err);
@@ -625,8 +641,8 @@ INA_API(ina_rc_t) iarray_eval_block(char* expr, iarray_variable_t vars[], int nv
 		blosc2_schunk_append_buffer(sc_out, outbuf, (size_t)chunksize);
 	}
 
-	free(outbuf);
-	free(temp_vars);  // FIXME: do a recursive free
-	free(te_vars);
+	ina_mem_free(outbuf);
+	ina_mem_free(temp_vars);  // FIXME: do a recursive free
+	ina_mem_free(te_vars);
 	return 0;
 }

@@ -14,7 +14,6 @@
 #include <fcntl.h>
 #include <math.h>
 #include <stdint.h>
-#include <unistd.h>
 #include "blosc.h"
 
 
@@ -33,7 +32,7 @@ extern int tests_run;
 
 
 // Check that two super-chunks with the same partitions are equal
-boolean_t test_schunks_equal_double(blosc2_schunk* sc1, blosc2_schunk* sc2) {
+bool test_schunks_equal_double(blosc2_schunk* sc1, blosc2_schunk* sc2) {
 	size_t chunksize = (size_t)sc1->chunksize;
 	int nitems_in_chunk = (int)chunksize / sc1->typesize;
 	double *buffer_sc1 = malloc(chunksize);

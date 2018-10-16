@@ -15,6 +15,7 @@ typedef struct iarray_container_s iarray_container_t;
 typedef struct iarray_expression_s iarray_expression_t;
 
 typedef struct iarray_config_s {
+	int flags;
 	int max_num_threads; /* Maximum number of threads to use */
 	void *cparams;
 } iarray_config_t;
@@ -40,6 +41,11 @@ typedef struct iarray_slice_param_s {
 	int idx;
 } iarray_slice_param_t;
 
+typedef enum iarray_config_flags_e {
+	IARRAY_EXPR_EVAL_BLOCK = 0x1,
+	IARRAY_EXPR_EVAL_CHUNK = 0x2
+} iarray_config_flags_t;
+
 typedef enum iarray_bind_flags_e {
 	IARRAY_BIND_UPDATE_CONTAINER
 } iarray_bind_flags_t;
@@ -64,8 +70,18 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
 
-// INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, iarray_container_t **ret);
-INA_API(ina_rc_t) iarray_eval_chunk(char* expr, iarray_variable_t vars[], int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
-INA_API(ina_rc_t) iarray_eval_block(char* expr, iarray_variable_t vars[], int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
+INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, iarray_container_t **ret);
+
+//FIXME: Move to private header
+
+typedef struct iarray_variable_s {
+    const char *name;
+    const void *address;
+    iarray_dtshape_t dtshape;
+    void *context;
+} iarray_variable_t;
+
+ina_rc_t iarray_eval_chunk(char* expr, iarray_variable_t *vars, int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
+ina_rc_t iarray_eval_block(char* expr, iarray_variable_t *vars, int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
 
 #endif //PROJECT_IARRAY_H

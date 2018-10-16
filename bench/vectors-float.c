@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdbool.h>
-#include "iarray.h"
+#include <libiarray/iarray.h>
 
 #define KB (1024.)
 #define MB (1024 * KB)
@@ -54,7 +54,7 @@ void fill_buffer(float* x, int nchunk)
 
 void fill_sc_x(blosc2_schunk* sc_x, const size_t isize)
 {
-	float buffer_x[NITEMS_CHUNK];
+	static float buffer_x[NITEMS_CHUNK];
 
 	/* Fill with even values between 0 and 10 */
 	for (int nchunk = 0; nchunk<NCHUNKS; nchunk++) {
@@ -85,7 +85,7 @@ void fill_buffer_y(const float* x, float* y)
 }
 
 // Check that two super-chunks with the same partitions are equal
-boolean_t test_schunks_equal(blosc2_schunk* sc1, blosc2_schunk* sc2) {
+bool test_schunks_equal(blosc2_schunk* sc1, blosc2_schunk* sc2) {
 	size_t chunksize = (size_t)sc1->chunksize;
 	int nitems_in_chunk = (int)chunksize / sc1->typesize;
 	float *buffer_sc1 = malloc(chunksize);
@@ -116,8 +116,8 @@ int main(int argc, char** argv)
 	blosc_init();
 
 	const size_t isize = NITEMS_CHUNK * sizeof(float);
-	float buffer_x[NITEMS_CHUNK];
-	float buffer_y[NITEMS_CHUNK];
+	static float buffer_x[NITEMS_CHUNK];
+	static float buffer_y[NITEMS_CHUNK];
 	blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
 	blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
 	blosc2_schunk *sc_x, *sc_y;

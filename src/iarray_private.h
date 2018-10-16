@@ -28,13 +28,6 @@ typedef struct iarray_temporary_s {
 	} scalar_value;
 } iarray_temporary_t;
 
-typedef struct iarray_variable_s {
-	const char *name;
-	const void *address;
-	iarray_dtshape_t dtshape;
-	void *context;
-} iarray_variable_t;
-
 ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, iarray_dtshape_t *dtshape, iarray_temporary_t **temp);
 
 ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size);
@@ -45,5 +38,8 @@ iarray_temporary_t* _iarray_op_add(iarray_temporary_t *lhs, iarray_temporary_t *
 iarray_temporary_t* _iarray_op_sub(iarray_temporary_t *lhs, iarray_temporary_t *rhs);
 iarray_temporary_t* _iarray_op_mul(iarray_temporary_t *lhs, iarray_temporary_t *rhs);
 iarray_temporary_t* _iarray_op_divide(iarray_temporary_t *lhs, iarray_temporary_t *rhs);
+
+ina_rc_t iarray_eval_chunk(char* expr, iarray_variable_t *vars, int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
+ina_rc_t iarray_eval_block(char* expr, iarray_variable_t *vars, int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
 
 #endif
