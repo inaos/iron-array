@@ -32,6 +32,7 @@ set(LIBINAC ${CMAKE_SOURCE_DIR}/inac/libinac)
 set(SRC ${CMAKE_SOURCE_DIR}/src)
 set(BENCH ${CMAKE_SOURCE_DIR}/bench)
 set(TESTS ${CMAKE_SOURCE_DIR}/tests)
+<<<<<<< HEAD
 add_subdirectory(contribs/c-blosc2)
 include_directories(contribs/c-blosc2/blosc)
 
@@ -41,6 +42,8 @@ set_target_properties(
         iarray_c
         PROPERTIES
         COMPILE_DEFINITIONS INA_LIB=1)
+=======
+>>>>>>> d7e270395d28195545f3ff6e75ec2331bd1941e3
 
 include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac"
         "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/c-blosc2/blosc")
@@ -95,3 +98,4 @@ else()
 endif()
 
 inac_package()
+
