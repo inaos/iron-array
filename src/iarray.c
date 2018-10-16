@@ -556,7 +556,6 @@ INA_API(ina_rc_t) iarray_eval_chunk(char* expr, iarray_variable_t vars[], int nv
 	return 0;
 }
 
-
 INA_API(ina_rc_t) iarray_eval_block(char* expr, iarray_variable_t vars[], int nvars, iarray_variable_t out,
 		iarray_data_type_t dtype, int *err)
 {
