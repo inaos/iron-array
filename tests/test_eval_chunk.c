@@ -4,7 +4,7 @@
 
 #include "test_common.h"
 #include "blosc.h"
-#include "iarray.h"
+#include <libiarray/iarray.h>
 
 #define NCHUNKS  10
 #define NITEMS_CHUNK (20 * 1000)

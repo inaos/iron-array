@@ -310,14 +310,16 @@ static te_expr *base(state *s) {
     switch (TYPE_MASK(s->type)) {
         case TOK_NUMBER:
             ret = new_expr(TE_CONSTANT, 0);
-			ret->value = ina_mempool_dalloc(NULL, sizeof(iarray_temporary_t));  /* FIXME: for now we have to allocate a scalar for every chunk */
+			//FIXME: ret->value = ina_mempool_dalloc(NULL, sizeof(iarray_temporary_t));  /* FIXME: for now we have to allocate a scalar for every chunk */
+			ret->value = ina_mem_alloc(sizeof(iarray_temporary_t));
 			memset(ret->value, 0, sizeof(iarray_temporary_t));
 			// Make this an actual scalar
 			iarray_dtshape_t sshape = {
 					.ndim = 0,
 					.dtype = IARRAY_DATA_TYPE_DOUBLE,
 			};
-			ret->value->dtshape = ina_mempool_dalloc(NULL, sizeof(iarray_dtshape_t));
+			//FIXME: ret->value->dtshape = ina_mempool_dalloc(NULL, sizeof(iarray_dtshape_t));
+			ret->value->dtshape = ina_mem_alloc(sizeof(iarray_dtshape_t));
 			memcpy(ret->value->dtshape, &sshape, sizeof(iarray_dtshape_t));
             ret->value->scalar_value.d = s->scalar;
             //ret->value->scalar_value.f = (float)s->scalar;

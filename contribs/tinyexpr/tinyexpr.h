@@ -35,7 +35,11 @@ extern "C" {
 
 typedef struct te_expr {
     int type;
-    union { iarray_temporary_t *value; const iarray_temporary_t **bound; const void *function;};
+    union {
+        iarray_temporary_t *value;
+        const iarray_temporary_t **bound;
+        const void *function;
+    };
     void *parameters[1];
 } te_expr;
 
