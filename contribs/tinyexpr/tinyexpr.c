@@ -536,7 +536,7 @@ static te_expr *list(state *s) {
 
 
 //#define TE_FUN(...) ((double(*)(__VA_ARGS__))n->function)
-#define TE_FUN(expr, ...) ( (iarray_temporary_t*(*)(expr, __VA_ARGS__))n->function )
+#define TE_FUN(...) ( (iarray_temporary_t*(*)(__VA_ARGS__))n->function )
 #define M(e) te_eval(expr, n->parameters[e])
 
 
@@ -551,28 +551,28 @@ iarray_temporary_t *te_eval(iarray_expression_t *expr, const te_expr *n) {
         case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:
             //printf("Arity: %d\n", ARITY(n->type));
             switch(ARITY(n->type)) {
-                case 0: return TE_FUN(void)(expr);
-                case 1: return TE_FUN(iarray_temporary_t*)(expr, M(0));
-                case 2: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1));
-                case 3: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1), M(2));
-                case 4: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1), M(2), M(3));
-                case 5: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1), M(2), M(3), M(4));
-                case 6: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1), M(2), M(3), M(4), M(5));
-                case 7: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1), M(2), M(3), M(4), M(5), M(6));
+                case 0: return TE_FUN(iarray_expression_t*)(expr);
+                case 1: return TE_FUN(iarray_expression_t*, iarray_temporary_t*)(expr, M(0));
+                case 2: return TE_FUN(iarray_expression_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1));
+                case 3: return TE_FUN(iarray_expression_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1), M(2));
+                case 4: return TE_FUN(iarray_expression_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1), M(2), M(3));
+                case 5: return TE_FUN(iarray_expression_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1), M(2), M(3), M(4));
+                case 6: return TE_FUN(iarray_expression_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1), M(2), M(3), M(4), M(5));
+                case 7: return TE_FUN(iarray_expression_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1), M(2), M(3), M(4), M(5), M(6));
                 default: return NULL;
             }
 
         case TE_CLOSURE0: case TE_CLOSURE1: case TE_CLOSURE2: case TE_CLOSURE3:
         case TE_CLOSURE4: case TE_CLOSURE5: case TE_CLOSURE6: case TE_CLOSURE7:
             switch(ARITY(n->type)) {
-                case 0: return TE_FUN(void*)(expr, n->parameters[0]);
-                case 1: return TE_FUN(void*, iarray_temporary_t*)(expr, n->parameters[1], M(0));
-                case 2: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[2], M(0), M(1));
-                case 3: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[3], M(0), M(1), M(2));
-                case 4: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[4], M(0), M(1), M(2), M(3));
-                case 5: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[5], M(0), M(1), M(2), M(3), M(4));
-                case 6: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[6], M(0), M(1), M(2), M(3), M(4), M(5));
-                case 7: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[7], M(0), M(1), M(2), M(3), M(4), M(5), M(6));
+                case 0: return TE_FUN(void*)(n->parameters[0]);
+                case 1: return TE_FUN(iarray_expression_t*, void*, iarray_temporary_t*)(expr, n->parameters[1], M(0));
+                case 2: return TE_FUN(iarray_expression_t*, void*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[2], M(0), M(1));
+                case 3: return TE_FUN(iarray_expression_t*, void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[3], M(0), M(1), M(2));
+                case 4: return TE_FUN(iarray_expression_t*, void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[4], M(0), M(1), M(2), M(3));
+                case 5: return TE_FUN(iarray_expression_t*, void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[5], M(0), M(1), M(2), M(3), M(4));
+                case 6: return TE_FUN(iarray_expression_t*, void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[6], M(0), M(1), M(2), M(3), M(4), M(5));
+                case 7: return TE_FUN(iarray_expression_t*, void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[7], M(0), M(1), M(2), M(3), M(4), M(5), M(6));
                 default: return NULL;
             }
 

@@ -57,11 +57,11 @@ find_package(MKL)
 set(BENCH ${CMAKE_SOURCE_DIR}/bench)
 set(TESTS ${CMAKE_SOURCE_DIR}/tests)
 # Playing with OpenMP (available mainly on GCC)
-if (UNIX AND NOT CMAKE_C_COMPILER_ID STREQUAL Clang)
-    set_property(
-            TARGET vectors
-            APPEND PROPERTY LINK_FLAGS "-fopenmp")
-endif ()
+#if (UNIX AND NOT CMAKE_C_COMPILER_ID STREQUAL Clang)
+#    set_property(
+#            TARGET vectors
+#            APPEND PROPERTY LINK_FLAGS "-fopenmp")
+#endif ()
 add_executable(vectors ${BENCH}/vectors.c)
 add_executable(vectors-float ${BENCH}/vectors-float.c)
 
