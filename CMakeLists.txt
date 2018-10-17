@@ -1,10 +1,12 @@
 #
-# Copyright INAOS GmbH, Thalwil, 2018. All rights reserved
+# Copyright INAOS GmbH, Thalwil, 2018.
+# Copyright Francesc Alted, 2018.
+#
+# All rights reserved
 #
 # This software is the confidential and proprietary information of INAOS GmbH
-# ("Confidential Information"). You shall not disclose such Confidential
-# Information and shall use it only in accordance with the terms of the
-# license agreement you entered into with INAOS GmbH.
+# and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+# Information and shall use it only in accordance with the terms of the license agreement.
 #
 cmake_minimum_required (VERSION 3.12)
 project(iarray)

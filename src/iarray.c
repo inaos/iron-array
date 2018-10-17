@@ -1,6 +1,14 @@
-//
-// Created by Francesc Alted on 11/09/2018.
-//
+/*
+ * Copyright INAOS GmbH, Thalwil, 2018.
+ * Copyright Francesc Alted, 2018.
+ *
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information of INAOS GmbH
+ * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * Information and shall use it only in accordance with the terms of the license agreement.
+ *
+ */
 
 #include <libiarray/iarray.h>
 #include <contribs/tinyexpr/tinyexpr.h>
