@@ -69,7 +69,7 @@ typedef struct state {
 	double scalar;
     union {iarray_temporary_t *value; const iarray_temporary_t **bound; const void *function;};
     void *context;
-
+	iarray_expression_t *expr;
     const te_variable *lookup;
     int lookup_len;
 } state;
@@ -81,13 +81,16 @@ typedef struct state {
 #define IS_FUNCTION(TYPE) (((TYPE) & TE_FUNCTION0) != 0)
 #define IS_CLOSURE(TYPE) (((TYPE) & TE_CLOSURE0) != 0)
 #define ARITY(TYPE) ( ((TYPE) & (TE_FUNCTION0 | TE_CLOSURE0)) ? ((TYPE) & 0x00000007) : 0 )
-#define NEW_EXPR(type, ...) new_expr((type), (const te_expr*[]){__VA_ARGS__})
+#define NEW_EXPR(state, type, ...) new_expr((state), (type), (const te_expr*[]){__VA_ARGS__})
 
-static te_expr *new_expr(const int type, const te_expr *parameters[]) {
+static te_expr *new_expr(state *state, const int type, const te_expr *parameters[]) {
     const int arity = ARITY(type);
     const int psize = sizeof(void*) * arity;
     const int size = (sizeof(te_expr) - sizeof(void*)) + psize + (IS_CLOSURE(type) ? sizeof(void*) : 0);
-    te_expr *ret = malloc(size);
+    //te_expr *ret = malloc(size);
+	ina_mempool_t *mp;
+	iarray_expr_get_mp(state->expr, &mp);
+    te_expr *ret = ina_mempool_dalloc(mp, size);
     memset(ret, 0, size);
     if (arity && parameters) {
         memcpy(ret->parameters, parameters, psize);
@@ -115,7 +118,7 @@ void te_free_parameters(te_expr *n) {
 void te_free(te_expr *n) {
     if (!n) return;
     te_free_parameters(n);
-    free(n);
+    //free(n);
 }
 
 
@@ -309,17 +312,19 @@ static te_expr *base(state *s) {
 
     switch (TYPE_MASK(s->type)) {
         case TOK_NUMBER:
-            ret = new_expr(TE_CONSTANT, 0);
-			//FIXME: ret->value = ina_mempool_dalloc(NULL, sizeof(iarray_temporary_t));  /* FIXME: for now we have to allocate a scalar for every chunk */
-			ret->value = ina_mem_alloc(sizeof(iarray_temporary_t));
+            ret = new_expr(s, TE_CONSTANT, 0);
+			ina_mempool_t *mp;
+			iarray_expr_get_mp(s->expr, &mp);
+			ret->value = ina_mempool_dalloc(mp, sizeof(iarray_temporary_t));  /* FIXME: for now we have to allocate a scalar for every chunk */
+			//ret->value = ina_mem_alloc(sizeof(iarray_temporary_t));
 			memset(ret->value, 0, sizeof(iarray_temporary_t));
 			// Make this an actual scalar
 			iarray_dtshape_t sshape = {
 					.ndim = 0,
 					.dtype = IARRAY_DATA_TYPE_DOUBLE,
 			};
-			//FIXME: ret->value->dtshape = ina_mempool_dalloc(NULL, sizeof(iarray_dtshape_t));
-			ret->value->dtshape = ina_mem_alloc(sizeof(iarray_dtshape_t));
+			ret->value->dtshape = ina_mempool_dalloc(mp, sizeof(iarray_dtshape_t));
+			//ret->value->dtshape = ina_mem_alloc(sizeof(iarray_dtshape_t));
 			memcpy(ret->value->dtshape, &sshape, sizeof(iarray_dtshape_t));
             ret->value->scalar_value.d = s->scalar;
             //ret->value->scalar_value.f = (float)s->scalar;
@@ -327,14 +332,14 @@ static te_expr *base(state *s) {
             break;
 
         case TOK_VARIABLE:
-            ret = new_expr(TE_VARIABLE, 0);
+            ret = new_expr(s, TE_VARIABLE, 0);
             ret->bound = s->bound;
             next_token(s);
             break;
 
         case TE_FUNCTION0:
         case TE_CLOSURE0:
-            ret = new_expr(s->type, 0);
+            ret = new_expr(s, s->type, 0);
             ret->function = s->function;
             if (IS_CLOSURE(s->type)) ret->parameters[0] = s->context;
             next_token(s);
@@ -350,7 +355,7 @@ static te_expr *base(state *s) {
 
         case TE_FUNCTION1:
         case TE_CLOSURE1:
-            ret = new_expr(s->type, 0);
+            ret = new_expr(s, s->type, 0);
             ret->function = s->function;
             if (IS_CLOSURE(s->type)) ret->parameters[1] = s->context;
             next_token(s);
@@ -363,7 +368,7 @@ static te_expr *base(state *s) {
         case TE_CLOSURE5: case TE_CLOSURE6: case TE_CLOSURE7:
             arity = ARITY(s->type);
 
-            ret = new_expr(s->type, 0);
+            ret = new_expr(s, s->type, 0);
             ret->function = s->function;
             if (IS_CLOSURE(s->type)) ret->parameters[arity] = s->context;
             next_token(s);
@@ -399,7 +404,7 @@ static te_expr *base(state *s) {
             break;
 
         default:
-            ret = new_expr(0, 0);
+            ret = new_expr(s, 0, 0);
             s->type = TOK_ERROR;
             ret->value = NULL;
             break;
@@ -422,7 +427,7 @@ static te_expr *power(state *s) {
     if (sign == 1) {
         ret = base(s);
     } else {
-        ret = NEW_EXPR(TE_FUNCTION1 | TE_FLAG_PURE, base(s));
+        ret = NEW_EXPR(s, TE_FUNCTION1 | TE_FLAG_PURE, base(s));
         ret->function = negate;
     }
 
@@ -439,7 +444,7 @@ static te_expr *factor(state *s) {
 
     if (ret->type == (TE_FUNCTION1 | TE_FLAG_PURE) && ret->function == negate) {
         te_expr *se = ret->parameters[0];
-        free(ret);
+        //free(ret);
         ret = se;
         neg = 1;
     }
@@ -450,19 +455,19 @@ static te_expr *factor(state *s) {
 
         if (insertion) {
             /* Make exponentiation go right-to-left. */
-            te_expr *insert = NEW_EXPR(TE_FUNCTION2 | TE_FLAG_PURE, insertion->parameters[1], power(s));
+            te_expr *insert = NEW_EXPR(s, TE_FUNCTION2 | TE_FLAG_PURE, insertion->parameters[1], power(s));
             insert->function = t;
             insertion->parameters[1] = insert;
             insertion = insert;
         } else {
-            ret = NEW_EXPR(TE_FUNCTION2 | TE_FLAG_PURE, ret, power(s));
+            ret = NEW_EXPR(s, TE_FUNCTION2 | TE_FLAG_PURE, ret, power(s));
             ret->function = t;
             insertion = ret;
         }
     }
 
     if (neg) {
-        ret = NEW_EXPR(TE_FUNCTION1 | TE_FLAG_PURE, ret);
+        ret = NEW_EXPR(s, TE_FUNCTION1 | TE_FLAG_PURE, ret);
         ret->function = negate;
     }
 
@@ -476,7 +481,7 @@ static te_expr *factor(state *s) {
     while (s->type == TOK_INFIX && (s->function == pow)) {
         te_fun2 t = (te_fun2)s->function;
         next_token(s);
-        ret = NEW_EXPR(TE_FUNCTION2 | TE_FLAG_PURE, ret, power(s));
+        ret = NEW_EXPR(s, TE_FUNCTION2 | TE_FLAG_PURE, ret, power(s));
         ret->function = t;
     }
 
@@ -493,7 +498,7 @@ static te_expr *term(state *s) {
     while (s->type == TOK_INFIX && (s->function == mul || s->function == divide || s->function == fmod)) {
         te_fun2 t = (te_fun2)s->function;
         next_token(s);
-        ret = NEW_EXPR(TE_FUNCTION2 | TE_FLAG_PURE, ret, factor(s));
+        ret = NEW_EXPR(s, TE_FUNCTION2 | TE_FLAG_PURE, ret, factor(s));
         ret->function = t;
     }
 
@@ -508,7 +513,7 @@ static te_expr *expr(state *s) {
     while (s->type == TOK_INFIX && (s->function == add || s->function == sub)) {
         te_fun2 t = (te_fun2)s->function;
         next_token(s);
-        ret = NEW_EXPR(TE_FUNCTION2 | TE_FLAG_PURE, ret, term(s));
+        ret = NEW_EXPR(s, TE_FUNCTION2 | TE_FLAG_PURE, ret, term(s));
         ret->function = t;
     }
 
@@ -522,7 +527,7 @@ static te_expr *list(state *s) {
 
     while (s->type == TOK_SEP) {
         next_token(s);
-        ret = NEW_EXPR(TE_FUNCTION2 | TE_FLAG_PURE, ret, expr(s));
+        ret = NEW_EXPR(s, TE_FUNCTION2 | TE_FLAG_PURE, ret, expr(s));
         ret->function = comma;
     }
 
@@ -531,11 +536,11 @@ static te_expr *list(state *s) {
 
 
 //#define TE_FUN(...) ((double(*)(__VA_ARGS__))n->function)
-#define TE_FUN(...) ( (iarray_temporary_t*(*)(__VA_ARGS__))n->function )
-#define M(e) te_eval(n->parameters[e])
+#define TE_FUN(expr, ...) ( (iarray_temporary_t*(*)(expr, __VA_ARGS__))n->function )
+#define M(e) te_eval(expr, n->parameters[e])
 
 
-iarray_temporary_t *te_eval(const te_expr *n) {
+iarray_temporary_t *te_eval(iarray_expression_t *expr, const te_expr *n) {
     if (!n) return NULL;
 
     switch(TYPE_MASK(n->type)) {
@@ -546,28 +551,28 @@ iarray_temporary_t *te_eval(const te_expr *n) {
         case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:
             //printf("Arity: %d\n", ARITY(n->type));
             switch(ARITY(n->type)) {
-                case 0: return TE_FUN(void)();
-                case 1: return TE_FUN(iarray_temporary_t*)(M(0));
-                case 2: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*)(M(0), M(1));
-                case 3: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(M(0), M(1), M(2));
-                case 4: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(M(0), M(1), M(2), M(3));
-                case 5: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(M(0), M(1), M(2), M(3), M(4));
-                case 6: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(M(0), M(1), M(2), M(3), M(4), M(5));
-                case 7: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(M(0), M(1), M(2), M(3), M(4), M(5), M(6));
+                case 0: return TE_FUN(void)(expr);
+                case 1: return TE_FUN(iarray_temporary_t*)(expr, M(0));
+                case 2: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1));
+                case 3: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1), M(2));
+                case 4: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1), M(2), M(3));
+                case 5: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1), M(2), M(3), M(4));
+                case 6: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1), M(2), M(3), M(4), M(5));
+                case 7: return TE_FUN(iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, M(0), M(1), M(2), M(3), M(4), M(5), M(6));
                 default: return NULL;
             }
 
         case TE_CLOSURE0: case TE_CLOSURE1: case TE_CLOSURE2: case TE_CLOSURE3:
         case TE_CLOSURE4: case TE_CLOSURE5: case TE_CLOSURE6: case TE_CLOSURE7:
             switch(ARITY(n->type)) {
-                case 0: return TE_FUN(void*)(n->parameters[0]);
-                case 1: return TE_FUN(void*, iarray_temporary_t*)(n->parameters[1], M(0));
-                case 2: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*)(n->parameters[2], M(0), M(1));
-                case 3: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(n->parameters[3], M(0), M(1), M(2));
-                case 4: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(n->parameters[4], M(0), M(1), M(2), M(3));
-                case 5: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(n->parameters[5], M(0), M(1), M(2), M(3), M(4));
-                case 6: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(n->parameters[6], M(0), M(1), M(2), M(3), M(4), M(5));
-                case 7: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(n->parameters[7], M(0), M(1), M(2), M(3), M(4), M(5), M(6));
+                case 0: return TE_FUN(void*)(expr, n->parameters[0]);
+                case 1: return TE_FUN(void*, iarray_temporary_t*)(expr, n->parameters[1], M(0));
+                case 2: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[2], M(0), M(1));
+                case 3: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[3], M(0), M(1), M(2));
+                case 4: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[4], M(0), M(1), M(2), M(3));
+                case 5: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[5], M(0), M(1), M(2), M(3), M(4));
+                case 6: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[6], M(0), M(1), M(2), M(3), M(4), M(5));
+                case 7: return TE_FUN(void*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*, iarray_temporary_t*)(expr, n->parameters[7], M(0), M(1), M(2), M(3), M(4), M(5), M(6));
                 default: return NULL;
             }
 
@@ -579,7 +584,7 @@ iarray_temporary_t *te_eval(const te_expr *n) {
 #undef TE_FUN
 #undef M
 
-static void optimize(te_expr *n) {
+static void optimize(iarray_expression_t *expr, te_expr *n) {
     /* Evaluates as much as possible. */
     if (n->type == TE_CONSTANT) return;
     if (n->type == TE_VARIABLE) return;
@@ -590,13 +595,13 @@ static void optimize(te_expr *n) {
         int known = 1;
         int i;
         for (i = 0; i < arity; ++i) {
-            optimize(n->parameters[i]);
+            optimize(expr, n->parameters[i]);
             if (((te_expr*)(n->parameters[i]))->type != TE_CONSTANT) {
                 known = 0;
             }
         }
         if (known) {
-            const iarray_temporary_t *value = te_eval(n);
+            const iarray_temporary_t *value = te_eval(expr, n);
             te_free_parameters(n);
             n->type = TE_CONSTANT;
             n->value = value;
@@ -605,11 +610,12 @@ static void optimize(te_expr *n) {
 }
 
 
-te_expr *te_compile(const char *expression, const te_variable *variables, int var_count, int *error) {
+te_expr *te_compile(iarray_expression_t *expr, const char *expression, const te_variable *variables, int var_count, int *error) {
     state s;
     s.start = s.next = expression;
     s.lookup = variables;
     s.lookup_len = var_count;
+    s.expr = expr;
 
     next_token(&s);
     te_expr *root = list(&s);
@@ -622,18 +628,18 @@ te_expr *te_compile(const char *expression, const te_variable *variables, int va
         }
         return 0;
     } else {
-        optimize(root);
+        optimize(expr, root);
         if (error) *error = 0;
         return root;
     }
 }
 
 
-iarray_temporary_t *te_interp(const char *expression, int *error) {
-    te_expr *n = te_compile(expression, 0, 0, error);
+iarray_temporary_t *te_interp(iarray_expression_t *expr, const char *expression, int *error) {
+    te_expr *n = te_compile(expr, expression, 0, 0, error);
 	iarray_temporary_t *ret;
     if (n) {
-        ret = te_eval(n);
+        ret = te_eval(expr, n);
         te_free(n);
     } else {
         ret = NULL;

@@ -17,7 +17,8 @@ typedef struct iarray_expression_s iarray_expression_t;
 typedef struct iarray_config_s {
 	int flags;
 	int max_num_threads; /* Maximum number of threads to use */
-	void *cparams;
+    blosc2_cparams *cparams;
+    blosc2_dparams *dparams;
 } iarray_config_t;
 
 typedef enum iarray_rng_e {
@@ -47,7 +48,7 @@ typedef enum iarray_config_flags_e {
 } iarray_config_flags_t;
 
 typedef enum iarray_bind_flags_e {
-	IARRAY_BIND_UPDATE_CONTAINER
+	IARRAY_BIND_UPDATE_CONTAINER = 0x1
 } iarray_bind_flags_t;
 
 INA_API(ina_rc_t) iarray_ctx_new(iarray_config_t *cfg, iarray_context_t **ctx);
@@ -59,18 +60,21 @@ INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx, iarray_dtshape_t *dtshape, 
 INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx, iarray_dtshape_t *dtshape, float value, iarray_container_t **container);
 INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx, iarray_dtshape_t *dtshape, double value, iarray_container_t **container);
 INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_rng_t rng, iarray_data_type_t dtype, iarray_container_t **container);
-
 INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx, iarray_container_t *c, iarray_slice_param_t *params, iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e);
 INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e);
-INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val, int flags); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
+INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val);
 INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val);
 INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val);
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
 
-INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, iarray_container_t **ret);
+INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blosc2_schunk *out, int flags, iarray_container_t **ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
+
+//FIXME: remove
+INA_API(ina_rc_t) iarray_from_sc(iarray_context_t *ctx, blosc2_schunk *sc, iarray_data_type_t dtype, iarray_container_t **container);
+INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp);
 
 //FIXME: Move to private header
 
@@ -81,7 +85,7 @@ typedef struct iarray_variable_s {
     void *context;
 } iarray_variable_t;
 
-ina_rc_t iarray_eval_chunk(char* expr, iarray_variable_t *vars, int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
-ina_rc_t iarray_eval_block(char* expr, iarray_variable_t *vars, int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
+ina_rc_t iarray_eval_chunk(iarray_context_t *ctx, char* expr, iarray_variable_t *vars, int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
+ina_rc_t iarray_eval_block(iarray_context_t *ctx, char* expr, iarray_variable_t *vars, int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
 
 #endif //PROJECT_IARRAY_H
