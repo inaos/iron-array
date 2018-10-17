@@ -199,8 +199,8 @@ int main(int argc, char** argv)
 	iarray_expression_t *e;
 	iarray_expr_new(iactx, &e);
 	iarray_container_t *c_x, *c_y;
-	iarray_from_sc(iactx, sc_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
-	iarray_from_sc(iactx, sc_y, IARRAY_DATA_TYPE_DOUBLE, &c_y);
+	iarray_from_sc(iactx, sc_x, IARRAY_DATA_TYPE_FLOAT, &c_x);
+	iarray_from_sc(iactx, sc_y, IARRAY_DATA_TYPE_FLOAT, &c_y);
 	iarray_expr_bind(e, "x", c_x);
 	iarray_expr_bind(e, "y", c_y);
 	iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
