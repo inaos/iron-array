@@ -67,14 +67,14 @@ typedef struct te_variable {
 
 /* Parses the input expression, evaluates it, and frees it. */
 /* Returns NaN on error. */
-iarray_temporary_t *te_interp(const char *expression, int *error);
+iarray_temporary_t *te_interp(iarray_expression_t *expr, const char *expression, int *error);
 
 /* Parses the input expression and binds variables. */
 /* Returns NULL on error. */
-te_expr *te_compile(const char *expression, const te_variable *variables, int var_count, int *error);
+te_expr *te_compile(iarray_expression_t *expr, const char *expression, const te_variable *variables, int var_count, int *error);
 
 /* Evaluates the expression. */
-iarray_temporary_t *te_eval(const te_expr *n);
+iarray_temporary_t *te_eval(iarray_expression_t *expr, const te_expr *n);
 
 /* Prints debugging information on the syntax tree. */
 void te_print(const te_expr *n);

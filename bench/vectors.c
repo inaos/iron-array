@@ -190,14 +190,27 @@ int main(int argc, char** argv)
 
 	// Check IronArray performance
 	// First for chunk evaluator
-	iarray_variable_t vars[] = {{"x", sc_x}, {"y", sc_y}};
+    iarray_context_t *iactx;
+    iarray_config_t cfg = {.max_num_threads = 1, .flags = 0, .cparams = &cparams, .dparams = &dparams};
+    iarray_ctx_new(&cfg, &iactx);
+
+	//iarray_variable_t vars[] = {{"x", sc_x}, {"y", sc_y}};
 	blosc2_schunk *sc_out = blosc2_new_schunk(cparams, dparams, NULL);
-	iarray_variable_t out = {"out", sc_out};
+	//iarray_variable_t out = {"out", sc_out};
+
+    iarray_expression_t *e;
+    iarray_expr_new(iactx, &e);
+    iarray_container_t *c_x, *c_y;
+    iarray_from_sc(iactx, sc_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
+    iarray_from_sc(iactx, sc_y, IARRAY_DATA_TYPE_DOUBLE, &c_y);
+    iarray_expr_bind(e, "x", c_x);
+    iarray_expr_bind(e, "y", c_y);
+	iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
 
 	int err;
 	blosc_set_timestamp(&last);
-	//iarray_eval("x + y", vars, 2, out, IARRAY_DATA_TYPE_DOUBLE, &err);
-	iarray_eval_chunk("(x - 1.35) * (x - 4.45) * (x - 8.5)", vars, 1, out, IARRAY_DATA_TYPE_DOUBLE, &err);
+	iarray_eval(iactx, e, sc_out, 0, NULL);
+	//iarray_eval_chunk("(x - 1.35) * (x - 4.45) * (x - 8.5)", vars, 1, out, IARRAY_DATA_TYPE_DOUBLE, &err);
 	blosc_set_timestamp(&current);
 	ttotal = blosc_elapsed_secs(last, current);
 	printf("\n");
@@ -212,6 +225,9 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
+	iarray_expr_free(iactx, &e);
+
+	/*
 	// Then for block evaluator
 	blosc2_free_schunk(sc_out);
 	sc_out = blosc2_new_schunk(cparams, dparams, NULL);
@@ -231,7 +247,7 @@ int main(int argc, char** argv)
 	// Check that we are getting the same results than through manual computation
 	if (!test_schunks_equal(sc_y, sc_out)) {
 		return -1;
-	}
+	}*/
 
 	// Free resources
 	blosc2_free_schunk(sc_x);
