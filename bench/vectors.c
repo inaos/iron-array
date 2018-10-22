@@ -141,7 +141,7 @@ int main(int argc, char** argv)
 	blosc_set_timestamp(&last);
 	fill_x(x);
 	blosc_set_timestamp(&current);
-	ttotal = blosc_elapsed_secs(last, current);
+//	ttotal = blosc_elapsed_secs(last, current);
 //	printf("Time for filling X values: %.3g s, %.1f MB/s\n",
 //			ttotal, sizeof(x)/(ttotal*MB));
 
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
 	blosc_set_timestamp(&last);
 	fill_sc_x(sc_x, isize);
 	blosc_set_timestamp(&current);
-	ttotal = blosc_elapsed_secs(last, current);
+//	ttotal = blosc_elapsed_secs(last, current);
 //	printf("Time for filling X values (compressed): %.3g s, %.1f MB/s\n",
 //			ttotal, (sc_x->nbytes/(ttotal*MB)));
 //	printf("Compression for X values: %.1f MB -> %.1f MB (%.1fx)\n",
@@ -191,7 +191,7 @@ int main(int argc, char** argv)
 	// Check IronArray performance
 	// First for chunk evaluator
     iarray_context_t *iactx;
-    iarray_config_t cfg = {.max_num_threads = 1, .flags = 0, .cparams = &cparams, .dparams = &dparams};
+    iarray_config_t cfg = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_CHUNK, .cparams = &cparams, .dparams = &dparams};
     iarray_ctx_new(&cfg, &iactx);
 
 	//iarray_variable_t vars[] = {{"x", sc_x}, {"y", sc_y}};
@@ -207,10 +207,8 @@ int main(int argc, char** argv)
     iarray_expr_bind(e, "y", c_y);
 	iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
 
-	int err;
 	blosc_set_timestamp(&last);
 	iarray_eval(iactx, e, sc_out, 0, NULL);
-	//iarray_eval_chunk("(x - 1.35) * (x - 4.45) * (x - 8.5)", vars, 1, out, IARRAY_DATA_TYPE_DOUBLE, &err);
 	blosc_set_timestamp(&current);
 	ttotal = blosc_elapsed_secs(last, current);
 	printf("\n");

@@ -318,10 +318,10 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blo
         if (nblocks_in_chunk * e->blocksize < e->chunksize) {
             nblocks_in_chunk += 1;
         }
-        int nitems = (int)e->blocksize / e->typesize;
+        size_t nitems = e->blocksize / e->typesize;
         for (int nchunk = 0; nchunk < e->nchunks; nchunk++) {
             size_t corrected_blocksize = e->blocksize;
-            int corrected_nitems = nitems;
+            size_t corrected_nitems = nitems;
 //#pragma omp parallel for schedule(dynamic)
             for (int nblock = 0; nblock < nblocks_in_chunk; nblock++) {
                 if ((nblock + 1 == nblocks_in_chunk) && (nblock + 1) * e->blocksize > e->chunksize) {
@@ -332,10 +332,10 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blo
                 for (int nvar = 0; nvar < e->var_len; nvar++) {
                     blosc2_schunk *schunk = (blosc2_schunk*)e->vars[nvar].c->sc;
                     uint8_t *chunk = schunk->data[nchunk];
-                    int dsize = blosc_getitem(chunk, nblock * nitems, corrected_nitems, e->temp_vars[nvar]->data);
+                    int dsize = blosc_getitem(chunk, (int)(nblock * nitems), (int)corrected_nitems, e->temp_vars[nvar]->data);
                     if (dsize < 0) {
                         printf("Decompression error.  Error code: %d\n", dsize);
-                        return dsize;
+                        return INA_ERR_FAILED;
                     }
                 }
                 // Evaluate the expression for this block
@@ -347,18 +347,22 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blo
     }
     else {
         // Evaluate the expression for all the chunks in variables
+		blosc2_schunk *schunk0 = (blosc2_schunk *) e->vars[0].c->sc;  // get the super-chunk of the first variable
+		int nitems_in_schunk = (int)schunk0->nbytes / (int)e->typesize;
+		int nitems_in_chunk = (int)e->chunksize / (int)e->typesize;
         for (int nchunk = 0; nchunk < e->nchunks; nchunk++) {
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < e->var_len; nvar++) {
-                blosc2_schunk *schunk = (blosc2_schunk *) e->vars[nvar].c->sc;  // get the super-chunk of the first variable
+                blosc2_schunk *schunk = (blosc2_schunk *) e->vars[nvar].c->sc;
                 int dsize = blosc2_schunk_decompress_chunk(schunk, nchunk, e->temp_vars[nvar]->data, e->chunksize);
                 if (dsize < 0) {
                     printf("Decompression error.  Error code: %d\n", dsize);
-                    return dsize;
+                    return INA_ERR_FAILED;
                 }
             }
             const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
-            blosc2_schunk_append_buffer(out, expr_out->data, e->chunksize);
+			int nitems = (nchunk < e->nchunks - 1) ? nitems_in_chunk : nitems_in_schunk - nchunk * nitems_in_chunk;
+            blosc2_schunk_append_buffer(out, expr_out->data, nitems * e->typesize);
         }
     }
 	return INA_SUCCESS;
