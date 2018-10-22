@@ -189,14 +189,12 @@ int main(int argc, char** argv)
 			(1.*sc_y->nbytes)/sc_y->cbytes);
 
 	// Check IronArray performance
-	// First for chunk evaluator
+	// First for the chunk evaluator
     iarray_context_t *iactx;
     iarray_config_t cfg = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_CHUNK, .cparams = &cparams, .dparams = &dparams};
     iarray_ctx_new(&cfg, &iactx);
 
-	//iarray_variable_t vars[] = {{"x", sc_x}, {"y", sc_y}};
 	blosc2_schunk *sc_out = blosc2_new_schunk(cparams, dparams, NULL);
-	//iarray_variable_t out = {"out", sc_out};
 
     iarray_expression_t *e;
     iarray_expr_new(iactx, &e);
@@ -224,33 +222,45 @@ int main(int argc, char** argv)
 	}
 
 	iarray_expr_free(iactx, &e);
+	iarray_ctx_free(&iactx);
 
-	/*
-	// Then for block evaluator
-	blosc2_free_schunk(sc_out);
-	sc_out = blosc2_new_schunk(cparams, dparams, NULL);
-	iarray_variable_t out2 = {"out", sc_out};
+	// Then for the block evaluator
+    iarray_config_t cfg2 = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_BLOCK, .cparams = &cparams, .dparams = &dparams};
+    iarray_ctx_new(&cfg2, &iactx);
+
+	blosc2_schunk *sc_out2 = blosc2_new_schunk(cparams, dparams, NULL);
+
+    iarray_expr_new(iactx, &e);
+    iarray_from_sc(iactx, sc_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
+    iarray_from_sc(iactx, sc_y, IARRAY_DATA_TYPE_DOUBLE, &c_y);
+    iarray_expr_bind(e, "x", c_x);
+    iarray_expr_bind(e, "y", c_y);
+	iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
+
 	blosc_set_timestamp(&last);
-	//iarray_eval("x + y", vars, 2, out, IARRAY_DATA_TYPE_DOUBLE, &err);
-	iarray_eval_block("(x - 1.35) * (x - 4.45) * (x - 8.5)", vars, 1, out2, IARRAY_DATA_TYPE_DOUBLE, &err);
+	iarray_eval(iactx, e, sc_out2, 0, NULL);
 	blosc_set_timestamp(&current);
 	ttotal = blosc_elapsed_secs(last, current);
 	printf("\n");
 	printf("Time for computing and filling OUT values using iarray (block eval):  %.3g s, %.1f MB/s\n",
-			ttotal, sc_out->nbytes / (ttotal * MB));
+			ttotal, sc_out2->nbytes / (ttotal * MB));
 	printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
-			(sc_out->nbytes/MB), (sc_out->cbytes/MB),
-			(1.*sc_out->nbytes)/sc_out->cbytes);
+			(sc_out2->nbytes/MB), (sc_out2->cbytes/MB),
+			(1.*sc_out2->nbytes)/sc_out2->cbytes);
 
 	// Check that we are getting the same results than through manual computation
-	if (!test_schunks_equal(sc_y, sc_out)) {
+	if (!test_schunks_equal(sc_y, sc_out2)) {
 		return -1;
-	}*/
+	}
+
+	iarray_expr_free(iactx, &e);
+	iarray_ctx_free(&iactx);
 
 	// Free resources
 	blosc2_free_schunk(sc_x);
 	blosc2_free_schunk(sc_y);
 	blosc2_free_schunk(sc_out);
+	blosc2_free_schunk(sc_out2);
 
 	blosc_destroy();
 

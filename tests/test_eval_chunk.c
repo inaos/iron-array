@@ -16,7 +16,6 @@ int tests_run = 0;
 blosc2_schunk *sc_x, *sc_y, *sc_out;
 int nbytes, cbytes;
 int clevel = 9;
-iarray_context_t* iactx = NULL;
 
 double buffer_x[NITEMS_CHUNK];
 double buffer_y[NITEMS_CHUNK];
@@ -56,9 +55,9 @@ void fill_buffer_y(const double* x, double* y, int nitems)
 
 static char* test_eval_chunk1()
 {
-	//iarray_variable_t vars[] = {{"x", sc_x}, {"y", sc_y}};
-	//iarray_variable_t out = {"out", sc_out};
-
+	iarray_context_t *iactx;
+	iarray_config_t cfg = {.max_num_threads = NTHREADS, .flags = IARRAY_EXPR_EVAL_CHUNK};
+	iarray_ctx_new(&cfg, &iactx);
 	iarray_expression_t* e;
 	iarray_expr_new(iactx, &e);
 	iarray_container_t* c_x;
@@ -73,6 +72,31 @@ static char* test_eval_chunk1()
 	}
 
 	iarray_expr_free(iactx, &e);
+	iarray_ctx_free(&iactx);
+
+	return 0;
+}
+
+static char* test_eval_block1()
+{
+	iarray_context_t *iactx;
+	iarray_config_t cfg = {.max_num_threads = NTHREADS, .flags = IARRAY_EXPR_EVAL_BLOCK};
+	iarray_ctx_new(&cfg, &iactx);
+	iarray_expression_t* e;
+	iarray_expr_new(iactx, &e);
+	iarray_container_t* c_x;
+	iarray_from_sc(iactx, sc_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
+	iarray_expr_bind(e, "x", c_x);
+
+	iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
+	iarray_eval(iactx, e, sc_out, 0, NULL);
+	// Check that we are getting the same results than through manual computation
+	if (!test_schunks_equal_double(sc_y, sc_out)) {
+		return "Super-chunks are not equal";
+	}
+
+	iarray_expr_free(iactx, &e);
+	iarray_ctx_free(&iactx);
 
 	return 0;
 }
@@ -80,6 +104,7 @@ static char* test_eval_chunk1()
 static char* all_tests()
 {
 	mu_run_test(test_eval_chunk1);
+	mu_run_test(test_eval_block1);
 
 	return 0;
 }
@@ -106,9 +131,6 @@ int main(int argc, char** argv)
 	cparams.blocksize = 16*(int) KB;  // 16 KB seems optimal for evaluating expressions
 	cparams.nthreads = NTHREADS;
 	dparams.nthreads = NTHREADS;
-
-	iarray_config_t cfg = {.max_num_threads = 1, .flags = 0, .cparams = &cparams, .dparams = &dparams};
-	iarray_ctx_new(&cfg, &iactx);
 
 	sc_x = blosc2_new_schunk(cparams, dparams, NULL);
 	fill_sc_x(sc_x);
