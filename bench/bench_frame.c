@@ -17,7 +17,7 @@
 
 INA_BENCH_DATA(chunk_store){
     double *A;
-    double`*B;
+    double *B;
     double *C;
     size_t elements;
 };
@@ -30,6 +30,7 @@ INA_BENCH_SETUP(chunk_store)
     data->B = (double*)ina_mem_alloc(sizeof(double)*data->elements);
     data->C = (double*)ina_mem_alloc(sizeof(double)*data->elements);
 }
+
 INA_BENCH_TEARDOWN(chunk_store)
 {
     ina_mem_free(data->A);
@@ -41,6 +42,7 @@ INA_BENCH_SCALE(chunk_store)
 {
     ina_bench_set_scale(1);
 }
+
 INA_BENCH_BEGIN(chunk_store, realloc) {}
 INA_BENCH_END(chunk_store, realloc) {}
 
@@ -53,6 +55,3 @@ INA_BENCH(chunk_store, realloc, 1)
     
     ina_bench_set_int64(ina_bench_stopwatch_stop());
 }
-
-
-

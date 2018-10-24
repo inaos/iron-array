@@ -22,40 +22,40 @@ typedef struct iarray_container_s iarray_container_t;
 typedef struct iarray_expression_s iarray_expression_t;
 
 typedef struct iarray_config_s {
-	int flags;
-	int max_num_threads; /* Maximum number of threads to use */
+    int flags;
+    int max_num_threads; /* Maximum number of threads to use */
     blosc2_cparams *cparams;
     blosc2_dparams *dparams;
 } iarray_config_t;
 
 typedef enum iarray_rng_e {
-	IARRAY_RNG_MERSENNE_TWISTER,
-	IARRAY_RNG_SOBOL,
+    IARRAY_RNG_MERSENNE_TWISTER,
+    IARRAY_RNG_SOBOL,
 } iarray_rng_t;
 
 typedef enum iarray_data_type_e {
-	IARRAY_DATA_TYPE_DOUBLE,
-	IARRAY_DATA_TYPE_FLOAT
+    IARRAY_DATA_TYPE_DOUBLE,
+    IARRAY_DATA_TYPE_FLOAT
 } iarray_data_type_t;
 
 typedef struct iarray_dtshape_s {
-	iarray_data_type_t dtype;
-	int ndim;     /* IF ndim = 0 THEN it is a scalar */
-	int dims[8];  // a fixed size simplifies the code and should be enough for most IronArray cases
+    iarray_data_type_t dtype;
+    int ndim;     /* IF ndim = 0 THEN it is a scalar */
+    int dims[8];  // a fixed size simplifies the code and should be enough for most IronArray cases
 } iarray_dtshape_t;
 
 typedef struct iarray_slice_param_s {
-	int axis;
-	int idx;
+    int axis;
+    int idx;
 } iarray_slice_param_t;
 
 typedef enum iarray_config_flags_e {
-	IARRAY_EXPR_EVAL_BLOCK = 0x1,
-	IARRAY_EXPR_EVAL_CHUNK = 0x2
+    IARRAY_EXPR_EVAL_BLOCK = 0x1,
+    IARRAY_EXPR_EVAL_CHUNK = 0x2
 } iarray_config_flags_t;
 
 typedef enum iarray_bind_flags_e {
-	IARRAY_BIND_UPDATE_CONTAINER = 0x1
+    IARRAY_BIND_UPDATE_CONTAINER = 0x1
 } iarray_bind_flags_t;
 
 INA_API(ina_rc_t) iarray_ctx_new(iarray_config_t *cfg, iarray_context_t **ctx);
