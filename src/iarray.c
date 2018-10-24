@@ -195,7 +195,13 @@ INA_API(ina_rc_t) iarray_from_sc(iarray_context_t *ctx, blosc2_schunk *sc, iarra
     if (ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
         int typesize = sc->typesize;
         size_t chunksize, cbytes, blocksize;
-        blosc_cbuffer_sizes(sc->data[0], &chunksize, &cbytes, &blocksize);
+        void *chunk;
+        bool needs_free;
+        int retcode = blosc2_schunk_get_chunk(sc, 0, &chunk, &needs_free);
+        blosc_cbuffer_sizes(chunk, &chunksize, &cbytes, &blocksize);
+        if (needs_free) {
+            free(chunk);
+        }
         dim0 = (int)blocksize / typesize;
     }
     else {
@@ -273,13 +279,19 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 {
     e->expr = ina_str_new_fromcstr(expr);
     te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->var_len * sizeof(te_variable));
-    blosc2_schunk *schunk = (blosc2_schunk*)e->vars[0].c->sc;
+    blosc2_schunk *schunk = e->vars[0].c->sc;
     int dim0 = 0;
     if (e->ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
         int typesize = schunk->typesize;
         int nchunks = schunk->nchunks;
+        void *chunk;
+        bool needs_free;
+        int retcode = blosc2_schunk_get_chunk(schunk, 0, &chunk, &needs_free);
         size_t chunksize, cbytes, blocksize;
-        blosc_cbuffer_sizes(schunk->data[0], &chunksize, &cbytes, &blocksize);
+        blosc_cbuffer_sizes(chunk, &chunksize, &cbytes, &blocksize);
+        if (needs_free) {
+            free(chunk);
+        }
         dim0 = (int)blocksize / typesize;
         e->nchunks = nchunks;
         e->chunksize = chunksize;
@@ -335,9 +347,15 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blo
                 }
                 // Decompress blocks in variables into temporaries
                 for (int nvar = 0; nvar < e->var_len; nvar++) {
-                    blosc2_schunk *schunk = (blosc2_schunk*)e->vars[nvar].c->sc;
-                    uint8_t *chunk = schunk->data[nchunk];
+                    // TODO: this requires to get a chunk per every block; see a way to avoid this
+                    blosc2_schunk *schunk = e->vars[nvar].c->sc;
+                    void *chunk;
+                    bool needs_free;
+                    int retcode = blosc2_schunk_get_chunk(schunk, (int)nchunk, &chunk, &needs_free);
                     int dsize = blosc_getitem(chunk, (int)(nblock * nitems), (int)corrected_nitems, e->temp_vars[nvar]->data);
+                    if (needs_free) {
+                        free(chunk);
+                    }
                     if (dsize < 0) {
                         printf("Decompression error.  Error code: %d\n", dsize);
                         return INA_ERR_FAILED;
