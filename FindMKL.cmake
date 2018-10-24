@@ -21,18 +21,18 @@
 # 
 
 find_path(MKL_ROOT_DIR
-	include/mkl.h
-	PATHS
-	$ENV{MKLROOT}
-	/opt/intel/compilers_and_libraries/linux/mkl
-	"C:/IntelSWTools/compilers_and_libraries/windows/mkl/"
-	/Library/Frameworks/Intel_MKL.framework/Versions/Current/lib/universal
+    include/mkl.h
+    PATHS
+    $ENV{MKLROOT}
+    /opt/intel/compilers_and_libraries/linux/mkl
+    "C:/IntelSWTools/compilers_and_libraries/windows/mkl/"
+    /Library/Frameworks/Intel_MKL.framework/Versions/Current/lib/universal
 )
 
 find_path(MKL_INCLUDE_DIR
-	mkl.h
-	PATHS
-	${MKL_ROOT_DIR}/include
+    mkl.h
+    PATHS
+    ${MKL_ROOT_DIR}/include
 )
 
 if(WIN32)
@@ -47,26 +47,26 @@ endif()
 
 
 find_path(MKL_LIB_SEARCHPATH
-	${MKL_SEARCH_LIB}
-	PATHS
-	${MKL_ROOT_DIR}/lib/intel64
+    ${MKL_SEARCH_LIB}
+    PATHS
+    ${MKL_ROOT_DIR}/lib/intel64
 )
 
 if(WIN32)
-	set(MKL_LIBS mkl_core.lib mkl_sequential.lib)
+    set(MKL_LIBS mkl_core.lib mkl_sequential.lib)
 elseif(APPLE)
-	set(MKL_LIBS )
+    set(MKL_LIBS )
 else() # Linux
-	set(MKL_LIBS libmkl_core.a libmkl_sequential.a)
+    set(MKL_LIBS libmkl_core.a libmkl_sequential.a)
 endif()
 
 foreach (LIB ${MKL_LIBS})
-	find_library(${LIB}_PATH ${LIB} PATHS ${MKL_LIB_SEARCHPATH})
-	if(${LIB}_PATH)
-		set(MKL_LIBRARIES ${MKL_LIBRARIES} ${${LIB}_PATH})
-	else()
-		message(STATUS "Could not find ${LIB}: disabling MKL")
-	endif()
+    find_library(${LIB}_PATH ${LIB} PATHS ${MKL_LIB_SEARCHPATH})
+    if(${LIB}_PATH)
+        set(MKL_LIBRARIES ${MKL_LIBRARIES} ${${LIB}_PATH})
+    else()
+        message(STATUS "Could not find ${LIB}: disabling MKL")
+    endif()
 endforeach()
 
 set(MKL_INCLUDE_DIRS ${MKL_INCLUDE_DIR})

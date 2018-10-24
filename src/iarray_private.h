@@ -5,27 +5,27 @@
 #include <libiarray/iarray.h>
 
 typedef enum iarray_optype_e {
-	IARRAY_OPERATION_TYPE_ADD,
-	IARRAY_OPERATION_TYPE_SUB,
-	IARRAY_OPERATION_TYPE_MUL,
-	IARRAY_OPERATION_TYPE_DIVIDE,
-	IARRAY_OPERATION_TYPE_NEGATE,
+    IARRAY_OPERATION_TYPE_ADD,
+    IARRAY_OPERATION_TYPE_SUB,
+    IARRAY_OPERATION_TYPE_MUL,
+    IARRAY_OPERATION_TYPE_DIVIDE,
+    IARRAY_OPERATION_TYPE_NEGATE,
 } iarray_optype_t;
 
 typedef enum iarray_blas_type_e {
-	IARRAY_OPERATION_TYPE_BLAS1,
-	IARRAY_OPERATION_TYPE_BLAS2,
-	IARRAY_OPERATION_TYPE_BLAS3
+    IARRAY_OPERATION_TYPE_BLAS1,
+    IARRAY_OPERATION_TYPE_BLAS2,
+    IARRAY_OPERATION_TYPE_BLAS3
 } iarray_blas_type_t;
 
 typedef struct iarray_temporary_s {
-	iarray_dtshape_t *dtshape;
-	size_t size;
-	void *data;
-	union {
-		float f;
-		double d;
-	} scalar_value;
+    iarray_dtshape_t *dtshape;
+    size_t size;
+    void *data;
+    union {
+        float f;
+        double d;
+    } scalar_value;
 } iarray_temporary_t;
 
 ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, iarray_dtshape_t *dtshape, iarray_temporary_t **temp);
