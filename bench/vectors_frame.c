@@ -4,14 +4,17 @@
 
 /*
   Example program demonstrating how to execute an expression with super-chunks as operands.
+  This is the version for using frames (either in-memory or on-disk) backing the super-chunks.
 
   To compile this program:
 
-  $ gcc -O3 vectors.c -o vectors -lblosc
+  $ gcc -O3 vectors_frame.c -o vectors_frame -lblosc
 
   To run:
 
-  $ ./vectors
+  $ ./vectors_frame memory
+  ...
+  $ ./vectors_frame disk
   ...
 
 */
@@ -115,6 +118,13 @@ int main(int argc, char** argv)
 
     ina_app_init(argc, argv, NULL);
 
+    bool diskframes = false;
+    if (argc > 1) {
+        if (*argv[1] == 'd') {
+            diskframes = true;
+        }
+    }
+
     blosc_init();
 
     const size_t isize = NITEMS_CHUNK * sizeof(double);
@@ -146,7 +156,9 @@ int main(int argc, char** argv)
 //			ttotal, sizeof(x)/(ttotal*MB));
 
     // Create and fill a super-chunk for the x operand
-    sc_x = blosc2_new_schunk(cparams, dparams, NULL);
+    blosc2_frame frame_x = BLOSC_EMPTY_FRAME;
+    if (diskframes) frame_x.fname = "x.b2frame";
+    sc_x = blosc2_new_schunk(cparams, dparams, &frame_x);
     blosc_set_timestamp(&last);
     fill_sc_x(sc_x, isize);
     blosc_set_timestamp(&current);
@@ -169,7 +181,9 @@ int main(int argc, char** argv)
     int retcode = y[0] > y[1];
 
     // Create a super-chunk container and compute y values
-    sc_y = blosc2_new_schunk(cparams, dparams, NULL);
+    blosc2_frame frame_y = BLOSC_EMPTY_FRAME;
+    if (diskframes) frame_y.fname = "y.b2frame";
+    sc_y = blosc2_new_schunk(cparams, dparams, &frame_y);
     blosc_set_timestamp(&last);
     for (int nchunk = 0; nchunk < sc_x->nchunks; nchunk++) {
         int dsize = blosc2_schunk_decompress_chunk(sc_x, nchunk, buffer_x, isize);
@@ -194,7 +208,10 @@ int main(int argc, char** argv)
     iarray_config_t cfg = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_CHUNK, .cparams = &cparams, .dparams = &dparams};
     iarray_ctx_new(&cfg, &iactx);
 
-    blosc2_schunk *sc_out = blosc2_new_schunk(cparams, dparams, NULL);
+    /* Create a super-chunk backed by an in-memory frame */
+    blosc2_frame frame_out = BLOSC_EMPTY_FRAME;
+    if (diskframes) frame_out.fname = "out.b2frame";
+    blosc2_schunk *sc_out = blosc2_new_schunk(cparams, dparams, &frame_out);
 
     iarray_expression_t *e;
     iarray_expr_new(iactx, &e);
@@ -228,7 +245,10 @@ int main(int argc, char** argv)
     iarray_config_t cfg2 = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_BLOCK, .cparams = &cparams, .dparams = &dparams};
     iarray_ctx_new(&cfg2, &iactx);
 
-    blosc2_schunk *sc_out2 = blosc2_new_schunk(cparams, dparams, NULL);
+    /* Create a super-chunk backed by an in-memory frame */
+    blosc2_frame frame_out2 = BLOSC_EMPTY_FRAME;
+    if (diskframes) frame_out2.fname = "out2.b2frame";
+    blosc2_schunk *sc_out2 = blosc2_new_schunk(cparams, dparams, &frame_out2);
 
     iarray_expr_new(iactx, &e);
     iarray_from_sc(iactx, sc_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
