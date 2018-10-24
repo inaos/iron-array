@@ -65,9 +65,11 @@ set(TESTS ${CMAKE_SOURCE_DIR}/tests)
 #            APPEND PROPERTY LINK_FLAGS "-fopenmp")
 #endif ()
 add_executable(vectors ${BENCH}/vectors.c)
+add_executable(vectors_frame ${BENCH}/vectors_frame.c)
 add_executable(vectors-float ${BENCH}/vectors-float.c)
 
 target_link_libraries(vectors LINK_PUBLIC iarray_c blosc_static tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+target_link_libraries(vectors_frame LINK_PUBLIC iarray_c blosc_static tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 target_link_libraries(vectors-float LINK_PUBLIC iarray_c blosc_static tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 add_executable(test_eval_chunk ${TESTS}/test_eval_chunk.c)
