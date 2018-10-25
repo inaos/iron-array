@@ -37,7 +37,7 @@ struct iarray_expression_s {
     size_t blocksize;
     size_t typesize;
     size_t chunksize;
-    int var_len;
+    int nvars;
     te_expr *texpr;
     iarray_temporary_t **temp_vars;
     iarray_container_t *out;
@@ -225,7 +225,7 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e
     *e = ina_mem_alloc(sizeof(iarray_expression_t));
     INA_RETURN_IF_NULL(e);
     (*e)->ctx = ctx;
-    (*e)->var_len = 0;
+    (*e)->nvars = 0;
     (*e)->temp_vars = ina_mem_alloc(sizeof(iarray_temporary_t*)*_IARRAY_EXPR_VAR_MAX);
     ina_mem_set(&(*e)->vars, 0, sizeof(_iarray_tinyexpr_var_t)*_IARRAY_EXPR_VAR_MAX);
     return INA_SUCCESS;
@@ -245,9 +245,9 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
         /* FIXME: raise error */
         return 1;
     }
-    e->vars[e->var_len].var = var;
-    e->vars[e->var_len].c = val;
-    e->var_len++;
+    e->vars[e->nvars].var = var;
+    e->vars[e->nvars].c = val;
+    e->nvars++;
     return INA_SUCCESS;
 }
 
@@ -269,16 +269,16 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
     c->dtshape->ndim = 0;
     c->dtshape->dtype = IARRAY_DATA_TYPE_DOUBLE;
     c->scalar_value.d = val;
-    e->vars[e->var_len].var = var;
-    e->vars[e->var_len].c = c;
-    e->var_len++;
+    e->vars[e->nvars].var = var;
+    e->vars[e->nvars].c = c;
+    e->nvars++;
     return INA_SUCCESS;
 }
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 {
     e->expr = ina_str_new_fromcstr(expr);
-    te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->var_len * sizeof(te_variable));
+    te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(te_variable));
     blosc2_schunk *schunk = e->vars[0].c->sc;
     int dim0 = 0;
     if (e->ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
@@ -309,7 +309,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
             .dims = {dim0},
             .dtype = e->vars[0].c->dtshape->dtype,
     };
-    for (int nvar = 0; nvar < e->var_len; nvar++) {
+    for (int nvar = 0; nvar < e->nvars; nvar++) {
         iarray_temporary_new(e, e->vars[nvar].c, &shape_var, &e->temp_vars[nvar]);
         te_vars[nvar].name = e->vars[nvar].var;
         te_vars[nvar].address = &e->temp_vars[nvar];
@@ -317,7 +317,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         te_vars[nvar].context = NULL;
     }
     int err = 0;
-    e->texpr = te_compile(e, ina_str_cstr(e->expr), te_vars, e->var_len, &err);
+    e->texpr = te_compile(e, ina_str_cstr(e->expr), te_vars, e->nvars, &err);
     // FIXME: error handling
     return INA_SUCCESS;
 }
@@ -327,9 +327,19 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blo
     blosc2_schunk *schunk0 = e->vars[0].c->sc;  // get the super-chunk of the first variable
     size_t nitems_in_schunk = schunk0->nbytes / e->typesize;
     size_t nitems_in_chunk = e->chunksize / e->typesize;
+    int nvars = e->nvars;
+
     if (e->ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
-        int8_t *outbuf = ina_mem_alloc(e->chunksize);  // FIXME: this could beneifit from using a mempool (probably not)
+        int8_t *outbuf = ina_mem_alloc(e->chunksize);  // FIXME: this could benefit from using a mempool (probably not)
         size_t nitems = e->blocksize / e->typesize;
+        void **var_chunks = ina_mem_alloc(nvars * sizeof(void*));
+        bool *var_needs_free = ina_mem_alloc(nvars * sizeof(bool));
+        // Allocate a buffer for every (compressed) chunk
+        for (int nvar = 0; nvar < nvars; nvar++) {
+            //var_chunks[nvar] = ina_mem_alloc(e->chunksize);  // FIXME: looks like this does not work correctly
+            var_chunks[nvar] = malloc(e->chunksize);
+            var_needs_free[nvar] = false;
+        }
         for (size_t nchunk = 0; nchunk < e->nchunks; nchunk++) {
             size_t chunksize = (nchunk < e->nchunks - 1) ? e->chunksize : schunk0->nbytes - nchunk * e->chunksize;
             size_t nblocks_in_chunk = chunksize / e->blocksize;
@@ -339,6 +349,11 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blo
                 nitems_in_chunk = chunksize / e->typesize;
                 nblocks_in_chunk += 1;
             }
+            // Allocate a buffer for every chunk (specially useful for reading on-disk variables)
+            for (int nvar = 0; nvar < nvars; nvar++) {
+                blosc2_schunk* schunk = e->vars[nvar].c->sc;
+                int retcode = blosc2_schunk_get_chunk(schunk, (int)nchunk, &var_chunks[nvar], &var_needs_free[nvar]);
+            }
 //#pragma omp parallel for schedule(dynamic)
             for (size_t nblock = 0; nblock < nblocks_in_chunk; nblock++) {
                 if ((nblock + 1 == nblocks_in_chunk) && (nblock + 1) * e->blocksize > chunksize) {
@@ -346,16 +361,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blo
                     corrected_nitems = (int)corrected_blocksize / e->typesize;
                 }
                 // Decompress blocks in variables into temporaries
-                for (int nvar = 0; nvar < e->var_len; nvar++) {
-                    // TODO: this requires to get a chunk per every block; see a way to avoid this
-                    blosc2_schunk *schunk = e->vars[nvar].c->sc;
-                    void *chunk;
-                    bool needs_free;
-                    int retcode = blosc2_schunk_get_chunk(schunk, (int)nchunk, &chunk, &needs_free);
-                    int dsize = blosc_getitem(chunk, (int)(nblock * nitems), (int)corrected_nitems, e->temp_vars[nvar]->data);
-                    if (needs_free) {
-                        free(chunk);
-                    }
+                for (int nvar = 0; nvar < nvars; nvar++) {
+                    int dsize = blosc_getitem(var_chunks[nvar], (int)(nblock * nitems), (int)corrected_nitems, e->temp_vars[nvar]->data);
                     if (dsize < 0) {
                         printf("Decompression error.  Error code: %d\n", dsize);
                         return INA_ERR_FAILED;
@@ -367,13 +374,21 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blo
             }
             blosc2_schunk_append_buffer(out, outbuf, nitems_in_chunk * e->typesize);
         }
+        for (int nvar = 0; nvar < nvars; nvar++) {
+            if (var_needs_free[nvar]) {
+                //ina_mem_free(var_chunks[nvar]);  // this raises an error (bug in the ina library?)
+                free(var_chunks[nvar]);
+            }
+        }
+        ina_mem_free(var_chunks);
+        ina_mem_free(var_needs_free);
         ina_mem_free(outbuf);
     }
     else {
         // Evaluate the expression for all the chunks in variables
         for (size_t nchunk = 0; nchunk < e->nchunks; nchunk++) {
             // Decompress chunks in variables into temporaries
-            for (int nvar = 0; nvar < e->var_len; nvar++) {
+            for (int nvar = 0; nvar < nvars; nvar++) {
                 blosc2_schunk *schunk = e->vars[nvar].c->sc;
                 int dsize = blosc2_schunk_decompress_chunk(schunk, (int)nchunk, e->temp_vars[nvar]->data, e->chunksize);
                 if (dsize < 0) {
