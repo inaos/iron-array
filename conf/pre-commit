@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# Check coding conventions:
+# - No tabs; 4 spaces
+# 
+#
+
+if
+    git diff --cached --name-only | egrep '(\.(h|c|txt|md|cmake)$)' | xargs git diff --cached | egrep '^\+.*'$'\t' > /dev/null
+then
+    echo "Tabs found in your commit. Please use (four) spaces and re-commit."
+    exit 1
+fi
