@@ -30,12 +30,10 @@ include("${CMAKE_BINARY_DIR}/inac.cmake")
 inac_add_dependency(inac "1.0.0")
 inac_add_contrib_lib(tinyexpr)
 
-set(LIBINAC ${CMAKE_SOURCE_DIR}/inac/libinac)
-set(SRC ${CMAKE_SOURCE_DIR}/src)
-
 add_subdirectory(contribs/c-blosc2)
 include_directories(contribs/c-blosc2/blosc)
 
+set(SRC ${CMAKE_SOURCE_DIR}/src)
 file(GLOB src ${SRC_DIR}/*.c)
 add_library(iarray_c ${src})
 set_target_properties(
@@ -46,9 +44,9 @@ set_target_properties(
 include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac"
         "${CMAKE_SOURCE_DIR}" )
 
-#inac_merge_static_libs(iarray iarray_c blosc_static ${INAC_LIBS})
+inac_merge_static_libs(iarray iarray_c blosc_static ${INAC_LIBS})
 
-#inac_add_tests(iarray)
+inac_add_tests(iarray)
 #inac_add_benchmarks(iarray)
 #inac_add_tools(iarray)
 #inac_add_examples(iarray)
@@ -57,7 +55,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 find_package(MKL)
 
 set(BENCH ${CMAKE_SOURCE_DIR}/bench)
-set(TESTS ${CMAKE_SOURCE_DIR}/tests)
 # Playing with OpenMP (available mainly on GCC)
 #if (UNIX AND NOT CMAKE_C_COMPILER_ID STREQUAL Clang)
 #    set_property(
@@ -71,9 +68,6 @@ add_executable(vectors-float ${BENCH}/vectors-float.c)
 target_link_libraries(vectors LINK_PUBLIC iarray_c blosc_static tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 target_link_libraries(vectors_frame LINK_PUBLIC iarray_c blosc_static tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 target_link_libraries(vectors-float LINK_PUBLIC iarray_c blosc_static tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
-
-add_executable(test_eval_chunk ${TESTS}/test_eval_chunk.c)
-target_link_libraries(test_eval_chunk LINK_PUBLIC iarray_c blosc_static tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 add_executable(test ${BENCH}/test.c)
 add_executable(test2 ${BENCH}/test2.c)
