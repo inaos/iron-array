@@ -46,6 +46,11 @@ include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMA
 
 inac_merge_static_libs(iarray iarray_c blosc_static ${INAC_LIBS})
 
+if (UNIX)
+set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
+set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc_static)
+endif()
+
 inac_add_tests(iarray)
 #inac_add_benchmarks(iarray)
 #inac_add_tools(iarray)
