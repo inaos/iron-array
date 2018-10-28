@@ -55,7 +55,8 @@ void fill_buffer_y(const double* x, double* y, int nitems)
 }
 
 /* Check that two super-chunks with the same partitions are equal */
-bool test_schunks_equal_double(blosc2_schunk* sc1, blosc2_schunk* sc2) {
+int test_schunks_equal_double(blosc2_schunk* sc1, blosc2_schunk* sc2) 
+{
     size_t chunksize = (size_t)sc1->chunksize;
     int nitems_in_chunk = (int)chunksize / sc1->typesize;
     double *buffer_sc1 = malloc(chunksize);
@@ -69,13 +70,13 @@ bool test_schunks_equal_double(blosc2_schunk* sc1, blosc2_schunk* sc2) {
                 INA_TEST_MSG("Values differ in (%d nchunk, %d nelem) (diff: %f)\n", nchunk, nelem, vdiff);
                 free(buffer_sc1);
                 free(buffer_sc2);
-                return false;
+                return 0;
             }
         }
     }
     free(buffer_sc1);
     free(buffer_sc2);
-    return true;
+    return 1;
 }
 
 INA_TEST_DATA(eval)
