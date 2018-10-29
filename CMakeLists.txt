@@ -32,6 +32,8 @@ inac_add_contrib_lib(tinyexpr)
 
 add_subdirectory(contribs/c-blosc2)
 include_directories(contribs/c-blosc2/blosc)
+add_subdirectory(contribs/caterva)
+include_directories(contribs/caterva/caterva)
 
 set(SRC ${CMAKE_SOURCE_DIR}/src)
 file(GLOB src ${SRC_DIR}/*.c)
