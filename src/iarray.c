@@ -48,7 +48,7 @@ struct iarray_container_s {
     iarray_dtshape_t *dtshape;
     //FIXME: caterva_array pointer
     //	     blosc2_frame *frame;, will be in the caterva struct
-    blosc2_schunk *sc;
+    caterva_array *catarr;
     union {
         float f;
         double d;
@@ -61,7 +61,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *s
     INA_RETURN_IF_NULL(c);
     (*c)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
     ina_mem_cpy((*c)->dtshape, shape, sizeof(iarray_dtshape_t));
-    (*c)->sc = blosc2_new_schunk(*ctx->cfg->cparams, *ctx->cfg->dparams, NULL);
+    (*c)->catarr = caterva_new_array(*ctx->cfg->cparams, *ctx->cfg->dparams, NULL, *ctx->cfg->pparams);
     return INA_SUCCESS;
 }
 
@@ -208,7 +208,35 @@ INA_API(ina_rc_t) iarray_from_sc(iarray_context_t *ctx, blosc2_schunk *sc, iarra
         dim0 = sc->chunksize / sc->typesize;
     }
     (*container)->dtshape->dims[0] = dim0;
-    (*container)->sc = sc;
+    (*container)->catarr->sc = sc;
+    return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_from_ctarray(iarray_context_t *ctx, caterva_array *ctarray, iarray_data_type_t dtype, iarray_container_t **container)
+{
+    *container = ina_mem_alloc(sizeof(iarray_container_t));
+    (*container)->dtshape = ina_mem_alloc(sizeof(iarray_dtshape_t));
+    (*container)->dtshape->ndim = 1;
+    (*container)->dtshape->dtype = dtype;
+    int dim0 = 0;
+    blosc2_schunk *sc = ctarray->sc;
+    if (ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
+        int typesize = sc->typesize;
+        size_t chunksize, cbytes, blocksize;
+        void *chunk;
+        bool needs_free;
+        int retcode = blosc2_schunk_get_chunk(sc, 0, &chunk, &needs_free);
+        blosc_cbuffer_sizes(chunk, &chunksize, &cbytes, &blocksize);
+        if (needs_free) {
+            free(chunk);
+        }
+        dim0 = (int)blocksize / typesize;
+    }
+    else {
+        dim0 = sc->chunksize / sc->typesize;
+    }
+    (*container)->dtshape->dims[0] = dim0;
+    (*container)->catarr = ctarray;
     return INA_SUCCESS;
 }
 
@@ -279,7 +307,8 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 {
     e->expr = ina_str_new_fromcstr(expr);
     te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(te_variable));
-    blosc2_schunk *schunk = e->vars[0].c->sc;
+    caterva_array *catarr = e->vars[0].c->catarr;
+    blosc2_schunk *schunk = catarr->sc;
     int dim0 = 0;
     if (e->ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
         int typesize = schunk->typesize;
@@ -322,9 +351,9 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blosc2_schunk *out, int flags, iarray_container_t **ret)
+INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, caterva_array *out, int flags, iarray_container_t **ret)
 {
-    blosc2_schunk *schunk0 = e->vars[0].c->sc;  // get the super-chunk of the first variable
+    blosc2_schunk *schunk0 = e->vars[0].c->catarr->sc;  // get the super-chunk of the first variable
     size_t nitems_in_schunk = schunk0->nbytes / e->typesize;
     size_t nitems_in_chunk = e->chunksize / e->typesize;
     int nvars = e->nvars;
@@ -351,7 +380,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blo
             }
             // Allocate a buffer for every chunk (specially useful for reading on-disk variables)
             for (int nvar = 0; nvar < nvars; nvar++) {
-                blosc2_schunk* schunk = e->vars[nvar].c->sc;
+                blosc2_schunk *schunk = e->vars[nvar].c->catarr->sc;
                 int retcode = blosc2_schunk_get_chunk(schunk, (int)nchunk, &var_chunks[nvar], &var_needs_free[nvar]);
             }
 //#pragma omp parallel for schedule(dynamic)
@@ -389,7 +418,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blo
         for (size_t nchunk = 0; nchunk < e->nchunks; nchunk++) {
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
-                blosc2_schunk *schunk = e->vars[nvar].c->sc;
+                blosc2_schunk *schunk = e->vars[nvar].c->catarr->sc;
                 int dsize = blosc2_schunk_decompress_chunk(schunk, (int)nchunk, e->temp_vars[nvar]->data, e->chunksize);
                 if (dsize < 0) {
                     printf("Decompression error.  Error code: %d\n", dsize);
@@ -399,7 +428,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blo
             const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
             // Correct the number of items in last chunk
             nitems_in_chunk = (nchunk < e->nchunks - 1) ? nitems_in_chunk : nitems_in_schunk - nchunk * nitems_in_chunk;
-            blosc2_schunk_append_buffer(out, expr_out->data, nitems_in_chunk * e->typesize);
+            blosc2_schunk_append_buffer(out->sc, expr_out->data, nitems_in_chunk * e->typesize);
         }
     }
     return INA_SUCCESS;
