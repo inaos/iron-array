@@ -13,6 +13,7 @@
 #define PROJECT_IARRAY_H
 
 #include <blosc.h>
+#include <caterva.h>
 #include <libinac/lib.h>
 
 typedef struct iarray_context_s iarray_context_t;
@@ -26,6 +27,7 @@ typedef struct iarray_config_s {
     int max_num_threads; /* Maximum number of threads to use */
     blosc2_cparams *cparams;
     blosc2_dparams *dparams;
+    caterva_pparams *pparams;
 } iarray_config_t;
 
 typedef enum iarray_rng_e {
@@ -77,7 +79,9 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
 
-INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blosc2_schunk *out, int flags, iarray_container_t **ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
+INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, caterva_array *out, int flags, iarray_container_t **ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
+
+INA_API(ina_rc_t) iarray_from_ctarray(iarray_context_t *ctx, caterva_array *ctarray, iarray_data_type_t dtype, iarray_container_t **container);
 
 //FIXME: remove
 INA_API(ina_rc_t) iarray_from_sc(iarray_context_t *ctx, blosc2_schunk *sc, iarray_data_type_t dtype, iarray_container_t **container);
