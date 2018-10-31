@@ -729,3 +729,8 @@ INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp)
     *mp = e->ctx->mp;
     return INA_SUCCESS;
 }
+
+iarray_temporary_t* _iarray_matmul(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs)
+{
+    return _iarray_op(expr, lhs, rhs, IARRAY_OPERATION_TYPE_MUL);
+}
