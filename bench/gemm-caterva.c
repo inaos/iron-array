@@ -29,8 +29,11 @@
 #define GB (1024 * MB)
 
 #define NCHUNKS  100
-#define NITEMS_CHUNK (200 * 1000)  // fits well in modern L3 caches
-#define NELEM (NCHUNKS * NITEMS_CHUNK)  // multiple of NITEMS_CHUNKS for now
+#define N (1000)   // array size is (N * N)
+#define P (100)    // partition size
+#define NITEMS_CHUNK (P * P)
+//#define NELEM (NCHUNKS * NITEMS_CHUNK)  // multiple of NITEMS_CHUNKS for now
+#define NELEM (N * N)
 #define NTHREADS 1
 
 // Fill X values in regular array
@@ -151,9 +154,11 @@ int main(int argc, char** argv)
         pparams.shape[i] = 1;
         pparams.cshape[i] = 1;
     }
-    pparams.shape[CATERVA_MAXDIM - 1] = NELEM;  // FIXME: 1's at the beginning should be removed
-    pparams.cshape[CATERVA_MAXDIM - 1] = NITEMS_CHUNK;  // FIXME: 1's at the beginning should be removed
-    pparams.ndims = 1;
+    pparams.shape[CATERVA_MAXDIM - 1] = N;  // FIXME: 1's at the beginning should be removed
+    pparams.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
+    pparams.shape[CATERVA_MAXDIM - 2] = N;  // FIXME: 1's at the beginning should be removed
+    pparams.cshape[CATERVA_MAXDIM - 2] = P;  // FIXME: 1's at the beginning should be removed
+    pparams.ndims = 2;
 
     caterva_array *cta_x = caterva_new_array(cparams, dparams, &frame_x, pparams);
     blosc_set_timestamp(&last);
@@ -176,39 +181,40 @@ int main(int argc, char** argv)
     blosc_set_timestamp(&current);
 
     // Compute matrix-matrix multiplication (TODO)
-    blosc2_frame frame_out = BLOSC_EMPTY_FRAME;
-    if (diskframes) frame_out.fname = "out.b2frame";
-    caterva_array *cta_out = caterva_new_array(cparams, dparams, &frame_out, pparams);
-    blosc2_schunk *sc_x = cta_x->sc;
-    blosc2_schunk *sc_y = cta_y->sc;
-    blosc2_schunk *sc_out = cta_out->sc;
-    blosc_set_timestamp(&last);
-    for (int nchunk = 0; nchunk < sc_x->nchunks; nchunk++) {
-        int dsize = blosc2_schunk_decompress_chunk(sc_x, nchunk, buffer_x, isize);
-        if (dsize < 0) {
-            printf("Decompression error.  Error code: %d\n", dsize);
-            return dsize;
-        }
-        dsize = blosc2_schunk_decompress_chunk(sc_y, nchunk, buffer_y, isize);
-        if (dsize < 0) {
-            printf("Decompression error.  Error code: %d\n", dsize);
-            return dsize;
-        }
-        fill_buffer_out(buffer_x, buffer_y, buffer_out);
-        blosc2_schunk_append_buffer(sc_out, buffer_out, isize);
-    }
-    blosc_set_timestamp(&current);
-    ttotal = blosc_elapsed_secs(last, current);
-    printf("\n");
-    printf("Time for computing and filling OUT values w/o iarray:  %.3g s, %.1f MB/s\n",
-           ttotal, sc_out->nbytes / (ttotal * MB));
-    printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
-           (sc_out->nbytes/MB), (sc_out->cbytes/MB),
-           (1.*sc_out->nbytes)/sc_out->cbytes);
+//    blosc2_frame frame_out = BLOSC_EMPTY_FRAME;
+//    if (diskframes) frame_out.fname = "out.b2frame";
+//    caterva_array *cta_out = caterva_new_array(cparams, dparams, &frame_out, pparams);
+//    blosc2_schunk *sc_x = cta_x->sc;
+//    blosc2_schunk *sc_y = cta_y->sc;
+//    blosc2_schunk *sc_out = cta_out->sc;
+//    blosc_set_timestamp(&last);
+//    for (int nchunk = 0; nchunk < sc_x->nchunks; nchunk++) {
+//        int dsize = blosc2_schunk_decompress_chunk(sc_x, nchunk, buffer_x, isize);
+//        if (dsize < 0) {
+//            printf("Decompression error.  Error code: %d\n", dsize);
+//            return dsize;
+//        }
+//        dsize = blosc2_schunk_decompress_chunk(sc_y, nchunk, buffer_y, isize);
+//        if (dsize < 0) {
+//            printf("Decompression error.  Error code: %d\n", dsize);
+//            return dsize;
+//        }
+//        fill_buffer_out(buffer_x, buffer_y, buffer_out);
+//        blosc2_schunk_append_buffer(sc_out, buffer_out, isize);
+//    }
+//    blosc_set_timestamp(&current);
+//    ttotal = blosc_elapsed_secs(last, current);
+//    printf("\n");
+//    printf("Time for computing and filling OUT values w/o iarray:  %.3g s, %.1f MB/s\n",
+//           ttotal, sc_out->nbytes / (ttotal * MB));
+//    printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
+//           (sc_out->nbytes/MB), (sc_out->cbytes/MB),
+//           (1.*sc_out->nbytes)/sc_out->cbytes);
 
     // Check IronArray performance
     iarray_context_t *iactx;
-    iarray_config_t cfg = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_CHUNK, .cparams = &cparams, .dparams = &dparams};
+    iarray_config_t cfg = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_CHUNK,
+                           .cparams = &cparams, .dparams = &dparams, .pparams = &pparams};
     iarray_ctx_new(&cfg, &iactx);
 
     /* Create a super-chunk backed by an in-memory frame */
@@ -218,15 +224,17 @@ int main(int argc, char** argv)
 
     iarray_expression_t *e;
     iarray_expr_new(iactx, &e);
-    iarray_container_t *c_x, *c_y;
+    iarray_container_t *c_x, *c_y, *c_out2;
     iarray_from_ctarray(iactx, cta_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
     iarray_from_ctarray(iactx, cta_y, IARRAY_DATA_TYPE_DOUBLE, &c_y);
-    iarray_expr_bind(e, "x", c_x);
-    iarray_expr_bind(e, "y", c_y);
-    iarray_expr_compile(e, "gemm(x, y)");
+    iarray_from_ctarray(iactx, cta_out2, IARRAY_DATA_TYPE_DOUBLE, &c_out2);
+//    iarray_expr_bind(e, "x", c_x);
+//    iarray_expr_bind(e, "y", c_y);
+//    iarray_expr_compile(e, "gemm(x, y)");
 
     blosc_set_timestamp(&last);
-    iarray_eval(iactx, e, cta_out2, 0, NULL);
+    //iarray_eval(iactx, e, cta_out2, 0, NULL);
+    ina_rc_t errcode = iarray_gemm(c_x, c_y, c_out2);
     blosc_set_timestamp(&current);
     ttotal = blosc_elapsed_secs(last, current);
     blosc2_schunk *sc_out2 = cta_out2->sc;
@@ -238,9 +246,9 @@ int main(int argc, char** argv)
             (1.*sc_out2->nbytes) / sc_out2->cbytes);
 
     // Check that we are getting the same results than through manual computation
-    if (!test_schunks_equal(sc_out, sc_out2)) {
-        return -1;
-    }
+//    if (!test_schunks_equal(sc_out, sc_out2)) {
+//        return -1;
+//    }
 
     iarray_expr_free(iactx, &e);
     iarray_ctx_free(&iactx);
