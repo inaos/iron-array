@@ -730,7 +730,58 @@ INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp)
     return INA_SUCCESS;
 }
 
-iarray_temporary_t* _iarray_matmul(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs)
+int _matmul(size_t n, double const *a, double const *b, double *c)
 {
-    return _iarray_op(expr, lhs, rhs, IARRAY_OPERATION_TYPE_MUL);
+    size_t i, j, k;
+    for (i = 0; i < n; ++i) {
+        for (j = 0; j < n; ++j) {
+            double t = 0.0;
+            for (k = 0; k < n; ++k)
+                t += a[i*n+k] * b[k*n+j];
+            c[i*n+j] = t;
+        }
+    }
+    return 0;
+}
+
+
+INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
+    size_t P = a->catarr->cshape[7];
+    size_t M = a->catarr->eshape[6];
+    size_t K = a->catarr->eshape[7];
+    size_t N = b->catarr->eshape[7];
+
+    size_t p_size = P * P;
+    int32_t typesize = a->catarr->sc->typesize;
+
+    double *a_block = (double *)malloc(p_size * typesize);
+    double *b_block = (double *)malloc(p_size * typesize);
+    double *c_block;
+
+    size_t a_i, b_i;
+    int a_tam, b_tam;
+
+    for (size_t m = 0; m < M / P; m++)
+    {
+        for (size_t n = 0; n < N / P; n++)
+        {
+            c_block = (double *)calloc(p_size, (size_t)typesize);  // FIXME: this can go out of the loop
+
+            for (size_t k = 0; k < K / P; k++)
+            {
+                a_i = (m * K / P + k);
+                b_i = (k * N / P + n);
+
+                a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)a_i, a_block, p_size * typesize);
+                b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)b_i, b_block, p_size * typesize);
+// FIXME: Use the blas function when MKL support would be there
+//                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P,
+//                            1.0, a_block, P, b_block, P, 1.0, c_block, P);
+                _matmul(P, a_block, b_block, c_block);
+            }
+            blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], p_size * typesize);
+            free(c_block);
+        }
+    }
+    return 0;
 }
