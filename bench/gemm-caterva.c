@@ -28,78 +28,41 @@
 #define MB (1024 * KB)
 #define GB (1024 * MB)
 
-#define NCHUNKS  100
 #define N (1000)   // array size is (N * N)
 #define P (100)    // partition size
-#define NITEMS_CHUNK (P * P)
-//#define NELEM (NCHUNKS * NITEMS_CHUNK)  // multiple of NITEMS_CHUNKS for now
 #define NELEM (N * N)
 #define NTHREADS 1
 
-// Fill X values in regular array
-int fill_x(double* x)
-{
-    double incx = 10./NELEM;
 
-    /* Fill even values between 0 and 10 */
-    for (int i = 0; i<NELEM; i++) {
-        x[i] = incx*i;
+// Simple matrix-matrix multiplication for square matrices
+int simple_matmul(size_t n, double const *a, double const *b, double *c)
+{
+    size_t i, j, k;
+    for (i = 0; i < n; ++i) {
+        for (j = 0; j < n; ++j) {
+            double t = 0.0;
+            for (k = 0; k < n; ++k)
+                t += a[i*n+k] * b[k*n+j];
+            c[i*n+j] = t;
+        }
     }
     return 0;
 }
 
-// Compute and fill X values in a buffer
-void fill_buffer(double* x, int nchunk)
-{
-    double incx = 10./NELEM;
 
-    for (int i=0; i<NITEMS_CHUNK; i++) {
-        x[i] = incx*(nchunk * NITEMS_CHUNK + i);
-    }
-}
-
-void fill_cta(caterva_array* cta_x, const size_t isize)
-{
-    static double buffer_x[NITEMS_CHUNK];
-
-    /* Fill with even values between 0 and 10 */
-    for (int nchunk = 0; nchunk<NCHUNKS; nchunk++) {
-        fill_buffer(buffer_x, nchunk);
-        blosc2_schunk_append_buffer(cta_x->sc, buffer_x, isize);
-    }
-}
-
-// Compute and fill Y values in a buffer
-void fill_buffer_out(const double* x, const double* y, double* out)
-{
-    for (int i = 0; i<NITEMS_CHUNK; i++) {
-        out[i] = x[i] * y[i];
-    }
-}
-
-// Check that two super-chunks with the same partitions are equal
-bool test_schunks_equal(blosc2_schunk* sc1, blosc2_schunk* sc2) {
-    size_t chunksize = (size_t)sc1->chunksize;
-    int nitems_in_chunk = (int)chunksize / sc1->typesize;
-    double *buffer_sc1 = malloc(chunksize);
-    double *buffer_sc2 = malloc(chunksize);
-    for (int nchunk=0; nchunk < sc1->nchunks; nchunk++) {
-        int dsize = blosc2_schunk_decompress_chunk(sc1, nchunk, buffer_sc1, chunksize);
-        dsize = blosc2_schunk_decompress_chunk(sc2, nchunk, buffer_sc2, chunksize);
-        for (int nelem=0; nelem < nitems_in_chunk; nelem++) {
-            double vdiff = fabs(buffer_sc1[nelem] - buffer_sc2[nelem]);
-            if (vdiff > 1e-6) {
-                printf("Values differ in (%d nchunk, %d nelem) (diff: %f)\n", nchunk, nelem, vdiff);
-                free(buffer_sc1);
-                free(buffer_sc2);
-                return false;
-            }
+// Check that the values of a super-chunk are equal to a C matrix
+bool test_mat_equal(double *c1, double *c2) {
+    for (int nelem=0; nelem < NELEM; nelem++) {
+        double vdiff = fabs((c1[nelem] - c2[nelem]) / c1[nelem]);
+        if (vdiff > 1e-6) {
+            printf("%f, %f\n", c1[nelem], c2[nelem]);
+            printf("Values differ in (%d nelem) (diff: %f)\n", nelem, vdiff);
+            return false;
         }
     }
-    free(buffer_sc1);
-    free(buffer_sc2);
     return true;
 }
+
 
 int main(int argc, char** argv)
 {
@@ -117,14 +80,33 @@ int main(int argc, char** argv)
 
     blosc_init();
 
-    const size_t isize = NITEMS_CHUNK * sizeof(double);
-    static double buffer_x [NITEMS_CHUNK];
-    static double buffer_y[NITEMS_CHUNK];
-    static double buffer_out[NITEMS_CHUNK];
     blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
     blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
     blosc_timestamp_t last, current;
     double ttotal;
+
+    // Fill the plain C buffers for x, y matrices
+    static double mat_x[NELEM];
+    static double mat_y[NELEM];
+    blosc_set_timestamp(&last);
+    double incx = 10. / NELEM;
+    for (int i = 0; i < NELEM; i++) {
+        mat_x[i] = i * incx;
+        mat_y[i] = i * incx;
+    }
+    blosc_set_timestamp(&current);
+    ttotal = blosc_elapsed_secs(last, current);
+    printf("Time for filling X and Y matrices: %.3g s, %.1f MB/s\n",
+           ttotal, (sizeof(mat_x) + sizeof(mat_y)) / (ttotal * MB));
+
+    // Compute matrix-matrix multiplication
+    static double mat_out[NELEM];
+    blosc_set_timestamp(&last);
+    simple_matmul(N, mat_x, mat_y, mat_out);
+    blosc_set_timestamp(&current);
+    ttotal = blosc_elapsed_secs(last, current);
+    printf("Time for multiplying two matrices (pure C): %.3g s, %.1f MB/s\n",
+        ttotal, (sizeof(mat_x) * 3) / (ttotal * MB));
 
     /* Create a super-chunk container for input (X values) */
     cparams.typesize = sizeof(double);
@@ -136,80 +118,42 @@ int main(int argc, char** argv)
     cparams.nthreads = NTHREADS;
     dparams.nthreads = NTHREADS;
 
-    // Fill the plain x operand
-    static double x[NELEM];
-    blosc_set_timestamp(&last);
-    fill_x(x);
-    blosc_set_timestamp(&current);
-//	ttotal = blosc_elapsed_secs(last, current);
-//	printf("Time for filling X values: %.3g s, %.1f MB/s\n",
-//			ttotal, sizeof(x)/(ttotal*MB));
-
-    // Create and fill a super-chunk for the x operand
-    blosc2_frame frame_x = BLOSC_EMPTY_FRAME;
-    if (diskframes) frame_x.fname = "x.b2frame";
-    //sc_x = blosc2_new_schunk(cparams, dparams, &frame_x);
+    // Create Caterva arrays out of C buffers
     caterva_pparams pparams;
     for (int i = 0; i < CATERVA_MAXDIM; i++) {
         pparams.shape[i] = 1;
         pparams.cshape[i] = 1;
     }
     pparams.shape[CATERVA_MAXDIM - 1] = N;  // FIXME: 1's at the beginning should be removed
-    pparams.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
     pparams.shape[CATERVA_MAXDIM - 2] = N;  // FIXME: 1's at the beginning should be removed
+    pparams.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
     pparams.cshape[CATERVA_MAXDIM - 2] = P;  // FIXME: 1's at the beginning should be removed
     pparams.ndims = 2;
 
+    blosc2_frame frame_x = BLOSC_EMPTY_FRAME;
+    if (diskframes) frame_x.fname = "x.b2frame";
     caterva_array *cta_x = caterva_new_array(cparams, dparams, &frame_x, pparams);
-    blosc_set_timestamp(&last);
-    fill_cta(cta_x, isize);
-    blosc_set_timestamp(&current);
-//	ttotal = blosc_elapsed_secs(last, current);
-//	printf("Time for filling X values (compressed): %.3g s, %.1f MB/s\n",
-//			ttotal, (sc_x->nbytes/(ttotal*MB)));
-//	printf("Compression for X values: %.1f MB -> %.1f MB (%.1fx)\n",
-//			(sc_x->nbytes/MB), (sc_x->cbytes/MB),
-//			((double) sc_x->nbytes/sc_x->cbytes));
-
-    // Create a super-chunk container and compute y values
     blosc2_frame frame_y = BLOSC_EMPTY_FRAME;
     if (diskframes) frame_y.fname = "y.b2frame";
-    //sc_y = blosc2_new_schunk(cparams, dparams, &frame_y);
     caterva_array *cta_y = caterva_new_array(cparams, dparams, &frame_y, pparams);
-    blosc_set_timestamp(&last);
-    fill_cta(cta_y, isize);
-    blosc_set_timestamp(&current);
 
-    // Compute matrix-matrix multiplication (TODO)
-//    blosc2_frame frame_out = BLOSC_EMPTY_FRAME;
-//    if (diskframes) frame_out.fname = "out.b2frame";
-//    caterva_array *cta_out = caterva_new_array(cparams, dparams, &frame_out, pparams);
-//    blosc2_schunk *sc_x = cta_x->sc;
-//    blosc2_schunk *sc_y = cta_y->sc;
-//    blosc2_schunk *sc_out = cta_out->sc;
-//    blosc_set_timestamp(&last);
-//    for (int nchunk = 0; nchunk < sc_x->nchunks; nchunk++) {
-//        int dsize = blosc2_schunk_decompress_chunk(sc_x, nchunk, buffer_x, isize);
-//        if (dsize < 0) {
-//            printf("Decompression error.  Error code: %d\n", dsize);
-//            return dsize;
-//        }
-//        dsize = blosc2_schunk_decompress_chunk(sc_y, nchunk, buffer_y, isize);
-//        if (dsize < 0) {
-//            printf("Decompression error.  Error code: %d\n", dsize);
-//            return dsize;
-//        }
-//        fill_buffer_out(buffer_x, buffer_y, buffer_out);
-//        blosc2_schunk_append_buffer(sc_out, buffer_out, isize);
-//    }
-//    blosc_set_timestamp(&current);
-//    ttotal = blosc_elapsed_secs(last, current);
-//    printf("\n");
-//    printf("Time for computing and filling OUT values w/o iarray:  %.3g s, %.1f MB/s\n",
-//           ttotal, sc_out->nbytes / (ttotal * MB));
-//    printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
-//           (sc_out->nbytes/MB), (sc_out->cbytes/MB),
-//           (1.*sc_out->nbytes)/sc_out->cbytes);
+    blosc_set_timestamp(&last);
+    caterva_from_buffer(cta_x, mat_x);
+    caterva_from_buffer(cta_y, mat_y);
+    blosc_set_timestamp(&current);
+	ttotal = blosc_elapsed_secs(last, current);
+	printf("Time for filling X values (compressed): %.3g s, %.1f MB/s\n",
+			ttotal, (cta_x->sc->nbytes * 2) / (ttotal * MB));
+	printf("Compression for X values: %.1f MB -> %.1f MB (%.1fx)\n",
+			(cta_x->sc->nbytes/MB), (cta_x->sc->cbytes/MB),
+			((double) cta_x->sc->nbytes/cta_x->sc->cbytes));
+
+	// Check that operands are the same
+    caterva_to_buffer(cta_x, mat_x);
+    caterva_to_buffer(cta_y, mat_y);
+    if (!test_mat_equal(mat_x, mat_y)) {
+        return -1;
+    }
 
     // Check IronArray performance
     iarray_context_t *iactx;
@@ -218,46 +162,42 @@ int main(int argc, char** argv)
     iarray_ctx_new(&cfg, &iactx);
 
     /* Create a super-chunk backed by an in-memory frame */
-    blosc2_frame frame_out2 = BLOSC_EMPTY_FRAME;
-    if (diskframes) frame_out2.fname = "out2.b2frame";
-    caterva_array *cta_out2 = caterva_new_array(cparams, dparams, &frame_out2, pparams);
+    blosc2_frame frame_out = BLOSC_EMPTY_FRAME;
+    if (diskframes) frame_out.fname = "out2.b2frame";
+    caterva_array *cta_out = caterva_new_array(cparams, dparams, &frame_out, pparams);
 
-    iarray_expression_t *e;
-    iarray_expr_new(iactx, &e);
-    iarray_container_t *c_x, *c_y, *c_out2;
-    iarray_from_ctarray(iactx, cta_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
-    iarray_from_ctarray(iactx, cta_y, IARRAY_DATA_TYPE_DOUBLE, &c_y);
-    iarray_from_ctarray(iactx, cta_out2, IARRAY_DATA_TYPE_DOUBLE, &c_out2);
-//    iarray_expr_bind(e, "x", c_x);
-//    iarray_expr_bind(e, "y", c_y);
-//    iarray_expr_compile(e, "gemm(x, y)");
+    iarray_container_t *iac_x, *iac_y, *iac_out;
+    iarray_from_ctarray(iactx, cta_x, IARRAY_DATA_TYPE_DOUBLE, &iac_x);
+    iarray_from_ctarray(iactx, cta_y, IARRAY_DATA_TYPE_DOUBLE, &iac_y);
+    iarray_from_ctarray(iactx, cta_out, IARRAY_DATA_TYPE_DOUBLE, &iac_out);
 
     blosc_set_timestamp(&last);
-    //iarray_eval(iactx, e, cta_out2, 0, NULL);
-    ina_rc_t errcode = iarray_gemm(c_x, c_y, c_out2);
+    ina_rc_t errcode = iarray_gemm(iac_x, iac_y, iac_out);
+    if (errcode < 0) {
+        printf("Error in iarray_gemm()\n");
+        return -1;
+    }
     blosc_set_timestamp(&current);
     ttotal = blosc_elapsed_secs(last, current);
-    blosc2_schunk *sc_out2 = cta_out2->sc;
+    blosc2_schunk *sc_out = cta_out->sc;
     printf("\n");
-    printf("Time for computing and filling OUT values using iarray (chunk eval):  %.3g s, %.1f MB/s\n",
-            ttotal, sc_out2->nbytes / (ttotal * MB));
+    printf("Time for multiplying two matrices (iarray):  %.3g s, %.1f MB/s\n",
+            ttotal, (sc_out->nbytes * 3) / (ttotal * MB));
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
-            (sc_out2->nbytes/MB), (sc_out2->cbytes/MB),
-            (1.*sc_out2->nbytes) / sc_out2->cbytes);
+            (sc_out->nbytes/MB), (sc_out->cbytes/MB),
+            (1.*sc_out->nbytes) / sc_out->cbytes);
 
     // Check that we are getting the same results than through manual computation
-//    if (!test_schunks_equal(sc_out, sc_out2)) {
-//        return -1;
-//    }
-
-    iarray_expr_free(iactx, &e);
-    iarray_ctx_free(&iactx);
+    static double mat_out2[NELEM];
+    caterva_to_buffer(cta_out, mat_out2);
+    if (!test_mat_equal(mat_out, mat_out2)) {
+        return -1;
+    }
 
     // Free resources
     caterva_free_array(cta_x);
     caterva_free_array(cta_y);
-    //caterva_free_array(cta_out);
-    caterva_free_array(cta_out2);
+    caterva_free_array(cta_out);
 
     blosc_destroy();
 

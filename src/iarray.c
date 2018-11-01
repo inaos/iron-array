@@ -730,15 +730,14 @@ INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp)
     return INA_SUCCESS;
 }
 
+// TODO: This should go when support for MKL is here
 int _matmul(size_t n, double const *a, double const *b, double *c)
 {
-    size_t i, j, k;
-    for (i = 0; i < n; ++i) {
-        for (j = 0; j < n; ++j) {
-            double t = 0.0;
-            for (k = 0; k < n; ++k)
-                t += a[i*n+k] * b[k*n+j];
-            c[i*n+j] = t;
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            for (size_t k = 0; k < n; ++k) {
+                c[i*n+j] += a[i*n+k] * b[k*n+j];
+            }
         }
     }
     return 0;
@@ -754,9 +753,9 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
     size_t p_size = P * P;
     int32_t typesize = a->catarr->sc->typesize;
 
-    double *a_block = (double *)malloc(p_size * typesize);
-    double *b_block = (double *)malloc(p_size * typesize);
-    double *c_block;
+    double *a_block = malloc(p_size * typesize);
+    double *b_block = malloc(p_size * typesize);
+    double *c_block = malloc(p_size * typesize);
 
     size_t a_i, b_i;
     int a_tam, b_tam;
@@ -765,8 +764,7 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
     {
         for (size_t n = 0; n < N / P; n++)
         {
-            c_block = (double *)calloc(p_size, (size_t)typesize);  // FIXME: this can go out of the loop
-
+            memset(c_block, 0, p_size * typesize);
             for (size_t k = 0; k < K / P; k++)
             {
                 a_i = (m * K / P + k);
@@ -780,7 +778,6 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
                 _matmul(P, a_block, b_block, c_block);
             }
             blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], p_size * typesize);
-            free(c_block);
         }
     }
     return 0;
