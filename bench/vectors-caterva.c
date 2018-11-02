@@ -8,13 +8,13 @@
 
   To compile this program:
 
-  $ gcc -O3 vectors_frame.c -o vectors_frame -lblosc
+  $ gcc -O3 vectors-caterva.c -o vectors-caterva -lblosc
 
   To run:
 
-  $ ./vectors_frame memory
+  $ ./vectors-caterva memory
   ...
-  $ ./vectors_frame disk
+  $ ./vectors-caterva disk
   ...
 
 */
@@ -63,6 +63,17 @@ void fill_sc_x(blosc2_schunk* sc_x, const size_t isize)
     for (int nchunk = 0; nchunk<NCHUNKS; nchunk++) {
         fill_buffer(buffer_x, nchunk);
         blosc2_schunk_append_buffer(sc_x, buffer_x, isize);
+    }
+}
+
+void fill_cta_x(caterva_array* cta_x, const size_t isize)
+{
+    static double buffer_x[NITEMS_CHUNK];
+
+    /* Fill with even values between 0 and 10 */
+    for (int nchunk = 0; nchunk<NCHUNKS; nchunk++) {
+        fill_buffer(buffer_x, nchunk);
+        blosc2_schunk_append_buffer(cta_x->sc, buffer_x, isize);
     }
 }
 
@@ -132,7 +143,6 @@ int main(int argc, char** argv)
     static double buffer_y[NITEMS_CHUNK];
     blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
     blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
-    blosc2_schunk *sc_x, *sc_y;
     blosc_timestamp_t last, current;
     double ttotal;
 
@@ -158,9 +168,19 @@ int main(int argc, char** argv)
     // Create and fill a super-chunk for the x operand
     blosc2_frame frame_x = BLOSC_EMPTY_FRAME;
     if (diskframes) frame_x.fname = "x.b2frame";
-    sc_x = blosc2_new_schunk(cparams, dparams, &frame_x);
+    //sc_x = blosc2_new_schunk(cparams, dparams, &frame_x);
+    caterva_pparams pparams;
+    for (int i = 0; i < CATERVA_MAXDIM; i++) {
+        pparams.shape[i] = 1;
+        pparams.cshape[i] = 1;
+    }
+    pparams.shape[CATERVA_MAXDIM - 1] = NELEM;  // FIXME: 1's at the beginning should be removed
+    pparams.cshape[CATERVA_MAXDIM - 1] = NITEMS_CHUNK;  // FIXME: 1's at the beginning should be removed
+    pparams.ndims = 1;
+
+    caterva_array *cta_x = caterva_new_array(cparams, dparams, &frame_x, pparams);
     blosc_set_timestamp(&last);
-    fill_sc_x(sc_x, isize);
+    fill_cta_x(cta_x, isize);
     blosc_set_timestamp(&current);
 //	ttotal = blosc_elapsed_secs(last, current);
 //	printf("Time for filling X values (compressed): %.3g s, %.1f MB/s\n",
@@ -183,7 +203,10 @@ int main(int argc, char** argv)
     // Create a super-chunk container and compute y values
     blosc2_frame frame_y = BLOSC_EMPTY_FRAME;
     if (diskframes) frame_y.fname = "y.b2frame";
-    sc_y = blosc2_new_schunk(cparams, dparams, &frame_y);
+    //sc_y = blosc2_new_schunk(cparams, dparams, &frame_y);
+    caterva_array *cta_y = caterva_new_array(cparams, dparams, &frame_y, pparams);
+    blosc2_schunk *sc_x = cta_x->sc;
+    blosc2_schunk *sc_y = cta_y->sc;
     blosc_set_timestamp(&last);
     for (int nchunk = 0; nchunk < sc_x->nchunks; nchunk++) {
         int dsize = blosc2_schunk_decompress_chunk(sc_x, nchunk, buffer_x, isize);
@@ -211,21 +234,20 @@ int main(int argc, char** argv)
     /* Create a super-chunk backed by an in-memory frame */
     blosc2_frame frame_out = BLOSC_EMPTY_FRAME;
     if (diskframes) frame_out.fname = "out.b2frame";
-    blosc2_schunk *sc_out = blosc2_new_schunk(cparams, dparams, &frame_out);
+    caterva_array *cta_out = caterva_new_array(cparams, dparams, &frame_out, pparams);
 
     iarray_expression_t *e;
     iarray_expr_new(iactx, &e);
     iarray_container_t *c_x, *c_y;
-    iarray_from_sc(iactx, sc_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
-    iarray_from_sc(iactx, sc_y, IARRAY_DATA_TYPE_DOUBLE, &c_y);
+    iarray_from_ctarray(iactx, cta_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
     iarray_expr_bind(e, "x", c_x);
-    //iarray_expr_bind(e, "y", c_y);
     iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
 
     blosc_set_timestamp(&last);
-    iarray_eval(iactx, e, sc_out, 0, NULL);
+    iarray_eval(iactx, e, cta_out, 0, NULL);
     blosc_set_timestamp(&current);
     ttotal = blosc_elapsed_secs(last, current);
+    blosc2_schunk *sc_out = cta_out->sc;
     printf("\n");
     printf("Time for computing and filling OUT values using iarray (chunk eval):  %.3g s, %.1f MB/s\n",
             ttotal, sc_out->nbytes / (ttotal * MB));
@@ -241,46 +263,45 @@ int main(int argc, char** argv)
     iarray_expr_free(iactx, &e);
     iarray_ctx_free(&iactx);
 
-    // Then for the block evaluator
-    iarray_config_t cfg2 = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_BLOCK, .cparams = &cparams, .dparams = &dparams};
-    iarray_ctx_new(&cfg2, &iactx);
-
-    /* Create a super-chunk backed by an in-memory frame */
-    blosc2_frame frame_out2 = BLOSC_EMPTY_FRAME;
-    if (diskframes) frame_out2.fname = "out2.b2frame";
-    blosc2_schunk *sc_out2 = blosc2_new_schunk(cparams, dparams, &frame_out2);
-
-    iarray_expr_new(iactx, &e);
-    iarray_from_sc(iactx, sc_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
-    iarray_from_sc(iactx, sc_y, IARRAY_DATA_TYPE_DOUBLE, &c_y);
-    iarray_expr_bind(e, "x", c_x);
-    //iarray_expr_bind(e, "y", c_y);
-    iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
-
-    blosc_set_timestamp(&last);
-    iarray_eval(iactx, e, sc_out2, 0, NULL);
-    blosc_set_timestamp(&current);
-    ttotal = blosc_elapsed_secs(last, current);
-    printf("\n");
-    printf("Time for computing and filling OUT values using iarray (block eval):  %.3g s, %.1f MB/s\n",
-            ttotal, sc_out2->nbytes / (ttotal * MB));
-    printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
-            (sc_out2->nbytes/MB), (sc_out2->cbytes/MB),
-            (1.*sc_out2->nbytes)/sc_out2->cbytes);
-
-    // Check that we are getting the same results than through manual computation
-    if (!test_schunks_equal(sc_y, sc_out2)) {
-        return -1;
-    }
-
-    iarray_expr_free(iactx, &e);
-    iarray_ctx_free(&iactx);
+//    // Then for the block evaluator
+//    iarray_config_t cfg2 = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_BLOCK, .cparams = &cparams, .dparams = &dparams};
+//    iarray_ctx_new(&cfg2, &iactx);
+//
+//    /* Create a super-chunk backed by an in-memory frame */
+//    blosc2_frame frame_out2 = BLOSC_EMPTY_FRAME;
+//    if (diskframes) frame_out2.fname = "out2.b2frame";
+//    caterva_array *cta_out2 = caterva_new_array(cparams, dparams, &frame_out2, pparams);
+//
+//    iarray_expr_new(iactx, &e);
+//    iarray_from_ctarray(iactx, cta_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
+//    iarray_expr_bind(e, "x", c_x);
+//    iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
+//
+//    blosc_set_timestamp(&last);
+//    iarray_eval(iactx, e, cta_out2, 0, NULL);
+//    blosc_set_timestamp(&current);
+//    ttotal = blosc_elapsed_secs(last, current);
+//    blosc2_schunk *sc_out2 = cta_out2->sc;
+//    printf("\n");
+//    printf("Time for computing and filling OUT values using iarray (block eval):  %.3g s, %.1f MB/s\n",
+//            ttotal, sc_out2->nbytes / (ttotal * MB));
+//    printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
+//            (sc_out2->nbytes/MB), (sc_out2->cbytes/MB),
+//            (1.*sc_out2->nbytes)/sc_out2->cbytes);
+//
+//    // Check that we are getting the same results than through manual computation
+//    if (!test_schunks_equal(sc_y, sc_out2)) {
+//        return -1;
+//    }
+//
+//    iarray_expr_free(iactx, &e);
+//    iarray_ctx_free(&iactx);
 
     // Free resources
-    blosc2_free_schunk(sc_x);
-    blosc2_free_schunk(sc_y);
-    blosc2_free_schunk(sc_out);
-    blosc2_free_schunk(sc_out2);
+    caterva_free_array(cta_x);
+    caterva_free_array(cta_y);
+    caterva_free_array(cta_out);
+    //caterva_free_array(cta_out2);
 
     blosc_destroy();
 
