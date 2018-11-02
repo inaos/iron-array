@@ -32,6 +32,7 @@ inac_add_contrib_lib(tinyexpr)
 
 add_subdirectory(contribs/c-blosc2)
 include_directories(contribs/c-blosc2/blosc)
+set(BLOSC_LIB blosc_static) # required for caterva tests
 add_subdirectory(contribs/caterva)
 include_directories(contribs/caterva/caterva)
 
