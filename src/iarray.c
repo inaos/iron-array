@@ -731,7 +731,20 @@ INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp)
 }
 
 // TODO: This should go when support for MKL is here
-int _matmul(size_t n, double const *a, double const *b, double *c)
+int _matmul_d(size_t n, double const *a, double const *b, double *c)
+{
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            for (size_t k = 0; k < n; ++k) {
+                c[i*n+j] += a[i*n+k] * b[k*n+j];
+            }
+        }
+    }
+    return 0;
+}
+
+// TODO: This should go when support for MKL is here
+int _matmul_f(size_t n, float const *a, float const *b, float *c)
 {
     for (size_t i = 0; i < n; ++i) {
         for (size_t j = 0; j < n; ++j) {
@@ -750,34 +763,35 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
     size_t K = a->catarr->eshape[7];
     size_t N = b->catarr->eshape[7];
 
-    size_t p_size = P * P;
-    int32_t typesize = a->catarr->sc->typesize;
+    size_t p_size = P * P * a->catarr->sc->typesize;;
+    int dtype = a->dtshape->dtype;
 
-    double *a_block = malloc(p_size * typesize);
-    double *b_block = malloc(p_size * typesize);
-    double *c_block = malloc(p_size * typesize);
-
-    size_t a_i, b_i;
-    int a_tam, b_tam;
+    void *a_block = malloc(p_size);
+    void *b_block = malloc(p_size);
+    void *c_block = malloc(p_size);
 
     for (size_t m = 0; m < M / P; m++)
     {
         for (size_t n = 0; n < N / P; n++)
         {
-            memset(c_block, 0, p_size * typesize);
+            memset(c_block, 0, p_size);
             for (size_t k = 0; k < K / P; k++)
             {
-                a_i = (m * K / P + k);
-                b_i = (k * N / P + n);
-
-                a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)a_i, a_block, p_size * typesize);
-                b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)b_i, b_block, p_size * typesize);
+                size_t a_i = (m * K / P + k);
+                size_t b_i = (k * N / P + n);
+                int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)a_i, a_block, p_size);
+                int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)b_i, b_block, p_size);
 // FIXME: Use the blas function when MKL support would be there
 //                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P,
 //                            1.0, a_block, P, b_block, P, 1.0, c_block, P);
-                _matmul(P, a_block, b_block, c_block);
+                if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
+                    _matmul_d(P, a_block, b_block, c_block);
+                }
+                else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
+                    _matmul_f(P, a_block, b_block, c_block);
+                }
             }
-            blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], p_size * typesize);
+            blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], p_size);
         }
     }
     return 0;
