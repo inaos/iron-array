@@ -46,7 +46,7 @@ set_target_properties(
 include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac"
         "${CMAKE_SOURCE_DIR}" )
 
-inac_merge_static_libs(iarray iarray_c blosc_static ${INAC_LIBS})
+inac_merge_static_libs(iarray iarray_c blosc_static caterva ${INAC_LIBS})
 
 if (UNIX)
 set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)

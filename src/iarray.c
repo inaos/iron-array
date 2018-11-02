@@ -766,9 +766,9 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
     size_t p_size = P * P * a->catarr->sc->typesize;;
     int dtype = a->dtshape->dtype;
 
-    void *a_block = malloc(p_size);
-    void *b_block = malloc(p_size);
-    void *c_block = malloc(p_size);
+    uint8_t *a_block = malloc(p_size);
+    uint8_t *b_block = malloc(p_size);
+    uint8_t *c_block = malloc(p_size);
 
     for (size_t m = 0; m < M / P; m++)
     {
@@ -785,10 +785,10 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
 //                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P,
 //                            1.0, a_block, P, b_block, P, 1.0, c_block, P);
                 if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-                    _matmul_d(P, a_block, b_block, c_block);
+                    _matmul_d(P, (double*)a_block, (double*)b_block, (double*)c_block);
                 }
                 else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
-                    _matmul_f(P, a_block, b_block, c_block);
+                    _matmul_f(P, (float*)a_block, (float*)b_block, (float*)c_block);
                 }
             }
             blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], p_size);
