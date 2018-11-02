@@ -2,3 +2,6 @@
 	path = contribs/c-blosc2
 	url = https://github.com/Blosc/c-blosc2
 	branch = master
+[submodule "caterva"]
+	path = contribs/caterva
+	url = git@gitlab.com:blosc/caterva/caterva.git

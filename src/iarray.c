@@ -48,7 +48,7 @@ struct iarray_container_s {
     iarray_dtshape_t *dtshape;
     //FIXME: caterva_array pointer
     //	     blosc2_frame *frame;, will be in the caterva struct
-    blosc2_schunk *sc;
+    caterva_array *catarr;
     union {
         float f;
         double d;
@@ -61,7 +61,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *s
     INA_RETURN_IF_NULL(c);
     (*c)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
     ina_mem_cpy((*c)->dtshape, shape, sizeof(iarray_dtshape_t));
-    (*c)->sc = blosc2_new_schunk(*ctx->cfg->cparams, *ctx->cfg->dparams, NULL);
+    (*c)->catarr = caterva_new_array(*ctx->cfg->cparams, *ctx->cfg->dparams, NULL, *ctx->cfg->pparams);
     return INA_SUCCESS;
 }
 
@@ -208,7 +208,35 @@ INA_API(ina_rc_t) iarray_from_sc(iarray_context_t *ctx, blosc2_schunk *sc, iarra
         dim0 = sc->chunksize / sc->typesize;
     }
     (*container)->dtshape->dims[0] = dim0;
-    (*container)->sc = sc;
+    (*container)->catarr->sc = sc;
+    return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_from_ctarray(iarray_context_t *ctx, caterva_array *ctarray, iarray_data_type_t dtype, iarray_container_t **container)
+{
+    *container = ina_mem_alloc(sizeof(iarray_container_t));
+    (*container)->dtshape = ina_mem_alloc(sizeof(iarray_dtshape_t));
+    (*container)->dtshape->ndim = 1;
+    (*container)->dtshape->dtype = dtype;
+    int dim0 = 0;
+    blosc2_schunk *sc = ctarray->sc;
+    if (ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
+        int typesize = sc->typesize;
+        size_t chunksize, cbytes, blocksize;
+        void *chunk;
+        bool needs_free;
+        int retcode = blosc2_schunk_get_chunk(sc, 0, &chunk, &needs_free);
+        blosc_cbuffer_sizes(chunk, &chunksize, &cbytes, &blocksize);
+        if (needs_free) {
+            free(chunk);
+        }
+        dim0 = (int)blocksize / typesize;
+    }
+    else {
+        dim0 = sc->chunksize / sc->typesize;
+    }
+    (*container)->dtshape->dims[0] = dim0;
+    (*container)->catarr = ctarray;
     return INA_SUCCESS;
 }
 
@@ -279,7 +307,8 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 {
     e->expr = ina_str_new_fromcstr(expr);
     te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(te_variable));
-    blosc2_schunk *schunk = e->vars[0].c->sc;
+    caterva_array *catarr = e->vars[0].c->catarr;
+    blosc2_schunk *schunk = catarr->sc;
     int dim0 = 0;
     if (e->ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
         int typesize = schunk->typesize;
@@ -322,9 +351,9 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blosc2_schunk *out, int flags, iarray_container_t **ret)
+INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, caterva_array *out, int flags, iarray_container_t **ret)
 {
-    blosc2_schunk *schunk0 = e->vars[0].c->sc;  // get the super-chunk of the first variable
+    blosc2_schunk *schunk0 = e->vars[0].c->catarr->sc;  // get the super-chunk of the first variable
     size_t nitems_in_schunk = schunk0->nbytes / e->typesize;
     size_t nitems_in_chunk = e->chunksize / e->typesize;
     int nvars = e->nvars;
@@ -351,7 +380,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blo
             }
             // Allocate a buffer for every chunk (specially useful for reading on-disk variables)
             for (int nvar = 0; nvar < nvars; nvar++) {
-                blosc2_schunk* schunk = e->vars[nvar].c->sc;
+                blosc2_schunk *schunk = e->vars[nvar].c->catarr->sc;
                 int retcode = blosc2_schunk_get_chunk(schunk, (int)nchunk, &var_chunks[nvar], &var_needs_free[nvar]);
             }
 //#pragma omp parallel for schedule(dynamic)
@@ -389,7 +418,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blo
         for (size_t nchunk = 0; nchunk < e->nchunks; nchunk++) {
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
-                blosc2_schunk *schunk = e->vars[nvar].c->sc;
+                blosc2_schunk *schunk = e->vars[nvar].c->catarr->sc;
                 int dsize = blosc2_schunk_decompress_chunk(schunk, (int)nchunk, e->temp_vars[nvar]->data, e->chunksize);
                 if (dsize < 0) {
                     printf("Decompression error.  Error code: %d\n", dsize);
@@ -399,7 +428,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, blo
             const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
             // Correct the number of items in last chunk
             nitems_in_chunk = (nchunk < e->nchunks - 1) ? nitems_in_chunk : nitems_in_schunk - nchunk * nitems_in_chunk;
-            blosc2_schunk_append_buffer(out, expr_out->data, nitems_in_chunk * e->typesize);
+            blosc2_schunk_append_buffer(out->sc, expr_out->data, nitems_in_chunk * e->typesize);
         }
     }
     return INA_SUCCESS;
@@ -699,4 +728,71 @@ INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp)
 {
     *mp = e->ctx->mp;
     return INA_SUCCESS;
+}
+
+// TODO: This should go when support for MKL is here
+int _matmul_d(size_t n, double const *a, double const *b, double *c)
+{
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            for (size_t k = 0; k < n; ++k) {
+                c[i*n+j] += a[i*n+k] * b[k*n+j];
+            }
+        }
+    }
+    return 0;
+}
+
+// TODO: This should go when support for MKL is here
+int _matmul_f(size_t n, float const *a, float const *b, float *c)
+{
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            for (size_t k = 0; k < n; ++k) {
+                c[i*n+j] += a[i*n+k] * b[k*n+j];
+            }
+        }
+    }
+    return 0;
+}
+
+
+INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
+    size_t P = a->catarr->cshape[7];
+    size_t M = a->catarr->eshape[6];
+    size_t K = a->catarr->eshape[7];
+    size_t N = b->catarr->eshape[7];
+
+    size_t p_size = P * P * a->catarr->sc->typesize;;
+    int dtype = a->dtshape->dtype;
+
+    void *a_block = malloc(p_size);
+    void *b_block = malloc(p_size);
+    void *c_block = malloc(p_size);
+
+    for (size_t m = 0; m < M / P; m++)
+    {
+        for (size_t n = 0; n < N / P; n++)
+        {
+            memset(c_block, 0, p_size);
+            for (size_t k = 0; k < K / P; k++)
+            {
+                size_t a_i = (m * K / P + k);
+                size_t b_i = (k * N / P + n);
+                int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)a_i, a_block, p_size);
+                int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)b_i, b_block, p_size);
+// FIXME: Use the blas function when MKL support would be there
+//                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P,
+//                            1.0, a_block, P, b_block, P, 1.0, c_block, P);
+                if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
+                    _matmul_d(P, a_block, b_block, c_block);
+                }
+                else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
+                    _matmul_f(P, a_block, b_block, c_block);
+                }
+            }
+            blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], p_size);
+        }
+    }
+    return 0;
 }
