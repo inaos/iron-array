@@ -31,6 +31,9 @@
 /* Tuning params */
 #define _IARRAY_BLOSC_BLOCK_SIZE  (16 * (int)_IARRAY_SIZE_KB)  // 16 KB seems optimal for evaluating expressions
 
+/* we should initialize blosc only once in a process lifetime */
+static int _blosc_inited = 0;
+
 struct iarray_context_s {
     iarray_config_t *cfg;
     ina_mempool_t *mp;
@@ -149,7 +152,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
 
     dparams.nthreads = ctx->cfg->max_num_threads;
     ina_mem_cpy((*c)->dparams, &dparams, sizeof(blosc2_dparams));
-    
+
     for (int i = 0; i < CATERVA_MAXDIM; i++) {
         pparams.shape[i] = 1;
         pparams.cshape[i] = 1;

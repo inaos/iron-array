@@ -86,12 +86,12 @@ INA_API(void) iarray_destroy();
 INA_API(ina_rc_t) iarray_ctx_new(iarray_config_t *cfg, iarray_context_t **ctx);
 INA_API(void) iarray_ctx_free(iarray_context_t **ctx);
 
-INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx, 
-                                iarray_dtshape_t *dtshape, 
-                                int start, 
-                                int stop, 
-                                int step, 
-                                iarray_data_type_t dtype, 
+INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
+                                iarray_dtshape_t *dtshape,
+                                int start,
+                                int stop,
+                                int step,
+                                iarray_data_type_t dtype,
                                 const char *name,
                                 int flags,
                                 iarray_container_t **container);
@@ -178,18 +178,9 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
 
-<<<<<<< HEAD
 INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
-=======
-INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, 
-                              iarray_expression_t *e, 
-                              caterva_array *out, 
-                              int flags, 
-                              iarray_container_t **ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
->>>>>>> hiding all blosc and caterva in iarray impl
 
-//FIXME: remove
-//INA_API(ina_rc_t) iarray_from_ctarray(iarray_context_t *ctx, caterva_array *ctarray, iarray_data_type_t dtype, iarray_container_t **container);
+INA_API(ina_rc_t) iarray_from_ctarray(iarray_context_t *ctx, caterva_array *ctarray, iarray_data_type_t dtype, iarray_container_t **container);
 
 //FIXME: remove
 INA_API(ina_rc_t) iarray_from_sc(iarray_context_t *ctx, blosc2_schunk *sc, iarray_data_type_t dtype, iarray_container_t **container);
