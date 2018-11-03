@@ -68,7 +68,7 @@ struct iarray_container_s {
     } scalar_value;
 };
 
-static ina_rc_t _iarray_container_new(iarray_context_t *ctx, 
+static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
                                       iarray_dtshape_t *shape,
                                       const char *name,
                                       int flags,

@@ -12,6 +12,8 @@
 #ifndef PROJECT_IARRAY_H
 #define PROJECT_IARRAY_H
 
+#include <blosc.h>
+#include <caterva.h>
 #include <libinac/lib.h>
 
 typedef struct iarray_context_s iarray_context_t;
@@ -19,6 +21,14 @@ typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;
 
 typedef struct iarray_expression_s iarray_expression_t;
+
+typedef struct iarray_config_s {
+    int flags;
+    int max_num_threads; /* Maximum number of threads to use */
+    blosc2_cparams *cparams;
+    blosc2_dparams *dparams;
+    caterva_pparams *pparams;
+} iarray_config_t;
 
 typedef enum iarray_rng_e {
     IARRAY_RNG_MERSENNE_TWISTER,
@@ -93,21 +103,21 @@ INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
                                        iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
-                                iarray_dtshape_t *dtshape, 
-                                int start, 
-                                int stop, 
+                                iarray_dtshape_t *dtshape,
+                                int start,
+                                int stop,
                                 int step,
                                 const char *name,
                                 int flags,
                                 iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx, 
+INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
                                iarray_dtshape_t *dtshape,
                                const char *name,
                                int flags,
                                iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx, 
+INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
                               iarray_dtshape_t *dtshape,
                               const char *name,
                               int flags,
@@ -127,8 +137,8 @@ INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
                                      int flags,
                                      iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx, 
-                              iarray_dtshape_t *dtshape, 
+INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx,
+                              iarray_dtshape_t *dtshape,
                               iarray_rng_t rng,
                               const char *name,
                               int flags,
@@ -169,15 +179,9 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
 
-<<<<<<< HEAD
-INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
-=======
-INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, 
-                              iarray_expression_t *e, 
-                              caterva_array *out, 
-                              int flags, 
-                              iarray_container_t **ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
->>>>>>> hiding all blosc and caterva in iarray impl
+INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, caterva_array *out, int flags, iarray_container_t **ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
+
+INA_API(ina_rc_t) iarray_from_ctarray(iarray_context_t *ctx, caterva_array *ctarray, iarray_data_type_t dtype, iarray_container_t **container);
 
 //FIXME: remove
 //INA_API(ina_rc_t) iarray_from_ctarray(iarray_context_t *ctx, caterva_array *ctarray, iarray_data_type_t dtype, iarray_container_t **container);
