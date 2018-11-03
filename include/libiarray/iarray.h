@@ -12,8 +12,6 @@
 #ifndef PROJECT_IARRAY_H
 #define PROJECT_IARRAY_H
 
-#include <blosc.h>
-#include <caterva.h>
 #include <libinac/lib.h>
 
 typedef struct iarray_context_s iarray_context_t;
@@ -21,14 +19,6 @@ typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;
 
 typedef struct iarray_expression_s iarray_expression_t;
-
-typedef struct iarray_config_s {
-    int flags;
-    int max_num_threads; /* Maximum number of threads to use */
-    blosc2_cparams *cparams;
-    blosc2_dparams *dparams;
-    caterva_pparams *pparams;
-} iarray_config_t;
 
 typedef enum iarray_rng_e {
     IARRAY_RNG_MERSENNE_TWISTER,
@@ -39,6 +29,40 @@ typedef enum iarray_data_type_e {
     IARRAY_DATA_TYPE_DOUBLE,
     IARRAY_DATA_TYPE_FLOAT
 } iarray_data_type_t;
+
+typedef enum iarray_config_flags_e {
+    IARRAY_EXPR_EVAL_BLOCK = 0x1,
+    IARRAY_EXPR_EVAL_CHUNK = 0x2,
+    IARRAY_COMP_SHUFFLE    = 0x4,
+    IARRAY_COMP_BITSHUFFLE = 0x8,
+    IARRAY_COMP_DELTA      = 0x10,
+    IARRAY_COMP_TRUNC_PREC = 0x20,
+} iarray_config_flags_t;
+
+typedef enum iarray_bind_flags_e {
+    IARRAY_BIND_UPDATE_CONTAINER = 0x1
+} iarray_bind_flags_t;
+
+typedef enum iarray_container_flags_e {
+    IARRAY_CONTAINER_PERSIST = 0x1
+} iarray_container_flags_t;
+
+typedef enum iarray_compression_codec_e {
+    IARRAY_COMPRESSION_DEFAULT = 0,
+    IARRAY_COMPRESSION_LZ4,
+    IARRAY_COMPRESSION_LZ4HC,
+    IARRAY_COMPRESSION_SNAPPY,
+    IARRAY_COMPRESSION_ZLIB,
+    IARRAY_COMPRESSION_ZSTD,
+    IARRAY_COMPRESSION_LIZARD
+} iarray_compression_codec_t;
+
+typedef struct iarray_config_s {
+    iarray_compression_codec_t compression_codec;
+    int compression_level;
+    int flags;
+    int max_num_threads; /* Maximum number of threads to use */
+} iarray_config_t;
 
 typedef struct iarray_dtshape_s {
     iarray_data_type_t dtype;
@@ -51,25 +75,55 @@ typedef struct iarray_slice_param_s {
     int idx;
 } iarray_slice_param_t;
 
-typedef enum iarray_config_flags_e {
-    IARRAY_EXPR_EVAL_BLOCK = 0x1,
-    IARRAY_EXPR_EVAL_CHUNK = 0x2
-} iarray_config_flags_t;
-
-typedef enum iarray_bind_flags_e {
-    IARRAY_BIND_UPDATE_CONTAINER = 0x1
-} iarray_bind_flags_t;
-
 INA_API(ina_rc_t) iarray_ctx_new(iarray_config_t *cfg, iarray_context_t **ctx);
 INA_API(void) iarray_ctx_free(iarray_context_t **ctx);
 
-INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx, iarray_dtshape_t *dtshape, int start, int stop, int step, iarray_data_type_t dtype, iarray_container_t **container);
-INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_data_type_t dtype, iarray_container_t **container);
-INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_data_type_t dtype, iarray_container_t **container);
-INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx, iarray_dtshape_t *dtshape, float value, iarray_container_t **container);
-INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx, iarray_dtshape_t *dtshape, double value, iarray_container_t **container);
-INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_rng_t rng, iarray_data_type_t dtype, iarray_container_t **container);
-INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx, iarray_container_t *c, iarray_slice_param_t *params, iarray_container_t **container);
+INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx, 
+                                iarray_dtshape_t *dtshape, 
+                                int start, 
+                                int stop, 
+                                int step, 
+                                iarray_data_type_t dtype, 
+                                int flags,
+                                iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx, 
+                               iarray_dtshape_t *dtshape, 
+                               iarray_data_type_t dtype, 
+                               int flags,
+                               iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx, 
+                              iarray_dtshape_t *dtshape, 
+                              iarray_data_type_t dtype, 
+                              int flags,
+                              iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx, 
+                                    iarray_dtshape_t *dtshape, 
+                                    float value, 
+                                    int flags,
+                                    iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx, 
+                                     iarray_dtshape_t *dtshape, 
+                                     double value, 
+                                     int flags,
+                                     iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx, 
+                              iarray_dtshape_t *dtshape, 
+                              iarray_rng_t rng, 
+                              iarray_data_type_t dtype, 
+                              int flags,
+                              iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx, 
+                               iarray_container_t *c, 
+                               iarray_slice_param_t *params, 
+                               iarray_container_t **container);
+
+INA_API(void) iarray_free(iarray_context_t *ctx, iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e);
 INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e);
@@ -79,8 +133,17 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
 
+<<<<<<< HEAD
 INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
+=======
+INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, 
+                              iarray_expression_t *e, 
+                              caterva_array *out, 
+                              int flags, 
+                              iarray_container_t **ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
+>>>>>>> hiding all blosc and caterva in iarray impl
 
+//FIXME: remove
 INA_API(ina_rc_t) iarray_from_ctarray(iarray_context_t *ctx, caterva_array *ctarray, iarray_data_type_t dtype, iarray_container_t **container);
 
 //FIXME: remove
@@ -100,7 +163,8 @@ ina_rc_t iarray_eval_chunk(iarray_context_t *ctx, char* expr, iarray_variable_t 
 ina_rc_t iarray_eval_block(iarray_context_t *ctx, char* expr, iarray_variable_t *vars, int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
 
 INA_API(ina_rc_t) iarray_equal_data(iarray_container_t *a, iarray_container_t *b);
+
 INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c);
 INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c);
 
-#endif //PROJECT_IARRAY_H
+#endif
