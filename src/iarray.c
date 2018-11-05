@@ -11,13 +11,25 @@
  */
 
 #include <libiarray/iarray.h>
+
 #include <contribs/tinyexpr/tinyexpr.h>
+#include <blosc.h>
+#include <caterva.h>
+
 #include "iarray_private.h"
 
 #include <stdbool.h>
 
 #define _IARRAY_MEMPOOL_EVAL_SIZE (8*1024*1024)
 #define _IARRAY_EXPR_VAR_MAX      (128)
+
+/* Sizes */
+#define _IARRAY_SIZE_KB  (1024)
+#define _IARRAY_SIZE_MB  (1024*_IARRAY_SIZE_KB)
+#define _IARRAY_SIZE_GB  (1024*_IARRAY_SIZE_MB)
+
+/* Tuning params */
+#define _IARRAY_BLOSC_BLOCK_SIZE  (16 * (int)_IARRAY_SIZE_KB)  // 16 KB seems optimal for evaluating expressions
 
 struct iarray_context_s {
     iarray_config_t *cfg;
@@ -46,23 +58,117 @@ struct iarray_expression_s {
 
 struct iarray_container_s {
     iarray_dtshape_t *dtshape;
-    //FIXME: caterva_array pointer
-    //	     blosc2_frame *frame;, will be in the caterva struct
+    blosc2_cparams *cparams;
+    blosc2_dparams *dparams;
+    caterva_pparams *pparams;
+    blosc2_frame *frame;
     caterva_array *catarr;
+    ina_str_t name;
     union {
         float f;
         double d;
     } scalar_value;
 };
 
-static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *shape, iarray_data_type_t dtype, iarray_container_t **c)
+static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
+                                      iarray_dtshape_t *shape,
+                                      iarray_data_type_t dtype,
+                                      const char *name,
+                                      int flags,
+                                      iarray_container_t **c)
 {
+    blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
+    blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
+    caterva_pparams pparams;
+    int blosc_filter_idx = 0;
+
+    /* validation */
+    if (shape->dims > CATERVA_MAXDIM) {
+        return INA_ERROR(INA_ERR_EXCEEDED);
+    }
+    if (flags & IARRAY_CONTAINER_PERSIST && name == NULL) {
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
+
     *c = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
     INA_RETURN_IF_NULL(c);
+
     (*c)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
+    INA_FAIL_IF((*c)->dtshape == NULL);
     ina_mem_cpy((*c)->dtshape, shape, sizeof(iarray_dtshape_t));
-    (*c)->catarr = caterva_new_array(*ctx->cfg->cparams, *ctx->cfg->dparams, NULL, *ctx->cfg->pparams);
+
+    (*c)->frame = (blosc2_frame*)ina_mem_alloc(sizeof(blosc2_frame));
+    INA_FAIL_IF((*c)->frame == NULL);
+    ina_mem_cpy((*c)->frame, &BLOSC_EMPTY_FRAME, sizeof(blosc2_frame));
+
+    (*c)->cparams = (blosc2_cparams*)ina_mem_alloc(sizeof(blosc2_cparams));
+    INA_FAIL_IF((*c)->cparams == NULL);
+
+    (*c)->dparams = (blosc2_dparams*)ina_mem_alloc(sizeof(blosc2_dparams));
+    INA_FAIL_IF((*c)->dparams == NULL);
+
+    (*c)->pparams = (caterva_pparams*)ina_mem_alloc(sizeof(caterva_pparams));
+    INA_FAIL_IF((*c)->pparams == NULL);
+
+    if (flags & IARRAY_CONTAINER_PERSIST) {
+        (*c)->name = ina_str_new_fromcstr(name);
+        INA_FAIL_IF((*c)->name == NULL);
+        (*c)->frame->fname = ina_str_cstr((*c)->name);
+    }
+
+    switch (dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            cparams.typesize = sizeof(double);
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            cparams.typesize = sizeof(float);
+            break;
+    }
+    cparams.compcode = ctx->cfg->compression_codec;
+    cparams.clevel = ctx->cfg->compression_level;
+    cparams.blocksize = _IARRAY_BLOSC_BLOCK_SIZE;
+    cparams.nthreads = ctx->cfg->max_num_threads;
+    if (dtype == IARRAY_DATA_TYPE_DOUBLE && ctx->cfg->flags & IARRAY_COMP_TRUNC_PREC) {
+        cparams.filters[blosc_filter_idx] = BLOSC_TRUNC_PREC;
+        cparams.filters_meta[blosc_filter_idx] = 23;  // treat doubles as floats
+        blosc_filter_idx++;
+    }
+    if (ctx->cfg->flags & IARRAY_COMP_BITSHUFFLE) {
+        cparams.filters[blosc_filter_idx] = BLOSC_BITSHUFFLE;
+        blosc_filter_idx++;
+    }
+    if (ctx->cfg->flags & IARRAY_COMP_SHUFFLE) {
+        cparams.filters[blosc_filter_idx] = BLOSC_SHUFFLE;
+        blosc_filter_idx++;
+    }
+    if (ctx->cfg->flags & IARRAY_COMP_DELTA) {
+        cparams.filters[blosc_filter_idx] = BLOSC_DELTA;
+        blosc_filter_idx++;
+    }
+    ina_mem_cpy((*c)->cparams, &cparams, sizeof(blosc2_cparams));
+
+    dparams.nthreads = ctx->cfg->max_num_threads;
+    ina_mem_cpy((*c)->dparams, &dparams, sizeof(blosc2_dparams));
+    
+    for (int i = 0; i < CATERVA_MAXDIM; i++) {
+        pparams.shape[i] = 1;
+        pparams.cshape[i] = 1;
+    }
+    for (int i = 0; i < shape->dims; ++i) { // FIXME: 1's at the beginning should be removed
+        pparams.shape[CATERVA_MAXDIM - (i + 1)] = shape->dims[i];
+        pparams.cshape[CATERVA_MAXDIM - 1] = 100; // FIXME: should rather be a tuning parameter with a smart default?
+    }
+    pparams.ndims = shape->ndim;
+    ina_mem_cpy((*c)->pparams, &pparams, sizeof(caterva_pparams));
+
+    (*c)->catarr = caterva_new_array(*(*c)->cparams, *(*c)->dparams, (*c)->frame, *(*c)->pparams);
+    INA_FAIL_IF((*c)->catarr == NULL);
+
     return INA_SUCCESS;
+
+fail:
+    iarray_free(ctx, c);
+    return ina_err_get_rc();
 }
 
 static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
@@ -77,17 +183,33 @@ static ina_rc_t _iarray_container_fill_double(iarray_container_t *c, double valu
     return INA_SUCCESS;
 }
 
+INA_API(ina_rc_t) iarray_init()
+{
+    ina_init();
+    blosc_init();
+}
+INA_API(void) iarray_destroy()
+{
+    blosc_destroy();
+}
+
 INA_API(ina_rc_t) iarray_ctx_new(iarray_config_t *cfg, iarray_context_t **ctx)
 {
     INA_VERIFY_NOT_NULL(ctx);
     *ctx = ina_mem_alloc(sizeof(iarray_context_t));
     INA_RETURN_IF_NULL(ctx);
     (*ctx)->cfg = ina_mem_alloc(sizeof(iarray_config_t));
+    INA_FAIL_IF((*ctx)->cfg == NULL);
     ina_mem_cpy((*ctx)->cfg, cfg, sizeof(iarray_config_t));
     if (!(cfg->flags & IARRAY_EXPR_EVAL_BLOCK) && !(cfg->flags & IARRAY_EXPR_EVAL_CHUNK)) {
         (*ctx)->cfg->flags |= IARRAY_EXPR_EVAL_CHUNK;
     }
-    return ina_mempool_new(_IARRAY_MEMPOOL_EVAL_SIZE, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp);
+    INA_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL_SIZE, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp));
+    return INA_SUCCESS;
+
+fail:
+    iarray_ctx_free(ctx);
+    return ina_err_get_rc();
 }
 
 INA_API(void) iarray_ctx_free(iarray_context_t **ctx)
@@ -185,6 +307,33 @@ INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx, iarray_dtshape_t *dtshape, 
     return INA_SUCCESS;
 }
 
+INA_API(ina_rc_t) iarray_from_sc(iarray_context_t *ctx, blosc2_schunk *sc, iarray_data_type_t dtype, iarray_container_t **container)
+{
+    *container = ina_mem_alloc(sizeof(iarray_container_t));
+    (*container)->dtshape = ina_mem_alloc(sizeof(iarray_dtshape_t));
+    (*container)->dtshape->ndim = 1;
+    (*container)->dtshape->dtype = dtype;
+    int dim0 = 0;
+    if (ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
+        int typesize = sc->typesize;
+        size_t chunksize, cbytes, blocksize;
+        void *chunk;
+        bool needs_free;
+        int retcode = blosc2_schunk_get_chunk(sc, 0, &chunk, &needs_free);
+        blosc_cbuffer_sizes(chunk, &chunksize, &cbytes, &blocksize);
+        if (needs_free) {
+            free(chunk);
+        }
+        dim0 = (int)blocksize / typesize;
+    }
+    else {
+        dim0 = sc->chunksize / sc->typesize;
+    }
+    (*container)->dtshape->dims[0] = dim0;
+    (*container)->catarr->sc = sc;
+    return INA_SUCCESS;
+}
+
 INA_API(ina_rc_t) iarray_from_ctarray(iarray_context_t *ctx, caterva_array *ctarray, iarray_data_type_t dtype, iarray_container_t **container)
 {
     *container = ina_mem_alloc(sizeof(iarray_container_t));
@@ -227,6 +376,23 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx, iarray_container_t *c, iar
 {
 
     return INA_SUCCESS;
+}
+
+INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container)
+{
+    INA_FREE_CHECK(container);
+    if ((*container)->catarr != NULL) {
+        caterva_free_array((*container)->catarr);
+    }
+    if ((*container)->frame != NULL) {
+        blosc2_free_frame((*container)->frame);
+    }
+    INA_MEM_FREE_SAFE((*container)->frame);
+    INA_MEM_FREE_SAFE((*container)->cparams);
+    INA_MEM_FREE_SAFE((*container)->dparams);
+    INA_MEM_FREE_SAFE((*container)->pparams);
+    INA_MEM_FREE_SAFE((*container)->dtshape);
+    INA_MEM_FREE_SAFE(*container);
 }
 
 INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e)
