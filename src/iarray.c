@@ -31,9 +31,6 @@
 /* Tuning params */
 #define _IARRAY_BLOSC_BLOCK_SIZE  (16 * (int)_IARRAY_SIZE_KB)  // 16 KB seems optimal for evaluating expressions
 
-/* we should initialize blosc only once in a process lifetime */
-static int _blosc_inited = 0;
-
 struct iarray_context_s {
     iarray_config_t *cfg;
     ina_mempool_t *mp;
@@ -66,13 +63,19 @@ struct iarray_container_s {
     caterva_pparams *pparams;
     blosc2_frame *frame;
     caterva_array *catarr;
+    ina_str_t name;
     union {
         float f;
         double d;
     } scalar_value;
 };
 
-static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *shape, iarray_data_type_t dtype, iarray_container_t **c)
+static ina_rc_t _iarray_container_new(iarray_context_t *ctx, 
+                                      iarray_dtshape_t *shape, 
+                                      iarray_data_type_t dtype, 
+                                      const char *name,
+                                      int flags,
+                                      iarray_container_t **c)
 {
     blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
     blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
@@ -82,6 +85,9 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *s
     /* validation */
     if (shape->dims > CATERVA_MAXDIM) {
         return INA_ERROR(INA_ERR_EXCEEDED);
+    }
+    if (flags & IARRAY_CONTAINER_PERSIST && name == NULL) {
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     *c = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
@@ -103,6 +109,12 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *s
 
     (*c)->pparams = (caterva_pparams*)ina_mem_alloc(sizeof(caterva_pparams));
     INA_FAIL_IF((*c)->pparams == NULL);
+
+    if (flags & IARRAY_CONTAINER_PERSIST) {
+        (*c)->name = ina_str_new_fromcstr(name);
+        INA_FAIL_IF((*c)->name == NULL);
+        (*c)->frame->fname = ina_str_cstr((*c)->name);
+    }
 
     switch (dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
@@ -171,6 +183,16 @@ static ina_rc_t _iarray_container_fill_double(iarray_container_t *c, double valu
     return INA_SUCCESS;
 }
 
+INA_API(ina_rc_t) iarray_init()
+{
+    ina_init();
+    blosc_init();
+}
+INA_API(void) iarray_destroy()
+{
+    blosc_destroy();
+}
+
 INA_API(ina_rc_t) iarray_ctx_new(iarray_config_t *cfg, iarray_context_t **ctx)
 {
     INA_VERIFY_NOT_NULL(ctx);
@@ -183,10 +205,6 @@ INA_API(ina_rc_t) iarray_ctx_new(iarray_config_t *cfg, iarray_context_t **ctx)
         (*ctx)->cfg->flags |= IARRAY_EXPR_EVAL_CHUNK;
     }
     INA_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL_SIZE, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp));
-    if (!_blosc_inited) {
-        blosc_init();
-        _blosc_inited = 1;
-    }
     return INA_SUCCESS;
 
 fail:
@@ -360,12 +378,19 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx, iarray_container_t *c, iar
     return INA_SUCCESS;
 }
 
-INA_API(void) iarray_free(iarray_context_t *ctx, iarray_container_t **container)
+INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container)
 {
     INA_FREE_CHECK(container);
     if ((*container)->catarr != NULL) {
         caterva_free_array((*container)->catarr);
     }
+    if ((*container)->frame != NULL) {
+        blosc2_free_frame((*container)->frame);
+    }
+    INA_MEM_FREE_SAFE((*container)->frame);
+    INA_MEM_FREE_SAFE((*container)->cparams);
+    INA_MEM_FREE_SAFE((*container)->dparams);
+    INA_MEM_FREE_SAFE((*container)->pparams);
     INA_MEM_FREE_SAFE((*container)->dtshape);
     INA_MEM_FREE_SAFE(*container);
 }
@@ -463,9 +488,9 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         return INA_ERR_NOT_SUPPORTED;
     }
     iarray_dtshape_t shape_var = {
-            .ndim = 1,
-            .dims = {dim0},
-            .dtype = e->vars[0].c->dtshape->dtype,
+        .ndim = 1,
+        .dims = {dim0},
+        .dtype = e->vars[0].c->dtshape->dtype,
     };
     for (int nvar = 0; nvar < e->nvars; nvar++) {
         iarray_temporary_new(e, e->vars[nvar].c, &shape_var, &e->temp_vars[nvar]);
