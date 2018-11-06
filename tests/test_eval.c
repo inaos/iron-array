@@ -152,9 +152,11 @@ INA_TEST_FIXTURE(eval, chunk1)
     iarray_container_t* c_x;
     iarray_from_sc(iactx, data->sc_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
     iarray_expr_bind(e, "x", c_x);
+    iarray_container_t* c_out;
+    iarray_from_sc(iactx, data->sc_out, IARRAY_DATA_TYPE_DOUBLE, &c_out);
 
     iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
-    iarray_eval(iactx, e, data->sc_out, 0, NULL);
+    iarray_eval(e, c_out);
     
     INA_TEST_ASSERT_TRUE(test_schunks_equal_double(data->sc_y, data->sc_out));
 
@@ -172,9 +174,11 @@ INA_TEST_FIXTURE(eval, block1)
     iarray_container_t* c_x;
     iarray_from_sc(iactx, data->sc_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
     iarray_expr_bind(e, "x", c_x);
+    iarray_container_t* c_out;
+    iarray_from_sc(iactx, data->sc_out, IARRAY_DATA_TYPE_DOUBLE, &c_out);
 
     iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
-    iarray_eval(iactx, e, data->sc_out, 0, NULL);
+    iarray_eval(e, c_out);
     
     INA_TEST_ASSERT_TRUE(test_schunks_equal_double(data->sc_y, data->sc_out));
 
