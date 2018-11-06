@@ -1,5 +1,5 @@
 //
-// Created by Francesc Alted on 25/09/2018.
+// Created by Francesc Alted on 6/11/2018.
 //
 
 /*
@@ -8,13 +8,13 @@
 
   To compile this program:
 
-  $ gcc -O3 vectors-caterva.c -o vectors-caterva -lblosc
+  $ gcc -O3 vectors-iarray.c -o vectors-iarray -lblosc
 
   To run:
 
-  $ ./vectors-caterva memory
+  $ ./vectors-iarray memory
   ...
-  $ ./vectors-caterva disk
+  $ ./vectors-iarray disk
   ...
 
 */
@@ -106,7 +106,15 @@ bool test_schunks_equal(blosc2_schunk* sc1, blosc2_schunk* sc2) {
     double *buffer_sc2 = malloc(chunksize);
     for (int nchunk=0; nchunk < sc1->nchunks; nchunk++) {
         int dsize = blosc2_schunk_decompress_chunk(sc1, nchunk, buffer_sc1, chunksize);
+        if (dsize < 0) {
+            fprintf(stderr, "Error in decompressing a chunk from sc1\n");
+            return false;
+        }
         dsize = blosc2_schunk_decompress_chunk(sc2, nchunk, buffer_sc2, chunksize);
+        if (dsize < 0) {
+            fprintf(stderr, "Error in decompressing a chunk from sc2\n");
+            return false;
+        }
         for (int nelem=0; nelem < nitems_in_chunk; nelem++) {
             double vdiff = fabs(buffer_sc1[nelem] - buffer_sc2[nelem]);
             if (vdiff > 1e-6) {
@@ -227,24 +235,30 @@ int main(int argc, char** argv)
 
     // Check IronArray performance
     // First for the chunk evaluator
-    iarray_context_t *iactx;
-    iarray_config_t cfg = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_CHUNK, .cparams = &cparams, .dparams = &dparams};
-    iarray_ctx_new(&cfg, &iactx);
 
     /* Create a super-chunk backed by an in-memory frame */
     blosc2_frame frame_out = BLOSC_EMPTY_FRAME;
     if (diskframes) frame_out.fname = "out.b2frame";
     caterva_array *cta_out = caterva_new_array(cparams, dparams, &frame_out, pparams);
 
+    // Create context for evaluating the expressions and iarray containers for operands
+    iarray_context_t *iactx;
+    iarray_config_t cfg = {.max_num_threads = NTHREADS, .flags = IARRAY_EXPR_EVAL_CHUNK,
+        .cparams = &cparams, .dparams = &dparams, .pparams = &pparams};
+    iarray_ctx_new(&cfg, &iactx);
+
+    iarray_container_t *iac_x, *iac_y, *iac_out;
+    iarray_from_ctarray(iactx, cta_x, IARRAY_DATA_TYPE_DOUBLE, &iac_x);
+    iarray_from_ctarray(iactx, cta_y, IARRAY_DATA_TYPE_DOUBLE, &iac_y);
+    iarray_from_ctarray(iactx, cta_out, IARRAY_DATA_TYPE_DOUBLE, &iac_out);
+
     iarray_expression_t *e;
     iarray_expr_new(iactx, &e);
-    iarray_container_t *c_x, *c_y;
-    iarray_from_ctarray(iactx, cta_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
-    iarray_expr_bind(e, "x", c_x);
+    iarray_expr_bind(e, "x", iac_x);
     iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
 
     blosc_set_timestamp(&last);
-    iarray_eval(iactx, e, cta_out, 0, NULL);
+    iarray_eval(e, iac_out);
     blosc_set_timestamp(&current);
     ttotal = blosc_elapsed_secs(last, current);
     blosc2_schunk *sc_out = cta_out->sc;
@@ -263,45 +277,50 @@ int main(int argc, char** argv)
     iarray_expr_free(iactx, &e);
     iarray_ctx_free(&iactx);
 
-//    // Then for the block evaluator
-//    iarray_config_t cfg2 = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_BLOCK, .cparams = &cparams, .dparams = &dparams};
-//    iarray_ctx_new(&cfg2, &iactx);
-//
-//    /* Create a super-chunk backed by an in-memory frame */
-//    blosc2_frame frame_out2 = BLOSC_EMPTY_FRAME;
-//    if (diskframes) frame_out2.fname = "out2.b2frame";
-//    caterva_array *cta_out2 = caterva_new_array(cparams, dparams, &frame_out2, pparams);
-//
-//    iarray_expr_new(iactx, &e);
-//    iarray_from_ctarray(iactx, cta_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
-//    iarray_expr_bind(e, "x", c_x);
-//    iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
-//
-//    blosc_set_timestamp(&last);
-//    iarray_eval(iactx, e, cta_out2, 0, NULL);
-//    blosc_set_timestamp(&current);
-//    ttotal = blosc_elapsed_secs(last, current);
-//    blosc2_schunk *sc_out2 = cta_out2->sc;
-//    printf("\n");
-//    printf("Time for computing and filling OUT values using iarray (block eval):  %.3g s, %.1f MB/s\n",
-//            ttotal, sc_out2->nbytes / (ttotal * MB));
-//    printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
-//            (sc_out2->nbytes/MB), (sc_out2->cbytes/MB),
-//            (1.*sc_out2->nbytes)/sc_out2->cbytes);
-//
-//    // Check that we are getting the same results than through manual computation
-//    if (!test_schunks_equal(sc_y, sc_out2)) {
-//        return -1;
-//    }
-//
-//    iarray_expr_free(iactx, &e);
-//    iarray_ctx_free(&iactx);
+    // Then for the block evaluator
+    iarray_config_t cfg2 = {.max_num_threads = NTHREADS, .flags = IARRAY_EXPR_EVAL_BLOCK,
+                            .cparams = &cparams, .dparams = &dparams};
+    iarray_context_t *iactx2;
+    iarray_ctx_new(&cfg2, &iactx2);
+    iarray_container_t *iac_x2;
+    iarray_from_ctarray(iactx2, cta_x, IARRAY_DATA_TYPE_DOUBLE, &iac_x2);
+
+    /* Create a super-chunk backed by an in-memory frame */
+    blosc2_frame frame_out2 = BLOSC_EMPTY_FRAME;
+    if (diskframes) frame_out2.fname = "out2.b2frame";
+    caterva_array *cta_out2 = caterva_new_array(cparams, dparams, &frame_out2, pparams);
+    iarray_container_t *iac_out2;
+    iarray_from_ctarray(iactx2, cta_out2, IARRAY_DATA_TYPE_DOUBLE, &iac_out2);
+
+    iarray_expr_new(iactx2, &e);
+    iarray_expr_bind(e, "x", iac_x2);
+    iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
+
+    blosc_set_timestamp(&last);
+    iarray_eval(e, iac_out2);
+    blosc_set_timestamp(&current);
+    ttotal = blosc_elapsed_secs(last, current);
+    blosc2_schunk *sc_out2 = cta_out2->sc;
+    printf("\n");
+    printf("Time for computing and filling OUT values using iarray (block eval):  %.3g s, %.1f MB/s\n",
+            ttotal, sc_out2->nbytes / (ttotal * MB));
+    printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
+            (sc_out2->nbytes/MB), (sc_out2->cbytes/MB),
+            (1.*sc_out2->nbytes)/sc_out2->cbytes);
+
+    // Check that we are getting the same results than through manual computation
+    if (!test_schunks_equal(sc_y, sc_out2)) {
+        return -1;
+    }
+
+    iarray_expr_free(iactx2, &e);
+    iarray_ctx_free(&iactx2);
 
     // Free resources
     caterva_free_array(cta_x);
     caterva_free_array(cta_y);
     caterva_free_array(cta_out);
-    //caterva_free_array(cta_out2);
+    caterva_free_array(cta_out2);
 
     blosc_destroy();
 
