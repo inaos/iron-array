@@ -2,6 +2,11 @@
 
 ## Style and code conventions
 
+### Function and brackets
+
+* Open and closing brackets of functions are alwayls on the beginning of the line
+* The backet open or close is alwayls the only character on the line
+
 ### Adhere to INAC conventions wherever possible
 
 * Alwalys use ina_rc_t as return type of functions
