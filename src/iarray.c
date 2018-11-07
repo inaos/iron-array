@@ -185,33 +185,6 @@ INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx, iarray_dtshape_t *dtshape, 
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_from_sc(iarray_context_t *ctx, blosc2_schunk *sc, iarray_data_type_t dtype, iarray_container_t **container)
-{
-    *container = ina_mem_alloc(sizeof(iarray_container_t));
-    (*container)->dtshape = ina_mem_alloc(sizeof(iarray_dtshape_t));
-    (*container)->dtshape->ndim = 1;
-    (*container)->dtshape->dtype = dtype;
-    int dim0 = 0;
-    if (ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
-        int typesize = sc->typesize;
-        size_t chunksize, cbytes, blocksize;
-        void *chunk;
-        bool needs_free;
-        int retcode = blosc2_schunk_get_chunk(sc, 0, &chunk, &needs_free);
-        blosc_cbuffer_sizes(chunk, &chunksize, &cbytes, &blocksize);
-        if (needs_free) {
-            free(chunk);
-        }
-        dim0 = (int)blocksize / typesize;
-    }
-    else {
-        dim0 = sc->chunksize / sc->typesize;
-    }
-    (*container)->dtshape->dims[0] = dim0;
-    (*container)->catarr->sc = sc;
-    return INA_SUCCESS;
-}
-
 INA_API(ina_rc_t) iarray_from_ctarray(iarray_context_t *ctx, caterva_array *ctarray, iarray_data_type_t dtype, iarray_container_t **container)
 {
     *container = ina_mem_alloc(sizeof(iarray_container_t));
