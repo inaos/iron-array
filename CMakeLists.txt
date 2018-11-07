@@ -45,7 +45,7 @@ set_target_properties(
         COMPILE_DEFINITIONS INA_LIB=1)
 
 include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac"
-        "${CMAKE_SOURCE_DIR}" )
+        "${CMAKE_SOURCE_DIR}")
 
 inac_merge_static_libs(iarray iarray_c blosc_static caterva ${INAC_LIBS})
 
@@ -54,18 +54,14 @@ set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc_static)
 endif()
 
-#inac_add_tests(iarray)
+inac_add_tests(iarray)
 #inac_add_benchmarks(iarray)
 #inac_add_tools(iarray)
 #inac_add_examples(iarray)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 find_package(MKL)
-add_subdirectory(tests)
-
-# TODO: @stoni can you figure out how to reproduce the functionality inside the cmake file in tests?
-enable_testing()
-add_subdirectory(tests)
+set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${MKL_LIBRARIES})
 
 set(BENCH ${CMAKE_SOURCE_DIR}/bench)
 # Playing with OpenMP (available mainly on GCC)
@@ -79,7 +75,7 @@ add_executable(vectors-iarray ${BENCH}/vectors-iarray.c)
 add_executable(gemm-iarray ${BENCH}/gemm-iarray.c)
 
 target_link_libraries(vectors-iarray LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
-target_link_libraries(gemm-iarray LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${MKL_LIBRARIES} ${PLATFORM_LIBS})
+target_link_libraries(gemm-iarray LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 #if (MSVC)
 #    install(TARGETS iarray
