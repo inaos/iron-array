@@ -3,4 +3,6 @@
 //
 
 #include <libinac/lib.h>
-int main(int argc,  char** argv) { return ina_test_run(argc, argv, NULL);}
+int main(int argc,  char** argv) {
+    return ina_test_run(argc, argv, NULL);
+}
