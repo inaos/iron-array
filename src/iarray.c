@@ -423,8 +423,7 @@ INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
 INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val)
 {
     if (val->dtshape->ndim > 2) {
-        /* FIXME: raise error */
-        return 1;
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
     e->vars[e->nvars].var = var;
     e->vars[e->nvars].c = val;
@@ -504,7 +503,9 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     }
     int err = 0;
     e->texpr = te_compile(e, ina_str_cstr(e->expr), te_vars, e->nvars, &err);
-    // FIXME: error handling
+    if (e->texpr == 0) {
+        return INA_ERROR(INA_ERR_NOT_COMPILED);
+    }
     return INA_SUCCESS;
 }
 
