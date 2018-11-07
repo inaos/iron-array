@@ -45,7 +45,7 @@ set_target_properties(
         COMPILE_DEFINITIONS INA_LIB=1)
 
 include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac"
-        "${CMAKE_SOURCE_DIR}" )
+        "${CMAKE_SOURCE_DIR}")
 
 inac_merge_static_libs(iarray iarray_c blosc_static caterva ${INAC_LIBS})
 
@@ -63,6 +63,8 @@ add_subdirectory(tests)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 find_package(MKL)
+include_directories(${MKL_INCLUDE_DIRS})
+set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${MKL_LIBRARIES})
 
 set(BENCH ${CMAKE_SOURCE_DIR}/bench)
 # Playing with OpenMP (available mainly on GCC)
