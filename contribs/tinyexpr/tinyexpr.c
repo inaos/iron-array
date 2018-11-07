@@ -62,6 +62,7 @@ enum {
 enum {TE_CONSTANT = 1};
 
 
+INA_DISABLE_WARNING_MSVC(4201); /* Since this is TinyExpr code we do not properly fix it */
 typedef struct state {
     const char *start;
     const char *next;
@@ -73,7 +74,7 @@ typedef struct state {
     const te_variable *lookup;
     int lookup_len;
 } state;
-
+INA_ENABLE_WARNING_MSVC(4201);
 
 #define TYPE_MASK(TYPE) ((TYPE)&0x0000001F)
 
@@ -154,6 +155,7 @@ static double ncr(double n, double r) {
 }
 static double npr(double n, double r) {return ncr(n, r) * fac(r);}
 
+INA_DISABLE_WARNING_MSVC(4152);
 static const te_variable functions[] = {
     /* must be in alphabetical order */
     {"abs", fabs,     TE_FUNCTION1 | TE_FLAG_PURE, 0},
@@ -186,8 +188,9 @@ static const te_variable functions[] = {
     {"tanh", tanh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {0, 0, 0, 0}
 };
+INA_ENABLE_WARNING_MSVC(4152);
 
-static const te_variable *find_builtin(const char *name, int len) {
+static const te_variable *find_builtin(const char *name, size_t len) {
     int imin = 0;
     int imax = sizeof(functions) / sizeof(te_variable) - 2;
 
@@ -208,7 +211,7 @@ static const te_variable *find_builtin(const char *name, int len) {
     return 0;
 }
 
-static const te_variable *find_lookup(const state *s, const char *name, int len) {
+static const te_variable *find_lookup(const state *s, const char *name, size_t len) {
     int iters;
     const te_variable *var;
     if (!s->lookup) return 0;
@@ -282,6 +285,7 @@ void next_token(state *s) {
 
             } else {
                 /* Look for an operator or special character. */
+                INA_DISABLE_WARNING_MSVC(4152);
                 switch (s->next++[0]) {
                     case '+': s->type = TOK_INFIX; s->function = add; break;
                     case '-': s->type = TOK_INFIX; s->function = sub; break;
@@ -295,6 +299,7 @@ void next_token(state *s) {
                     case ' ': case '\t': case '\n': case '\r': break;
                     default: s->type = TOK_ERROR; break;
                 }
+                INA_ENABLE_WARNING_MSVC(4152);
             }
         }
     } while (s->type == TOK_NULL);
@@ -413,7 +418,8 @@ static te_expr *base(state *s) {
     return ret;
 }
 
-
+INA_DISABLE_WARNING_MSVC(4152);
+INA_DISABLE_WARNING_MSVC(4204);
 static te_expr *power(state *s) {
     /* <power>     =    {("-" | "+")} <base> */
     int sign = 1;
@@ -533,7 +539,8 @@ static te_expr *list(state *s) {
 
     return ret;
 }
-
+INA_ENABLE_WARNING_MSVC(4152);
+INA_ENABLE_WARNING_MSVC(4204);
 
 //#define TE_FUN(...) ((double(*)(__VA_ARGS__))n->function)
 #define TE_FUN(...) ( (iarray_temporary_t*(*)(__VA_ARGS__))n->function )
@@ -623,7 +630,7 @@ te_expr *te_compile(iarray_expression_t *expr, const char *expression, const te_
     if (s.type != TOK_END) {
         te_free(root);
         if (error) {
-            *error = (s.next - s.start);
+            *error = (int)(s.next - s.start);
             if (*error == 0) *error = 1;
         }
         return 0;
