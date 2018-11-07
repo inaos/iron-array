@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 
-
+INA_DISABLE_WARNING_MSVC(4201); /* Since this is TinyExpr code we do not properly fix it */
 typedef struct te_expr {
     int type;
     union {
@@ -42,7 +42,7 @@ typedef struct te_expr {
     };
     void *parameters[1];
 } te_expr;
-
+INA_ENABLE_WARNING_MSVC(4201);
 
 enum {
     TE_VARIABLE = 0,

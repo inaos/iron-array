@@ -16,10 +16,7 @@
 */
 
 #include <libiarray/iarray.h>
-#include <mkl.h>
-
-#define KB (1024.)
-#define MB (1024 * KB)
+#include <iarray_private.h>
 
 #define N (1000)   /* array size is (N * N) */
 #define NELEM (N * N)
@@ -59,6 +56,11 @@ static double *mat_x = NULL;
 static double *mat_y = NULL;
 static double *mat_out = NULL;
 
+static void ina_cleanup_handler(int error, int *exitcode)
+{
+    iarray_destroy();
+}
+
 int main(int argc, char** argv)
 {
     ina_stopwatch_t *w = NULL;
@@ -67,11 +69,16 @@ int main(int argc, char** argv)
     const char *mat_y_name = NULL;
     const char *mat_out_name = NULL;
 
-    INA_MUST_SUCCEED(iarray_init());
-
     INA_OPTS(opt,
         INA_OPT_FLAG("p", "persistence", "Use persistent containers")
     );
+
+    if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
+        return EXIT_FAILURE;
+    }
+    ina_set_cleanup_handler(ina_cleanup_handler);
+
+    INA_MUST_SUCCEED(iarray_init());
 
     if (INA_SUCCEED(ina_opt_isset("p"))) {
         mat_x_name = "mat_x";
@@ -96,7 +103,7 @@ int main(int argc, char** argv)
     config.max_num_threads = NTHREADS;
     config.flags = IARRAY_EXPR_EVAL_CHUNK;
 
-    iarray_ctx_new(&config, &ctx);
+    INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
 
     double elapsed_sec;
     INA_STOPWATCH_NEW(1, -1, &w);
@@ -114,7 +121,7 @@ int main(int argc, char** argv)
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     printf("Time for filling X and Y matrices: %.3g s, %.1f MB/s\n",
-        elapsed_sec, (sizeof(mat_x) + sizeof(mat_y)) / (elapsed_sec * MB));
+        elapsed_sec, (sizeof(mat_x) + sizeof(mat_y)) / (elapsed_sec * _IARRAY_SIZE_MB));
 
 
     /* Compute naive matrix-matrix multiplication */
@@ -123,7 +130,7 @@ int main(int argc, char** argv)
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     printf("Time for multiplying two matrices (pure C): %.3g s, %.1f MB/s\n",
-        elapsed_sec, (sizeof(mat_x) * 3) / (elapsed_sec * MB));
+        elapsed_sec, (sizeof(mat_x) * 3) / (elapsed_sec * _IARRAY_SIZE_MB));
 
 
     iarray_dtshape_t shape;
@@ -136,8 +143,8 @@ int main(int argc, char** argv)
     iarray_container_t *con_y;
 
     INA_STOPWATCH_START(w);
-    iarray_from_buffer(ctx, &shape, IARRAY_DATA_TYPE_DOUBLE, mat_x, N, IARRAY_STORAGE_ROW_WISE, mat_x_name, 0, &con_x);
-    iarray_from_buffer(ctx, &shape, IARRAY_DATA_TYPE_DOUBLE, mat_y, N, IARRAY_STORAGE_ROW_WISE, mat_y_name, 0, &con_y);
+    iarray_from_buffer(ctx, &shape, mat_x, N, IARRAY_STORAGE_ROW_WISE, mat_x_name, 0, &con_x);
+    iarray_from_buffer(ctx, &shape, mat_y, N, IARRAY_STORAGE_ROW_WISE, mat_y_name, 0, &con_y);
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
@@ -145,19 +152,19 @@ int main(int argc, char** argv)
     size_t cbytes = 0;
     iarray_container_info(con_x, &nbytes, &cbytes);
     printf("Time for filling X and Y iarray-containers: %.3g s, %.1f MB/s\n",
-        elapsed_sec, (nbytes * 2) / (elapsed_sec * MB));
+        elapsed_sec, (nbytes * 2) / (elapsed_sec * _IARRAY_SIZE_MB));
     printf("Compression for X iarray-container: %.1f MB -> %.1f MB (%.1fx)\n",
-        (nbytes / MB), (cbytes / MB),
+        (nbytes / _IARRAY_SIZE_MB), (cbytes / _IARRAY_SIZE_MB),
         ((double)nbytes / cbytes));
 
-    iarray_to_buffer(ctx, con_x, IARRAY_DATA_TYPE_DOUBLE, mat_x, NELEM_BYTES, IARRAY_STORAGE_ROW_WISE);
-    iarray_to_buffer(ctx, con_y, IARRAY_DATA_TYPE_DOUBLE, mat_y, NELEM_BYTES, IARRAY_STORAGE_ROW_WISE);
+    iarray_to_buffer(ctx, con_x, mat_x, NELEM_BYTES, IARRAY_STORAGE_ROW_WISE);
+    iarray_to_buffer(ctx, con_y, mat_y, NELEM_BYTES, IARRAY_STORAGE_ROW_WISE);
     if (!test_mat_equal(mat_x, mat_y)) {
         return EXIT_FAILURE; /* FIXME: error handling */
     }
 
     iarray_container_t *con_out;
-    iarray_container_new(ctx, &shape, IARRAY_DATA_TYPE_DOUBLE, mat_out_name, 0, &con_out);
+    iarray_container_new(ctx, &shape, mat_out_name, 0, &con_out);
 
     INA_STOPWATCH_START(w);
     iarray_gemm(con_x, con_y, con_out); /* FIXME: error handling */
@@ -167,14 +174,14 @@ int main(int argc, char** argv)
     iarray_container_info(con_out, &nbytes, &cbytes);
     printf("\n");
     printf("Time for multiplying two matrices (iarray):  %.3g s, %.1f MB/s\n",
-        elapsed_sec, (nbytes * 3) / (elapsed_sec * MB));
+        elapsed_sec, (nbytes * 3) / (elapsed_sec * _IARRAY_SIZE_MB));
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
-            (nbytes/MB), (cbytes/MB),
+            (nbytes/ _IARRAY_SIZE_MB), (cbytes/ _IARRAY_SIZE_MB),
             (1.*nbytes) / cbytes);
 
     /* Check that we are getting the same results than through manual computation */
     ina_mem_set(mat_out, 0, NELEM_BYTES);
-    iarray_to_buffer(ctx, con_out, IARRAY_DATA_TYPE_DOUBLE, mat_out, NELEM_BYTES, IARRAY_STORAGE_ROW_WISE);
+    iarray_to_buffer(ctx, con_out, mat_out, NELEM_BYTES, IARRAY_STORAGE_ROW_WISE);
     if (!test_mat_equal(mat_out, mat_out)) {
         return EXIT_FAILURE; /* FIXME: error-handling */
     }

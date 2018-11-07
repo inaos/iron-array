@@ -10,25 +10,24 @@
 *
 */
 
-#include "test_common.h"
+#include <libiarray/iarray.h>
+#include <iarray_private.h>
+
+#include <tests/iarray_test.h>
 
 #define NTHREADS 1
 
-#define KB  1024
-#define MB  (1024*KB)
-#define GB  (1024*MB)
-
-int test_gemm(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out,
-              iarray_container_t *c_res, double tol) {
-    iarray_gemm(c_x, c_y, c_out);
-    if (!iarray_almost_equal_data(c_out, c_res, tol)) {
-        return false;
+ina_rc_t test_gemm(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out, iarray_container_t *c_res)
+{
+    INA_TEST_ASSERT_SUCCEED(iarray_gemm(c_x, c_y, c_out));
+    if (!iarray_equal_data(c_out, c_res)) {
+        return INA_ERROR(INA_ERR_FAILED);
     }
-    return true;
+    return INA_SUCCESS;
 }
 
-INA_TEST_DATA(e_gemm) {
-
+INA_TEST_DATA(e_gemm)
+{
     int tests_run;
 
     blosc2_cparams cparams;
@@ -36,7 +35,8 @@ INA_TEST_DATA(e_gemm) {
 
 };
 
-INA_TEST_SETUP(e_gemm) {
+INA_TEST_SETUP(e_gemm)
+{
 
     blosc_init();
 
@@ -50,13 +50,13 @@ INA_TEST_SETUP(e_gemm) {
 }
 
 
-INA_TEST_TEARDOWN(e_gemm) {
-
+INA_TEST_TEARDOWN(e_gemm)
+{
     blosc_destroy();
-
 }
 
-INA_TEST_FIXTURE(e_gemm, double_data) {
+INA_TEST_FIXTURE(e_gemm, double_data)
+{
 
     // Define fixture parameters
     size_t M = 956;
@@ -64,10 +64,13 @@ INA_TEST_FIXTURE(e_gemm, double_data) {
     size_t N = 2345;
     size_t P = 42;
     data->cparams.typesize = sizeof(double);
-    int typesize = data->cparams.typesize;
 
     // Define 'x' caterva container
-    caterva_pparams pparams_x = CATERVA_PPARAMS_ONES;
+    caterva_pparams pparams_x;
+    for (int i = 0; i < CATERVA_MAXDIM; i++) {
+        pparams_x.shape[i] = 1;
+        pparams_x.cshape[i] = 1;
+    }
     pparams_x.shape[CATERVA_MAXDIM - 1] = K;  // FIXME: 1's at the beginning should be removed
     pparams_x.shape[CATERVA_MAXDIM - 2] = M;  // FIXME: 1's at the beginning should be removed
     pparams_x.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
@@ -75,8 +78,8 @@ INA_TEST_FIXTURE(e_gemm, double_data) {
     pparams_x.ndims = 2;
     blosc2_frame fr_x = BLOSC_EMPTY_FRAME;
     caterva_array *cta_x = caterva_new_array(data->cparams, data->dparams, &fr_x, pparams_x);
-    double *buf_x = (double *) ina_mem_alloc(cta_x->size * typesize);
-    dfill_buf(buf_x, cta_x->size);
+    double *buf_x = (double *) malloc(sizeof(double) * M * K);
+    dfill_buf(buf_x, M * K);
     caterva_from_buffer(cta_x, buf_x);
 
     // Create 'x' iarray container

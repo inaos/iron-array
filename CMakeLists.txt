@@ -45,7 +45,7 @@ set_target_properties(
         COMPILE_DEFINITIONS INA_LIB=1)
 
 include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac"
-        "${CMAKE_SOURCE_DIR}")
+        "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
 
 inac_merge_static_libs(iarray iarray_c blosc_static caterva ${INAC_LIBS})
 
