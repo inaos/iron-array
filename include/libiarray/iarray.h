@@ -72,7 +72,7 @@ typedef struct iarray_config_s {
 typedef struct iarray_dtshape_s {
     iarray_data_type_t dtype;
     int ndim;     /* IF ndim = 0 THEN it is a scalar */
-    int dims[8];  // a fixed size simplifies the code and should be enough for most IronArray cases
+    int dims[8];  /* a fixed size simplifies the code and should be enough for most IronArray cases */
 } iarray_dtshape_t;
 
 typedef struct iarray_slice_param_s {
@@ -85,6 +85,13 @@ INA_API(void) iarray_destroy();
 
 INA_API(ina_rc_t) iarray_ctx_new(iarray_config_t *cfg, iarray_context_t **ctx);
 INA_API(void) iarray_ctx_free(iarray_context_t **ctx);
+
+INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
+                                       iarray_dtshape_t *dtshape,
+                                       iarray_data_type_t dtype,
+                                       const char *name,
+                                       int flags,
+                                       iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx, 
                                 iarray_dtshape_t *dtshape, 
@@ -137,37 +144,28 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
                                iarray_slice_param_t *params, 
                                iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_from_float_buffer(iarray_context_t *ctx,
-                                           iarray_dtshape_t *dtshape,
-                                           float *buffer,
-                                           size_t buffer_len,
-                                           iarray_storage_format_t fmt,
-                                           const char *name,
-                                           int flags,
-                                           iarray_container_t **container);
+INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
+                                     iarray_dtshape_t *dtshape,
+                                     iarray_data_type_t dtype,
+                                     void *buffer,
+                                     size_t buffer_len,
+                                     iarray_storage_format_t fmt,
+                                     const char *name,
+                                     int flags,
+                                     iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_from_double_buffer(iarray_context_t *ctx,
-                                            iarray_dtshape_t *dtshape,
-                                            double *buffer,
-                                            size_t buffer_len,
-                                            iarray_storage_format_t fmt,
-                                            const char *name,
-                                            int flags,
-                                            iarray_container_t **container);
+INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
+                                   iarray_container_t *container,
+                                   iarray_data_type_t dtype,
+                                   void *buffer,
+                                   size_t buffer_len,
+                                   iarray_storage_format_t fmt);
 
-INA_API(ina_rc_t) iarray_to_float_buffer(iarray_context_t *ctx,
-                                         iarray_container_t *container,
-                                         float *buffer,
-                                         size_t buffer_len,
-                                         iarray_storage_format_t fmt);
 
-INA_API(ina_rc_t) iarray_to_double_buffer(iarray_context_t *ctx,
-                                          iarray_container_t *container,
-                                          double *buffer,
-                                          size_t buffer_len,
-                                          iarray_storage_format_t fmt);
+INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, 
+                                        size_t *size_in_bytes, 
+                                        size_t *compressed_size_in_bytes);
 
-INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, size_t *size_in_bytes);
 INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e);
