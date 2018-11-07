@@ -10,23 +10,24 @@
 *
 */
 
-#include "test_common.h"
+#include <libiarray/iarray.h>
+#include <iarray_private.h>
+
+#include <tests/iarray_test.h>
 
 #define NTHREADS 1
 
-#define KB  1024
-#define MB  (1024*KB)
-#define GB  (1024*MB)
-
-int test_gemm(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out, iarray_container_t *c_res) {
-    iarray_gemm(c_x, c_y, c_out);
+ina_rc_t test_gemm(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out, iarray_container_t *c_res) 
+{
+    INA_TEST_ASSERT_SUCCEED(iarray_gemm(c_x, c_y, c_out));
     if (!iarray_equal_data(c_out, c_res)) {
-        return -1;
+        return INA_ERROR(INA_ERR_FAILED);
     }
-    return 1;
+    return INA_SUCCESS;
 }
 
-INA_TEST_DATA(e_gemm) {
+INA_TEST_DATA(e_gemm)
+{
     int tests_run;
 
     blosc2_cparams cparams;
@@ -34,7 +35,8 @@ INA_TEST_DATA(e_gemm) {
 
 };
 
-INA_TEST_SETUP(e_gemm) {
+INA_TEST_SETUP(e_gemm)
+{
 
     blosc_init();
 
@@ -53,7 +55,8 @@ INA_TEST_TEARDOWN(e_gemm)
     blosc_destroy();
 }
 
-INA_TEST_FIXTURE(e_gemm, double_data) {
+INA_TEST_FIXTURE(e_gemm, double_data)
+{
 
     // Define fixture parameters
     size_t M = 163;

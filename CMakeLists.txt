@@ -45,7 +45,7 @@ set_target_properties(
         COMPILE_DEFINITIONS INA_LIB=1)
 
 include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac"
-        "${CMAKE_SOURCE_DIR}")
+        "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
 
 inac_merge_static_libs(iarray iarray_c blosc_static caterva ${INAC_LIBS})
 
@@ -58,8 +58,6 @@ inac_add_tests(iarray)
 #inac_add_benchmarks(iarray)
 #inac_add_tools(iarray)
 #inac_add_examples(iarray)
-
-add_subdirectory(tests)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 find_package(MKL)

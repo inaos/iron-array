@@ -13,8 +13,12 @@
 #ifndef IARRAY_PRIVATE_H_
 #define IARRAY_PRIVATE_H_
 
-#include <stddef.h>
 #include <libiarray/iarray.h>
+
+ /* Sizes */
+#define _IARRAY_SIZE_KB  (1024)
+#define _IARRAY_SIZE_MB  (1024*_IARRAY_SIZE_KB)
+#define _IARRAY_SIZE_GB  (1024*_IARRAY_SIZE_MB)
 
 typedef enum iarray_optype_e {
     IARRAY_OPERATION_TYPE_ADD,

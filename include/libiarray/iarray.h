@@ -83,12 +83,11 @@ typedef struct iarray_slice_param_s {
 INA_API(ina_rc_t) iarray_init();
 INA_API(void) iarray_destroy();
 
-INA_API(ina_rc_t) iarray_ctx_new(iarray_config_t *cfg, iarray_context_t **ctx);
-INA_API(void) iarray_ctx_free(iarray_context_t **ctx);
+INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx);
+INA_API(void) iarray_context_free(iarray_context_t **ctx);
 
 INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
                                        iarray_dtshape_t *dtshape,
-                                       iarray_data_type_t dtype,
                                        const char *name,
                                        int flags,
                                        iarray_container_t **container);
@@ -98,21 +97,18 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
                                 int start, 
                                 int stop, 
                                 int step, 
-                                iarray_data_type_t dtype, 
                                 const char *name,
                                 int flags,
                                 iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx, 
                                iarray_dtshape_t *dtshape, 
-                               iarray_data_type_t dtype, 
                                const char *name,
                                int flags,
                                iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx, 
                               iarray_dtshape_t *dtshape, 
-                              iarray_data_type_t dtype, 
                               const char *name,
                               int flags,
                               iarray_container_t **container);
@@ -134,7 +130,6 @@ INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
 INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx, 
                               iarray_dtshape_t *dtshape, 
                               iarray_rng_t rng, 
-                              iarray_data_type_t dtype, 
                               const char *name,
                               int flags,
                               iarray_container_t **container);
@@ -146,7 +141,6 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
-                                     iarray_data_type_t dtype,
                                      void *buffer,
                                      size_t buffer_len,
                                      iarray_storage_format_t fmt,
@@ -156,7 +150,6 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
                                    iarray_container_t *container,
-                                   iarray_data_type_t dtype,
                                    void *buffer,
                                    size_t buffer_len,
                                    iarray_storage_format_t fmt);
@@ -176,21 +169,14 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
 
-<<<<<<< HEAD
 INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
-=======
-INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, 
-                              iarray_expression_t *e, 
-                              caterva_array *out, 
-                              int flags, 
-                              iarray_container_t **ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
->>>>>>> hiding all blosc and caterva in iarray impl
+
+INA_API(ina_rc_t) iarray_equal_data(iarray_container_t *a, iarray_container_t *b);
+
+INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c);
+INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c);
 
 //FIXME: remove
-//INA_API(ina_rc_t) iarray_from_ctarray(iarray_context_t *ctx, caterva_array *ctarray, iarray_data_type_t dtype, iarray_container_t **container);
-
-//FIXME: remove
-INA_API(ina_rc_t) iarray_from_sc(iarray_context_t *ctx, blosc2_schunk *sc, iarray_data_type_t dtype, iarray_container_t **container);
 INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp);
 
 //FIXME: Move to private header
@@ -204,10 +190,5 @@ typedef struct iarray_variable_s {
 
 ina_rc_t iarray_eval_chunk(iarray_context_t *ctx, char* expr, iarray_variable_t *vars, int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
 ina_rc_t iarray_eval_block(iarray_context_t *ctx, char* expr, iarray_variable_t *vars, int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
-
-INA_API(ina_rc_t) iarray_equal_data(iarray_container_t *a, iarray_container_t *b);
-
-INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c);
-INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c);
 
 #endif
