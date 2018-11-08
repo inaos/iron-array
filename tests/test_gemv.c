@@ -62,11 +62,7 @@ INA_TEST_FIXTURE(e_gemv, double_data) {
     data->cparams.typesize = sizeof(double);
 
     // Define 'x' caterva container
-    caterva_pparams pparams_x;
-    for (int i = 0; i < CATERVA_MAXDIM; i++) {
-        pparams_x.shape[i] = 1;
-        pparams_x.cshape[i] = 1;
-    }
+    caterva_pparams pparams_x = CATERVA_PPARAMS_ONES;
     pparams_x.shape[CATERVA_MAXDIM - 1] = K;  // FIXME: 1's at the beginning should be removed
     pparams_x.shape[CATERVA_MAXDIM - 2] = M;  // FIXME: 1's at the beginning should be removed
     pparams_x.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
@@ -88,11 +84,7 @@ INA_TEST_FIXTURE(e_gemv, double_data) {
 
 
     // Define 'y' caterva container
-    caterva_pparams pparams_y;
-    for (int i = 0; i < CATERVA_MAXDIM; i++) {
-        pparams_y.shape[i] = 1;
-        pparams_y.cshape[i] = 1;
-    }
+    caterva_pparams pparams_y = CATERVA_PPARAMS_ONES;
     pparams_y.shape[CATERVA_MAXDIM - 1] = K;  // FIXME: 1's at the beginning should be removed
     pparams_y.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
     pparams_y.ndims = 1;
@@ -111,11 +103,7 @@ INA_TEST_FIXTURE(e_gemv, double_data) {
     iarray_from_ctarray(iactx_y, cta_y, IARRAY_DATA_TYPE_DOUBLE, &c_y);
 
     // Define 'out' caterva container
-    caterva_pparams pparams_out;
-    for (int i = 0; i < CATERVA_MAXDIM; i++) {
-        pparams_out.shape[i] = 1;
-        pparams_out.cshape[i] = 1;
-    }
+    caterva_pparams pparams_out = CATERVA_PPARAMS_ONES;
     pparams_out.shape[CATERVA_MAXDIM - 1] = M;  // FIXME: 1's at the beginning should be removed
     pparams_out.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
     pparams_out.ndims = 1;
@@ -131,11 +119,7 @@ INA_TEST_FIXTURE(e_gemv, double_data) {
     iarray_from_ctarray(iactx_out, cta_out, IARRAY_DATA_TYPE_DOUBLE, &c_out);
 
     // Define 'res' caterva container
-    caterva_pparams pparams_res;
-    for (int i = 0; i < CATERVA_MAXDIM; i++) {
-        pparams_res.shape[i] = 1;
-        pparams_res.cshape[i] = 1;
-    }
+    caterva_pparams pparams_res  = CATERVA_PPARAMS_ONES;
     pparams_res.shape[CATERVA_MAXDIM - 1] = M;  // FIXME: 1's at the beginning should be removed
     pparams_res.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
     pparams_res.ndims = 1;
