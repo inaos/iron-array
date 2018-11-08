@@ -817,9 +817,13 @@ INA_API(ina_rc_t) iarray_almost_equal_data(iarray_container_t *a, iarray_contain
             if (vdiff > tol) {
                 printf("%f, %f\n", b_a[i], b_b[i]);
                 printf("Values differ in (%lu nelem) (diff: %f)\n", i, vdiff);
+                free(buf_a);
+                free(buf_b);
                 return false;
             }
         }
+        free(buf_a);
+        free(buf_b);
         return true;
     }
     else if(a->dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
@@ -831,12 +835,18 @@ INA_API(ina_rc_t) iarray_almost_equal_data(iarray_container_t *a, iarray_contain
             if (vdiff > tol) {
                 printf("%f, %f\n", b_a[i], b_b[i]);
                 printf("Values differ in (%lu nelem) (diff: %f)\n", i, vdiff);
+                free(buf_a);
+                free(buf_b);
                 return false;
             }
         }
+        free(buf_a);
+        free(buf_b);
         return true;
     }
     printf("Data type is not supported");
+    free(buf_a);
+    free(buf_b);
     return false;
 }
 
@@ -923,5 +933,8 @@ INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarr
         }
         blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], p_vsize);
     }
+    free(a_block);
+    free(b_block);
+    free(c_block);
     return 0;
 }
