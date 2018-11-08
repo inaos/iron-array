@@ -794,13 +794,50 @@ int _dtshape_equal(iarray_dtshape_t *a, iarray_dtshape_t *b) {
 }
 
 
-INA_API(ina_rc_t) iarray_equal_data(iarray_container_t *a, iarray_container_t *b) {
-
-    if (caterva_equal_data(a->catarr, b->catarr) != 0) {
-        return 1;
+INA_API(ina_rc_t) iarray_almost_equal_data(iarray_container_t *a, iarray_container_t *b, double tol) {
+    if(a->dtshape->dtype != b->dtshape->dtype){
+        return false;
     }
+    if(a->catarr->size != b->catarr->size) {
+        return false;
+    }
+    size_t size = a->catarr->size;
 
-    return 0;
+    uint8_t *buf_a = malloc(a->catarr->size * a->catarr->sc->typesize);
+    caterva_to_buffer(a->catarr, buf_a);
+    uint8_t *buf_b = malloc(b->catarr->size * b->catarr->sc->typesize);
+    caterva_to_buffer(b->catarr, buf_b);
+
+    if(a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
+        double *b_a = (double *)buf_a;
+        double *b_b = (double *)buf_a;
+
+        for (size_t i = 0; i < size; ++i) {
+            double vdiff = fabs((b_a[i] - b_b[i]) / b_a[i]);
+            if (vdiff > tol) {
+                printf("%f, %f\n", b_a[i], b_b[i]);
+                printf("Values differ in (%lu nelem) (diff: %f)\n", i, vdiff);
+                return false;
+            }
+        }
+        return true;
+    }
+    else if(a->dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
+        float *b_a = (float *)buf_a;
+        float *b_b = (float *)buf_a;
+
+        for (size_t i = 0; i < size; ++i) {
+            double vdiff = fabs((double)(b_a[i] - b_b[i]) / b_a[i]);
+            if (vdiff > tol) {
+                printf("%f, %f\n", b_a[i], b_b[i]);
+                printf("Values differ in (%lu nelem) (diff: %f)\n", i, vdiff);
+                return false;
+            }
+        }
+        return true;
+    }
+    printf("Data type is not supported");
+    return false;
 }
 
 
