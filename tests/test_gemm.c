@@ -18,12 +18,13 @@
 #define MB  (1024*KB)
 #define GB  (1024*MB)
 
-int test_gemm(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out, iarray_container_t *c_res) {
+int test_gemm(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out,
+              iarray_container_t *c_res, double tol) {
     iarray_gemm(c_x, c_y, c_out);
-    if (!iarray_equal_data(c_out, c_res)) {
-        return -1;
+    if (!iarray_almost_equal_data(c_out, c_res, tol)) {
+        return false;
     }
-    return 1;
+    return true;
 }
 
 INA_TEST_DATA(e_gemm) {
@@ -48,17 +49,16 @@ INA_TEST_SETUP(e_gemm) {
 }
 
 
-INA_TEST_TEARDOWN(e_gemm)
-{
+INA_TEST_TEARDOWN(e_gemm) {
     blosc_destroy();
 }
 
 INA_TEST_FIXTURE(e_gemm, double_data) {
 
     // Define fixture parameters
-    size_t M = 163;
-    size_t K = 135;
-    size_t N = 94;
+    size_t M = 506;
+    size_t K = 276;
+    size_t N = 643;
     size_t P = 24;
     data->cparams.typesize = sizeof(double);
     int typesize = data->cparams.typesize;
@@ -83,7 +83,7 @@ INA_TEST_FIXTURE(e_gemm, double_data) {
     iarray_ctx_new(&cfg_x, &iactx_x);
     iarray_container_t *c_x;
     iarray_from_ctarray(iactx_x, cta_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
-    
+
 
     // Define 'y' caterva container
     caterva_pparams pparams_y = CATERVA_PPARAMS_ONES;
@@ -149,7 +149,7 @@ INA_TEST_FIXTURE(e_gemm, double_data) {
     iarray_container_t *c_res;
     iarray_from_ctarray(iactx_res, cta_res, IARRAY_DATA_TYPE_DOUBLE, &c_res);
 
-    INA_TEST_ASSERT_TRUE(test_gemm(c_x, c_y, c_out, c_res));
+    INA_TEST_ASSERT_TRUE(test_gemm(c_x, c_y, c_out, c_res, 1e-14));
 
     // Free memory
     ina_mem_free(buf_x);
@@ -167,7 +167,6 @@ INA_TEST_FIXTURE(e_gemm, double_data) {
     iarray_ctx_free(&iactx_res);
 }
 
-    
 
 INA_TEST_FIXTURE(e_gemm, float_data) {
 
@@ -263,7 +262,7 @@ INA_TEST_FIXTURE(e_gemm, float_data) {
     iarray_container_t *c_res;
     iarray_from_ctarray(iactx_res, cta_res, IARRAY_DATA_TYPE_FLOAT, &c_res);
 
-    INA_TEST_ASSERT_TRUE(test_gemm(c_x, c_y, c_out, c_res));
+    INA_TEST_ASSERT_TRUE(test_gemm(c_x, c_y, c_out, c_res, 1e-06));
 
     // Free memory
     ina_mem_free(buf_x);

@@ -18,12 +18,13 @@
 #define MB  (1024*KB)
 #define GB  (1024*MB)
 
-int test_gemv(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out, iarray_container_t *c_res) {
+int test_gemv(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out,
+              iarray_container_t *c_res, double tol) {
     iarray_gemv(c_x, c_y, c_out);
-    if (iarray_equal_data(c_out, c_res) != 0) {
-        return 0;
+    if (!iarray_almost_equal_data(c_out, c_res, tol)) {
+        return false;
     }
-    return 1;
+    return true;
 }
 
 INA_TEST_DATA(e_gemv) {
@@ -48,8 +49,7 @@ INA_TEST_SETUP(e_gemv) {
 }
 
 
-INA_TEST_TEARDOWN(e_gemv)
-{
+INA_TEST_TEARDOWN(e_gemv) {
     blosc_destroy();
 }
 
@@ -120,7 +120,7 @@ INA_TEST_FIXTURE(e_gemv, double_data) {
     iarray_from_ctarray(iactx_out, cta_out, IARRAY_DATA_TYPE_DOUBLE, &c_out);
 
     // Define 'res' caterva container
-    caterva_pparams pparams_res  = CATERVA_PPARAMS_ONES;
+    caterva_pparams pparams_res = CATERVA_PPARAMS_ONES;
     pparams_res.shape[CATERVA_MAXDIM - 1] = M;  // FIXME: 1's at the beginning should be removed
     pparams_res.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
     pparams_res.ndims = 1;
@@ -143,7 +143,7 @@ INA_TEST_FIXTURE(e_gemv, double_data) {
     iarray_container_t *c_res;
     iarray_from_ctarray(iactx_res, cta_res, IARRAY_DATA_TYPE_DOUBLE, &c_res);
 
-    INA_TEST_ASSERT_TRUE(test_gemv(c_x, c_y, c_out, c_res));
+    INA_TEST_ASSERT_TRUE(test_gemv(c_x, c_y, c_out, c_res, 1e-14));
 
     // Free memory
     ina_mem_free(buf_x);
@@ -169,7 +169,7 @@ INA_TEST_FIXTURE(e_gemv, float_data) {
     size_t P = 15;
     data->cparams.typesize = sizeof(float);
     int typesize = data->cparams.typesize;
-    
+
     // Define 'x' caterva container
     caterva_pparams pparams_x = CATERVA_PPARAMS_ONES;
     pparams_x.shape[CATERVA_MAXDIM - 1] = K;  // FIXME: 1's at the beginning should be removed
@@ -251,7 +251,7 @@ INA_TEST_FIXTURE(e_gemv, float_data) {
     iarray_container_t *c_res;
     iarray_from_ctarray(iactx_res, cta_res, IARRAY_DATA_TYPE_FLOAT, &c_res);
 
-    INA_TEST_ASSERT_TRUE(test_gemv(c_x, c_y, c_out, c_res));
+    INA_TEST_ASSERT_TRUE(test_gemv(c_x, c_y, c_out, c_res, 1e-06));
 
     // Free memory
     ina_mem_free(buf_x);
