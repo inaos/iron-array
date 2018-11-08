@@ -61,6 +61,7 @@ INA_TEST_FIXTURE(e_gemm, double_data) {
     size_t N = 94;
     size_t P = 24;
     data->cparams.typesize = sizeof(double);
+    int typesize = data->cparams.typesize;
 
     // Define 'x' caterva container
     caterva_pparams pparams_x = CATERVA_PPARAMS_ONES;
@@ -71,8 +72,8 @@ INA_TEST_FIXTURE(e_gemm, double_data) {
     pparams_x.ndims = 2;
     blosc2_frame fr_x = BLOSC_EMPTY_FRAME;
     caterva_array *cta_x = caterva_new_array(data->cparams, data->dparams, &fr_x, pparams_x);
-    double *buf_x = (double *) malloc(sizeof(double) * M * K);
-    dfill_buf(buf_x, M * K);
+    double *buf_x = (double *) ina_mem_alloc(cta_x->size * typesize);
+    dfill_buf(buf_x, cta_x->size);
     caterva_from_buffer(cta_x, buf_x);
 
     // Create 'x' iarray container
@@ -82,7 +83,7 @@ INA_TEST_FIXTURE(e_gemm, double_data) {
     iarray_ctx_new(&cfg_x, &iactx_x);
     iarray_container_t *c_x;
     iarray_from_ctarray(iactx_x, cta_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
-
+    
 
     // Define 'y' caterva container
     caterva_pparams pparams_y = CATERVA_PPARAMS_ONES;
@@ -93,8 +94,8 @@ INA_TEST_FIXTURE(e_gemm, double_data) {
     pparams_y.ndims = 2;
     blosc2_frame fr_y = BLOSC_EMPTY_FRAME;
     caterva_array *cta_y = caterva_new_array(data->cparams, data->dparams, &fr_y, pparams_y);
-    double *buf_y = (double *) malloc(sizeof(double) * K * N);
-    dfill_buf(buf_y, K * N);
+    double *buf_y = (double *) ina_mem_alloc(cta_y->size * typesize);
+    dfill_buf(buf_y, cta_y->size);
     caterva_from_buffer(cta_y, buf_y);
 
     // Create 'y' iarray container
@@ -135,7 +136,7 @@ INA_TEST_FIXTURE(e_gemm, double_data) {
 
 
     // Obtain values of 'res' buffer
-    double *buf_res = (double *) calloc(cta_res->size, (size_t)cta_res->sc->typesize);
+    double *buf_res = (double *) ina_mem_alloc(cta_res->size * typesize);
     dmm_mul(M, K, N, buf_x, buf_y, buf_res);
     caterva_from_buffer(cta_res, buf_res);
 
@@ -151,9 +152,9 @@ INA_TEST_FIXTURE(e_gemm, double_data) {
     INA_TEST_ASSERT_TRUE(test_gemm(c_x, c_y, c_out, c_res));
 
     // Free memory
-    free(buf_x);
-    free(buf_y);
-    free(buf_res);
+    ina_mem_free(buf_x);
+    ina_mem_free(buf_y);
+    ina_mem_free(buf_res);
 
     caterva_free_array(cta_x);
     caterva_free_array(cta_y);
@@ -166,6 +167,7 @@ INA_TEST_FIXTURE(e_gemm, double_data) {
     iarray_ctx_free(&iactx_res);
 }
 
+    
 
 INA_TEST_FIXTURE(e_gemm, float_data) {
 
@@ -175,6 +177,7 @@ INA_TEST_FIXTURE(e_gemm, float_data) {
     size_t N = 75;
     size_t P = 10;
     data->cparams.typesize = sizeof(float);
+    int typesize = data->cparams.typesize;
 
     // Define 'x' caterva container
     caterva_pparams pparams_x = CATERVA_PPARAMS_ONES;
@@ -185,7 +188,7 @@ INA_TEST_FIXTURE(e_gemm, float_data) {
     pparams_x.ndims = 2;
     blosc2_frame fr_x = BLOSC_EMPTY_FRAME;
     caterva_array *cta_x = caterva_new_array(data->cparams, data->dparams, &fr_x, pparams_x);
-    float *buf_x = (float *) malloc(cta_x->size * sizeof(float));
+    float *buf_x = (float *) ina_mem_alloc(cta_x->size * typesize);
     ffill_buf(buf_x, cta_x->size);
     caterva_from_buffer(cta_x, buf_x);
 
@@ -207,8 +210,8 @@ INA_TEST_FIXTURE(e_gemm, float_data) {
     pparams_y.ndims = 2;
     blosc2_frame fr_y = BLOSC_EMPTY_FRAME;
     caterva_array *cta_y = caterva_new_array(data->cparams, data->dparams, &fr_y, pparams_y);
-    float *buf_y = (float *) malloc(sizeof(float) * K * N);
-    ffill_buf(buf_y, K * N);
+    float *buf_y = (float *) ina_mem_alloc(cta_y->size * typesize);
+    ffill_buf(buf_y, cta_y->size);
     caterva_from_buffer(cta_y, buf_y);
 
     // Create 'y' iarray container
@@ -248,7 +251,7 @@ INA_TEST_FIXTURE(e_gemm, float_data) {
     caterva_array *cta_res = caterva_new_array(data->cparams, data->dparams, &fr_res, pparams_res);
 
     // Obtain values of 'res' buffer
-    float *buf_res = (float *) calloc(cta_res->size, sizeof(float));
+    float *buf_res = (float *) ina_mem_alloc(cta_res->size * typesize);
     fmm_mul(M, K, N, buf_x, buf_y, buf_res);
     caterva_from_buffer(cta_res, buf_res);
 
@@ -263,9 +266,9 @@ INA_TEST_FIXTURE(e_gemm, float_data) {
     INA_TEST_ASSERT_TRUE(test_gemm(c_x, c_y, c_out, c_res));
 
     // Free memory
-    free(buf_x);
-    free(buf_y);
-    free(buf_res);
+    ina_mem_free(buf_x);
+    ina_mem_free(buf_y);
+    ina_mem_free(buf_res);
 
     caterva_free_array(cta_x);
     caterva_free_array(cta_y);
