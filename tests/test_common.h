@@ -28,7 +28,7 @@ void dfill_buf(double *x, size_t nitems) {
     }
 }
 
-int fmm_mul(size_t M, size_t K, size_t N, float const *a, float const *b, float *c) {
+void fmm_mul(size_t M, size_t K, size_t N, float const *a, float const *b, float *c) {
     for (size_t m = 0; m < M; ++m) {
         for (size_t n= 0; n < N; ++n) {
             for (size_t k = 0; k < K; ++k) {
@@ -36,10 +36,9 @@ int fmm_mul(size_t M, size_t K, size_t N, float const *a, float const *b, float 
             }
         }
     }
-    return 0;
 }
 
-int dmm_mul(size_t M, size_t K, size_t N, double const *a, double const *b, double *c) {
+void dmm_mul(size_t M, size_t K, size_t N, double const *a, double const *b, double *c) {
     for (size_t m = 0; m < M; ++m) {
         for (size_t n= 0; n < N; ++n) {
             for (size_t k = 0; k < K; ++k) {
@@ -47,27 +46,22 @@ int dmm_mul(size_t M, size_t K, size_t N, double const *a, double const *b, doub
             }
         }
     }
-    return 0;
 }
 
-int fmv_mul(size_t M, size_t K, float const *a, float const *b, float *c) {
+void fmv_mul(size_t M, size_t K, float const *a, float const *b, float *c) {
     for (size_t m = 0; m < M; ++m) {
         for (size_t k = 0; k < K; ++k) {
             c[m] += a[m * K + k] * b[k];
         }
-
     }
-    return 0;
 }
 
-int dmv_mul(size_t M, size_t K, double const *a, double const *b, double *c) {
+void dmv_mul(size_t M, size_t K, double const *a, double const *b, double *c) {
     for (size_t m = 0; m < M; ++m) {
         for (size_t k = 0; k < K; ++k) {
             c[m] += a[m * K + k] * b[k];
         }
-
     }
-    return 0;
 }
 
 #endif //IARRAY_TEST_COMMON_H

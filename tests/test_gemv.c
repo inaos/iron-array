@@ -28,6 +28,7 @@ int test_gemv(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container
 }
 
 INA_TEST_DATA(e_gemv) {
+
     int tests_run;
 
     blosc2_cparams cparams;
@@ -50,7 +51,9 @@ INA_TEST_SETUP(e_gemv) {
 
 
 INA_TEST_TEARDOWN(e_gemv) {
+
     blosc_destroy();
+
 }
 
 INA_TEST_FIXTURE(e_gemv, double_data) {
@@ -82,7 +85,6 @@ INA_TEST_FIXTURE(e_gemv, double_data) {
     iarray_ctx_new(&cfg_x, &iactx_x);
     iarray_container_t *c_x;
     iarray_from_ctarray(iactx_x, cta_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
-
 
     // Define 'y' caterva container
     caterva_pparams pparams_y = CATERVA_PPARAMS_ONES;
@@ -127,13 +129,11 @@ INA_TEST_FIXTURE(e_gemv, double_data) {
     blosc2_frame fr_res = BLOSC_EMPTY_FRAME;
     caterva_array *cta_res = caterva_new_array(data->cparams, data->dparams, &fr_res, pparams_res);
 
-
     // Obtain values of 'res' buffer
     double *buf_res = (double *) ina_mem_alloc(cta_res->size * typesize);
     memset(buf_res, 0, cta_res->size * typesize);
     dmv_mul(M, K, buf_x, buf_y, buf_res);
     caterva_from_buffer(cta_res, buf_res);
-
 
     // Create 'res' iarray container
     iarray_context_t *iactx_res;
@@ -191,7 +191,6 @@ INA_TEST_FIXTURE(e_gemv, float_data) {
     iarray_container_t *c_x;
     iarray_from_ctarray(iactx_x, cta_x, IARRAY_DATA_TYPE_FLOAT, &c_x);
 
-
     // Define 'y' caterva container
     caterva_pparams pparams_y = CATERVA_PPARAMS_ONES;
     pparams_y.shape[CATERVA_MAXDIM - 1] = K;  // FIXME: 1's at the beginning should be removed
@@ -235,13 +234,11 @@ INA_TEST_FIXTURE(e_gemv, float_data) {
     blosc2_frame fr_res = BLOSC_EMPTY_FRAME;
     caterva_array *cta_res = caterva_new_array(data->cparams, data->dparams, &fr_res, pparams_res);
 
-
     // Obtain values of 'res' buffer
     float *buf_res = (float *) ina_mem_alloc(cta_res->size * typesize);
     memset(buf_res, 0, cta_res->size * typesize);
     fmv_mul(M, K, buf_x, buf_y, buf_res);
     caterva_from_buffer(cta_res, buf_res);
-
 
     // Create 'res' iarray container
     iarray_context_t *iactx_res;
