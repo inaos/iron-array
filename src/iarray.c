@@ -810,7 +810,7 @@ INA_API(ina_rc_t) iarray_almost_equal_data(iarray_container_t *a, iarray_contain
 
     if(a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
         double *b_a = (double *)buf_a;
-        double *b_b = (double *)buf_a;
+        double *b_b = (double *)buf_b;
 
         for (size_t i = 0; i < size; ++i) {
             double vdiff = fabs((b_a[i] - b_b[i]) / b_a[i]);
@@ -828,7 +828,7 @@ INA_API(ina_rc_t) iarray_almost_equal_data(iarray_container_t *a, iarray_contain
     }
     else if(a->dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
         float *b_a = (float *)buf_a;
-        float *b_b = (float *)buf_a;
+        float *b_b = (float *)buf_b;
 
         for (size_t i = 0; i < size; ++i) {
             double vdiff = fabs((double)(b_a[i] - b_b[i]) / b_a[i]);
@@ -876,14 +876,12 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
 
                 int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)a_i, a_block, p_size);
                 int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)b_i, b_block, p_size);
-// FIXME: Use the blas function when MKL support would be there
-//                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P,
-//                            1.0, a_block, P, b_block, P, 1.0, c_block, P);
+
                 if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-                    _mm_mul_d(P, (double *) a_block, (double *) b_block, (double *) c_block);
+                    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P, 1.0, (double *)a_block, P, (double *)b_block, P, 1.0, (double *)c_block, P);
                 }
                 else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
-                    _mm_mul_f(P, (float *) a_block, (float *) b_block, (float *) c_block);
+                    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P, 1.0, (float *)a_block, P, (float *)b_block, P, 1.0, (float *)c_block, P);
                 }
             }
             blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], p_size);
@@ -923,12 +921,11 @@ INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarr
             int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)a_i, a_block, p_size);
             int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)b_i, b_block, p_vsize);
 
-            // cblas_dgemv(CblasRowMajor, CblasNoTrans, P, P, 1.0, a_block, P, b_block, 1, 1.0, c_block, 1);
             if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-                _mv_mul_d(P, (double *) a_block, (double *) b_block, (double *) c_block);
+                cblas_dgemv(CblasRowMajor, CblasNoTrans, P, P, 1.0, (double *) a_block, P, (double *) b_block, 1, 1.0, (double *) c_block, 1);
             }
             else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
-                _mv_mul_f(P, (float *) a_block, (float *) b_block, (float *) c_block);
+                cblas_sgemv(CblasRowMajor, CblasNoTrans, P, P, 1.0, (float *) a_block, P, (float *) b_block, 1, 1.0, (float *) c_block, 1);
             }
         }
         blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], p_vsize);
