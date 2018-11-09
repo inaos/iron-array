@@ -747,7 +747,7 @@ int _matmul_f(size_t n, float const *a, float const *b, float *c)
 
 
 INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
-    size_t P = a->catarr->cshape[7];
+    const int P = a->catarr->cshape[7];
     size_t M = a->catarr->eshape[6];
     size_t K = a->catarr->eshape[7];
     size_t N = b->catarr->eshape[7];
@@ -770,18 +770,23 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
                 size_t b_i = (k * N / P + n);
                 int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)a_i, a_block, p_size);
                 int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)b_i, b_block, p_size);
-// FIXME: Use the blas function when MKL support would be there
-//                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P,
-//                            1.0, a_block, P, b_block, P, 1.0, c_block, P);
                 if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-                    _matmul_d(P, (double*)a_block, (double*)b_block, (double*)c_block);
+                  //_matmul_d((size_t)P, (double*)a_block, (double*)b_block, (double*)c_block);
+                  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P,
+                              1.0, (double*)a_block, P, (double*)b_block, P, 1.0, (double*)c_block, P);
                 }
                 else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
-                    _matmul_f(P, (float*)a_block, (float*)b_block, (float*)c_block);
+                    //_matmul_f((size_t)P, (float*)a_block, (float*)b_block, (float*)c_block);
+                    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P,
+                                1.0, (float*)a_block, P, (float*)b_block, P, 1.0, (float*)c_block, P);
                 }
             }
             blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], p_size);
         }
     }
+    free(a_block);
+    free(b_block);
+    free(c_block);
+
     return 0;
 }
