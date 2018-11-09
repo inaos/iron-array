@@ -190,6 +190,8 @@ int main(int argc, char** argv)
     iarray_container_free(ctx, &con_y);
     iarray_container_free(ctx, &con_out);
 
+    iarray_context_free(ctx);
+
     ina_mem_free(mat_x);
     ina_mem_free(mat_y);
     ina_mem_free(mat_out);

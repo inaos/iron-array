@@ -11,15 +11,14 @@
 */
 
 #include <libiarray/iarray.h>
+#include <iarray_private.h>
+
+#include <tests/iarray_test.h>
 
 #define NCHUNKS  10
 #define NITEMS_CHUNK (20 * 1000)
 #define NELEM (((NCHUNKS - 1) * NITEMS_CHUNK) + 10)
 #define NTHREADS 1
-
-#define KB  1024
-#define MB  (1024*KB)
-#define GB  (1024*MB)
 
 //static double vector_x[NELEM];
 //static double vector_y[NELEM];
