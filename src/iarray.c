@@ -720,7 +720,7 @@ INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp)
 }
 
 // TODO: This should go when support for MKL is here
-int _matmul_d(size_t n, double const *a, double const *b, double *c)
+int _mm_mul_d(size_t n, double const *a, double const *b, double *c)
 {
     for (size_t i = 0; i < n; ++i) {
         for (size_t j = 0; j < n; ++j) {
@@ -733,7 +733,7 @@ int _matmul_d(size_t n, double const *a, double const *b, double *c)
 }
 
 // TODO: This should go when support for MKL is here
-int _matmul_f(size_t n, float const *a, float const *b, float *c)
+int _mm_mul_f(size_t n, float const *a, float const *b, float *c)
 {
     for (size_t i = 0; i < n; ++i) {
         for (size_t j = 0; j < n; ++j) {
@@ -745,6 +745,53 @@ int _matmul_f(size_t n, float const *a, float const *b, float *c)
     return 0;
 }
 
+// TODO: This should go when support for MKL is here
+int _mv_mul_d(size_t n, double const *a, double const *b, double *c)
+{
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t k = 0; k < n; ++k) {
+            c[i] += a[i*n+k] * b[k];
+        }
+    }
+    return 0;
+}
+
+// TODO: This should go when support for MKL is here
+int _mv_mul_f(size_t n, float const *a, float const *b, float *c)
+{
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t k = 0; k < n; ++k) {
+            c[i] += a[i*n+k] * b[k];
+        }
+    }
+    return 0;
+}
+
+int _dtshape_equal(iarray_dtshape_t *a, iarray_dtshape_t *b) {
+    if (a->dtype != b->dtype) {
+        return -1;
+    }
+    if (a->ndim != b->ndim) {
+        return -1;
+    }
+    for (int i = 0; i < CATERVA_MAXDIM; ++i) {
+        if (a->dims[i] != b->dims[i]) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+
+INA_API(ina_rc_t) iarray_equal_data(iarray_container_t *a, iarray_container_t *b) {
+
+    if (caterva_equal_data(a->catarr, b->catarr) != 0) {
+        return 1;
+    }
+
+    return 0;
+}
+
 
 INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
     const int P = a->catarr->cshape[7];
@@ -752,7 +799,7 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
     size_t K = a->catarr->eshape[7];
     size_t N = b->catarr->eshape[7];
 
-    size_t p_size = P * P * a->catarr->sc->typesize;;
+    size_t p_size = P * P * a->catarr->sc->typesize;
     int dtype = a->dtshape->dtype;
 
     uint8_t *a_block = malloc(p_size);
@@ -768,15 +815,16 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
             {
                 size_t a_i = (m * K / P + k);
                 size_t b_i = (k * N / P + n);
+
                 int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)a_i, a_block, p_size);
                 int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)b_i, b_block, p_size);
                 if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-                  //_matmul_d((size_t)P, (double*)a_block, (double*)b_block, (double*)c_block);
-                  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P,
-                              1.0, (double*)a_block, P, (double*)b_block, P, 1.0, (double*)c_block, P);
+                    //_mm_mul_d(P, (double *) a_block, (double *) b_block, (double *) c_block);
+                    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P,
+                                1.0, (double*)a_block, P, (double*)b_block, P, 1.0, (double*)c_block, P);
                 }
                 else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
-                    //_matmul_f((size_t)P, (float*)a_block, (float*)b_block, (float*)c_block);
+                    //_mm_mul_d(P, (double *) a_block, (double *) b_block, (double *) c_block);
                     cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P,
                                 1.0, (float*)a_block, P, (float*)b_block, P, 1.0, (float*)c_block, P);
                 }
@@ -787,6 +835,46 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
     free(a_block);
     free(b_block);
     free(c_block);
+    return 0;
+}
 
+INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
+    size_t P = a->catarr->cshape[7];
+
+    size_t M = a->catarr->eshape[6];
+    size_t K = a->catarr->eshape[7];
+
+    size_t p_size = P * P * a->catarr->sc->typesize;
+    size_t p_vsize = P * a->catarr->sc->typesize;
+
+    int dtype = a->dtshape->dtype;
+
+    uint8_t *a_block = malloc(p_size);
+    uint8_t *b_block = malloc(p_vsize);
+    uint8_t *c_block = malloc(p_vsize);
+
+    size_t a_i, b_i;
+
+    for (size_t m = 0; m < M / P; m++)
+    {
+        memset(c_block, 0, p_vsize);
+        for (size_t k = 0; k < K / P; k++)
+        {
+            a_i = (m * K / P + k);
+            b_i = (k);
+
+            int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)a_i, a_block, p_size);
+            int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)b_i, b_block, p_vsize);
+
+            // cblas_dgemv(CblasRowMajor, CblasNoTrans, P, P, 1.0, a_block, P, b_block, 1, 1.0, c_block, 1);
+            if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
+                _mv_mul_d(P, (double *) a_block, (double *) b_block, (double *) c_block);
+            }
+            else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
+                _mv_mul_f(P, (float *) a_block, (float *) b_block, (float *) c_block);
+            }
+        }
+        blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], p_vsize);
+    }
     return 0;
 }
