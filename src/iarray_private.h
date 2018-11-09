@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef IARRAY_PRIVATE_H_
-#define IARRAY_PRIVATE_H_
+#ifndef _IARRAY_PRIVATE_H_
+#define _IARRAY_PRIVATE_H_
 
 #include <libiarray/iarray.h>
 
