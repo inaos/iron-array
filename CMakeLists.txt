@@ -54,15 +54,17 @@ set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc_static)
 endif()
 
-inac_add_tests(iarray)
+#inac_add_tests(iarray)
 #inac_add_benchmarks(iarray)
 #inac_add_tools(iarray)
 #inac_add_examples(iarray)
 
-#add_subdirectory(tests)
-
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 find_package(MKL)
+
+# TODO: @stoni can you figure out how to reproduce the functionality inside the cmake file in tests?
+enable_testing()
+add_subdirectory(tests)
 
 set(BENCH ${CMAKE_SOURCE_DIR}/bench)
 # Playing with OpenMP (available mainly on GCC)
