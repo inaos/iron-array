@@ -59,10 +59,10 @@ INA_TEST_TEARDOWN(e_gemm) {
 INA_TEST_FIXTURE(e_gemm, double_data) {
 
     // Define fixture parameters
-    size_t M = 506;
-    size_t K = 276;
-    size_t N = 643;
-    size_t P = 24;
+    size_t M = 956;
+    size_t K = 1050;
+    size_t N = 2345;
+    size_t P = 42;
     data->cparams.typesize = sizeof(double);
     int typesize = data->cparams.typesize;
 
@@ -138,7 +138,9 @@ INA_TEST_FIXTURE(e_gemm, double_data) {
 
     // Obtain values of 'res' buffer
     double *buf_res = (double *) ina_mem_alloc(cta_res->size * typesize);
-    dmm_mul(M, K, N, buf_x, buf_y, buf_res);
+    memset(buf_res, 0, cta_res->size * typesize);
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, 1.0, buf_x, K, buf_y, N, 1.0, buf_res, N);
+
     caterva_from_buffer(cta_res, buf_res);
 
     // Create 'res' iarray container
@@ -171,10 +173,10 @@ INA_TEST_FIXTURE(e_gemm, double_data) {
 INA_TEST_FIXTURE(e_gemm, float_data) {
 
     // Define fixture parameters
-    size_t M = 123;
-    size_t K = 50;
-    size_t N = 75;
-    size_t P = 10;
+    size_t M = 2569;
+    size_t K = 2345;
+    size_t N = 3453;
+    size_t P = 100;
     data->cparams.typesize = sizeof(float);
     int typesize = data->cparams.typesize;
 
@@ -250,7 +252,8 @@ INA_TEST_FIXTURE(e_gemm, float_data) {
 
     // Obtain values of 'res' buffer
     float *buf_res = (float *) ina_mem_alloc(cta_res->size * typesize);
-    fmm_mul(M, K, N, buf_x, buf_y, buf_res);
+    memset(buf_res, 0, cta_res->size * typesize);
+    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, 1.0, buf_x, K, buf_y, N, 1.0, buf_res, N);
     caterva_from_buffer(cta_res, buf_res);
 
     // Create 'res' iarray container

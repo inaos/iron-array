@@ -14,6 +14,7 @@
 
 #include <blosc.h>
 #include <caterva.h>
+#include <mkl.h>
 #include <libinac/lib.h>
 
 typedef struct iarray_context_s iarray_context_t;

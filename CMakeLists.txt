@@ -59,10 +59,10 @@ inac_add_tests(iarray)
 #inac_add_tools(iarray)
 #inac_add_examples(iarray)
 
-add_subdirectory(tests)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 find_package(MKL)
+add_subdirectory(tests)
 
 set(BENCH ${CMAKE_SOURCE_DIR}/bench)
 # Playing with OpenMP (available mainly on GCC)
