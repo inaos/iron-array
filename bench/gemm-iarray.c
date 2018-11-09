@@ -23,13 +23,14 @@
 #include <math.h>
 #include <stdbool.h>
 #include <libiarray/iarray.h>
+#include <mkl.h>
 
 #define KB (1024.)
 #define MB (1024 * KB)
 #define GB (1024 * MB)
 
-#define N (1000)   // array size is (N * N)
-#define P (100)    // partition size
+#define N (4000)   // array size is (N * N)
+#define P (1000)    // partition size
 #define NELEM (N * N)
 #define NTHREADS 1
 
@@ -102,7 +103,10 @@ int main(int argc, char** argv)
     // Compute matrix-matrix multiplication
     static double mat_out[NELEM];
     blosc_set_timestamp(&last);
-    simple_matmul(N, mat_x, mat_y, mat_out);
+    //simple_matmul(N, mat_x, mat_y, mat_out);
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, N, N, N,
+                1.0, mat_x, N, mat_y, N, 1.0, mat_out, N);
+
     blosc_set_timestamp(&current);
     ttotal = blosc_elapsed_secs(last, current);
     printf("Time for multiplying two matrices (pure C): %.3g s, %.1f MB/s\n",

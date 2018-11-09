@@ -14,6 +14,7 @@
 #define IARRAY_PRIVATE_H_
 
 #include <stddef.h>
+#include <mkl.h>
 #include <libiarray/iarray.h>
 
 typedef enum iarray_optype_e {
