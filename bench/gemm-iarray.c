@@ -18,7 +18,8 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-#define N (1000)   /* array size is (N * N) */
+#define N (1000) /* array size is (N * N) */
+#define P (100)  /* partition size */  
 #define NELEM (N * N)
 #define NELEM_BYTES (NELEM*sizeof(double))
 #define NTHREADS 1
@@ -138,6 +139,8 @@ int main(int argc, char** argv)
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     shape.dims[0] = N;
     shape.dims[1] = N;
+    shape.partshape[0] = P;
+    shape.partshape[1] = P;
 
     iarray_container_t *con_x;
     iarray_container_t *con_y;
