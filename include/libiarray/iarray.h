@@ -14,6 +14,8 @@
 
 #include <libinac/lib.h>
 
+#define IARRAY_DIMENSION_MAX 8 /* A fixed size simplifies the code and should be enough for most IronArray cases */
+
 typedef struct iarray_context_s iarray_context_t;
 
 typedef struct iarray_container_s iarray_container_t;
@@ -72,7 +74,8 @@ typedef struct iarray_config_s {
 typedef struct iarray_dtshape_s {
     iarray_data_type_t dtype;
     int ndim;     /* IF ndim = 0 THEN it is a scalar */
-    int dims[8];  /* a fixed size simplifies the code and should be enough for most IronArray cases */
+    int dims[IARRAY_DIMENSION_MAX];
+    int partshape[IARRAY_DIMENSION_MAX]; /* Partition-Shape, optional in the future */
 } iarray_dtshape_t;
 
 typedef struct iarray_slice_param_s {

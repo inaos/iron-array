@@ -83,6 +83,11 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     if (flags & IARRAY_CONTAINER_PERSIST && name == NULL) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
+    for (int i = 0; i < shape->ndim; ++i) {
+        if (shape->dims[i] < shape->partshape[i]) {
+            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        }
+    }
 
     *c = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
     INA_RETURN_IF_NULL(c);
@@ -150,7 +155,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     }
     for (int i = 0; i < shape->ndim; ++i) { // FIXME: 1's at the beginning should be removed
         pparams.shape[CATERVA_MAXDIM - (i + 1)] = shape->dims[i];
-        pparams.cshape[CATERVA_MAXDIM - 1] = 100; // FIXME: should rather be a tuning parameter with a smart default?
+        pparams.cshape[CATERVA_MAXDIM - (i + 1)] = shape->partshape[i];
     }
     pparams.ndims = shape->ndim;
     ina_mem_cpy((*c)->pparams, &pparams, sizeof(caterva_pparams));
