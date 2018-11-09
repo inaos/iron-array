@@ -25,6 +25,7 @@
 #define NCHUNKS  100
 #define NITEMS_CHUNK (200 * 1000)  // fits well in modern L3 caches
 #define NELEM (NCHUNKS * NITEMS_CHUNK)  // multiple of NITEMS_CHUNKS for now
+#define PART_SIZE 1000
 #define NTHREADS 1
 
 static double poly(const double x)
@@ -177,13 +178,14 @@ int main(int argc, char** argv)
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     shape.dims[0] = NELEM;
     shape.dims[1] = NELEM;
+    shape.partshape[0] = PART_SIZE;
+    shape.partshape[1] = PART_SIZE;
 
     iarray_container_t *con_x;
     iarray_container_t *con_y;
 
 
-    // FIXME: How to do this?
-    //fill_cta_x(cta_x, isize);
+    // FIXME: always fill from C buffer for now!
     
 
 
