@@ -14,6 +14,7 @@
 
 #include <blosc.h>
 #include <caterva.h>
+#include <mkl.h>
 #include <libinac/lib.h>
 
 typedef struct iarray_context_s iarray_context_t;
@@ -99,7 +100,7 @@ typedef struct iarray_variable_s {
 ina_rc_t iarray_eval_chunk(iarray_context_t *ctx, char* expr, iarray_variable_t *vars, int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
 ina_rc_t iarray_eval_block(iarray_context_t *ctx, char* expr, iarray_variable_t *vars, int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
 
-INA_API(ina_rc_t) iarray_equal_data(iarray_container_t *a, iarray_container_t *b);
+INA_API(ina_rc_t) iarray_almost_equal_data(iarray_container_t *a, iarray_container_t *b, double tol);
 INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c);
 INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c);
 

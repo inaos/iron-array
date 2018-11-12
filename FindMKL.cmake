@@ -18,22 +18,22 @@
 #
 # 1. We only use the sequential version of the MKL
 # 2. We only use 64bit
-# 
+#
 
 find_path(MKL_ROOT_DIR
     include/mkl.h
     PATHS
-    $ENV{MKLROOT}
-    /opt/intel/compilers_and_libraries/linux/mkl
-    /opt/intel/compilers_and_libraries/mac/mkl
-    "C:/IntelSWTools/compilers_and_libraries/windows/mkl/"
+        $ENV{MKLROOT}
+        /opt/intel/compilers_and_libraries/linux/mkl
+        /opt/intel/compilers_and_libraries/mac/mkl
+        "C:/IntelSWTools/compilers_and_libraries/windows/mkl/"
 )
 
 find_path(MKL_INCLUDE_DIR
-    mkl.h
-    PATHS
-    ${MKL_ROOT_DIR}/include
-)
+        mkl.h
+        PATHS
+        ${MKL_ROOT_DIR}/include
+        )
 
 if(WIN32)
     set(MKL_SEARCH_LIB mkl_core.lib)
