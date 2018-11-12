@@ -129,7 +129,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     cparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
     if (shape->dtype == IARRAY_DATA_TYPE_DOUBLE && ctx->cfg->flags & IARRAY_COMP_TRUNC_PREC) {
         cparams.filters[blosc_filter_idx] = BLOSC_TRUNC_PREC;
-        cparams.filters_meta[blosc_filter_idx] = 23;  // treat doubles as floats
+        cparams.filters_meta[blosc_filter_idx] = ctx->cfg->fp_mantissa_bits;
         blosc_filter_idx++;
     }
     if (ctx->cfg->flags & IARRAY_COMP_BITSHUFFLE) {
@@ -384,7 +384,7 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
     iarray_dtshape_t *dtshape,
-    void *buffer,
+    const void *buffer,
     size_t buffer_len,
     iarray_storage_format_t fmt,
     const char *name,
