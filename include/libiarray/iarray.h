@@ -37,6 +37,10 @@ typedef enum iarray_storage_format_e {
     IARRAY_STORAGE_COL_WISE
 } iarray_storage_format_t;
 
+typedef struct iarray_store_properties_s {
+    const char *id;
+} iarray_store_properties_t;
+
 typedef enum iarray_config_flags_e {
     IARRAY_EXPR_EVAL_BLOCK = 0x1,
     IARRAY_EXPR_EVAL_CHUNK = 0x2,
@@ -55,7 +59,7 @@ typedef enum iarray_container_flags_e {
 } iarray_container_flags_t;
 
 typedef enum iarray_compression_codec_e {
-    IARRAY_COMPRESSION_DEFAULT = 0,
+    IARRAY_COMPRESSION_BLOSCLZ = 0,
     IARRAY_COMPRESSION_LZ4,
     IARRAY_COMPRESSION_LZ4HC,
     IARRAY_COMPRESSION_SNAPPY,
@@ -70,12 +74,13 @@ typedef struct iarray_config_s {
     int flags;
     int max_num_threads; /* Maximum number of threads to use */
     int fp_mantissa_bits; /* Only useful together with flag: IARRAY_COMP_TRUNC_PREC */
+    int blocksize; /* Advanced Tuning Parameter */
 } iarray_config_t;
 
 typedef struct iarray_dtshape_s {
     iarray_data_type_t dtype;
     int ndim;     /* IF ndim = 0 THEN it is a scalar */
-    int dims[IARRAY_DIMENSION_MAX];
+    int shape[IARRAY_DIMENSION_MAX];
     int partshape[IARRAY_DIMENSION_MAX]; /* Partition-Shape, optional in the future */
 } iarray_dtshape_t;
 
@@ -83,6 +88,9 @@ typedef struct iarray_slice_param_s {
     int axis;
     int idx;
 } iarray_slice_param_t;
+
+static const iarray_config_t _IARRAY_CONFIG_DEFAULTS = { IARRAY_COMPRESSION_BLOSCLZ, 5, 0, 1, 0, 0 };
+#define IARRAY_CONFIG_DEFAULTS _IARRAY_CONFIG_DEFAULTS
 
 INA_API(ina_rc_t) iarray_init();
 INA_API(void) iarray_destroy();
@@ -92,7 +100,7 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx);
 
 INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
                                        iarray_dtshape_t *dtshape,
-                                       const char *name,
+                                       iarray_store_properties_t *store,
                                        int flags,
                                        iarray_container_t **container);
 
@@ -101,67 +109,68 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
                                 int start, 
                                 int stop, 
                                 int step, 
-                                const char *name,
+                                iarray_store_properties_t *store,
                                 int flags,
                                 iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx, 
                                iarray_dtshape_t *dtshape, 
-                               const char *name,
+                               iarray_store_properties_t *store,
                                int flags,
                                iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx, 
                               iarray_dtshape_t *dtshape, 
-                              const char *name,
+                              iarray_store_properties_t *store,
                               int flags,
                               iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx, 
                                     iarray_dtshape_t *dtshape, 
                                     float value, 
-                                    const char *name,
+                                    iarray_store_properties_t *store,
                                     int flags,
                                     iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx, 
                                      iarray_dtshape_t *dtshape, 
                                      double value, 
-                                     const char *name,
+                                     iarray_store_properties_t *store,
                                      int flags,
                                      iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx, 
                               iarray_dtshape_t *dtshape, 
                               iarray_rng_t rng, 
-                              const char *name,
+                              iarray_store_properties_t *store,
                               int flags,
                               iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx, 
                                iarray_container_t *c, 
-                               iarray_slice_param_t *params, 
+                               int *start,
+                               int *stop,
+                               iarray_store_properties_t *store,
+                               int flags,
                                iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
                                      const void *buffer,
                                      size_t buffer_len,
-                                     iarray_storage_format_t fmt,
-                                     const char *name,
+                                     iarray_store_properties_t *store,
                                      int flags,
                                      iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
                                    iarray_container_t *container,
                                    void *buffer,
-                                   size_t buffer_len,
-                                   iarray_storage_format_t fmt);
+                                   size_t buffer_len);
 
 
 INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, 
-                                        size_t *size_in_bytes, 
-                                        size_t *compressed_size_in_bytes);
+                                        size_t *nbytes, 
+                                        size_t *cbytes);
 
 INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container);
 
