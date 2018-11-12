@@ -61,6 +61,7 @@ endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 find_package(MKL)
+add_subdirectory(tests)
 
 # TODO: @stoni can you figure out how to reproduce the functionality inside the cmake file in tests?
 enable_testing()
