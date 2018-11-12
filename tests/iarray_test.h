@@ -87,7 +87,7 @@ static ina_rc_t _iarray_test_container_dbl_buffer_cmp(iarray_context_t *ctx, iar
 {
     double *bufcmp = ina_mem_alloc(buffer_len);
     
-    INA_RETURN_IF_FAILED(iarray_to_buffer(ctx, c, bufcmp, buffer_len, IARRAY_STORAGE_ROW_WISE));
+    INA_RETURN_IF_FAILED(iarray_to_buffer(ctx, c, bufcmp, buffer_len));
     
     size_t len = buffer_len / sizeof(double);
     for (size_t i = 0; i < len; ++i) {
