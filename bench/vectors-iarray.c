@@ -155,12 +155,12 @@ int main(int argc, char** argv)
 
     INA_MUST_SUCCEED(iarray_init());
     
-    iarray_config_t config;
-    ina_mem_set(&config, 0, sizeof(iarray_config_t));
-    config.compression_codec = IARRAY_COMPRESSION_DEFAULT;
+    iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
+    config.compression_codec = IARRAY_COMPRESSION_BLOSCLZ;
     config.compression_level = 9;
     config.max_num_threads = NTHREADS;
     config.flags = eval_flag; // (IARRAY_EXPR_EVAL_BLOCK || IARRAY_EXPR_EVAL_CHUNK)
+    config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
 
@@ -176,8 +176,8 @@ int main(int argc, char** argv)
     iarray_dtshape_t shape;
     shape.ndim = 2;
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
-    shape.dims[0] = NELEM;
-    shape.dims[1] = NELEM;
+    shape.shape[0] = NELEM;
+    shape.shape[1] = NELEM;
     shape.partshape[0] = PART_SIZE;
     shape.partshape[1] = PART_SIZE;
 
@@ -258,7 +258,7 @@ int main(int argc, char** argv)
     iarray_container_free(ctx, &con_y);
     iarray_container_free(ctx, &con_out);
 
-    iarray_context_free(ctx);
+    iarray_context_free(&ctx);
 
     ina_mem_free(x);
     ina_mem_free(y);

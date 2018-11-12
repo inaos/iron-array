@@ -44,29 +44,29 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
 
     xshape.dtype = dtype;
     xshape.ndim = 2;
-    xshape.dims[0] = K;
-    xshape.dims[1] = M;
+    xshape.shape[0] = K;
+    xshape.shape[1] = M;
     xshape.partshape[0] = P;
     xshape.partshape[1] = P;
 
     yshape.dtype = dtype;
     yshape.ndim = 2;
-    yshape.dims[0] = N;
-    yshape.dims[1] = K;
+    yshape.shape[0] = N;
+    yshape.shape[1] = K;
     yshape.partshape[0] = P;
     yshape.partshape[1] = P;
 
     oshape.dtype = dtype;
     oshape.ndim = 2;
-    oshape.dims[0] = N;
-    oshape.dims[1] = M;
+    oshape.shape[0] = N;
+    oshape.shape[1] = M;
     oshape.partshape[0] = P;
     oshape.partshape[1] = P;
 
     rshape.dtype = dtype;
     rshape.ndim = 2;
-    rshape.dims[0] = N;
-    rshape.dims[1] = M;
+    rshape.shape[0] = N;
+    rshape.shape[1] = M;
     rshape.partshape[0] = N;
     rshape.partshape[1] = M;
 
@@ -75,9 +75,9 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
     iarray_container_t *c_out;
     iarray_container_t *c_res;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xshape, buffer_x, buffer_x_len, IARRAY_STORAGE_ROW_WISE, NULL, 0, &c_x));
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &yshape, buffer_y, buffer_y_len, IARRAY_STORAGE_ROW_WISE, NULL, 0, &c_y));
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &rshape, buffer_r, buffer_r_len, IARRAY_STORAGE_ROW_WISE, NULL, 0, &c_res));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xshape, buffer_x, buffer_x_len, NULL, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &yshape, buffer_y, buffer_y_len, NULL, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &rshape, buffer_r, buffer_r_len, NULL, 0, &c_res));
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &oshape, NULL, 0, &c_out));
 
     INA_TEST_ASSERT_SUCCEED(test_gemm(c_x, c_y, c_out, c_res));
@@ -99,10 +99,8 @@ INA_TEST_SETUP(gemm)
 {
     iarray_init();
 
-    iarray_config_t cfg;
-    ina_mem_set(&cfg, 0, sizeof(iarray_config_t));
+    iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
-    cfg.max_num_threads = 1;
     cfg.flags = IARRAY_EXPR_EVAL_CHUNK;
 
     iarray_context_new(&cfg, &data->ctx);

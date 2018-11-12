@@ -55,12 +55,12 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
     iarray_dtshape_t shape;
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     shape.ndim = 1;
-    shape.dims[0] = NELEM;
-    shape.partshape[0] = NELEM;
+    shape.shape[0] = NELEM;
+    shape.partshape[0] = NITEMS_CHUNK;
 
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_x, buffer_len, IARRAY_STORAGE_ROW_WISE, NULL, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_x, buffer_len, NULL, 0, &c_x));
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &shape, NULL, 0, &c_out));
 
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
@@ -90,7 +90,7 @@ INA_TEST_SETUP(eval)
 {
     iarray_init();
 
-    ina_mem_set(&data->cfg, 0, sizeof(iarray_config_t));
+    data->cfg = IARRAY_CONFIG_DEFAULTS;
     data->cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
     data->cfg.compression_level = 9;
     data->cfg.flags = IARRAY_COMP_TRUNC_PREC;
