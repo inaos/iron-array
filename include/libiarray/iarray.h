@@ -79,6 +79,7 @@ typedef struct iarray_config_s {
     int compression_level;
     int flags;
     int max_num_threads; /* Maximum number of threads to use */
+    int fp_mantissa_bits; /* Only useful together with flag: IARRAY_COMP_TRUNC_PREC */
 } iarray_config_t;
 
 typedef struct iarray_dtshape_s {
@@ -154,7 +155,7 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
-                                     void *buffer,
+                                     const void *buffer,
                                      size_t buffer_len,
                                      iarray_storage_format_t fmt,
                                      const char *name,
