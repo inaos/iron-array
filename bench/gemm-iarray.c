@@ -97,8 +97,7 @@ int main(int argc, char** argv)
     printf("Measuring time for multiplying matrices of (%ld, %ld), with a partition of (%d, %d)\n", n, n, P, P);
     printf("Working set for the 4 uncompressed matrices: %.1f MB\n", n * n * sizeof(double) * 4 / MB);
 
-    iarray_config_t config;
-    ina_mem_set(&config, 0, sizeof(iarray_config_t));
+    iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_codec = IARRAY_COMPRESSION_LZ4;
     config.compression_level = 5;
     config.max_num_threads = NTHREADS;
@@ -137,8 +136,8 @@ int main(int argc, char** argv)
     iarray_dtshape_t shape;
     shape.ndim = 2;
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
-    shape.dims[0] = N;
-    shape.dims[1] = N;
+    shape.shape[0] = N;
+    shape.shape[1] = N;
     shape.partshape[0] = P;
     shape.partshape[1] = P;
 
@@ -146,8 +145,8 @@ int main(int argc, char** argv)
     iarray_container_t *con_y;
 
     INA_STOPWATCH_START(w);
-    iarray_from_buffer(ctx, &shape, mat_x, N, IARRAY_STORAGE_ROW_WISE, mat_x_name, 0, &con_x);
-    iarray_from_buffer(ctx, &shape, mat_y, N, IARRAY_STORAGE_ROW_WISE, mat_y_name, 0, &con_y);
+    iarray_from_buffer(ctx, &shape, mat_x, N, mat_x_name, 0, &con_x);
+    iarray_from_buffer(ctx, &shape, mat_y, N, mat_y_name, 0, &con_y);
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
@@ -160,8 +159,8 @@ int main(int argc, char** argv)
         (nbytes / _IARRAY_SIZE_MB), (cbytes / _IARRAY_SIZE_MB),
         ((double)nbytes / cbytes));
 
-    iarray_to_buffer(ctx, con_x, mat_x, NELEM_BYTES, IARRAY_STORAGE_ROW_WISE);
-    iarray_to_buffer(ctx, con_y, mat_y, NELEM_BYTES, IARRAY_STORAGE_ROW_WISE);
+    iarray_to_buffer(ctx, con_x, mat_x, NELEM_BYTES);
+    iarray_to_buffer(ctx, con_y, mat_y, NELEM_BYTES);
     if (!test_mat_equal(mat_x, mat_y)) {
         return EXIT_FAILURE; /* FIXME: error handling */
     }
@@ -184,7 +183,7 @@ int main(int argc, char** argv)
 
     /* Check that we are getting the same results than through manual computation */
     ina_mem_set(mat_out, 0, NELEM_BYTES);
-    iarray_to_buffer(ctx, con_out, mat_out, NELEM_BYTES, IARRAY_STORAGE_ROW_WISE);
+    iarray_to_buffer(ctx, con_out, mat_out, NELEM_BYTES);
     if (!test_mat_equal(mat_out, mat_out)) {
         return EXIT_FAILURE; /* FIXME: error-handling */
     }
@@ -193,7 +192,7 @@ int main(int argc, char** argv)
     iarray_container_free(ctx, &con_y);
     iarray_container_free(ctx, &con_out);
 
-    iarray_context_free(ctx);
+    iarray_context_free(&ctx);
 
     ina_mem_free(mat_x);
     ina_mem_free(mat_y);
