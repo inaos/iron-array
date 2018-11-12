@@ -15,273 +15,169 @@
 
 #include <tests/iarray_test.h>
 
-#define NTHREADS 1
-
-ina_rc_t test_gemm(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out, iarray_container_t *c_res)
+static ina_rc_t test_gemm(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out, iarray_container_t *c_res)
 {
     INA_TEST_ASSERT_SUCCEED(iarray_gemm(c_x, c_y, c_out));
-    if (!iarray_equal_data(c_out, c_res)) {
+    if (!iarray_almost_equal_data(c_out, c_res)) {
         return INA_ERROR(INA_ERR_FAILED);
     }
     return INA_SUCCESS;
 }
 
-INA_TEST_DATA(e_gemm)
+static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
+                                     iarray_data_type_t dtype,
+                                     int M,
+                                     int K,
+                                     int N,
+                                     int P,
+                                     void *buffer_x,
+                                     void *buffer_y,
+                                     void *buffer_r,
+                                     size_t buffer_x_len,
+                                     size_t buffer_y_len,
+                                     size_t buffer_r_len)
 {
-    int tests_run;
+    iarray_dtshape_t xshape;
+    iarray_dtshape_t yshape;
+    iarray_dtshape_t oshape;
+    iarray_dtshape_t rshape;
 
-    blosc2_cparams cparams;
-    blosc2_dparams dparams;
+    xshape.dtype = dtype;
+    xshape.ndim = 2;
+    xshape.dims[0] = K;
+    xshape.dims[1] = M;
+    xshape.partshape[0] = P;
+    xshape.partshape[1] = P;
 
+    yshape.dtype = dtype;
+    yshape.ndim = 2;
+    yshape.dims[0] = N;
+    yshape.dims[1] = K;
+    yshape.partshape[0] = P;
+    yshape.partshape[1] = P;
+
+    oshape.dtype = dtype;
+    oshape.ndim = 2;
+    oshape.dims[0] = N;
+    oshape.dims[1] = M;
+    oshape.partshape[0] = P;
+    oshape.partshape[1] = P;
+
+    rshape.dtype = dtype;
+    rshape.ndim = 2;
+    rshape.dims[0] = N;
+    rshape.dims[1] = M;
+    rshape.partshape[0] = N;
+    rshape.partshape[1] = M;
+
+    iarray_container_t *c_x;
+    iarray_container_t *c_y;
+    iarray_container_t *c_out;
+    iarray_container_t *c_res;
+
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xshape, buffer_x, buffer_x_len, IARRAY_STORAGE_ROW_WISE, NULL, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &yshape, buffer_y, buffer_y_len, IARRAY_STORAGE_ROW_WISE, NULL, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &rshape, buffer_r, buffer_r_len, IARRAY_STORAGE_ROW_WISE, NULL, 0, &c_res));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &oshape, NULL, 0, &c_out));
+
+    INA_TEST_ASSERT_SUCCEED(test_gemm(c_x, c_y, c_out, c_res));
+
+    iarray_container_free(ctx, &c_x);
+    iarray_container_free(ctx, &c_y);
+    iarray_container_free(ctx, &c_out);
+    iarray_container_free(ctx, &c_res);
+
+    return INA_SUCCESS;
+}
+
+INA_TEST_DATA(gemm)
+{
+    iarray_context_t *ctx;
 };
 
-INA_TEST_SETUP(e_gemm)
+INA_TEST_SETUP(gemm)
 {
+    iarray_init();
 
-    blosc_init();
+    iarray_config_t cfg;
+    ina_mem_set(&cfg, 0, sizeof(iarray_config_t));
+    cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
+    cfg.max_num_threads = 1;
+    cfg.flags = IARRAY_EXPR_EVAL_CHUNK;
 
-    data->cparams = BLOSC_CPARAMS_DEFAULTS;
-    data->dparams = BLOSC_DPARAMS_DEFAULTS;
-
-    data->cparams.compcode = BLOSC_LZ4;
-    data->cparams.nthreads = NTHREADS;
-    data->dparams.nthreads = NTHREADS;
-
+    iarray_context_new(&cfg, &data->ctx);
 }
 
 
-INA_TEST_TEARDOWN(e_gemm)
+INA_TEST_TEARDOWN(gemm)
 {
-    blosc_destroy();
+    iarray_context_free(&data->ctx);
+    iarray_destroy();
 }
 
-INA_TEST_FIXTURE(e_gemm, double_data)
+INA_TEST_FIXTURE(gemm, double_data)
 {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    double *buffer_x;
+    double *buffer_y;
+    double *buffer_r;
+    size_t buffer_x_len;
+    size_t buffer_y_len;
+    size_t buffer_r_len;
 
-    // Define fixture parameters
-    size_t M = 956;
-    size_t K = 1050;
-    size_t N = 2345;
-    size_t P = 42;
-    data->cparams.typesize = sizeof(double);
+    int M = 956;
+    int K = 1050;
+    int N = 2345;
+    int P = 42;
 
-    // Define 'x' caterva container
-    caterva_pparams pparams_x;
-    for (int i = 0; i < CATERVA_MAXDIM; i++) {
-        pparams_x.shape[i] = 1;
-        pparams_x.cshape[i] = 1;
-    }
-    pparams_x.shape[CATERVA_MAXDIM - 1] = K;  // FIXME: 1's at the beginning should be removed
-    pparams_x.shape[CATERVA_MAXDIM - 2] = M;  // FIXME: 1's at the beginning should be removed
-    pparams_x.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
-    pparams_x.cshape[CATERVA_MAXDIM - 2] = P;  // FIXME: 1's at the beginning should be removed
-    pparams_x.ndims = 2;
-    blosc2_frame fr_x = BLOSC_EMPTY_FRAME;
-    caterva_array *cta_x = caterva_new_array(data->cparams, data->dparams, &fr_x, pparams_x);
-    double *buf_x = (double *) malloc(sizeof(double) * M * K);
-    dfill_buf(buf_x, M * K);
-    caterva_from_buffer(cta_x, buf_x);
+    buffer_x_len = sizeof(double) * M * K;
+    buffer_y_len = sizeof(double) * K * N;
+    buffer_r_len = sizeof(double) * M * N;
+    buffer_x = ina_mem_alloc(buffer_x_len);
+    buffer_y = ina_mem_alloc(buffer_y_len);
+    buffer_r = ina_mem_alloc(buffer_r_len);
+    dfill_buf(buffer_x, M * K);
+    dfill_buf(buffer_y, K * N);
+    dmm_mul(M, K, N, buffer_x, buffer_y, buffer_r);
 
-    // Create 'x' iarray container
-    iarray_context_t *iactx_x;
-    iarray_config_t cfg_x = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_CHUNK,
-            .cparams = &data->cparams, .dparams = &data->dparams, .pparams = &pparams_x};
-    iarray_ctx_new(&cfg_x, &iactx_x);
-    iarray_container_t *c_x;
-    iarray_from_ctarray(iactx_x, cta_x, IARRAY_DATA_TYPE_DOUBLE, &c_x);
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx,
+        dtype, M, K, N, P, buffer_x, buffer_y, buffer_r, buffer_x_len, buffer_y_len, buffer_r_len));
 
-    // Define 'y' caterva container
-    caterva_pparams pparams_y = CATERVA_PPARAMS_ONES;
-    pparams_y.shape[CATERVA_MAXDIM - 1] = N;  // FIXME: 1's at the beginning should be removed
-    pparams_y.shape[CATERVA_MAXDIM - 2] = K;  // FIXME: 1's at the beginning should be removed
-    pparams_y.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
-    pparams_y.cshape[CATERVA_MAXDIM - 2] = P;  // FIXME: 1's at the beginning should be removed
-    pparams_y.ndims = 2;
-    blosc2_frame fr_y = BLOSC_EMPTY_FRAME;
-    caterva_array *cta_y = caterva_new_array(data->cparams, data->dparams, &fr_y, pparams_y);
-    double *buf_y = (double *) ina_mem_alloc(cta_y->size * typesize);
-    dfill_buf(buf_y, cta_y->size);
-    caterva_from_buffer(cta_y, buf_y);
-
-    // Create 'y' iarray container
-    iarray_context_t *iactx_y;
-    iarray_config_t cfg_y = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_CHUNK,
-            .cparams = &data->cparams, .dparams = &data->dparams, .pparams = &pparams_y};
-    iarray_ctx_new(&cfg_y, &iactx_y);
-    iarray_container_t *c_y;
-    iarray_from_ctarray(iactx_y, cta_y, IARRAY_DATA_TYPE_DOUBLE, &c_y);
-
-    // Define 'out' caterva container
-    caterva_pparams pparams_out = CATERVA_PPARAMS_ONES;
-    pparams_out.shape[CATERVA_MAXDIM - 1] = N;  // FIXME: 1's at the beginning should be removed
-    pparams_out.shape[CATERVA_MAXDIM - 2] = M;  // FIXME: 1's at the beginning should be removed
-    pparams_out.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
-    pparams_out.cshape[CATERVA_MAXDIM - 2] = P;  // FIXME: 1's at the beginning should be removed
-    pparams_out.ndims = 2;
-    blosc2_frame fr_out = BLOSC_EMPTY_FRAME;
-    caterva_array *cta_out = caterva_new_array(data->cparams, data->dparams, &fr_out, pparams_out);
-
-    // Create 'out' iarray container
-    iarray_context_t *iactx_out;
-    iarray_config_t cfg_out = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_CHUNK,
-            .cparams = &data->cparams, .dparams = &data->dparams, .pparams = &pparams_out};
-    iarray_ctx_new(&cfg_out, &iactx_out);
-    iarray_container_t *c_out;
-    iarray_from_ctarray(iactx_out, cta_out, IARRAY_DATA_TYPE_DOUBLE, &c_out);
-
-    // Define 'res' caterva container
-    caterva_pparams pparams_res = CATERVA_PPARAMS_ONES;
-    pparams_res.shape[CATERVA_MAXDIM - 1] = N;  // FIXME: 1's at the beginning should be removed
-    pparams_res.shape[CATERVA_MAXDIM - 2] = M;  // FIXME: 1's at the beginning should be removed
-    pparams_res.cshape[CATERVA_MAXDIM - 1] = N;  // FIXME: 1's at the beginning should be removed
-    pparams_res.cshape[CATERVA_MAXDIM - 2] = M;  // FIXME: 1's at the beginning should be removed
-    pparams_res.ndims = 2;
-    blosc2_frame fr_res = BLOSC_EMPTY_FRAME;
-    caterva_array *cta_res = caterva_new_array(data->cparams, data->dparams, &fr_res, pparams_res);
-
-    // Obtain values of 'res' buffer
-    double *buf_res = (double *) ina_mem_alloc(cta_res->size * typesize);
-    memset(buf_res, 0, cta_res->size * typesize);
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, 1.0, buf_x, K, buf_y, N, 1.0, buf_res, N);
-
-    caterva_from_buffer(cta_res, buf_res);
-
-    // Create 'res' iarray container
-    iarray_context_t *iactx_res;
-    iarray_config_t cfg_res = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_CHUNK,
-            .cparams = &data->cparams, .dparams = &data->dparams, .pparams = &pparams_res};
-    iarray_ctx_new(&cfg_res, &iactx_res);
-    iarray_container_t *c_res;
-    iarray_from_ctarray(iactx_res, cta_res, IARRAY_DATA_TYPE_DOUBLE, &c_res);
-
-    INA_TEST_ASSERT_TRUE(test_gemm(c_x, c_y, c_out, c_res, 1e-14));
-
-    // Free memory
-    ina_mem_free(buf_x);
-    ina_mem_free(buf_y);
-    ina_mem_free(buf_res);
-
-    caterva_free_array(cta_x);
-    caterva_free_array(cta_y);
-    caterva_free_array(cta_out);
-    caterva_free_array(cta_res);
-
-    iarray_ctx_free(&iactx_x);
-    iarray_ctx_free(&iactx_y);
-    iarray_ctx_free(&iactx_out);
-    iarray_ctx_free(&iactx_res);
-
+    ina_mem_free(buffer_x);
+    ina_mem_free(buffer_y);
+    ina_mem_free(buffer_r);
 }
 
-INA_TEST_FIXTURE(e_gemm, float_data) {
 
-    // Define fixture parameters
-    size_t M = 2569;
-    size_t K = 2345;
-    size_t N = 3453;
-    size_t P = 100;
-    data->cparams.typesize = sizeof(float);
-    int typesize = data->cparams.typesize;
+INA_TEST_FIXTURE(gemm, float_data)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    float *buffer_x;
+    float *buffer_y;
+    float *buffer_r;
+    size_t buffer_x_len;
+    size_t buffer_y_len;
+    size_t buffer_r_len;
 
-    // Define 'x' caterva container
-    caterva_pparams pparams_x = CATERVA_PPARAMS_ONES;
-    pparams_x.shape[CATERVA_MAXDIM - 1] = K;  // FIXME: 1's at the beginning should be removed
-    pparams_x.shape[CATERVA_MAXDIM - 2] = M;  // FIXME: 1's at the beginning should be removed
-    pparams_x.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
-    pparams_x.cshape[CATERVA_MAXDIM - 2] = P;  // FIXME: 1's at the beginning should be removed
-    pparams_x.ndims = 2;
-    blosc2_frame fr_x = BLOSC_EMPTY_FRAME;
-    caterva_array *cta_x = caterva_new_array(data->cparams, data->dparams, &fr_x, pparams_x);
-    float *buf_x = (float *) ina_mem_alloc(cta_x->size * typesize);
-    ffill_buf(buf_x, cta_x->size);
-    caterva_from_buffer(cta_x, buf_x);
+    int M = 2569;
+    int K = 2345;
+    int N = 3453;
+    int P = 100;
 
-    // Create 'x' iarray container
-    iarray_context_t *iactx_x;
-    iarray_config_t cfg_x = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_CHUNK,
-            .cparams = &data->cparams, .dparams = &data->dparams, .pparams = &pparams_x};
-    iarray_ctx_new(&cfg_x, &iactx_x);
-    iarray_container_t *c_x;
-    iarray_from_ctarray(iactx_x, cta_x, IARRAY_DATA_TYPE_FLOAT, &c_x);
+    buffer_x_len = sizeof(float) * M * K;
+    buffer_y_len = sizeof(float) * K * N;
+    buffer_r_len = sizeof(float) * M * N;
+    buffer_x = ina_mem_alloc(buffer_x_len);
+    buffer_y = ina_mem_alloc(buffer_y_len);
+    buffer_r = ina_mem_alloc(buffer_r_len);
+    ffill_buf(buffer_x, M * K);
+    ffill_buf(buffer_y, K * N);
+    fmm_mul(M, K, N, buffer_x, buffer_y, buffer_r);
 
-    // Define 'y' caterva container
-    caterva_pparams pparams_y = CATERVA_PPARAMS_ONES;
-    pparams_y.shape[CATERVA_MAXDIM - 1] = N;  // FIXME: 1's at the beginning should be removed
-    pparams_y.shape[CATERVA_MAXDIM - 2] = K;  // FIXME: 1's at the beginning should be removed
-    pparams_y.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
-    pparams_y.cshape[CATERVA_MAXDIM - 2] = P;  // FIXME: 1's at the beginning should be removed
-    pparams_y.ndims = 2;
-    blosc2_frame fr_y = BLOSC_EMPTY_FRAME;
-    caterva_array *cta_y = caterva_new_array(data->cparams, data->dparams, &fr_y, pparams_y);
-    float *buf_y = (float *) ina_mem_alloc(cta_y->size * typesize);
-    ffill_buf(buf_y, cta_y->size);
-    caterva_from_buffer(cta_y, buf_y);
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx,
+        dtype, M, K, N, P, buffer_x, buffer_y, buffer_r, buffer_x_len, buffer_y_len, buffer_r_len));
 
-    // Create 'y' iarray container
-    iarray_context_t *iactx_y;
-    iarray_config_t cfg_y = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_CHUNK,
-            .cparams = &data->cparams, .dparams = &data->dparams, .pparams = &pparams_y};
-    iarray_ctx_new(&cfg_y, &iactx_y);
-    iarray_container_t *c_y;
-    iarray_from_ctarray(iactx_y, cta_y, IARRAY_DATA_TYPE_FLOAT, &c_y);
-
-    // Define 'out' caterva container
-    caterva_pparams pparams_out = CATERVA_PPARAMS_ONES;
-    pparams_out.shape[CATERVA_MAXDIM - 1] = N;  // FIXME: 1's at the beginning should be removed
-    pparams_out.shape[CATERVA_MAXDIM - 2] = M;  // FIXME: 1's at the beginning should be removed
-    pparams_out.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
-    pparams_out.cshape[CATERVA_MAXDIM - 2] = P;  // FIXME: 1's at the beginning should be removed
-    pparams_out.ndims = 2;
-    blosc2_frame fr_out = BLOSC_EMPTY_FRAME;
-    caterva_array *cta_out = caterva_new_array(data->cparams, data->dparams, &fr_out, pparams_out);
-
-    // Create 'out' iarray container
-    iarray_context_t *iactx_out;
-    iarray_config_t cfg_out = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_CHUNK,
-            .cparams = &data->cparams, .dparams = &data->dparams, .pparams = &pparams_out};
-    iarray_ctx_new(&cfg_out, &iactx_out);
-    iarray_container_t *c_out;
-    iarray_from_ctarray(iactx_out, cta_out, IARRAY_DATA_TYPE_FLOAT, &c_out);
-
-    // Define 'res' caterva container
-    caterva_pparams pparams_res = CATERVA_PPARAMS_ONES;
-    pparams_res.shape[CATERVA_MAXDIM - 1] = N;  // FIXME: 1's at the beginning should be removed
-    pparams_res.shape[CATERVA_MAXDIM - 2] = M;  // FIXME: 1's at the beginning should be removed
-    pparams_res.cshape[CATERVA_MAXDIM - 1] = N;  // FIXME: 1's at the beginning should be removed
-    pparams_res.cshape[CATERVA_MAXDIM - 2] = M;  // FIXME: 1's at the beginning should be removed
-    pparams_res.ndims = 2;
-    blosc2_frame fr_res = BLOSC_EMPTY_FRAME;
-    caterva_array *cta_res = caterva_new_array(data->cparams, data->dparams, &fr_res, pparams_res);
-
-    // Obtain values of 'res' buffer
-    float *buf_res = (float *) ina_mem_alloc(cta_res->size * typesize);
-    memset(buf_res, 0, cta_res->size * typesize);
-    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, 1.0, buf_x, K, buf_y, N, 1.0, buf_res, N);
-    caterva_from_buffer(cta_res, buf_res);
-
-    // Create 'res' iarray container
-    iarray_context_t *iactx_res;
-    iarray_config_t cfg_res = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_CHUNK,
-            .cparams = &data->cparams, .dparams = &data->dparams, .pparams = &pparams_res};
-    iarray_ctx_new(&cfg_res, &iactx_res);
-    iarray_container_t *c_res;
-    iarray_from_ctarray(iactx_res, cta_res, IARRAY_DATA_TYPE_FLOAT, &c_res);
-
-    INA_TEST_ASSERT_TRUE(test_gemm(c_x, c_y, c_out, c_res, 1e-06));
-
-    // Free memory
-    ina_mem_free(buf_x);
-    ina_mem_free(buf_y);
-    ina_mem_free(buf_res);
-
-    caterva_free_array(cta_x);
-    caterva_free_array(cta_y);
-    caterva_free_array(cta_out);
-    caterva_free_array(cta_res);
-
-    iarray_ctx_free(&iactx_x);
-    iarray_ctx_free(&iactx_y);
-    iarray_ctx_free(&iactx_out);
-    iarray_ctx_free(&iactx_res);
-
+    ina_mem_free(buffer_x);
+    ina_mem_free(buffer_y);
+    ina_mem_free(buffer_r);
 }
