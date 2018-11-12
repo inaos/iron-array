@@ -6,15 +6,11 @@
   Example program demonstrating how to execute an expression with super-chunks as operands.
   This is the version for using frames (either in-memory or on-disk) backing the super-chunks.
 
-  To compile this program:
-
-  $ gcc -O3 gemm-caterva.c -o gemm-caterva -lblosc
-
   To run:
 
-  $ ./gemm-caterva memory
+  $ ./gemm-iarray memory
   ...
-  $ ./gemm-caterva disk
+  $ ./gemm-iarray disk
   ...
 
 */
@@ -23,13 +19,14 @@
 #include <math.h>
 #include <stdbool.h>
 #include <libiarray/iarray.h>
+#include <mkl.h>
 
 #define KB (1024.)
 #define MB (1024 * KB)
 #define GB (1024 * MB)
 
 #define N (1000)   // array size is (N * N)
-#define P (100)    // partition size
+#define P (1000)   // partition size
 #define NELEM (N * N)
 #define NTHREADS 1
 
@@ -66,6 +63,9 @@ bool test_mat_equal(double *c1, double *c2) {
 
 int main(int argc, char** argv)
 {
+    long n = N;
+    long nelem = NELEM;
+
     printf("Blosc version info: %s (%s)\n",
             BLOSC_VERSION_STRING, BLOSC_VERSION_DATE);
 
@@ -75,8 +75,19 @@ int main(int argc, char** argv)
     if (argc > 1) {
         if (*argv[1] == 'd') {
             diskframes = true;
+            printf("Storage for iarray matrices: *disk*\n");
         }
     }
+    if (!diskframes) {
+        printf("Storage for iarray matrices: *memory*\n");
+    }
+
+    if (argc > 2) {
+        n = strtol(argv[2], NULL, 10);
+        nelem = n * n;
+    }
+    printf("Measuring time for multiplying matrices of (%ld, %ld), with a partition of (%d, %d)\n", n, n, P, P);
+    printf("Working set for the 4 uncompressed matrices: %.1f MB\n", n * n * sizeof(double) * 4 / MB);
 
     blosc_init();
 
@@ -86,27 +97,31 @@ int main(int argc, char** argv)
     double ttotal;
 
     // Fill the plain C buffers for x, y matrices
-    static double mat_x[NELEM];
-    static double mat_y[NELEM];
+    double *mat_x = malloc(nelem * sizeof(double));
+    double *mat_y = malloc(nelem * sizeof(double));
+    double *mat_out = malloc(nelem * sizeof(double));
     blosc_set_timestamp(&last);
-    double incx = 10. / NELEM;
-    for (int i = 0; i < NELEM; i++) {
+    double incx = 10. / nelem;
+    for (int i = 0; i < nelem; i++) {
         mat_x[i] = i * incx;
         mat_y[i] = i * incx;
     }
     blosc_set_timestamp(&current);
     ttotal = blosc_elapsed_secs(last, current);
-    printf("Time for filling X and Y matrices: %.3g s, %.1f MB/s\n",
-           ttotal, (sizeof(mat_x) + sizeof(mat_y)) / (ttotal * MB));
+//    printf("Time for filling X and Y matrices: %.3g s, %.1f MB/s\n",
+//           ttotal, (sizeof(mat_x) + sizeof(mat_y)) / (ttotal * MB));
 
     // Compute matrix-matrix multiplication
-    static double mat_out[NELEM];
     blosc_set_timestamp(&last);
-    simple_matmul(N, mat_x, mat_y, mat_out);
+    //simple_matmul(n, mat_x, mat_y, mat_out);
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n,
+                1.0, mat_x, n, mat_y, n, 1.0, mat_out, n);
+
     blosc_set_timestamp(&current);
     ttotal = blosc_elapsed_secs(last, current);
-    printf("Time for multiplying two matrices (pure C): %.3g s, %.1f MB/s\n",
-        ttotal, (sizeof(mat_x) * 3) / (ttotal * MB));
+    printf("Time for multiplying two matrices (pure C): %.3g s, %.1f GFlop/s, %.1f MB/s\n",
+        ttotal, ((double)n * (double)n * (double)n * 2) / (ttotal * 1e9),
+        (n * n * 3) / (ttotal * MB));
 
     /* Create a super-chunk container for input (X values) */
     cparams.typesize = sizeof(double);
@@ -124,8 +139,8 @@ int main(int argc, char** argv)
         pparams.shape[i] = 1;
         pparams.cshape[i] = 1;
     }
-    pparams.shape[CATERVA_MAXDIM - 1] = N;  // FIXME: 1's at the beginning should be removed
-    pparams.shape[CATERVA_MAXDIM - 2] = N;  // FIXME: 1's at the beginning should be removed
+    pparams.shape[CATERVA_MAXDIM - 1] = n;  // FIXME: 1's at the beginning should be removed
+    pparams.shape[CATERVA_MAXDIM - 2] = n;  // FIXME: 1's at the beginning should be removed
     pparams.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
     pparams.cshape[CATERVA_MAXDIM - 2] = P;  // FIXME: 1's at the beginning should be removed
     pparams.ndims = 2;
@@ -142,9 +157,9 @@ int main(int argc, char** argv)
     caterva_from_buffer(cta_y, mat_y);
     blosc_set_timestamp(&current);
 	ttotal = blosc_elapsed_secs(last, current);
-	printf("Time for filling X values (compressed): %.3g s, %.1f MB/s\n",
-			ttotal, (cta_x->sc->nbytes * 2) / (ttotal * MB));
-	printf("Compression for X values: %.1f MB -> %.1f MB (%.1fx)\n",
+//	printf("Time for filling X values (compressed): %.3g s, %.1f MB/s\n",
+//			ttotal, (cta_x->sc->nbytes * 2) / (ttotal * MB));
+	printf("Compression for values in matrix X: %.1f MB -> %.1f MB (%.1fx)\n",
 			(cta_x->sc->nbytes/MB), (cta_x->sc->cbytes/MB),
 			((double) cta_x->sc->nbytes/cta_x->sc->cbytes));
 
@@ -154,6 +169,8 @@ int main(int argc, char** argv)
     if (!test_mat_equal(mat_x, mat_y)) {
         return -1;
     }
+    free(mat_x);
+    free(mat_y);
 
     // Check IronArray performance
     iarray_context_t *iactx;
@@ -180,19 +197,21 @@ int main(int argc, char** argv)
     blosc_set_timestamp(&current);
     ttotal = blosc_elapsed_secs(last, current);
     blosc2_schunk *sc_out = cta_out->sc;
-    printf("\n");
-    printf("Time for multiplying two matrices (iarray):  %.3g s, %.1f MB/s\n",
-            ttotal, (sc_out->nbytes * 3) / (ttotal * MB));
-    printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
+    //printf("\n");
+    printf("Time for multiplying two matrices (iarray):  %.3g s, %.1f GFlop/s, %.1f MB/s\n",
+            ttotal, ((double)n * (double)n * (double)n * 2) / (ttotal * 1e9),
+           (n * n * 3) / (ttotal * MB));
+    printf("Compression for values in matrix OUT: %.1f MB -> %.1f MB (%.1fx)\n",
             (sc_out->nbytes/MB), (sc_out->cbytes/MB),
             (1.*sc_out->nbytes) / sc_out->cbytes);
 
     // Check that we are getting the same results than through manual computation
-    static double mat_out2[NELEM];
+    double *mat_out2 = malloc(nelem * sizeof(double));
     caterva_to_buffer(cta_out, mat_out2);
     if (!test_mat_equal(mat_out, mat_out2)) {
         return -1;
     }
+    free(mat_out);
 
     // Free resources
     caterva_free_array(cta_x);

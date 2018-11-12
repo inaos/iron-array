@@ -54,14 +54,17 @@ set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc_static)
 endif()
 
-inac_add_tests(iarray)
+#inac_add_tests(iarray)
 #inac_add_benchmarks(iarray)
 #inac_add_tools(iarray)
 #inac_add_examples(iarray)
 
-
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
 find_package(MKL)
+add_subdirectory(tests)
+
+# TODO: @stoni can you figure out how to reproduce the functionality inside the cmake file in tests?
+enable_testing()
 add_subdirectory(tests)
 
 set(BENCH ${CMAKE_SOURCE_DIR}/bench)
@@ -71,20 +74,12 @@ set(BENCH ${CMAKE_SOURCE_DIR}/bench)
 #            TARGET vectors
 #            APPEND PROPERTY LINK_FLAGS "-fopenmp")
 #endif ()
-add_executable(vectors ${BENCH}/vectors.c)
-add_executable(vectors-float ${BENCH}/vectors-float.c)
-add_executable(vectors-frame ${BENCH}/vectors-frame.c)
-add_executable(vectors-caterva ${BENCH}/vectors-caterva.c)
-add_executable(gemm-caterva ${BENCH}/gemm-caterva.c)
 
-target_link_libraries(vectors LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
-target_link_libraries(vectors-float LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
-target_link_libraries(vectors-frame LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
-target_link_libraries(vectors-caterva LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
-target_link_libraries(gemm-caterva LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+add_executable(vectors-iarray ${BENCH}/vectors-iarray.c)
+add_executable(gemm-iarray ${BENCH}/gemm-iarray.c)
 
-add_executable(test ${BENCH}/test.c)
-add_executable(test2 ${BENCH}/test2.c)
+target_link_libraries(vectors-iarray LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+target_link_libraries(gemm-iarray LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${MKL_LIBRARIES} ${PLATFORM_LIBS})
 
 #if (MSVC)
 #    install(TARGETS iarray
