@@ -185,33 +185,6 @@ INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx, iarray_dtshape_t *dtshape, 
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_from_sc(iarray_context_t *ctx, blosc2_schunk *sc, iarray_data_type_t dtype, iarray_container_t **container)
-{
-    *container = ina_mem_alloc(sizeof(iarray_container_t));
-    (*container)->dtshape = ina_mem_alloc(sizeof(iarray_dtshape_t));
-    (*container)->dtshape->ndim = 1;
-    (*container)->dtshape->dtype = dtype;
-    int dim0 = 0;
-    if (ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
-        int typesize = sc->typesize;
-        size_t chunksize, cbytes, blocksize;
-        void *chunk;
-        bool needs_free;
-        int retcode = blosc2_schunk_get_chunk(sc, 0, &chunk, &needs_free);
-        blosc_cbuffer_sizes(chunk, &chunksize, &cbytes, &blocksize);
-        if (needs_free) {
-            free(chunk);
-        }
-        dim0 = (int)blocksize / typesize;
-    }
-    else {
-        dim0 = sc->chunksize / sc->typesize;
-    }
-    (*container)->dtshape->dims[0] = dim0;
-    (*container)->catarr->sc = sc;
-    return INA_SUCCESS;
-}
-
 INA_API(ina_rc_t) iarray_from_ctarray(iarray_context_t *ctx, caterva_array *ctarray, iarray_data_type_t dtype, iarray_container_t **container)
 {
     *container = ina_mem_alloc(sizeof(iarray_container_t));
@@ -220,20 +193,30 @@ INA_API(ina_rc_t) iarray_from_ctarray(iarray_context_t *ctx, caterva_array *ctar
     (*container)->dtshape->dtype = dtype;
     int dim0 = 0;
     blosc2_schunk *sc = ctarray->sc;
-    if (ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
-        int typesize = sc->typesize;
-        size_t chunksize, cbytes, blocksize;
-        void *chunk;
-        bool needs_free;
-        int retcode = blosc2_schunk_get_chunk(sc, 0, &chunk, &needs_free);
-        blosc_cbuffer_sizes(chunk, &chunksize, &cbytes, &blocksize);
-        if (needs_free) {
-            free(chunk);
-        }
-        dim0 = (int)blocksize / typesize;
+    // Empty super-chunks are easy to deal with
+    if (sc->nchunks == 0) {
+        dim0 = 0;
     }
     else {
-        dim0 = sc->chunksize / sc->typesize;
+        if (ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
+            int typesize = sc->typesize;
+            size_t chunksize, cbytes, blocksize;
+            void *chunk;
+            bool needs_free;
+            int retcode = blosc2_schunk_get_chunk(sc, 0, &chunk, &needs_free);
+            if (retcode < 0) {
+                fprintf(stderr, "Error getting chunk\n");
+                return INA_ERR_FAILED;
+            }
+            blosc_cbuffer_sizes(chunk, &chunksize, &cbytes, &blocksize);
+            if (needs_free) {
+                free(chunk);
+            }
+            dim0 = (int)blocksize / typesize;
+        }
+        else {
+            dim0 = sc->chunksize / sc->typesize;
+        }
     }
     (*container)->dtshape->dims[0] = dim0;
     (*container)->catarr = ctarray;
@@ -262,6 +245,7 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e
 INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
 {
     INA_FREE_CHECK(e);
+    INA_FREE_CHECK(&ctx);
     ina_mempool_reset(ctx->mp); // FIXME
     INA_MEM_FREE_SAFE((*e)->temp_vars);
     INA_MEM_FREE_SAFE(*e);
@@ -327,11 +311,15 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         e->blocksize = blocksize;
         e->typesize = typesize;
     }
-    else {
+    else if (e->ctx->cfg->flags & IARRAY_EXPR_EVAL_CHUNK) {
         dim0 = schunk->chunksize / schunk->typesize;
         e->nchunks = schunk->nchunks;
         e->chunksize = schunk->chunksize;
         e->typesize = schunk->typesize;
+    }
+    else {
+        fprintf(stderr, "Flag %d is not supported\n", e->ctx->cfg->flags);
+        return INA_ERR_NOT_SUPPORTED;
     }
     iarray_dtshape_t shape_var = {
             .ndim = 1,
@@ -351,12 +339,13 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, caterva_array *out, int flags, iarray_container_t **ret)
+INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 {
     blosc2_schunk *schunk0 = e->vars[0].c->catarr->sc;  // get the super-chunk of the first variable
     size_t nitems_in_schunk = schunk0->nbytes / e->typesize;
     size_t nitems_in_chunk = e->chunksize / e->typesize;
     int nvars = e->nvars;
+    caterva_array out = *ret->catarr;
 
     if (e->ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
         int8_t *outbuf = ina_mem_alloc(e->chunksize);  // FIXME: this could benefit from using a mempool (probably not)
@@ -401,7 +390,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, cat
                 const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
                 ina_mem_cpy(outbuf + nblock * e->blocksize, expr_out->data, corrected_blocksize);
             }
-            blosc2_schunk_append_buffer(out, outbuf, nitems_in_chunk * e->typesize);
+            blosc2_schunk_append_buffer(out.sc, outbuf, nitems_in_chunk * e->typesize);
         }
         for (int nvar = 0; nvar < nvars; nvar++) {
             if (var_needs_free[nvar]) {
@@ -428,7 +417,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, cat
             const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
             // Correct the number of items in last chunk
             nitems_in_chunk = (nchunk < e->nchunks - 1) ? nitems_in_chunk : nitems_in_schunk - nchunk * nitems_in_chunk;
-            blosc2_schunk_append_buffer(out->sc, expr_out->data, nitems_in_chunk * e->typesize);
+            blosc2_schunk_append_buffer(out.sc, expr_out->data, nitems_in_chunk * e->typesize);
         }
     }
     return INA_SUCCESS;
@@ -852,7 +841,7 @@ INA_API(ina_rc_t) iarray_almost_equal_data(iarray_container_t *a, iarray_contain
 
 
 INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
-    size_t P = a->catarr->cshape[7];
+    const int P = a->catarr->cshape[7];
     size_t M = a->catarr->eshape[6];
     size_t K = a->catarr->eshape[7];
     size_t N = b->catarr->eshape[7];

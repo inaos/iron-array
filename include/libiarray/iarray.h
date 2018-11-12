@@ -80,7 +80,7 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
 
-INA_API(ina_rc_t) iarray_eval(iarray_context_t *ctx, iarray_expression_t *e, caterva_array *out, int flags, iarray_container_t **ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
+INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
 
 INA_API(ina_rc_t) iarray_from_ctarray(iarray_context_t *ctx, caterva_array *ctarray, iarray_data_type_t dtype, iarray_container_t **container);
 
