@@ -93,8 +93,6 @@ INA_TEST_SETUP(eval)
     data->cfg = IARRAY_CONFIG_DEFAULTS;
     data->cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
     data->cfg.compression_level = 9;
-    data->cfg.flags = IARRAY_COMP_TRUNC_PREC;
-    data->cfg.fp_mantissa_bits = 23; // treat doubles as floats
     data->cfg.max_num_threads = NTHREADS;
     
     data->buf_len = sizeof(double)*NELEM;

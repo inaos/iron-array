@@ -66,6 +66,9 @@ struct iarray_container_s {
     } scalar_value;
 };
 
+static int _ina_inited = 0;
+static int _blosc_inited = 0;
+
 static ina_rc_t _iarray_container_new(iarray_context_t *ctx, 
                                       iarray_dtshape_t *shape, 
                                       iarray_store_properties_t *store,
@@ -186,14 +189,21 @@ static ina_rc_t _iarray_container_fill_double(iarray_container_t *c, double valu
 
 INA_API(ina_rc_t) iarray_init()
 {
-    ina_init();
-    blosc_init();
+	if (!_ina_inited) {
+		ina_init();
+		_ina_inited = 1;
+	}
+	if (!_blosc_inited) {
+		blosc_init();
+		_blosc_inited = 1;
+	}
     return INA_SUCCESS;
 }
 
 INA_API(void) iarray_destroy()
 {
     blosc_destroy();
+	_blosc_inited = 0;
 }
 
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx)
