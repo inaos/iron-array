@@ -61,7 +61,7 @@ static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx,
     rshape.dtype = dtype;
     rshape.ndim = 1;
     rshape.shape[0] = M;
-    rshape.partshape[1] = P;
+    rshape.partshape[0] = P;
 
     iarray_container_t *c_x;
     iarray_container_t *c_y;
@@ -89,7 +89,6 @@ INA_TEST_DATA(gemv) {
 
 INA_TEST_SETUP(gemv)
 {
-
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
