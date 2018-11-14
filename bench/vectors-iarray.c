@@ -68,14 +68,14 @@ int main(int argc, char** argv)
     const char *mat_y_name = NULL;
     const char *mat_out_name = NULL;
     int eval_flag = 0;
-	const char *eval_method = NULL;
+    const char *eval_method = NULL;
 
     INA_OPTS(opt,
         INA_OPT_INT("f", "eval-flag", 1, "EVAL_BLOCK = 1, EVAL_CHUNK = 2"),
         INA_OPT_FLAG("p", "persistence", "Use persistent containers")
     );
 
-	INA_MUST_SUCCEED(iarray_init());
+    INA_MUST_SUCCEED(iarray_init());
 
     /*if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
         return EXIT_FAILURE;
@@ -88,12 +88,12 @@ int main(int argc, char** argv)
         mat_y_name = "mat_y";
         mat_out_name = "mat_out";
     }*/
-	if (eval_flag == 2) {
-		eval_method = "EVAL_CHUNK";
-	}
-	else {
-		eval_method = "EVAL_BLOCK";
-	}
+    if (eval_flag == 2) {
+        eval_method = "EVAL_CHUNK";
+    }
+    else {
+        eval_method = "EVAL_BLOCK";
+    }
 
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_codec = IARRAY_COMPRESSION_BLOSCLZ;
@@ -107,7 +107,7 @@ int main(int argc, char** argv)
     double elapsed_sec = 0;
     INA_STOPWATCH_NEW(1, -1, &w);
    
-	size_t buffer_len = sizeof(double)*NELEM;
+    size_t buffer_len = sizeof(double)*NELEM;
     x = (double*)ina_mem_alloc(buffer_len);
     y = (double*)ina_mem_alloc(buffer_len);
 
@@ -133,14 +133,14 @@ int main(int argc, char** argv)
     // To prevent the optimizer going too smart and removing 'dead' code
     int retcode = y[0] > y[1];
 
-	INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, x, buffer_len, NULL, 0, &con_x));
+    INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, x, buffer_len, NULL, 0, &con_x));
     INA_STOPWATCH_START(w);
-	INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, y, buffer_len, NULL, 0, &con_y));
+    INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, y, buffer_len, NULL, 0, &con_y));
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
     size_t nbytes = 0;
-	size_t cbytes = 0;
+    size_t cbytes = 0;
     double nbytes_mb = 0;
     double cbytes_mb = 0;
 
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
             nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
 
-	INA_MUST_SUCCEED(iarray_equal_data(con_y, con_out));
+    INA_MUST_SUCCEED(iarray_almost_equal_data(con_y, con_out, 1e-06));
 
     iarray_expr_free(ctx, &e);
 

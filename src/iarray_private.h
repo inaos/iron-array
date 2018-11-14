@@ -15,6 +15,11 @@
 
 #include <libiarray/iarray.h>
 
+/* Dependencies */
+#include <blosc.h>
+#include <caterva.h>
+#include <mkl.h>
+
  /* Sizes */
 #define _IARRAY_SIZE_KB  (1024)
 #define _IARRAY_SIZE_MB  (1024*_IARRAY_SIZE_KB)

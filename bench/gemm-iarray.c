@@ -66,7 +66,8 @@ int main(int argc, char** argv)
     const char *mat_out_name = NULL;
 
     INA_OPTS(opt,
-        INA_OPT_FLAG("p", "persistence", "Use persistent containers")
+        INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
+        INA_OPT_INT("n", "elements", N, "Number of Elements")
     );
 
     INA_MUST_SUCCEED(iarray_init());
@@ -81,17 +82,16 @@ int main(int argc, char** argv)
         mat_y_name = "mat_y";
         mat_out_name = "mat_out";
     }*/
-    }
-    if (!diskframes) {
+    //else {
         printf("Storage for iarray matrices: *memory*\n");
-    }
+    //}
 
-    if (argc > 2) {
-        n = strtol(argv[2], NULL, 10);
-        nelem = n * n;
-    }
-    printf("Measuring time for multiplying matrices of (%ld, %ld), with a partition of (%d, %d)\n", n, n, P, P);
-    printf("Working set for the 4 uncompressed matrices: %.1f MB\n", n * n * sizeof(double) * 4 / MB);
+    /* do this when INA_OPT is back */
+    //n = strtol(argv[2], NULL, 10);
+    //nelem = n * n;
+    
+    printf("Measuring time for multiplying matrices of (%ld, %ld), with a partition of (%d, %d)\n", N, N, P, P);
+    printf("Working set for the 4 uncompressed matrices: %.1f MB\n", N * N * sizeof(double) * 4 / _IARRAY_SIZE_MB);
 
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_codec = IARRAY_COMPRESSION_LZ4;
@@ -122,7 +122,8 @@ int main(int argc, char** argv)
 
     /* Compute naive matrix-matrix multiplication */
     INA_STOPWATCH_START(w);
-    simple_matmul(N, mat_x, mat_y, mat_out);
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, N, N, N,
+        1.0, mat_x, N, mat_y, N, 1.0, mat_out, N);
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     printf("Time for multiplying two matrices (pure C): %.3g s, %.1f MB/s\n",

@@ -36,6 +36,9 @@ set(BLOSC_LIB blosc_static) # required for caterva tests
 add_subdirectory(contribs/caterva)
 include_directories(contribs/caterva/caterva)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
+find_package(MKL)
+
 set(SRC ${CMAKE_SOURCE_DIR}/src)
 file(GLOB src ${SRC_DIR}/*.c)
 add_library(iarray_c ${src})
@@ -58,10 +61,6 @@ inac_add_tests(iarray)
 #inac_add_benchmarks(iarray)
 #inac_add_tools(iarray)
 #inac_add_examples(iarray)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
-find_package(MKL)
-set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${MKL_LIBRARIES})
 
 set(BENCH ${CMAKE_SOURCE_DIR}/bench)
 # Playing with OpenMP (available mainly on GCC)
