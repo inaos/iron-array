@@ -25,7 +25,7 @@
 #define NCHUNKS  100
 #define NITEMS_CHUNK (200 * 1000)  // fits well in modern L3 caches
 #define NELEM (NCHUNKS * NITEMS_CHUNK)  // multiple of NITEMS_CHUNKS for now
-#define PART_SIZE 1000
+#define PART_SIZE NITEMS_CHUNK
 #define NTHREADS 1
 
 static double poly(const double x)
@@ -134,60 +134,61 @@ int main(int argc, char** argv)
     const char *mat_x_name = NULL;
     const char *mat_y_name = NULL;
     const char *mat_out_name = NULL;
-    int eval_flag;
+    int eval_flag = 0;
+	const char *eval_method = NULL;
 
     INA_OPTS(opt,
         INA_OPT_INT("f", "eval-flag", 1, "EVAL_BLOCK = 1, EVAL_CHUNK = 2"),
         INA_OPT_FLAG("p", "persistence", "Use persistent containers")
     );
 
-    if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
+	INA_MUST_SUCCEED(iarray_init());
+
+    /*if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
         return EXIT_FAILURE;
-    }
+    }*/
     ina_set_cleanup_handler(ina_cleanup_handler);
 
-    INA_MUST_SUCCEED(ina_opt_get_int("f", &eval_flag));
+    /*INA_MUST_SUCCEED(ina_opt_get_int("f", &eval_flag));
     if (INA_SUCCEED(ina_opt_isset("p"))) {
         mat_x_name = "mat_x";
         mat_y_name = "mat_y";
         mat_out_name = "mat_out";
-    }
+    }*/
+	if (eval_flag == 2) {
+		eval_method = "EVAL_CHUNK";
+	}
+	else {
+		eval_method = "EVAL_BLOCK";
+	}
 
-    INA_MUST_SUCCEED(iarray_init());
-    
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_codec = IARRAY_COMPRESSION_BLOSCLZ;
     config.compression_level = 9;
     config.max_num_threads = NTHREADS;
-    config.flags = eval_flag; // (IARRAY_EXPR_EVAL_BLOCK || IARRAY_EXPR_EVAL_CHUNK)
+    config.flags = IARRAY_EXPR_EVAL_BLOCK; // (IARRAY_EXPR_EVAL_BLOCK || IARRAY_EXPR_EVAL_CHUNK)
     config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
 
-    double elapsed_sec;
+    double elapsed_sec = 0;
     INA_STOPWATCH_NEW(1, -1, &w);
    
-    x = (double*)ina_mem_alloc(sizeof(double)*NELEM);
-    y = (double*)ina_mem_alloc(sizeof(double)*NELEM);
+	size_t buffer_len = sizeof(double)*NELEM;
+    x = (double*)ina_mem_alloc(buffer_len);
+    y = (double*)ina_mem_alloc(buffer_len);
 
     // Fill the plain x operand
     fill_x(x);
 
     iarray_dtshape_t shape;
-    shape.ndim = 2;
+    shape.ndim = 1;
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     shape.shape[0] = NELEM;
-    shape.shape[1] = NELEM;
     shape.partshape[0] = PART_SIZE;
-    shape.partshape[1] = PART_SIZE;
-
+    
     iarray_container_t *con_x;
     iarray_container_t *con_y;
-
-
-    // FIXME: always fill from C buffer for now!
-    
-
 
     // Compute the plain y vector
     INA_STOPWATCH_START(w);
@@ -195,37 +196,27 @@ int main(int argc, char** argv)
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     printf("Time for computing and filling Y values: %.3g s, %.1f MB/s\n",
-            elapsed_sec, sizeof(y)/(elapsed_sec*_IARRAY_SIZE_MB));
+            elapsed_sec, buffer_len/(elapsed_sec*_IARRAY_SIZE_MB));
     // To prevent the optimizer going too smart and removing 'dead' code
     int retcode = y[0] > y[1];
 
+	INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, x, buffer_len, NULL, 0, &con_x));
     INA_STOPWATCH_START(w);
-    // FIXME: how to do this properly?
-    /*for (int nchunk = 0; nchunk < sc_x->nchunks; nchunk++) {
-        int dsize = blosc2_schunk_decompress_chunk(sc_x, nchunk, buffer_x, isize);
-        if (dsize < 0) {
-            printf("Decompression error.  Error code: %d\n", dsize);
-            return dsize;
-        }
-        fill_buffer_y(buffer_x, buffer_y);
-        blosc2_schunk_append_buffer(sc_y, buffer_y, isize);
-    }*/
+	INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, y, buffer_len, NULL, 0, &con_y));
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
     size_t nbytes = 0;
-    size_t cbytes = 0;
+	size_t cbytes = 0;
 
     iarray_container_info(con_x, &nbytes, &cbytes);
-    printf("Time for computing and filling Y values (compressed): %.3g s, %.1f MB/s\n",
+    printf("Time for compressing Y values: %.3g s, %.1f MB/s\n",
             elapsed_sec, nbytes/(elapsed_sec*_IARRAY_SIZE_MB));
     printf("Compression for Y values: %.1f MB -> %.1f MB (%.1fx)\n",
             (nbytes/ _IARRAY_SIZE_MB), (cbytes/ _IARRAY_SIZE_MB),
             (1.*nbytes)/cbytes);
 
     // Check IronArray performance
-    // First for the chunk evaluator
-
     iarray_expression_t *e;
     iarray_expr_new(ctx, &e);
     iarray_expr_bind(e, "x", con_x);
@@ -240,17 +231,13 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     iarray_container_info(con_out, &nbytes, &cbytes);
     printf("\n");
-    printf("Time for computing and filling OUT values using iarray (chunk eval):  %.3g s, %.1f MB/s\n",
-        elapsed_sec, nbytes / (elapsed_sec * _IARRAY_SIZE_MB));
+    printf("Time for computing and filling OUT values using iarray (%s):  %.3g s, %.1f MB/s\n",
+        eval_method, elapsed_sec, nbytes / (elapsed_sec * _IARRAY_SIZE_MB));
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
-            (nbytes/ _IARRAY_SIZE_MB), (cbytes/ _IARRAY_SIZE_MB),
+            (nbytes/_IARRAY_SIZE_MB), (cbytes/_IARRAY_SIZE_MB),
             (1.*nbytes)/cbytes);
 
-    // Check that we are getting the same results than through manual computation
-    // FIXME: how to do this
-    /*if (!test_schunks_equal(sc_y, sc_out)) {
-        return -1;
-    }*/
+	INA_MUST_SUCCEED(iarray_equal_data(con_y, con_out));
 
     iarray_expr_free(ctx, &e);
 
