@@ -156,16 +156,16 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
 
     for (int i = 0; i < CATERVA_MAXDIM; i++) {
         pparams.shape[i] = 1;
-        pparams.cshape[i] = 1;
+        pparams.pshape[i] = 1;
     }
     for (int i = 0; i < shape->ndim; ++i) { // FIXME: 1's at the beginning should be removed
         pparams.shape[CATERVA_MAXDIM - (i + 1)] = shape->shape[i];
-        pparams.cshape[CATERVA_MAXDIM - (i + 1)] = shape->partshape[i];
+        pparams.pshape[CATERVA_MAXDIM - (i + 1)] = shape->partshape[i];
     }
-    pparams.ndims = shape->ndim;
+    pparams.ndim = shape->ndim;
     ina_mem_cpy((*c)->pparams, &pparams, sizeof(caterva_pparams));
 
-    (*c)->catarr = caterva_new_array(*(*c)->cparams, *(*c)->dparams, (*c)->frame, *(*c)->pparams);
+    (*c)->catarr = caterva_new_array(*(*c)->cparams, *(*c)->dparams, (*c)->frame, *(*c)->pparams, NULL);
     INA_FAIL_IF((*c)->catarr == NULL);
 
     return INA_SUCCESS;
@@ -1091,7 +1091,7 @@ INA_API(ina_rc_t) iarray_almost_equal_data(iarray_container_t *a, iarray_contain
 
 
 INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
-    const int P = a->catarr->cshape[7];
+    const int P = a->catarr->pshape[7];
     size_t M = a->catarr->eshape[6];
     size_t K = a->catarr->eshape[7];
     size_t N = b->catarr->eshape[7];
@@ -1133,7 +1133,7 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
 }
 
 INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
-    size_t P = a->catarr->cshape[7];
+    size_t P = a->catarr->pshape[7];
 
     size_t M = a->catarr->eshape[6];
     size_t K = a->catarr->eshape[7];
