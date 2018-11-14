@@ -26,17 +26,37 @@ static ina_rc_t test_gemm(iarray_container_t *c_x, iarray_container_t *c_y, iarr
 
 static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx, 
                                      iarray_data_type_t dtype, 
+                                     size_t type_size,
                                      int M, 
                                      int K, 
                                      int N, 
-                                     int P,
-                                     void *buffer_x,
-                                     void *buffer_y,
-                                     void *buffer_r,
-                                     size_t buffer_x_len,
-                                     size_t buffer_y_len,
-                                     size_t buffer_r_len)
+                                     int P)
 {
+    void *buffer_x;
+    void *buffer_y;
+    void *buffer_r;
+    size_t buffer_x_len;
+    size_t buffer_y_len;
+    size_t buffer_r_len;
+    
+    buffer_x_len = type_size * M * K;
+    buffer_y_len = type_size * K * N;
+    buffer_r_len = type_size * M * N;
+    buffer_x = ina_mem_alloc(buffer_x_len);
+    buffer_y = ina_mem_alloc(buffer_y_len);
+    buffer_r = ina_mem_alloc(buffer_r_len);
+
+    if (type_size == sizeof(float)) {
+        ffill_buf((float*)buffer_x, M * K);
+        ffill_buf((float*)buffer_y, K * N);
+        fmm_mul(M, K, N, (float*)buffer_x, (float*)buffer_y, (float*)buffer_r);
+    }
+    else {
+        dfill_buf((double*)buffer_x, M * K);
+        dfill_buf((double*)buffer_y, K * N);
+        dmm_mul(M, K, N, (double*)buffer_x, (double*)buffer_y, (double*)buffer_r);
+    }
+
     iarray_dtshape_t xshape;
     iarray_dtshape_t yshape;
     iarray_dtshape_t oshape;
@@ -87,6 +107,10 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
     iarray_container_free(ctx, &c_out);
     iarray_container_free(ctx, &c_res);
 
+    ina_mem_free(buffer_x);
+    ina_mem_free(buffer_y);
+    ina_mem_free(buffer_r);
+
     return INA_SUCCESS;
 }
 
@@ -116,66 +140,27 @@ INA_TEST_TEARDOWN(gemm)
 INA_TEST_FIXTURE(gemm, double_data)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    double *buffer_x;
-    double *buffer_y;
-    double *buffer_r;
-    size_t buffer_x_len;
-    size_t buffer_y_len;
-    size_t buffer_r_len;
-    
+    size_t type_size = sizeof(double);
+
     int M = 163;
     int K = 135;
     int N = 94;
-    int P = 24;
-    
-    buffer_x_len = sizeof(double) * M * K;
-    buffer_y_len = sizeof(double) * K * N;
-    buffer_r_len = sizeof(double) * M * N;
-    buffer_x = ina_mem_alloc(buffer_x_len);
-    buffer_y = ina_mem_alloc(buffer_y_len);
-    buffer_r = ina_mem_alloc(buffer_r_len);
-    dfill_buf(buffer_x, M * K);
-    dfill_buf(buffer_y, K * N);
-    dmm_mul(M, K, N, buffer_x, buffer_y, buffer_r);
+    int P = 24;    
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, 
-        dtype, M, K, N, P, buffer_x, buffer_y, buffer_r, buffer_x_len, buffer_y_len, buffer_r_len));
-
-    ina_mem_free(buffer_x);
-    ina_mem_free(buffer_y);
-    ina_mem_free(buffer_r);
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, M, K, N, P));
 }
 
 
 INA_TEST_FIXTURE(gemm, float_data)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    float *buffer_x;
-    float *buffer_y;
-    float *buffer_r;
-    size_t buffer_x_len;
-    size_t buffer_y_len;
-    size_t buffer_r_len;
-    
+    size_t type_size = sizeof(float);
+
     int M = 123;
     int K = 50;
     int N = 75;
     int P = 10;
     
-    buffer_x_len = sizeof(float) * M * K;
-    buffer_y_len = sizeof(float) * K * N;
-    buffer_r_len = sizeof(float) * M * N;
-    buffer_x = ina_mem_alloc(buffer_x_len);
-    buffer_y = ina_mem_alloc(buffer_y_len);
-    buffer_r = ina_mem_alloc(buffer_r_len);
-    ffill_buf(buffer_x, M * K);
-    ffill_buf(buffer_y, K * N);
-    fmm_mul(M, K, N, buffer_x, buffer_y, buffer_r);
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, M, K, N, P));
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx,
-        dtype, M, K, N, P, buffer_x, buffer_y, buffer_r, buffer_x_len, buffer_y_len, buffer_r_len));
-
-    ina_mem_free(buffer_x);
-    ina_mem_free(buffer_y);
-    ina_mem_free(buffer_r);
 }
