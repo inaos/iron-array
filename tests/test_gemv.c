@@ -26,16 +26,36 @@ static ina_rc_t test_gemv(iarray_container_t *c_x, iarray_container_t *c_y, iarr
 
 static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx,
     iarray_data_type_t dtype,
+    size_t type_size,
     int M,
     int K,
-    int P,
-    void *buffer_x,
-    void *buffer_y,
-    void *buffer_r,
-    size_t buffer_x_len,
-    size_t buffer_y_len,
-    size_t buffer_r_len)
+    int P)
 {
+    void *buffer_x;
+    void *buffer_y;
+    void *buffer_r;
+    size_t buffer_x_len;
+    size_t buffer_y_len;
+    size_t buffer_r_len;
+
+    buffer_x_len = type_size * M * K;
+    buffer_y_len = type_size * K;
+    buffer_r_len = type_size * M;
+    buffer_x = ina_mem_alloc(buffer_x_len);
+    buffer_y = ina_mem_alloc(buffer_y_len);
+    buffer_r = ina_mem_alloc(buffer_r_len);
+
+    if (type_size == sizeof(float)) {
+        ffill_buf((float*)buffer_x, M * K);
+        ffill_buf((float*)buffer_y, K);
+        fmv_mul(M, K, (float*)buffer_x, (float*)buffer_y, (float*)buffer_r);
+    }
+    else {
+        dfill_buf((double*)buffer_x, M * K);
+        dfill_buf((double*)buffer_y, K);
+        dmv_mul(M, K, (double*)buffer_x, (double*)buffer_y, (double*)buffer_r);
+    }
+
     iarray_dtshape_t xshape;
     iarray_dtshape_t yshape;
     iarray_dtshape_t oshape;
@@ -80,6 +100,10 @@ static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx,
     iarray_container_free(ctx, &c_out);
     iarray_container_free(ctx, &c_res);
 
+    ina_mem_free(buffer_x);
+    ina_mem_free(buffer_y);
+    ina_mem_free(buffer_r);
+
     return INA_SUCCESS;
 }
 
@@ -107,63 +131,23 @@ INA_TEST_TEARDOWN(gemv)
 INA_TEST_FIXTURE(gemv, double_data)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    double *buffer_x;
-    double *buffer_y;
-    double *buffer_r;
-    size_t buffer_x_len;
-    size_t buffer_y_len;
-    size_t buffer_r_len;
+    size_t type_size = sizeof(double);
 
     int M = 4163;
     int K = 5135;
     int P = 453;
 
-    buffer_x_len = sizeof(double) * M * K;
-    buffer_y_len = sizeof(double) * K;
-    buffer_r_len = sizeof(double) * M;
-    buffer_x = ina_mem_alloc(buffer_x_len);
-    buffer_y = ina_mem_alloc(buffer_y_len);
-    buffer_r = ina_mem_alloc(buffer_r_len);
-    dfill_buf(buffer_x, M * K);
-    dfill_buf(buffer_y, K);
-    dmv_mul(M, K, buffer_x, buffer_y, buffer_r);
-
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemv(data->ctx,
-        dtype, M, K, P, buffer_x, buffer_y, buffer_r, buffer_x_len, buffer_y_len, buffer_r_len));
-
-    ina_mem_free(buffer_x);
-    ina_mem_free(buffer_y);
-    ina_mem_free(buffer_r);
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemv(data->ctx, dtype, type_size, M, K, P));
 }
 
 INA_TEST_FIXTURE(gemv, float_data)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    float *buffer_x;
-    float *buffer_y;
-    float *buffer_r;
-    size_t buffer_x_len;
-    size_t buffer_y_len;
-    size_t buffer_r_len;
+    size_t type_size = sizeof(float);
 
     int M = 3485;
     int K = 3555;
     int P = 519;
 
-    buffer_x_len = sizeof(float) * M * K;
-    buffer_y_len = sizeof(float) * K;
-    buffer_r_len = sizeof(float) * M;
-    buffer_x = ina_mem_alloc(buffer_x_len);
-    buffer_y = ina_mem_alloc(buffer_y_len);
-    buffer_r = ina_mem_alloc(buffer_r_len);
-    ffill_buf(buffer_x, M * K);
-    ffill_buf(buffer_y, K);
-    fmv_mul(M, K, buffer_x, buffer_y, buffer_r);
-
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemv(data->ctx,
-        dtype, M, K, P, buffer_x, buffer_y, buffer_r, buffer_x_len, buffer_y_len, buffer_r_len));
-
-    ina_mem_free(buffer_x);
-    ina_mem_free(buffer_y);
-    ina_mem_free(buffer_r);
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemv(data->ctx, dtype, type_size, M, K, P));
 }
