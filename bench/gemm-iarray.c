@@ -1,37 +1,25 @@
-//
-// Created by Francesc Alted on 25/09/2018.
-//
-
 /*
-  Example program demonstrating how to execute an expression with super-chunks as operands.
-  This is the version for using frames (either in-memory or on-disk) backing the super-chunks.
+ * Copyright INAOS GmbH, Thalwil, 2018.
+ * Copyright Francesc Alted, 2018.
+ *
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information of INAOS GmbH
+ * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * Information and shall use it only in accordance with the terms of the license agreement.
+ *
+ */
 
-  To run:
-
-  $ ./gemm-iarray memory
-  ...
-  $ ./gemm-iarray disk
-  ...
-
-*/
-
-#include <stdio.h>
-#include <math.h>
-#include <stdbool.h>
 #include <libiarray/iarray.h>
-#include <mkl.h>
+#include <iarray_private.h>
 
-#define KB (1024.)
-#define MB (1024 * KB)
-#define GB (1024 * MB)
-
-#define N (1000)   // array size is (N * N)
-#define P (1000)   // partition size
+#define N (1000) /* array size is (N * N) */
+#define P (100)  /* partition size */  
 #define NELEM (N * N)
+#define NELEM_BYTES (NELEM*sizeof(double))
 #define NTHREADS 1
 
-
-// Simple matrix-matrix multiplication for square matrices
+/* Simple matrix-matrix multiplication for square matrices */
 int simple_matmul(size_t n, double const *a, double const *b, double *c)
 {
     size_t i, j, k;
@@ -47,36 +35,52 @@ int simple_matmul(size_t n, double const *a, double const *b, double *c)
 }
 
 
-// Check that the values of a super-chunk are equal to a C matrix
-bool test_mat_equal(double *c1, double *c2) {
+/* Check that the values of a super-chunk are equal to a C matrix */
+int test_mat_equal(double *c1, double *c2) {
     for (int nelem=0; nelem < NELEM; nelem++) {
         double vdiff = fabs((c1[nelem] - c2[nelem]) / c1[nelem]);
         if (vdiff > 1e-6) {
             printf("%f, %f\n", c1[nelem], c2[nelem]);
             printf("Values differ in (%d nelem) (diff: %f)\n", nelem, vdiff);
-            return false;
+            return 0;
         }
     }
-    return true;
+    return 1;
 }
 
+static double *mat_x = NULL;
+static double *mat_y = NULL;
+static double *mat_out = NULL;
+
+static void ina_cleanup_handler(int error, int *exitcode)
+{
+    iarray_destroy();
+}
 
 int main(int argc, char** argv)
 {
-    long n = N;
-    long nelem = NELEM;
+    ina_stopwatch_t *w = NULL;
+    iarray_context_t *ctx = NULL;
+    const char *mat_x_name = NULL;
+    const char *mat_y_name = NULL;
+    const char *mat_out_name = NULL;
 
-    printf("Blosc version info: %s (%s)\n",
-            BLOSC_VERSION_STRING, BLOSC_VERSION_DATE);
+    INA_OPTS(opt,
+        INA_OPT_FLAG("p", "persistence", "Use persistent containers")
+    );
 
-    ina_app_init(argc, argv, NULL);
+    INA_MUST_SUCCEED(iarray_init());
 
-    bool diskframes = false;
-    if (argc > 1) {
-        if (*argv[1] == 'd') {
-            diskframes = true;
-            printf("Storage for iarray matrices: *disk*\n");
-        }
+    //if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
+    //    return EXIT_FAILURE;
+    //}
+    ina_set_cleanup_handler(ina_cleanup_handler);
+
+    /*if (INA_SUCCEED(ina_opt_isset("p"))) {
+        mat_x_name = "mat_x";
+        mat_y_name = "mat_y";
+        mat_out_name = "mat_out";
+    }*/
     }
     if (!diskframes) {
         printf("Storage for iarray matrices: *memory*\n");
@@ -89,136 +93,112 @@ int main(int argc, char** argv)
     printf("Measuring time for multiplying matrices of (%ld, %ld), with a partition of (%d, %d)\n", n, n, P, P);
     printf("Working set for the 4 uncompressed matrices: %.1f MB\n", n * n * sizeof(double) * 4 / MB);
 
-    blosc_init();
+    iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
+    config.compression_codec = IARRAY_COMPRESSION_LZ4;
+    config.compression_level = 5;
+    config.max_num_threads = NTHREADS;
+    config.flags = IARRAY_EXPR_EVAL_CHUNK;
 
-    blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
-    blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
-    blosc_timestamp_t last, current;
-    double ttotal;
+    INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
 
-    // Fill the plain C buffers for x, y matrices
-    double *mat_x = malloc(nelem * sizeof(double));
-    double *mat_y = malloc(nelem * sizeof(double));
-    double *mat_out = malloc(nelem * sizeof(double));
-    blosc_set_timestamp(&last);
-    double incx = 10. / nelem;
-    for (int i = 0; i < nelem; i++) {
+    double elapsed_sec = 0;
+    INA_STOPWATCH_NEW(1, -1, &w);
+
+    mat_x = (double*)ina_mem_alloc((sizeof(double)*NELEM));
+    mat_y = (double*)ina_mem_alloc((sizeof(double)*NELEM));
+    mat_out = (double*)ina_mem_alloc((sizeof(double)*NELEM));
+
+    INA_STOPWATCH_START(w);
+    double incx = 10. / NELEM;
+    for (int i = 0; i < NELEM; i++) {
         mat_x[i] = i * incx;
         mat_y[i] = i * incx;
     }
-    blosc_set_timestamp(&current);
-    ttotal = blosc_elapsed_secs(last, current);
-//    printf("Time for filling X and Y matrices: %.3g s, %.1f MB/s\n",
-//           ttotal, (sizeof(mat_x) + sizeof(mat_y)) / (ttotal * MB));
+    INA_STOPWATCH_STOP(w);
+    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+    printf("Time for filling X and Y matrices: %.3g s, %.1f MB/s\n",
+        elapsed_sec, (sizeof(mat_x) + sizeof(mat_y)) / (elapsed_sec * _IARRAY_SIZE_MB));
 
-    // Compute matrix-matrix multiplication
-    blosc_set_timestamp(&last);
-    //simple_matmul(n, mat_x, mat_y, mat_out);
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n,
-                1.0, mat_x, n, mat_y, n, 1.0, mat_out, n);
 
-    blosc_set_timestamp(&current);
-    ttotal = blosc_elapsed_secs(last, current);
-    printf("Time for multiplying two matrices (pure C): %.3g s, %.1f GFlop/s, %.1f MB/s\n",
-        ttotal, ((double)n * (double)n * (double)n * 2) / (ttotal * 1e9),
-        (n * n * 3) / (ttotal * MB));
+    /* Compute naive matrix-matrix multiplication */
+    INA_STOPWATCH_START(w);
+    simple_matmul(N, mat_x, mat_y, mat_out);
+    INA_STOPWATCH_STOP(w);
+    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+    printf("Time for multiplying two matrices (pure C): %.3g s, %.1f MB/s\n",
+        elapsed_sec, (sizeof(mat_x) * 3) / (elapsed_sec * _IARRAY_SIZE_MB));
 
-    /* Create a super-chunk container for input (X values) */
-    cparams.typesize = sizeof(double);
-    cparams.compcode = BLOSC_LZ4;
-    cparams.clevel = 9;
-    cparams.filters[0] = BLOSC_TRUNC_PREC;
-    cparams.filters_meta[0] = 23;  // treat doubles as floats
-    cparams.blocksize = 16 * (int)KB;  // 16 KB seems optimal for evaluating expressions
-    cparams.nthreads = NTHREADS;
-    dparams.nthreads = NTHREADS;
 
-    // Create Caterva arrays out of C buffers
-    caterva_pparams pparams;
-    for (int i = 0; i < CATERVA_MAXDIM; i++) {
-        pparams.shape[i] = 1;
-        pparams.cshape[i] = 1;
-    }
-    pparams.shape[CATERVA_MAXDIM - 1] = n;  // FIXME: 1's at the beginning should be removed
-    pparams.shape[CATERVA_MAXDIM - 2] = n;  // FIXME: 1's at the beginning should be removed
-    pparams.cshape[CATERVA_MAXDIM - 1] = P;  // FIXME: 1's at the beginning should be removed
-    pparams.cshape[CATERVA_MAXDIM - 2] = P;  // FIXME: 1's at the beginning should be removed
-    pparams.ndims = 2;
+    iarray_dtshape_t shape;
+    shape.ndim = 2;
+    shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
+    shape.shape[0] = N;
+    shape.shape[1] = N;
+    shape.partshape[0] = P;
+    shape.partshape[1] = P;
 
-    blosc2_frame frame_x = BLOSC_EMPTY_FRAME;
-    if (diskframes) frame_x.fname = "x.b2frame";
-    caterva_array *cta_x = caterva_new_array(cparams, dparams, &frame_x, pparams);
-    blosc2_frame frame_y = BLOSC_EMPTY_FRAME;
-    if (diskframes) frame_y.fname = "y.b2frame";
-    caterva_array *cta_y = caterva_new_array(cparams, dparams, &frame_y, pparams);
+    iarray_container_t *con_x;
+    iarray_container_t *con_y;
 
-    blosc_set_timestamp(&last);
-    caterva_from_buffer(cta_x, mat_x);
-    caterva_from_buffer(cta_y, mat_y);
-    blosc_set_timestamp(&current);
-	ttotal = blosc_elapsed_secs(last, current);
-//	printf("Time for filling X values (compressed): %.3g s, %.1f MB/s\n",
-//			ttotal, (cta_x->sc->nbytes * 2) / (ttotal * MB));
-	printf("Compression for values in matrix X: %.1f MB -> %.1f MB (%.1fx)\n",
-			(cta_x->sc->nbytes/MB), (cta_x->sc->cbytes/MB),
-			((double) cta_x->sc->nbytes/cta_x->sc->cbytes));
+    INA_STOPWATCH_START(w);
+    INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, mat_x, N, mat_x_name, 0, &con_x));
+    INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, mat_y, N, mat_y_name, 0, &con_y));
+    INA_STOPWATCH_STOP(w);
+    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
-	// Check that operands are the same
-    caterva_to_buffer(cta_x, mat_x);
-    caterva_to_buffer(cta_y, mat_y);
+    size_t nbytes = 0;
+    size_t cbytes = 0;
+    double nbytes_mb = 0;
+    double cbytes_mb = 0;
+    iarray_container_info(con_x, &nbytes, &cbytes);
+    printf("Time for filling X and Y iarray-containers: %.3g s, %.1f MB/s\n",
+        elapsed_sec, (nbytes * 2) / (elapsed_sec * _IARRAY_SIZE_MB));
+    nbytes_mb = (nbytes / _IARRAY_SIZE_MB);
+    cbytes_mb = (cbytes / _IARRAY_SIZE_MB);
+    printf("Compression for X iarray-container: %.1f MB -> %.1f MB (%.1fx)\n",
+        nbytes_mb, cbytes_mb, ((double)nbytes / cbytes));
+
+    INA_MUST_SUCCEED(iarray_to_buffer(ctx, con_x, mat_x, NELEM_BYTES));
+    INA_MUST_SUCCEED(iarray_to_buffer(ctx, con_y, mat_y, NELEM_BYTES));
     if (!test_mat_equal(mat_x, mat_y)) {
-        return -1;
+        return EXIT_FAILURE; /* FIXME: error handling */
     }
-    free(mat_x);
-    free(mat_y);
 
-    // Check IronArray performance
-    iarray_context_t *iactx;
-    iarray_config_t cfg = {.max_num_threads = 1, .flags = IARRAY_EXPR_EVAL_CHUNK,
-                           .cparams = &cparams, .dparams = &dparams, .pparams = &pparams};
-    iarray_ctx_new(&cfg, &iactx);
+    iarray_container_t *con_out;
+    iarray_container_new(ctx, &shape, mat_out_name, 0, &con_out);
 
-    /* Create a super-chunk backed by an in-memory frame */
-    blosc2_frame frame_out = BLOSC_EMPTY_FRAME;
-    if (diskframes) frame_out.fname = "out2.b2frame";
-    caterva_array *cta_out = caterva_new_array(cparams, dparams, &frame_out, pparams);
+    INA_STOPWATCH_START(w);
+    iarray_gemm(con_x, con_y, con_out); /* FIXME: error handling */
+    INA_STOPWATCH_STOP(w);
+    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
-    iarray_container_t *iac_x, *iac_y, *iac_out;
-    iarray_from_ctarray(iactx, cta_x, IARRAY_DATA_TYPE_DOUBLE, &iac_x);
-    iarray_from_ctarray(iactx, cta_y, IARRAY_DATA_TYPE_DOUBLE, &iac_y);
-    iarray_from_ctarray(iactx, cta_out, IARRAY_DATA_TYPE_DOUBLE, &iac_out);
+    iarray_container_info(con_out, &nbytes, &cbytes);
+    printf("\n");
+    printf("Time for multiplying two matrices (iarray):  %.3g s, %.1f MB/s\n",
+        elapsed_sec, (nbytes * 3) / (elapsed_sec * _IARRAY_SIZE_MB));
+    nbytes_mb = (nbytes / _IARRAY_SIZE_MB);
+    cbytes_mb = (cbytes / _IARRAY_SIZE_MB);
+    printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
+            nbytes_mb, cbytes_mb, (1.*nbytes) / cbytes);
 
-    blosc_set_timestamp(&last);
-    ina_rc_t errcode = iarray_gemm(iac_x, iac_y, iac_out);
-    if (errcode < 0) {
-        printf("Error in iarray_gemm()\n");
-        return -1;
+    /* Check that we are getting the same results than through manual computation */
+    ina_mem_set(mat_out, 0, NELEM_BYTES);
+    iarray_to_buffer(ctx, con_out, mat_out, NELEM_BYTES);
+    if (!test_mat_equal(mat_out, mat_out)) {
+        return EXIT_FAILURE; /* FIXME: error-handling */
     }
-    blosc_set_timestamp(&current);
-    ttotal = blosc_elapsed_secs(last, current);
-    blosc2_schunk *sc_out = cta_out->sc;
-    //printf("\n");
-    printf("Time for multiplying two matrices (iarray):  %.3g s, %.1f GFlop/s, %.1f MB/s\n",
-            ttotal, ((double)n * (double)n * (double)n * 2) / (ttotal * 1e9),
-           (n * n * 3) / (ttotal * MB));
-    printf("Compression for values in matrix OUT: %.1f MB -> %.1f MB (%.1fx)\n",
-            (sc_out->nbytes/MB), (sc_out->cbytes/MB),
-            (1.*sc_out->nbytes) / sc_out->cbytes);
 
-    // Check that we are getting the same results than through manual computation
-    double *mat_out2 = malloc(nelem * sizeof(double));
-    caterva_to_buffer(cta_out, mat_out2);
-    if (!test_mat_equal(mat_out, mat_out2)) {
-        return -1;
-    }
-    free(mat_out);
+    iarray_container_free(ctx, &con_x);
+    iarray_container_free(ctx, &con_y);
+    iarray_container_free(ctx, &con_out);
 
-    // Free resources
-    caterva_free_array(cta_x);
-    caterva_free_array(cta_y);
-    caterva_free_array(cta_out);
+    iarray_context_free(&ctx);
 
-    blosc_destroy();
+    ina_mem_free(mat_x);
+    ina_mem_free(mat_y);
+    ina_mem_free(mat_out);
 
-    return 0;
+    INA_STOPWATCH_FREE(&w);
+
+    return EXIT_SUCCESS;
 }
