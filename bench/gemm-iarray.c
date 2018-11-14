@@ -1,19 +1,14 @@
-//
-// Created by Francesc Alted on 25/09/2018.
-//
-
 /*
-  Example program demonstrating how to execute an expression with super-chunks as operands.
-  This is the version for using frames (either in-memory or on-disk) backing the super-chunks.
-
-  To run:
-
-  $ ./gemm-iarray memory
-  ...
-  $ ./gemm-iarray disk
-  ...
-
-*/
+ * Copyright INAOS GmbH, Thalwil, 2018.
+ * Copyright Francesc Alted, 2018.
+ *
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information of INAOS GmbH
+ * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * Information and shall use it only in accordance with the terms of the license agreement.
+ *
+ */
 
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
@@ -74,17 +69,18 @@ int main(int argc, char** argv)
         INA_OPT_FLAG("p", "persistence", "Use persistent containers")
     );
 
-    if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
-        return EXIT_FAILURE;
-    }
-    ina_set_cleanup_handler(ina_cleanup_handler);
-
     INA_MUST_SUCCEED(iarray_init());
 
-    if (INA_SUCCEED(ina_opt_isset("p"))) {
+    //if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
+    //    return EXIT_FAILURE;
+    //}
+    ina_set_cleanup_handler(ina_cleanup_handler);
+
+    /*if (INA_SUCCEED(ina_opt_isset("p"))) {
         mat_x_name = "mat_x";
         mat_y_name = "mat_y";
         mat_out_name = "mat_out";
+    }*/
     }
     if (!diskframes) {
         printf("Storage for iarray matrices: *memory*\n");
@@ -105,7 +101,7 @@ int main(int argc, char** argv)
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
 
-    double elapsed_sec;
+    double elapsed_sec = 0;
     INA_STOPWATCH_NEW(1, -1, &w);
 
     mat_x = (double*)ina_mem_alloc((sizeof(double)*NELEM));
@@ -145,22 +141,25 @@ int main(int argc, char** argv)
     iarray_container_t *con_y;
 
     INA_STOPWATCH_START(w);
-    iarray_from_buffer(ctx, &shape, mat_x, N, mat_x_name, 0, &con_x);
-    iarray_from_buffer(ctx, &shape, mat_y, N, mat_y_name, 0, &con_y);
+    INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, mat_x, N, mat_x_name, 0, &con_x));
+    INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, mat_y, N, mat_y_name, 0, &con_y));
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
     size_t nbytes = 0;
     size_t cbytes = 0;
+    double nbytes_mb = 0;
+    double cbytes_mb = 0;
     iarray_container_info(con_x, &nbytes, &cbytes);
     printf("Time for filling X and Y iarray-containers: %.3g s, %.1f MB/s\n",
         elapsed_sec, (nbytes * 2) / (elapsed_sec * _IARRAY_SIZE_MB));
+    nbytes_mb = (nbytes / _IARRAY_SIZE_MB);
+    cbytes_mb = (cbytes / _IARRAY_SIZE_MB);
     printf("Compression for X iarray-container: %.1f MB -> %.1f MB (%.1fx)\n",
-        (nbytes / _IARRAY_SIZE_MB), (cbytes / _IARRAY_SIZE_MB),
-        ((double)nbytes / cbytes));
+        nbytes_mb, cbytes_mb, ((double)nbytes / cbytes));
 
-    iarray_to_buffer(ctx, con_x, mat_x, NELEM_BYTES);
-    iarray_to_buffer(ctx, con_y, mat_y, NELEM_BYTES);
+    INA_MUST_SUCCEED(iarray_to_buffer(ctx, con_x, mat_x, NELEM_BYTES));
+    INA_MUST_SUCCEED(iarray_to_buffer(ctx, con_y, mat_y, NELEM_BYTES));
     if (!test_mat_equal(mat_x, mat_y)) {
         return EXIT_FAILURE; /* FIXME: error handling */
     }
@@ -177,9 +176,10 @@ int main(int argc, char** argv)
     printf("\n");
     printf("Time for multiplying two matrices (iarray):  %.3g s, %.1f MB/s\n",
         elapsed_sec, (nbytes * 3) / (elapsed_sec * _IARRAY_SIZE_MB));
+    nbytes_mb = (nbytes / _IARRAY_SIZE_MB);
+    cbytes_mb = (cbytes / _IARRAY_SIZE_MB);
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
-            (nbytes/ _IARRAY_SIZE_MB), (cbytes/ _IARRAY_SIZE_MB),
-            (1.*nbytes) / cbytes);
+            nbytes_mb, cbytes_mb, (1.*nbytes) / cbytes);
 
     /* Check that we are getting the same results than through manual computation */
     ina_mem_set(mat_out, 0, NELEM_BYTES);

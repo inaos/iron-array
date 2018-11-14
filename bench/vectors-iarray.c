@@ -1,22 +1,13 @@
-//
-// Created by Francesc Alted on 6/11/2018.
-//
-
 /*
-  Example program demonstrating how to execute an expression with super-chunks as operands.
-  This is the version for using frames (either in-memory or on-disk) backing the super-chunks.
-
-  To compile this program:
-
-  $ gcc -O3 vectors-iarray.c -o vectors-iarray -lblosc
-
-  To run:
-
-  $ ./vectors-iarray memory
-  ...
-  $ ./vectors-iarray disk
-  ...
-
+* Copyright INAOS GmbH, Thalwil, 2018.
+* Copyright Francesc Alted, 2018.
+*
+* All rights reserved.
+*
+* This software is the confidential and proprietary information of INAOS GmbH
+* and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+* Information and shall use it only in accordance with the terms of the license agreement.
+*
 */
 
 #include <libiarray/iarray.h>
@@ -28,42 +19,21 @@
 #define PART_SIZE NITEMS_CHUNK
 #define NTHREADS 1
 
-static double poly(const double x)
+static double _poly(const double x)
 {
     return (x - 1.35) * (x - 4.45) * (x - 8.5);
 }
 
-/* FIXME: how to handle
-void fill_buffer(double* x, int nchunk)
-{
-    double incx = 10./NELEM;
-
-    for (int i=0; i<NITEMS_CHUNK; i++) {
-        x[i] = incx*(nchunk * NITEMS_CHUNK + i);
-    }
-}
-
-void fill_cta_x(caterva_array* cta_x, const size_t isize)
-{
-    static double buffer_x[NITEMS_CHUNK];
-
-    // Fill with even values between 0 and 10
-    for (int nchunk = 0; nchunk<NCHUNKS; nchunk++) {
-        fill_buffer(buffer_x, nchunk);
-        blosc2_schunk_append_buffer(cta_x->sc, buffer_x, isize);
-    }
-}*/
-
 // Compute and fill Y values in a buffer
-void fill_buffer_y(const double* x, double* y)
+void _fill_buffer_y(const double* x, double* y)
 {
     for (int i = 0; i<NITEMS_CHUNK; i++) {
-        y[i] = poly(x[i]);
+        y[i] = _poly(x[i]);
     }
 }
 
 // Fill X values in regular array
-static int fill_x(double* x)
+static int _fill_x(double* x)
 {
     double incx = 10. / NELEM;
 
@@ -75,47 +45,12 @@ static int fill_x(double* x)
 }
 
 // Compute and fill Y values in regular array
-static void compute_y(const double* x, double* y)
+static void _compute_y(const double* x, double* y)
 {
     for (int i = 0; i<NELEM; i++) {
-        y[i] = poly(x[i]);
+        y[i] = _poly(x[i]);
     }
 }
-
-// STONI: here we should compare the original C buffers to the exported array-containers, maybe after 
-// -> this should rather be a test than a benchmark
-// ...
-// Check that two super-chunks with the same partitions are equal
-/*int test_schunks_equal(blosc2_schunk* sc1, blosc2_schunk* sc2) {
-    size_t chunksize = (size_t)sc1->chunksize;
-    int nitems_in_chunk = (int)chunksize / sc1->typesize;
-    double *buffer_sc1 = malloc(chunksize);
-    double *buffer_sc2 = malloc(chunksize);
-    for (int nchunk=0; nchunk < sc1->nchunks; nchunk++) {
-        int dsize = blosc2_schunk_decompress_chunk(sc1, nchunk, buffer_sc1, chunksize);
-        if (dsize < 0) {
-            fprintf(stderr, "Error in decompressing a chunk from sc1\n");
-            return 0;
-        }
-        dsize = blosc2_schunk_decompress_chunk(sc2, nchunk, buffer_sc2, chunksize);
-        if (dsize < 0) {
-            fprintf(stderr, "Error in decompressing a chunk from sc2\n");
-            return 0;
-        }
-        for (int nelem=0; nelem < nitems_in_chunk; nelem++) {
-            double vdiff = fabs(buffer_sc1[nelem] - buffer_sc2[nelem]);
-            if (vdiff > 1e-6) {
-                printf("Values differ in (%d nchunk, %d nelem) (diff: %f)\n", nchunk, nelem, vdiff);
-                free(buffer_sc1);
-                free(buffer_sc2);
-                return 0;
-            }
-        }
-    }
-    free(buffer_sc1);
-    free(buffer_sc2);
-    return 1;
-}*/
 
 static void ina_cleanup_handler(int error, int *exitcode)
 {
@@ -124,8 +59,6 @@ static void ina_cleanup_handler(int error, int *exitcode)
 
 static double *x = NULL;
 static double *y = NULL;
-
-// FIXME: pparams.cshape[CATERVA_MAXDIM - 1] = NITEMS_CHUNK;  // FIXME: 1's at the beginning should be removed
 
 int main(int argc, char** argv)
 {
@@ -179,7 +112,7 @@ int main(int argc, char** argv)
     y = (double*)ina_mem_alloc(buffer_len);
 
     // Fill the plain x operand
-    fill_x(x);
+    _fill_x(x);
 
     iarray_dtshape_t shape;
     shape.ndim = 1;
@@ -192,7 +125,7 @@ int main(int argc, char** argv)
 
     // Compute the plain y vector
     INA_STOPWATCH_START(w);
-    compute_y(x, y);
+    _compute_y(x, y);
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     printf("Time for computing and filling Y values: %.3g s, %.1f MB/s\n",
@@ -208,13 +141,16 @@ int main(int argc, char** argv)
 
     size_t nbytes = 0;
 	size_t cbytes = 0;
+    double nbytes_mb = 0;
+    double cbytes_mb = 0;
 
     iarray_container_info(con_x, &nbytes, &cbytes);
     printf("Time for compressing Y values: %.3g s, %.1f MB/s\n",
             elapsed_sec, nbytes/(elapsed_sec*_IARRAY_SIZE_MB));
+    nbytes_mb = (nbytes / _IARRAY_SIZE_MB);
+    cbytes_mb = (cbytes / _IARRAY_SIZE_MB);
     printf("Compression for Y values: %.1f MB -> %.1f MB (%.1fx)\n",
-            (nbytes/ _IARRAY_SIZE_MB), (cbytes/ _IARRAY_SIZE_MB),
-            (1.*nbytes)/cbytes);
+            nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
 
     // Check IronArray performance
     iarray_expression_t *e;
@@ -233,9 +169,10 @@ int main(int argc, char** argv)
     printf("\n");
     printf("Time for computing and filling OUT values using iarray (%s):  %.3g s, %.1f MB/s\n",
         eval_method, elapsed_sec, nbytes / (elapsed_sec * _IARRAY_SIZE_MB));
+    nbytes_mb = (nbytes / _IARRAY_SIZE_MB);
+    cbytes_mb = (cbytes / _IARRAY_SIZE_MB);
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
-            (nbytes/_IARRAY_SIZE_MB), (cbytes/_IARRAY_SIZE_MB),
-            (1.*nbytes)/cbytes);
+            nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
 
 	INA_MUST_SUCCEED(iarray_equal_data(con_y, con_out));
 
