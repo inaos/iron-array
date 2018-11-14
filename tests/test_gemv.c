@@ -15,9 +15,9 @@
 
 #include <tests/iarray_test.h>
 
-static ina_rc_t test_gemv(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out, iarray_container_t *c_res)
+static ina_rc_t test_gemv(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out, iarray_container_t *c_res, double tol)
 {
-    iarray_gemv(c_x, c_y, c_out, double tol);
+    iarray_gemv(c_x, c_y, c_out);
     if (iarray_almost_equal_data(c_out, c_res, tol) != 0) {
         return INA_ERROR(INA_ERR_FAILED);
     }
@@ -37,6 +37,7 @@ static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx,
     size_t buffer_x_len;
     size_t buffer_y_len;
     size_t buffer_r_len;
+    double tol;
 
     buffer_x_len = type_size * M * K;
     buffer_y_len = type_size * K;
@@ -46,14 +47,16 @@ static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx,
     buffer_r = ina_mem_alloc(buffer_r_len);
 
     if (type_size == sizeof(float)) {
+        tol = 1e-06;
         ffill_buf((float*)buffer_x, M * K);
         ffill_buf((float*)buffer_y, K);
-        fmv_mul(M, K, (float*)buffer_x, (float*)buffer_y, (float*)buffer_r);
+        cblas_sgemv(CblasRowMajor, CblasNoTrans, M, K, 1.0, (float*)buffer_x, K, (float*)buffer_y, 1, 1.0, (float*)buffer_r, 1);
     }
     else {
+        tol = 1e-14;
         dfill_buf((double*)buffer_x, M * K);
         dfill_buf((double*)buffer_y, K);
-        dmv_mul(M, K, (double*)buffer_x, (double*)buffer_y, (double*)buffer_r);
+        cblas_dgemv(CblasRowMajor, CblasNoTrans, M, K, 1.0, (double*)buffer_x, K, (double*)buffer_y, 1, 1.0, (double*)buffer_r, 1);
     }
 
     iarray_dtshape_t xshape;
@@ -93,7 +96,7 @@ static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx,
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &rshape, buffer_r, buffer_r_len, NULL, 0, &c_res));
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &oshape, NULL, 0, &c_out));
 
-    INA_TEST_ASSERT_SUCCEED(test_gemv(c_x, c_y, c_out, c_res, 1e-06));
+    INA_TEST_ASSERT_SUCCEED(test_gemv(c_x, c_y, c_out, c_res, tol));
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);

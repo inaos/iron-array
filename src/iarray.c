@@ -13,12 +13,8 @@
 #include <libiarray/iarray.h>
 
 #include <contribs/tinyexpr/tinyexpr.h>
-#include <blosc.h>
-#include <caterva.h>
 
 #include <iarray_private.h>
-
-#include <stdbool.h>
 
 #define _IARRAY_MEMPOOL_EVAL_SIZE (8*1024*1024)
 #define _IARRAY_EXPR_VAR_MAX      (128)
@@ -189,21 +185,21 @@ static ina_rc_t _iarray_container_fill_double(iarray_container_t *c, double valu
 
 INA_API(ina_rc_t) iarray_init()
 {
-	if (!_ina_inited) {
-		ina_init();
-		_ina_inited = 1;
-	}
-	if (!_blosc_inited) {
-		blosc_init();
-		_blosc_inited = 1;
-	}
+    if (!_ina_inited) {
+        ina_init();
+        _ina_inited = 1;
+    }
+    if (!_blosc_inited) {
+        blosc_init();
+        _blosc_inited = 1;
+    }
     return INA_SUCCESS;
 }
 
 INA_API(void) iarray_destroy()
 {
     blosc_destroy();
-	_blosc_inited = 0;
+    _blosc_inited = 0;
 }
 
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx)
@@ -513,13 +509,13 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
 
 //INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val)
 //{
-//	iarray_container_t *c = ina_mempool_dalloc(e->mp, sizeof(iarray_container_t));
-//	c->dtshape = ina_mempool_dalloc(e->mp, sizeof(iarray_dtshape_t));
-//	c->dtshape->ndim = 0;
-//	c->dtshape->dims = NULL;
-//	c->dtshape->dtype = IARRAY_DATA_TYPE_FLOAT;
-//	c->scalar_value.f = val;
-//	return INA_SUCCESS;
+//  iarray_container_t *c = ina_mempool_dalloc(e->mp, sizeof(iarray_container_t));
+//  c->dtshape = ina_mempool_dalloc(e->mp, sizeof(iarray_dtshape_t));
+//  c->dtshape->ndim = 0;
+//  c->dtshape->dims = NULL;
+//  c->dtshape->dtype = IARRAY_DATA_TYPE_FLOAT;
+//  c->scalar_value.f = val;
+//  return INA_SUCCESS;
 //}
 
 INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val)
