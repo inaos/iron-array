@@ -161,13 +161,16 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     pparams.ndim = shape->ndim;
     ina_mem_cpy((*c)->pparams, &pparams, sizeof(caterva_pparams));
 
-    (*c)->catarr = caterva_new_array(*(*c)->cparams, *(*c)->dparams, (*c)->frame, *(*c)->pparams, NULL);
+    caterva_ctxt *ctxt = caterva_new_ctxt(NULL, NULL);
+
+    (*c)->catarr = caterva_new_array(*(*c)->cparams, *(*c)->dparams, (*c)->frame, *(*c)->pparams, ctxt);
     INA_FAIL_IF((*c)->catarr == NULL);
 
     return INA_SUCCESS;
 
 fail:
     iarray_container_free(ctx, c);
+    caterva_free_ctxt(ctxt);
     return ina_err_get_rc();
 }
 
@@ -462,9 +465,6 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
     INA_FREE_CHECK(container);
     if ((*container)->catarr != NULL) {
         caterva_free_array((*container)->catarr);
-    }
-    if ((*container)->frame != NULL) {
-        blosc2_free_frame((*container)->frame);
     }
     INA_MEM_FREE_SAFE((*container)->frame);
     INA_MEM_FREE_SAFE((*container)->cparams);
