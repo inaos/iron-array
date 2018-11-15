@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     //nelem = n * n;
     
     printf("Measuring time for multiplying matrices of (%ld, %ld), with a partition of (%d, %d)\n", N, N, P, P);
-    printf("Working set for the 4 uncompressed matrices: %.1f MB\n", N * N * sizeof(double) * 4 / _IARRAY_SIZE_MB);
+    printf("Working set for the 4 uncompressed matrices: %.1f MB\n", N * N * sizeof(double) * 4 / (double)_IARRAY_SIZE_MB);
 
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_codec = IARRAY_COMPRESSION_LZ4;
@@ -119,7 +119,6 @@ int main(int argc, char** argv)
     printf("Time for filling X and Y matrices: %.3g s, %.1f MB/s\n",
         elapsed_sec, (sizeof(mat_x) + sizeof(mat_y)) / (elapsed_sec * _IARRAY_SIZE_MB));
 
-
     /* Compute naive matrix-matrix multiplication */
     INA_STOPWATCH_START(w);
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, N, N, N,
@@ -128,7 +127,6 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     printf("Time for multiplying two matrices (pure C): %.3g s, %.1f MB/s\n",
         elapsed_sec, (sizeof(mat_x) * 3) / (elapsed_sec * _IARRAY_SIZE_MB));
-
 
     iarray_dtshape_t shape;
     shape.ndim = 2;
