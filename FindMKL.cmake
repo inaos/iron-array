@@ -27,6 +27,7 @@ find_path(MKL_ROOT_DIR
         /opt/intel/compilers_and_libraries/linux/mkl
         /opt/intel/compilers_and_libraries/mac/mkl
         "C:/IntelSWTools/compilers_and_libraries/windows/mkl/"
+		"C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl"
 )
 
 find_path(MKL_INCLUDE_DIR
@@ -66,8 +67,3 @@ endforeach()
 set(MKL_INCLUDE_DIRS ${MKL_INCLUDE_DIR})
 include_directories(${MKL_INCLUDE_DIRS})
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${MKL_LIBRARIES})
-
-include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(MKL DEFAULT_MSG MKL_LIBRARIES MKL_INCLUDE_DIRS)
-
-mark_as_advanced(MKL_INCLUDE_DIRS MKL_LIBRARIES)
