@@ -226,7 +226,7 @@ fail:
 
 INA_API(void) iarray_context_free(iarray_context_t **ctx)
 {
-    INA_FREE_CHECK(ctx);
+    INA_VERIFY_FREE(ctx);
     ina_mempool_free(&(*ctx)->mp);
     INA_MEM_FREE_SAFE((*ctx)->cfg);
     INA_MEM_FREE_SAFE(*ctx);
@@ -462,7 +462,7 @@ INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c,
 
 INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container)
 {
-    INA_FREE_CHECK(container);
+    INA_VERIFY_FREE(container);
     if ((*container)->catarr != NULL) {
         caterva_free_array((*container)->catarr);
     }
@@ -489,8 +489,8 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e
 
 INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
 {
-    INA_FREE_CHECK(e);
-    INA_FREE_CHECK(&ctx);
+    INA_ASSERT_NOT_NULL(ctx);
+    INA_VERIFY_FREE(e);
     ina_mempool_reset(ctx->mp); // FIXME
     INA_MEM_FREE_SAFE((*e)->temp_vars);
     INA_MEM_FREE_SAFE(*e);
