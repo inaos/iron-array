@@ -75,31 +75,32 @@ int main(int argc, char** argv)
         INA_OPT_FLAG("p", "persistence", "Use persistent containers")
     );
 
-    INA_MUST_SUCCEED(iarray_init());
-
-    /*if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
+    if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
         return EXIT_FAILURE;
-    }*/
+    }
     ina_set_cleanup_handler(ina_cleanup_handler);
 
-    /*INA_MUST_SUCCEED(ina_opt_get_int("f", &eval_flag));
+    INA_MUST_SUCCEED(ina_opt_get_int("f", &eval_flag));
     if (INA_SUCCEED(ina_opt_isset("p"))) {
         mat_x_name = "mat_x";
         mat_y_name = "mat_y";
         mat_out_name = "mat_out";
-    }*/
-    if (eval_flag == 2) {
-        eval_method = "EVAL_CHUNK";
     }
-    else {
-        eval_method = "EVAL_BLOCK";
-    }
+
+    INA_MUST_SUCCEED(iarray_init());
 
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_codec = IARRAY_COMPRESSION_BLOSCLZ;
     config.compression_level = 9;
     config.max_num_threads = NTHREADS;
-    config.flags = IARRAY_EXPR_EVAL_BLOCK; // (IARRAY_EXPR_EVAL_BLOCK || IARRAY_EXPR_EVAL_CHUNK)
+    if (eval_flag == 2) {
+        eval_method = "EVAL_CHUNK";
+        config.flags = IARRAY_EXPR_EVAL_CHUNK;
+    }
+    else {
+        eval_method = "EVAL_BLOCK";
+        config.flags = IARRAY_EXPR_EVAL_BLOCK;
+    }
     config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
