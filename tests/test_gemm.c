@@ -51,13 +51,13 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
         tol = 1e-06;
         ffill_buf((float*)buffer_x, M * K);
         ffill_buf((float*)buffer_y, K * N);
-        cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, 1.0, (float*)buffer_x, K, (float*)buffer_y, N, 1.0, (float*)buffer_r, N);
+        cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, 1.0, (float*)buffer_x, K, (float*)buffer_y, N, 0.0, (float*)buffer_r, N);
     }
     else {
         tol = 1e-14;
         dfill_buf((double*)buffer_x, M * K);
         dfill_buf((double*)buffer_y, K * N);
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, 1.0, (double*)buffer_x, K, (double*)buffer_y, N, 1.0, (double*)buffer_r, N);
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, 1.0, (double*)buffer_x, K, (double*)buffer_y, N, 0.0, (double*)buffer_r, N);
     }
 
     iarray_dtshape_t xshape;
