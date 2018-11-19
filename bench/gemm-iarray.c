@@ -100,7 +100,7 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
 
     double elapsed_sec = 0;
-    INA_STOPWATCH_NEW(1, -1, &w);
+    INA_STOPWATCH_NEW(-1, -1, &w);
 
     mat_x = (double*)ina_mem_alloc((sizeof(double)*nelem));
     mat_y = (double*)ina_mem_alloc((sizeof(double)*nelem));
