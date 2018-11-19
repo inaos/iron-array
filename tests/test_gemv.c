@@ -18,7 +18,7 @@
 static ina_rc_t test_gemv(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out, iarray_container_t *c_res, double tol)
 {
     iarray_gemv(c_x, c_y, c_out);
-    if (iarray_almost_equal_data(c_out, c_res, tol) != 0) {
+    if (!iarray_almost_equal_data(c_out, c_res, tol)) {
         return INA_ERROR(INA_ERR_FAILED);
     }
     return INA_SUCCESS;
@@ -50,13 +50,13 @@ static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx,
         tol = 1e-06;
         ffill_buf((float*)buffer_x, M * K);
         ffill_buf((float*)buffer_y, K);
-        cblas_sgemv(CblasRowMajor, CblasNoTrans, M, K, 1.0, (float*)buffer_x, K, (float*)buffer_y, 1, 1.0, (float*)buffer_r, 1);
+        cblas_sgemv(CblasRowMajor, CblasNoTrans, M, K, 1.0, (float*)buffer_x, K, (float*)buffer_y, 1, 0.0, (float*)buffer_r, 1);
     }
     else {
         tol = 1e-14;
         dfill_buf((double*)buffer_x, M * K);
         dfill_buf((double*)buffer_y, K);
-        cblas_dgemv(CblasRowMajor, CblasNoTrans, M, K, 1.0, (double*)buffer_x, K, (double*)buffer_y, 1, 1.0, (double*)buffer_r, 1);
+        cblas_dgemv(CblasRowMajor, CblasNoTrans, M, K, 1.0, (double*)buffer_x, K, (double*)buffer_y, 1, 0.0, (double*)buffer_r, 1);
     }
 
     iarray_dtshape_t xshape;
