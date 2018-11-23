@@ -974,53 +974,6 @@ INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp)
     return INA_SUCCESS;
 }
 
-// TODO: This should go when support for MKL is here
-int _mm_mul_d(size_t n, double const *a, double const *b, double *c)
-{
-    for (size_t i = 0; i < n; ++i) {
-        for (size_t j = 0; j < n; ++j) {
-            for (size_t k = 0; k < n; ++k) {
-                c[i*n+j] += a[i*n+k] * b[k*n+j];
-            }
-        }
-    }
-    return 0;
-}
-
-// TODO: This should go when support for MKL is here
-int _mm_mul_f(size_t n, float const *a, float const *b, float *c)
-{
-    for (size_t i = 0; i < n; ++i) {
-        for (size_t j = 0; j < n; ++j) {
-            for (size_t k = 0; k < n; ++k) {
-                c[i*n+j] += a[i*n+k] * b[k*n+j];
-            }
-        }
-    }
-    return 0;
-}
-
-// TODO: This should go when support for MKL is here
-int _mv_mul_d(size_t n, double const *a, double const *b, double *c)
-{
-    for (size_t i = 0; i < n; ++i) {
-        for (size_t k = 0; k < n; ++k) {
-            c[i] += a[i*n+k] * b[k];
-        }
-    }
-    return 0;
-}
-
-// TODO: This should go when support for MKL is here
-int _mv_mul_f(size_t n, float const *a, float const *b, float *c)
-{
-    for (size_t i = 0; i < n; ++i) {
-        for (size_t k = 0; k < n; ++k) {
-            c[i] += a[i*n+k] * b[k];
-        }
-    }
-    return 0;
-}
 
 static int _dtshape_equal(iarray_dtshape_t *a, iarray_dtshape_t *b) {
     if (a->dtype != b->dtype) {
@@ -1096,10 +1049,13 @@ INA_API(ina_rc_t) iarray_almost_equal_data(iarray_container_t *a, iarray_contain
 
 
 INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
-    const int P = a->catarr->pshape[7];
-    size_t M = a->catarr->eshape[6];
-    size_t K = a->catarr->eshape[7];
-    size_t N = b->catarr->eshape[7];
+
+    caterva_update_shape(c->catarr, *c->shape);
+
+    const int P = a->catarr->pshape[0];
+    size_t M = a->catarr->eshape[0];
+    size_t K = a->catarr->eshape[1];
+    size_t N = b->catarr->eshape[1];
 
     size_t p_size = P * P * a->catarr->sc->typesize;
     int dtype = a->dtshape->dtype;
@@ -1138,10 +1094,13 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
 }
 
 INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
-    size_t P = a->catarr->pshape[7];
 
-    size_t M = a->catarr->eshape[6];
-    size_t K = a->catarr->eshape[7];
+    caterva_update_shape(c->catarr, *c->shape);
+
+    size_t P = a->catarr->pshape[0];
+
+    size_t M = a->catarr->eshape[0];
+    size_t K = a->catarr->eshape[1];
 
     size_t p_size = P * P * a->catarr->sc->typesize;
     size_t p_vsize = P * a->catarr->sc->typesize;
