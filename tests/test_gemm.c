@@ -67,31 +67,31 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
 
     xshape.dtype = dtype;
     xshape.ndim = 2;
-    xshape.shape[0] = K;
-    xshape.shape[1] = M;
+    xshape.shape[0] = M;
+    xshape.shape[1] = K;
     xshape.partshape[0] = P;
     xshape.partshape[1] = P;
 
     yshape.dtype = dtype;
     yshape.ndim = 2;
-    yshape.shape[0] = N;
-    yshape.shape[1] = K;
+    yshape.shape[0] = K;
+    yshape.shape[1] = N;
     yshape.partshape[0] = P;
     yshape.partshape[1] = P;
 
     oshape.dtype = dtype;
     oshape.ndim = 2;
-    oshape.shape[0] = N;
-    oshape.shape[1] = M;
+    oshape.shape[0] = M;
+    oshape.shape[1] = N;
     oshape.partshape[0] = P;
     oshape.partshape[1] = P;
 
     rshape.dtype = dtype;
     rshape.ndim = 2;
-    rshape.shape[0] = N;
-    rshape.shape[1] = M;
-    rshape.partshape[0] = N;
-    rshape.partshape[1] = M;
+    rshape.shape[0] = M;
+    rshape.shape[1] = N;
+    rshape.partshape[0] = P;
+    rshape.partshape[1] = P;
 
     iarray_container_t *c_x;
     iarray_container_t *c_y;
@@ -145,10 +145,10 @@ INA_TEST_FIXTURE(gemm, double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    int M = 956;
-    int K = 1050;
-    int N = 2345;
-    int P = 42;
+    int M = 1230;
+    int K = 3456;
+    int N = 2856;
+    int P = 123;
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, M, K, N, P));
 }
