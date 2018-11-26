@@ -66,8 +66,8 @@ static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx,
 
     xshape.dtype = dtype;
     xshape.ndim = 2;
-    xshape.shape[0] = K;
-    xshape.shape[1] = M;
+    xshape.shape[0] = M;
+    xshape.shape[1] = K;
     xshape.partshape[0] = P;
     xshape.partshape[1] = P;
 
