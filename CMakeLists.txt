@@ -27,7 +27,7 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
 endif()
 include("${CMAKE_BINARY_DIR}/inac.cmake")
 
-inac_add_dependency(inac "1.0.1")
+inac_add_dependency(inac "1.0.1" SNAPSHOT)
 inac_add_contrib_lib(tinyexpr)
 
 add_subdirectory(contribs/c-blosc2)
