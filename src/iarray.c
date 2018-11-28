@@ -52,9 +52,10 @@ struct iarray_container_s {
     iarray_dtshape_t *dtshape;
     blosc2_cparams *cparams;
     blosc2_dparams *dparams;
-    caterva_pparams *pparams;
+    caterva_dims_t *pshape;
+    caterva_dims_t *shape;
     blosc2_frame *frame;
-    caterva_array *catarr;
+    caterva_array_t *catarr;
     _iarray_container_store_t *store;
     union {
         float f;
@@ -65,26 +66,26 @@ struct iarray_container_s {
 static int _ina_inited = 0;
 static int _blosc_inited = 0;
 
-static ina_rc_t _iarray_container_new(iarray_context_t *ctx, 
-                                      iarray_dtshape_t *shape, 
+static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *dtshape,
                                       iarray_store_properties_t *store,
                                       int flags,
                                       iarray_container_t **c)
 {
     blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
     blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
-    caterva_pparams pparams;
+    caterva_dims_t pshape;
+    caterva_dims_t shape;
     int blosc_filter_idx = 0;
 
     /* validation */
-    if (shape->ndim > CATERVA_MAXDIM) {
+    if (dtshape->ndim > CATERVA_MAXDIM) {
         return INA_ERROR(INA_ERR_EXCEEDED);
     }
     if (flags & IARRAY_CONTAINER_PERSIST && store == NULL) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
-    for (int i = 0; i < shape->ndim; ++i) {
-        if (shape->shape[i] < shape->partshape[i]) {
+    for (int i = 0; i < dtshape->ndim; ++i) {
+        if (dtshape->shape[i] < dtshape->partshape[i]) {
             return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }
     }
@@ -94,7 +95,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
 
     (*c)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
     INA_FAIL_IF((*c)->dtshape == NULL);
-    ina_mem_cpy((*c)->dtshape, shape, sizeof(iarray_dtshape_t));
+    ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
 
     (*c)->frame = (blosc2_frame*)ina_mem_alloc(sizeof(blosc2_frame));
     INA_FAIL_IF((*c)->frame == NULL);
@@ -106,8 +107,11 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     (*c)->dparams = (blosc2_dparams*)ina_mem_alloc(sizeof(blosc2_dparams));
     INA_FAIL_IF((*c)->dparams == NULL);
 
-    (*c)->pparams = (caterva_pparams*)ina_mem_alloc(sizeof(caterva_pparams));
-    INA_FAIL_IF((*c)->pparams == NULL);
+    (*c)->shape = (caterva_dims_t*)ina_mem_alloc(sizeof(caterva_dims_t));
+    INA_FAIL_IF((*c)->shape == NULL);
+
+    (*c)->pshape = (caterva_dims_t*)ina_mem_alloc(sizeof(caterva_dims_t));
+    INA_FAIL_IF((*c)->pshape == NULL);
 
     if (flags & IARRAY_CONTAINER_PERSIST) {
         (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
@@ -116,7 +120,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
         (*c)->frame->fname = (char*)ina_str_cstr((*c)->store->id); /* FIXME: shouldn't fname be a const char? */
     }
 
-    switch (shape->dtype) {
+    switch (dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
             cparams.typesize = sizeof(double);
             break;
@@ -128,7 +132,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     cparams.clevel = (uint8_t)ctx->cfg->compression_level; /* Since its just a mapping, we know the cast is ok */
     cparams.blocksize = ctx->cfg->blocksize;
     cparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
-    if (shape->dtype == IARRAY_DATA_TYPE_DOUBLE && ctx->cfg->flags & IARRAY_COMP_TRUNC_PREC) {
+    if (dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE && ctx->cfg->flags & IARRAY_COMP_TRUNC_PREC) {
         cparams.filters[blosc_filter_idx] = BLOSC_TRUNC_PREC;
         cparams.filters_meta[blosc_filter_idx] = ctx->cfg->fp_mantissa_bits;
         blosc_filter_idx++;
@@ -151,26 +155,29 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     ina_mem_cpy((*c)->dparams, &dparams, sizeof(blosc2_dparams));
 
     for (int i = 0; i < CATERVA_MAXDIM; i++) {
-        pparams.shape[i] = 1;
-        pparams.pshape[i] = 1;
+        shape.dims[i] = 1;
+        pshape.dims[i] = 1;
     }
-    for (int i = 0; i < shape->ndim; ++i) { // FIXME: 1's at the beginning should be removed
-        pparams.shape[CATERVA_MAXDIM - (i + 1)] = shape->shape[i];
-        pparams.pshape[CATERVA_MAXDIM - (i + 1)] = shape->partshape[i];
+    for (int i = 0; i < dtshape->ndim; ++i) { // FIXME: 1's at the beginning should be removed
+        shape.dims[i] = dtshape->shape[i];
+        pshape.dims[i] = dtshape->partshape[i];
     }
-    pparams.ndim = shape->ndim;
-    ina_mem_cpy((*c)->pparams, &pparams, sizeof(caterva_pparams));
+    shape.ndim = dtshape->ndim;
+    pshape.ndim = dtshape->ndim;
 
-    caterva_ctxt *ctxt = caterva_new_ctxt(NULL, NULL);
+    ina_mem_cpy((*c)->shape, &shape, sizeof(caterva_dims_t));
+    ina_mem_cpy((*c)->pshape, &pshape, sizeof(caterva_dims_t));
 
-    (*c)->catarr = caterva_new_array(*(*c)->cparams, *(*c)->dparams, (*c)->frame, *(*c)->pparams, ctxt);
+    caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, cparams, dparams);
+
+    (*c)->catarr = caterva_empty_array(cat_ctx, (*c)->frame, *(*c)->pshape);
     INA_FAIL_IF((*c)->catarr == NULL);
 
     return INA_SUCCESS;
 
 fail:
     iarray_container_free(ctx, c);
-    caterva_free_ctxt(ctxt);
+    caterva_free_ctx(cat_ctx);
     return ina_err_get_rc();
 }
 
@@ -381,22 +388,30 @@ INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
     iarray_container_t *c,
-    int *start,
-    int *stop,
+    uint64_t *start_,
+    uint64_t *stop_,
     iarray_store_properties_t *store,
     int flags,
     iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
-    INA_VERIFY_NOT_NULL(start);
-    INA_VERIFY_NOT_NULL(stop);
+    INA_VERIFY_NOT_NULL(start_);
+    INA_VERIFY_NOT_NULL(stop_);
     INA_VERIFY_NOT_NULL(container);
 
-    // FIXME: we need the new dtshape from caterva
+    caterva_dims_t start = caterva_new_dims(start_, c->dtshape->ndim);
+    caterva_dims_t stop = caterva_new_dims(stop_, c->dtshape->ndim);
 
-    //INA_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, store, flags, container));
+    iarray_dtshape_t dtshape;
+    for (int i = 0; i < c->dtshape->ndim; ++i) {
+        dtshape.shape[i] = (stop_[i] - start_[i]);
+        dtshape.partshape[i] = c->dtshape->partshape[i];
+    }
+    dtshape.ndim = c->dtshape->ndim;
+    dtshape.dtype = c->dtshape->dtype;
+    INA_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape, store, flags, container));
 
-    INA_FAIL_IF(caterva_get_slice(c->catarr, (*container)->catarr, start, stop) != 0);
+    INA_FAIL_IF(caterva_get_slice((*container)->catarr, c->catarr, start, stop) != 0);
 
     return INA_SUCCESS;
 
@@ -407,7 +422,7 @@ fail:
 
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
     iarray_dtshape_t *dtshape,
-    const void *buffer,
+    void *buffer,
     size_t buffer_len,
     iarray_store_properties_t *store,
     int flags,
@@ -420,7 +435,7 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
     INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
-    if (caterva_from_buffer((*container)->catarr, buffer) != 0) {
+    if (caterva_from_buffer((*container)->catarr, *(*container)->shape, buffer) != 0) {
         INA_ERROR(INA_ERR_FAILED);
         INA_FAIL_IF(1);
     }
@@ -449,13 +464,13 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
 }
 
 INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c,
-    size_t *nbytes,
-    size_t *cbytes)
+    uint64_t *nbytes,
+    uint64_t *cbytes)
 {
     INA_VERIFY_NOT_NULL(c);
 
-    *nbytes = c->catarr->sc->nbytes;
-    *cbytes = c->catarr->sc->cbytes;
+    *nbytes = (uint64_t) c->catarr->sc->nbytes;
+    *cbytes = (uint64_t) c->catarr->sc->cbytes;
 
     return INA_SUCCESS;
 }
@@ -469,7 +484,8 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
     INA_MEM_FREE_SAFE((*container)->frame);
     INA_MEM_FREE_SAFE((*container)->cparams);
     INA_MEM_FREE_SAFE((*container)->dparams);
-    INA_MEM_FREE_SAFE((*container)->pparams);
+    INA_MEM_FREE_SAFE((*container)->shape);
+    INA_MEM_FREE_SAFE((*container)->pshape);
     INA_MEM_FREE_SAFE((*container)->dtshape);
     INA_MEM_FREE_SAFE(*container);
 }
@@ -535,7 +551,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 {
     e->expr = ina_str_new_fromcstr(expr);
     te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(te_variable));
-    caterva_array *catarr = e->vars[0].c->catarr;
+    caterva_array_t *catarr = e->vars[0].c->catarr;
     blosc2_schunk *schunk = catarr->sc;
     int dim0 = 0;
     if (e->ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
@@ -591,7 +607,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
     size_t nitems_in_schunk = schunk0->nbytes / e->typesize;
     size_t nitems_in_chunk = e->chunksize / e->typesize;
     int nvars = e->nvars;
-    caterva_array out = *ret->catarr;
+    caterva_update_shape(ret->catarr, *e->vars[0].c->shape);
+    caterva_array_t out = *ret->catarr;
 
     if (e->ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
         int8_t *outbuf = ina_mem_alloc(e->chunksize);  // FIXME: this could benefit from using a mempool (probably not)
@@ -965,53 +982,6 @@ INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp)
     return INA_SUCCESS;
 }
 
-// TODO: This should go when support for MKL is here
-int _mm_mul_d(size_t n, double const *a, double const *b, double *c)
-{
-    for (size_t i = 0; i < n; ++i) {
-        for (size_t j = 0; j < n; ++j) {
-            for (size_t k = 0; k < n; ++k) {
-                c[i*n+j] += a[i*n+k] * b[k*n+j];
-            }
-        }
-    }
-    return 0;
-}
-
-// TODO: This should go when support for MKL is here
-int _mm_mul_f(size_t n, float const *a, float const *b, float *c)
-{
-    for (size_t i = 0; i < n; ++i) {
-        for (size_t j = 0; j < n; ++j) {
-            for (size_t k = 0; k < n; ++k) {
-                c[i*n+j] += a[i*n+k] * b[k*n+j];
-            }
-        }
-    }
-    return 0;
-}
-
-// TODO: This should go when support for MKL is here
-int _mv_mul_d(size_t n, double const *a, double const *b, double *c)
-{
-    for (size_t i = 0; i < n; ++i) {
-        for (size_t k = 0; k < n; ++k) {
-            c[i] += a[i*n+k] * b[k];
-        }
-    }
-    return 0;
-}
-
-// TODO: This should go when support for MKL is here
-int _mv_mul_f(size_t n, float const *a, float const *b, float *c)
-{
-    for (size_t i = 0; i < n; ++i) {
-        for (size_t k = 0; k < n; ++k) {
-            c[i] += a[i*n+k] * b[k];
-        }
-    }
-    return 0;
-}
 
 static int _dtshape_equal(iarray_dtshape_t *a, iarray_dtshape_t *b) {
     if (a->dtype != b->dtype) {
@@ -1087,12 +1057,15 @@ INA_API(ina_rc_t) iarray_almost_equal_data(iarray_container_t *a, iarray_contain
 
 
 INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
-    const int P = a->catarr->pshape[7];
-    size_t M = a->catarr->eshape[6];
-    size_t K = a->catarr->eshape[7];
-    size_t N = b->catarr->eshape[7];
 
-    size_t p_size = P * P * a->catarr->sc->typesize;
+    caterva_update_shape(c->catarr, *c->shape);
+
+    const int32_t P = (int32_t) a->catarr->pshape[0];
+    uint64_t M = a->catarr->eshape[0];
+    uint64_t K = a->catarr->eshape[1];
+    uint64_t N = b->catarr->eshape[1];
+
+    uint64_t p_size = (uint64_t) P * P * a->catarr->sc->typesize;
     int dtype = a->dtshape->dtype;
 
     uint8_t *a_block = malloc(p_size);
@@ -1129,13 +1102,16 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
 }
 
 INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
-    size_t P = a->catarr->pshape[7];
 
-    size_t M = a->catarr->eshape[6];
-    size_t K = a->catarr->eshape[7];
+    caterva_update_shape(c->catarr, *c->shape);
 
-    size_t p_size = P * P * a->catarr->sc->typesize;
-    size_t p_vsize = P * a->catarr->sc->typesize;
+    int32_t P = (int32_t) a->catarr->pshape[0];
+
+    uint64_t M = a->catarr->eshape[0];
+    uint64_t K = a->catarr->eshape[1];
+
+    uint64_t p_size = (uint64_t) P * P * a->catarr->sc->typesize;
+    uint64_t p_vsize = (uint64_t) P * a->catarr->sc->typesize;
 
     int dtype = a->dtshape->dtype;
 

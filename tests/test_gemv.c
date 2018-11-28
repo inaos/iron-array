@@ -15,8 +15,7 @@
 
 #include <tests/iarray_test.h>
 
-static ina_rc_t test_gemv(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out, iarray_container_t *c_res, double tol)
-{
+static ina_rc_t test_gemv(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out, iarray_container_t *c_res, double tol) {
     iarray_gemv(c_x, c_y, c_out);
     if (!iarray_almost_equal_data(c_out, c_res, tol)) {
         return INA_ERROR(INA_ERR_FAILED);
@@ -24,13 +23,7 @@ static ina_rc_t test_gemv(iarray_container_t *c_x, iarray_container_t *c_y, iarr
     return INA_SUCCESS;
 }
 
-static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx,
-    iarray_data_type_t dtype,
-    size_t type_size,
-    int M,
-    int K,
-    int P)
-{
+static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint64_t M, uint64_t K, int32_t P) {
     void *buffer_x;
     void *buffer_y;
     void *buffer_r;
@@ -50,13 +43,13 @@ static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx,
         tol = 1e-06;
         ffill_buf((float*)buffer_x, M * K);
         ffill_buf((float*)buffer_y, K);
-        cblas_sgemv(CblasRowMajor, CblasNoTrans, M, K, 1.0, (float*)buffer_x, K, (float*)buffer_y, 1, 0.0, (float*)buffer_r, 1);
+        cblas_sgemv(CblasRowMajor, CblasNoTrans, (int32_t) M, (int32_t) K, 1.0, (float*)buffer_x, (int32_t) K, (float*)buffer_y, 1, 0.0, (float*)buffer_r, 1);
     }
     else {
         tol = 1e-14;
         dfill_buf((double*)buffer_x, M * K);
         dfill_buf((double*)buffer_y, K);
-        cblas_dgemv(CblasRowMajor, CblasNoTrans, M, K, 1.0, (double*)buffer_x, K, (double*)buffer_y, 1, 0.0, (double*)buffer_r, 1);
+        cblas_dgemv(CblasRowMajor, CblasNoTrans, (int32_t) M, (int32_t) K, 1.0, (double*)buffer_x, (int32_t) K, (double*)buffer_y, 1, 0.0, (double*)buffer_r, 1);
     }
 
     iarray_dtshape_t xshape;
@@ -66,25 +59,25 @@ static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx,
 
     xshape.dtype = dtype;
     xshape.ndim = 2;
-    xshape.shape[0] = K;
-    xshape.shape[1] = M;
-    xshape.partshape[0] = P;
-    xshape.partshape[1] = P;
+    xshape.shape[0] = M;
+    xshape.shape[1] = K;
+    xshape.partshape[0] = (uint64_t) P;
+    xshape.partshape[1] = (uint64_t) P;
 
     yshape.dtype = dtype;
     yshape.ndim = 1;
     yshape.shape[0] = K;
-    yshape.partshape[0] = P;
+    yshape.partshape[0] = (uint64_t) P;
 
     oshape.dtype = dtype;
     oshape.ndim = 1;
     oshape.shape[0] = M;
-    oshape.partshape[0] = P;
+    oshape.partshape[0] = (uint64_t) P;
 
     rshape.dtype = dtype;
     rshape.ndim = 1;
     rshape.shape[0] = M;
-    rshape.partshape[0] = P;
+    rshape.partshape[0] = (uint64_t) P;
 
     iarray_container_t *c_x;
     iarray_container_t *c_y;
@@ -136,9 +129,9 @@ INA_TEST_FIXTURE(gemv, double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    int M = 4163;
-    int K = 5135;
-    int P = 453;
+    uint64_t M = 4163;
+    uint64_t K = 5135;
+    int32_t P = 453;
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemv(data->ctx, dtype, type_size, M, K, P));
 }
@@ -148,9 +141,9 @@ INA_TEST_FIXTURE(gemv, float_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
 
-    int M = 3485;
-    int K = 3555;
-    int P = 519;
+    uint64_t M = 3485;
+    uint64_t K = 3555;
+    int32_t P = 519;
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemv(data->ctx, dtype, type_size, M, K, P));
 }
