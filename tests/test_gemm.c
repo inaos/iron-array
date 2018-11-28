@@ -24,8 +24,8 @@ static ina_rc_t test_gemm(iarray_container_t *c_x, iarray_container_t *c_y, iarr
     return INA_SUCCESS;
 }
 
-static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx, 
-                                     iarray_data_type_t dtype, 
+static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
+                                     iarray_data_type_t dtype,
                                      size_t type_size,
                                      int M,
                                      int K,
