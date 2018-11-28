@@ -15,21 +15,16 @@
 
 #include <tests/iarray_test.h>
 
-static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t **c_out, iarray_container_t *c_x, size_t* start, size_t *stop) {
+static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t **c_out, iarray_container_t *c_x, uint64_t * start, uint64_t *stop) {
     INA_TEST_ASSERT_SUCCEED(iarray_slice(ctx, c_x, start, stop, NULL, 0, c_out));
 
     return INA_SUCCESS;
 }
 
-static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, int ndim,
-                                     int *shape, int *pshape, size_t *start, size_t *stop) {
+static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint8_t ndim,
+                                     const uint64_t *shape, const uint64_t *pshape, uint64_t *start, uint64_t *stop) {
     void *buffer_x;
-    void *buffer_y;
-    void *buffer_r;
     size_t buffer_x_len;
-    size_t buffer_y_len;
-    size_t buffer_r_len;
-    double tol;
 
     buffer_x_len = 1;
     for (int i = 0; i < ndim; ++i) {
@@ -38,11 +33,9 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx, iarray_data_type_t d
     buffer_x = ina_mem_alloc(buffer_x_len * type_size);
 
     if (type_size == sizeof(float)) {
-        tol = 1e-06;
         ffill_buf((float *) buffer_x, buffer_x_len);
 
     } else {
-        tol = 1e-14;
         dfill_buf((double *) buffer_x, buffer_x_len);
     }
 
@@ -94,11 +87,11 @@ INA_TEST_FIXTURE(slice, double_data) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    int ndim = 3;
-    int shape[] = {123, 156, 234};
-    int pshape[] = {13, 12, 17};
-    size_t start[] = {45, 2, 103};
-    size_t stop[] = {102, 66, 199};
+    uint8_t ndim = 3;
+    uint64_t shape[] = {123, 156, 234};
+    uint64_t pshape[] = {13, 12, 17};
+    uint64_t start[] = {45, 2, 103};
+    uint64_t stop[] = {102, 66, 199};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, ndim, shape, pshape, start, stop));
 }
