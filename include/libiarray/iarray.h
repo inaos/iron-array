@@ -148,8 +148,8 @@ INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx, 
                                iarray_container_t *c, 
-                               int *start,
-                               int *stop,
+                               size_t *start,
+                               size_t *stop,
                                iarray_store_properties_t *store,
                                int flags,
                                iarray_container_t **container);
