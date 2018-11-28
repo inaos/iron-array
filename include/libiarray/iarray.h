@@ -79,9 +79,9 @@ typedef struct iarray_config_s {
 
 typedef struct iarray_dtshape_s {
     iarray_data_type_t dtype;
-    int ndim;     /* IF ndim = 0 THEN it is a scalar */
-    int shape[IARRAY_DIMENSION_MAX];
-    int partshape[IARRAY_DIMENSION_MAX]; /* Partition-Shape, optional in the future */
+    uint8_t ndim;     /* IF ndim = 0 THEN it is a scalar */
+    uint64_t shape[IARRAY_DIMENSION_MAX];
+    uint64_t partshape[IARRAY_DIMENSION_MAX]; /* Partition-Shape, optional in the future */
 } iarray_dtshape_t;
 
 typedef struct iarray_slice_param_s {
@@ -148,15 +148,15 @@ INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx, 
                                iarray_container_t *c, 
-                               int *start,
-                               int *stop,
+                               uint64_t *start,
+                               uint64_t *stop,
                                iarray_store_properties_t *store,
                                int flags,
                                iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
-                                     const void *buffer,
+                                     void *buffer,
                                      size_t buffer_len,
                                      iarray_store_properties_t *store,
                                      int flags,
@@ -167,10 +167,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
                                    void *buffer,
                                    size_t buffer_len);
 
-
-INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, 
-                                        size_t *nbytes,
-                                        size_t *cbytes);
+INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, uint64_t *nbytes, uint64_t *cbytes);
 
 INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container);
 
