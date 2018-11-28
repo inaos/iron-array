@@ -48,9 +48,9 @@ static ina_rc_t _iarray_test_container_dbl_buffer_cmp(iarray_context_t *ctx, iar
         double a = buffer[i];
         double b = bufcmp[i];
         double vdiff = fabs(a - b);
-        if (vdiff > 1e-6) {
-            // INA_TEST_MSG("Values differ in (%d nelem) (diff: %f)\n", i, vdiff);
-            //INA_FAIL_IF(1);
+        if (vdiff > 1e-15) {
+            INA_TEST_MSG("Values differ in (%d nelem) (diff: %f)\n", i, vdiff);
+            INA_FAIL_IF(1);
         }
     }
     ina_mem_free(bufcmp);

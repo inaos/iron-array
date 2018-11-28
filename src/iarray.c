@@ -159,11 +159,11 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         pshape.dims[i] = 1;
     }
     for (int i = 0; i < dtshape->ndim; ++i) { // FIXME: 1's at the beginning should be removed
-        shape.dims[i] = (size_t) dtshape->shape[i];
-        pshape.dims[i] = (size_t) dtshape->partshape[i];
+        shape.dims[i] = dtshape->shape[i];
+        pshape.dims[i] = dtshape->partshape[i];
     }
-    shape.ndim = (size_t) dtshape->ndim;
-    pshape.ndim = (size_t) dtshape->ndim;
+    shape.ndim = dtshape->ndim;
+    pshape.ndim = dtshape->ndim;
 
     ina_mem_cpy((*c)->shape, &shape, sizeof(caterva_dims_t));
     ina_mem_cpy((*c)->pshape, &pshape, sizeof(caterva_dims_t));
@@ -388,8 +388,8 @@ INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
     iarray_container_t *c,
-    size_t *start_,
-    size_t *stop_,
+    uint64_t *start_,
+    uint64_t *stop_,
     iarray_store_properties_t *store,
     int flags,
     iarray_container_t **container)
@@ -404,7 +404,7 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
 
     iarray_dtshape_t dtshape;
     for (int i = 0; i < c->dtshape->ndim; ++i) {
-        dtshape.shape[i] = (int) (stop_[i] - start_[i]);
+        dtshape.shape[i] = (stop_[i] - start_[i]);
         dtshape.partshape[i] = c->dtshape->partshape[i];
     }
     dtshape.ndim = c->dtshape->ndim;
@@ -422,7 +422,7 @@ fail:
 
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
     iarray_dtshape_t *dtshape,
-    const void *buffer,
+    void *buffer,
     size_t buffer_len,
     iarray_store_properties_t *store,
     int flags,
@@ -464,13 +464,13 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
 }
 
 INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c,
-    size_t *nbytes,
-    size_t *cbytes)
+    uint64_t *nbytes,
+    uint64_t *cbytes)
 {
     INA_VERIFY_NOT_NULL(c);
 
-    *nbytes = c->catarr->sc->nbytes;
-    *cbytes = c->catarr->sc->cbytes;
+    *nbytes = (uint64_t) c->catarr->sc->nbytes;
+    *cbytes = (uint64_t) c->catarr->sc->cbytes;
 
     return INA_SUCCESS;
 }
@@ -607,8 +607,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
     size_t nitems_in_schunk = schunk0->nbytes / e->typesize;
     size_t nitems_in_chunk = e->chunksize / e->typesize;
     int nvars = e->nvars;
+    caterva_update_shape(ret->catarr, *e->vars[0].c->shape);
     caterva_array_t out = *ret->catarr;
-    caterva_update_shape(&out, *e->vars[0].c->shape);
 
     if (e->ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {
         int8_t *outbuf = ina_mem_alloc(e->chunksize);  // FIXME: this could benefit from using a mempool (probably not)
@@ -1060,12 +1060,12 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
 
     caterva_update_shape(c->catarr, *c->shape);
 
-    const int P = a->catarr->pshape[0];
-    size_t M = a->catarr->eshape[0];
-    size_t K = a->catarr->eshape[1];
-    size_t N = b->catarr->eshape[1];
+    const int32_t P = (int32_t) a->catarr->pshape[0];
+    uint64_t M = a->catarr->eshape[0];
+    uint64_t K = a->catarr->eshape[1];
+    uint64_t N = b->catarr->eshape[1];
 
-    size_t p_size = P * P * a->catarr->sc->typesize;
+    uint64_t p_size = (uint64_t) P * P * a->catarr->sc->typesize;
     int dtype = a->dtshape->dtype;
 
     uint8_t *a_block = malloc(p_size);
@@ -1105,13 +1105,13 @@ INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarr
 
     caterva_update_shape(c->catarr, *c->shape);
 
-    size_t P = a->catarr->pshape[0];
+    int32_t P = (int32_t) a->catarr->pshape[0];
 
-    size_t M = a->catarr->eshape[0];
-    size_t K = a->catarr->eshape[1];
+    uint64_t M = a->catarr->eshape[0];
+    uint64_t K = a->catarr->eshape[1];
 
-    size_t p_size = P * P * a->catarr->sc->typesize;
-    size_t p_vsize = P * a->catarr->sc->typesize;
+    uint64_t p_size = (uint64_t) P * P * a->catarr->sc->typesize;
+    uint64_t p_vsize = (uint64_t) P * a->catarr->sc->typesize;
 
     int dtype = a->dtshape->dtype;
 
