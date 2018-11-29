@@ -183,13 +183,13 @@ fail:
 
 static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
 {
-    /* FIXME: blosc set container */
+    caterva_fill(c->catarr, *c->shape, &value);
     return INA_SUCCESS;
 }
 
 static ina_rc_t _iarray_container_fill_double(iarray_container_t *c, double value)
 {
-    /* FIXME: blosc set container */
+    caterva_fill(c->catarr, *c->shape, &value);
     return INA_SUCCESS;
 }
 
