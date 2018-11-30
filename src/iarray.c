@@ -1155,28 +1155,48 @@ uint64_t *_iarray_itr_start(iarray_itr_t *itr) {
 }
 
 uint64_t *_iarray_itr_next(iarray_itr_t *itr) {
-    if (itr->cont % itr->container->catarr->csize == 0) {
-        //Append chunk to catarr
-    }
-
     itr->cont += 1;
 
     uint64_t cont2 = itr->cont % itr->container->catarr->csize;
     int ndim = itr->container->catarr->ndim;
 
     itr->index[ndim-1] = cont2 % itr->container->catarr->pshape[ndim-1];
-    int64_t inc = itr->container->catarr->pshape[ndim-1];
+    uint64_t inc = itr->container->catarr->pshape[ndim-1];
 
     for (int i = ndim - 2; i >= 0; --i) {
         itr->index[i] = cont2 / inc;
         inc *= itr->container->catarr->pshape[i];
     }
 
+    if (itr->cont % itr->container->catarr->csize == 0) {
+        printf("New chunk %llu\n", itr->cont / itr->container->catarr->csize);
+    }
+    uint64_t nchunk = itr->cont/itr->container->catarr->csize;
+
+    uint64_t aux[CATERVA_MAXDIM];
+    for (int k = 0; k < ndim; ++k) {
+        aux[k] = itr->container->catarr->eshape[k] / itr->container->catarr->pshape[k];
+    }
+    if (nchunk % aux[ndim - 1] == aux[ndim - 1] - 1) {
+        itr->cont += itr->container->catarr->eshape[ndim-1] - itr->container->catarr->shape[ndim-1];
+    }
+
+    //FIXME: Not work fine
+
+    for (int j = ndim - 2; j >= 0; --j) {
+        if (nchunk / aux[j] == aux[j] - 1) {
+            if(cont2 % itr->container->catarr->pshape[j + 1] == 0) {
+                itr->cont += (itr->container->catarr->eshape[j] - itr->container->catarr->shape[j])
+                    * itr->container->catarr->pshape[j + 1];
+            }
+        }
+    }
+
     return itr->index;
 }
 
 int _iarray_itr_finish(iarray_itr_t *itr) {
-    return itr->cont == itr->container->catarr->size;
+    return itr->cont >= itr->container->catarr->esize;
 }
 
 
@@ -1186,7 +1206,7 @@ INA_API(ina_rc_t) iarray_itr_new(iarray_container_t *container, iarray_itr_t **i
     caterva_update_shape(container->catarr, *container->shape);
     (*itr)->container = container;
 
-    (*itr)->index = (uint64_t *) malloc(CATERVA_MAXDIM * sizeof(uint64_t));
+    (*itr)->index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
 
     (*itr)->cont = 0;
 
