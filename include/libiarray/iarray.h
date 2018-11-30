@@ -19,7 +19,7 @@
 typedef struct iarray_context_s iarray_context_t;
 
 typedef struct iarray_container_s iarray_container_t;
-
+typedef struct iarray_itr_s iarray_itr_t;
 typedef struct iarray_expression_s iarray_expression_t;
 
 typedef enum iarray_rng_e {
@@ -67,6 +67,15 @@ typedef enum iarray_compression_codec_e {
     IARRAY_COMPRESSION_ZSTD,
     IARRAY_COMPRESSION_LIZARD
 } iarray_compression_codec_t;
+
+typedef struct iarray_itr_s {
+    iarray_container_t *container;
+    uint64_t *index;
+    uint64_t cont;
+    int (*finish)(iarray_itr_t *itr);
+    uint64_t *(*start)(iarray_itr_t *itr);
+    uint64_t *(*next)(iarray_itr_t *itr);
+} iarray_itr_t;
 
 typedef struct iarray_config_s {
     iarray_compression_codec_t compression_codec;
@@ -201,5 +210,8 @@ ina_rc_t iarray_eval_block(iarray_context_t *ctx, char* expr, iarray_variable_t 
 INA_API(ina_rc_t) iarray_almost_equal_data(iarray_container_t *a, iarray_container_t *b, double tol);
 INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c);
 INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c);
+
+INA_API(ina_rc_t) iarray_itr_new(iarray_container_t *container, iarray_itr_t **itr);
+INA_API(ina_rc_t) iarray_itr_free(iarray_itr_t *itr);
 
 #endif

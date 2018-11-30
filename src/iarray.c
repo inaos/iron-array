@@ -1146,3 +1146,58 @@ INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarr
     free(c_block);
     return 0;
 }
+
+uint64_t *_iarray_itr_start(iarray_itr_t *itr) {
+    for (int i = 0; i < CATERVA_MAXDIM; ++i) {
+        itr->index[i] = 0;
+    }
+    return itr->index;
+}
+
+uint64_t *_iarray_itr_next(iarray_itr_t *itr) {
+    if (itr->cont % itr->container->catarr->csize == 0) {
+        //Append chunk to catarr
+    }
+
+    itr->cont += 1;
+
+    uint64_t cont2 = itr->cont % itr->container->catarr->csize;
+    int ndim = itr->container->catarr->ndim;
+
+    itr->index[ndim-1] = cont2 % itr->container->catarr->pshape[ndim-1];
+    int64_t inc = itr->container->catarr->pshape[ndim-1];
+
+    for (int i = ndim - 2; i >= 0; --i) {
+        itr->index[i] = cont2 / inc;
+        inc *= itr->container->catarr->pshape[i];
+    }
+
+    return itr->index;
+}
+
+int _iarray_itr_finish(iarray_itr_t *itr) {
+    return itr->cont == itr->container->catarr->size;
+}
+
+
+INA_API(ina_rc_t) iarray_itr_new(iarray_container_t *container, iarray_itr_t **itr) {
+    *itr = (iarray_itr_t*)ina_mem_alloc(sizeof(iarray_itr_t));
+    INA_RETURN_IF_NULL(itr);
+    caterva_update_shape(container->catarr, *container->shape);
+    (*itr)->container = container;
+
+    (*itr)->index = (uint64_t *) malloc(CATERVA_MAXDIM * sizeof(uint64_t));
+
+    (*itr)->cont = 0;
+
+    (*itr)->start = _iarray_itr_start;
+    (*itr)->next = _iarray_itr_next;
+    (*itr)->finish = _iarray_itr_finish;
+    return 0;
+}
+
+INA_API(ina_rc_t) iarray_itr_free(iarray_itr_t *itr) {
+    ina_mem_free(itr->index);
+    ina_mem_free(itr);
+    return 0;
+}
