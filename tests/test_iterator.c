@@ -42,11 +42,11 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
     iarray_itr_new(c_x, &I);
     uint64_t *i;
 
-    for (I->start(I); !I->finish(I) ; I->next(I)) {
+    for (I->start(I); !I->finish(I); I->next(I)) {
 
         i = I->index;
         for (int j = 0; j < ndim; ++j) {
-            printf("%llu-", i[j]);
+            printf("-%llu-", i[j]);
         }
         printf("\n");
     }
