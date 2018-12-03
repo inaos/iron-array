@@ -40,15 +40,10 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
 
     iarray_itr_t *I;
     iarray_itr_new(c_x, &I);
-    uint64_t *i;
 
-    for (I->start(I); !I->finish(I); I->next(I)) {
+    for (I->init(I); !I->finished(I); I->next(I)) {
 
-        i = I->index;
-        for (int j = 0; j < ndim; ++j) {
-            printf("-%llu-", i[j]);
-        }
-        printf("\n");
+        printf("%llu\n", I->cont);
     }
 
     iarray_itr_free(I);
@@ -80,8 +75,8 @@ INA_TEST_FIXTURE(iterator, double_data) {
     size_t type_size = sizeof(double);
 
     uint8_t ndim = 2;
-    uint64_t shape[] = {10, 10};
-    uint64_t pshape[] = {3, 3};
+    uint64_t shape[] = {5, 3};
+    uint64_t pshape[] = {3, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }

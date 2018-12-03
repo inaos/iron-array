@@ -1147,55 +1147,73 @@ INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarr
     return 0;
 }
 
-uint64_t *_iarray_itr_start(iarray_itr_t *itr) {
-    for (int i = 0; i < CATERVA_MAXDIM; ++i) {
-        itr->index[i] = 0;
-    }
-    return itr->index;
-}
+void _update_itr_index(iarray_itr_t *itr) {
 
-uint64_t *_iarray_itr_next(iarray_itr_t *itr) {
-    itr->cont += 1;
+    caterva_array_t *catarr = itr->container->catarr;
 
-    uint64_t cont2 = itr->cont % itr->container->catarr->csize;
-    int ndim = itr->container->catarr->ndim;
+    int ndim = catarr->ndim;
 
-    itr->index[ndim-1] = cont2 % itr->container->catarr->pshape[ndim-1];
-    uint64_t inc = itr->container->catarr->pshape[ndim-1];
+    uint64_t cont2 = itr->cont % catarr->csize;
+    itr->index[ndim - 1] = cont2 % catarr->pshape[ndim-1];
+    uint64_t inc = catarr->pshape[ndim - 1];
 
     for (int i = ndim - 2; i >= 0; --i) {
         itr->index[i] = cont2 / inc;
-        inc *= itr->container->catarr->pshape[i];
+        inc *= catarr->pshape[i];
     }
 
-    if (itr->cont % itr->container->catarr->csize == 0) {
-        printf("New chunk %llu\n", itr->cont / itr->container->catarr->csize);
-    }
-    uint64_t nchunk = itr->cont/itr->container->catarr->csize;
+    uint64_t nchunk = itr->cont / catarr->csize;
 
-    uint64_t aux[CATERVA_MAXDIM];
-    for (int k = 0; k < ndim; ++k) {
-        aux[k] = itr->container->catarr->eshape[k] / itr->container->catarr->pshape[k];
+    uint64_t aux_nchunk[CATERVA_MAXDIM];
+
+    aux_nchunk[ndim - 1] = catarr->eshape[ndim - 1] - catarr->pshape[ndim - 1];
+    for (int k = ndim - 2; k >= 0; --k) {
+        aux_nchunk[k] = aux_nchunk[k + 1] * (catarr->eshape[k] / catarr->pshape[k]);
     }
-    if (nchunk % aux[ndim - 1] == aux[ndim - 1] - 1) {
-        itr->cont += itr->container->catarr->eshape[ndim-1] - itr->container->catarr->shape[ndim-1];
+    for (int j = 0; j < ndim; ++j) {
+        itr->index[j] += nchunk % aux_nchunk[j] / (aux_nchunk[j] / (catarr->eshape[j] / catarr->pshape[j])) * catarr->pshape[j];
     }
 
-    //FIXME: Not work fine
+}
 
-    for (int j = ndim - 2; j >= 0; --j) {
-        if (nchunk / aux[j] == aux[j] - 1) {
-            if(cont2 % itr->container->catarr->pshape[j + 1] == 0) {
-                itr->cont += (itr->container->catarr->eshape[j] - itr->container->catarr->shape[j])
-                    * itr->container->catarr->pshape[j + 1];
-            }
+
+void _iarray_itr_init(iarray_itr_t *itr) {
+    for (int i = 0; i < CATERVA_MAXDIM; ++i) {
+        itr->index[i] = 0;
+    }
+}
+
+void _iarray_itr_next(iarray_itr_t *itr) {
+
+    caterva_array_t *catarr = itr->container->catarr;
+    int ndim = catarr->ndim;
+
+    itr->cont += 1;
+
+    _update_itr_index(itr);
+
+    uint64_t aux_inc[CATERVA_MAXDIM];
+    aux_inc[ndim - 1] = 1;
+    for (int m = ndim - 2; m >= 0; --m) {
+        aux_inc[m] = catarr->pshape[m + 1] * aux_inc[m + 1];
+    }
+
+    for (int l = ndim - 1; l >= 0; --l) {
+        if (itr->index[l] >= catarr->shape[l]) {
+            itr->cont += (catarr->eshape[l] - catarr->shape[l]) * aux_inc[l];
+            _update_itr_index(itr);
         }
     }
 
-    return itr->index;
+    if (itr->cont % catarr->csize == 0) {
+        printf("New chunk %llu\n", itr->cont / catarr->csize);
+    }
+
+    _update_itr_index(itr);
 }
 
-int _iarray_itr_finish(iarray_itr_t *itr) {
+
+int _iarray_itr_finished(iarray_itr_t *itr) {
     return itr->cont >= itr->container->catarr->esize;
 }
 
@@ -1207,12 +1225,11 @@ INA_API(ina_rc_t) iarray_itr_new(iarray_container_t *container, iarray_itr_t **i
     (*itr)->container = container;
 
     (*itr)->index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
-
     (*itr)->cont = 0;
 
-    (*itr)->start = _iarray_itr_start;
+    (*itr)->init = _iarray_itr_init;
     (*itr)->next = _iarray_itr_next;
-    (*itr)->finish = _iarray_itr_finish;
+    (*itr)->finished = _iarray_itr_finished;
     return 0;
 }
 
