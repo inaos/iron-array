@@ -70,11 +70,13 @@ typedef enum iarray_compression_codec_e {
 
 typedef struct iarray_itr_s {
     iarray_container_t *container;
+    void *part;
+    void *dir_mem;
     uint64_t *index;
     uint64_t cont;
-    int (*finish)(iarray_itr_t *itr);
-    uint64_t *(*start)(iarray_itr_t *itr);
-    uint64_t *(*next)(iarray_itr_t *itr);
+    int (*finished)(iarray_itr_t *itr);
+    void (*init)(iarray_itr_t *itr);
+    void (*next)(iarray_itr_t *itr);
 } iarray_itr_t;
 
 typedef struct iarray_config_s {
