@@ -1174,13 +1174,22 @@ void _update_itr_index(iarray_itr_t *itr) {
         itr->index[j] += nchunk % aux_nchunk[j] / (aux_nchunk[j] / (catarr->eshape[j] / catarr->pshape[j])) * catarr->pshape[j];
     }
 
+    if (itr->container->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
+        itr->dir_mem = (uint8_t *)&((double*)itr->part)[cont2];
+    } else{
+        itr->dir_mem = (uint8_t *)&((float*)itr->part)[cont2];
+    }
+
 }
 
 
 void _iarray_itr_init(iarray_itr_t *itr) {
+    itr->cont = 0;
+    memset(itr->part, 0, itr->container->catarr->csize * itr->container->catarr->sc->typesize);
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         itr->index[i] = 0;
     }
+    itr->dir_mem = &itr->part[0];
 }
 
 void _iarray_itr_next(iarray_itr_t *itr) {
@@ -1206,6 +1215,8 @@ void _iarray_itr_next(iarray_itr_t *itr) {
     }
 
     if (itr->cont % catarr->csize == 0) {
+        blosc2_schunk_append_buffer(catarr->sc, itr->part, catarr->csize * catarr->sc->typesize);
+        memset(itr->part, 0, itr->container->catarr->csize * itr->container->catarr->sc->typesize);
         printf("New chunk %llu\n", itr->cont / catarr->csize);
     }
 
@@ -1223,9 +1234,9 @@ INA_API(ina_rc_t) iarray_itr_new(iarray_container_t *container, iarray_itr_t **i
     INA_RETURN_IF_NULL(itr);
     caterva_update_shape(container->catarr, *container->shape);
     (*itr)->container = container;
+    (*itr)->part = (uint8_t *) ina_mem_alloc(container->catarr->csize * container->catarr->sc->typesize);
 
     (*itr)->index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
-    (*itr)->cont = 0;
 
     (*itr)->init = _iarray_itr_init;
     (*itr)->next = _iarray_itr_next;
