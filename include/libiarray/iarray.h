@@ -70,8 +70,8 @@ typedef enum iarray_compression_codec_e {
 
 typedef struct iarray_itr_s {
     iarray_container_t *container;
-    void *part;
-    void *dir_mem;
+    uint8_t *part;
+    uint8_t *dir_mem;
     uint64_t *index;
     uint64_t cont;
     int (*finished)(iarray_itr_t *itr);

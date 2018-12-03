@@ -43,7 +43,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
 
     for (I->init(I); !I->finished(I); I->next(I)) {
 
-        printf("%llu\n", I->cont);
+        printf("%p\n", (void *)I->dir_mem);
     }
 
     iarray_itr_free(I);
