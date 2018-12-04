@@ -181,6 +181,14 @@ fail:
     return ina_err_get_rc();
 }
 
+INA_API(ina_rc_t) iarray_partition_advice(iarray_data_type_t dtype, int *max_nelem, int *min_nelem)
+{
+    /* Use INAC to determine L3 cache size */
+    // high = L3 / 4 (2x operand, 1x temporary, 1x reserve) / dtype
+    //low = 4k (determine a better solution later)
+    return INA_SUCCESS;
+}
+
 static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
 {
     caterva_fill(c->catarr, *c->shape, &value);
@@ -370,7 +378,7 @@ fail:
 
 INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx,
     iarray_dtshape_t *dtshape,
-    iarray_rng_t rng,
+    iarray_random_ctx_t *random_ctx,
     iarray_store_properties_t *store,
     int flags,
     iarray_container_t **container)
@@ -1056,7 +1064,7 @@ INA_API(ina_rc_t) iarray_almost_equal_data(iarray_container_t *a, iarray_contain
 }
 
 
-INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
+static ina_rc_t _iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
 
     caterva_update_shape(c->catarr, *c->shape);
 
@@ -1098,10 +1106,11 @@ INA_API(ina_rc_t) iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarr
     free(a_block);
     free(b_block);
     free(c_block);
-    return 0;
+
+    return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
+static ina_rc_t _iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
 
     caterva_update_shape(c->catarr, *c->shape);
 
@@ -1144,7 +1153,25 @@ INA_API(ina_rc_t) iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarr
     free(a_block);
     free(b_block);
     free(c_block);
-    return 0;
+
+    return INA_SUCCESS;;
+}
+
+INA_API(ina_rc_t) iarray_matmul(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c, int flag)
+{
+    /* FIXME: handle special shapes */
+    if (a->dtshape->ndim != 2) {
+        return INA_ERR_INVALID_ARGUMENT;
+    }
+    if (b->dtshape->ndim == 1) {
+        return _iarray_gemv(a, b, c);
+    }
+    else if (b->dtshape->ndim == 2) {
+        return _iarray_gemm(a, b, c);
+    }
+    else {
+        return INA_ERR_INVALID_ARGUMENT;
+    }
 }
 
 void _update_itr_index(iarray_itr_t *itr) {
