@@ -46,7 +46,7 @@ elseif(APPLE)
     set(MKL_LIBS libmkl_intel_lp64.a libmkl_core.a libmkl_sequential.a)
 else() # Linux
     set(MKL_SEARCH_LIB libmkl_core.a)
-    set(MKL_LIBS libmkl_intel_lp64.a libmkl_core.a libmkl_sequential.a)
+    set(MKL_LIBS libmkl_intel_lp64.a libmkl_sequential.a libmkl_core.a)
 endif()
 
 

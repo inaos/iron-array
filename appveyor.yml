@@ -29,17 +29,17 @@ environment:
       BUILD_CONFIGURATION: Debug
       RUN_SONAR: no
       
-    - MY_NAME: Linux Release 64bit
-      APPVEYOR_BUILD_WORKER_IMAGE: ubuntu
-      BUILD_CONFIGURATION: RelWithDebInfo
-      RUN_SONAR: no
-
     - MY_NAME: Windows VS 2017 Debug 64bit
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       VSINSTALL: "Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build"
       MSVC_PLATFORM: amd64
       BUILD_CONFIGURATION: Debug
       BUILD_ARCH: x86_64
+      RUN_SONAR: no
+
+    - MY_NAME: Linux Release 64bit
+      APPVEYOR_BUILD_WORKER_IMAGE: ubuntu
+      BUILD_CONFIGURATION: RelWithDebInfo
       RUN_SONAR: no
 
     - MY_NAME: Windows VS 2017 Release 64bit
@@ -71,13 +71,13 @@ install:
          sudo apt-get install inaos-dev-quality-tools
          sudo apt-get install gcovr
          sudo apt-get install xsltproc
-         sudo apt-get install intel-mkl-2019.1-053
+         sudo apt-get install -y intel-mkl-2019.1-053
          appveyor DownloadFile https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
   - cmd: |
          choco source add -n "inaos" -s "https://inaos.jfrog.io/inaos/api/nuget/nuget-release-local/" -u %jfrog_artifactory_uid% -p %jfrog_artifactory_pwd%
          choco install inaos-dev-quality-tools -y --force
-         conda install -c intel mkl-include
-         conda install -c intel mkl-static
+         C:\Miniconda3\Scripts\conda install -y -c intel mkl-include
+         C:\Miniconda3\Scripts\conda install -y -c intel mkl-static
          appveyor DownloadFile https://sonarcloud.io/static/cpp/build-wrapper-win-x86.zip
   - ps: |
         mkdir -p $HOME/.inaos/cmake
