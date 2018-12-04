@@ -1158,7 +1158,7 @@ void _update_itr_index(iarray_itr_t *itr) {
     uint64_t inc = catarr->pshape[ndim - 1];
 
     for (int i = ndim - 2; i >= 0; --i) {
-        itr->index[i] = cont2 / inc;
+        itr->index[i] = cont2 % (inc * catarr->pshape[i]) / inc;
         inc *= catarr->pshape[i];
     }
 
@@ -1180,11 +1180,18 @@ void _update_itr_index(iarray_itr_t *itr) {
         itr->pointer = (void *)&((float*)itr->part)[cont2];
     }
 
+    itr->nelem = 0;
+    inc = 1;
+    for (int i = ndim - 1; i >= 0; --i) {
+        itr->nelem += itr->index[i] * inc;
+        inc *= itr->container->dtshape->shape[i];
+    }
 }
 
 
 void _iarray_itr_init(iarray_itr_t *itr) {
     itr->cont = 0;
+    itr->nelem = 0;
     memset(itr->part, 0, itr->container->catarr->csize * itr->container->catarr->sc->typesize);
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         itr->index[i] = 0;
@@ -1245,6 +1252,7 @@ INA_API(ina_rc_t) iarray_itr_new(iarray_container_t *container, iarray_itr_t **i
 
 INA_API(ina_rc_t) iarray_itr_free(iarray_itr_t *itr) {
     ina_mem_free(itr->index);
+    ina_mem_free(itr->part);
     ina_mem_free(itr);
     return 0;
 }
