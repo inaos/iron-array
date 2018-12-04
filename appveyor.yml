@@ -71,6 +71,12 @@ install:
          choco source add -n "inaos" -s "https://inaos.jfrog.io/inaos/api/nuget/nuget-release-local/" -u %jfrog_artifactory_uid% -p %jfrog_artifactory_pwd%
          choco install inaos-dev-quality-tools -y --force
          appveyor DownloadFile https://sonarcloud.io/static/cpp/build-wrapper-win-x86.zip
+  - ps: |
+        mkdir ($env:HOME)/.inaos/cmake
+        $inac_home = Join-Path -Path $env:HOME -ChildPath "INAOS"
+        mkdir $inac_home
+        $repos = "INAC_REPOSITORY_LOCAL=$inac_home`nINAC_REPOSITORY_REMOTE=https://inaos.jfrog.io/inaos/libs-release-local/inaos`nINAC_REPOSITORY_USRPWD=licensed:AKCp5bBraH7CasbsYCURsjzkbjXwVwdYcT7u39EiuL6GjnK1VKfKQWCd1E2E64mHokU5YUHku"
+        Add-Content ($env:HOME)/.inaos/cmake/repository.txt $repos
 
 build_script:
   - sh: |
