@@ -71,10 +71,10 @@ set(BENCH ${CMAKE_SOURCE_DIR}/bench)
 #endif ()
 
 add_executable(vectors-iarray ${BENCH}/vectors-iarray.c)
-add_executable(gemm-iarray ${BENCH}/gemm-iarray.c)
+add_executable(matmul-iarray ${BENCH}/matmul-iarray.c)
 
 target_link_libraries(vectors-iarray LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
-target_link_libraries(gemm-iarray LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+target_link_libraries(matmul-iarray LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 #if (MSVC)
 #    install(TARGETS iarray
