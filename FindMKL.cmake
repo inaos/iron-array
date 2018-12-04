@@ -29,7 +29,8 @@ find_path(MKL_ROOT_DIR
         "C:/IntelSWTools/compilers_and_libraries/windows/mkl/"
         "C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl"
         $ENV{HOME}/miniconda3
-        "C:/Miniconda3"
+        $ENV{USERPROFILE}/miniconda3/Library
+        "C:/Miniconda3/Library"
 )
 
 find_path(MKL_INCLUDE_DIR
@@ -61,6 +62,7 @@ foreach (LIB ${MKL_LIBS})
     find_library(${LIB}_PATH ${LIB} PATHS ${MKL_LIB_SEARCHPATH})
     if(${LIB}_PATH)
         set(MKL_LIBRARIES ${MKL_LIBRARIES} ${${LIB}_PATH})
+        message(STATUS "Found MKL ${LIB} in: ${${LIB}_PATH}")
     else()
         message(STATUS "Could not find ${LIB}: disabling MKL")
     endif()
