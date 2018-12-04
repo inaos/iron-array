@@ -4,6 +4,14 @@
 
 ### Function and brackets
 
+Following our guideline:
+
+     typedef struct iarray_example_s {
+         int test;
+     } iarray_example_t;
+
+### Function and brackets
+
 * Open and closing brackets of functions are alwayls on the beginning of the line
 * The backet open or close is alwayls the only character on the line
 
