@@ -82,7 +82,7 @@ install:
         $fileContent = "-----BEGIN RSA PRIVATE KEY-----`n"
         $fileContent += $env:gitlab_priv_key.Replace(' ', "`n")
         $fileContent += "`n-----END RSA PRIVATE KEY-----`n"
-        Set-Content $env:userprofile\.ssh\id_rsa $fileContent
+        Set-Content $HOME/.ssh/id_rsa $fileContent
         git submodule update --init --recursive
 
 build_script:
