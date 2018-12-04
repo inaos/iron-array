@@ -1,0 +1,117 @@
+#
+# Copyright INAOS GmbH, Thalwil, 2018.
+# Copyright Francesc Alted, 2018.
+#
+# All rights reserved.
+#
+# This software is the confidential and proprietary information of INAOS GmbH
+# and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+# Information and shall use it only in accordance with the terms of the license agreement.
+#
+ 
+branches:
+  # whitelist
+  only:
+    - master
+  
+environment:
+  jfrog_artifactory_uid: appveyor
+  jfrog_artifactory_pwd:
+    secure: 2xpsiuGNHwFPtxdh8pA/Mm0I1bC1EfC8NBSoxOEiNco=
+  codecov_api_key:
+    secure: UN9Xgah/RiLwDuTuzBIpcStsLxVt5hNIuHpV5Th8R0YvSsYQeZphSICK8Kes8z2r
+    
+  matrix:
+    - MY_NAME: Linux Debug 64bit
+      APPVEYOR_BUILD_WORKER_IMAGE: ubuntu
+      BUILD_CONFIGURATION: Debug
+      RUN_SONAR: no
+      
+    - MY_NAME: Linux Release 64bit
+      APPVEYOR_BUILD_WORKER_IMAGE: ubuntu
+      BUILD_CONFIGURATION: RelWithDebInfo
+      RUN_SONAR: no
+
+    - MY_NAME: Windows VS 2017 Debug 64bit
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      VSINSTALL: "Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build"
+      MSVC_PLATFORM: amd64
+      BUILD_CONFIGURATION: Debug
+      BUILD_ARCH: x86_64
+      RUN_SONAR: no
+
+    - MY_NAME: Windows VS 2017 Release 64bit
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      VSINSTALL: "Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build"
+      MSVC_PLATFORM: amd64
+      BUILD_CONFIGURATION: RelWithDebInfo
+      BUILD_ARCH: x86_64
+      RUN_SONAR: no
+      
+matrix:
+  fast_finish: false
+
+init:
+  - cmd: C:\"Program Files (x86)"\"%VSINSTALL%"\vcvarsall.bat %MSVC_PLATFORM%
+  
+cache:
+  - C:\ProgramData\chocolatey\lib -> appveyor.yml # on Ubuntu builds this path will not be found
+  - /var/cache/apt/archives/inaos-dev-quality-tools_1.0-1.deb # on VS builds this path will not be found
+
+install:
+  - sh:  |
+         sudo sh -c "echo 'deb https://appveyor:N9z6j8yVukyeLcfE@inaos.jfrog.io/inaos/debian-local xenial main' >> /etc/apt/sources.list"
+         sudo wget --http-user=$jfrog_artifactory_uid --http-password=$jfrog_artifactory_pwd -O - https://inaos.jfrog.io/inaos/api/gpg/key/public | sudo apt-key add -
+         sudo apt-get update
+         sudo apt-get install inaos-dev-quality-tools
+         sudo apt-get install gcovr
+         sudo apt-get install xsltproc
+         appveyor DownloadFile https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
+  - cmd: |
+         choco source add -n "inaos" -s "https://inaos.jfrog.io/inaos/api/nuget/nuget-release-local/" -u %jfrog_artifactory_uid% -p %jfrog_artifactory_pwd%
+         choco install inaos-dev-quality-tools -y --force
+         appveyor DownloadFile https://sonarcloud.io/static/cpp/build-wrapper-win-x86.zip
+
+build_script:
+  - sh: |
+        mkdir cmake-build-$BUILD_CONFIGURATION
+        7z e build-wrapper-linux-x86.zip -ocmake-build-$BUILD_CONFIGURATION
+        cd cmake-build-$BUILD_CONFIGURATION
+        cmake -G "Unix Makefiles" ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION -DINAC_COVERAGE_ENABLED=1 $snapshot
+        ./build-wrapper-linux-x86-64 --out-dir bw-output make
+  - cmd: |
+         mkdir cmake-build-%BUILD_CONFIGURATION%
+         7z e build-wrapper-win-x86.zip -ocmake-build-%BUILD_CONFIGURATION%
+         cd cmake-build-%BUILD_CONFIGURATION%
+         cmake -G "NMake Makefiles" ../ -DCMAKE_BUILD_TYPE=%BUILD_CONFIGURATION% -DINAC_TARGET_ARCH=%BUILD_ARCH% -DINAC_COVERAGE_ENABLED=1 %snapshot%
+         build-wrapper-win-x86-64.exe --out-dir bw-output nmake
+after_build:
+  - sh: |
+        cpack
+  - cmd: |
+         cpack
+
+test_script:
+  - sh: |
+        make coverage || true
+  - cmd: |
+         nmake coverage & exit 0
+
+after_test:
+  - ps: |
+        $wc = New-Object 'System.Net.WebClient'
+        $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $env:APPVEYOR_BUILD_FOLDER/cmake-build-$env:BUILD_CONFIGURATION/junit.xml))
+     
+        # Code coverage
+        $env:PATH = 'C:\msys64\usr\bin;' + $env:PATH
+        Invoke-WebRequest -Uri 'https://codecov.io/bash' -OutFile codecov.sh
+        bash codecov.sh -f "$env:APPVEYOR_BUILD_FOLDER/cmake-build-$env:BUILD_CONFIGURATION/tests-coverage.xml" -t $env:codecov_api_key
+        
+        # Detect if there are any failure nodes in the junit results
+        [xml]$results = Get-Content $env:APPVEYOR_BUILD_FOLDER/cmake-build-$env:BUILD_CONFIGURATION/junit.xml
+        $failure = $results.SelectSingleNode("//failure")
+        if ($failure -ne $null) { 
+            throw "Forcing build failure due to unit test failure(s)"
+        }
+    
+  
