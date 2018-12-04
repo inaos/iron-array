@@ -56,6 +56,8 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx, iarray_data_type_t d
 
     INA_TEST_ASSERT_SUCCEED(test_slice(ctx, &c_out, c_x, start, stop));
 
+    //TODO: Implement an assert function
+
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_out);
 
