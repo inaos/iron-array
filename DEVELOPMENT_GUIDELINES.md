@@ -39,6 +39,13 @@ Following our guideline:
 * Alwalys use ina_rc_t as return type of functions
 * Only for functions that end in suffix '_free' we should use the 'void'
 
+### File names
+
+Source files should prefer '_' (underscores) to '-' (dashes).  Example:
+
+   test_this.c
+   bench_that.c
+
 ### Good practices for developing C libraries
 
 http://lucumr.pocoo.org/2013/8/18/beautiful-native-libraries/
