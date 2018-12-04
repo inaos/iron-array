@@ -64,10 +64,14 @@ install:
   - sh:  |
          sudo sh -c "echo 'deb https://appveyor:N9z6j8yVukyeLcfE@inaos.jfrog.io/inaos/debian-local xenial main' >> /etc/apt/sources.list"
          sudo wget --http-user=$jfrog_artifactory_uid --http-password=$jfrog_artifactory_pwd -O - https://inaos.jfrog.io/inaos/api/gpg/key/public | sudo apt-key add -
+         sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
+         sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
+         sudo sh -c 'echo deb https://apt.repos.intel.com/mkl all main > /etc/apt/sources.list.d/intel-mkl.list'
          sudo apt-get update
          sudo apt-get install inaos-dev-quality-tools
          sudo apt-get install gcovr
          sudo apt-get install xsltproc
+         sudo apt-get install intel-mkl-2019.1-053
          appveyor DownloadFile https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
   - cmd: |
          choco source add -n "inaos" -s "https://inaos.jfrog.io/inaos/api/nuget/nuget-release-local/" -u %jfrog_artifactory_uid% -p %jfrog_artifactory_pwd%
