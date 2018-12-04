@@ -41,8 +41,8 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
     iarray_itr_t *I;
     iarray_itr_new(c_x, &I);
 
-
     for (I->init(I); !I->finished(I); I->next(I)) {
+
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double value = (double) I->nelem;
             memcpy(I->pointer, &value, type_size);
@@ -50,7 +50,6 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
             float value = (float) I->nelem;
             memcpy(I->pointer, &value, type_size);
         }
-
     }
 
     iarray_itr_free(I);
