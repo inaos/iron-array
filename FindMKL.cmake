@@ -27,7 +27,9 @@ find_path(MKL_ROOT_DIR
         /opt/intel/compilers_and_libraries/linux/mkl
         /opt/intel/compilers_and_libraries/mac/mkl
         "C:/IntelSWTools/compilers_and_libraries/windows/mkl/"
-		"C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl"
+        "C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl"
+        $ENV{HOME}/miniconda3
+        "C:/Miniconda3"
 )
 
 find_path(MKL_INCLUDE_DIR

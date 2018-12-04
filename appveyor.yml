@@ -72,6 +72,8 @@ install:
   - cmd: |
          choco source add -n "inaos" -s "https://inaos.jfrog.io/inaos/api/nuget/nuget-release-local/" -u %jfrog_artifactory_uid% -p %jfrog_artifactory_pwd%
          choco install inaos-dev-quality-tools -y --force
+         conda install -c intel mkl-include
+         conda install -c intel mkl-static
          appveyor DownloadFile https://sonarcloud.io/static/cpp/build-wrapper-win-x86.zip
   - ps: |
         mkdir -p $HOME/.inaos/cmake
@@ -83,16 +85,17 @@ install:
         $fileContent += $env:gitlab_priv_key.Replace(' ', "`n")
         $fileContent += "`n-----END RSA PRIVATE KEY-----`n"
         Set-Content $HOME/.ssh/id_rsa $fileContent
-        git submodule update -q --init --recursive
 
 build_script:
   - sh: |
+        git submodule update -q --init --recursive
         mkdir cmake-build-$BUILD_CONFIGURATION
         7z e build-wrapper-linux-x86.zip -ocmake-build-$BUILD_CONFIGURATION
         cd cmake-build-$BUILD_CONFIGURATION
         cmake -G "Unix Makefiles" ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION -DINAC_COVERAGE_ENABLED=1 $snapshot
         ./build-wrapper-linux-x86-64 --out-dir bw-output make
   - cmd: |
+         git submodule update -q --init --recursive
          mkdir cmake-build-%BUILD_CONFIGURATION%
          7z e build-wrapper-win-x86.zip -ocmake-build-%BUILD_CONFIGURATION%
          cd cmake-build-%BUILD_CONFIGURATION%
