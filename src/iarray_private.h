@@ -25,6 +25,9 @@
 #define _IARRAY_SIZE_MB  (1024*_IARRAY_SIZE_KB)
 #define _IARRAY_SIZE_GB  (1024*_IARRAY_SIZE_MB)
 
+/* Mempools */
+#define _IARRAY_MEMPOOL_EVAL_SIZE (8*1024*1024)
+
 typedef enum iarray_optype_e {
     IARRAY_OPERATION_TYPE_ADD,
     IARRAY_OPERATION_TYPE_SUB,
@@ -38,6 +41,31 @@ typedef enum iarray_blas_type_e {
     IARRAY_OPERATION_TYPE_BLAS2,
     IARRAY_OPERATION_TYPE_BLAS3
 } iarray_blas_type_t;
+
+struct iarray_context_s {
+    iarray_config_t *cfg;
+    ina_mempool_t *mp;
+    /* FIXME: track expressions -> list */
+};
+
+typedef struct _iarray_container_store_s {
+    ina_str_t id;
+} _iarray_container_store_t;
+
+struct iarray_container_s {
+    iarray_dtshape_t *dtshape;
+    blosc2_cparams *cparams;
+    blosc2_dparams *dparams;
+    caterva_dims_t *pshape;
+    caterva_dims_t *shape;
+    blosc2_frame *frame;
+    caterva_array_t *catarr;
+    _iarray_container_store_t *store;
+    union {
+        float f;
+        double d;
+    } scalar_value;
+};
 
 typedef struct iarray_temporary_s {
     iarray_dtshape_t *dtshape;
