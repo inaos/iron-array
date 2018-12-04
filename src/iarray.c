@@ -1166,7 +1166,7 @@ void _update_itr_index(iarray_itr_t *itr) {
 
     uint64_t aux_nchunk[CATERVA_MAXDIM];
 
-    aux_nchunk[ndim - 1] = catarr->eshape[ndim - 1] - catarr->pshape[ndim - 1];
+    aux_nchunk[ndim - 1] = catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1];
     for (int k = ndim - 2; k >= 0; --k) {
         aux_nchunk[k] = aux_nchunk[k + 1] * (catarr->eshape[k] / catarr->pshape[k]);
     }
@@ -1175,9 +1175,9 @@ void _update_itr_index(iarray_itr_t *itr) {
     }
 
     if (itr->container->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        itr->dir_mem = (uint8_t *)&((double*)itr->part)[cont2];
+        itr->pointer = (void *)&((double*)itr->part)[cont2];
     } else{
-        itr->dir_mem = (uint8_t *)&((float*)itr->part)[cont2];
+        itr->pointer = (void *)&((float*)itr->part)[cont2];
     }
 
 }
@@ -1189,7 +1189,7 @@ void _iarray_itr_init(iarray_itr_t *itr) {
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         itr->index[i] = 0;
     }
-    itr->dir_mem = &itr->part[0];
+    itr->pointer = &itr->part[0];
 }
 
 void _iarray_itr_next(iarray_itr_t *itr) {
@@ -1217,7 +1217,6 @@ void _iarray_itr_next(iarray_itr_t *itr) {
     if (itr->cont % catarr->csize == 0) {
         blosc2_schunk_append_buffer(catarr->sc, itr->part, catarr->csize * catarr->sc->typesize);
         memset(itr->part, 0, itr->container->catarr->csize * itr->container->catarr->sc->typesize);
-        printf("New chunk %llu\n", itr->cont / catarr->csize);
     }
 
     _update_itr_index(itr);

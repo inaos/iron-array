@@ -17,7 +17,6 @@
 #define IARRAY_DIMENSION_MAX 8 /* A fixed size simplifies the code and should be enough for most IronArray cases */
 
 typedef struct iarray_context_s iarray_context_t;
-
 typedef struct iarray_container_s iarray_container_t;
 typedef struct iarray_itr_s iarray_itr_t;
 typedef struct iarray_expression_s iarray_expression_t;
@@ -68,10 +67,11 @@ typedef enum iarray_compression_codec_e {
     IARRAY_COMPRESSION_LIZARD
 } iarray_compression_codec_t;
 
+
 typedef struct iarray_itr_s {
     iarray_container_t *container;
     uint8_t *part;
-    uint8_t *dir_mem;
+    void *pointer;
     uint64_t *index;
     uint64_t cont;
     int (*finished)(iarray_itr_t *itr);
