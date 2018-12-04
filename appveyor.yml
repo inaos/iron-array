@@ -76,8 +76,8 @@ install:
   - cmd: |
          choco source add -n "inaos" -s "https://inaos.jfrog.io/inaos/api/nuget/nuget-release-local/" -u %jfrog_artifactory_uid% -p %jfrog_artifactory_pwd%
          choco install inaos-dev-quality-tools -y --force
-         conda install -c intel mkl-include
-         conda install -c intel mkl-static
+         C:\Miniconda3\Scripts\conda install -c intel mkl-include
+         C:\Miniconda3\Scripts\conda install -c intel mkl-static
          appveyor DownloadFile https://sonarcloud.io/static/cpp/build-wrapper-win-x86.zip
   - ps: |
         mkdir -p $HOME/.inaos/cmake
