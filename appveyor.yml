@@ -77,6 +77,7 @@ install:
         mkdir -p $inac_home
         $repos = "INAC_REPOSITORY_LOCAL=$inac_home`nINAC_REPOSITORY_REMOTE=https://inaos.jfrog.io/inaos/libs-release-local/inaos`nINAC_REPOSITORY_USRPWD=licensed:AKCp5bBraH7CasbsYCURsjzkbjXwVwdYcT7u39EiuL6GjnK1VKfKQWCd1E2E64mHokU5YUHku"
         Add-Content $HOME/.inaos/cmake/repository.txt $repos
+        git submodule update --init --recursive
 
 build_script:
   - sh: |
