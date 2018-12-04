@@ -191,13 +191,13 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_data_type_t dtype, int *max_nel
 
 static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
 {
-    /* FIXME: blosc set container */
+    caterva_fill(c->catarr, *c->shape, &value);
     return INA_SUCCESS;
 }
 
 static ina_rc_t _iarray_container_fill_double(iarray_container_t *c, double value)
 {
-    /* FIXME: blosc set container */
+    caterva_fill(c->catarr, *c->shape, &value);
     return INA_SUCCESS;
 }
 
