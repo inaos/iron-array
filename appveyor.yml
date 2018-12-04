@@ -29,17 +29,17 @@ environment:
       BUILD_CONFIGURATION: Debug
       RUN_SONAR: no
       
-    - MY_NAME: Linux Release 64bit
-      APPVEYOR_BUILD_WORKER_IMAGE: ubuntu
-      BUILD_CONFIGURATION: RelWithDebInfo
-      RUN_SONAR: no
-
     - MY_NAME: Windows VS 2017 Debug 64bit
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       VSINSTALL: "Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build"
       MSVC_PLATFORM: amd64
       BUILD_CONFIGURATION: Debug
       BUILD_ARCH: x86_64
+      RUN_SONAR: no
+
+    - MY_NAME: Linux Release 64bit
+      APPVEYOR_BUILD_WORKER_IMAGE: ubuntu
+      BUILD_CONFIGURATION: RelWithDebInfo
       RUN_SONAR: no
 
     - MY_NAME: Windows VS 2017 Release 64bit
