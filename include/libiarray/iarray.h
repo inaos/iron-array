@@ -216,6 +216,8 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
                                    void *buffer,
                                    size_t buffer_len);
 
+
+INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dtshape_t *b);
 INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, uint64_t *nbytes, uint64_t *cbytes);
 
 INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container);
