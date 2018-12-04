@@ -43,8 +43,8 @@ Following our guideline:
 
 Source files should prefer '_' (underscores) to '-' (dashes).  Example:
 
-   test_this.c
-   bench_that.c
+    test_this.c
+    bench_that.c
 
 ### Good practices for developing C libraries
 
