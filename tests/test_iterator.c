@@ -36,37 +36,35 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
 
     iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x);
 
-    // Iterator
+    // Start Iterator
 
     iarray_itr_t *I;
     iarray_itr_new(c_x, &I);
 
 
     for (I->init(I); !I->finished(I); I->next(I)) {
-        double cont = 0;
-        uint64_t inc = 1;
-        for (int i = ndim - 1; i >= 0; --i) {
-            cont += I->index[i] * inc;
-            inc *= shape[i];
-        }
-        //printf("%f\n", cont);
-        memcpy(I->pointer, &cont, sizeof(double));
+        double value = (double) I->nelem;
+        memcpy(I->pointer, &value, sizeof(double));
     }
 
     iarray_itr_free(I);
+
+    // Assert iterator values
 
     uint64_t bufsize = 1;
     for (int j = 0; j < ndim; ++j) {
         bufsize *= xdtshape.shape[j];
     }
-    double *bufdest = (double *) malloc(bufsize * type_size);
+    double *bufdest = (double *) ina_mem_alloc(bufsize * type_size);
     iarray_to_buffer(ctx, c_x, bufdest, bufsize);
 
-    for (uint64_t k = 0; k < bufsize; ++k) {
-        printf("%f\n", bufdest[k]);
+    for (uint64_t k = 1; k < bufsize; ++k) {
+        INA_TEST_ASSERT_EQUAL_FLOATING(bufdest[k-1] + 1, bufdest[k]);
     }
 
-    free(bufdest);
+    // Free
+
+    ina_mem_free(bufdest);
     iarray_container_free(ctx, &c_x);
     return INA_SUCCESS;
 }
@@ -94,9 +92,9 @@ INA_TEST_FIXTURE(iterator, double_data) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    uint8_t ndim = 2;
-    uint64_t shape[] = {4, 18};
-    uint64_t pshape[] = {2, 3};
+    uint8_t ndim = 7;
+    uint64_t shape[] = {13, 14, 15, 4, 6, 14, 8};
+    uint64_t pshape[] = {5, 2, 4, 3, 2, 9, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
