@@ -2,6 +2,10 @@
 
 ## Style and code conventions
 
+### Indentation
+
+* Use 4 spaces
+
 ### Structs
 
 Following our guideline:
