@@ -136,4 +136,5 @@ after_test:
             throw "Forcing build failure due to unit test failure(s)"
         }
     
-  
+on_finish:
+  - ps: $blockRdp = $true
