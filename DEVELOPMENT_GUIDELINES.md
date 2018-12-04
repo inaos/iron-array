@@ -2,7 +2,7 @@
 
 ## Style and code conventions
 
-### Function and brackets
+### Structs
 
 Following our guideline:
 
