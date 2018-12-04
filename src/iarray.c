@@ -1223,7 +1223,7 @@ void _iarray_itr_next(iarray_itr_t *itr) {
 
     if (itr->cont % catarr->csize == 0) {
         blosc2_schunk_append_buffer(catarr->sc, itr->part, catarr->csize * catarr->sc->typesize);
-        memset(itr->part, 0, itr->container->catarr->csize * itr->container->catarr->sc->typesize);
+        memset(itr->part, 0, catarr->csize * catarr->sc->typesize);
     }
 
     _update_itr_index(itr);
