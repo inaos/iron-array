@@ -42,3 +42,11 @@ We use inac cmake build-system.
 * Invoke CMAKE, we have to define the generator as well as the build-type 
 
          cmake -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug ..
+
+
+### Limitations
+
+#### Expressions
+
+* For now only element-wise operations are supported in expression.
+
