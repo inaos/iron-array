@@ -57,11 +57,11 @@ typedef enum iarray_container_flags_e {
     IARRAY_CONTAINER_PERSIST = 0x1
 } iarray_container_flags_t;
 
-typedef enum iarray_operation_hint_e {
-    IARRAY_OPERATION_GENERAL = 0,
-    IARRAY_OPERATION_SYMMETRIC,
-    IARRAY_OPERATION_TRIANGULAR
-} iarray_operation_hint_t;
+typedef enum iarray_operator_hint_e {
+    IARRAY_OPERATOR_GENERAL = 0,
+    IARRAY_OPERATOR_SYMMETRIC,
+    IARRAY_OPERATOR_TRIANGULAR
+} iarray_operator_hint_t;
 
 typedef enum iarray_compression_codec_e {
     IARRAY_COMPRESSION_BLOSCLZ = 0,
@@ -246,24 +246,24 @@ INA_API(ina_rc_t) iarray_container_is_symmetric(iarray_container_t *a);
 INA_API(ina_rc_t) iarray_container_is_triangular(iarray_container_t *a);
 
 /* Logical operators -> not supported yet as we only support float and double and return would be int8 */
-INA_API(ina_rc_t) iarray_operation_and(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_or(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_xor(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_nand(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_not(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_and(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_or(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_xor(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_nand(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_not(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
 
 /* Arithmetic operators -> element-wise */
-INA_API(ina_rc_t) iarray_operation_add(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_sub(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_mul(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_div(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_add(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_sub(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_mul(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_div(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
 
 /* linear algebra */
 INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a);
 INA_API(ina_rc_t) iarray_linalg_inverse(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result,
-                                       iarray_operation_hint_t hint);
-INA_API(ina_rc_t) iarray_linalg_dot(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result, iarray_operation_hint_t hint);
+                                       iarray_operator_hint_t hint);
+INA_API(ina_rc_t) iarray_linalg_dot(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result, iarray_operator_hint_t hint);
 INA_API(ina_rc_t) iarray_linalg_det(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 INA_API(ina_rc_t) iarray_linalg_eigen(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 INA_API(ina_rc_t) iarray_linalg_norm(iarray_context_t *ctx, iarray_container_t *a, iarray_linalg_norm_t ord, iarray_container_t *result);
@@ -275,34 +275,34 @@ INA_API(ina_rc_t) iarray_linalg_lu(iarray_context_t *ctx, iarray_container_t *a,
 INA_API(ina_rc_t) iarray_linalg_cholesky(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 
 /* Function operators -> element-wise */
-INA_API(ina_rc_t) iarray_operation_abs(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_acos(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_asin(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_atanc(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_atan2(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_ceil(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_cos(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_cosh(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_exp(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_floor(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_log(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_log10(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_pow(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_sin(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_sinh(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_sqrt(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_tan(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_tanh(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_erf(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_erfc(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_cdfnorm(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_erfinv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_erfcinv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_cdfnorminv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_lgamma(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_tgamma(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_expint1(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operation_cumsum(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_abs(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_acos(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_asin(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_atanc(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_atan2(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_ceil(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_cos(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_cosh(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_exp(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_floor(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_log(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_log10(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_pow(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_sin(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_sinh(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_sqrt(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_tan(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_tanh(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_erf(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_erfc(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_cdfnorm(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_erfinv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_erfcinv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_cdfnorminv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_lgamma(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_tgamma(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_expint1(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_cumsum(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 
 /* Reductions */
 INA_API(ina_rc_t) iarray_reduction_sum(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
