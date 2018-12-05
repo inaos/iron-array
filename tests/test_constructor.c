@@ -15,8 +15,14 @@
 
 #include <tests/iarray_test.h>
 
-static ina_rc_t test_fill(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint8_t ndim, uint64_t *shape, uint64_t *pshape, void *value) {
-
+static ina_rc_t test_fill(iarray_context_t *ctx,
+                          iarray_data_type_t dtype,
+                          size_t type_size,
+                          uint8_t ndim,
+                          uint64_t *shape,
+                          uint64_t *pshape,
+                          void *value)
+{
     iarray_dtshape_t xdtshape;
 
     xdtshape.dtype = dtype;
@@ -58,11 +64,11 @@ static ina_rc_t test_fill(iarray_context_t *ctx, iarray_data_type_t dtype, size_
     return INA_SUCCESS;
 }
 
-INA_TEST_DATA(fill) {
+INA_TEST_DATA(constructor_fill) {
     iarray_context_t *ctx;
 };
 
-INA_TEST_SETUP(fill)
+INA_TEST_SETUP(constructor_fill)
 {
     iarray_init();
 
@@ -73,13 +79,13 @@ INA_TEST_SETUP(fill)
     iarray_context_new(&cfg, &data->ctx);
 }
 
-INA_TEST_TEARDOWN(fill)
+INA_TEST_TEARDOWN(constructor_fill)
 {
     iarray_context_free(&data->ctx);
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(fill, double_data)
+INA_TEST_FIXTURE(constructor_fill, double_data)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
@@ -92,7 +98,7 @@ INA_TEST_FIXTURE(fill, double_data)
     INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, pshape, &value));
 }
 
-INA_TEST_FIXTURE(fill, float_data)
+INA_TEST_FIXTURE(constructor_fill, float_data)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
