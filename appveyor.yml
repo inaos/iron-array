@@ -15,7 +15,6 @@ branches:
     - master
   
 environment:
-  APPVEYOR_RDP_PASSWORD: M${FF^m{a#Pq,3gQ
   jfrog_artifactory_uid: appveyor
   jfrog_artifactory_pwd:
     secure: 2xpsiuGNHwFPtxdh8pA/Mm0I1bC1EfC8NBSoxOEiNco=
@@ -77,8 +76,8 @@ install:
   - cmd: |
          choco source add -n "inaos" -s "https://inaos.jfrog.io/inaos/api/nuget/nuget-release-local/" -u %jfrog_artifactory_uid% -p %jfrog_artifactory_pwd%
          choco install inaos-dev-quality-tools -y --force
-         C:\Miniconda3\Scripts\conda install -y -c intel mkl-include
-         C:\Miniconda3\Scripts\conda install -y -c intel mkl-static
+         C:\Miniconda37-x64\Scripts\conda install -y -c intel mkl-include
+         C:\Miniconda37-x64\Scripts\conda install -y -c intel mkl-static
          appveyor DownloadFile https://sonarcloud.io/static/cpp/build-wrapper-win-x86.zip
   - ps: |
         mkdir -p $HOME/.inaos/cmake
@@ -134,6 +133,4 @@ after_test:
         if ($failure -ne $null) { 
             throw "Forcing build failure due to unit test failure(s)"
         }
-    
-on_finish:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+   
