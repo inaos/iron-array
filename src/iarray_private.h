@@ -67,6 +67,15 @@ struct iarray_container_s {
     } scalar_value;
 };
 
+typedef struct iarray_itr_s {
+    iarray_container_t *container;
+    uint8_t *part;
+    void *pointer;
+    uint64_t *index;
+    uint64_t nelem;
+    uint64_t cont;
+} iarray_itr_t;
+
 typedef struct iarray_temporary_s {
     iarray_dtshape_t *dtshape;
     size_t size;

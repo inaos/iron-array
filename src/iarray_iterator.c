@@ -57,7 +57,7 @@ void _update_itr_index(iarray_itr_t *itr)
 }
 
 
-void _iarray_itr_init(iarray_itr_t *itr)
+INA_API(void) iarray_itr_init(iarray_itr_t *itr)
 {
     itr->cont = 0;
     itr->nelem = 0;
@@ -68,7 +68,7 @@ void _iarray_itr_init(iarray_itr_t *itr)
     itr->pointer = &itr->part[0];
 }
 
-void _iarray_itr_next(iarray_itr_t *itr)
+INA_API(void) iarray_itr_next(iarray_itr_t *itr)
 {
 
     caterva_array_t *catarr = itr->container->catarr;
@@ -100,7 +100,7 @@ void _iarray_itr_next(iarray_itr_t *itr)
 }
 
 
-int _iarray_itr_finished(iarray_itr_t *itr)
+INA_API(int) iarray_itr_finished(iarray_itr_t *itr)
 {
     return itr->cont >= itr->container->catarr->esize;
 }
@@ -116,9 +116,6 @@ INA_API(ina_rc_t) iarray_itr_new(iarray_container_t *container, iarray_itr_t **i
 
     (*itr)->index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
 
-    (*itr)->init = _iarray_itr_init;
-    (*itr)->next = _iarray_itr_next;
-    (*itr)->finished = _iarray_itr_finished;
     return 0;
 }
 

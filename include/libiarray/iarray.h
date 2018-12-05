@@ -73,19 +73,6 @@ typedef enum iarray_compression_codec_e {
     IARRAY_COMPRESSION_LIZARD
 } iarray_compression_codec_t;
 
-
-typedef struct iarray_itr_s {
-    iarray_container_t *container;
-    uint8_t *part;
-    void *pointer;
-    uint64_t *index;
-    uint64_t nelem;
-    uint64_t cont;
-    int (*finished)(iarray_itr_t *itr);
-    void (*init)(iarray_itr_t *itr);
-    void (*next)(iarray_itr_t *itr);
-} iarray_itr_t;
-
 typedef struct iarray_config_s {
     iarray_compression_codec_t compression_codec;
     int compression_level;
@@ -255,5 +242,9 @@ ina_rc_t iarray_eval_block(iarray_context_t *ctx, char* expr, iarray_variable_t 
 
 INA_API(ina_rc_t) iarray_itr_new(iarray_container_t *container, iarray_itr_t **itr);
 INA_API(ina_rc_t) iarray_itr_free(iarray_itr_t *itr);
+
+INA_API(void) iarray_itr_init(iarray_itr_t *itr);
+INA_API(void) iarray_itr_next(iarray_itr_t *itr);
+INA_API(int) iarray_itr_finished(iarray_itr_t *itr);
 
 #endif

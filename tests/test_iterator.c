@@ -41,7 +41,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
     iarray_itr_t *I;
     iarray_itr_new(c_x, &I);
 
-    for (I->init(I); !I->finished(I); I->next(I)) {
+    for (iarray_itr_init(I); !iarray_itr_finished(I); iarray_itr_next(I)) {
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double value = (double) I->nelem;
