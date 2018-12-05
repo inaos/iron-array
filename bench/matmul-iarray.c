@@ -165,7 +165,7 @@ int main(int argc, char** argv)
     iarray_container_new(ctx, &shape, mat_out_name, 0, &con_out);
 
     INA_STOPWATCH_START(w);
-    iarray_matmul(con_x, con_y, con_out, IARRAY_OPERATION_GENERAL); /* FIXME: error handling */
+    iarray_linalg_matmul(con_x, con_y, con_out, IARRAY_OPERATION_GENERAL); /* FIXME: error handling */
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 

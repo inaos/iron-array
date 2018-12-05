@@ -175,7 +175,7 @@ int main(int argc, char** argv)
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
             nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
 
-    INA_MUST_SUCCEED(iarray_almost_equal_data(con_y, con_out, 1e-06));
+    INA_MUST_SUCCEED(iarray_container_almost_equal(con_y, con_out, 1e-06));
 
     iarray_expr_free(ctx, &e);
 

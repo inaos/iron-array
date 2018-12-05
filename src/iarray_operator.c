@@ -14,63 +14,6 @@
 
 #include <iarray_private.h>
 
-INA_API(ina_rc_t) iarray_almost_equal_data(iarray_container_t *a, iarray_container_t *b, double tol) {
-    if(a->dtshape->dtype != b->dtshape->dtype){
-        return false;
-    }
-    if(a->catarr->size != b->catarr->size) {
-        return false;
-    }
-    size_t size = a->catarr->size;
-
-    uint8_t *buf_a = malloc(a->catarr->size * a->catarr->sc->typesize);
-    caterva_to_buffer(a->catarr, buf_a);
-    uint8_t *buf_b = malloc(b->catarr->size * b->catarr->sc->typesize);
-    caterva_to_buffer(b->catarr, buf_b);
-
-    if(a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        double *b_a = (double *)buf_a;
-        double *b_b = (double *)buf_b;
-
-        for (size_t i = 0; i < size; ++i) {
-            double vdiff = fabs((b_a[i] - b_b[i]) / b_a[i]);
-            if (vdiff > tol) {
-                printf("%f, %f\n", b_a[i], b_b[i]);
-                printf("Values differ in (%lu nelem) (diff: %f)\n", i, vdiff);
-                free(buf_a);
-                free(buf_b);
-                return false;
-            }
-        }
-        free(buf_a);
-        free(buf_b);
-        return true;
-    }
-    else if(a->dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        float *b_a = (float *)buf_a;
-        float *b_b = (float *)buf_b;
-
-        for (size_t i = 0; i < size; ++i) {
-            double vdiff = fabs((double)(b_a[i] - b_b[i]) / b_a[i]);
-            if (vdiff > tol) {
-                printf("%f, %f\n", b_a[i], b_b[i]);
-                printf("Values differ in (%lu nelem) (diff: %f)\n", i, vdiff);
-                free(buf_a);
-                free(buf_b);
-                return false;
-            }
-        }
-        free(buf_a);
-        free(buf_b);
-        return true;
-    }
-    printf("Data type is not supported");
-    free(buf_a);
-    free(buf_b);
-    return false;
-}
-
-
 static ina_rc_t _iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
 
     caterva_update_shape(c->catarr, *c->shape);
@@ -162,6 +105,17 @@ static ina_rc_t _iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarra
     free(c_block);
 
     return INA_SUCCESS;;
+}
+
+INA_API(ina_rc_t) iarray_operation_transpose(iarray_container_t *a)
+{
+    if (a->transposed == 0) {
+        a->transposed = 1;
+    }
+    else {
+        a->transposed = 0;
+    }
+    return INA_SUCCESS;
 }
 
 INA_API(ina_rc_t) iarray_matmul(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c, int flag)
