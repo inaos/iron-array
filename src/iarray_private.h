@@ -61,11 +61,20 @@ struct iarray_container_s {
     blosc2_frame *frame;
     caterva_array_t *catarr;
     _iarray_container_store_t *store;
+    int transposed;
     union {
         float f;
         double d;
     } scalar_value;
 };
+
+typedef struct iarray_variable_s {
+    const char *name;
+    const void *address;
+    iarray_dtshape_t dtshape;
+    void *context;
+} iarray_variable_t;
+
 
 typedef struct iarray_temporary_s {
     iarray_dtshape_t *dtshape;

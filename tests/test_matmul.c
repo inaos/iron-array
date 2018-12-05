@@ -17,8 +17,8 @@
 
 static ina_rc_t test_gemm(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out,
                           iarray_container_t *c_res, double tol) {
-    INA_TEST_ASSERT_SUCCEED(iarray_matmul(c_x, c_y, c_out, IARRAY_OPERATION_GENERAL));
-    if (!iarray_almost_equal_data(c_out, c_res, tol)) {
+    INA_TEST_ASSERT_SUCCEED(iarray_linalg_matmul(c_x, c_y, c_out, IARRAY_OPERATION_GENERAL));
+    if (!iarray_container_almost_equal(c_out, c_res, tol)) {
         return INA_ERROR(INA_ERR_FAILED);
     }
     return INA_SUCCESS;
@@ -120,8 +120,8 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
 }
 
 static ina_rc_t test_gemv(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out, iarray_container_t *c_res, double tol) {
-    iarray_matmul(c_x, c_y, c_out, IARRAY_OPERATION_GENERAL);
-    if (!iarray_almost_equal_data(c_out, c_res, tol)) {
+    iarray_linalg_matmul(c_x, c_y, c_out, IARRAY_OPERATION_GENERAL);
+    if (!iarray_container_almost_equal(c_out, c_res, tol)) {
         return INA_ERROR(INA_ERR_FAILED);
     }
     return INA_SUCCESS;
@@ -224,6 +224,18 @@ INA_TEST_SETUP(gemm) {
 INA_TEST_TEARDOWN(gemm) {
     iarray_context_free(&data->ctx);
     iarray_destroy();
+}
+
+INA_TEST_FIXTURE_SKIP(gemm, different_shapes) {
+
+}
+
+INA_TEST_FIXTURE_SKIP(gemm, test_partition_compatibility) {
+
+}
+
+INA_TEST_FIXTURE_SKIP(gemm, test_error_handling) {
+
 }
 
 INA_TEST_FIXTURE(gemm, double_data) {

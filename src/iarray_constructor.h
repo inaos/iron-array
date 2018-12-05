@@ -64,6 +64,8 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     (*c)->pshape = (caterva_dims_t*)ina_mem_alloc(sizeof(caterva_dims_t));
     INA_FAIL_IF((*c)->pshape == NULL);
 
+    (*c)->transposed = 0;
+
     if (flags & IARRAY_CONTAINER_PERSIST) {
         (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
         INA_FAIL_IF((*c)->store == NULL);
