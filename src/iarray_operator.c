@@ -110,7 +110,7 @@ static ina_rc_t _iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarra
     return INA_SUCCESS;;
 }
 
-static ina_rc_t _iarray_operator_elem_wise(
+static ina_rc_t _iarray_operator_elwise(
         iarray_context_t *ctx,
         iarray_container_t *a,
         iarray_container_t *b,
@@ -194,5 +194,5 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_operator_add(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
-    return _iarray_operator_elem_wise(ctx, a, b, result, vdAdd, vsAdd);
+    return _iarray_operator_elwise(ctx, a, b, result, vdAdd, vsAdd);
 }
