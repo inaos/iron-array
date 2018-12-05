@@ -23,6 +23,7 @@
 static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint8_t ndim,
                                      const uint64_t *shape, const uint64_t *pshape) {
 
+    // Create dtshape
     iarray_dtshape_t xdtshape;
 
     xdtshape.dtype = dtype;
@@ -37,7 +38,6 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
     iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x);
 
     // Start Iterator
-
     iarray_itr_t *I;
     iarray_itr_new(c_x, &I);
 
@@ -55,7 +55,6 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
     iarray_itr_free(I);
 
     // Assert iterator values
-
     uint64_t bufsize = 1;
     for (int j = 0; j < ndim; ++j) {
         bufsize *= xdtshape.shape[j];
@@ -76,7 +75,6 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
     }
 
     // Free
-
     ina_mem_free(bufdest);
     iarray_container_free(ctx, &c_x);
     return INA_SUCCESS;
