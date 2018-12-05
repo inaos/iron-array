@@ -33,6 +33,16 @@ Following our guideline:
      ...
      }
      
+### Large number of arguments in functions
+
+    INA_API(ina_rc_t)function(int arg1,
+                              int arg2,
+                              int arg3,
+                              ...
+                              )
+     {
+     ...
+     }
 
 ### Adhere to INAC conventions wherever possible
 
