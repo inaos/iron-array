@@ -22,7 +22,7 @@ static ina_rc_t test_gemm(iarray_context_t *ctx,
                           iarray_container_t *c_res,
                           double tol)
 {
-    INA_TEST_ASSERT_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y, c_out, IARRAY_OPERATION_GENERAL));
+    INA_TEST_ASSERT_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y, c_out, IARRAY_OPERATOR_GENERAL));
     if (!iarray_container_almost_equal(c_out, c_res, tol)) {
         return INA_ERROR(INA_ERR_FAILED);
     }
@@ -132,14 +132,15 @@ static ina_rc_t test_gemv(iarray_context_t *ctx,
                           iarray_container_t *c_res,
                           double tol)
 {
-    iarray_linalg_matmul(ctx, c_x, c_y, c_out, IARRAY_OPERATION_GENERAL);
+    iarray_linalg_matmul(ctx, c_x, c_y, c_out, IARRAY_OPERATOR_GENERAL);
     if (!iarray_container_almost_equal(c_out, c_res, tol)) {
         return INA_ERROR(INA_ERR_FAILED);
     }
     return INA_SUCCESS;
 }
 
-static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint64_t M, uint64_t K, int32_t P) {
+static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint64_t M, uint64_t K, int32_t P)
+{
     void *buffer_x;
     void *buffer_y;
     void *buffer_r;
@@ -219,11 +220,11 @@ static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx, iarray_data_type_t d
     return INA_SUCCESS;
 }
 
-INA_TEST_DATA(gemm) {
+INA_TEST_DATA(linalg_gemm) {
     iarray_context_t *ctx;
 };
 
-INA_TEST_SETUP(gemm) {
+INA_TEST_SETUP(linalg_gemm) {
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -233,24 +234,24 @@ INA_TEST_SETUP(gemm) {
     iarray_context_new(&cfg, &data->ctx);
 }
 
-INA_TEST_TEARDOWN(gemm) {
+INA_TEST_TEARDOWN(linalg_gemm) {
     iarray_context_free(&data->ctx);
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE_SKIP(gemm, different_shapes) {
+INA_TEST_FIXTURE_SKIP(linalg_gemm, different_shapes) {
 
 }
 
-INA_TEST_FIXTURE_SKIP(gemm, test_partition_compatibility) {
+INA_TEST_FIXTURE_SKIP(linalg_gemm, test_partition_compatibility) {
 
 }
 
-INA_TEST_FIXTURE_SKIP(gemm, test_error_handling) {
+INA_TEST_FIXTURE_SKIP(linalg_gemm, test_error_handling) {
 
 }
 
-INA_TEST_FIXTURE(gemm, double_data) {
+INA_TEST_FIXTURE(linalg_gemm, double_data) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
@@ -262,7 +263,7 @@ INA_TEST_FIXTURE(gemm, double_data) {
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, M, K, N, P));
 }
 
-INA_TEST_FIXTURE(gemm, float_data) {
+INA_TEST_FIXTURE(linalg_gemm, float_data) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
 
@@ -275,11 +276,11 @@ INA_TEST_FIXTURE(gemm, float_data) {
 
 }
 
-INA_TEST_DATA(gemv) {
+INA_TEST_DATA(linalg_gemv) {
     iarray_context_t *ctx;
 };
 
-INA_TEST_SETUP(gemv)
+INA_TEST_SETUP(linalg_gemv)
 {
     iarray_init();
 
@@ -290,13 +291,13 @@ INA_TEST_SETUP(gemv)
     iarray_context_new(&cfg, &data->ctx);
 }
 
-INA_TEST_TEARDOWN(gemv)
+INA_TEST_TEARDOWN(linalg_gemv)
 {
     iarray_context_free(&data->ctx);
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(gemv, double_data)
+INA_TEST_FIXTURE(linalg_gemv, double_data)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
@@ -308,7 +309,7 @@ INA_TEST_FIXTURE(gemv, double_data)
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemv(data->ctx, dtype, type_size, M, K, P));
 }
 
-INA_TEST_FIXTURE(gemv, float_data)
+INA_TEST_FIXTURE(linalg_gemv, float_data)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);

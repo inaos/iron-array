@@ -78,7 +78,7 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
     return INA_SUCCESS;
 }
 
-INA_TEST_DATA(eval)
+INA_TEST_DATA(expression_eval)
 {
     size_t buf_len;
     double *buffer_x;
@@ -86,7 +86,7 @@ INA_TEST_DATA(eval)
     iarray_config_t cfg;
 };
 
-INA_TEST_SETUP(eval)
+INA_TEST_SETUP(expression_eval)
 {
     iarray_init();
 
@@ -103,7 +103,7 @@ INA_TEST_SETUP(eval)
     _fill_y(data->buffer_x, data->buffer_y);
 }
 
-INA_TEST_TEARDOWN(eval)
+INA_TEST_TEARDOWN(expression_eval)
 {
     ina_mem_free(data->buffer_x);
     ina_mem_free(data->buffer_y);
@@ -111,14 +111,14 @@ INA_TEST_TEARDOWN(eval)
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(eval, chunk1)
+INA_TEST_FIXTURE(expression_eval, chunk1)
 {
     data->cfg.flags |= IARRAY_EXPR_EVAL_CHUNK;
  
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len));
 }
 
-INA_TEST_FIXTURE(eval, block1)
+INA_TEST_FIXTURE(expression_eval, block1)
 {
     data->cfg.flags |= IARRAY_EXPR_EVAL_BLOCK;
    
