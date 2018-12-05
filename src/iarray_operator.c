@@ -110,7 +110,7 @@ static ina_rc_t _iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarra
     return INA_SUCCESS;;
 }
 
-static ina_rc_t _iarray_operation_elem_wise(
+static ina_rc_t _iarray_operator_elem_wise(
         iarray_context_t *ctx,
         iarray_container_t *a,
         iarray_container_t *b,
@@ -147,6 +147,7 @@ static ina_rc_t _iarray_operation_elem_wise(
                 mkl_fun_f((const int)psize/sizeof(float), (const float*)a_chunk, (const float*)b_chunk, (float*)c_chunk);
                 break;
         }
+        blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize);
     }
 
     ina_mempool_reset(ctx->mp_op);
@@ -159,7 +160,7 @@ fail:
     return INA_ERR_ILLEGAL;
 }
 
-INA_API(ina_rc_t) iarray_operation_transpose(iarray_context_t *ctx, iarray_container_t *a)
+INA_API(ina_rc_t) iarray_operator_transpose(iarray_context_t *ctx, iarray_container_t *a)
 {
     if (a->transposed == 0) {
         a->transposed = 1;
@@ -187,7 +188,7 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx, iarray_container_t
     }
 }
 
-INA_API(ina_rc_t) iarray_operation_add(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+INA_API(ina_rc_t) iarray_operator_add(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
-    return _iarray_operation_elem_wise(ctx, a, b, result, vdAdd, vsAdd);
+    return _iarray_operator_elem_wise(ctx, a, b, result, vdAdd, vsAdd);
 }
