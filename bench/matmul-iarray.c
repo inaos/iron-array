@@ -17,22 +17,6 @@
 #define NELEM_BYTES(nelem) (nelem*sizeof(double))
 #define NTHREADS 1
 
-/* Simple matrix-matrix multiplication for square matrices */
-int simple_matmul(size_t n, double const *a, double const *b, double *c)
-{
-    size_t i, j, k;
-    for (i = 0; i < n; ++i) {
-        for (j = 0; j < n; ++j) {
-            double t = 0.0;
-            for (k = 0; k < n; ++k)
-                t += a[i*n+k] * b[k*n+j];
-            c[i*n+j] = t;
-        }
-    }
-    return 0;
-}
-
-
 /* Check that the values of a super-chunk are equal to a C matrix */
 int test_mat_equal(int nelems, double *c1, double *c2) {
     for (int nelem=0; nelem < nelems; nelem++) {
@@ -165,7 +149,7 @@ int main(int argc, char** argv)
     iarray_container_new(ctx, &shape, mat_out_name, 0, &con_out);
 
     INA_STOPWATCH_START(w);
-    iarray_linalg_matmul(con_x, con_y, con_out, IARRAY_OPERATION_GENERAL); /* FIXME: error handling */
+    iarray_linalg_matmul(ctx, con_x, con_y, con_out, IARRAY_OPERATION_GENERAL); /* FIXME: error handling */
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
