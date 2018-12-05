@@ -118,7 +118,7 @@ INA_API(ina_rc_t) iarray_operation_transpose(iarray_container_t *a)
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_matmul(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c, int flag)
+INA_API(ina_rc_t) iarray_linalg_matmul(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c, int flag)
 {
     /* FIXME: handle special shapes */
     if (a->dtshape->ndim != 2) {

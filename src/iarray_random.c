@@ -14,6 +14,8 @@
 
 #include <iarray_private.h>
 
+#include "iarray_constructor.h"
+
 INA_API(ina_rc_t) iarray_rand(iarray_context_t *ctx,
     iarray_dtshape_t *dtshape,
     iarray_random_ctx_t *random_ctx,
