@@ -14,8 +14,11 @@
 
 #include <iarray_private.h>
 
-static ina_rc_t _iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
+typedef void (*_iarray_mkl_fun_d)(const MKL_INT n, const double a[], const double b[], double r[]);
+typedef void (*_iarray_mkl_fun_f)(const MKL_INT n, const float a[], const float b[], float r[]);
 
+static ina_rc_t _iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c)
+{
     caterva_update_shape(c->catarr, *c->shape);
 
     const int32_t P = (int32_t) a->catarr->pshape[0];
@@ -60,8 +63,8 @@ static ina_rc_t _iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarra
     return INA_SUCCESS;
 }
 
-static ina_rc_t _iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
-
+static ina_rc_t _iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c)
+{
     caterva_update_shape(c->catarr, *c->shape);
 
     int32_t P = (int32_t) a->catarr->pshape[0];
@@ -107,7 +110,56 @@ static ina_rc_t _iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarra
     return INA_SUCCESS;;
 }
 
-INA_API(ina_rc_t) iarray_operation_transpose(iarray_container_t *a)
+static ina_rc_t _iarray_operation_elem_wise(
+        iarray_context_t *ctx,
+        iarray_container_t *a,
+        iarray_container_t *b,
+        iarray_container_t *result,
+        _iarray_mkl_fun_d mkl_fun_d,
+        _iarray_mkl_fun_f mkl_fun_f)
+{
+    if (!INA_SUCCEED(iarray_container_dtshape_equal(a->dtshape, b->dtshape))) {
+        return INA_ERR_INVALID_ARGUMENT;
+    }
+
+    caterva_update_shape(result->catarr, *result->shape);
+
+    size_t psize = (size_t)a->catarr->sc->typesize;
+    for (int i = 0; i < a->catarr->ndim; ++i) {
+        if (a->catarr->pshape[i] != b->catarr->pshape[i]) {
+            return INA_ERR_ILLEGAL;
+        }
+        psize *= a->catarr->pshape[i];
+    }
+
+    int8_t *a_chunk = (int8_t*)ina_mempool_dalloc(ctx->mp_op, psize);
+    int8_t *b_chunk = (int8_t*)ina_mempool_dalloc(ctx->mp_op, psize);
+    int8_t *c_chunk = (int8_t*)ina_mempool_dalloc(ctx->mp_op, psize);
+
+    for (int i = 0; i < a->catarr->sc->nchunks; ++i) {
+        INA_FAIL_IF(blosc2_schunk_decompress_chunk(a->catarr->sc, i, a_chunk, psize) < 0);
+        INA_FAIL_IF(blosc2_schunk_decompress_chunk(b->catarr->sc, i, b_chunk, psize) < 0);
+        switch (a->dtshape->dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                mkl_fun_d((const int)(psize/sizeof(double)), (const double*)a_chunk, (const double*)b_chunk, (double*)c_chunk);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                mkl_fun_f((const int)psize/sizeof(float), (const float*)a_chunk, (const float*)b_chunk, (float*)c_chunk);
+                break;
+        }
+    }
+
+    ina_mempool_reset(ctx->mp_op);
+
+    return INA_SUCCESS;
+
+fail:
+    ina_mempool_reset(ctx->mp_op);
+    /* FIXME: error handling */
+    return INA_ERR_ILLEGAL;
+}
+
+INA_API(ina_rc_t) iarray_operation_transpose(iarray_context_t *ctx, iarray_container_t *a)
 {
     if (a->transposed == 0) {
         a->transposed = 1;
@@ -118,7 +170,7 @@ INA_API(ina_rc_t) iarray_operation_transpose(iarray_container_t *a)
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_linalg_matmul(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c, int flag)
+INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c, int flag)
 {
     /* FIXME: handle special shapes */
     if (a->dtshape->ndim != 2) {
@@ -133,4 +185,9 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_container_t *a, iarray_container_t
     else {
         return INA_ERR_INVALID_ARGUMENT;
     }
+}
+
+INA_API(ina_rc_t) iarray_operation_add(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+{
+    return _iarray_operation_elem_wise(ctx, a, b, result, vdAdd, vsAdd);
 }

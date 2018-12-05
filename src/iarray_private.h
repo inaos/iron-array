@@ -26,6 +26,7 @@
 #define _IARRAY_SIZE_GB  (1024*_IARRAY_SIZE_MB)
 
 /* Mempools */
+#define _IARRAY_MEMPOOL_OP_CHUNKS (8*1024*1024) /* FIXME: evaluate L3 during context init) */
 #define _IARRAY_MEMPOOL_EVAL_SIZE (8*1024*1024)
 
 typedef enum iarray_optype_e {
@@ -45,6 +46,7 @@ typedef enum iarray_blas_type_e {
 struct iarray_context_s {
     iarray_config_t *cfg;
     ina_mempool_t *mp;
+    ina_mempool_t *mp_op;
     /* FIXME: track expressions -> list */
 };
 
