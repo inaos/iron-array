@@ -96,6 +96,5 @@ iarray_temporary_t* _iarray_op_add(iarray_expression_t *expr, iarray_temporary_t
 iarray_temporary_t* _iarray_op_sub(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs);
 iarray_temporary_t* _iarray_op_mul(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs);
 iarray_temporary_t* _iarray_op_divide(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs);
-iarray_temporary_t* _iarray_matmul(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs);
 
 #endif
