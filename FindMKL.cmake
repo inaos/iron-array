@@ -30,7 +30,7 @@ find_path(MKL_ROOT_DIR
         "C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl"
         $ENV{HOME}/miniconda3
         $ENV{USERPROFILE}/miniconda3/Library
-        "C:/Miniconda3/Library"
+        "C:/Miniconda37-x64/Library"
 )
 
 find_path(MKL_INCLUDE_DIR
