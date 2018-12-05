@@ -171,7 +171,11 @@ INA_API(ina_rc_t) iarray_operator_transpose(iarray_context_t *ctx, iarray_contai
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c, int flag)
+INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
+                                       iarray_container_t *a,
+                                       iarray_container_t *b,
+                                       iarray_container_t *c,
+                                       iarray_operator_hint_t hint)
 {
     /* FIXME: handle special shapes */
     if (a->dtshape->ndim != 2) {
