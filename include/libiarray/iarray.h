@@ -131,11 +131,12 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx);
 
 INA_API(ina_rc_t) iarray_partition_advice(iarray_data_type_t dtype, int *max_nelem, int *min_nelem);
 
-INA_API(ina_rc_t) iarray_random_ctx_new(int64_t seed, 
-	                                    iarray_random_rng_t rng, 
-	                                    iarray_random_ctx_t **ctx);
+INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
+                                        uint32_t seed, 
+                                        iarray_random_rng_t rng, 
+                                        iarray_random_ctx_t **rng_ctx);
 
-INA_API(ina_rc_t) iarray_random_ctx_free(iarray_random_ctx_t **ctx);
+INA_API(void) iarray_random_ctx_free(iarray_context_t *ctx, iarray_random_ctx_t **rng_ctx);
 
 INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
                                        iarray_dtshape_t *dtshape,
@@ -186,25 +187,25 @@ INA_API(ina_rc_t) iarray_random_rand(iarray_context_t *ctx,
                                      iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_random_randn(iarray_context_t *ctx,
-	                                  iarray_dtshape_t *dtshape,
-	                                  iarray_random_ctx_t *rand_ctx,
-	                                  iarray_store_properties_t *store,
-	                                  int flags,
-	                                  iarray_container_t **container);
+                                      iarray_dtshape_t *dtshape,
+                                      iarray_random_ctx_t *rand_ctx,
+                                      iarray_store_properties_t *store,
+                                      int flags,
+                                      iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_random_beta(iarray_context_t *ctx,
-	                                 iarray_dtshape_t *dtshape,
-	                                 iarray_random_ctx_t *rand_ctx,
-	                                 iarray_store_properties_t *store,
-	                                 int flags,
-	                                 iarray_container_t **container);
+                                     iarray_dtshape_t *dtshape,
+                                     iarray_random_ctx_t *rand_ctx,
+                                     iarray_store_properties_t *store,
+                                     int flags,
+                                     iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_random_lognormal(iarray_context_t *ctx,
-	                                      iarray_dtshape_t *dtshape,
-	                                      iarray_random_ctx_t *rand_ctx,
-	                                      iarray_store_properties_t *store,
-	                                      int flags,
-	                                      iarray_container_t **container);
+                                          iarray_dtshape_t *dtshape,
+                                          iarray_random_ctx_t *rand_ctx,
+                                          iarray_store_properties_t *store,
+                                          int flags,
+                                          iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx, 
                                iarray_container_t *c, 
@@ -287,7 +288,7 @@ INA_API(ina_rc_t) iarray_operator_exp(iarray_context_t *ctx, iarray_container_t 
 INA_API(ina_rc_t) iarray_operator_floor(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 INA_API(ina_rc_t) iarray_operator_log(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 INA_API(ina_rc_t) iarray_operator_log10(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_pow(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_operator_pow(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
 INA_API(ina_rc_t) iarray_operator_sin(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 INA_API(ina_rc_t) iarray_operator_sinh(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 INA_API(ina_rc_t) iarray_operator_sqrt(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
