@@ -14,9 +14,6 @@
 
 #include <iarray_private.h>
 
-typedef void (*_iarray_mkl_fun_d)(const MKL_INT n, const double a[], const double b[], double r[]);
-typedef void (*_iarray_mkl_fun_f)(const MKL_INT n, const float a[], const float b[], float r[]);
-
 static ina_rc_t _iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c)
 {
     caterva_update_shape(c->catarr, *c->shape);
@@ -110,14 +107,67 @@ static ina_rc_t _iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarra
     return INA_SUCCESS;;
 }
 
-static ina_rc_t _iarray_operator_elwise(
+static ina_rc_t _iarray_operator_elwise_a(
+    iarray_context_t *ctx,
+    iarray_container_t *a,
+    iarray_container_t *result,
+    _iarray_vml_fun_d_a mkl_fun_d,
+    _iarray_vml_fun_s_a mkl_fun_s)
+{
+    INA_ASSERT_NOT_NULL(ctx);
+    INA_ASSERT_NOT_NULL(a);
+    INA_ASSERT_NOT_NULL(result);
+    INA_ASSERT_NOT_NULL(mkl_fun_d);
+    INA_ASSERT_NOT_NULL(mkl_fun_s);
+
+    caterva_update_shape(result->catarr, *result->shape);
+
+    size_t psize = (size_t)a->catarr->sc->typesize;
+    for (int i = 0; i < a->catarr->ndim; ++i) {
+        psize *= a->catarr->pshape[i];
+    }
+
+    int8_t *a_chunk = (int8_t*)ina_mempool_dalloc(ctx->mp_op, psize);
+    int8_t *c_chunk = (int8_t*)ina_mempool_dalloc(ctx->mp_op, psize);
+
+    for (int i = 0; i < a->catarr->sc->nchunks; ++i) {
+        INA_FAIL_IF(blosc2_schunk_decompress_chunk(a->catarr->sc, i, a_chunk, psize) < 0);
+        switch (a->dtshape->dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            mkl_fun_d((const int)(psize / sizeof(double)), (const double*)a_chunk, (double*)c_chunk);
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            mkl_fun_s((const int)psize / sizeof(float), (const float*)a_chunk, (float*)c_chunk);
+            break;
+        }
+        blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize);
+    }
+
+    ina_mempool_reset(ctx->mp_op);
+
+    return INA_SUCCESS;
+
+fail:
+    ina_mempool_reset(ctx->mp_op);
+    /* FIXME: error handling */
+    return INA_ERR_ILLEGAL;
+}
+
+static ina_rc_t _iarray_operator_elwise_ab(
         iarray_context_t *ctx,
         iarray_container_t *a,
         iarray_container_t *b,
         iarray_container_t *result,
-        _iarray_mkl_fun_d mkl_fun_d,
-        _iarray_mkl_fun_f mkl_fun_f)
+        _iarray_vml_fun_d_ab mkl_fun_d,
+        _iarray_vml_fun_s_ab mkl_fun_s)
 {
+    INA_ASSERT_NOT_NULL(ctx);
+    INA_ASSERT_NOT_NULL(a);
+    INA_ASSERT_NOT_NULL(b);
+    INA_ASSERT_NOT_NULL(result);
+    INA_ASSERT_NOT_NULL(mkl_fun_d);
+    INA_ASSERT_NOT_NULL(mkl_fun_s);
+
     if (!INA_SUCCEED(iarray_container_dtshape_equal(a->dtshape, b->dtshape))) {
         return INA_ERR_INVALID_ARGUMENT;
     }
@@ -144,7 +194,7 @@ static ina_rc_t _iarray_operator_elwise(
                 mkl_fun_d((const int)(psize/sizeof(double)), (const double*)a_chunk, (const double*)b_chunk, (double*)c_chunk);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                mkl_fun_f((const int)psize/sizeof(float), (const float*)a_chunk, (const float*)b_chunk, (float*)c_chunk);
+                mkl_fun_s((const int)psize/sizeof(float), (const float*)a_chunk, (const float*)b_chunk, (float*)c_chunk);
                 break;
         }
         blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize);
@@ -192,7 +242,182 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     }
 }
 
+INA_API(ina_rc_t) iarray_operator_and(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
+
+INA_API(ina_rc_t) iarray_operator_or(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
+
+INA_API(ina_rc_t) iarray_operator_xor(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
+
+INA_API(ina_rc_t) iarray_operator_nand(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
+
+INA_API(ina_rc_t) iarray_operator_not(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
+
 INA_API(ina_rc_t) iarray_operator_add(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
-    return _iarray_operator_elwise(ctx, a, b, result, vdAdd, vsAdd);
+    return _iarray_operator_elwise_ab(ctx, a, b, result, vdAdd, vsAdd);
+}
+
+INA_API(ina_rc_t) iarray_operator_sub(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_ab(ctx, a, b, result, vdSub, vsSub);
+}
+
+INA_API(ina_rc_t) iarray_operator_mul(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_ab(ctx, a, b, result, vdMul, vsMul);
+}
+
+INA_API(ina_rc_t) iarray_operator_div(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_ab(ctx, a, b, result, vdDiv, vsDiv);
+}
+
+INA_API(ina_rc_t) iarray_operator_abs(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdAbs, vsAbs);
+}
+
+INA_API(ina_rc_t) iarray_operator_acos(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdAcos, vsAcos);
+}
+
+INA_API(ina_rc_t) iarray_operator_asin(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdAsin, vsAsin);
+}
+
+INA_API(ina_rc_t) iarray_operator_atanc(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
+
+INA_API(ina_rc_t) iarray_operator_atan2(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
+
+INA_API(ina_rc_t) iarray_operator_ceil(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdCeil, vsCeil);
+}
+
+INA_API(ina_rc_t) iarray_operator_cos(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdCos, vsCos);
+}
+
+INA_API(ina_rc_t) iarray_operator_cosh(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdCosh, vsCosh);
+}
+
+INA_API(ina_rc_t) iarray_operator_exp(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdExp, vsExp);
+}
+
+INA_API(ina_rc_t) iarray_operator_floor(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdFloor, vsFloor);
+}
+
+INA_API(ina_rc_t) iarray_operator_log(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
+
+INA_API(ina_rc_t) iarray_operator_log10(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdLog10, vsLog10);
+}
+
+INA_API(ina_rc_t) iarray_operator_pow(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_ab(ctx, a, b, result, vdPow, vsPow);
+}
+
+INA_API(ina_rc_t) iarray_operator_sin(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdSin, vsSin);
+}
+
+INA_API(ina_rc_t) iarray_operator_sinh(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdSinh, vsSinh);
+}
+
+INA_API(ina_rc_t) iarray_operator_sqrt(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdSqrt, vsSqrt);
+}
+
+INA_API(ina_rc_t) iarray_operator_tan(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdTan, vsTan);
+}
+
+INA_API(ina_rc_t) iarray_operator_tanh(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdTanh, vsTanh);
+}
+
+INA_API(ina_rc_t) iarray_operator_erf(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdErf, vsErf);
+}
+
+INA_API(ina_rc_t) iarray_operator_erfc(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdErfc, vsErfc);
+}
+
+INA_API(ina_rc_t) iarray_operator_cdfnorm(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdCdfNorm, vsCdfNorm);
+}
+
+INA_API(ina_rc_t) iarray_operator_erfinv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdErfInv, vsErfInv);
+}
+
+INA_API(ina_rc_t) iarray_operator_erfcinv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdErfcInv, vsErfcInv);
+}
+
+INA_API(ina_rc_t) iarray_operator_cdfnorminv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdCdfNormInv, vsCdfNormInv);
+}
+
+INA_API(ina_rc_t) iarray_operator_lgamma(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdLGamma, vsLGamma);
+}
+
+INA_API(ina_rc_t) iarray_operator_tgamma(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdTGamma, vsTGamma);
+}
+
+INA_API(ina_rc_t) iarray_operator_expint1(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    return _iarray_operator_elwise_a(ctx, a, result, vdExpInt1, vsExpInt1);
 }

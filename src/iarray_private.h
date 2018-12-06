@@ -88,6 +88,12 @@ typedef struct iarray_temporary_s {
     } scalar_value;
 } iarray_temporary_t;
 
+typedef void(*_iarray_vml_fun_d_ab)(const MKL_INT n, const double a[], const double b[], double r[]);
+typedef void(*_iarray_vml_fun_s_ab)(const MKL_INT n, const float a[], const float b[], float r[]);
+
+typedef void(*_iarray_vml_fun_d_a)(const MKL_INT n, const double a[], double r[]);
+typedef void(*_iarray_vml_fun_s_a)(const MKL_INT n, const float a[], float r[]);
+
 ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, iarray_dtshape_t *dtshape, iarray_temporary_t **temp);
 
 ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size);

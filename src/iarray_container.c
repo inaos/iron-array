@@ -161,3 +161,28 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
     INA_MEM_FREE_SAFE((*container)->dtshape);
     INA_MEM_FREE_SAFE(*container);
 }
+
+INA_API(ina_rc_t) iarray_container_gt(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
+
+INA_API(ina_rc_t) iarray_container_lt(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
+
+INA_API(ina_rc_t) iarray_container_gte(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
+
+INA_API(ina_rc_t) iarray_container_lte(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
+
+INA_API(ina_rc_t) iarray_container_eq(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
