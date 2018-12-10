@@ -87,29 +87,27 @@ static ina_rc_t _iarray_gemm(iarray_container_t *a, iarray_container_t *b, iarra
     uint8_t *b_block = malloc(p_size);
     uint8_t *c_block = malloc(p_size);
 
-    for (size_t m = 0; m < M / P; m++)
-    {
-        for (size_t n = 0; n < N / P; n++)
-        {
-            memset(c_block, 0, p_size);
-            for (size_t k = 0; k < K / P; k++)
-            {
-                size_t a_i = (m * K / P + k);
-                size_t b_i = (k * N / P + n);
+    iarray_itr_matmul_t *I;
+    iarray_itr_matmul_new(a, b, &I);
 
-                int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)a_i, a_block, p_size);
-                int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)b_i, b_block, p_size);
+    memset(c_block, 0, p_size);
+    for (iarray_itr_matmul_init(I); !iarray_itr_matmul_finished(I); iarray_itr_matmul_next(I)) {
 
-                if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-                    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P, 1.0, (double *)a_block, P, (double *)b_block, P, 1.0, (double *)c_block, P);
-                }
-                else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
-                    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P, 1.0, (float *)a_block, P, (float *)b_block, P, 1.0, (float *)c_block, P);
-                }
-            }
+        int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)I->nchunk1, a_block, p_size);
+        int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)I->nchunk2, b_block, p_size);
+
+        if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
+            cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P, 1.0, (double *)a_block, P, (double *)b_block, P, 1.0, (double *)c_block, P);
+        }
+        else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
+            cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P, 1.0, (float *)a_block, P, (float *)b_block, P, 1.0, (float *)c_block, P);
+        }
+        if((I->cont + 1) % (K / P) == 0) {
             blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], p_size);
+            memset(c_block, 0, p_size);
         }
     }
+
     free(a_block);
     free(b_block);
     free(c_block);

@@ -182,3 +182,55 @@ INA_API(ina_rc_t) iarray_itr_free(iarray_itr_t *itr)
     ina_mem_free(itr);
     return 0;
 }
+// MATMUL ITERATOR
+
+INA_API(void) iarray_itr_matmul_init(iarray_itr_matmul_t *itr)
+{
+    itr->cont = 0;
+    itr->nchunk1 = 0;
+    itr->nchunk2 = 0;
+}
+
+INA_API(void) iarray_itr_matmul_next(iarray_itr_matmul_t *itr)
+{
+    uint64_t P = itr->container1->catarr->pshape[0];
+    uint64_t M = itr->container1->catarr->eshape[0];
+    uint64_t N = itr->container2->catarr->eshape[1];
+    uint64_t K = itr->container1->catarr->eshape[1];
+
+    itr->cont++;
+
+    uint64_t m = itr->cont / ((K/P) * (N/P)) % (M/P);
+    uint64_t n = itr->cont / ((K/P)) % (N/P);
+    uint64_t k = itr->cont % (K/P);
+
+    itr->nchunk1 = (m * (K/P) + k);
+    itr->nchunk2 = (k * (N/P) + n);
+
+}
+
+INA_API(int) iarray_itr_matmul_finished(iarray_itr_matmul_t *itr)
+{
+    uint64_t P = itr->container1->catarr->pshape[0];
+    uint64_t M = itr->container1->catarr->eshape[0];
+    uint64_t N = itr->container2->catarr->eshape[1];
+    uint64_t K = itr->container1->catarr->eshape[1];
+
+    return itr->cont >= (M/P) * (N/P) * (K/P);
+}
+
+INA_API(ina_rc_t) iarray_itr_matmul_new(iarray_container_t *c1, iarray_container_t *c2, iarray_itr_matmul_t **itr)
+{
+    *itr = (iarray_itr_matmul_t*)ina_mem_alloc(sizeof(iarray_itr_matmul_t));
+    INA_RETURN_IF_NULL(itr);
+    (*itr)->container1 = c1;
+    (*itr)->container2 = c2;
+
+    return 0;
+}
+
+INA_API(ina_rc_t) iarray_itr_matmul_free(iarray_itr_matmul_t *itr)
+{
+    ina_mem_free(itr);
+    return 0;
+}

@@ -19,6 +19,7 @@
 typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;
 typedef struct iarray_itr_s iarray_itr_t;
+typedef struct iarray_itr_matmul_s iarray_itr_matmul_t;
 typedef struct iarray_expression_s iarray_expression_t;
 
 typedef enum iarray_random_rng_e {
@@ -242,9 +243,15 @@ ina_rc_t iarray_eval_block(iarray_context_t *ctx, char* expr, iarray_variable_t 
 
 INA_API(ina_rc_t) iarray_itr_new(iarray_container_t *container, iarray_itr_t **itr);
 INA_API(ina_rc_t) iarray_itr_free(iarray_itr_t *itr);
-
 INA_API(void) iarray_itr_init(iarray_itr_t *itr);
 INA_API(void) iarray_itr_next(iarray_itr_t *itr);
 INA_API(int) iarray_itr_finished(iarray_itr_t *itr);
+
+INA_API(ina_rc_t) iarray_itr_matmul_new(iarray_container_t *container1, iarray_container_t *container2,
+										iarray_itr_matmul_t **itr);
+INA_API(ina_rc_t) iarray_itr_matmul_free(iarray_itr_matmul_t *itr);
+INA_API(void) iarray_itr_matmul_init(iarray_itr_matmul_t *itr);
+INA_API(void) iarray_itr_matmul_next(iarray_itr_matmul_t *itr);
+INA_API(int) iarray_itr_matmul_finished(iarray_itr_matmul_t *itr);
 
 #endif

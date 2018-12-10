@@ -76,6 +76,14 @@ typedef struct iarray_itr_s {
     uint64_t cont;
 } iarray_itr_t;
 
+typedef struct iarray_itr_matmul_s {
+    iarray_container_t *container1;
+    iarray_container_t *container2;
+    uint64_t nchunk1;
+    uint64_t nchunk2;
+    uint64_t cont;
+} iarray_itr_matmul_t;
+
 typedef struct iarray_temporary_s {
     iarray_dtshape_t *dtshape;
     size_t size;
