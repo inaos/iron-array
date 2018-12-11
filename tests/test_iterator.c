@@ -16,7 +16,6 @@
  */
 
 #include <libiarray/iarray.h>
-#include <iarray_private.h>
 
 #include <tests/iarray_test.h>
 
@@ -43,12 +42,15 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
 
     for (iarray_itr_init(I); !iarray_itr_finished(I); iarray_itr_next(I)) {
 
+        iarray_itr_value_t val;
+        iarray_itr_value(I, &val);
+
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value = (double) I->nelem;
-            memcpy(I->pointer, &value, type_size);
+            double value = (double) val.nelem;
+            memcpy(val.pointer, &value, type_size);
         } else {
-            float value = (float) I->nelem;
-            memcpy(I->pointer, &value, type_size);
+            float value = (float) val.nelem;
+            memcpy(val.pointer, &value, type_size);
         }
     }
 

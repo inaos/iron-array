@@ -152,6 +152,16 @@ INA_API(int) iarray_itr_finished(iarray_itr_t *itr)
  *   returns: an error code
  */
 
+INA_API(ina_rc_t) iarray_itr_value(iarray_itr_t *itr, iarray_itr_value_t *val)
+{
+    val->pointer = itr->pointer;
+    val->index = itr->index;
+    val->nelem = itr->nelem;
+
+    return 0;
+}
+
+
 INA_API(ina_rc_t) iarray_itr_new(iarray_container_t *container, iarray_itr_t **itr)
 {
     *itr = (iarray_itr_t*)ina_mem_alloc(sizeof(iarray_itr_t));

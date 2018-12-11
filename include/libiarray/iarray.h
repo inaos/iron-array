@@ -19,7 +19,6 @@
 typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;
 typedef struct iarray_itr_s iarray_itr_t;
-typedef struct iarray_itr_matmul_s iarray_itr_matmul_t;
 typedef struct iarray_expression_s iarray_expression_t;
 
 typedef enum iarray_random_rng_e {
@@ -89,6 +88,12 @@ typedef struct iarray_dtshape_s {
     uint64_t shape[IARRAY_DIMENSION_MAX];
     uint64_t partshape[IARRAY_DIMENSION_MAX]; /* Partition-Shape, optional in the future */
 } iarray_dtshape_t;
+
+typedef struct iarray_itr_value_s {
+	void *pointer;
+	uint64_t *index;
+	uint64_t nelem;
+} iarray_itr_value_t;
 
 typedef struct iarray_slice_param_s {
     int axis;
@@ -246,12 +251,6 @@ INA_API(ina_rc_t) iarray_itr_free(iarray_itr_t *itr);
 INA_API(void) iarray_itr_init(iarray_itr_t *itr);
 INA_API(void) iarray_itr_next(iarray_itr_t *itr);
 INA_API(int) iarray_itr_finished(iarray_itr_t *itr);
-
-INA_API(ina_rc_t) iarray_itr_matmul_new(iarray_container_t *container1, iarray_container_t *container2,
-										iarray_itr_matmul_t **itr);
-INA_API(ina_rc_t) iarray_itr_matmul_free(iarray_itr_matmul_t *itr);
-INA_API(void) iarray_itr_matmul_init(iarray_itr_matmul_t *itr);
-INA_API(void) iarray_itr_matmul_next(iarray_itr_matmul_t *itr);
-INA_API(int) iarray_itr_matmul_finished(iarray_itr_matmul_t *itr);
+INA_API(ina_rc_t) iarray_itr_value(iarray_itr_t *itr, iarray_itr_value_t *value);
 
 #endif
