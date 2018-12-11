@@ -24,14 +24,6 @@ static double _poly(const double x)
     return (x - 1.35) * (x - 4.45) * (x - 8.5);
 }
 
-// Compute and fill Y values in a buffer
-void _fill_buffer_y(const double* x, double* y)
-{
-    for (int i = 0; i<NITEMS_CHUNK; i++) {
-        y[i] = _poly(x[i]);
-    }
-}
-
 // Fill X values in regular array
 static int _fill_x(double* x)
 {
@@ -54,7 +46,10 @@ static void _compute_y(const double* x, double* y)
 
 static void ina_cleanup_handler(int error, int *exitcode)
 {
-    iarray_destroy();
+    if (!error) {
+        iarray_destroy();
+    }
+    *exitcode = INA_SUCCESS;
 }
 
 static double *x = NULL;
@@ -86,6 +81,9 @@ int main(int argc, char** argv)
         mat_y_name = "mat_y";
         mat_out_name = "mat_out";
     }
+    iarray_store_properties_t mat_x = {.id = mat_x_name};
+    iarray_store_properties_t mat_y = {.id = mat_y_name};
+    iarray_store_properties_t mat_out = {.id = mat_out_name};
 
     INA_MUST_SUCCEED(iarray_init());
 
@@ -107,7 +105,7 @@ int main(int argc, char** argv)
 
     double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
-   
+
     size_t buffer_len = sizeof(double)*NELEM;
     x = (double*)ina_mem_alloc(buffer_len);
     y = (double*)ina_mem_alloc(buffer_len);
@@ -120,7 +118,7 @@ int main(int argc, char** argv)
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     shape.shape[0] = NELEM;
     shape.partshape[0] = PART_SIZE;
-    
+
     iarray_container_t *con_x;
     iarray_container_t *con_y;
 
@@ -134,22 +132,22 @@ int main(int argc, char** argv)
     // To prevent the optimizer going too smart and removing 'dead' code
     int retcode = y[0] > y[1];
 
-    INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, x, buffer_len, NULL, 0, &con_x));
+    INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, x, buffer_len, &mat_x, 0, &con_x));
     INA_STOPWATCH_START(w);
-    INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, y, buffer_len, NULL, 0, &con_y));
+    INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, y, buffer_len, &mat_y, 0, &con_y));
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
-    size_t nbytes = 0;
-    size_t cbytes = 0;
+    uint64_t nbytes = 0;
+    uint64_t cbytes = 0;
     double nbytes_mb = 0;
     double cbytes_mb = 0;
 
     iarray_container_info(con_x, &nbytes, &cbytes);
     printf("Time for compressing Y values: %.3g s, %.1f MB/s\n",
             elapsed_sec, nbytes/(elapsed_sec*_IARRAY_SIZE_MB));
-    nbytes_mb = (nbytes / _IARRAY_SIZE_MB);
-    cbytes_mb = (cbytes / _IARRAY_SIZE_MB);
+    nbytes_mb = ((double)nbytes / _IARRAY_SIZE_MB);
+    cbytes_mb = ((double)cbytes / _IARRAY_SIZE_MB);
     printf("Compression for Y values: %.1f MB -> %.1f MB (%.1fx)\n",
             nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
 
@@ -160,7 +158,7 @@ int main(int argc, char** argv)
     iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
 
     iarray_container_t *con_out;
-    iarray_container_new(ctx, &shape, mat_out_name, 0, &con_out);
+    INA_MUST_SUCCEED(iarray_container_new(ctx, &shape, &mat_out, 0, &con_out));
 
     INA_STOPWATCH_START(w);
     iarray_eval(e, con_out);
@@ -170,8 +168,8 @@ int main(int argc, char** argv)
     printf("\n");
     printf("Time for computing and filling OUT values using iarray (%s):  %.3g s, %.1f MB/s\n",
         eval_method, elapsed_sec, nbytes / (elapsed_sec * _IARRAY_SIZE_MB));
-    nbytes_mb = (nbytes / _IARRAY_SIZE_MB);
-    cbytes_mb = (cbytes / _IARRAY_SIZE_MB);
+    nbytes_mb = ((double)nbytes / (double)_IARRAY_SIZE_MB);
+    cbytes_mb = ((double)cbytes / (double)_IARRAY_SIZE_MB);
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
             nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
 

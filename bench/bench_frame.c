@@ -9,8 +9,9 @@
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
- 
-#include <libinac/libinac.h>
+
+#include <libiarray/iarray.h>
+#include <iarray_private.h>
 
 /*
  * Idea of this benchmark is to compare different implementations of the cblosc2 frames
@@ -19,8 +20,8 @@
  * 2. Creating a branch of cblosc2 which would handle frames by using:
  *    - mmap
  *    - hugepages
- * 
- * 
+ *
+ *
  *
  *
  */
@@ -62,6 +63,6 @@ INA_BENCH(chunk_store, realloc, 1)
     size_t counter = 0;
 
     ina_bench_stopwatch_start();
-    
+
     ina_bench_set_int64(ina_bench_stopwatch_stop());
 }
