@@ -58,7 +58,7 @@ set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc_static)
 endif()
 
 inac_add_tests(iarray)
-inac_add_benchmarks(iarray)
+#inac_add_benchmarks(iarray)
 #inac_add_tools(iarray)
 #inac_add_examples(iarray)
 
