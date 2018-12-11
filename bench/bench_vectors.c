@@ -46,21 +46,10 @@ static void _compute_y(const double* x, double* y)
 
 static void ina_cleanup_handler(int error, int *exitcode)
 {
-    iarray_destroy();
-}
-
-/*
- * Check if a file exist using fopen() function
- * return 1 if the file exist otherwise return 0
- */
-bool cfileexists(const char * filename){
-    /* try to open file to read */
-    FILE *file;
-    if ((file = fopen(filename, "r"))) {
-        fclose(file);
-        return true;
+    if (!error) {
+        iarray_destroy();
     }
-    return false;
+    *exitcode = INA_SUCCESS;
 }
 
 static double *x = NULL;
@@ -88,9 +77,9 @@ int main(int argc, char** argv)
 
     INA_MUST_SUCCEED(ina_opt_get_int("f", &eval_flag));
     if (INA_SUCCEED(ina_opt_isset("p"))) {
-        mat_x_name = "mat_x.b2frame";
-        mat_y_name = "mat_y.b2frame";
-        mat_out_name = "mat_out.b2frame";
+        mat_x_name = "mat_x";
+        mat_y_name = "mat_y";
+        mat_out_name = "mat_out";
     }
     iarray_store_properties_t mat_x = {.id = mat_x_name};
     iarray_store_properties_t mat_y = {.id = mat_y_name};
@@ -143,20 +132,9 @@ int main(int argc, char** argv)
     // To prevent the optimizer going too smart and removing 'dead' code
     int retcode = y[0] > y[1];
 
-    int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
-    if (INA_SUCCEED(ina_opt_isset("p")) && cfileexists(mat_x.id)) {
-        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_x, flags, &con_x));
-    }
-    else {
-        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, x, buffer_len, &mat_x, flags, &con_x));
-    }
+    INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, x, buffer_len, &mat_x, 0, &con_x));
     INA_STOPWATCH_START(w);
-    if (INA_SUCCEED(ina_opt_isset("p")) && cfileexists(mat_y.id)) {
-        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_y, flags, &con_y));
-    }
-    else {
-        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, y, buffer_len, &mat_y, flags, &con_y));
-    }
+    INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, y, buffer_len, &mat_y, 0, &con_y));
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
@@ -180,7 +158,7 @@ int main(int argc, char** argv)
     iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
 
     iarray_container_t *con_out;
-    INA_MUST_SUCCEED(iarray_container_new(ctx, &shape, &mat_out, flags, &con_out));
+    INA_MUST_SUCCEED(iarray_container_new(ctx, &shape, &mat_out, 0, &con_out));
 
     INA_STOPWATCH_START(w);
     iarray_eval(e, con_out);
