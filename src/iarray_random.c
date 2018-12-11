@@ -57,7 +57,7 @@ fail:
 
 INA_API(void) iarray_random_ctx_free(iarray_context_t *ctx, iarray_random_ctx_t **rng_ctx)
 {
-    INA_VERIFY_NOT_NULL(ctx);
+    INA_ASSERT_NOT_NULL(ctx);
     INA_VERIFY_FREE(rng_ctx);
     vslDeleteStream((*rng_ctx)->stream);
     INA_MEM_FREE_SAFE(*rng_ctx);
