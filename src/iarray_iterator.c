@@ -200,13 +200,23 @@ INA_API(void) iarray_itr_matmul_next(iarray_itr_matmul_t *itr)
 
     itr->cont++;
 
-    uint64_t m = itr->cont / ((K/P) * (N/P)) % (M/P);
-    uint64_t n = itr->cont / ((K/P)) % (N/P);
-    uint64_t k = itr->cont % (K/P);
+    uint64_t n, k, m;
 
-    itr->nchunk1 = (m * (K/P) + k);
-    itr->nchunk2 = (k * (N/P) + n);
+    if (itr->container2->catarr->ndim == 1) {
+        m = itr->cont / ((K/P)) % (M/P);
+        k = itr->cont % (K/P);
 
+        itr->nchunk1 = (m * (K/P) + k);
+        itr->nchunk2 = k;
+
+    } else {
+        m = itr->cont / ((K/P) * (N/P)) % (M/P);
+        k = itr->cont % (K/P);
+        n = itr->cont / ((K/P)) % (N/P);
+
+        itr->nchunk1 = (m * (K/P) + k);
+        itr->nchunk2 = (k * (N/P) + n);
+    }
 }
 
 INA_API(int) iarray_itr_matmul_finished(iarray_itr_matmul_t *itr)
@@ -215,6 +225,14 @@ INA_API(int) iarray_itr_matmul_finished(iarray_itr_matmul_t *itr)
     uint64_t M = itr->container1->catarr->eshape[0];
     uint64_t N = itr->container2->catarr->eshape[1];
     uint64_t K = itr->container1->catarr->eshape[1];
+
+    if (itr->container1->catarr->ndim == 1) {
+        return itr->cont >= (M/P) * (N/P);
+    }
+
+    if (itr->container2->catarr->ndim == 1) {
+        return itr->cont >= (M/P) * (K/P);
+    }
 
     return itr->cont >= (M/P) * (N/P) * (K/P);
 }

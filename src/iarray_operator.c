@@ -133,27 +133,26 @@ static ina_rc_t _iarray_gemv(iarray_container_t *a, iarray_container_t *b, iarra
     uint8_t *b_block = malloc(p_vsize);
     uint8_t *c_block = malloc(p_vsize);
 
-    size_t a_i, b_i;
+    iarray_itr_matmul_t *I;
+    iarray_itr_matmul_new(a, b, &I);
 
-    for (size_t m = 0; m < M / P; m++)
-    {
-        memset(c_block, 0, p_vsize);
-        for (size_t k = 0; k < K / P; k++)
-        {
-            a_i = (m * K / P + k);
-            b_i = (k);
+    memset(c_block, 0, p_vsize);
+    for (iarray_itr_matmul_init(I); !iarray_itr_matmul_finished(I); iarray_itr_matmul_next(I)) {
 
-            int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)a_i, a_block, p_size);
-            int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)b_i, b_block, p_vsize);
+        int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)I->nchunk1, a_block, p_size);
+        int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)I->nchunk2, b_block, p_vsize);
 
-            if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-                cblas_dgemv(CblasRowMajor, CblasNoTrans, P, P, 1.0, (double *) a_block, P, (double *) b_block, 1, 1.0, (double *) c_block, 1);
-            }
-            else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
-                cblas_sgemv(CblasRowMajor, CblasNoTrans, P, P, 1.0, (float *) a_block, P, (float *) b_block, 1, 1.0, (float *) c_block, 1);
-            }
+        if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
+            cblas_dgemv(CblasRowMajor, CblasNoTrans, P, P, 1.0, (double *) a_block, P, (double *) b_block, 1, 1.0, (double *) c_block, 1);
         }
-        blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], p_vsize);
+        else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
+            cblas_sgemv(CblasRowMajor, CblasNoTrans, P, P, 1.0, (float *) a_block, P, (float *) b_block, 1, 1.0, (float *) c_block, 1);
+        }
+
+        if((I->cont + 1) % (K / P) == 0) {
+            blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], p_vsize);
+            memset(c_block, 0, p_vsize);
+        }
     }
     free(a_block);
     free(b_block);
