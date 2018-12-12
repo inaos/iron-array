@@ -46,10 +46,7 @@ static void _compute_y(const double* x, double* y)
 
 static void ina_cleanup_handler(int error, int *exitcode)
 {
-    if (!error) {
-        iarray_destroy();
-    }
-    *exitcode = INA_SUCCESS;
+    iarray_destroy();
 }
 
 static double *x = NULL;
