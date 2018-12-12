@@ -38,7 +38,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
 
     // Start Iterator
     iarray_itr_t *I;
-    iarray_itr_new(c_x, &I);
+    iarray_itr_new(ctx, c_x, &I);
 
     for (iarray_itr_init(I); !iarray_itr_finished(I); iarray_itr_next(I)) {
 
@@ -54,7 +54,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
         }
     }
 
-    iarray_itr_free(I);
+    iarray_itr_free(ctx, I);
 
     // Assert iterator values
     uint64_t bufsize = 1;

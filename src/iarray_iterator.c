@@ -20,7 +20,6 @@
  *   Update the index and the nelem of an iterator
  *
  *   itr: an iterator
- *
  */
 
 void _update_itr_index(iarray_itr_t *itr) 
@@ -72,7 +71,6 @@ void _update_itr_index(iarray_itr_t *itr)
  *   Set the iterator values to the first element
  *
  *   itr: an iterator
- *
  */
 
 INA_API(void) iarray_itr_init(iarray_itr_t *itr)
@@ -92,7 +90,6 @@ INA_API(void) iarray_itr_init(iarray_itr_t *itr)
  *   Compute the next iterator element
  *
  *   itr: an iterator
- *
  */
 
 INA_API(void) iarray_itr_next(iarray_itr_t *itr)
@@ -142,12 +139,12 @@ INA_API(int) iarray_itr_finished(iarray_itr_t *itr)
 }
 
 /*
- * Function: iarray_itr_new
+ * Function: iarray_itr_value
  * ------------------------
  *   Create a new iterator
  *
- *   container: the container used in the iterator
  *   itr: an iterator
+ *   val: a struct where data needed by the user is stored
  *
  *   returns: an error code
  */
@@ -161,8 +158,18 @@ INA_API(ina_rc_t) iarray_itr_value(iarray_itr_t *itr, iarray_itr_value_t *val)
     return 0;
 }
 
+/*
+ * Function: iarray_itr_new
+ * ------------------------
+ *   Create a new iterator
+ *
+ *   container: the container used in the iterator
+ *   itr: an iterator
+ *
+ *   returns: an error code
+ */
 
-INA_API(ina_rc_t) iarray_itr_new(iarray_container_t *container, iarray_itr_t **itr)
+INA_API(ina_rc_t) iarray_itr_new(iarray_context_t *ctx, iarray_container_t *container, iarray_itr_t **itr)
 {
     *itr = (iarray_itr_t*)ina_mem_alloc(sizeof(iarray_itr_t));
     INA_RETURN_IF_NULL(itr);
@@ -176,8 +183,8 @@ INA_API(ina_rc_t) iarray_itr_new(iarray_container_t *container, iarray_itr_t **i
 }
 
 /*
- * Function: iarray_itr_new
- * ------------------------
+ * Function: iarray_itr_free
+ * -------------------------
  *   Free an iterator structure
  *
  *   itr: an iterator
@@ -185,7 +192,7 @@ INA_API(ina_rc_t) iarray_itr_new(iarray_container_t *container, iarray_itr_t **i
  *   returns: an error code
  */
 
-INA_API(ina_rc_t) iarray_itr_free(iarray_itr_t *itr)
+INA_API(ina_rc_t) iarray_itr_free(iarray_context_t *ctx, iarray_itr_t *itr)
 {
     ina_mem_free(itr->index);
     ina_mem_free(itr->part);
@@ -194,14 +201,31 @@ INA_API(ina_rc_t) iarray_itr_free(iarray_itr_t *itr)
 }
 // MATMUL ITERATOR
 
-INA_API(void) iarray_itr_matmul_init(iarray_itr_matmul_t *itr)
+/*
+ * Function: iarray_itr_matmul_init
+ * --------------------------------
+ *   Set the iterator values to the first element
+ *
+ *   itr: an iterator
+ */
+
+ina_rc_t iarray_itr_matmul_init(iarray_itr_matmul_t *itr)
 {
     itr->cont = 0;
     itr->nchunk1 = 0;
     itr->nchunk2 = 0;
+    return 0;
 }
 
-INA_API(void) iarray_itr_matmul_next(iarray_itr_matmul_t *itr)
+/*
+ * Function: iarray_itr_matmul_next
+ * --------------------------------
+ *   Compute the next iterator element
+ *
+ *   itr: an iterator
+ */
+
+ina_rc_t iarray_itr_matmul_next(iarray_itr_matmul_t *itr)
 {
     uint64_t P = itr->container1->catarr->pshape[0];
     uint64_t M = itr->container1->catarr->eshape[0];
@@ -227,9 +251,21 @@ INA_API(void) iarray_itr_matmul_next(iarray_itr_matmul_t *itr)
         itr->nchunk1 = (m * (K/P) + k);
         itr->nchunk2 = (k * (N/P) + n);
     }
+
+    return 0;
 }
 
-INA_API(int) iarray_itr_matmul_finished(iarray_itr_matmul_t *itr)
+/*
+ * Function: iarray_itr_matmul_finished
+ * ------------------------------------
+ *   Check if the iterator is finished
+ *
+ *   itr: an iterator
+ *
+ *   returns: 1 if iter is finished or 0 if not
+ */
+
+int iarray_itr_matmul_finished(iarray_itr_matmul_t *itr)
 {
     uint64_t P = itr->container1->catarr->pshape[0];
     uint64_t M = itr->container1->catarr->eshape[0];
@@ -247,7 +283,17 @@ INA_API(int) iarray_itr_matmul_finished(iarray_itr_matmul_t *itr)
     return itr->cont >= (M/P) * (N/P) * (K/P);
 }
 
-INA_API(ina_rc_t) iarray_itr_matmul_new(iarray_container_t *c1, iarray_container_t *c2, iarray_itr_matmul_t **itr)
+/*
+ * Function: iarray_itr_matmul_new
+ * ------------------------
+ *   Free an iterator structure
+ *
+ *   itr: an iterator
+ *
+ *   returns: an error code
+ */
+
+ina_rc_t iarray_itr_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, iarray_container_t *c2, iarray_itr_matmul_t **itr)
 {
     *itr = (iarray_itr_matmul_t*)ina_mem_alloc(sizeof(iarray_itr_matmul_t));
     INA_RETURN_IF_NULL(itr);
@@ -257,7 +303,17 @@ INA_API(ina_rc_t) iarray_itr_matmul_new(iarray_container_t *c1, iarray_container
     return 0;
 }
 
-INA_API(ina_rc_t) iarray_itr_matmul_free(iarray_itr_matmul_t *itr)
+/*
+ * Function: iarray_itr_matmul_free
+ * --------------------------------
+ *   Free an iterator structure
+ *
+ *   itr: an iterator
+ *
+ *   returns: an error code
+ */
+
+ina_rc_t iarray_itr_matmul_free(iarray_context_t *ctx, iarray_itr_matmul_t *itr)
 {
     ina_mem_free(itr);
     return 0;

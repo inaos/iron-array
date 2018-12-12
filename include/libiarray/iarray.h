@@ -217,7 +217,7 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
 
 INA_API(ina_rc_t) iarray_almost_equal_data(iarray_container_t *a, iarray_container_t *b, double tol);
 
-INA_API(ina_rc_t) iarray_matmul(iarray_container_t *a, iarray_container_t *b, iarray_container_t *c, int flag);
+INA_API(ina_rc_t) iarray_matmul(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c, int flag);
 
 INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e);
 INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e);
@@ -246,8 +246,8 @@ typedef struct iarray_variable_s {
 ina_rc_t iarray_eval_chunk(iarray_context_t *ctx, char* expr, iarray_variable_t *vars, int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
 ina_rc_t iarray_eval_block(iarray_context_t *ctx, char* expr, iarray_variable_t *vars, int vars_count, iarray_variable_t out, iarray_data_type_t dtype, int *err);
 
-INA_API(ina_rc_t) iarray_itr_new(iarray_container_t *container, iarray_itr_t **itr);
-INA_API(ina_rc_t) iarray_itr_free(iarray_itr_t *itr);
+INA_API(ina_rc_t) iarray_itr_new(iarray_context_t *ctx, iarray_container_t *container, iarray_itr_t **itr);
+INA_API(ina_rc_t) iarray_itr_free(iarray_context_t *ctx, iarray_itr_t *itr);
 INA_API(void) iarray_itr_init(iarray_itr_t *itr);
 INA_API(void) iarray_itr_next(iarray_itr_t *itr);
 INA_API(int) iarray_itr_finished(iarray_itr_t *itr);

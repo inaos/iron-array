@@ -98,6 +98,14 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 
 ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size);
 
+// Matmul iterator
+
+INA_API(ina_rc_t) iarray_itr_matmul_new(iarray_context_t *ctx, iarray_container_t *container1, iarray_container_t *container2, iarray_itr_matmul_t **itr);
+INA_API(ina_rc_t) iarray_itr_matmul_free(iarray_context_t *ctx, iarray_itr_matmul_t *itr);
+INA_API(ina_rc_t) iarray_itr_matmul_init(iarray_itr_matmul_t *itr);
+INA_API(ina_rc_t) iarray_itr_matmul_next(iarray_itr_matmul_t *itr);
+INA_API(int) iarray_itr_matmul_finished(iarray_itr_matmul_t *itr);
+
 /* FIXME: since we want to keep the changes to tinyexpr as little as possible we deviate from our usual function decls */
 //static iarray_temporary_t* _iarray_op(iarray_temporary_t *lhs, iarray_temporary_t *rhs, iarray_optype_t op);
 iarray_temporary_t* _iarray_op_add(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs);

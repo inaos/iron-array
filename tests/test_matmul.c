@@ -15,9 +15,9 @@
 
 #include <tests/iarray_test.h>
 
-static ina_rc_t test_gemm(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out,
-                          iarray_container_t *c_res, double tol) {
-    INA_TEST_ASSERT_SUCCEED(iarray_matmul(c_x, c_y, c_out, IARRAY_OPERATION_GENERAL));
+static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_container_t *c_x, iarray_container_t *c_y,
+                          iarray_container_t *c_out, iarray_container_t *c_res, double tol) {
+    INA_TEST_ASSERT_SUCCEED(iarray_matmul(ctx, c_x, c_y, c_out, IARRAY_OPERATION_GENERAL));
     if (!iarray_almost_equal_data(c_out, c_res, tol)) {
         return INA_ERROR(INA_ERR_FAILED);
     }
@@ -105,7 +105,7 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &rshape, buffer_r, buffer_r_len, NULL, 0, &c_res));
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &oshape, NULL, 0, &c_out));
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(c_x, c_y, c_out, c_res, tol));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(ctx, c_x, c_y, c_out, c_res, tol));
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
@@ -119,8 +119,9 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
-static ina_rc_t test_gemv(iarray_container_t *c_x, iarray_container_t *c_y, iarray_container_t *c_out, iarray_container_t *c_res, double tol) {
-    iarray_matmul(c_x, c_y, c_out, IARRAY_OPERATION_GENERAL);
+static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_container_t *c_x, iarray_container_t *c_y,
+                          iarray_container_t *c_out, iarray_container_t *c_res, double tol) {
+    iarray_matmul(ctx, c_x, c_y, c_out, IARRAY_OPERATION_GENERAL);
     if (!iarray_almost_equal_data(c_out, c_res, tol)) {
         return INA_ERROR(INA_ERR_FAILED);
     }
@@ -193,7 +194,7 @@ static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx, iarray_data_type_t d
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &rshape, buffer_r, buffer_r_len, NULL, 0, &c_res));
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &oshape, NULL, 0, &c_out));
 
-    INA_TEST_ASSERT_SUCCEED(test_gemv(c_x, c_y, c_out, c_res, tol));
+    INA_TEST_ASSERT_SUCCEED(test_gemv(ctx, c_x, c_y, c_out, c_res, tol));
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
