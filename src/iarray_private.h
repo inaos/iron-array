@@ -76,6 +76,16 @@ typedef struct iarray_itr_s {
     uint64_t cont;
 } iarray_itr_t;
 
+typedef struct iarray_itr_chunk_s {
+    iarray_container_t *container;
+    uint8_t *part;
+    void *pointer;
+    uint64_t part_size;
+    uint64_t *index;
+    uint64_t nelem;
+    uint64_t cont;
+} iarray_itr_chunk_t;
+
 typedef struct iarray_itr_matmul_s {
     iarray_container_t *container1;
     iarray_container_t *container2;
