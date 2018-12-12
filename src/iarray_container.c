@@ -51,7 +51,7 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
     uint64_t *stop_,
     iarray_store_properties_t *store,
     int flags,
-    iarray_container_t **container)
+    iarray_container_t *container)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(start_);
@@ -68,14 +68,20 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
     }
     dtshape.ndim = c->dtshape->ndim;
     dtshape.dtype = c->dtshape->dtype;
-    INA_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape, store, flags, container));
 
-    INA_FAIL_IF(caterva_get_slice((*container)->catarr, c->catarr, start, stop) != 0);
+    INA_FAIL_IF(caterva_get_slice(container->catarr, c->catarr, start, stop) != 0);
+
+    if (container->dtshape->ndim != container->catarr->ndim) {
+        container->dtshape->ndim = (uint8_t) container->catarr->ndim;
+        for (int i = 0; i < container->catarr->ndim; ++i) {
+            container->dtshape->shape[i] = container->catarr->shape[i];
+            container->dtshape->partshape[i] = container->catarr->pshape[i];
+        }
+    }
 
     return INA_SUCCESS;
 
 fail:
-    iarray_container_free(ctx, container);
     return ina_err_get_rc();
 }
 
