@@ -17,6 +17,22 @@
 
 #include <iarray_private.h>
 
+
+static int32_t serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
+{
+    if (dtype > 127) {
+        return -1;
+    }
+    int32_t smeta_len = 1;  // the dtype only takes 7-bit, so up to 128 values
+    *smeta = malloc((size_t)smeta_len);
+
+    // dtype entry
+    **smeta = (uint8_t)dtype;  // positive fixnum (7-bit positive integer)
+
+    return smeta_len;
+}
+
+
 static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *dtshape,
                                       iarray_store_properties_t *store,
                                       int flags,
@@ -71,6 +87,13 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         INA_FAIL_IF((*c)->store == NULL);
         (*c)->store->id = ina_str_new_fromcstr(store->id);
         (*c)->frame->fname = (char*)ina_str_cstr((*c)->store->id); /* FIXME: shouldn't fname be a const char? */
+        uint8_t *smeta;
+        int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
+        INA_FAIL_IF(smeta_len < 0);
+        // And store it in iarray namespace
+        int retcode = blosc2_frame_add_namespace((*c)->frame, "iarray", smeta, (uint32_t)smeta_len);
+        INA_FAIL_IF(retcode < 0);
+        free(smeta);
     }
 
     switch (dtshape->dtype) {
