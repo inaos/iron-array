@@ -159,6 +159,7 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
     INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
+    // TODO: would it be interesting to add a `buffer_len` parameter to `caterva_from_buffer()`?
     if (caterva_from_buffer((*container)->catarr, *(*container)->shape, buffer) != 0) {
         INA_ERROR(INA_ERR_FAILED);
         INA_FAIL_IF(1);
