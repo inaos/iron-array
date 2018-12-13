@@ -14,9 +14,10 @@
 
 #include <tests/iarray_test.h>
 
-static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_out, iarray_container_t *c_x, uint64_t * start, uint64_t *stop) {
-    INA_TEST_ASSERT_SUCCEED(iarray_slice(ctx, c_x, start, stop, NULL, 0, c_out));
-    INA_TEST_ASSERT_SUCCEED(iarray_squeeze(ctx, NULL, 0, c_out));
+static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_x, uint64_t * start, uint64_t *stop,
+    iarray_dtshape_t dtshape, iarray_store_properties_t *stores, int flags, iarray_container_t **c_out) {
+    INA_TEST_ASSERT_SUCCEED(iarray_slice(ctx, c_x, start, stop, &dtshape, stores, flags, c_out));
+    INA_TEST_ASSERT_SUCCEED(iarray_squeeze(ctx, *c_out));
 
     return INA_SUCCESS;
 }
@@ -62,9 +63,8 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     iarray_container_t *c_out;
 
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buffer_x, buffer_x_len * type_size, NULL, 0, &c_x));
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &outdtshape, NULL, 0, &c_out));
 
-    INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_out, c_x, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, outdtshape, NULL, 0, &c_out));
 
     uint64_t bufdes_size = 1;
 
