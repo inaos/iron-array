@@ -85,6 +85,31 @@ fail:
     return ina_err_get_rc();
 }
 
+INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
+                                 iarray_store_properties_t *store,
+                                 int flags,
+                                 iarray_container_t *container)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(container);
+
+    INA_FAIL_IF(caterva_squeeze(container->catarr) != 0);
+
+    if (container->dtshape->ndim != container->catarr->ndim) {
+        container->dtshape->ndim = (uint8_t) container->catarr->ndim;
+        for (int i = 0; i < container->catarr->ndim; ++i) {
+            container->dtshape->shape[i] = container->catarr->shape[i];
+            container->dtshape->partshape[i] = container->catarr->pshape[i];
+        }
+    }
+
+    return INA_SUCCESS;
+
+    fail:
+    return ina_err_get_rc();
+}
+
+
 INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c,
     uint64_t *nbytes,
     uint64_t *cbytes)
