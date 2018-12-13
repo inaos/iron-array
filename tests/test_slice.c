@@ -16,6 +16,7 @@
 
 static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_out, iarray_container_t *c_x, uint64_t * start, uint64_t *stop) {
     INA_TEST_ASSERT_SUCCEED(iarray_slice(ctx, c_x, start, stop, NULL, 0, c_out));
+    INA_TEST_ASSERT_SUCCEED(iarray_squeeze(ctx, NULL, 0, c_out));
 
     return INA_SUCCESS;
 }
