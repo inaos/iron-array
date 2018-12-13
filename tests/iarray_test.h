@@ -27,7 +27,6 @@ static void ffill_buf(float *x, size_t nitems)
 static void dfill_buf(double *x, size_t nitems)
 {
     /* Fill with even values between 0 and 10 */
-    double incx = 10. / nitems;
 
     for (size_t i = 0; i < nitems; i++) {
         x[i] = i;
