@@ -65,7 +65,6 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_out, c_x, start, stop));
 
-    //TODO: Implement an assert function
     uint64_t bufdes_size = 1;
 
     for (int k = 0; k < ndim; ++k) {
