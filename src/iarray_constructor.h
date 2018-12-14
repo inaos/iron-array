@@ -134,7 +134,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         shape.dims[i] = 1;
         pshape.dims[i] = 1;
     }
-    for (int i = 0; i < dtshape->ndim; ++i) { // FIXME: 1's at the beginning should be removed
+    for (int i = 0; i < dtshape->ndim; ++i) {
         shape.dims[i] = dtshape->shape[i];
         pshape.dims[i] = dtshape->partshape[i];
     }
