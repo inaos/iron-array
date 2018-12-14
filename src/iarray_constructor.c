@@ -145,12 +145,12 @@ fail:
 }
 
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
-    iarray_dtshape_t *dtshape,
-    void *buffer,
-    size_t buffer_len,
-    iarray_store_properties_t *store,
-    int flags,
-    iarray_container_t **container)
+                                     iarray_dtshape_t *dtshape,
+                                     void *buffer,
+                                     size_t buffer_len,
+                                     iarray_store_properties_t *store,
+                                     int flags,
+                                     iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
@@ -169,6 +169,101 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
 fail:
     iarray_container_free(ctx, container);
+    return ina_err_get_rc();
+}
+
+
+static int32_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype)
+{
+    uint8_t *pmeta = smeta;
+
+    // We only have an entry with the datatype (enumerated < 128)
+    *dtype = *pmeta;
+    pmeta += 1;
+    assert(pmeta - smeta == smeta_len);
+    if (*dtype >= IARRAY_DATA_TYPE_MAX) {
+        return INA_ERR_FAILED;
+    }
+
+    return INA_SUCCESS;
+}
+
+
+INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
+                                   iarray_store_properties_t *store,
+                                   int flags,
+                                   iarray_container_t **container)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(container);
+
+    caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, BLOSC_CPARAMS_DEFAULTS, BLOSC_DPARAMS_DEFAULTS);
+
+    caterva_array_t *catarr = caterva_from_file(cat_ctx, store->id);
+    if (catarr == NULL) {
+        INA_ERROR(INA_ERR_FAILED);
+        INA_FAIL_IF(1);
+    }
+
+    uint8_t *smeta;
+    uint32_t smeta_len;
+    blosc2_frame_get_namespace(catarr->sc->frame, "iarray", &smeta, &smeta_len);
+    iarray_data_type_t dtype;
+    deserialize_meta(smeta, smeta_len, &dtype);
+
+    //INA_RETURN_IF_FAILED(_iarray_container_new(ctx, &dtshape, store, flags, container));
+    *container = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
+    INA_RETURN_IF_NULL(container);
+
+    // Build the dtshape
+    (*container)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
+    iarray_dtshape_t* dtshape = (*container)->dtshape;
+    dtshape->dtype = dtype;
+    dtshape->ndim = catarr->ndim;
+    for (int i = 0; i < catarr->ndim; ++i) {
+        dtshape->shape[i] = catarr->shape[i];
+        dtshape->partshape[i] = catarr->pshape[i];
+    }
+
+    // Populate the frame
+    (*container)->frame = (blosc2_frame*)ina_mem_alloc(sizeof(blosc2_frame));
+    INA_FAIL_IF((*container)->frame == NULL);
+    ina_mem_cpy((*container)->frame, catarr->sc->frame, sizeof(blosc2_frame));
+
+    // Populate other contents of the container
+    (*container)->catarr = catarr;
+    (*container)->cparams = NULL;  // TODO: complete this
+    (*container)->dparams = NULL;  // TODO: complete this
+    (*container)->transposed = false;  // TODO: complete this
+    // The store
+    (*container)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
+    INA_FAIL_IF((*container)->store == NULL);
+    (*container)->store->id = ina_str_new_fromcstr(store->id);
+
+    // The shape and pshape (FIXME: isn't this redundant with dtshape?)
+    (*container)->shape = (caterva_dims_t*)ina_mem_alloc(sizeof(caterva_dims_t));
+    INA_FAIL_IF((*container)->shape == NULL);
+    (*container)->pshape = (caterva_dims_t*)ina_mem_alloc(sizeof(caterva_dims_t));
+    INA_FAIL_IF((*container)->pshape == NULL);
+    caterva_dims_t shape;
+    caterva_dims_t pshape;
+    for (int i = 0; i < CATERVA_MAXDIM; i++) {
+        shape.dims[i] = 1;
+        pshape.dims[i] = 1;
+    }
+    for (int i = 0; i < dtshape->ndim; ++i) {
+        shape.dims[i] = dtshape->shape[i];
+        pshape.dims[i] = dtshape->partshape[i];
+    }
+    shape.ndim = dtshape->ndim;
+    pshape.ndim = dtshape->ndim;
+    ina_mem_cpy((*container)->shape, &shape, sizeof(caterva_dims_t));
+    ina_mem_cpy((*container)->pshape, &pshape, sizeof(caterva_dims_t));
+
+    return INA_SUCCESS;
+
+fail:
+    caterva_free_ctx(cat_ctx);
     return ina_err_get_rc();
 }
 
