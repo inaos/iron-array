@@ -282,6 +282,29 @@ INA_API(void) iarray_itr_chunk_init(iarray_itr_chunk_t *itr)
 
 INA_API(void) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
 {
+    caterva_array_t *catarr = itr->container->catarr;
+    int ndim = catarr->ndim;
+
+    //update_index
+    itr->index[ndim - 1] = itr->cont % catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1];
+    uint64_t inc = catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1];
+
+    for (int i = ndim - 2; i >= 0; --i) {
+        itr->index[i] = itr->cont % (inc * catarr->eshape[i] / catarr->pshape[i]);
+        inc *= catarr->eshape[i] / catarr->pshape[i];
+    }
+
+    // check if the chunk should be padded with 0s
+    itr->size = 1;
+    for (int i = 0; i < ndim; ++i) {
+        if ((itr->index[i] + 1) * catarr->pshape[i] > catarr->shape[i]) {
+            itr->shape[i] = catarr->eshape[i] - catarr->shape[i];
+        } else {
+            itr->shape[i] = catarr->pshape[i];
+        }
+        itr->size *= itr->size;
+    }
+
     uint64_t psizeb = itr->size * itr->container->catarr->sc->typesize;
     if ( itr->size == itr->container->catarr->psize ) {
         //blosc2_schunk_append_buffer(itr->container->catarr->sc, itr->part, psizeb);
@@ -312,14 +335,8 @@ INA_API(void) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
         //blosc2_schunk_append_buffer(itr->container->catarr->sc, itr->part, psizeb);
     }
 
-    caterva_array_t *catarr = itr->container->catarr;
-    int ndim = catarr->ndim;
-
     // jump to the next element
     itr->cont += 1;
-
-
-
 }
 
 /*
@@ -353,6 +370,7 @@ INA_API(ina_rc_t) iarray_itr_chunk_value(iarray_itr_chunk_t *itr, iarray_itr_chu
     val->pointer = itr->pointer;
     val->index = itr->index;
     val->nelem = itr->cont;
+    val->shape = itr->shape;
 
     return 0;
 }

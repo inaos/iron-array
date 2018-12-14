@@ -40,7 +40,16 @@ static ina_rc_t test_chunk_iterator(iarray_context_t *ctx, iarray_data_type_t dt
         iarray_itr_chunk_value_t val;
         iarray_itr_chunk_value(I, &val);
 
-        printf("Nchunk: %llu\n", val.nelem);
+        uint64_t chunksize = 1;
+        for (int i = 0; i < ndim; ++i) {
+            chunksize *= val.shape[i];
+        }
+        printf("Nchunk %llu (size %llu)\n", val.nelem, chunksize);
+        printf("- Index: ");
+        for (int j = 0; j < ndim; ++j) {
+            printf("%llu ", val.index[j]);
+        }
+        printf("\n");
     }
 
     iarray_itr_chunk_free(ctx, I);
@@ -75,7 +84,7 @@ INA_TEST_FIXTURE(chunk_iterator, double_2) {
 
     uint8_t ndim = 2;
     uint64_t shape[] = {100, 100};
-    uint64_t pshape[] = {20, 20};
+    uint64_t pshape[] = {20, 40};
 
     INA_TEST_ASSERT_SUCCEED(test_chunk_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
