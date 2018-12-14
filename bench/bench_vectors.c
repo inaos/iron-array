@@ -49,6 +49,20 @@ static void ina_cleanup_handler(int error, int *exitcode)
     iarray_destroy();
 }
 
+/*
+ * Check if a file exist using fopen() function
+ * return 1 if the file exist otherwise return 0
+ */
+bool cfileexists(const char * filename){
+    /* try to open file to read */
+    FILE *file;
+    if ((file = fopen(filename, "r"))) {
+        fclose(file);
+        return true;
+    }
+    return false;
+}
+
 static double *x = NULL;
 static double *y = NULL;
 
@@ -130,9 +144,19 @@ int main(int argc, char** argv)
     int retcode = y[0] > y[1];
 
     int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
-    INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, x, buffer_len, &mat_x, flags, &con_x));
+    if (INA_SUCCEED(ina_opt_isset("p")) && cfileexists(mat_x.id)) {
+        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_x, flags, &con_x));
+    }
+    else {
+        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, x, buffer_len, &mat_x, flags, &con_x));
+    }
     INA_STOPWATCH_START(w);
-    INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, y, buffer_len, &mat_y, flags, &con_y));
+    if (INA_SUCCEED(ina_opt_isset("p")) && cfileexists(mat_y.id)) {
+        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_y, flags, &con_y));
+    }
+    else {
+        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, y, buffer_len, &mat_y, flags, &con_y));
+    }
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 

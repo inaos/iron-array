@@ -58,8 +58,8 @@ struct iarray_container_s {
     iarray_dtshape_t *dtshape;
     blosc2_cparams *cparams;
     blosc2_dparams *dparams;
-    caterva_dims_t *pshape;
-    caterva_dims_t *shape;
+    caterva_dims_t *pshape;  // FIXME: is not this part of dtshape?
+    caterva_dims_t *shape;  // FIXME: is not this part of dtshape?
     blosc2_frame *frame;
     caterva_array_t *catarr;
     _iarray_container_store_t *store;
