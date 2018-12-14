@@ -1,9 +1,4 @@
 /*
- * Copyright (C) 2018  Francesc Alted
- * Copyright (C) 2018  Aleix Alcacer
- */
-
-/*
  * Copyright INAOS GmbH, Thalwil, 2018.
  * Copyright Francesc Alted, 2018.
  *
@@ -16,13 +11,13 @@
  */
 
 #include <libiarray/iarray.h>
-#include <iarray_private.h>
 
 #include <tests/iarray_test.h>
 
 static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint8_t ndim,
-                                     const uint64_t *shape, const uint64_t *pshape) {
+                              const uint64_t *shape, const uint64_t *pshape) {
 
+    // Create dtshape
     iarray_dtshape_t xdtshape;
 
     xdtshape.dtype = dtype;
@@ -37,25 +32,26 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
     iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x);
 
     // Start Iterator
-
     iarray_itr_t *I;
-    iarray_itr_new(c_x, &I);
+    iarray_itr_new(ctx, c_x, &I);
 
-    for (I->init(I); !I->finished(I); I->next(I)) {
+    for (iarray_itr_init(I); !iarray_itr_finished(I); iarray_itr_next(I)) {
+
+        iarray_itr_value_t val;
+        iarray_itr_value(I, &val);
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value = (double) I->nelem;
-            memcpy(I->pointer, &value, type_size);
+            double value = (double) val.nelem;
+            memcpy(val.pointer, &value, type_size);
         } else {
-            float value = (float) I->nelem;
-            memcpy(I->pointer, &value, type_size);
+            float value = (float) val.nelem;
+            memcpy(val.pointer, &value, type_size);
         }
     }
 
-    iarray_itr_free(I);
+    iarray_itr_free(ctx, I);
 
     // Assert iterator values
-
     uint64_t bufsize = 1;
     for (int j = 0; j < ndim; ++j) {
         bufsize *= xdtshape.shape[j];
@@ -76,7 +72,6 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
     }
 
     // Free
-
     ina_mem_free(bufdest);
     iarray_container_free(ctx, &c_x);
     return INA_SUCCESS;
