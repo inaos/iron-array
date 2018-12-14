@@ -28,7 +28,8 @@ typedef enum iarray_random_rng_e {
 
 typedef enum iarray_data_type_e {
     IARRAY_DATA_TYPE_DOUBLE,
-    IARRAY_DATA_TYPE_FLOAT
+    IARRAY_DATA_TYPE_FLOAT,
+    IARRAY_DATA_TYPE_MAX  // marker; must be the last entry
 } iarray_data_type_t;
 
 typedef enum iarray_storage_format_e {
@@ -214,6 +215,11 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
                                iarray_store_properties_t *store,
                                int flags,
                                iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
+                                   iarray_store_properties_t *store,
+                                   int flags,
+                                   iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
