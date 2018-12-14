@@ -49,6 +49,7 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
     iarray_container_t *c,
     uint64_t *start_,
     uint64_t *stop_,
+    iarray_dtshape_t *dtshape,
     iarray_store_properties_t *store,
     int flags,
     iarray_container_t **container)
@@ -56,28 +57,42 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(start_);
     INA_VERIFY_NOT_NULL(stop_);
-    INA_VERIFY_NOT_NULL(container);
+
+    iarray_container_new(ctx, dtshape, store, flags, container);
 
     caterva_dims_t start = caterva_new_dims(start_, c->dtshape->ndim);
     caterva_dims_t stop = caterva_new_dims(stop_, c->dtshape->ndim);
-
-    iarray_dtshape_t dtshape;
-    for (int i = 0; i < c->dtshape->ndim; ++i) {
-        dtshape.shape[i] = (stop_[i] - start_[i]);
-        dtshape.partshape[i] = c->dtshape->partshape[i];
-    }
-    dtshape.ndim = c->dtshape->ndim;
-    dtshape.dtype = c->dtshape->dtype;
-    INA_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape, store, flags, container));
 
     INA_FAIL_IF(caterva_get_slice((*container)->catarr, c->catarr, start, stop) != 0);
 
     return INA_SUCCESS;
 
 fail:
-    iarray_container_free(ctx, container);
     return ina_err_get_rc();
 }
+
+INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
+                                 iarray_container_t *container)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(container);
+
+    INA_FAIL_IF(caterva_squeeze(container->catarr) != 0);
+
+    if (container->dtshape->ndim != container->catarr->ndim) {
+        container->dtshape->ndim = (uint8_t) container->catarr->ndim;
+        for (int i = 0; i < container->catarr->ndim; ++i) {
+            container->dtshape->shape[i] = container->catarr->shape[i];
+            container->dtshape->partshape[i] = container->catarr->pshape[i];
+        }
+    }
+
+    return INA_SUCCESS;
+
+fail:
+    return ina_err_get_rc();
+}
+
 
 INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c,
     uint64_t *nbytes,
