@@ -118,11 +118,6 @@ int main(int argc, char** argv)
     INA_STOPWATCH_NEW(-1, -1, &w);
 
     size_t buffer_len = sizeof(double)*NELEM;
-    x = (double*)ina_mem_alloc(buffer_len);
-    y = (double*)ina_mem_alloc(buffer_len);
-
-    // Fill the plain x operand
-    _fill_x(x);
 
     iarray_dtshape_t shape;
     shape.ndim = 1;
@@ -130,48 +125,65 @@ int main(int argc, char** argv)
     shape.shape[0] = NELEM;
     shape.partshape[0] = PART_SIZE;
 
-    iarray_container_t *con_x;
-    iarray_container_t *con_y;
-
-    // Compute the plain y vector
-    INA_STOPWATCH_START(w);
-    _compute_y(x, y);
-    INA_STOPWATCH_STOP(w);
-    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
-    printf("Time for computing and filling Y values: %.3g s, %.1f MB/s\n",
-            elapsed_sec, buffer_len/(elapsed_sec*_IARRAY_SIZE_MB));
-    // To prevent the optimizer going too smart and removing 'dead' code
-    int retcode = y[0] > y[1];
-
-    int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
-    if (INA_SUCCEED(ina_opt_isset("p")) && cfileexists(mat_x.id)) {
-        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_x, flags, &con_x));
-    }
-    else {
-        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, x, buffer_len, &mat_x, flags, &con_x));
-    }
-    INA_STOPWATCH_START(w);
-    if (INA_SUCCEED(ina_opt_isset("p")) && cfileexists(mat_y.id)) {
-        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_y, flags, &con_y));
-    }
-    else {
-        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, y, buffer_len, &mat_y, flags, &con_y));
-    }
-    INA_STOPWATCH_STOP(w);
-    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
-
     uint64_t nbytes = 0;
     uint64_t cbytes = 0;
     double nbytes_mb = 0;
     double cbytes_mb = 0;
 
-    iarray_container_info(con_x, &nbytes, &cbytes);
-    printf("Time for compressing Y values: %.3g s, %.1f MB/s\n",
-            elapsed_sec, nbytes/(elapsed_sec*_IARRAY_SIZE_MB));
+    iarray_container_t *con_x;
+    iarray_container_t *con_y;
+
+    int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
+    if (INA_SUCCEED(ina_opt_isset("p")) && cfileexists(mat_x.id)) {
+        INA_STOPWATCH_START(w);
+        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_x, flags, &con_x));
+        INA_STOPWATCH_STOP(w);
+        INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+        iarray_container_info(con_x, &nbytes, &cbytes);
+        printf("Time for *opening* X values: %.3g s, %.1f MB/s\n",
+               elapsed_sec, nbytes/(elapsed_sec * _IARRAY_SIZE_MB));
+    }
+    else {
+        x = (double*)ina_mem_alloc(buffer_len);
+        // Fill the plain x operand
+        _fill_x(x);
+        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, x, buffer_len, &mat_x, flags, &con_x));
+    }
+    nbytes_mb = ((double)nbytes / _IARRAY_SIZE_MB);
+    cbytes_mb = ((double)cbytes / _IARRAY_SIZE_MB);
+    printf("Compression for X values: %.1f MB -> %.1f MB (%.1fx)\n",
+           nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
+
+    if (INA_SUCCEED(ina_opt_isset("p")) && cfileexists(mat_y.id)) {
+        INA_STOPWATCH_START(w);
+        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_y, flags, &con_y));
+        INA_STOPWATCH_STOP(w);
+        INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+        iarray_container_info(con_y, &nbytes, &cbytes);
+        printf("Time for *opening* Y values: %.3g s, %.1f MB/s\n",
+               elapsed_sec, nbytes/(elapsed_sec * _IARRAY_SIZE_MB));
+    }
+    else {
+        // Compute the plain y vector
+        y = (double*)ina_mem_alloc(buffer_len);
+        INA_STOPWATCH_START(w);
+        _compute_y(x, y);
+        INA_STOPWATCH_STOP(w);
+        INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+        printf("Time for computing and filling Y values: %.3g s, %.1f MB/s\n",
+               elapsed_sec, buffer_len/(elapsed_sec*_IARRAY_SIZE_MB));
+        INA_STOPWATCH_START(w);
+        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, y, buffer_len, &mat_y, flags, &con_y));
+        INA_STOPWATCH_STOP(w);
+        INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+        iarray_container_info(con_y, &nbytes, &cbytes);
+        printf("Time for compressing Y values: %.3g s, %.1f MB/s\n",
+               elapsed_sec, nbytes/(elapsed_sec * _IARRAY_SIZE_MB));
+    }
     nbytes_mb = ((double)nbytes / _IARRAY_SIZE_MB);
     cbytes_mb = ((double)cbytes / _IARRAY_SIZE_MB);
     printf("Compression for Y values: %.1f MB -> %.1f MB (%.1fx)\n",
-            nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
+           nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
 
     // Check IronArray performance
     iarray_expression_t *e;
@@ -210,5 +222,5 @@ int main(int argc, char** argv)
 
     INA_STOPWATCH_FREE(&w);
 
-    return retcode;
+    return 0;
 }
