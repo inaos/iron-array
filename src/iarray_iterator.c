@@ -267,9 +267,9 @@ INA_API(void) iarray_itr_chunk_init(iarray_itr_chunk_t *itr)
     memset(itr->part, 0, itr->container->catarr->psize * itr->container->catarr->sc->typesize);
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         itr->index[i] = 0;
-        itr->size = itr->container->catarr->psize;
         itr->shape[i] = itr->container->dtshape->partshape[i];
     }
+    itr->size = itr->container->catarr->psize;
 }
 
 /*
@@ -285,46 +285,49 @@ INA_API(void) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
     caterva_array_t *catarr = itr->container->catarr;
     int ndim = catarr->ndim;
 
-    //update_index
-    itr->index[ndim - 1] = itr->cont % catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1];
-    uint64_t inc = catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1];
+    uint64_t psizeb = itr->size * catarr->sc->typesize;
 
-    for (int i = ndim - 2; i >= 0; --i) {
-        itr->index[i] = itr->cont % (inc * catarr->eshape[i] / catarr->pshape[i]);
-        inc *= catarr->eshape[i] / catarr->pshape[i];
-    }
-
-    // check if the chunk should be padded with 0s
-    itr->size = 1;
-    for (int i = 0; i < ndim; ++i) {
-        if ((itr->index[i] + 1) * catarr->pshape[i] > catarr->shape[i]) {
-            itr->shape[i] = catarr->eshape[i] - catarr->shape[i];
-        } else {
-            itr->shape[i] = catarr->pshape[i];
-        }
-        itr->size *= itr->size;
-    }
-
-    uint64_t psizeb = itr->size * itr->container->catarr->sc->typesize;
-    if ( itr->size == itr->container->catarr->psize ) {
-        //blosc2_schunk_append_buffer(itr->container->catarr->sc, itr->part, psizeb);
+    if ( itr->size == catarr->psize ) {
+        blosc2_schunk_append_buffer(catarr->sc, itr->part, psizeb);
     } else {
-        uint8_t *part_aux = malloc(psizeb);
+        uint8_t *part_aux = malloc(catarr->psize * catarr->sc->typesize);
+
+        //reverse shape
+        uint64_t shaper[CATERVA_MAXDIM];
+        for (int i = 0; i < CATERVA_MAXDIM; ++i) {
+            if(i >= CATERVA_MAXDIM - ndim) {
+                shaper[i] = itr->shape[i - CATERVA_MAXDIM + ndim];
+            } else {
+                shaper[i] = 1;
+            }
+        }
 
         uint64_t ii[CATERVA_MAXDIM];
 
-        for (ii[0] = 0; ii[0] < itr->shape[0]; ++ii[0]) {
-            for (ii[1] = 0; ii[1] < itr->shape[1]; ++ii[1]) {
-                for (ii[2] = 0; ii[2] < itr->shape[2]; ++ii[2]) {
-                    for (ii[3] = 0; ii[3] < itr->shape[3]; ++ii[3]) {
-                        for (ii[4] = 0; ii[4] < itr->shape[4]; ++ii[4]) {
-                            for (ii[5] = 0; ii[5] < itr->shape[5]; ++ii[5]) {
-                                for (ii[6] = 0; ii[6] < itr->shape[6]; ++ii[6]) {
+        for (ii[0] = 0; ii[0] < shaper[0]; ++ii[0]) {
+            for (ii[1] = 0; ii[1] < shaper[1]; ++ii[1]) {
+                for (ii[2] = 0; ii[2] < shaper[2]; ++ii[2]) {
+                    for (ii[3] = 0; ii[3] < shaper[3]; ++ii[3]) {
+                        for (ii[4] = 0; ii[4] < shaper[4]; ++ii[4]) {
+                            for (ii[5] = 0; ii[5] < shaper[5]; ++ii[5]) {
+                                for (ii[6] = 0; ii[6] < shaper[6]; ++ii[6]) {
 
                                     uint64_t aux_p = 0;
-                                    uint64_t itr_p = 0;
+                                    uint64_t aux_i = catarr->pshape[ndim - 1];
 
-                                    //memcpy(&part_aux[aux_p], &(itr->part)[itr_p], itr->shape[7]);
+                                    for (int i = ndim - 2; i >= 0; --i) {
+                                        aux_p += ii[CATERVA_MAXDIM - ndim + i] * aux_i;
+                                        aux_i *= catarr->pshape[i];
+                                    }
+
+                                    uint64_t itr_p = 0;
+                                    uint64_t itr_i = shaper[CATERVA_MAXDIM - 1];
+
+                                    for (int i = CATERVA_MAXDIM - 2; i >= CATERVA_MAXDIM - ndim; --i) {
+                                        itr_p += ii[i] * itr_i;
+                                        itr_i *= shaper[i];
+                                    }
+                                    memcpy(&part_aux[aux_p * catarr->sc->typesize], &(itr->part[itr_p * catarr->sc->typesize]), shaper[7] * catarr->sc->typesize);
                                 }
                             }
                         }
@@ -332,11 +335,34 @@ INA_API(void) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
                 }
             }
         }
-        //blosc2_schunk_append_buffer(itr->container->catarr->sc, itr->part, psizeb);
+
+        blosc2_schunk_append_buffer(itr->container->catarr->sc, part_aux, catarr->psize * catarr->sc->typesize);
+
+        free(part_aux);
+    }
+    itr->cont += 1;
+
+    //update_index
+    itr->index[ndim - 1] = itr->cont % (catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1]);
+    uint64_t inc = catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1];
+
+    for (int i = ndim - 2; i >= 0; --i) {
+        itr->index[i] = itr->cont / (inc);
+        inc *= catarr->eshape[i] / catarr->pshape[i];
     }
 
-    // jump to the next element
-    itr->cont += 1;
+
+    // check if the chunk should be padded with 0s
+    itr->size = 1;
+    for (int i = 0; i < ndim; ++i) {
+        if ((itr->index[i] + 1) * catarr->pshape[i] > catarr->shape[i]) {
+            itr->shape[i] = catarr->shape[i] - catarr->eshape[i] + catarr->pshape[i];
+        } else {
+            itr->shape[i] = catarr->pshape[i];
+        }
+        itr->size *= itr->shape[i];
+    }
+
 }
 
 /*
