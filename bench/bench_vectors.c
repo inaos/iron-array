@@ -133,6 +133,8 @@ int main(int argc, char** argv)
     iarray_container_t *con_x;
     iarray_container_t *con_y;
 
+    bool x_allocated = false, y_allocated = false;
+
     int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
     if (INA_SUCCEED(ina_opt_isset("p")) && cfileexists(mat_x.id)) {
         INA_STOPWATCH_START(w);
@@ -145,9 +147,11 @@ int main(int argc, char** argv)
     }
     else {
         x = (double*)ina_mem_alloc(buffer_len);
+        x_allocated = true;
         // Fill the plain x operand
         _fill_x(x);
         INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, x, buffer_len, &mat_x, flags, &con_x));
+        iarray_container_info(con_x, &nbytes, &cbytes);
     }
     nbytes_mb = ((double)nbytes / _IARRAY_SIZE_MB);
     cbytes_mb = ((double)cbytes / _IARRAY_SIZE_MB);
@@ -166,6 +170,7 @@ int main(int argc, char** argv)
     else {
         // Compute the plain y vector
         y = (double*)ina_mem_alloc(buffer_len);
+        y_allocated = true;
         INA_STOPWATCH_START(w);
         _compute_y(x, y);
         INA_STOPWATCH_STOP(w);
@@ -207,7 +212,10 @@ int main(int argc, char** argv)
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
             nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
 
+    printf("Checking that the outcome of the expression is correct...");
+    fflush(stdout);
     INA_MUST_SUCCEED(iarray_container_almost_equal(con_y, con_out, 1e-06));
+    printf(" Yes!\n");
 
     iarray_expr_free(ctx, &e);
 
@@ -217,8 +225,8 @@ int main(int argc, char** argv)
 
     iarray_context_free(&ctx);
 
-    ina_mem_free(x);
-    ina_mem_free(y);
+    if (x_allocated) ina_mem_free(x);
+    if (y_allocated) ina_mem_free(y);
 
     INA_STOPWATCH_FREE(&w);
 
