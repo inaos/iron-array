@@ -146,12 +146,22 @@ int main(int argc, char** argv)
                elapsed_sec, nbytes/(elapsed_sec * _IARRAY_SIZE_GB));
     }
     else {
+        INA_STOPWATCH_START(w);
         x = (double*)ina_mem_alloc(buffer_len);
         x_allocated = true;
         // Fill the plain x operand
         _fill_x(x);
+        INA_STOPWATCH_STOP(w);
+        INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+        printf("Time for computing and filling X values: %.3g s, %.1f MB/s\n",
+               elapsed_sec, buffer_len/(elapsed_sec*_IARRAY_SIZE_MB));
+        INA_STOPWATCH_START(w);
         INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, x, buffer_len, &mat_x, flags, &con_x));
         iarray_container_info(con_x, &nbytes, &cbytes);
+        INA_STOPWATCH_STOP(w);
+        INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+        printf("Time for compressing and *storing* X values: %.3g s, %.1f MB/s\n",
+               elapsed_sec, nbytes/(elapsed_sec * _IARRAY_SIZE_MB));
     }
     nbytes_mb = ((double)nbytes / _IARRAY_SIZE_MB);
     cbytes_mb = ((double)cbytes / _IARRAY_SIZE_MB);
@@ -169,9 +179,9 @@ int main(int argc, char** argv)
     }
     else {
         // Compute the plain y vector
+        INA_STOPWATCH_START(w);
         y = (double*)ina_mem_alloc(buffer_len);
         y_allocated = true;
-        INA_STOPWATCH_START(w);
         _compute_y(x, y);
         INA_STOPWATCH_STOP(w);
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
@@ -182,7 +192,7 @@ int main(int argc, char** argv)
         INA_STOPWATCH_STOP(w);
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
         iarray_container_info(con_y, &nbytes, &cbytes);
-        printf("Time for compressing Y values: %.3g s, %.1f MB/s\n",
+        printf("Time for compressing and *storing* Y values: %.3g s, %.1f MB/s\n",
                elapsed_sec, nbytes/(elapsed_sec * _IARRAY_SIZE_MB));
     }
     nbytes_mb = ((double)nbytes / _IARRAY_SIZE_MB);
