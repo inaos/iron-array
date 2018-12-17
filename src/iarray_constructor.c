@@ -211,9 +211,9 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
     iarray_data_type_t dtype;
     deserialize_meta(smeta, smeta_len, &dtype);
 
-    //INA_RETURN_IF_FAILED(_iarray_container_new(ctx, &dtshape, store, flags, container));
     *container = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
     INA_RETURN_IF_NULL(container);
+    (*container)->catarr = catarr;
 
     // Build the dtshape
     (*container)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
@@ -230,12 +230,22 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
     INA_FAIL_IF((*container)->frame == NULL);
     ina_mem_cpy((*container)->frame, catarr->sc->frame, sizeof(blosc2_frame));
 
-    // Populate other contents of the container
-    (*container)->catarr = catarr;
-    (*container)->cparams = NULL;  // TODO: complete this
-    (*container)->dparams = NULL;  // TODO: complete this
+    // Populate compression parameters
+    blosc2_cparams *cparams;
+    blosc2_get_cparams(catarr->sc, &cparams);
+    blosc2_cparams *cparams2 = (blosc2_cparams*)ina_mem_alloc(sizeof(blosc2_cparams));
+    memcpy(cparams2, cparams, sizeof(blosc2_cparams));
+    free(cparams);
+    (*container)->cparams = cparams2;  // we need an INA-allocated struct (to match INA_MEM_FREE_SAFE)
+    blosc2_dparams *dparams;
+    blosc2_get_dparams(catarr->sc, &dparams);
+    blosc2_dparams *dparams2 = (blosc2_dparams*)ina_mem_alloc(sizeof(blosc2_dparams));
+    memcpy(dparams2, dparams, sizeof(blosc2_dparams));
+    free(dparams);
+    (*container)->dparams = dparams2;  // we need an INA-allocated struct (to match INA_MEM_FREE_SAFE)
+
     (*container)->transposed = false;  // TODO: complete this
-    // The store
+
     (*container)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
     INA_FAIL_IF((*container)->store == NULL);
     (*container)->store->id = ina_str_new_fromcstr(store->id);
