@@ -53,12 +53,11 @@ static ina_rc_t test_chunk_iterator(iarray_context_t *ctx, iarray_data_type_t dt
             }
         } else {
             for (uint64_t i = 0; i < part_size; ++i) {
-                ( (float *)data)[i] = (float) (val.nelem + 1) * i;
+                ( (float *)data)[i] = (float) val.nelem * part_size + i;
             }
         }
         memcpy(val.pointer, &data[0], part_size * type_size);
         free(data);
-        //FIXME: Error in some malloc
     }
 
     iarray_itr_chunk_free(ctx, I);
@@ -156,12 +155,60 @@ INA_TEST_FIXTURE(chunk_iterator, double_2) {
 
 INA_TEST_FIXTURE(chunk_iterator, float_3) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    size_t type_size = sizeof(float);
+
+    uint8_t ndim = 3;
+    uint64_t shape[] = {120, 131, 155};
+    uint64_t pshape[] = {23, 32, 35};
+    uint64_t  nchunk[] = {4, 2, 3};
+
+    INA_TEST_ASSERT_SUCCEED(test_chunk_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, nchunk));
+}
+
+INA_TEST_FIXTURE(chunk_iterator, double_4) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    uint8_t ndim = 2;
-    uint64_t shape[] = {123, 154};
-    uint64_t pshape[] = {23, 31};
-    uint64_t  nchunk[] = {4, 3};
+    uint8_t ndim = 4;
+    uint64_t shape[] = {80, 64, 80, 99};
+    uint64_t pshape[] = {11, 8, 12, 21};
+    uint64_t  nchunk[] = {6, 0, 5, 3};
+
+    INA_TEST_ASSERT_SUCCEED(test_chunk_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, nchunk));
+}
+
+INA_TEST_FIXTURE(chunk_iterator, float_5) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    size_t type_size = sizeof(float);
+
+    uint8_t ndim = 5;
+    uint64_t shape[] = {40, 26, 35, 23, 21};
+    uint64_t pshape[] = {5, 8, 10, 7, 9};
+    uint64_t  nchunk[] = {6, 2, 0, 2, 1};
+
+    INA_TEST_ASSERT_SUCCEED(test_chunk_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, nchunk));
+}
+
+INA_TEST_FIXTURE(chunk_iterator, double_6) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    size_t type_size = sizeof(double);
+
+    uint8_t ndim = 6;
+    uint64_t shape[] = {12, 13, 21, 19, 13, 15};
+    uint64_t pshape[] = {5, 4, 7, 3, 4, 12};
+    uint64_t  nchunk[] = {1, 2, 0, 3, 2, 0};
+
+    INA_TEST_ASSERT_SUCCEED(test_chunk_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, nchunk));
+}
+
+INA_TEST_FIXTURE(chunk_iterator, float_7) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    size_t type_size = sizeof(float);
+
+    uint8_t ndim = 7;
+    uint64_t shape[] = {10, 8, 6, 7, 13, 9, 10};
+    uint64_t pshape[] = {2, 3, 1, 3, 2, 4, 5};
+    uint64_t  nchunk[] = {1, 1, 2, 1, 3, 0, 1};
 
     INA_TEST_ASSERT_SUCCEED(test_chunk_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, nchunk));
 }
