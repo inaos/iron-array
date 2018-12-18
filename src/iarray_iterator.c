@@ -346,8 +346,10 @@ INA_API(void) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
     itr->index[ndim - 1] = itr->cont % (catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1]);
     uint64_t inc = catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1];
 
+    uint64_t a;
     for (int i = ndim - 2; i >= 0; --i) {
-        itr->index[i] = itr->cont / (inc);
+         a =  itr->cont % (inc * catarr->eshape[i] / catarr->pshape[i]) / (inc);
+        itr->index[i] = a;
         inc *= catarr->eshape[i] / catarr->pshape[i];
     }
 
