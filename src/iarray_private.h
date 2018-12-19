@@ -86,6 +86,7 @@ typedef struct iarray_itr_chunk_s {
     uint64_t *shape;
     uint64_t size;
     uint64_t *index;
+    uint64_t *el_index;
     uint64_t cont;
 } iarray_itr_chunk_t;
 
