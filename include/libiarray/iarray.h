@@ -327,18 +327,19 @@ INA_API(ina_rc_t) iarray_reduction_mul(iarray_context_t *ctx, iarray_container_t
 /* Iterators */
 
 INA_API(ina_rc_t) iarray_itr_new(iarray_context_t *ctx, iarray_container_t *container, iarray_itr_t **itr);
-INA_API(ina_rc_t) iarray_itr_free(iarray_context_t *ctx, iarray_itr_t *itr);
+INA_API(void) iarray_itr_free(iarray_context_t *ctx, iarray_itr_t *itr);
 INA_API(void) iarray_itr_init(iarray_itr_t *itr);
-INA_API(void) iarray_itr_next(iarray_itr_t *itr);
+INA_API(ina_rc_t) iarray_itr_next(iarray_itr_t *itr);
 INA_API(int) iarray_itr_finished(iarray_itr_t *itr);
-INA_API(ina_rc_t) iarray_itr_value(iarray_itr_t *itr, iarray_itr_value_t *value);
+INA_API(void) iarray_itr_value(iarray_itr_t *itr, iarray_itr_value_t *value);
 
 INA_API(ina_rc_t) iarray_itr_chunk_new(iarray_context_t *ctx, iarray_container_t *container, iarray_itr_chunk_t **itr);
-INA_API(ina_rc_t) iarray_itr_chunk_free(iarray_context_t *ctx, iarray_itr_chunk_t *itr);
+INA_API(void) iarray_itr_chunk_free(iarray_context_t *ctx, iarray_itr_chunk_t *itr);
 INA_API(void) iarray_itr_chunk_init(iarray_itr_chunk_t *itr);
-INA_API(void) iarray_itr_chunk_next(iarray_itr_chunk_t *itr);
+INA_API(ina_rc_t) iarray_itr_chunk_next(iarray_itr_chunk_t *itr);
 INA_API(int) iarray_itr_chunk_finished(iarray_itr_chunk_t *itr);
-INA_API(ina_rc_t) iarray_itr_chunk_value(iarray_itr_chunk_t *itr, iarray_itr_chunk_value_t *value);
+INA_API(void) iarray_itr_chunk_value(iarray_itr_chunk_t *itr, iarray_itr_chunk_value_t *value);
+
 /* Expressions */
 INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e);
 INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e);

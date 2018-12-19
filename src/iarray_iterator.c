@@ -98,7 +98,7 @@ INA_API(void) iarray_itr_init(iarray_itr_t *itr)
  *   itr: an iterator
  */
 
-INA_API(void) iarray_itr_next(iarray_itr_t *itr)
+INA_API(ina_rc_t) iarray_itr_next(iarray_itr_t *itr)
 {
     caterva_array_t *catarr = itr->container->catarr;
     int ndim = catarr->ndim;
@@ -122,11 +122,15 @@ INA_API(void) iarray_itr_next(iarray_itr_t *itr)
 
     // check if a chunk is filled totally and append it
     if (itr->cont % catarr->psize == 0) {
-        blosc2_schunk_append_buffer(catarr->sc, itr->part, catarr->psize * catarr->sc->typesize);
+        int err = blosc2_schunk_append_buffer(catarr->sc, itr->part, catarr->psize * catarr->sc->typesize);
+        if (err < 0) {
+            return INA_ERR_FAILED;
+        }
         memset(itr->part, 0, catarr->psize * catarr->sc->typesize);
     }
 
     _update_itr_index(itr);
+    return INA_SUCCESS;
 }
 
 /*
@@ -155,16 +159,14 @@ INA_API(int) iarray_itr_finished(iarray_itr_t *itr)
  *     nelem: if the container is row-wise flatten, `nelem` is the element position in the container
  *     pointer: pointer to element position in memory. It's used to copy the element into the container
  *
- *   return: an error code
+*   return: INA_SUCCESS or an error code
  */
 
-INA_API(ina_rc_t) iarray_itr_value(iarray_itr_t *itr, iarray_itr_value_t *val)
+INA_API(void) iarray_itr_value(iarray_itr_t *itr, iarray_itr_value_t *val)
 {
     val->pointer = itr->pointer;
     val->index = itr->index;
     val->nelem = itr->nelem;
-
-    return 0;
 }
 
 /*
@@ -175,20 +177,26 @@ INA_API(ina_rc_t) iarray_itr_value(iarray_itr_t *itr, iarray_itr_value_t *val)
  *   container: the container used in the iterator
  *   itr: an iterator pointer
  *
- *   return: an error code
+*   return: INA_SUCCESS or an error code
  */
 
 INA_API(ina_rc_t) iarray_itr_new(iarray_context_t *ctx, iarray_container_t *container, iarray_itr_t **itr)
 {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(container);
+    INA_VERIFY_NOT_NULL(itr);
+
     *itr = (iarray_itr_t*)ina_mem_alloc(sizeof(iarray_itr_t));
     INA_RETURN_IF_NULL(itr);
-    caterva_update_shape(container->catarr, *container->shape);
+    int err = caterva_update_shape(container->catarr, *container->shape);
+    if (err < 0) {
+        return INA_ERR_FAILED;
+    }
     (*itr)->container = container;
     (*itr)->part = (uint8_t *) ina_mem_alloc(container->catarr->psize * container->catarr->sc->typesize);
-
     (*itr)->index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
 
-    return 0;
+    return INA_SUCCESS;
 }
 
 /*
@@ -198,15 +206,14 @@ INA_API(ina_rc_t) iarray_itr_new(iarray_context_t *ctx, iarray_container_t *cont
  *
  *   itr: an iterator
  *
- *   return: an error code
+*   return: INA_SUCCESS or an error code
  */
 
-INA_API(ina_rc_t) iarray_itr_free(iarray_context_t *ctx, iarray_itr_t *itr)
+INA_API(void) iarray_itr_free(iarray_context_t *ctx, iarray_itr_t *itr)
 {
     ina_mem_free(itr->index);
     ina_mem_free(itr->part);
     ina_mem_free(itr);
-    return 0;
 }
 
 /*
@@ -293,7 +300,7 @@ INA_API(void) iarray_itr_chunk_init(iarray_itr_chunk_t *itr)
  *   itr: an iterator
  */
 
-INA_API(void) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
+INA_API(ina_rc_t) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
 {
     caterva_array_t *catarr = itr->container->catarr;
     int ndim = catarr->ndim;
@@ -302,7 +309,10 @@ INA_API(void) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
 
     // check if the chunk should be padded with 0s
     if ( itr->size == catarr->psize ) {
-        blosc2_schunk_append_buffer(catarr->sc, itr->part, psizeb);
+        int err = blosc2_schunk_append_buffer(catarr->sc, itr->part, psizeb);
+        if (err < 0) {
+            return INA_ERR_FAILED;
+        }
     } else {
         uint8_t *part_aux = malloc(catarr->psize * catarr->sc->typesize);
 
@@ -350,7 +360,10 @@ INA_API(void) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
             }
         }
 
-        blosc2_schunk_append_buffer(itr->container->catarr->sc, part_aux, catarr->psize * catarr->sc->typesize);
+        int err = blosc2_schunk_append_buffer(itr->container->catarr->sc, part_aux, catarr->psize * catarr->sc->typesize);
+        if (err < 0) {
+            return INA_ERR_FAILED;
+        }
 
         free(part_aux);
     }
@@ -377,6 +390,7 @@ INA_API(void) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
         itr->size *= itr->shape[i];
     }
 
+    return INA_SUCCESS;
 }
 
 /*
@@ -404,21 +418,19 @@ INA_API(int) iarray_itr_chunk_finished(iarray_itr_chunk_t *itr)
  *     index: position in coord where the chunk is placed in the container
  *     nelem: if the chunks are row-wise listed, `nelem` is the chunk position in this list
  *     el_index: position in coord where the first element of the chunk is placed in the container
- *     shape: is the actual chunk shape. It should be used to compute the chunk size.
+ *     shape: is the actual chunk shape. It should be used to compute the chunk size
  *     pointer: pointer to the first chunk element position in memory. It's used to copy the chunk into the container
  *
- *   return: an error code
+ *   return: INA_SUCCESS or an error code
  */
 
-INA_API(ina_rc_t) iarray_itr_chunk_value(iarray_itr_chunk_t *itr, iarray_itr_chunk_value_t *val)
+INA_API(void) iarray_itr_chunk_value(iarray_itr_chunk_t *itr, iarray_itr_chunk_value_t *val)
 {
     val->pointer = itr->pointer;
     val->index = itr->index;
     val->el_index = itr->el_index;
     val->nelem = itr->cont;
     val->shape = itr->shape;
-
-    return 0;
 }
 
 /*
@@ -429,14 +441,20 @@ INA_API(ina_rc_t) iarray_itr_chunk_value(iarray_itr_chunk_t *itr, iarray_itr_chu
  *   container: the container used in the iterator
  *   itr: an iterator
  *
- *   return: an error code
+*   return: INA_SUCCESS or an error code
  */
 
 INA_API(ina_rc_t) iarray_itr_chunk_new(iarray_context_t *ctx, iarray_container_t *container, iarray_itr_chunk_t **itr)
 {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(container);
+    INA_VERIFY_NOT_NULL(itr);
     *itr = (iarray_itr_chunk_t*)ina_mem_alloc(sizeof(iarray_itr_chunk_t));
     INA_RETURN_IF_NULL(itr);
-    caterva_update_shape(container->catarr, *container->shape);
+    int err = caterva_update_shape(container->catarr, *container->shape);
+    if (err < 0) {
+        return INA_ERR_FAILED;
+    }
     (*itr)->container = container;
     (*itr)->part = (uint8_t *) ina_mem_alloc(container->catarr->psize * container->catarr->sc->typesize);
     (*itr)->index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
@@ -444,7 +462,7 @@ INA_API(ina_rc_t) iarray_itr_chunk_new(iarray_context_t *ctx, iarray_container_t
     (*itr)->pointer = &(*itr)->part[0];
     (*itr)->shape = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
 
-    return 0;
+    return INA_SUCCESS;
 }
 
 /*
@@ -454,17 +472,16 @@ INA_API(ina_rc_t) iarray_itr_chunk_new(iarray_context_t *ctx, iarray_container_t
  *
  *   itr: an iterator
  *
- *   return: an error code
+*   return: INA_SUCCESS or an error code
  */
 
-INA_API(ina_rc_t) iarray_itr_chunk_free(iarray_context_t *ctx, iarray_itr_chunk_t *itr)
+INA_API(void) iarray_itr_chunk_free(iarray_context_t *ctx, iarray_itr_chunk_t *itr)
 {
     ina_mem_free(itr->index);
     ina_mem_free(itr->el_index);
     ina_mem_free(itr->shape);
     ina_mem_free(itr->part);
     ina_mem_free(itr);
-    return 0;
 }
 
 /*
@@ -483,12 +500,11 @@ INA_API(ina_rc_t) iarray_itr_chunk_free(iarray_context_t *ctx, iarray_itr_chunk_
  *   itr: an iterator
  */
 
-ina_rc_t iarray_itr_matmul_init(iarray_itr_matmul_t *itr)
+void _iarray_itr_matmul_init(iarray_itr_matmul_t *itr)
 {
     itr->cont = 0;
     itr->nchunk1 = 0;
     itr->nchunk2 = 0;
-    return 0;
 }
 
 /*
@@ -499,7 +515,7 @@ ina_rc_t iarray_itr_matmul_init(iarray_itr_matmul_t *itr)
  *   itr: an iterator
  */
 
-ina_rc_t iarray_itr_matmul_next(iarray_itr_matmul_t *itr)
+void _iarray_itr_matmul_next(iarray_itr_matmul_t *itr)
 {
     uint64_t P = itr->container1->catarr->pshape[0];
     uint64_t M = itr->container1->catarr->eshape[0];
@@ -525,8 +541,6 @@ ina_rc_t iarray_itr_matmul_next(iarray_itr_matmul_t *itr)
         itr->nchunk1 = (m * (K/P) + k);
         itr->nchunk2 = (k * (N/P) + n);
     }
-
-    return 0;
 }
 
 /*
@@ -539,7 +553,7 @@ ina_rc_t iarray_itr_matmul_next(iarray_itr_matmul_t *itr)
  *   return: 1 if iter is finished or 0 if not
  */
 
-int iarray_itr_matmul_finished(iarray_itr_matmul_t *itr)
+int _iarray_itr_matmul_finished(iarray_itr_matmul_t *itr)
 {
     uint64_t P = itr->container1->catarr->pshape[0];
     uint64_t M = itr->container1->catarr->eshape[0];
@@ -564,17 +578,23 @@ int iarray_itr_matmul_finished(iarray_itr_matmul_t *itr)
  *
  *   itr: an iterator
  *
- *   return: an error code
+*   return: INA_SUCCESS or an error code
  */
 
-ina_rc_t iarray_itr_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, iarray_container_t *c2, iarray_itr_matmul_t **itr)
+ina_rc_t _iarray_itr_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, iarray_container_t *c2,
+                                iarray_itr_matmul_t **itr)
 {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(c1);
+    INA_VERIFY_NOT_NULL(c2);
+    INA_VERIFY_NOT_NULL(itr);
+
     *itr = (iarray_itr_matmul_t*)ina_mem_alloc(sizeof(iarray_itr_matmul_t));
     INA_RETURN_IF_NULL(itr);
     (*itr)->container1 = c1;
     (*itr)->container2 = c2;
 
-    return 0;
+    return INA_SUCCESS;
 }
 
 /*
@@ -584,11 +604,10 @@ ina_rc_t iarray_itr_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, ia
  *
  *   itr: an iterator
  *
- *   return: an error code
+*   return: INA_SUCCESS or an error code
  */
 
-ina_rc_t iarray_itr_matmul_free(iarray_context_t *ctx, iarray_itr_matmul_t *itr)
+void _iarray_itr_matmul_free(iarray_context_t *ctx, iarray_itr_matmul_t *itr)
 {
     ina_mem_free(itr);
-    return 0;
 }
