@@ -135,10 +135,11 @@ iarray_temporary_t* _iarray_op_divide(iarray_expression_t *expr, iarray_temporar
 
 
 // Iterators
-INA_API(ina_rc_t) iarray_itr_matmul_new(iarray_context_t *ctx, iarray_container_t *container1, iarray_container_t *container2, iarray_itr_matmul_t **itr);
-INA_API(ina_rc_t) iarray_itr_matmul_free(iarray_context_t *ctx, iarray_itr_matmul_t *itr);
-INA_API(ina_rc_t) iarray_itr_matmul_init(iarray_itr_matmul_t *itr);
-INA_API(ina_rc_t) iarray_itr_matmul_next(iarray_itr_matmul_t *itr);
-INA_API(int) iarray_itr_matmul_finished(iarray_itr_matmul_t *itr);
+ina_rc_t _iarray_itr_matmul_new(iarray_context_t *ctx, iarray_container_t *container1,
+                                         iarray_container_t *container2, iarray_itr_matmul_t **itr);
+void _iarray_itr_matmul_free(iarray_context_t *ctx, iarray_itr_matmul_t *itr);
+void _iarray_itr_matmul_init(iarray_itr_matmul_t *itr);
+void _iarray_itr_matmul_next(iarray_itr_matmul_t *itr);
+int _iarray_itr_matmul_finished(iarray_itr_matmul_t *itr);
 
 #endif
