@@ -15,9 +15,15 @@
 #include <iarray_private.h>
 
 /*
+ * ELEMENT BY ELEMENT ITERATOR
+ *
+ * Next functions are used to fill an iarray container element by element
+ */
+
+/*
  * Function: _update_itr_index (private)
  * -------------------------------------
- *   Update the index and the nelem of an iterator
+ *   (internal) Update the index and the nelem of an iterator
  *
  *   itr: an iterator
  */
@@ -87,7 +93,7 @@ INA_API(void) iarray_itr_init(iarray_itr_t *itr)
 /*
  * Function: iarray_itr_next
  * -------------------------
- *   Compute the next iterator element
+ *   Compute the next iterator element nad update the iterator with it
  *
  *   itr: an iterator
  */
@@ -126,11 +132,11 @@ INA_API(void) iarray_itr_next(iarray_itr_t *itr)
 /*
  * Function: iarray_itr_finished
  * -----------------------------
- *   Check if the iterator is finished
+ *   Check if the iteration over a container is finished
  *
  *   itr: an iterator
  *
- *   returns: 1 if iter is finished or 0 if not
+ *   return: 1 if iter is finished or 0 if not
  */
 
 INA_API(int) iarray_itr_finished(iarray_itr_t *itr)
@@ -141,12 +147,15 @@ INA_API(int) iarray_itr_finished(iarray_itr_t *itr)
 /*
  * Function: iarray_itr_value
  * ------------------------
- *   Create a new iterator
+ *   Store in `val` some variables of the actual element
  *
  *   itr: an iterator
  *   val: a struct where data needed by the user is stored
+ *     index: position in coord where the element is placed in the container
+ *     nelem: if the container is row-wise flatten, `nelem` is the element position in the container
+ *     pointer: pointer to element position in memory. It's used to copy the element into the container
  *
- *   returns: an error code
+ *   return: an error code
  */
 
 INA_API(ina_rc_t) iarray_itr_value(iarray_itr_t *itr, iarray_itr_value_t *val)
@@ -164,9 +173,9 @@ INA_API(ina_rc_t) iarray_itr_value(iarray_itr_t *itr, iarray_itr_value_t *val)
  *   Create a new iterator
  *
  *   container: the container used in the iterator
- *   itr: an iterator
+ *   itr: an iterator pointer
  *
- *   returns: an error code
+ *   return: an error code
  */
 
 INA_API(ina_rc_t) iarray_itr_new(iarray_context_t *ctx, iarray_container_t *container, iarray_itr_t **itr)
@@ -189,7 +198,7 @@ INA_API(ina_rc_t) iarray_itr_new(iarray_context_t *ctx, iarray_container_t *cont
  *
  *   itr: an iterator
  *
- *   returns: an error code
+ *   return: an error code
  */
 
 INA_API(ina_rc_t) iarray_itr_free(iarray_context_t *ctx, iarray_itr_t *itr)
@@ -200,7 +209,11 @@ INA_API(ina_rc_t) iarray_itr_free(iarray_context_t *ctx, iarray_itr_t *itr)
     return 0;
 }
 
-// CHUNK BY CHUNK ITERATOR
+/*
+ * CHUNK BY CHUNK ITERATOR
+ *
+ * Unlike the previous, the next collection of functions are used to fill an iarray container chunk by chunk
+ */
 
 /*
  * Function: _update_itr_index (private)
@@ -255,7 +268,7 @@ void _update_itr_chunk_index(iarray_itr_t *itr)
 
 /*
  * Function: iarray_itr_chunk_init
- * -------------------------
+ * -------------------------------
  *   Set the iterator values to the first element
  *
  *   itr: an iterator
@@ -273,9 +286,9 @@ INA_API(void) iarray_itr_chunk_init(iarray_itr_chunk_t *itr)
 }
 
 /*
- * Function: iarray_itr_next
- * -------------------------
- *   Compute the next iterator element
+ * Function: iarray_itr_chunk_next
+ * -------------------------------
+ *   Update the iterator to next element
  *
  *   itr: an iterator
  */
@@ -287,6 +300,7 @@ INA_API(void) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
 
     uint64_t psizeb = itr->size * catarr->sc->typesize;
 
+    // check if the chunk should be padded with 0s
     if ( itr->size == catarr->psize ) {
         blosc2_schunk_append_buffer(catarr->sc, itr->part, psizeb);
     } else {
@@ -302,8 +316,8 @@ INA_API(void) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
             }
         }
 
+        //copy buffer data to an aux buffer padded with 0's
         uint64_t ii[CATERVA_MAXDIM];
-
         for (ii[0] = 0; ii[0] < shaper[0]; ++ii[0]) {
             for (ii[1] = 0; ii[1] < shaper[1]; ++ii[1]) {
                 for (ii[2] = 0; ii[2] < shaper[2]; ++ii[2]) {
@@ -346,15 +360,13 @@ INA_API(void) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
     itr->index[ndim - 1] = itr->cont % (catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1]);
     uint64_t inc = catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1];
 
-    uint64_t a;
     for (int i = ndim - 2; i >= 0; --i) {
-         a =  itr->cont % (inc * catarr->eshape[i] / catarr->pshape[i]) / (inc);
-        itr->index[i] = a;
+        itr->index[i] = itr->cont % (inc * catarr->eshape[i] / catarr->pshape[i]) / (inc);
+        itr->el_index[i] = itr->index[i] * catarr->pshape[i];
         inc *= catarr->eshape[i] / catarr->pshape[i];
     }
 
-
-    // check if the chunk should be padded with 0s
+    //calculate the buffer size
     itr->size = 1;
     for (int i = 0; i < ndim; ++i) {
         if ((itr->index[i] + 1) * catarr->pshape[i] > catarr->shape[i]) {
@@ -369,12 +381,12 @@ INA_API(void) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
 
 /*
  * Function: iarray_itr_chunk_finished
- * -----------------------------
+ * -----------------------------------
  *   Check if the iterator is finished
  *
  *   itr: an iterator
  *
- *   returns: 1 if iter is finished or 0 if not
+ *   return: 1 if iter is finished or 0 if not
  */
 
 INA_API(int) iarray_itr_chunk_finished(iarray_itr_chunk_t *itr)
@@ -383,20 +395,26 @@ INA_API(int) iarray_itr_chunk_finished(iarray_itr_chunk_t *itr)
 }
 
 /*
- * Function: iarray_itr_value
- * ------------------------
- *   Create a new iterator
+ * Function: iarray_itr_chunk_value
+ * --------------------------------
+ *   Store in `val` parameter some variables of the actual chunk
  *
  *   itr: an iterator
  *   val: a struct where data needed by the user is stored
+ *     index: position in coord where the chunk is placed in the container
+ *     nelem: if the chunks are row-wise listed, `nelem` is the chunk position in this list
+ *     el_index: position in coord where the first element of the chunk is placed in the container
+ *     shape: is the actual chunk shape. It should be used to compute the chunk size.
+ *     pointer: pointer to the first chunk element position in memory. It's used to copy the chunk into the container
  *
- *   returns: an error code
+ *   return: an error code
  */
 
 INA_API(ina_rc_t) iarray_itr_chunk_value(iarray_itr_chunk_t *itr, iarray_itr_chunk_value_t *val)
 {
     val->pointer = itr->pointer;
     val->index = itr->index;
+    val->el_index = itr->el_index;
     val->nelem = itr->cont;
     val->shape = itr->shape;
 
@@ -405,13 +423,13 @@ INA_API(ina_rc_t) iarray_itr_chunk_value(iarray_itr_chunk_t *itr, iarray_itr_chu
 
 /*
  * Function: iarray_itr_chunk_new
- * ------------------------
+ * ------------------------------
  *   Create a new iterator
  *
  *   container: the container used in the iterator
  *   itr: an iterator
  *
- *   returns: an error code
+ *   return: an error code
  */
 
 INA_API(ina_rc_t) iarray_itr_chunk_new(iarray_context_t *ctx, iarray_container_t *container, iarray_itr_chunk_t **itr)
@@ -421,8 +439,8 @@ INA_API(ina_rc_t) iarray_itr_chunk_new(iarray_context_t *ctx, iarray_container_t
     caterva_update_shape(container->catarr, *container->shape);
     (*itr)->container = container;
     (*itr)->part = (uint8_t *) ina_mem_alloc(container->catarr->psize * container->catarr->sc->typesize);
-
     (*itr)->index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
+    (*itr)->el_index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
     (*itr)->pointer = &(*itr)->part[0];
     (*itr)->shape = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
 
@@ -431,24 +449,31 @@ INA_API(ina_rc_t) iarray_itr_chunk_new(iarray_context_t *ctx, iarray_container_t
 
 /*
  * Function: iarray_itr_chunk_free
- * -------------------------
+ * -------------------------------
  *   Free an iterator structure
  *
  *   itr: an iterator
  *
- *   returns: an error code
+ *   return: an error code
  */
 
 INA_API(ina_rc_t) iarray_itr_chunk_free(iarray_context_t *ctx, iarray_itr_chunk_t *itr)
 {
     ina_mem_free(itr->index);
+    ina_mem_free(itr->el_index);
     ina_mem_free(itr->shape);
     ina_mem_free(itr->part);
     ina_mem_free(itr);
     return 0;
 }
 
-// MATMUL ITERATOR
+/*
+ * MATMUL ITERATOR
+ *
+ * Internal iterator used to perform easily matrix-matrix or vector-matrix multiplications by blocks
+ *
+ */
+
 
 /*
  * Function: iarray_itr_matmul_init
@@ -469,7 +494,7 @@ ina_rc_t iarray_itr_matmul_init(iarray_itr_matmul_t *itr)
 /*
  * Function: iarray_itr_matmul_next
  * --------------------------------
- *   Compute the next iterator element
+ *   Update the block to be used of each container
  *
  *   itr: an iterator
  */
@@ -511,7 +536,7 @@ ina_rc_t iarray_itr_matmul_next(iarray_itr_matmul_t *itr)
  *
  *   itr: an iterator
  *
- *   returns: 1 if iter is finished or 0 if not
+ *   return: 1 if iter is finished or 0 if not
  */
 
 int iarray_itr_matmul_finished(iarray_itr_matmul_t *itr)
@@ -535,11 +560,11 @@ int iarray_itr_matmul_finished(iarray_itr_matmul_t *itr)
 /*
  * Function: iarray_itr_matmul_new
  * ------------------------
- *   Free an iterator structure
+ *   Create a matmul iterator
  *
  *   itr: an iterator
  *
- *   returns: an error code
+ *   return: an error code
  */
 
 ina_rc_t iarray_itr_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, iarray_container_t *c2, iarray_itr_matmul_t **itr)
@@ -559,7 +584,7 @@ ina_rc_t iarray_itr_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, ia
  *
  *   itr: an iterator
  *
- *   returns: an error code
+ *   return: an error code
  */
 
 ina_rc_t iarray_itr_matmul_free(iarray_context_t *ctx, iarray_itr_matmul_t *itr)
