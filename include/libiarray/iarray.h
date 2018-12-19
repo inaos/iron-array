@@ -112,6 +112,7 @@ typedef struct iarray_itr_value_s {
 typedef struct iarray_itr_chunk_value_s {
     void *pointer;
     uint64_t *index;
+    uint64_t *el_index;
     uint64_t nelem;
     uint64_t* shape;
 } iarray_itr_chunk_value_t;
