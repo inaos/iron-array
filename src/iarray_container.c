@@ -170,8 +170,6 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
     INA_MEM_FREE_SAFE((*container)->frame);
     INA_MEM_FREE_SAFE((*container)->cparams);
     INA_MEM_FREE_SAFE((*container)->dparams);
-    INA_MEM_FREE_SAFE((*container)->shape);
-    INA_MEM_FREE_SAFE((*container)->pshape);
     INA_MEM_FREE_SAFE((*container)->dtshape);
     INA_MEM_FREE_SAFE(*container);
 }

@@ -188,7 +188,8 @@ INA_API(ina_rc_t) iarray_itr_new(iarray_context_t *ctx, iarray_container_t *cont
 
     *itr = (iarray_itr_t*)ina_mem_alloc(sizeof(iarray_itr_t));
     INA_RETURN_IF_NULL(itr);
-    int err = caterva_update_shape(container->catarr, *container->shape);
+    caterva_dims_t shape = caterva_new_dims(container->dtshape->shape, container->dtshape->ndim);
+    int err = caterva_update_shape(container->catarr, shape);
     if (err < 0) {
         return INA_ERR_FAILED;
     }
@@ -451,7 +452,8 @@ INA_API(ina_rc_t) iarray_itr_chunk_new(iarray_context_t *ctx, iarray_container_t
     INA_VERIFY_NOT_NULL(itr);
     *itr = (iarray_itr_chunk_t*)ina_mem_alloc(sizeof(iarray_itr_chunk_t));
     INA_RETURN_IF_NULL(itr);
-    int err = caterva_update_shape(container->catarr, *container->shape);
+    caterva_dims_t shape = caterva_new_dims(container->dtshape->shape, container->dtshape->ndim);
+    int err = caterva_update_shape(container->catarr, shape);
     if (err < 0) {
         return INA_ERR_FAILED;
     }
