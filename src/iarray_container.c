@@ -11,10 +11,9 @@
  */
 
 #include <libiarray/iarray.h>
-
 #include <iarray_private.h>
-
 #include "iarray_constructor.h"
+
 
 INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dtshape_t *b)
 {

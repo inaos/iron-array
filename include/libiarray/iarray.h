@@ -28,7 +28,8 @@ typedef enum iarray_random_rng_e {
 
 typedef enum iarray_data_type_e {
     IARRAY_DATA_TYPE_DOUBLE,
-    IARRAY_DATA_TYPE_FLOAT
+    IARRAY_DATA_TYPE_FLOAT,
+    IARRAY_DATA_TYPE_MAX  // marker; must be the last entry
 } iarray_data_type_t;
 
 typedef enum iarray_storage_format_e {
@@ -102,7 +103,7 @@ typedef struct iarray_config_s {
     int compression_level;
     int flags;
     int max_num_threads; /* Maximum number of threads to use */
-    int fp_mantissa_bits; /* Only useful together with flag: IARRAY_COMP_TRUNC_PREC */
+    uint8_t fp_mantissa_bits; /* Only useful together with flag: IARRAY_COMP_TRUNC_PREC */
     int blocksize; /* Advanced Tuning Parameter */
 } iarray_config_t;
 
@@ -132,8 +133,8 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx);
 INA_API(ina_rc_t) iarray_partition_advice(iarray_data_type_t dtype, int *max_nelem, int *min_nelem);
 
 INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
-                                        uint32_t seed, 
-                                        iarray_random_rng_t rng, 
+                                        uint32_t seed,
+                                        iarray_random_rng_t rng,
                                         iarray_random_ctx_t **rng_ctx);
 
 INA_API(void) iarray_random_ctx_free(iarray_context_t *ctx, iarray_random_ctx_t **rng_ctx);
@@ -144,43 +145,43 @@ INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
                                        int flags,
                                        iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx, 
-                                iarray_dtshape_t *dtshape, 
-                                int start, 
-                                int stop, 
-                                int step, 
+INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
+                                iarray_dtshape_t *dtshape,
+                                int start,
+                                int stop,
+                                int step,
                                 iarray_store_properties_t *store,
                                 int flags,
                                 iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx, 
-                               iarray_dtshape_t *dtshape, 
+INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
+                               iarray_dtshape_t *dtshape,
                                iarray_store_properties_t *store,
                                int flags,
                                iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx, 
-                              iarray_dtshape_t *dtshape, 
+INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
+                              iarray_dtshape_t *dtshape,
                               iarray_store_properties_t *store,
                               int flags,
                               iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx, 
-                                    iarray_dtshape_t *dtshape, 
-                                    float value, 
+INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx,
+                                    iarray_dtshape_t *dtshape,
+                                    float value,
                                     iarray_store_properties_t *store,
                                     int flags,
                                     iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx, 
-                                     iarray_dtshape_t *dtshape, 
-                                     double value, 
+INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
+                                     iarray_dtshape_t *dtshape,
+                                     double value,
                                      iarray_store_properties_t *store,
                                      int flags,
                                      iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_random_rand(iarray_context_t *ctx, 
-                                     iarray_dtshape_t *dtshape, 
+INA_API(ina_rc_t) iarray_random_rand(iarray_context_t *ctx,
+                                     iarray_dtshape_t *dtshape,
                                      iarray_random_ctx_t *rand_ctx,
                                      iarray_store_properties_t *store,
                                      int flags,
@@ -215,6 +216,11 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
                                iarray_store_properties_t *store,
                                int flags,
                                iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
+                                   iarray_store_properties_t *store,
+                                   int flags,
+                                   iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
                                  iarray_container_t *container);

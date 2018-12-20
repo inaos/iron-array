@@ -14,7 +14,7 @@
 
 #include <iarray_private.h>
 
-void _update_itr_index(iarray_itr_t *itr) 
+void _update_itr_index(iarray_itr_t *itr)
 {
 
     caterva_array_t *catarr = itr->container->catarr;
