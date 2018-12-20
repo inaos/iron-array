@@ -51,7 +51,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
     for (int i = 0; i < dtshape->ndim; ++i) {
-        if (dtshape->shape[i] < dtshape->partshape[i]) {
+        if (dtshape->shape[i] < dtshape->pshape[i]) {
             return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }
     }
@@ -125,7 +125,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
     caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, cparams, dparams);
 
-    caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->partshape, (*c)->dtshape->ndim);
+    caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
 
     (*c)->catarr = caterva_empty_array(cat_ctx, (*c)->frame, pshape);
     INA_FAIL_IF((*c)->catarr == NULL);
