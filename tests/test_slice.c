@@ -47,7 +47,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     xdtshape.ndim = ndim;
     for (int j = 0; j < xdtshape.ndim; ++j) {
         xdtshape.shape[j] = shape[j];
-        xdtshape.partshape[j] = pshape[j];
+        xdtshape.pshape[j] = pshape[j];
     }
 
     iarray_dtshape_t outdtshape;
@@ -56,7 +56,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     outdtshape.ndim = ndim;
     for (int j = 0; j < xdtshape.ndim; ++j) {
         outdtshape.shape[j] = stop[j] - start[j];
-        outdtshape.partshape[j] = pshape_dest[j];
+        outdtshape.pshape[j] = pshape_dest[j];
     }
 
     iarray_container_t *c_x;

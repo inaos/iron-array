@@ -100,7 +100,7 @@ typedef struct iarray_dtshape_s {
     iarray_data_type_t dtype;
     uint8_t ndim;     /* IF ndim = 0 THEN it is a scalar */
     uint64_t shape[IARRAY_DIMENSION_MAX];
-    uint64_t partshape[IARRAY_DIMENSION_MAX]; /* Partition-Shape, optional in the future */
+    uint64_t pshape[IARRAY_DIMENSION_MAX]; /* Partition-Shape, optional in the future */
 } iarray_dtshape_t;
 
 typedef struct iarray_itr_value_s {

@@ -82,7 +82,7 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
         container->dtshape->ndim = (uint8_t) container->catarr->ndim;
         for (int i = 0; i < container->catarr->ndim; ++i) {
             container->dtshape->shape[i] = container->catarr->shape[i];
-            container->dtshape->partshape[i] = container->catarr->pshape[i];
+            container->dtshape->pshape[i] = container->catarr->pshape[i];
         }
     }
 

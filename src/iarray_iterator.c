@@ -288,7 +288,7 @@ INA_API(void) iarray_itr_chunk_init(iarray_itr_chunk_t *itr)
     memset(itr->part, 0, itr->container->catarr->psize * itr->container->catarr->sc->typesize);
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         itr->index[i] = 0;
-        itr->shape[i] = itr->container->dtshape->partshape[i];
+        itr->shape[i] = itr->container->dtshape->pshape[i];
     }
     itr->size = itr->container->catarr->psize;
 }

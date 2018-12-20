@@ -225,7 +225,7 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
     dtshape->ndim = catarr->ndim;
     for (int i = 0; i < catarr->ndim; ++i) {
         dtshape->shape[i] = catarr->shape[i];
-        dtshape->partshape[i] = catarr->pshape[i];
+        dtshape->pshape[i] = catarr->pshape[i];
     }
 
     // Populate the frame
