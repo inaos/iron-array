@@ -40,8 +40,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 {
     blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
     blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
-    caterva_dims_t pshape;
-    caterva_dims_t shape;
+
     int blosc_filter_idx = 0;
 
     /* validation */
@@ -73,12 +72,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
     (*c)->dparams = (blosc2_dparams*)ina_mem_alloc(sizeof(blosc2_dparams));
     INA_FAIL_IF((*c)->dparams == NULL);
-
-    (*c)->shape = (caterva_dims_t*)ina_mem_alloc(sizeof(caterva_dims_t));
-    INA_FAIL_IF((*c)->shape == NULL);
-
-    (*c)->pshape = (caterva_dims_t*)ina_mem_alloc(sizeof(caterva_dims_t));
-    INA_FAIL_IF((*c)->pshape == NULL);
 
     (*c)->transposed = 0;
 
@@ -130,23 +123,11 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     dparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
     ina_mem_cpy((*c)->dparams, &dparams, sizeof(blosc2_dparams));
 
-    for (int i = 0; i < CATERVA_MAXDIM; i++) {
-        shape.dims[i] = 1;
-        pshape.dims[i] = 1;
-    }
-    for (int i = 0; i < dtshape->ndim; ++i) {
-        shape.dims[i] = dtshape->shape[i];
-        pshape.dims[i] = dtshape->partshape[i];
-    }
-    shape.ndim = dtshape->ndim;
-    pshape.ndim = dtshape->ndim;
-
-    ina_mem_cpy((*c)->shape, &shape, sizeof(caterva_dims_t));
-    ina_mem_cpy((*c)->pshape, &pshape, sizeof(caterva_dims_t));
-
     caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, cparams, dparams);
 
-    (*c)->catarr = caterva_empty_array(cat_ctx, (*c)->frame, *(*c)->pshape);
+    caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->partshape, (*c)->dtshape->ndim);
+
+    (*c)->catarr = caterva_empty_array(cat_ctx, (*c)->frame, pshape);
     INA_FAIL_IF((*c)->catarr == NULL);
 
     return INA_SUCCESS;
