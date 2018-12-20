@@ -77,29 +77,29 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
     xshape.ndim = 2;
     xshape.shape[0] = M;
     xshape.shape[1] = K;
-    xshape.partshape[0] = (uint64_t) P;
-    xshape.partshape[1] = (uint64_t) P;
+    xshape.pshape[0] = (uint64_t) P;
+    xshape.pshape[1] = (uint64_t) P;
 
     yshape.dtype = dtype;
     yshape.ndim = 2;
     yshape.shape[0] = K;
     yshape.shape[1] = N;
-    yshape.partshape[0] = (uint64_t) P;
-    yshape.partshape[1] = (uint64_t) P;
+    yshape.pshape[0] = (uint64_t) P;
+    yshape.pshape[1] = (uint64_t) P;
 
     oshape.dtype = dtype;
     oshape.ndim = 2;
     oshape.shape[0] = M;
     oshape.shape[1] = N;
-    oshape.partshape[0] = (uint64_t) P;
-    oshape.partshape[1] = (uint64_t) P;
+    oshape.pshape[0] = (uint64_t) P;
+    oshape.pshape[1] = (uint64_t) P;
 
     rshape.dtype = dtype;
     rshape.ndim = 2;
     rshape.shape[0] = M;
     rshape.shape[1] = N;
-    rshape.partshape[0] = (uint64_t) P;
-    rshape.partshape[1] = (uint64_t) P;
+    rshape.pshape[0] = (uint64_t) P;
+    rshape.pshape[1] = (uint64_t) P;
 
     iarray_container_t *c_x;
     iarray_container_t *c_y;
@@ -178,23 +178,23 @@ static ina_rc_t _execute_iarray_gemv(iarray_context_t *ctx, iarray_data_type_t d
     xshape.ndim = 2;
     xshape.shape[0] = M;
     xshape.shape[1] = K;
-    xshape.partshape[0] = (uint64_t) P;
-    xshape.partshape[1] = (uint64_t) P;
+    xshape.pshape[0] = (uint64_t) P;
+    xshape.pshape[1] = (uint64_t) P;
 
     yshape.dtype = dtype;
     yshape.ndim = 1;
     yshape.shape[0] = K;
-    yshape.partshape[0] = (uint64_t) P;
+    yshape.pshape[0] = (uint64_t) P;
 
     oshape.dtype = dtype;
     oshape.ndim = 1;
     oshape.shape[0] = M;
-    oshape.partshape[0] = (uint64_t) P;
+    oshape.pshape[0] = (uint64_t) P;
 
     rshape.dtype = dtype;
     rshape.ndim = 1;
     rshape.shape[0] = M;
-    rshape.partshape[0] = (uint64_t) P;
+    rshape.pshape[0] = (uint64_t) P;
 
     iarray_container_t *c_x;
     iarray_container_t *c_y;

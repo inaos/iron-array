@@ -24,7 +24,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        xdtshape.partshape[i] = pshape[i];
+        xdtshape.pshape[i] = pshape[i];
     }
 
     iarray_container_t *c_x;

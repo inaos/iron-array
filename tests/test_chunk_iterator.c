@@ -24,7 +24,7 @@ static ina_rc_t test_chunk_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        xdtshape.partshape[i] = pshape[i];
+        xdtshape.pshape[i] = pshape[i];
     }
 
     iarray_container_t *c_x;
@@ -104,7 +104,7 @@ static ina_rc_t test_chunk_iterator(iarray_context_t *ctx, iarray_data_type_t dt
         ydtshape.ndim = ndim;
         for (int i = 0; i < ndim; ++i) {
             ydtshape.shape[i] = stop[i] - start[i];
-            ydtshape.partshape[i] = ydtshape.shape[i];
+            ydtshape.pshape[i] = ydtshape.shape[i];
         }
         iarray_container_t *c_y;
         iarray_slice(ctx, c_x, start, stop, &ydtshape, NULL, 0, &c_y);

@@ -29,7 +29,7 @@ static ina_rc_t test_fill(iarray_context_t *ctx,
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        xdtshape.partshape[i] = pshape[i];
+        xdtshape.pshape[i] = pshape[i];
     }
 
     uint64_t buf_size = 1;

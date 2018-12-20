@@ -18,13 +18,15 @@
 
 static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
 {
-    caterva_fill(c->catarr, *c->shape, &value);
+    caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
+    caterva_fill(c->catarr, shape, &value);
     return INA_SUCCESS;
 }
 
 static ina_rc_t _iarray_container_fill_double(iarray_container_t *c, double value)
 {
-    caterva_fill(c->catarr, *c->shape, &value);
+    caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
+    caterva_fill(c->catarr, shape, &value);
     return INA_SUCCESS;
 }
 
@@ -160,7 +162,8 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
     INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     // TODO: would it be interesting to add a `buffer_len` parameter to `caterva_from_buffer()`?
-    if (caterva_from_buffer((*container)->catarr, *(*container)->shape, buffer) != 0) {
+    caterva_dims_t shape = caterva_new_dims((*container)->dtshape->shape, (*container)->dtshape->ndim);
+    if (caterva_from_buffer((*container)->catarr, shape, buffer) != 0) {
         INA_ERROR(INA_ERR_FAILED);
         INA_FAIL_IF(1);
     }
@@ -222,7 +225,7 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
     dtshape->ndim = catarr->ndim;
     for (int i = 0; i < catarr->ndim; ++i) {
         dtshape->shape[i] = catarr->shape[i];
-        dtshape->partshape[i] = catarr->pshape[i];
+        dtshape->pshape[i] = catarr->pshape[i];
     }
 
     // Populate the frame
@@ -250,25 +253,6 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
     INA_FAIL_IF((*container)->store == NULL);
     (*container)->store->id = ina_str_new_fromcstr(store->id);
 
-    // The shape and pshape (FIXME: isn't this redundant with dtshape?)
-    (*container)->shape = (caterva_dims_t*)ina_mem_alloc(sizeof(caterva_dims_t));
-    INA_FAIL_IF((*container)->shape == NULL);
-    (*container)->pshape = (caterva_dims_t*)ina_mem_alloc(sizeof(caterva_dims_t));
-    INA_FAIL_IF((*container)->pshape == NULL);
-    caterva_dims_t shape;
-    caterva_dims_t pshape;
-    for (int i = 0; i < CATERVA_MAXDIM; i++) {
-        shape.dims[i] = 1;
-        pshape.dims[i] = 1;
-    }
-    for (int i = 0; i < dtshape->ndim; ++i) {
-        shape.dims[i] = dtshape->shape[i];
-        pshape.dims[i] = dtshape->partshape[i];
-    }
-    shape.ndim = dtshape->ndim;
-    pshape.ndim = dtshape->ndim;
-    ina_mem_cpy((*container)->shape, &shape, sizeof(caterva_dims_t));
-    ina_mem_cpy((*container)->pshape, &pshape, sizeof(caterva_dims_t));
 
     return INA_SUCCESS;
 
