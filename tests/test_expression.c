@@ -56,7 +56,7 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     shape.ndim = 1;
     shape.shape[0] = NELEM;
-    shape.partshape[0] = NITEMS_CHUNK;
+    shape.pshape[0] = NITEMS_CHUNK;
 
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
 

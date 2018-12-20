@@ -75,8 +75,8 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
     shape.ndim = 2;
     shape.shape[0] = n;
     shape.shape[1] = n;
-    shape.partshape[0] = (uint64_t)p;
-    shape.partshape[1] = (uint64_t)p;
+    shape.pshape[0] = (uint64_t)p;
+    shape.pshape[1] = (uint64_t)p;
 
     iarray_container_t *c_x;
     iarray_container_t *c_y;

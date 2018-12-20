@@ -123,7 +123,7 @@ int main(int argc, char** argv)
     shape.ndim = 1;
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     shape.shape[0] = NELEM;
-    shape.partshape[0] = PART_SIZE;
+    shape.pshape[0] = PART_SIZE;
 
     uint64_t nbytes = 0;
     uint64_t cbytes = 0;

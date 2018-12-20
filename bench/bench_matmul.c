@@ -115,8 +115,8 @@ int main(int argc, char** argv)
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     shape.shape[0] = n;
     shape.shape[1] = n;
-    shape.partshape[0] = P;
-    shape.partshape[1] = P;
+    shape.pshape[0] = P;
+    shape.pshape[1] = P;
 
     iarray_container_t *con_x;
     iarray_container_t *con_y;

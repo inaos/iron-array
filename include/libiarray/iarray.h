@@ -100,7 +100,7 @@ typedef struct iarray_dtshape_s {
     iarray_data_type_t dtype;
     uint8_t ndim;     /* IF ndim = 0 THEN it is a scalar */
     uint64_t shape[IARRAY_DIMENSION_MAX];
-    uint64_t partshape[IARRAY_DIMENSION_MAX]; /* Partition-Shape, optional in the future */
+    uint64_t pshape[IARRAY_DIMENSION_MAX]; /* Partition-Shape, optional in the future */
 } iarray_dtshape_t;
 
 typedef struct iarray_itr_value_s {
@@ -213,8 +213,8 @@ INA_API(ina_rc_t) iarray_random_lognormal(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
                                iarray_container_t *c,
-                               uint64_t *start_,
-                               uint64_t *stop_,
+                               uint64_t *start,
+                               uint64_t *stop,
                                iarray_dtshape_t *dtshape,
                                iarray_store_properties_t *store,
                                int flags,

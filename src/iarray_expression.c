@@ -154,7 +154,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
     size_t nitems_in_schunk = schunk0->nbytes / e->typesize;
     size_t nitems_in_chunk = e->chunksize / e->typesize;
     int nvars = e->nvars;
-    caterva_update_shape(ret->catarr, *e->vars[0].c->shape);
+    caterva_dims_t shape = caterva_new_dims(e->vars[0].c->dtshape->shape, e->vars[0].c->dtshape->ndim);
+    caterva_update_shape(ret->catarr, shape);
     caterva_array_t out = *ret->catarr;
 
     if (e->ctx->cfg->flags & IARRAY_EXPR_EVAL_BLOCK) {

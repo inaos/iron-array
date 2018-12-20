@@ -18,7 +18,8 @@
 
 static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
 
-    caterva_update_shape(c->catarr, *c->shape);
+    caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
+    caterva_update_shape(c->catarr, shape);
 
     const int32_t P = (int32_t) a->catarr->pshape[0];
     uint64_t M = a->catarr->eshape[0];
@@ -62,7 +63,8 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
 static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
 
-    caterva_update_shape(c->catarr, *c->shape);
+    caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
+    caterva_update_shape(c->catarr, shape);
 
     int32_t P = (int32_t) a->catarr->pshape[0];
 
@@ -120,7 +122,8 @@ static ina_rc_t _iarray_operator_elwise_a(
     INA_ASSERT_NOT_NULL(mkl_fun_d);
     INA_ASSERT_NOT_NULL(mkl_fun_s);
 
-    caterva_update_shape(result->catarr, *result->shape);
+    caterva_dims_t shape = caterva_new_dims(result->dtshape->shape, result->dtshape->ndim);
+    caterva_update_shape(result->catarr, shape);
 
     size_t psize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {
@@ -172,7 +175,8 @@ static ina_rc_t _iarray_operator_elwise_ab(
         return INA_ERR_INVALID_ARGUMENT;
     }
 
-    caterva_update_shape(result->catarr, *result->shape);
+    caterva_dims_t shape = caterva_new_dims(result->dtshape->shape, result->dtshape->ndim);
+    caterva_update_shape(result->catarr, shape);
 
     size_t psize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {

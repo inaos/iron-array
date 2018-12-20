@@ -46,23 +46,23 @@ INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
     iarray_container_t *c,
-    uint64_t *start_,
-    uint64_t *stop_,
+    uint64_t *start,
+    uint64_t *stop,
     iarray_dtshape_t *dtshape,
     iarray_store_properties_t *store,
     int flags,
     iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
-    INA_VERIFY_NOT_NULL(start_);
-    INA_VERIFY_NOT_NULL(stop_);
+    INA_VERIFY_NOT_NULL(start);
+    INA_VERIFY_NOT_NULL(stop);
 
     iarray_container_new(ctx, dtshape, store, flags, container);
 
-    caterva_dims_t start = caterva_new_dims(start_, c->dtshape->ndim);
-    caterva_dims_t stop = caterva_new_dims(stop_, c->dtshape->ndim);
+    caterva_dims_t start_ = caterva_new_dims(start, c->dtshape->ndim);
+    caterva_dims_t stop_ = caterva_new_dims(stop, c->dtshape->ndim);
 
-    INA_FAIL_IF(caterva_get_slice((*container)->catarr, c->catarr, start, stop) != 0);
+    INA_FAIL_IF(caterva_get_slice((*container)->catarr, c->catarr, start_, stop_) != 0);
 
     return INA_SUCCESS;
 
@@ -82,7 +82,7 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
         container->dtshape->ndim = (uint8_t) container->catarr->ndim;
         for (int i = 0; i < container->catarr->ndim; ++i) {
             container->dtshape->shape[i] = container->catarr->shape[i];
-            container->dtshape->partshape[i] = container->catarr->pshape[i];
+            container->dtshape->pshape[i] = container->catarr->pshape[i];
         }
     }
 
@@ -170,8 +170,6 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
     INA_MEM_FREE_SAFE((*container)->frame);
     INA_MEM_FREE_SAFE((*container)->cparams);
     INA_MEM_FREE_SAFE((*container)->dparams);
-    INA_MEM_FREE_SAFE((*container)->shape);
-    INA_MEM_FREE_SAFE((*container)->pshape);
     INA_MEM_FREE_SAFE((*container)->dtshape);
     INA_MEM_FREE_SAFE(*container);
 }
