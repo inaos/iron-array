@@ -352,7 +352,7 @@ INA_API(void) iarray_itr_read_free(iarray_context_t *ctx, iarray_itr_read_t *itr
 INA_API(void) iarray_itr_read_init(iarray_itr_read_t *itr);
 INA_API(ina_rc_t) iarray_itr_read_next(iarray_itr_read_t *itr);
 INA_API(int) iarray_itr_read_finished(iarray_itr_read_t *itr);
-INA_API(void) iarray_itr_read_value(iarray_itr_read_t *itr, iarray_itr_read_value_t *val);
+INA_API(void) iarray_itr_read_value(iarray_itr_read_t *itr, iarray_itr_read_value_t *value);
 
 /* Expressions */
 INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e);
