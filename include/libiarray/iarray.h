@@ -20,6 +20,7 @@ typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;
 typedef struct iarray_itr_s iarray_itr_t;
 typedef struct iarray_itr_chunk_s iarray_itr_chunk_t;
+typedef struct iarray_itr_read_s iarray_itr_read_t;
 typedef struct iarray_expression_s iarray_expression_t;
 
 typedef enum iarray_random_rng_e {
@@ -116,6 +117,12 @@ typedef struct iarray_itr_chunk_value_s {
     uint64_t nelem;
     uint64_t* shape;
 } iarray_itr_chunk_value_t;
+
+typedef struct iarray_itr_read_value_s {
+    void *pointer;
+    uint64_t *index;
+    uint64_t* shape;
+} iarray_itr_read_value_t;
 
 typedef struct iarray_slice_param_s {
     int axis;
@@ -339,6 +346,13 @@ INA_API(void) iarray_itr_chunk_init(iarray_itr_chunk_t *itr);
 INA_API(ina_rc_t) iarray_itr_chunk_next(iarray_itr_chunk_t *itr);
 INA_API(int) iarray_itr_chunk_finished(iarray_itr_chunk_t *itr);
 INA_API(void) iarray_itr_chunk_value(iarray_itr_chunk_t *itr, iarray_itr_chunk_value_t *value);
+
+INA_API(ina_rc_t) iarray_itr_read_new(iarray_context_t *ctx, iarray_container_t *container, iarray_itr_read_t **itr, uint64_t *blockshape);
+INA_API(void) iarray_itr_read_free(iarray_context_t *ctx, iarray_itr_read_t *itr);
+INA_API(void) iarray_itr_read_init(iarray_itr_read_t *itr);
+INA_API(ina_rc_t) iarray_itr_read_next(iarray_itr_read_t *itr);
+INA_API(int) iarray_itr_read_finished(iarray_itr_read_t *itr);
+INA_API(void) iarray_itr_read_value(iarray_itr_read_t *itr, iarray_itr_read_value_t *val);
 
 /* Expressions */
 INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e);

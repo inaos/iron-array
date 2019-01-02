@@ -613,3 +613,117 @@ void _iarray_itr_matmul_free(iarray_context_t *ctx, iarray_itr_matmul_t *itr)
 {
     ina_mem_free(itr);
 }
+
+/*
+ * READ ITERATOR BY BLOCKS
+ *
+ * Iterator that allows read an iarray container by blocks (the blocksize is specified by the user)
+ *
+ */
+
+/*
+* Function: _update_itr_read_index (private)
+* ------------------------------------------
+*   Update the index and the nelem of the iterator
+    *
+    *   itr: an iterator
+*/
+
+static void _update_itr_read_index(iarray_itr_read_t *itr)
+{
+
+}
+
+/*
+ * Function: iarray_itr_read_init
+ * ------------------------------
+ *   Set the iterator values to the first element
+ *
+ *   itr: an iterator
+ */
+
+INA_API(void) iarray_itr_read_init(iarray_itr_read_t *itr)
+{
+
+}
+
+/*
+ * Function: iarray_itr_read_next
+ * ------------------------------
+ *   Update the iterator to next element
+ *
+ *   itr: an iterator
+ */
+
+INA_API(ina_rc_t) iarray_itr_read_next(iarray_itr_read_t *itr)
+{
+    return INA_SUCCESS;
+}
+
+/*
+ * Function: iarray_itr_read_finished
+ * ----------------------------------
+ *   Check if the iterator is finished
+ *
+ *   itr: an iterator
+ *
+ *   return: 1 if iter is finished or 0 if not
+ */
+
+INA_API(int) iarray_itr_read_finished(iarray_itr_read_t *itr)
+{
+    return 1;
+}
+
+/*
+ * Function: iarray_itr_read_value
+ * -------------------------------
+ *   Store in `val` parameter some variables of the actual block
+ *
+ *   itr: an iterator
+ *   val: a struct where data needed by the user is stored
+ *     index: position in coord where the chunk is placed in the container
+ *     nelem: if the chunks are row-wise listed, `nelem` is the chunk position in this list
+ *     el_index: position in coord where the first element of the chunk is placed in the container
+ *     shape: is the actual chunk shape. It should be used to compute the chunk size
+ *     pointer: pointer to the first chunk element position in memory. It's used to copy the chunk into the container
+ *
+ *   return: INA_SUCCESS or an error code
+ */
+
+INA_API(void) iarray_itr_read_value(iarray_itr_read_t *itr, iarray_itr_read_value_t *val)
+{
+
+}
+
+/*
+ * Function: iarray_itr_read_new
+ * -----------------------------
+ *   Create a new iterator
+ *
+ *   container: the container used in the iterator
+ *   itr: an iterator
+ *   blockshape: shape of each block
+ *
+*   return: INA_SUCCESS or an error code
+ */
+
+INA_API(ina_rc_t) iarray_itr_read_new(iarray_context_t *ctx, iarray_container_t *container, iarray_itr_read_t **itr, uint64_t *blockshape)
+{
+    return INA_SUCCESS;
+}
+
+/*
+ * Function: iarray_itr_read_free
+ * -------------------------------
+ *   Free an iterator structure
+ *
+ *   itr: an iterator
+ *
+*   return: INA_SUCCESS or an error code
+ */
+
+INA_API(void) iarray_itr_read_free(iarray_context_t *ctx, iarray_itr_read_t *itr)
+{
+
+}
