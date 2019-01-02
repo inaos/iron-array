@@ -644,7 +644,11 @@ static void _update_itr_read_index(iarray_itr_read_t *itr)
 
 INA_API(void) iarray_itr_read_init(iarray_itr_read_t *itr)
 {
-
+    itr->size = 1;
+    for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
+        itr->index[i] = 0;
+    }
+    itr->cont = 0;
 }
 
 /*
@@ -710,6 +714,27 @@ INA_API(void) iarray_itr_read_value(iarray_itr_read_t *itr, iarray_itr_read_valu
 
 INA_API(ina_rc_t) iarray_itr_read_new(iarray_context_t *ctx, iarray_container_t *container, iarray_itr_read_t **itr, uint64_t *blockshape)
 {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(container);
+    INA_VERIFY_NOT_NULL(itr);
+    *itr = (iarray_itr_read_t*) ina_mem_alloc(sizeof(iarray_itr_read_t));
+    INA_RETURN_IF_NULL(itr);
+
+    (*itr)->container = container;
+    (*itr)->size = 1;
+    (*itr)->shape = (uint64_t *) malloc(IARRAY_DIMENSION_MAX * sizeof(uint64_t));
+    (*itr)->index = (uint64_t *) malloc(IARRAY_DIMENSION_MAX * sizeof(uint64_t));
+
+    for (int i = 0; i < (*itr)->container->dtshape->ndim; ++i) {
+        (*itr)->shape[i] = blockshape[i];
+        (*itr)->size *= (*itr)->shape[i];
+    }
+    if ((*itr)->container->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
+        (*itr)->part = malloc((*itr)->size * sizeof(double));
+    } else {
+        (*itr)->part = malloc((*itr)->size * sizeof(float));
+    }
+    (*itr)->pointer = &((*itr)->part[0]);
     return INA_SUCCESS;
 }
 
@@ -725,5 +750,8 @@ INA_API(ina_rc_t) iarray_itr_read_new(iarray_context_t *ctx, iarray_container_t 
 
 INA_API(void) iarray_itr_read_free(iarray_context_t *ctx, iarray_itr_read_t *itr)
 {
-
+    free(itr->part);
+    free(itr->shape);
+    free(itr->index);
+    free(itr);
 }
