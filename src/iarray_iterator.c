@@ -649,6 +649,20 @@ INA_API(void) iarray_itr_read_init(iarray_itr_read_t *itr)
         itr->index[i] = 0;
     }
     itr->cont = 0;
+
+    //ToDo: Implement a iarray function that stores slicing result into a buffer
+    caterva_dims_t pshape = caterva_new_dims(itr->container->dtshape->pshape, itr->container->dtshape->ndim);
+    caterva_array_t *dest = caterva_empty_array(itr->container->catarr->ctx, NULL, pshape);
+    caterva_dims_t start = caterva_new_dims(itr->index, itr->container->dtshape->ndim);
+    uint64_t stop_[IARRAY_DIMENSION_MAX];
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        itr->pshape[i] = itr->container->dtshape->pshape[i];
+        stop_[i] = itr->index[i] + itr->shape[i];
+    }
+    caterva_dims_t stop = caterva_new_dims(stop_, itr->container->dtshape->ndim);
+    caterva_get_slice(dest, itr->container->catarr, start, stop);
+    caterva_to_buffer(dest, itr->part);
+    caterva_free_array(dest);
 }
 
 /*
@@ -661,6 +675,51 @@ INA_API(void) iarray_itr_read_init(iarray_itr_read_t *itr)
 
 INA_API(ina_rc_t) iarray_itr_read_next(iarray_itr_read_t *itr)
 {
+    uint8_t ndim = itr->container->dtshape->ndim;
+    caterva_array_t *catarr = itr->container->catarr;
+    itr->cont += 1;
+
+    uint64_t aux[IARRAY_DIMENSION_MAX];
+    for (int i = ndim - 1; i >= 0; --i) {
+        if (catarr->shape[i] % itr->shape[i] == 0) {
+            aux[i] = catarr->shape[i] / itr->shape[i];
+        } else {
+            aux[i] = catarr->shape[i] / itr->shape[i] + 1;
+        }
+    }
+
+    uint64_t start_[IARRAY_DIMENSION_MAX];
+
+    uint64_t inc = 1;
+
+    for (int i = ndim - 1; i >= 0; --i) {
+        start_[i] = itr->cont % (aux[i] * inc) / inc;
+        start_[i] *= itr->shape[i];
+        itr->index[i] = start_[i];
+        inc *= aux[i];
+    }
+
+    uint64_t stop_[IARRAY_DIMENSION_MAX];
+
+    for (int i = 0; i < ndim - 1; --i) {
+        if(start_[i] + itr->shape[i] >= catarr->shape[i]) {
+            stop_[i] = start_[i] + itr->shape[i];
+        } else {
+            stop_[i] = catarr->shape[i];
+        }
+        itr->pshape[i] = stop_[i] - start_[i];
+    }
+
+    //ToDo: Implement a iarray function that stores slicing result into a buffer
+    caterva_dims_t pshape = caterva_new_dims(itr->container->dtshape->pshape, itr->container->dtshape->ndim);
+    caterva_array_t *dest = caterva_empty_array(itr->container->catarr->ctx, NULL, pshape);
+    caterva_dims_t start = caterva_new_dims(start_, itr->container->dtshape->ndim);
+    caterva_dims_t stop = caterva_new_dims(stop_, itr->container->dtshape->ndim);
+    caterva_get_slice(dest, itr->container->catarr, start, stop);
+    caterva_to_buffer(dest, itr->part);
+    caterva_free_array(dest);
+
+
     return INA_SUCCESS;
 }
 
@@ -676,7 +735,15 @@ INA_API(ina_rc_t) iarray_itr_read_next(iarray_itr_read_t *itr)
 
 INA_API(int) iarray_itr_read_finished(iarray_itr_read_t *itr)
 {
-    return 1;
+    uint64_t size = 1;
+    for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
+        if(itr->container->dtshape->shape[i] % itr->shape[i] == 0) {
+            size *= itr->container->dtshape->shape[i] / itr->shape[i];
+        } else {
+            size *= itr->container->dtshape->shape[i] / itr->shape[i] + 1;
+        }
+    }
+    return itr->cont >= size;
 }
 
 /*
@@ -697,7 +764,9 @@ INA_API(int) iarray_itr_read_finished(iarray_itr_read_t *itr)
 
 INA_API(void) iarray_itr_read_value(iarray_itr_read_t *itr, iarray_itr_read_value_t *val)
 {
-
+    val->index = itr->index;
+    val->shape = itr->pshape;
+    val->pointer = itr->pointer;
 }
 
 /*
@@ -723,6 +792,7 @@ INA_API(ina_rc_t) iarray_itr_read_new(iarray_context_t *ctx, iarray_container_t 
     (*itr)->container = container;
     (*itr)->size = 1;
     (*itr)->shape = (uint64_t *) malloc(IARRAY_DIMENSION_MAX * sizeof(uint64_t));
+    (*itr)->pshape = (uint64_t *) malloc(IARRAY_DIMENSION_MAX * sizeof(uint64_t));
     (*itr)->index = (uint64_t *) malloc(IARRAY_DIMENSION_MAX * sizeof(uint64_t));
 
     for (int i = 0; i < (*itr)->container->dtshape->ndim; ++i) {

@@ -93,6 +93,7 @@ typedef struct iarray_itr_read_s {
     uint8_t *part;
     void *pointer;
     uint64_t *shape;
+    uint64_t *pshape;
     uint64_t size;
     uint64_t *index;
     uint64_t cont;
