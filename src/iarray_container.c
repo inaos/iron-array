@@ -70,6 +70,43 @@ fail:
     return ina_err_get_rc();
 }
 
+INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
+                                        iarray_container_t *c,
+                                       uint64_t *start,
+                                       uint64_t *stop,
+                                       void *buffer)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(start);
+    INA_VERIFY_NOT_NULL(stop);
+
+    uint8_t ndim = c->dtshape->ndim;
+
+    uint64_t start_[IARRAY_DIMENSION_MAX];
+    uint64_t stop_[IARRAY_DIMENSION_MAX];
+    uint64_t pshape_[IARRAY_DIMENSION_MAX];
+
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        start_[(IARRAY_DIMENSION_MAX - ndim + i) % CATERVA_MAXDIM] = start[i];
+        stop_[(IARRAY_DIMENSION_MAX - ndim + i) % CATERVA_MAXDIM] = stop[i];
+        pshape_[(IARRAY_DIMENSION_MAX - ndim + i) % CATERVA_MAXDIM] = stop_[(IARRAY_DIMENSION_MAX - ndim + i) % CATERVA_MAXDIM] - start_[(IARRAY_DIMENSION_MAX - ndim + i) % CATERVA_MAXDIM];
+
+    }
+
+    for (int i = ndim; i < CATERVA_MAXDIM; ++i) {
+        start_[(IARRAY_DIMENSION_MAX - ndim + i) % CATERVA_MAXDIM] = 0;
+        stop_[(IARRAY_DIMENSION_MAX - ndim + i) % CATERVA_MAXDIM] = 1;
+        pshape_[(IARRAY_DIMENSION_MAX - ndim + i) % CATERVA_MAXDIM] = stop_[(IARRAY_DIMENSION_MAX - ndim + i) % CATERVA_MAXDIM] - start_[(IARRAY_DIMENSION_MAX - ndim + i) % CATERVA_MAXDIM];
+    }
+
+    INA_FAIL_IF(caterva_get_slice_buffer(c->catarr, buffer, start_, stop_, pshape_) != 0);
+
+    return INA_SUCCESS;
+
+    fail:
+    return ina_err_get_rc();
+}
+
 INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
                                  iarray_container_t *container)
 {
