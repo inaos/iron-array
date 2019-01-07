@@ -81,7 +81,7 @@ INA_TEST_FIXTURE(read_iterator, double_2) {
 
     uint8_t ndim = 2;
     uint64_t shape[] = {10, 10};
-    uint64_t pshape[] = {5, 5};
+    uint64_t pshape[] = {4, 3};
     uint64_t blockshape[] = {3, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_read_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, blockshape));
