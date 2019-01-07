@@ -36,15 +36,16 @@ static ina_rc_t test_read_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     iarray_itr_read_new(ctx, c_x, &I, blockshape);
 
     for (iarray_itr_read_init(I); !iarray_itr_read_finished(I); iarray_itr_read_next(I)) {
-
         iarray_itr_read_value_t val;
         iarray_itr_read_value(I, &val);
-
-        uint64_t part_size = 1;
+        uint64_t partsize = 1;
         for (int i = 0; i < ndim; ++i) {
-            part_size *= val.shape[i];
+            partsize *= val.shape[i];
         }
 
+        for (uint64_t i = 0; i < partsize; ++i) {
+            printf("%llu: %f\n", i, ((double *)val.pointer)[i]);
+        }
     }
 
     iarray_itr_read_free(ctx, I);
@@ -81,7 +82,7 @@ INA_TEST_FIXTURE(read_iterator, double_2) {
     uint8_t ndim = 2;
     uint64_t shape[] = {10, 10};
     uint64_t pshape[] = {5, 5};
-    uint64_t blockshape[] = {5, 5};
+    uint64_t blockshape[] = {3, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_read_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, blockshape));
 }

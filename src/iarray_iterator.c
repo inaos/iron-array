@@ -622,19 +622,6 @@ void _iarray_itr_matmul_free(iarray_context_t *ctx, iarray_itr_matmul_t *itr)
  */
 
 /*
-* Function: _update_itr_read_index (private)
-* ------------------------------------------
-*   Update the index and the nelem of the iterator
-    *
-    *   itr: an iterator
-*/
-
-static void _update_itr_read_index(iarray_itr_read_t *itr)
-{
-
-}
-
-/*
  * Function: iarray_itr_read_init
  * ------------------------------
  *   Set the iterator values to the first element
@@ -653,16 +640,10 @@ INA_API(void) iarray_itr_read_init(iarray_itr_read_t *itr)
     //ToDo: Implement a iarray function that stores slicing result into a buffer
     uint64_t stop_[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
-        itr->pshape[i] = itr->container->dtshape->pshape[i];
+        itr->pshape[i] = itr->shape[i];
         stop_[i] = itr->index[i] + itr->shape[i];
     }
-    caterva_dims_t pshape = caterva_new_dims(itr->pshape, itr->container->dtshape->ndim);
-    caterva_array_t *dest = caterva_empty_array(itr->container->catarr->ctx, NULL, pshape);
-    caterva_dims_t start = caterva_new_dims(itr->index, itr->container->dtshape->ndim);
-    caterva_dims_t stop = caterva_new_dims(stop_, itr->container->dtshape->ndim);
-    caterva_get_slice(dest, itr->container->catarr, start, stop);
-    caterva_to_buffer(dest, itr->part);
-    caterva_free_array(dest);
+    iarray_slice_buffer(itr->container, itr->index, stop_, itr->part);
 }
 
 /*
@@ -702,7 +683,7 @@ INA_API(ina_rc_t) iarray_itr_read_next(iarray_itr_read_t *itr)
     uint64_t stop_[IARRAY_DIMENSION_MAX];
 
     for (int i = ndim - 1; i >= 0; --i) {
-        if(start_[i] + itr->shape[i] >= catarr->shape[i]) {
+        if(start_[i] + itr->shape[i] <= catarr->shape[i]) {
             stop_[i] = start_[i] + itr->shape[i];
         } else {
             stop_[i] = catarr->shape[i];
@@ -710,14 +691,7 @@ INA_API(ina_rc_t) iarray_itr_read_next(iarray_itr_read_t *itr)
         itr->pshape[i] = stop_[i] - start_[i];
     }
 
-    //ToDo: Implement a iarray function that stores slicing result into a buffer
-    caterva_dims_t pshape = caterva_new_dims(itr->pshape, itr->container->dtshape->ndim);
-    caterva_array_t *dest = caterva_empty_array(itr->container->catarr->ctx, NULL, pshape);
-    caterva_dims_t start = caterva_new_dims(start_, itr->container->dtshape->ndim);
-    caterva_dims_t stop = caterva_new_dims(stop_, itr->container->dtshape->ndim);
-    caterva_get_slice(dest, itr->container->catarr, start, stop);
-    caterva_to_buffer(dest, itr->part);
-    caterva_free_array(dest);
+    iarray_slice_buffer(itr->container, start_, stop_, itr->part);
 
     return INA_SUCCESS;
 }
@@ -790,18 +764,18 @@ INA_API(ina_rc_t) iarray_itr_read_new(iarray_context_t *ctx, iarray_container_t 
 
     (*itr)->container = container;
     (*itr)->size = 1;
-    (*itr)->shape = (uint64_t *) malloc(IARRAY_DIMENSION_MAX * sizeof(uint64_t));
-    (*itr)->pshape = (uint64_t *) malloc(IARRAY_DIMENSION_MAX * sizeof(uint64_t));
-    (*itr)->index = (uint64_t *) malloc(IARRAY_DIMENSION_MAX * sizeof(uint64_t));
+    (*itr)->shape = (uint64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(uint64_t));
+    (*itr)->pshape = (uint64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(uint64_t));
+    (*itr)->index = (uint64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(uint64_t));
 
     for (int i = 0; i < (*itr)->container->dtshape->ndim; ++i) {
         (*itr)->shape[i] = blockshape[i];
         (*itr)->size *= (*itr)->shape[i];
     }
     if ((*itr)->container->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        (*itr)->part = malloc((*itr)->size * sizeof(double));
+        (*itr)->part = ina_mem_alloc((*itr)->size * sizeof(double));
     } else {
-        (*itr)->part = malloc((*itr)->size * sizeof(float));
+        (*itr)->part = ina_mem_alloc((*itr)->size * sizeof(float));
     }
     (*itr)->pointer = &((*itr)->part[0]);
     return INA_SUCCESS;
@@ -819,8 +793,9 @@ INA_API(ina_rc_t) iarray_itr_read_new(iarray_context_t *ctx, iarray_container_t 
 
 INA_API(void) iarray_itr_read_free(iarray_context_t *ctx, iarray_itr_read_t *itr)
 {
-    free(itr->part);
-    free(itr->shape);
-    free(itr->index);
-    free(itr);
+    ina_mem_free(itr->shape);
+    ina_mem_free(itr->pshape);
+    ina_mem_free(itr->index);
+    ina_mem_free(itr->part);
+    ina_mem_free(itr);
 }

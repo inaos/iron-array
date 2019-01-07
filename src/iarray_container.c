@@ -70,13 +70,11 @@ fail:
     return ina_err_get_rc();
 }
 
-INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
-                                        iarray_container_t *c,
-                                       uint64_t *start,
+INA_API(ina_rc_t) iarray_slice_buffer(iarray_container_t *c,
+                                        uint64_t *start,
                                        uint64_t *stop,
                                        void *buffer)
 {
-    INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
 
