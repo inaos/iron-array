@@ -22,14 +22,17 @@ static ina_rc_t test_read_iterator(iarray_context_t *ctx, iarray_data_type_t dty
 
     xdtshape.dtype = dtype;
     xdtshape.ndim = ndim;
+    uint64_t contsize = 1;
     for (int i = 0; i < ndim; ++i) {
+        contsize *= shape[i];
         xdtshape.shape[i] = shape[i];
         xdtshape.pshape[i] = pshape[i];
     }
 
     iarray_container_t *c_x;
 
-    iarray_ones(ctx, &xdtshape, NULL, 0, &c_x);
+
+    iarray_arange(ctx, &xdtshape, 0, contsize, 1, NULL, 0, &c_x);
 
     // Start Iterator
     iarray_itr_read_t *I;

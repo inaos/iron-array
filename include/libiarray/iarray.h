@@ -157,9 +157,9 @@ INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
                                 iarray_dtshape_t *dtshape,
-                                int start,
-                                int stop,
-                                int step,
+                                uint64_t start,
+                                uint64_t stop,
+                                uint64_t step,
                                 iarray_store_properties_t *store,
                                 int flags,
                                 iarray_container_t **container);
