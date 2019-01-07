@@ -32,20 +32,52 @@ static ina_rc_t _iarray_container_fill_double(iarray_container_t *c, double valu
 
 INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
     iarray_dtshape_t *dtshape,
-    int start,
-    int stop,
-    int step,
+    uint64_t start,
+    uint64_t stop,
+    uint64_t step,
     iarray_store_properties_t *store,
     int flags,
     iarray_container_t **container)
 {
+
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(container);
 
+    double contsize = 1;
+    for (int i = 0; i < dtshape->ndim; ++i) {
+        contsize *= dtshape->shape[i];
+    }
+
+    double constant = (stop - start) / contsize;
+    if (constant != step) {
+        return INA_ERR_FAILED;
+    }
+
     INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
-    /* implement arange */
+    iarray_itr_t *I;
+    iarray_itr_new(ctx, *container, &I);
+
+    for (iarray_itr_init(I); !iarray_itr_finished(I); iarray_itr_next(I)) {
+        iarray_itr_value_t val;
+        iarray_itr_value(I, &val);
+
+        uint64_t i = 0;
+        uint64_t inc = 1;
+        for (int j = dtshape->ndim - 1; j >= 0; --j) {
+            i += val.index[j] * inc;
+            inc *= dtshape->shape[j];
+        }
+
+        if(dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
+            double value = i * step * constant;
+            memcpy(val.pointer, &value, sizeof(double));
+        } else {
+            float value = (float) (i * step * constant);
+            memcpy(val.pointer, &value, sizeof(float));
+        }
+    }
 
     return INA_SUCCESS;
 }
