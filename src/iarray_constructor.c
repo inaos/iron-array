@@ -59,9 +59,9 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
     iarray_itr_t *I;
     iarray_itr_new(ctx, *container, &I);
 
-    for (iarray_itr_init(I); !iarray_itr_finished(I); iarray_itr_next(I)) {
+    for (iarray_itr_init(ctx, I); !iarray_itr_finished(ctx, I); iarray_itr_next(ctx, I)) {
         iarray_itr_value_t val;
-        iarray_itr_value(I, &val);
+        iarray_itr_value(ctx, I, &val);
 
         uint64_t i = 0;
         uint64_t inc = 1;

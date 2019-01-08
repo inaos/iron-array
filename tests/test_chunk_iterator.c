@@ -35,10 +35,10 @@ static ina_rc_t test_chunk_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     iarray_itr_chunk_t *I;
     iarray_itr_chunk_new(ctx, c_x, &I);
 
-    for (iarray_itr_chunk_init(I); !iarray_itr_chunk_finished(I); iarray_itr_chunk_next(I)) {
+    for (iarray_itr_chunk_init(ctx, I); !iarray_itr_chunk_finished(ctx, I); iarray_itr_chunk_next(ctx, I)) {
 
         iarray_itr_chunk_value_t val;
-        iarray_itr_chunk_value(I, &val);
+        iarray_itr_chunk_value(ctx, I, &val);
 
         uint64_t part_size = 1;
         for (int i = 0; i < ndim; ++i) {

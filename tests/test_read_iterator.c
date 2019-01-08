@@ -37,9 +37,9 @@ static ina_rc_t test_read_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     iarray_itr_read_t *I;
     iarray_itr_read_new(ctx, c_x, &I, blockshape);
 
-    for (iarray_itr_read_init(I); !iarray_itr_read_finished(I); iarray_itr_read_next(I)) {
+    for (iarray_itr_read_init(ctx, I); !iarray_itr_read_finished(ctx, I); iarray_itr_read_next(ctx, I)) {
         iarray_itr_read_value_t val;
-        iarray_itr_read_value(I, &val);
+        iarray_itr_read_value(ctx, I, &val);
         uint64_t partsize = 1;
         for (int i = 0; i < ndim; ++i) {
             partsize *= val.shape[i];

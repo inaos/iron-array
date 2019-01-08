@@ -227,7 +227,7 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
                                int flags,
                                iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_slice_buffer(
+INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
                                       iarray_container_t *c,
                                       uint64_t *start,
                                       uint64_t *stop,

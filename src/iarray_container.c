@@ -70,7 +70,8 @@ fail:
     return ina_err_get_rc();
 }
 
-INA_API(ina_rc_t) iarray_slice_buffer(iarray_container_t *c,
+INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
+    iarray_container_t *c,
                                         uint64_t *start,
                                        uint64_t *stop,
                                        void *buffer)
