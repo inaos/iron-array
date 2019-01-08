@@ -34,11 +34,11 @@ static ina_rc_t test_read_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     iarray_arange(ctx, &xdtshape, 0, contsize, 1, NULL, 0, &c_x);
 
     // Start Iterator
-    iarray_itr_read_t *I;
+    iarray_itr_chunk_read_t *I;
     iarray_itr_chunk_read_new(ctx, c_x, &I, blockshape);
 
     for (iarray_itr_chunk_read_init(ctx, I); !iarray_itr_chunk_read_finished(ctx, I); iarray_itr_chunk_read_next(ctx, I)) {
-        iarray_itr_read_value_t val;
+        iarray_itr_chunk_read_value_t val;
         iarray_itr_chunk_read_value(ctx, I, &val);
         uint64_t partsize = 1;
         for (int i = 0; i < ndim; ++i) {
