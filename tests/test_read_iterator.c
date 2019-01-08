@@ -35,11 +35,11 @@ static ina_rc_t test_read_iterator(iarray_context_t *ctx, iarray_data_type_t dty
 
     // Start Iterator
     iarray_itr_read_t *I;
-    iarray_itr_read_new(ctx, c_x, &I, blockshape);
+    iarray_itr_chunk_read_new(ctx, c_x, &I, blockshape);
 
-    for (iarray_itr_read_init(ctx, I); !iarray_itr_read_finished(ctx, I); iarray_itr_read_next(ctx, I)) {
+    for (iarray_itr_chunk_read_init(ctx, I); !iarray_itr_chunk_read_finished(ctx, I); iarray_itr_chunk_read_next(ctx, I)) {
         iarray_itr_read_value_t val;
-        iarray_itr_read_value(ctx, I, &val);
+        iarray_itr_chunk_read_value(ctx, I, &val);
         uint64_t partsize = 1;
         for (int i = 0; i < ndim; ++i) {
             partsize *= val.shape[i];
@@ -47,7 +47,7 @@ static ina_rc_t test_read_iterator(iarray_context_t *ctx, iarray_data_type_t dty
         //TODO: Works well, but an assert is needed
     }
 
-    iarray_itr_read_free(ctx, I);
+    iarray_itr_chunk_read_free(ctx, I);
 
     // Free
     iarray_container_free(ctx, &c_x);
