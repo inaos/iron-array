@@ -624,11 +624,19 @@ void _iarray_itr_matmul_free(iarray_context_t *ctx, iarray_itr_matmul_t *itr)
 
 INA_API(void) iarray_itr_read_init(iarray_context_t *ctx, iarray_itr_read_t *itr)
 {
+    caterva_array_t *catarr = itr->container->catarr;
 
+    itr->cont = 0;
+    uint64_t partsize = 1;
+    for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
+        itr->index[i] = 0;
+        partsize *= itr->container->dtshape->pshape[i];
+    }
+    blosc2_schunk_decompress_chunk(catarr->sc, 0, itr->part, partsize);
 }
 
 /*
- *Function: iarray_itr_read_next
+ * Function: iarray_itr_read_next
  */
 
 INA_API(ina_rc_t) iarray_itr_read_next(iarray_context_t *ctx, iarray_itr_read_t *itr)
@@ -637,48 +645,79 @@ INA_API(ina_rc_t) iarray_itr_read_next(iarray_context_t *ctx, iarray_itr_read_t 
 }
 
 /*
- *Function: iarray_itr_read_finished
+ * Function: iarray_itr_read_finished
  */
 
 INA_API(int) iarray_itr_read_finished(iarray_context_t *ctx, iarray_itr_read_t *itr)
 {
-    return 1;
+    uint64_t size = 1;
+    for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
+        size *= itr->container->dtshape->shape[i];
+    }
+    return itr->cont >= size;
 }
 
 /*
- *Function: iarray_itr_read_value
+ * Function: iarray_itr_read_value
  */
 
 INA_API(void) iarray_itr_read_value(iarray_context_t *ctx, iarray_itr_read_t *itr,
                                     iarray_itr_read_value_t *val)
 {
-
+    val->index = itr->index;
+    val->pointer = itr->pointer;
+    val->nelem = itr->cont;
 }
 
 /*
- *Function: iarray_itr_read_new
+ * Function: iarray_itr_read_new
  */
 
 INA_API(ina_rc_t) iarray_itr_read_new(iarray_context_t *ctx, iarray_container_t *container,
                                       iarray_itr_read_t **itr)
 {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(container);
+    INA_VERIFY_NOT_NULL(itr);
+
+    *itr = (iarray_itr_read_t*) ina_mem_alloc(sizeof(iarray_itr_read_t));
+    INA_RETURN_IF_NULL(itr);
+
+    (*itr)->container = container;
+
+    uint64_t size = 1;
+    for (int i = 0; i < container->dtshape->ndim; ++i) {
+        size *= container->dtshape->pshape[i];
+    }
+
+    if ((*itr)->container->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
+        (*itr)->part = ina_mem_alloc(size * sizeof(double));
+    } else {
+        (*itr)->part = ina_mem_alloc(size * sizeof(float));
+    }
+
+    (*itr)->index = (uint64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(uint64_t));
+
+    (*itr)->pointer = &((*itr)->part[0]);
+
     return INA_SUCCESS;
 }
 
 /*
- *Function: iarray_itr_read_free
+ * Function: iarray_itr_read_free
  */
 
 INA_API(void) iarray_itr_read_free(iarray_context_t *ctx, iarray_itr_read_t *itr)
 {
-
+    ina_mem_free(itr->part);
+    ina_mem_free(itr->index);
+    ina_mem_free(itr);
 }
 
 /*
  * READ ITERATOR BY BLOCKS
  *
  * Iterator that allows read an iarray container by blocks (the blocksize is specified by the user)
- *
  */
 
 /*
@@ -689,7 +728,7 @@ INA_API(void) iarray_itr_read_free(iarray_context_t *ctx, iarray_itr_read_t *itr
  *   itr: an iterator
  */
 
-INA_API(void) iarray_itr_chunk_read_init(iarray_context_t *ctx, iarray_itr_read_t *itr)
+INA_API(void) iarray_itr_chunk_read_init(iarray_context_t *ctx, iarray_itr_chunk_read_t *itr)
 {
     itr->size = 1;
     for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
@@ -697,7 +736,6 @@ INA_API(void) iarray_itr_chunk_read_init(iarray_context_t *ctx, iarray_itr_read_
     }
     itr->cont = 0;
 
-    //ToDo: Implement a iarray function that stores slicing result into a buffer
     uint64_t stop_[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
         itr->pshape[i] = itr->shape[i];
@@ -714,7 +752,7 @@ INA_API(void) iarray_itr_chunk_read_init(iarray_context_t *ctx, iarray_itr_read_
  *   itr: an iterator
  */
 
-INA_API(ina_rc_t) iarray_itr_chunk_read_next(iarray_context_t *ctx, iarray_itr_read_t *itr)
+INA_API(ina_rc_t) iarray_itr_chunk_read_next(iarray_context_t *ctx, iarray_itr_chunk_read_t *itr)
 {
     uint8_t ndim = itr->container->dtshape->ndim;
     caterva_array_t *catarr = itr->container->catarr;
@@ -766,7 +804,7 @@ INA_API(ina_rc_t) iarray_itr_chunk_read_next(iarray_context_t *ctx, iarray_itr_r
  *   return: 1 if iter is finished or 0 if not
  */
 
-INA_API(int) iarray_itr_chunk_read_finished(iarray_context_t *ctx, iarray_itr_read_t *itr)
+INA_API(int) iarray_itr_chunk_read_finished(iarray_context_t *ctx, iarray_itr_chunk_read_t *itr)
 {
     uint64_t size = 1;
     for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
@@ -795,7 +833,7 @@ INA_API(int) iarray_itr_chunk_read_finished(iarray_context_t *ctx, iarray_itr_re
  *   return: INA_SUCCESS or an error code
  */
 
-INA_API(void) iarray_itr_chunk_read_value(iarray_context_t *ctx, iarray_itr_read_t *itr, iarray_itr_read_value_t *val)
+INA_API(void) iarray_itr_chunk_read_value(iarray_context_t *ctx, iarray_itr_chunk_read_t *itr, iarray_itr_chunk_read_value_t *val)
 {
     val->index = itr->index;
     val->shape = itr->pshape;
@@ -815,12 +853,12 @@ INA_API(void) iarray_itr_chunk_read_value(iarray_context_t *ctx, iarray_itr_read
  */
 
 INA_API(ina_rc_t) iarray_itr_chunk_read_new(iarray_context_t *ctx, iarray_container_t *container,
-                                            iarray_itr_read_t **itr, uint64_t *blockshape)
+                                            iarray_itr_chunk_read_t **itr, uint64_t *blockshape)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(container);
     INA_VERIFY_NOT_NULL(itr);
-    *itr = (iarray_itr_read_t*) ina_mem_alloc(sizeof(iarray_itr_read_t));
+    *itr = (iarray_itr_chunk_read_t*) ina_mem_alloc(sizeof(iarray_itr_chunk_read_t));
     INA_RETURN_IF_NULL(itr);
 
     (*itr)->container = container;
@@ -852,7 +890,7 @@ INA_API(ina_rc_t) iarray_itr_chunk_read_new(iarray_context_t *ctx, iarray_contai
 *   return: INA_SUCCESS or an error code
  */
 
-INA_API(void) iarray_itr_chunk_read_free(iarray_context_t *ctx, iarray_itr_read_t *itr)
+INA_API(void) iarray_itr_chunk_read_free(iarray_context_t *ctx, iarray_itr_chunk_read_t *itr)
 {
     ina_mem_free(itr->shape);
     ina_mem_free(itr->pshape);
