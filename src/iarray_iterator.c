@@ -28,7 +28,7 @@
  *   itr: an iterator
  */
 
-void _update_itr_index(iarray_itr_t *itr)
+void _update_itr_index(iarray_context_t *ctx, iarray_itr_t *itr)
 {
     caterva_array_t *catarr = itr->container->catarr;
 
@@ -79,7 +79,7 @@ void _update_itr_index(iarray_itr_t *itr)
  *   itr: an iterator
  */
 
-INA_API(void) iarray_itr_init(iarray_itr_t *itr)
+INA_API(void) iarray_itr_init(iarray_context_t *ctx, iarray_itr_t *itr)
 {
     itr->cont = 0;
     itr->nelem = 0;
@@ -98,14 +98,14 @@ INA_API(void) iarray_itr_init(iarray_itr_t *itr)
  *   itr: an iterator
  */
 
-INA_API(ina_rc_t) iarray_itr_next(iarray_itr_t *itr)
+INA_API(ina_rc_t) iarray_itr_next(iarray_context_t *ctx, iarray_itr_t *itr)
 {
     caterva_array_t *catarr = itr->container->catarr;
     int ndim = catarr->ndim;
 
     // jump to the next element
     itr->cont += 1;
-    _update_itr_index(itr);
+    _update_itr_index(ctx, itr);
 
     // check if the element is out of the container (pad positions)
     uint64_t aux_inc[CATERVA_MAXDIM];
@@ -116,7 +116,7 @@ INA_API(ina_rc_t) iarray_itr_next(iarray_itr_t *itr)
     for (int l = ndim - 1; l >= 0; --l) {
         if (itr->index[l] >= catarr->shape[l]) {
             itr->cont += (catarr->eshape[l] - catarr->shape[l]) * aux_inc[l];
-            _update_itr_index(itr);
+            _update_itr_index(ctx, itr);
         }
     }
 
@@ -129,7 +129,7 @@ INA_API(ina_rc_t) iarray_itr_next(iarray_itr_t *itr)
         memset(itr->part, 0, catarr->psize * catarr->sc->typesize);
     }
 
-    _update_itr_index(itr);
+    _update_itr_index(ctx, itr);
     return INA_SUCCESS;
 }
 
@@ -143,7 +143,7 @@ INA_API(ina_rc_t) iarray_itr_next(iarray_itr_t *itr)
  *   return: 1 if iter is finished or 0 if not
  */
 
-INA_API(int) iarray_itr_finished(iarray_itr_t *itr)
+INA_API(int) iarray_itr_finished(iarray_context_t *ctx, iarray_itr_t *itr)
 {
     return itr->cont >= itr->container->catarr->esize;
 }
@@ -162,7 +162,7 @@ INA_API(int) iarray_itr_finished(iarray_itr_t *itr)
 *   return: INA_SUCCESS or an error code
  */
 
-INA_API(void) iarray_itr_value(iarray_itr_t *itr, iarray_itr_value_t *val)
+INA_API(void) iarray_itr_value(iarray_context_t *ctx, iarray_itr_t *itr, iarray_itr_value_t *val)
 {
     val->pointer = itr->pointer;
     val->index = itr->index;
@@ -231,7 +231,7 @@ INA_API(void) iarray_itr_free(iarray_context_t *ctx, iarray_itr_t *itr)
  *   itr: an iterator
  */
 
-void _update_itr_chunk_index(iarray_itr_t *itr)
+void _update_itr_chunk_index(iarray_context_t *ctx, iarray_itr_t *itr)
 {
     caterva_array_t *catarr = itr->container->catarr;
 
@@ -282,7 +282,7 @@ void _update_itr_chunk_index(iarray_itr_t *itr)
  *   itr: an iterator
  */
 
-INA_API(void) iarray_itr_chunk_init(iarray_itr_chunk_t *itr)
+INA_API(void) iarray_itr_chunk_init(iarray_context_t *ctx, iarray_itr_chunk_t *itr)
 {
     itr->cont = 0;
     memset(itr->part, 0, itr->container->catarr->psize * itr->container->catarr->sc->typesize);
@@ -301,7 +301,7 @@ INA_API(void) iarray_itr_chunk_init(iarray_itr_chunk_t *itr)
  *   itr: an iterator
  */
 
-INA_API(ina_rc_t) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
+INA_API(ina_rc_t) iarray_itr_chunk_next(iarray_context_t *ctx, iarray_itr_chunk_t *itr)
 {
     caterva_array_t *catarr = itr->container->catarr;
     int ndim = catarr->ndim;
@@ -404,7 +404,7 @@ INA_API(ina_rc_t) iarray_itr_chunk_next(iarray_itr_chunk_t *itr)
  *   return: 1 if iter is finished or 0 if not
  */
 
-INA_API(int) iarray_itr_chunk_finished(iarray_itr_chunk_t *itr)
+INA_API(int) iarray_itr_chunk_finished(iarray_context_t *ctx, iarray_itr_chunk_t *itr)
 {
     return itr->cont >= itr->container->catarr->esize / itr->container->catarr->psize;
 }
@@ -425,7 +425,7 @@ INA_API(int) iarray_itr_chunk_finished(iarray_itr_chunk_t *itr)
  *   return: INA_SUCCESS or an error code
  */
 
-INA_API(void) iarray_itr_chunk_value(iarray_itr_chunk_t *itr, iarray_itr_chunk_value_t *val)
+INA_API(void) iarray_itr_chunk_value(iarray_context_t *ctx, iarray_itr_chunk_t *itr, iarray_itr_chunk_value_t *val)
 {
     val->pointer = itr->pointer;
     val->index = itr->index;
@@ -502,7 +502,7 @@ INA_API(void) iarray_itr_chunk_free(iarray_context_t *ctx, iarray_itr_chunk_t *i
  *   itr: an iterator
  */
 
-void _iarray_itr_matmul_init(iarray_itr_matmul_t *itr)
+void _iarray_itr_matmul_init(iarray_context_t *ctx, iarray_itr_matmul_t *itr)
 {
     itr->cont = 0;
     itr->nchunk1 = 0;
@@ -517,7 +517,7 @@ void _iarray_itr_matmul_init(iarray_itr_matmul_t *itr)
  *   itr: an iterator
  */
 
-void _iarray_itr_matmul_next(iarray_itr_matmul_t *itr)
+void _iarray_itr_matmul_next(iarray_context_t *ctx, iarray_itr_matmul_t *itr)
 {
     uint64_t P = itr->container1->catarr->pshape[0];
     uint64_t M = itr->container1->catarr->eshape[0];
@@ -555,7 +555,7 @@ void _iarray_itr_matmul_next(iarray_itr_matmul_t *itr)
  *   return: 1 if iter is finished or 0 if not
  */
 
-int _iarray_itr_matmul_finished(iarray_itr_matmul_t *itr)
+int _iarray_itr_matmul_finished(iarray_context_t *ctx, iarray_itr_matmul_t *itr)
 {
     uint64_t P = itr->container1->catarr->pshape[0];
     uint64_t M = itr->container1->catarr->eshape[0];
@@ -629,7 +629,7 @@ void _iarray_itr_matmul_free(iarray_context_t *ctx, iarray_itr_matmul_t *itr)
  *   itr: an iterator
  */
 
-INA_API(void) iarray_itr_read_init(iarray_itr_read_t *itr)
+INA_API(void) iarray_itr_read_init(iarray_context_t *ctx, iarray_itr_read_t *itr)
 {
     itr->size = 1;
     for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
@@ -654,7 +654,7 @@ INA_API(void) iarray_itr_read_init(iarray_itr_read_t *itr)
  *   itr: an iterator
  */
 
-INA_API(ina_rc_t) iarray_itr_read_next(iarray_itr_read_t *itr)
+INA_API(ina_rc_t) iarray_itr_read_next(iarray_context_t *ctx, iarray_itr_read_t *itr)
 {
     uint8_t ndim = itr->container->dtshape->ndim;
     caterva_array_t *catarr = itr->container->catarr;
@@ -706,7 +706,7 @@ INA_API(ina_rc_t) iarray_itr_read_next(iarray_itr_read_t *itr)
  *   return: 1 if iter is finished or 0 if not
  */
 
-INA_API(int) iarray_itr_read_finished(iarray_itr_read_t *itr)
+INA_API(int) iarray_itr_read_finished(iarray_context_t *ctx, iarray_itr_read_t *itr)
 {
     uint64_t size = 1;
     for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
@@ -735,7 +735,7 @@ INA_API(int) iarray_itr_read_finished(iarray_itr_read_t *itr)
  *   return: INA_SUCCESS or an error code
  */
 
-INA_API(void) iarray_itr_read_value(iarray_itr_read_t *itr, iarray_itr_read_value_t *val)
+INA_API(void) iarray_itr_read_value(iarray_context_t *ctx, iarray_itr_read_t *itr, iarray_itr_read_value_t *val)
 {
     val->index = itr->index;
     val->shape = itr->pshape;
