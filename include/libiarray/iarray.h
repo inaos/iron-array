@@ -353,6 +353,15 @@ INA_API(ina_rc_t) iarray_itr_chunk_next(iarray_context_t *ctx, iarray_itr_chunk_
 INA_API(int) iarray_itr_chunk_finished(iarray_context_t *ctx, iarray_itr_chunk_t *itr);
 INA_API(void) iarray_itr_chunk_value(iarray_context_t *ctx, iarray_itr_chunk_t *itr, iarray_itr_chunk_value_t *value);
 
+INA_API(ina_rc_t) iarray_itr_read_new(iarray_context_t *ctx, iarray_container_t *container,
+                                      iarray_itr_read_t **itr);
+INA_API(void) iarray_itr_read_free(iarray_context_t *ctx, iarray_itr_read_t *itr);
+INA_API(void) iarray_itr_read_init(iarray_context_t *ctx, iarray_itr_read_t *itr);
+INA_API(ina_rc_t) iarray_itr_read_next(iarray_context_t *ctx, iarray_itr_read_t *itr);
+INA_API(int) iarray_itr_read_finished(iarray_context_t *ctx, iarray_itr_read_t *itr);
+INA_API(void) iarray_itr_read_value(iarray_context_t *ctx, iarray_itr_read_t *itr,
+                                    iarray_itr_read_value_t *val);
+
 INA_API(ina_rc_t) iarray_itr_chunk_read_new(iarray_context_t *ctx, iarray_container_t *container,
                                             iarray_itr_read_t **itr, uint64_t *blockshape);
 INA_API(void) iarray_itr_chunk_read_free(iarray_context_t *ctx, iarray_itr_read_t *itr);
