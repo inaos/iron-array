@@ -643,7 +643,7 @@ INA_API(void) iarray_itr_read_init(iarray_context_t *ctx, iarray_itr_read_t *itr
         itr->pshape[i] = itr->shape[i];
         stop_[i] = itr->index[i] + itr->shape[i];
     }
-    iarray_slice_buffer(itr->container, itr->index, stop_, itr->part);
+    iarray_slice_buffer(ctx, itr->container, itr->index, stop_, itr->part);
 }
 
 /*
@@ -691,7 +691,7 @@ INA_API(ina_rc_t) iarray_itr_read_next(iarray_context_t *ctx, iarray_itr_read_t 
         itr->pshape[i] = stop_[i] - start_[i];
     }
 
-    iarray_slice_buffer(itr->container, start_, stop_, itr->part);
+    iarray_slice_buffer(ctx, itr->container, start_, stop_, itr->part);
 
     return INA_SUCCESS;
 }

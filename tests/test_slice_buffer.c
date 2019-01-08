@@ -17,7 +17,7 @@
 static ina_rc_t test_slice_buffer(iarray_context_t *ctx, iarray_container_t *c_x, uint64_t * start, uint64_t *stop,
     void *buffer) {
 
-    INA_TEST_ASSERT_SUCCEED(iarray_slice_buffer(c_x, start, stop, buffer));
+    INA_TEST_ASSERT_SUCCEED(iarray_slice_buffer(ctx, c_x, start, stop, buffer));
 
     return INA_SUCCESS;
 }
