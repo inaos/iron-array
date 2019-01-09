@@ -632,7 +632,7 @@ INA_API(void) iarray_itr_read_init(iarray_context_t *ctx, iarray_itr_read_t *itr
         itr->index[i] = 0;
         partsize *= itr->container->dtshape->pshape[i];
     }
-    blosc2_schunk_decompress_chunk(catarr->sc, 0, itr->part, partsize);
+    blosc2_schunk_decompress_chunk(catarr->sc, 0, itr->part, partsize * catarr->sc->typesize);
 }
 
 /*
@@ -641,6 +641,41 @@ INA_API(void) iarray_itr_read_init(iarray_context_t *ctx, iarray_itr_read_t *itr
 
 INA_API(ina_rc_t) iarray_itr_read_next(iarray_context_t *ctx, iarray_itr_read_t *itr)
 {
+
+    caterva_array_t *catarr = itr->container->catarr;
+
+    int ndim = catarr->ndim;
+
+    // jump to the next element
+    itr->cont += 1;
+    _update_itr_index(ctx, itr);
+
+    // check if the element is out of the container (pad positions)
+    uint64_t aux_inc[CATERVA_MAXDIM];
+    aux_inc[ndim - 1] = 1;
+    for (int m = ndim - 2; m >= 0; --m) {
+        aux_inc[m] = catarr->pshape[m + 1] * aux_inc[m + 1];
+    }
+    for (int l = ndim - 1; l >= 0; --l) {
+        if (itr->index[l] >= catarr->shape[l]) {
+            itr->cont += (catarr->eshape[l] - catarr->shape[l]) * aux_inc[l];
+            _update_itr_index(ctx, itr);
+        }
+    }
+    _update_itr_index(ctx, itr);
+
+    // check if a chunk is filled totally and append it
+    if (itr->cont % catarr->psize == 0 & itr->cont < catarr->esize) {
+        int err = blosc2_schunk_decompress_chunk(catarr->sc, (int) (itr->cont / catarr->psize), itr->part, catarr->psize * catarr->sc->typesize);
+        if (err < 0) {
+            return INA_ERR_FAILED;
+        }
+    }
+    return INA_SUCCESS;
+
+
+
+
     return INA_SUCCESS;
 }
 
@@ -652,7 +687,7 @@ INA_API(int) iarray_itr_read_finished(iarray_context_t *ctx, iarray_itr_read_t *
 {
     uint64_t size = 1;
     for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
-        size *= itr->container->dtshape->shape[i];
+        size *= itr->container->catarr->eshape[i];
     }
     return itr->cont >= size;
 }

@@ -20,7 +20,7 @@ typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;
 typedef struct iarray_itr_s iarray_itr_t;
 typedef struct iarray_itr_chunk_s iarray_itr_chunk_t;
-typedef struct iarray_itr_read_s iarray_itr_read_t;
+typedef struct iarray_itr_s iarray_itr_read_t;
 typedef struct iarray_itr_chunk_read_s iarray_itr_chunk_read_t;
 typedef struct iarray_expression_s iarray_expression_t;
 
