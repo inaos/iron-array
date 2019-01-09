@@ -14,8 +14,8 @@
 
 #include <tests/iarray_test.h>
 
-static ina_rc_t test_read_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint8_t ndim,
-                                    const uint64_t *shape, const uint64_t *pshape, uint64_t *blockshape) {
+static ina_rc_t test_read_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, uint8_t ndim,
+                                    const uint64_t *shape, const uint64_t *pshape) {
 
     // Create dtshape
     iarray_dtshape_t xdtshape;
@@ -31,23 +31,20 @@ static ina_rc_t test_read_iterator(iarray_context_t *ctx, iarray_data_type_t dty
 
     iarray_container_t *c_x;
 
-    iarray_arange(ctx, &xdtshape, 0, contsize, 1, NULL, 0, &c_x);
+    iarray_arange(ctx, &xdtshape, 0, contsize * 2, 2, NULL, 0, &c_x);
 
     // Start Iterator
-    iarray_itr_chunk_read_t *I;
-    iarray_itr_chunk_read_new(ctx, c_x, &I, blockshape);
+    iarray_itr_read_t *I;
+    iarray_itr_read_new(ctx, c_x, &I);
 
-    for (iarray_itr_chunk_read_init(ctx, I); !iarray_itr_chunk_read_finished(ctx, I); iarray_itr_chunk_read_next(ctx, I)) {
-        iarray_itr_chunk_read_value_t val;
-        iarray_itr_chunk_read_value(ctx, I, &val);
-        uint64_t partsize = 1;
-        for (int i = 0; i < ndim; ++i) {
-            partsize *= val.shape[i];
-        }
-        //TODO: Works well, but an assert is needed
+    for (iarray_itr_read_init(ctx, I); !iarray_itr_read_finished(ctx, I); iarray_itr_read_next(ctx, I)) {
+        iarray_itr_read_value_t val;
+        iarray_itr_read_value(ctx, I, &val);
+
+        printf("%f\n", ((double *) val.pointer)[0]);
     }
 
-    iarray_itr_chunk_read_free(ctx, I);
+    iarray_itr_read_free(ctx, I);
 
     // Free
     iarray_container_free(ctx, &c_x);
@@ -76,12 +73,10 @@ INA_TEST_TEARDOWN(read_iterator) {
 
 INA_TEST_FIXTURE(read_iterator, double_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    size_t type_size = sizeof(double);
 
     uint8_t ndim = 2;
-    uint64_t shape[] = {123, 131};
-    uint64_t pshape[] = {13, 31};
-    uint64_t blockshape[] = {42, 37};
+    uint64_t shape[] = {10, 10};
+    uint64_t pshape[] = {3, 7};
 
-    INA_TEST_ASSERT_SUCCEED(test_read_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, blockshape));
+    INA_TEST_ASSERT_SUCCEED(test_read_iterator(data->ctx, dtype, ndim, shape, pshape));
 }

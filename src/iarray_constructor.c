@@ -71,10 +71,10 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
         }
 
         if(dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value = i * step * constant;
+            double value = i * step;
             memcpy(val.pointer, &value, sizeof(double));
         } else {
-            float value = (float) (i * step * constant);
+            float value = (float) (i * step);
             memcpy(val.pointer, &value, sizeof(float));
         }
     }
