@@ -34,17 +34,21 @@ static ina_rc_t test_read_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     iarray_arange(ctx, &xdtshape, 0, contsize * 2, 2, NULL, 0, &c_x);
 
     // Start Iterator
-    iarray_itr_read_t *I;
-    iarray_itr_read_new(ctx, c_x, &I);
+    iarray_iter_read_t *I;
+    iarray_iter_read_new(ctx, c_x, &I);
 
-    for (iarray_itr_read_init(ctx, I); !iarray_itr_read_finished(ctx, I); iarray_itr_read_next(ctx, I)) {
-        iarray_itr_read_value_t val;
-        iarray_itr_read_value(ctx, I, &val);
+    for (iarray_iter_read_init(ctx, I); !iarray_iter_read_finished(ctx, I); iarray_iter_read_next(ctx, I)) {
+        iarray_iter_read_value_t val;
+        iarray_iter_read_value(ctx, I, &val);
 
-        printf("%f\n", ((double *) val.pointer)[0]);
+        if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
+            printf("%f\n", ((double *) val.pointer)[0]);
+        } else {
+            printf("%f\n", ((float *) val.pointer)[0]);
+        }
     }
 
-    iarray_itr_read_free(ctx, I);
+    iarray_iter_read_free(ctx, I);
 
     // Free
     iarray_container_free(ctx, &c_x);
@@ -77,6 +81,16 @@ INA_TEST_FIXTURE(read_iterator, double_2) {
     uint8_t ndim = 2;
     uint64_t shape[] = {10, 10};
     uint64_t pshape[] = {3, 7};
+
+    INA_TEST_ASSERT_SUCCEED(test_read_iterator(data->ctx, dtype, ndim, shape, pshape));
+}
+
+INA_TEST_FIXTURE(read_iterator, float_3) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+
+    uint8_t ndim = 3;
+    uint64_t shape[] = {10, 10, 10};
+    uint64_t pshape[] = {3, 7, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_read_iterator(data->ctx, dtype, ndim, shape, pshape));
 }
