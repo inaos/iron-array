@@ -32,13 +32,13 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
     iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x);
 
     // Start Iterator
-    iarray_itr_t *I;
-    iarray_itr_new(ctx, c_x, &I);
+    iarray_iter_t *I;
+    iarray_iter_new(ctx, c_x, &I);
 
-    for (iarray_itr_init(ctx, I); !iarray_itr_finished(ctx, I); iarray_itr_next(ctx, I)) {
+    for (iarray_iter_init(ctx, I); !iarray_iter_finished(ctx, I); iarray_iter_next(ctx, I)) {
 
-        iarray_itr_value_t val;
-        iarray_itr_value(ctx, I, &val);
+        iarray_iter_value_t val;
+        iarray_iter_value(ctx, I, &val);
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double value = (double) val.nelem;
@@ -49,7 +49,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
         }
     }
 
-    iarray_itr_free(ctx, I);
+    iarray_iter_free(ctx, I);
 
     // Assert iterator values
     uint64_t bufsize = 1;

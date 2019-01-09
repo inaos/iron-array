@@ -68,16 +68,16 @@ struct iarray_container_s {
     } scalar_value;
 };
 
-typedef struct iarray_itr_s {
+typedef struct iarray_iter_s {
     iarray_container_t *container;
     uint8_t *part;
     void *pointer;
     uint64_t *index;
     uint64_t nelem;
     uint64_t cont;
-} iarray_itr_t;
+} iarray_iter_t;
 
-typedef struct iarray_itr_chunk_s {
+typedef struct iarray_iter_part_s {
     iarray_container_t *container;
     uint8_t *part;
     void *pointer;
@@ -86,7 +86,7 @@ typedef struct iarray_itr_chunk_s {
     uint64_t *index;
     uint64_t *el_index;
     uint64_t cont;
-} iarray_itr_chunk_t;
+} iarray_iter_part_t;
 
 /*typedef struct iarray_itr_read_s {
     iarray_container_t *container;
@@ -94,9 +94,9 @@ typedef struct iarray_itr_chunk_s {
     void *pointer;
     uint64_t *index;
     uint64_t cont;
-} iarray_itr_read_t;*/
+} iarray_iter_read_t;*/
 
-typedef struct iarray_itr_chunk_read_s {
+typedef struct iarray_iter_block_read_s {
     iarray_container_t *container;
     uint8_t *part;
     void *pointer;
@@ -105,7 +105,7 @@ typedef struct iarray_itr_chunk_read_s {
     uint64_t size;
     uint64_t *index;
     uint64_t cont;
-} iarray_itr_chunk_read_t;
+} iarray_iter_block_read_t;
 
 typedef struct iarray_itr_matmul_s {
     iarray_container_t *container1;

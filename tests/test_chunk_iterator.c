@@ -32,13 +32,13 @@ static ina_rc_t test_chunk_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x);
 
     // Start Iterator
-    iarray_itr_chunk_t *I;
-    iarray_itr_chunk_new(ctx, c_x, &I);
+    iarray_iter_part_t *I;
+    iarray_iter_part_new(ctx, c_x, &I);
 
-    for (iarray_itr_chunk_init(ctx, I); !iarray_itr_chunk_finished(ctx, I); iarray_itr_chunk_next(ctx, I)) {
+    for (iarray_iter_part_init(ctx, I); !iarray_iter_part_finished(ctx, I); iarray_iter_part_next(ctx, I)) {
 
-        iarray_itr_chunk_value_t val;
-        iarray_itr_chunk_value(ctx, I, &val);
+        iarray_itr_part_value_t val;
+        iarray_iter_part_value(ctx, I, &val);
 
         uint64_t part_size = 1;
         for (int i = 0; i < ndim; ++i) {
@@ -60,7 +60,7 @@ static ina_rc_t test_chunk_iterator(iarray_context_t *ctx, iarray_data_type_t dt
         free(data);
     }
 
-    iarray_itr_chunk_free(ctx, I);
+    iarray_iter_part_free(ctx, I);
 
     // Testing
 
