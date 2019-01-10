@@ -672,11 +672,6 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_context_t *ctx, iarray_iter_read_
         }
     }
     return INA_SUCCESS;
-
-
-
-
-    return INA_SUCCESS;
 }
 
 /*
