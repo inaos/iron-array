@@ -32,9 +32,9 @@ static ina_rc_t _iarray_container_fill_double(iarray_container_t *c, double valu
 
 INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
     iarray_dtshape_t *dtshape,
-    uint64_t start,
-    uint64_t stop,
-    uint64_t step,
+    int64_t start,
+    int64_t stop,
+    int64_t step,
     iarray_store_properties_t *store,
     int flags,
     iarray_container_t **container)

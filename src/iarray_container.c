@@ -71,10 +71,11 @@ fail:
 }
 
 INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
-    iarray_container_t *c,
-                                        uint64_t *start,
-                                       uint64_t *stop,
-                                       void *buffer)
+                                      iarray_container_t *c,
+                                      uint64_t *start,
+                                      uint64_t *stop,
+                                      void *buffer,
+                                      uint64_t buflen)
 {
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
@@ -82,8 +83,20 @@ INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
     uint8_t ndim = c->dtshape->ndim;
 
     uint64_t pshape[IARRAY_DIMENSION_MAX];
-    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+    uint64_t psize = 1;
+    for (int i = 0; i < ndim; ++i) {
         pshape[i] = stop[i] - start[i];
+        psize *= pshape[i];
+    }
+
+    if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
+        if (psize * sizeof(double) > buflen) {
+            return INA_ERR_FAILED;
+        }
+    } else {
+        if (psize * sizeof(float) > buflen) {
+            return INA_ERR_FAILED;
+        }
     }
 
     caterva_dims_t start_ = caterva_new_dims(start, ndim);
