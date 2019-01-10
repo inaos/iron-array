@@ -15,9 +15,9 @@
 #include <tests/iarray_test.h>
 
 static ina_rc_t test_slice_buffer(iarray_context_t *ctx, iarray_container_t *c_x, uint64_t * start, uint64_t *stop,
-    void *buffer) {
+    void *buffer, uint64_t buflen) {
 
-    INA_TEST_ASSERT_SUCCEED(iarray_slice_buffer(ctx, c_x, start, stop, buffer));
+    INA_TEST_ASSERT_SUCCEED(iarray_slice_buffer(ctx, c_x, start, stop, buffer, buflen));
 
     return INA_SUCCESS;
 }
@@ -58,19 +58,21 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     uint8_t *bufdes;
 
+    uint64_t buflen = bufdes_size;
 
     if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        bufdes = ina_mem_alloc(bufdes_size * sizeof(double));
+        buflen *= sizeof(double);
     } else {
-        bufdes = ina_mem_alloc(bufdes_size * sizeof(float));
+        buflen *= sizeof(float);
     }
 
+    bufdes = ina_mem_alloc(bufdes_size * sizeof(double));
 
     iarray_container_t *c_x;
 
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buffer_x, buffer_x_len * type_size, NULL, 0, &c_x));
 
-    INA_TEST_ASSERT_SUCCEED(test_slice_buffer(ctx, c_x, start, stop, bufdes));
+    INA_TEST_ASSERT_SUCCEED(test_slice_buffer(ctx, c_x, start, stop, bufdes, buflen));
 
 
     if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
