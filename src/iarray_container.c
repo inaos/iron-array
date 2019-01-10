@@ -91,11 +91,11 @@ INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
 
     if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
         if (psize * sizeof(double) > buflen) {
-            return INA_ERR_FAILED;
+            return INA_ERR_ERROR;
         }
     } else {
         if (psize * sizeof(float) > buflen) {
-            return INA_ERR_FAILED;
+            return INA_ERR_ERROR;
         }
     }
 
