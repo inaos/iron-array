@@ -112,24 +112,21 @@ typedef struct iarray_iter_value_s {
     uint64_t nelem;
 } iarray_iter_value_t;
 
+typedef struct iarray_iter_value_s iarray_iter_read_value_t;
+
 typedef struct iarray_iter_part_value_s {
     void *pointer;
-    uint64_t *index;
-    uint64_t *el_index;
+    uint64_t *part_index;
+    uint64_t *elem_index;
     uint64_t nelem;
-    uint64_t* shape;
+    uint64_t* part_shape;
 } iarray_itr_part_value_t;
 
-typedef struct iarray_iter_read_value_s {
-    void *pointer;
-    uint64_t *index;
-    uint64_t nelem;
-} iarray_iter_read_value_t;
 
 typedef struct iarray_iter_block_read_value_s {
     void *pointer;
-    uint64_t *index;
-    uint64_t* shape;
+    uint64_t *block_index;
+    uint64_t* block_shape;
 } iarray_iter_block_read_value_t;
 
 typedef struct iarray_slice_param_s {
