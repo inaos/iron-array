@@ -23,7 +23,7 @@
 /*
  * Function: _update_itr_index (private)
  * -------------------------------------
- *   (internal) Update the index and the nelem of an iterator
+ *   (internal) Update the part_index and the nelem of an iterator
  *
  *   itr: an iterator
  */
@@ -36,7 +36,7 @@ void _update_itr_index(iarray_context_t *ctx, iarray_iter_t *itr)
 
     uint64_t cont2 = itr->cont % catarr->psize; // element position in the chunk
 
-    // set element index (in the chunk)
+    // set element part_index (in the chunk)
     itr->index[ndim - 1] = cont2 % catarr->pshape[ndim-1];
     uint64_t inc = catarr->pshape[ndim - 1];
     for (int i = ndim - 2; i >= 0; --i) {
@@ -44,7 +44,7 @@ void _update_itr_index(iarray_context_t *ctx, iarray_iter_t *itr)
         inc *= catarr->pshape[i];
     }
 
-    // set element index (in entire container)
+    // set element part_index (in entire container)
     uint64_t nchunk = itr->cont / catarr->psize;
     uint64_t aux_nchunk[CATERVA_MAXDIM];
     aux_nchunk[ndim - 1] = catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1];
@@ -83,6 +83,7 @@ INA_API(void) iarray_iter_init(iarray_context_t *ctx, iarray_iter_t *itr)
 {
     itr->cont = 0;
     itr->nelem = 0;
+
     memset(itr->part, 0, itr->container->catarr->psize * itr->container->catarr->sc->typesize);
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         itr->index[i] = 0;
@@ -155,7 +156,7 @@ INA_API(int) iarray_iter_finished(iarray_context_t *ctx, iarray_iter_t *itr)
  *
  *   itr: an iterator
  *   val: a struct where data needed by the user is stored
- *     index: position in coord where the element is placed in the container
+ *     part_index: position in coord where the element is placed in the container
  *     nelem: if the container is row-wise flatten, `nelem` is the element position in the container
  *     pointer: pointer to element position in memory. It's used to copy the element into the container
  *
@@ -226,7 +227,7 @@ INA_API(void) iarray_iter_free(iarray_context_t *ctx, iarray_iter_t *itr)
 /*
  * Function: _update_itr_index (private)
  * -------------------------------------
- *   Update the index and the nelem of an iterator
+ *   Update the part_index and the nelem of an iterator
  *
  *   itr: an iterator
  */
@@ -239,7 +240,7 @@ void _update_itr_chunk_index(iarray_context_t *ctx, iarray_iter_t *itr)
 
     uint64_t cont2 = itr->cont % catarr->psize; // element position in the chunk
 
-    // set element index (in the chunk)
+    // set element part_index (in the chunk)
     itr->index[ndim - 1] = cont2 % catarr->pshape[ndim-1];
     uint64_t inc = catarr->pshape[ndim - 1];
     for (int i = ndim - 2; i >= 0; --i) {
@@ -247,7 +248,7 @@ void _update_itr_chunk_index(iarray_context_t *ctx, iarray_iter_t *itr)
         inc *= catarr->pshape[i];
     }
 
-    // set element index (in entire container)
+    // set element part_index (in entire container)
     uint64_t nchunk = itr->cont / catarr->psize;
     uint64_t aux_nchunk[CATERVA_MAXDIM];
     aux_nchunk[ndim - 1] = catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1];
@@ -287,7 +288,7 @@ INA_API(void) iarray_iter_part_init(iarray_context_t *ctx, iarray_iter_part_t *i
     itr->cont = 0;
     memset(itr->part, 0, itr->container->catarr->psize * itr->container->catarr->sc->typesize);
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
-        itr->index[i] = 0;
+        itr->part_index[i] = 0;
         itr->shape[i] = itr->container->dtshape->pshape[i];
     }
     itr->size = itr->container->catarr->psize;
@@ -317,7 +318,7 @@ INA_API(ina_rc_t) iarray_iter_part_next(iarray_context_t *ctx, iarray_iter_part_
     } else {
         uint8_t *part_aux = malloc(catarr->psize * catarr->sc->typesize);
 
-        //reverse shape
+        //reverse part_shape
         uint64_t shaper[CATERVA_MAXDIM];
         for (int i = 0; i < CATERVA_MAXDIM; ++i) {
             if(i >= CATERVA_MAXDIM - ndim) {
@@ -371,19 +372,19 @@ INA_API(ina_rc_t) iarray_iter_part_next(iarray_context_t *ctx, iarray_iter_part_
     itr->cont += 1;
 
     //update_index
-    itr->index[ndim - 1] = itr->cont % (catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1]);
+    itr->part_index[ndim - 1] = itr->cont % (catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1]);
     uint64_t inc = catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1];
 
     for (int i = ndim - 2; i >= 0; --i) {
-        itr->index[i] = itr->cont % (inc * catarr->eshape[i] / catarr->pshape[i]) / (inc);
-        itr->el_index[i] = itr->index[i] * catarr->pshape[i];
+        itr->part_index[i] = itr->cont % (inc * catarr->eshape[i] / catarr->pshape[i]) / (inc);
+        itr->el_index[i] = itr->part_index[i] * catarr->pshape[i];
         inc *= catarr->eshape[i] / catarr->pshape[i];
     }
 
     //calculate the buffer size
     itr->size = 1;
     for (int i = 0; i < ndim; ++i) {
-        if ((itr->index[i] + 1) * catarr->pshape[i] > catarr->shape[i]) {
+        if ((itr->part_index[i] + 1) * catarr->pshape[i] > catarr->shape[i]) {
             itr->shape[i] = catarr->shape[i] - catarr->eshape[i] + catarr->pshape[i];
         } else {
             itr->shape[i] = catarr->pshape[i];
@@ -416,10 +417,10 @@ INA_API(int) iarray_iter_part_finished(iarray_context_t *ctx, iarray_iter_part_t
  *
  *   itr: an iterator
  *   val: a struct where data needed by the user is stored
- *     index: position in coord where the chunk is placed in the container
+ *     part_index: position in coord where the chunk is placed in the container
  *     nelem: if the chunks are row-wise listed, `nelem` is the chunk position in this list
- *     el_index: position in coord where the first element of the chunk is placed in the container
- *     shape: is the actual chunk shape. It should be used to compute the chunk size
+ *     elem_index: position in coord where the first element of the chunk is placed in the container
+ *     part_shape: is the actual chunk part_shape. It should be used to compute the chunk size
  *     pointer: pointer to the first chunk element position in memory. It's used to copy the chunk into the container
  *
  *   return: INA_SUCCESS or an error code
@@ -428,10 +429,10 @@ INA_API(int) iarray_iter_part_finished(iarray_context_t *ctx, iarray_iter_part_t
 INA_API(void) iarray_iter_part_value(iarray_context_t *ctx, iarray_iter_part_t *itr, iarray_itr_part_value_t *val)
 {
     val->pointer = itr->pointer;
-    val->index = itr->index;
-    val->el_index = itr->el_index;
+    val->part_index = itr->part_index;
+    val->elem_index = itr->el_index;
     val->nelem = itr->cont;
-    val->shape = itr->shape;
+    val->part_shape = itr->shape;
 }
 
 /*
@@ -459,7 +460,7 @@ INA_API(ina_rc_t) iarray_iter_part_new(iarray_context_t *ctx, iarray_container_t
     }
     (*itr)->container = container;
     (*itr)->part = (uint8_t *) ina_mem_alloc(container->catarr->psize * container->catarr->sc->typesize);
-    (*itr)->index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
+    (*itr)->part_index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
     (*itr)->el_index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
     (*itr)->pointer = &(*itr)->part[0];
     (*itr)->shape = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
@@ -479,7 +480,7 @@ INA_API(ina_rc_t) iarray_iter_part_new(iarray_context_t *ctx, iarray_container_t
 
 INA_API(void) iarray_iter_part_free(iarray_context_t *ctx, iarray_iter_part_t *itr)
 {
-    ina_mem_free(itr->index);
+    ina_mem_free(itr->part_index);
     ina_mem_free(itr->el_index);
     ina_mem_free(itr->shape);
     ina_mem_free(itr->part);
@@ -858,10 +859,10 @@ INA_API(int) iarray_iter_block_read_finished(iarray_context_t *ctx, iarray_iter_
  *
  *   itr: an iterator
  *   val: a struct where data needed by the user is stored
- *     index: position in coord where the chunk is placed in the container
+ *     part_index: position in coord where the chunk is placed in the container
  *     nelem: if the chunks are row-wise listed, `nelem` is the chunk position in this list
- *     el_index: position in coord where the first element of the chunk is placed in the container
- *     shape: is the actual chunk shape. It should be used to compute the chunk size
+ *     elem_index: position in coord where the first element of the chunk is placed in the container
+ *     part_shape: is the actual chunk part_shape. It should be used to compute the chunk size
  *     pointer: pointer to the first chunk element position in memory. It's used to copy the chunk into the container
  *
  *   return: INA_SUCCESS or an error code
@@ -870,8 +871,8 @@ INA_API(int) iarray_iter_block_read_finished(iarray_context_t *ctx, iarray_iter_
 INA_API(void) iarray_iter_block_read_value(iarray_context_t *ctx, iarray_iter_block_read_t *itr,
                                            iarray_iter_block_read_value_t *val)
 {
-    val->index = itr->index;
-    val->shape = itr->pshape;
+    val->block_index = itr->index;
+    val->block_shape = itr->pshape;
     val->pointer = itr->pointer;
 }
 
@@ -882,7 +883,7 @@ INA_API(void) iarray_iter_block_read_value(iarray_context_t *ctx, iarray_iter_bl
  *
  *   container: the container used in the iterator
  *   itr: an iterator
- *   blockshape: shape of each block
+ *   blockshape: part_shape of each block
  *
 *   return: INA_SUCCESS or an error code
  */

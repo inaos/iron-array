@@ -42,7 +42,7 @@ static ina_rc_t test_chunk_iterator(iarray_context_t *ctx, iarray_data_type_t dt
 
         uint64_t part_size = 1;
         for (int i = 0; i < ndim; ++i) {
-            part_size *= val.shape[i];
+            part_size *= val.part_shape[i];
         }
 
         uint8_t *data = malloc(part_size * type_size);
@@ -78,7 +78,7 @@ static ina_rc_t test_chunk_iterator(iarray_context_t *ctx, iarray_data_type_t dt
 
     for (uint64_t nchunk = 0; nchunk < totalchunk; ++nchunk) {
 
-        //chunk index
+        //chunk part_index
         uint64_t ichunk[IARRAY_DIMENSION_MAX];
         uint64_t inc = 1;
 
