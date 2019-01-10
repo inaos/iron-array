@@ -45,13 +45,13 @@ INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
 }
 
 INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
-    iarray_container_t *c,
-    uint64_t *start,
-    uint64_t *stop,
-    iarray_dtshape_t *dtshape,
-    iarray_store_properties_t *store,
-    int flags,
-    iarray_container_t **container)
+                               iarray_container_t *c,
+                               uint64_t *start,
+                               uint64_t *stop,
+                               iarray_dtshape_t *dtshape,
+                               iarray_store_properties_t *store,
+                               int flags,
+                               iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(start);
