@@ -84,7 +84,7 @@ typedef struct iarray_iter_part_s {
     uint64_t *shape;
     uint64_t size;
     uint64_t *part_index;
-    uint64_t *el_index;
+    uint64_t *elem_index;
     uint64_t cont;
 } iarray_iter_part_t;
 

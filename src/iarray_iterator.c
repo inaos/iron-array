@@ -377,7 +377,7 @@ INA_API(ina_rc_t) iarray_iter_part_next(iarray_context_t *ctx, iarray_iter_part_
 
     for (int i = ndim - 2; i >= 0; --i) {
         itr->part_index[i] = itr->cont % (inc * catarr->eshape[i] / catarr->pshape[i]) / (inc);
-        itr->el_index[i] = itr->part_index[i] * catarr->pshape[i];
+        itr->elem_index[i] = itr->part_index[i] * catarr->pshape[i];
         inc *= catarr->eshape[i] / catarr->pshape[i];
     }
 
@@ -430,7 +430,7 @@ INA_API(void) iarray_iter_part_value(iarray_context_t *ctx, iarray_iter_part_t *
 {
     val->pointer = itr->pointer;
     val->part_index = itr->part_index;
-    val->elem_index = itr->el_index;
+    val->elem_index = itr->elem_index;
     val->nelem = itr->cont;
     val->part_shape = itr->shape;
 }
@@ -461,7 +461,7 @@ INA_API(ina_rc_t) iarray_iter_part_new(iarray_context_t *ctx, iarray_container_t
     (*itr)->container = container;
     (*itr)->part = (uint8_t *) ina_mem_alloc(container->catarr->psize * container->catarr->sc->typesize);
     (*itr)->part_index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
-    (*itr)->el_index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
+    (*itr)->elem_index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
     (*itr)->pointer = &(*itr)->part[0];
     (*itr)->shape = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
 
@@ -481,7 +481,7 @@ INA_API(ina_rc_t) iarray_iter_part_new(iarray_context_t *ctx, iarray_container_t
 INA_API(void) iarray_iter_part_free(iarray_context_t *ctx, iarray_iter_part_t *itr)
 {
     ina_mem_free(itr->part_index);
-    ina_mem_free(itr->el_index);
+    ina_mem_free(itr->elem_index);
     ina_mem_free(itr->shape);
     ina_mem_free(itr->part);
     ina_mem_free(itr);
