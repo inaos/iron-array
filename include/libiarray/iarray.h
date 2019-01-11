@@ -126,6 +126,8 @@ typedef struct iarray_iter_part_value_s {
 typedef struct iarray_iter_block_read_value_s {
     void *pointer;
     uint64_t *block_index;
+    uint64_t *elem_index;
+    uint64_t nelem;
     uint64_t* block_shape;
 } iarray_iter_block_read_value_t;
 

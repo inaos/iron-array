@@ -81,8 +81,8 @@ typedef struct iarray_iter_part_s {
     iarray_container_t *container;
     uint8_t *part;
     void *pointer;
-    uint64_t *shape;
-    uint64_t size;
+    uint64_t *part_shape;
+    uint64_t part_size;
     uint64_t *part_index;
     uint64_t *elem_index;
     uint64_t cont;
@@ -93,9 +93,10 @@ typedef struct iarray_iter_block_read_s {
     uint8_t *part;
     void *pointer;
     uint64_t *shape;
-    uint64_t *pshape;
-    uint64_t size;
-    uint64_t *index;
+    uint64_t *block_shape;
+    uint64_t block_size;
+    uint64_t *block_index;
+    uint64_t *elem_index;
     uint64_t cont;
 } iarray_iter_block_read_t;
 
