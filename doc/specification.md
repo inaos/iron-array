@@ -241,7 +241,7 @@ This section is to document design decisions.
 * https://pypi.org/project/pytest-benchmark/
 * https://www.gnu.org/software/libjit/
 * https://www.gnu.org/software/lightning/
-* https://corsix.github.io/dynasm-doc/part_index.html
+* https://corsix.github.io/dynasm-doc/index.html
 * https://www.eclipse.org/omr/
 
 
