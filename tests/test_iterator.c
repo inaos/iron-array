@@ -51,28 +51,27 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
 
     iarray_iter_free(ctx, I);
 
-    // Assert iterator values
-    uint64_t bufsize = 1;
-    for (int j = 0; j < ndim; ++j) {
-        bufsize *= xdtshape.shape[j];
+    // Assert iterator reading it
+
+    iarray_iter_read_t *I2;
+    iarray_iter_read_new(ctx, c_x, &I2);
+
+    for (iarray_iter_read_init(ctx, I2); !iarray_iter_read_finished(ctx, I2); iarray_iter_read_next(ctx, I2)) {
+
+        iarray_iter_read_value_t val;
+        iarray_iter_read_value(ctx, I2, &val);
+
+        if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
+            double value = (double) val.nelem;
+            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((double *) val.pointer)[0]);
+        } else {
+            float value = (float) val.nelem;
+            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((float *) val.pointer)[0]);
+        }
     }
 
-    uint8_t *bufdest = ina_mem_alloc(bufsize * type_size);
-    iarray_to_buffer(ctx, c_x, bufdest, bufsize);
+    iarray_iter_free(ctx, I2);
 
-
-    if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        for (uint64_t k = 1; k < bufsize; ++k) {
-            INA_TEST_ASSERT_EQUAL_FLOATING(((double *)bufdest)[k-1] + 1, ((double *)bufdest)[k]);
-        }
-    } else {
-        for (uint64_t k = 1; k < bufsize; ++k) {
-            INA_TEST_ASSERT_EQUAL_FLOATING(((float *)bufdest)[k-1] + 1, ((float *)bufdest)[k]);
-        }
-    }
-
-    // Free
-    ina_mem_free(bufdest);
     iarray_container_free(ctx, &c_x);
     return INA_SUCCESS;
 }

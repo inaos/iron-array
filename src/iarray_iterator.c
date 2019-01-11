@@ -628,6 +628,7 @@ INA_API(void) iarray_iter_read_init(iarray_context_t *ctx, iarray_iter_read_t *i
     caterva_array_t *catarr = itr->container->catarr;
 
     itr->cont = 0;
+    itr->nelem = 0;
     uint64_t partsize = 1;
     for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
         itr->index[i] = 0;
@@ -697,7 +698,7 @@ INA_API(void) iarray_iter_read_value(iarray_context_t *ctx, iarray_iter_read_t *
 {
     val->index = itr->index;
     val->pointer = itr->pointer;
-    val->nelem = itr->cont;
+    val->nelem = itr->nelem;
 }
 
 /*
