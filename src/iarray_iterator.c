@@ -762,7 +762,9 @@ INA_API(void) iarray_iter_read_free(iarray_context_t *ctx, iarray_iter_read_t *i
 
 INA_API(void) iarray_iter_block_read_init(iarray_context_t *ctx, iarray_iter_block_read_t *itr)
 {
-    for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
+    caterva_array_t *catarr = itr->container->catarr;
+
+    for (int i = 0; i <IARRAY_DIMENSION_MAX; ++i) {
         itr->elem_index[i] = 0;
         itr->block_index[i] = 0;
     }
@@ -772,13 +774,13 @@ INA_API(void) iarray_iter_block_read_init(iarray_context_t *ctx, iarray_iter_blo
     uint64_t buflen = 1;
 
     itr->block_size = 1;
-    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+    for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
         itr->block_shape[i] = itr->shape[i];
         itr->block_size *= itr->block_shape[i];
         stop_[i] = itr->elem_index[i] + itr->shape[i];
         buflen *= itr->shape[i];
     }
-    iarray_slice_buffer(ctx, itr->container, itr->elem_index, stop_, itr->part, buflen);
+    INA_ASSERT_SUCCEED(iarray_slice_buffer(ctx, itr->container, itr->elem_index, stop_, itr->part, buflen * catarr->sc->typesize));
 }
 
 /*
@@ -829,7 +831,7 @@ INA_API(ina_rc_t) iarray_iter_block_read_next(iarray_context_t *ctx, iarray_iter
         buflen *= itr->shape[i];
     }
 
-    iarray_slice_buffer(ctx, itr->container, start_, stop_, itr->part, buflen);
+    iarray_slice_buffer(ctx, itr->container, start_, stop_, itr->part, buflen * catarr->sc->typesize);
 
     return INA_SUCCESS;
 }
