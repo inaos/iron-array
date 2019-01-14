@@ -23,7 +23,7 @@ static ina_rc_t test_gemm(iarray_context_t *ctx,
                           double tol)
 {
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y, c_out, IARRAY_OPERATOR_GENERAL));
-    if (!iarray_container_almost_equal(c_out, c_res, tol)) {
+    if (iarray_container_almost_equal(c_out, c_res, tol) == INA_ERR_FAILED) {
         return INA_ERROR(INA_ERR_FAILED);
     }
     return INA_SUCCESS;
@@ -133,7 +133,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx,
                           double tol)
 {
     iarray_linalg_matmul(ctx, c_x, c_y, c_out, IARRAY_OPERATOR_GENERAL);
-    if (!iarray_container_almost_equal(c_out, c_res, tol)) {
+    if (iarray_container_almost_equal(c_out, c_res, tol) == INA_ERR_FAILED) {
         return INA_ERROR(INA_ERR_FAILED);
     }
     return INA_SUCCESS;

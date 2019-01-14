@@ -78,7 +78,8 @@ int main(int argc, char** argv)
 
     INA_OPTS(opt,
         INA_OPT_INT("f", "eval-flag", 1, "EVAL_BLOCK = 1, EVAL_CHUNK = 2"),
-        INA_OPT_FLAG("p", "persistence", "Use persistent containers")
+        INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
+        INA_OPT_FLAG("r", "remove", "Remove the previous persistent containers (only valid w/ -p)")
     );
 
     if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
@@ -91,6 +92,11 @@ int main(int argc, char** argv)
         mat_x_name = "mat_x.b2frame";
         mat_y_name = "mat_y.b2frame";
         mat_out_name = "mat_out.b2frame";
+        if (INA_SUCCEED(ina_opt_isset("r"))) {
+            remove(mat_x_name);
+            remove(mat_y_name);
+            remove(mat_out_name);
+        }
     }
     iarray_store_properties_t mat_x = {.id = mat_x_name};
     iarray_store_properties_t mat_y = {.id = mat_y_name};
@@ -224,8 +230,16 @@ int main(int argc, char** argv)
 
     printf("Checking that the outcome of the expression is correct...");
     fflush(stdout);
-    INA_MUST_SUCCEED(iarray_container_almost_equal(con_y, con_out, 1e-06));
+    INA_STOPWATCH_START(w);
+    if (iarray_container_almost_equal(con_y, con_out, 1e-06) == INA_ERR_FAILED) {
+        printf(" No!\n");
+        return 1;
+    }
+    INA_STOPWATCH_STOP(w);
+    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     printf(" Yes!\n");
+    printf("Time for checking that two iarrays are equal:  %.3g s, %.1f MB/s\n",
+           elapsed_sec, (nbytes * 2) / (elapsed_sec * _IARRAY_SIZE_MB));
 
     iarray_expr_free(ctx, &e);
 

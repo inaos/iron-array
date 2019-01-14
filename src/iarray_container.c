@@ -107,10 +107,10 @@ INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c,
 
 INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_container_t *b, double tol) {
     if(a->dtshape->dtype != b->dtshape->dtype){
-        return false;
+        return INA_ERR_FAILED;
     }
     if(a->catarr->size != b->catarr->size) {
-        return false;
+        return INA_ERR_FAILED;
     }
     size_t size = a->catarr->size;
 
@@ -130,7 +130,7 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
                 printf("Values differ in (%lu nelem) (diff: %f)\n", i, vdiff);
                 free(buf_a);
                 free(buf_b);
-                return false;
+                return INA_ERR_FAILED;
             }
         }
         free(buf_a);
@@ -148,17 +148,17 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
                 printf("Values differ in (%lu nelem) (diff: %f)\n", i, vdiff);
                 free(buf_a);
                 free(buf_b);
-                return false;
+                return INA_ERR_FAILED;
             }
         }
         free(buf_a);
         free(buf_b);
-        return true;
+        return INA_SUCCESS;
     }
     printf("Data type is not supported");
     free(buf_a);
     free(buf_b);
-    return false;
+    return INA_ERR_FAILED;
 }
 
 INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container)
