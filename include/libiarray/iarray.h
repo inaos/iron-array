@@ -164,12 +164,21 @@ INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
                                 iarray_dtshape_t *dtshape,
-                                int64_t start,
-                                int64_t stop,
-                                int64_t step,
+                                double start,
+                                double stop,
+                                double step,
                                 iarray_store_properties_t *store,
                                 int flags,
                                 iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
+                                  iarray_dtshape_t *dtshape,
+                                  int64_t nelem,
+                                  double start,
+                                  double stop,
+                                  iarray_store_properties_t *store,
+                                  int flags,
+                                  iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
                                iarray_dtshape_t *dtshape,

@@ -64,8 +64,6 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
 
     iarray_iter_part_free(ctx, I);
 
-
-
     // Testing
 
     // Start Iterator
@@ -127,8 +125,8 @@ INA_TEST_FIXTURE(part_iterator, double_2) {
     size_t type_size = sizeof(double);
 
     uint8_t ndim = 2;
-    uint64_t shape[] = {1000, 1000};
-    uint64_t pshape[] = {310, 301};
+    uint64_t shape[] = {10, 10};
+    uint64_t pshape[] = {2, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_part_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }

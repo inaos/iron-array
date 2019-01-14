@@ -42,9 +42,9 @@ static ina_rc_t test_read_iterator(iarray_context_t *ctx, iarray_data_type_t dty
         iarray_iter_read_value(ctx, I, &val);
 
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            printf("%f\n", ((double *) val.pointer)[0]);
+            //printf("%f\n", ((double *) val.pointer)[0]);
         } else {
-            printf("%f\n", ((float *) val.pointer)[0]);
+            //printf("%f\n", ((float *) val.pointer)[0]);
         }
     }
 
