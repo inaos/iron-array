@@ -53,7 +53,8 @@ static void ina_cleanup_handler(int error, int *exitcode)
  * Check if a file exist using fopen() function
  * return 1 if the file exist otherwise return 0
  */
-bool cfileexists(const char * filename){
+bool _cfileexists(const char * filename)
+{
     /* try to open file to read */
     FILE *file;
     if ((file = fopen(filename, "r"))) {
@@ -142,9 +143,9 @@ int main(int argc, char** argv)
     bool x_allocated = false, y_allocated = false;
 
     int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
-    if (INA_SUCCEED(ina_opt_isset("p")) && cfileexists(mat_x.id)) {
+    if (INA_SUCCEED(ina_opt_isset("p")) && _cfileexists(mat_x.id)) {
         INA_STOPWATCH_START(w);
-        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_x, flags, &con_x));
+        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_x, &con_x));
         INA_STOPWATCH_STOP(w);
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
         iarray_container_info(con_x, &nbytes, &cbytes);
@@ -174,9 +175,9 @@ int main(int argc, char** argv)
     printf("Compression for X values: %.1f MB -> %.1f MB (%.1fx)\n",
            nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
 
-    if (INA_SUCCEED(ina_opt_isset("p")) && cfileexists(mat_y.id)) {
+    if (INA_SUCCEED(ina_opt_isset("p")) && _cfileexists(mat_y.id)) {
         INA_STOPWATCH_START(w);
-        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_y, flags, &con_y));
+        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_y, &con_y));
         INA_STOPWATCH_STOP(w);
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
         iarray_container_info(con_y, &nbytes, &cbytes);
