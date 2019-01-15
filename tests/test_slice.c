@@ -14,7 +14,7 @@
 
 #include <tests/iarray_test.h>
 
-static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_x, uint64_t * start, uint64_t *stop,
+static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_x, int64_t * start, int64_t *stop,
     iarray_dtshape_t dtshape, iarray_store_properties_t *stores, int flags, iarray_container_t **c_out) {
     INA_TEST_ASSERT_SUCCEED(iarray_slice(ctx, c_x, start, stop, &dtshape, stores, flags, c_out));
     INA_TEST_ASSERT_SUCCEED(iarray_squeeze(ctx, *c_out));
@@ -24,7 +24,7 @@ static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_x, uint6
 
 static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint8_t ndim,
                                       const uint64_t *shape, const uint64_t *pshape, const uint64_t *pshape_dest,
-                                      uint64_t *start, uint64_t *stop, const void *result) {
+                                      int64_t *start, int64_t *stop, const void *result) {
     void *buffer_x;
     size_t buffer_x_len;
 
@@ -55,7 +55,9 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     outdtshape.dtype = dtype;
     outdtshape.ndim = ndim;
     for (int j = 0; j < xdtshape.ndim; ++j) {
-        outdtshape.shape[j] = stop[j] - start[j];
+        int64_t st = (start[j] + shape[j]) % shape[j];
+        int64_t sp = (stop[j] + shape[j] - 1) % shape[j] + 1;
+        outdtshape.shape[j] = (uint64_t) sp - st;
         outdtshape.pshape[j] = pshape_dest[j];
     }
 
@@ -69,7 +71,9 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     uint64_t bufdes_size = 1;
 
     for (int k = 0; k < ndim; ++k) {
-        bufdes_size *= (stop[k] - start[k]);
+        int64_t st = (start[k] + shape[k]) % shape[k];
+        int64_t sp = (stop[k] + shape[k] - 1) % shape[k] + 1;
+        bufdes_size *= (uint64_t) sp - st;;
     }
 
     uint8_t *bufdes;
@@ -122,8 +126,8 @@ INA_TEST_FIXTURE(slice, double_data_2) {
     const uint64_t ndim = 2;
     uint64_t shape[] = {10, 10};
     uint64_t pshape[] = {3, 2};
-    uint64_t start[] = {5, 3};
-    uint64_t stop[] = {9, 10};
+    int64_t start[] = {-5, -7};
+    int64_t stop[] = {-1, 10};
     uint64_t pshape_dest[] = {3, 2};
 
     double result[] = {53, 54, 55, 56, 57, 58, 59, 63, 64, 65, 66, 67, 68, 69, 73, 74, 75, 76,
@@ -140,8 +144,8 @@ INA_TEST_FIXTURE(slice, float_data_3) {
     uint64_t const ndim = 3;
     uint64_t shape[] = {10, 10, 10};
     uint64_t pshape[] = {3, 5, 2};
-    uint64_t start[] = {3, 0, 3};
-    uint64_t stop[] = {6, 7, 10};
+    int64_t start[] = {3, 0, 3};
+    int64_t stop[] = {-4, -3, 10};
     uint64_t pshape_dest[] = {2, 4, 3};
 
     float result[] = {303, 304, 305, 306, 307, 308, 309, 313, 314, 315, 316, 317, 318, 319,
@@ -167,8 +171,8 @@ INA_TEST_FIXTURE(slice, double_data_4) {
     const uint64_t ndim = 4;
     uint64_t shape[] = {10, 10, 10, 10};
     uint64_t pshape[] = {3, 5, 2, 7};
-    uint64_t start[] = {5, 3, 9, 2};
-    uint64_t stop[] = {9, 6, 10, 7};
+    int64_t start[] = {5, -7, 9, 2};
+    int64_t stop[] = {-1, 6, 10, -3};
     uint64_t pshape_dest[] = {2, 2, 1, 3};
 
     double result[] = {5392, 5393, 5394, 5395, 5396, 5492, 5493, 5494, 5495, 5496, 5592, 5593,
@@ -189,8 +193,8 @@ INA_TEST_FIXTURE(slice, float_data_5) {
     const uint64_t ndim = 5;
     uint64_t shape[] = {10, 10, 10, 10, 10};
     uint64_t pshape[] = {3, 5, 2, 4, 5};
-    uint64_t start[] = {6, 0, 5, 5, 7};
-    uint64_t stop[] = {8, 9, 6, 6, 10};
+    int64_t start[] = {-4, 0, -5, 5, 7};
+    int64_t stop[] = {8, 9, -4, -4, 10};
     uint64_t pshape_dest[] = {2, 5, 1, 1, 2};
 
     float result[] = {60557, 60558, 60559, 61557, 61558, 61559, 62557, 62558, 62559, 63557,
@@ -211,8 +215,8 @@ INA_TEST_FIXTURE(slice, double_data_6) {
     const uint64_t ndim = 6;
     uint64_t shape[] = {10, 10, 10, 10, 10, 10};
     uint64_t pshape[] = {4, 5, 3, 8, 3, 3};
-    uint64_t start[] = {0, 4, 2, 4, 5, 1};
-    uint64_t stop[] = {1, 7, 4, 6, 8, 3};
+    int64_t start[] = {0, 4, -8, 4, 5, 1};
+    int64_t stop[] = {1, 7, 4, -4, 8, 3};
     uint64_t pshape_dest[] = {1, 2, 2, 2, 2, 2};
 
     double result[] = {42451, 42452, 42461, 42462, 42471, 42472, 42551, 42552, 42561, 42562,
@@ -235,8 +239,8 @@ INA_TEST_FIXTURE(slice, float_data_7) {
     const uint64_t ndim = 7;
     uint64_t shape[] = {10, 10, 10, 10, 10, 10, 10};
     uint64_t pshape[] = {4, 5, 1, 8, 5, 3, 10};
-    uint64_t start[] = {5, 4, 3, 8, 4, 5, 1};
-    uint64_t stop[] = {8, 6, 5, 9, 7, 7, 3};
+    int64_t start[] = {5, 4, 3, -2, 4, 5, -9};
+    int64_t stop[] = {8, 6, 5, 9, 7, 7, -7};
     uint64_t pshape_dest[] = {2, 2, 1, 1, 2, 2, 2};
 
     float result[] = {5438451, 5438452, 5438461, 5438462, 5438551, 5438552, 5438561, 5438562,
@@ -269,8 +273,8 @@ INA_TEST_FIXTURE(slice, double_data_8) {
     const uint64_t ndim = 8;
     uint64_t shape[] = {10, 10, 10, 10, 10, 10, 10, 10};
     uint64_t pshape[] = {2, 3, 4, 2, 3, 2, 4, 10};
-    uint64_t start[] = {3, 5, 2, 4, 5, 1, 6, 0};
-    uint64_t stop[] = {6, 6, 4, 6, 7, 3, 7, 3};
+    int64_t start[] = {3, 5, 2, 4, 5, 1, 6, 0};
+    int64_t stop[] = {6, 6, 4, 6, 7, 3, 7, 3};
     uint64_t pshape_dest[] = {2, 1, 1, 2, 2, 2, 1, 2};
 
     double result[] = {35245160, 35245161, 35245162, 35245260, 35245261, 35245262, 35246160,
