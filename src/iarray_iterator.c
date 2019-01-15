@@ -125,7 +125,7 @@ INA_API(ina_rc_t) iarray_iter_next(iarray_context_t *ctx, iarray_iter_t *itr)
     if (itr->cont % catarr->psize == 0) {
         int err = blosc2_schunk_append_buffer(catarr->sc, itr->part, catarr->psize * catarr->sc->typesize);
         if (err < 0) {
-            return INA_ERR_ERROR;
+            return INA_ERROR(INA_ERR_FAILED);
         }
         memset(itr->part, 0, catarr->psize * catarr->sc->typesize);
     }
@@ -192,7 +192,7 @@ INA_API(ina_rc_t) iarray_iter_new(iarray_context_t *ctx, iarray_container_t *con
     caterva_dims_t shape = caterva_new_dims(container->dtshape->shape, container->dtshape->ndim);
     int err = caterva_update_shape(container->catarr, shape);
     if (err < 0) {
-        return INA_ERR_ERROR;
+        return INA_ERROR(INA_ERR_FAILED);
     }
     (*itr)->container = container;
     (*itr)->part = (uint8_t *) ina_mem_alloc(container->catarr->psize * container->catarr->sc->typesize);
@@ -313,7 +313,7 @@ INA_API(ina_rc_t) iarray_iter_part_next(iarray_context_t *ctx, iarray_iter_part_
     if ( itr->part_size == catarr->psize ) {
         int err = blosc2_schunk_append_buffer(catarr->sc, itr->part, psizeb);
         if (err < 0) {
-            return INA_ERR_ERROR;
+            return INA_ERROR(INA_ERR_FAILED);
         }
     } else {
         uint8_t *part_aux = malloc(catarr->psize * catarr->sc->typesize);
@@ -364,7 +364,7 @@ INA_API(ina_rc_t) iarray_iter_part_next(iarray_context_t *ctx, iarray_iter_part_
 
         int err = blosc2_schunk_append_buffer(itr->container->catarr->sc, part_aux, catarr->psize * catarr->sc->typesize);
         if (err < 0) {
-            return INA_ERR_ERROR;
+            return INA_ERROR(INA_ERR_FAILED);
         }
 
         free(part_aux);
@@ -456,7 +456,7 @@ INA_API(ina_rc_t) iarray_iter_part_new(iarray_context_t *ctx, iarray_container_t
     caterva_dims_t shape = caterva_new_dims(container->dtshape->shape, container->dtshape->ndim);
     int err = caterva_update_shape(container->catarr, shape);
     if (err < 0) {
-        return INA_ERR_ERROR;
+        return INA_ERROR(INA_ERR_FAILED);
     }
     (*itr)->container = container;
     (*itr)->part = (uint8_t *) ina_mem_alloc(container->catarr->psize * container->catarr->sc->typesize);
@@ -670,7 +670,7 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_context_t *ctx, iarray_iter_read_
     if (itr->cont % catarr->psize == 0 & itr->cont < catarr->esize) {
         int err = blosc2_schunk_decompress_chunk(catarr->sc, (int) (itr->cont / catarr->psize), itr->part, catarr->psize * catarr->sc->typesize);
         if (err < 0) {
-            return INA_ERR_ERROR;
+            return INA_ERROR(INA_ERR_FAILED);
         }
     }
     return INA_SUCCESS;
