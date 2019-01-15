@@ -15,7 +15,7 @@
 #include <iarray_private.h>
 
 /*
- * ELEMENT BY ELEMENT ITERATOR
+ * Element by element iterator
  *
  * Next functions are used to fill an iarray container element by element
  */
@@ -25,6 +25,7 @@
  * -------------------------------------
  *   (internal) Update the part_index and the nelem of an iterator
  *
+ *   ctx: iarray context
  *   itr: an iterator
  */
 
@@ -76,6 +77,7 @@ void _update_iter_index(iarray_context_t *ctx, iarray_iter_t *itr)
  * -------------------------
  *   Set the iterator values to the first element
  *
+ *   ctx: iarray context
  *   itr: an iterator
  */
 
@@ -96,6 +98,7 @@ INA_API(void) iarray_iter_init(iarray_context_t *ctx, iarray_iter_t *itr)
  * -------------------------
  *   Compute the next iterator element nad update the iterator with it
  *
+ *   ctx: iarray ctx
  *   itr: an iterator
  */
 
@@ -139,6 +142,7 @@ INA_API(ina_rc_t) iarray_iter_next(iarray_context_t *ctx, iarray_iter_t *itr)
  * -----------------------------
  *   Check if the iteration over a container is finished
  *
+ *   ctx: iarray context
  *   itr: an iterator
  *
  *   return: 1 if iter is finished or 0 if not
@@ -154,6 +158,7 @@ INA_API(int) iarray_iter_finished(iarray_context_t *ctx, iarray_iter_t *itr)
  * ------------------------
  *   Store in `val` some variables of the actual element
  *
+ *   ctx: iarray context
  *   itr: an iterator
  *   val: a struct where data needed by the user is stored
  *     part_index: position in coord where the element is located in the container
@@ -175,6 +180,7 @@ INA_API(void) iarray_iter_value(iarray_context_t *ctx, iarray_iter_t *itr, iarra
  * ------------------------
  *   Create a new iterator
  *
+ *   ctx: iarrat context
  *   container: the container used in the iterator
  *   itr: an iterator pointer
  *
@@ -206,6 +212,7 @@ INA_API(ina_rc_t) iarray_iter_new(iarray_context_t *ctx, iarray_container_t *con
  * -------------------------
  *   Free an iterator structure
  *
+ *   ctx: iarray context
  *   itr: an iterator
  *
 *   return: INA_SUCCESS or an error code
@@ -219,7 +226,7 @@ INA_API(void) iarray_iter_free(iarray_context_t *ctx, iarray_iter_t *itr)
 }
 
 /*
- * CHUNK BY CHUNK ITERATOR
+ * Partition by partition iterator
  *
  * Unlike the previous, the next collection of functions are used to fill an iarray container part by part
  */
@@ -229,6 +236,7 @@ INA_API(void) iarray_iter_free(iarray_context_t *ctx, iarray_iter_t *itr)
  * -------------------------------
  *   Set the iterator values to the first element
  *
+ *   ctx: iarray context
  *   itr: an iterator
  */
 
@@ -248,6 +256,7 @@ INA_API(void) iarray_iter_part_init(iarray_context_t *ctx, iarray_iter_part_t *i
  * -------------------------------
  *   Update the iterator to next element
  *
+ *   ctx: iarray context
  *   itr: an iterator
  */
 
@@ -349,6 +358,7 @@ INA_API(ina_rc_t) iarray_iter_part_next(iarray_context_t *ctx, iarray_iter_part_
  * -----------------------------------
  *   Check if the iterator is finished
  *
+ *   ctx: iarray context
  *   itr: an iterator
  *
  *   return: 1 if iter is finished or 0 if not
@@ -364,6 +374,7 @@ INA_API(int) iarray_iter_part_finished(iarray_context_t *ctx, iarray_iter_part_t
  * --------------------------------
  *   Store in `val` parameter some variables of the actual part
  *
+ *   ctx: iarray context
  *   itr: an iterator
  *   val: a struct where data needed by the user is stored
  *     part_index: position in coord where the part is located in the container
@@ -389,6 +400,7 @@ INA_API(void) iarray_iter_part_value(iarray_context_t *ctx, iarray_iter_part_t *
  * ------------------------------
  *   Create a new iterator
  *
+ *   ctx: iarray context
  *   container: the container used in the iterator
  *   itr: an iterator
  *
@@ -422,6 +434,7 @@ INA_API(ina_rc_t) iarray_iter_part_new(iarray_context_t *ctx, iarray_container_t
  * -------------------------------
  *   Free an iterator structure
  *
+ *   ctx: iarray context
  *   itr: an iterator
  *
 *   return: INA_SUCCESS or an error code
@@ -437,7 +450,7 @@ INA_API(void) iarray_iter_part_free(iarray_context_t *ctx, iarray_iter_part_t *i
 }
 
 /*
- * MATMUL ITERATOR
+ * Matmul iterator
  *
  * Internal iterator used to perform easily matrix-matrix or vector-matrix multiplications by blocks
  *
@@ -449,7 +462,8 @@ INA_API(void) iarray_iter_part_free(iarray_context_t *ctx, iarray_iter_part_t *i
  * --------------------------------
  *   Set the iterator values to the first element
  *
- *   itr: an iterator
+  *   ctx: iarray context
+*   itr: an iterator
  */
 
 void _iarray_iter_matmul_init(iarray_context_t *ctx, iarray_iter_matmul_t *itr)
@@ -464,7 +478,8 @@ void _iarray_iter_matmul_init(iarray_context_t *ctx, iarray_iter_matmul_t *itr)
  * --------------------------------
  *   Update the block to be used of each container
  *
- *   itr: an iterator
+*   ctx: iarray context
+*   itr: an iterator
  */
 
 void _iarray_iter_matmul_next(iarray_context_t *ctx, iarray_iter_matmul_t *itr)
@@ -500,6 +515,7 @@ void _iarray_iter_matmul_next(iarray_context_t *ctx, iarray_iter_matmul_t *itr)
  * ------------------------------------
  *   Check if the iterator is finished
  *
+ *   ctx: iarray context
  *   itr: an iterator
  *
  *   return: 1 if iter is finished or 0 if not
@@ -528,6 +544,7 @@ int _iarray_iter_matmul_finished(iarray_context_t *ctx, iarray_iter_matmul_t *it
  * ------------------------
  *   Create a matmul iterator
  *
+ *   ctx: iarray context
  *   itr: an iterator
  *
 *   return: INA_SUCCESS or an error code
@@ -554,6 +571,7 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
  * --------------------------------
  *   Free an iterator structure
  *
+ *   ctx: iarray context
  *   itr: an iterator
  *
 *   return: INA_SUCCESS or an error code
@@ -565,7 +583,7 @@ void _iarray_iter_matmul_free(iarray_context_t *ctx, iarray_iter_matmul_t *itr)
 }
 
 /*
- * ELEMENT BY ELEMENT READ ITERTAOR
+ * Element by element read iterator
  */
 
 /*
@@ -696,17 +714,13 @@ INA_API(void) iarray_iter_read_free(iarray_context_t *ctx, iarray_iter_read_t *i
 }
 
 /*
- * READ ITERATOR BY BLOCKS
+ * Read iterator by blocks
  *
  * Iterator that allows read an iarray container by blocks (the blocksize is specified by the user)
  */
 
 /*
  * Function: iarray_iter_block_read_init
- * ------------------------------
- *   Set the iterator values to the first element
- *
- *   itr: an iterator
  */
 
 INA_API(void) iarray_iter_block_read_init(iarray_context_t *ctx, iarray_iter_block_read_t *itr)
@@ -735,10 +749,6 @@ INA_API(void) iarray_iter_block_read_init(iarray_context_t *ctx, iarray_iter_blo
 
 /*
  * Function: iarray_iter_block_read_next
- * ------------------------------
- *   Update the iterator to next element
- *
- *   itr: an iterator
  */
 
 INA_API(ina_rc_t) iarray_iter_block_read_next(iarray_context_t *ctx, iarray_iter_block_read_t *itr)
@@ -788,12 +798,6 @@ INA_API(ina_rc_t) iarray_iter_block_read_next(iarray_context_t *ctx, iarray_iter
 
 /*
  * Function: iarray_iter_block_read_finished
- * ----------------------------------
- *   Check if the iterator is finished
- *
- *   itr: an iterator
- *
- *   return: 1 if iter is finished or 0 if not
  */
 
 INA_API(int) iarray_iter_block_read_finished(iarray_context_t *ctx, iarray_iter_block_read_t *itr)
@@ -811,18 +815,6 @@ INA_API(int) iarray_iter_block_read_finished(iarray_context_t *ctx, iarray_iter_
 
 /*
  * Function: iarray_iter_block_read_value
- * -------------------------------
- *   Store in `val` parameter some variables of the actual block
- *
- *   itr: an iterator
- *   val: a struct where data needed by the user is stored
- *     part_index: position in coord where the part is located in the container
- *     nelem: if the parts are row-wise listed, `nelem` is the part position in this list
- *     elem_index: position in coord where the first element of the part is located in the container
- *     part_shape: is the actual part part_shape. It should be used to compute the part size
- *     pointer: pointer to the first part element position in memory. It's used to copy the part into the container
- *
- *   return: INA_SUCCESS or an error code
  */
 
 INA_API(void) iarray_iter_block_read_value(iarray_context_t *ctx, iarray_iter_block_read_t *itr,
@@ -837,14 +829,6 @@ INA_API(void) iarray_iter_block_read_value(iarray_context_t *ctx, iarray_iter_bl
 
 /*
  * Function: iarray_iter_block_read_new
- * -----------------------------
- *   Create a new iterator
- *
- *   container: the container used in the iterator
- *   itr: an iterator
- *   blockshape: part_shape of each block
- *
-*   return: INA_SUCCESS or an error code
  */
 
 INA_API(ina_rc_t) iarray_iter_block_read_new(iarray_context_t *ctx, iarray_container_t *container,
@@ -878,12 +862,6 @@ INA_API(ina_rc_t) iarray_iter_block_read_new(iarray_context_t *ctx, iarray_conta
 
 /*
  * Function: iarray_iter_block_read_free
- * -------------------------------
- *   Free an iterator structure
- *
- *   itr: an iterator
- *
-*   return: INA_SUCCESS or an error code
  */
 
 INA_API(void) iarray_iter_block_read_free(iarray_context_t *ctx, iarray_iter_block_read_t *itr)
