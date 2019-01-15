@@ -35,10 +35,10 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
     iarray_iter_t *I;
     iarray_iter_new(ctx, c_x, &I);
 
-    for (iarray_iter_init(ctx, I); !iarray_iter_finished(ctx, I); iarray_iter_next(ctx, I)) {
+    for (iarray_iter_init(I); !iarray_iter_finished(I); iarray_iter_next(I)) {
 
         iarray_iter_value_t val;
-        iarray_iter_value(ctx, I, &val);
+        iarray_iter_value(I, &val);
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double value = (double) val.nelem;
@@ -49,17 +49,17 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
         }
     }
 
-    iarray_iter_free(ctx, I);
+    iarray_iter_free(I);
 
     // Assert iterator reading it
 
     iarray_iter_read_t *I2;
     iarray_iter_read_new(ctx, c_x, &I2);
 
-    for (iarray_iter_read_init(ctx, I2); !iarray_iter_read_finished(ctx, I2); iarray_iter_read_next(ctx, I2)) {
+    for (iarray_iter_read_init(I2); !iarray_iter_read_finished(I2); iarray_iter_read_next(I2)) {
 
         iarray_iter_read_value_t val;
-        iarray_iter_read_value(ctx, I2, &val);
+        iarray_iter_read_value(I2, &val);
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double value = (double) val.nelem;
@@ -70,7 +70,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
         }
     }
 
-    iarray_iter_free(ctx, I2);
+    iarray_iter_free(I2);
 
     iarray_container_free(ctx, &c_x);
     return INA_SUCCESS;
