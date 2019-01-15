@@ -156,7 +156,7 @@ INA_API(int) iarray_iter_finished(iarray_context_t *ctx, iarray_iter_t *itr)
  *
  *   itr: an iterator
  *   val: a struct where data needed by the user is stored
- *     part_index: position in coord where the element is placed in the container
+ *     part_index: position in coord where the element is located in the container
  *     nelem: if the container is row-wise flatten, `nelem` is the element position in the container
  *     pointer: pointer to element position in memory. It's used to copy the element into the container
  *
@@ -417,9 +417,9 @@ INA_API(int) iarray_iter_part_finished(iarray_context_t *ctx, iarray_iter_part_t
  *
  *   itr: an iterator
  *   val: a struct where data needed by the user is stored
- *     part_index: position in coord where the chunk is placed in the container
+ *     part_index: position in coord where the chunk is located in the container
  *     nelem: if the chunks are row-wise listed, `nelem` is the chunk position in this list
- *     elem_index: position in coord where the first element of the chunk is placed in the container
+ *     elem_index: position in coord where the first element of the chunk is located in the container
  *     part_shape: is the actual chunk part_shape. It should be used to compute the chunk size
  *     pointer: pointer to the first chunk element position in memory. It's used to copy the chunk into the container
  *
@@ -867,9 +867,9 @@ INA_API(int) iarray_iter_block_read_finished(iarray_context_t *ctx, iarray_iter_
  *
  *   itr: an iterator
  *   val: a struct where data needed by the user is stored
- *     part_index: position in coord where the chunk is placed in the container
+ *     part_index: position in coord where the chunk is located in the container
  *     nelem: if the chunks are row-wise listed, `nelem` is the chunk position in this list
- *     elem_index: position in coord where the first element of the chunk is placed in the container
+ *     elem_index: position in coord where the first element of the chunk is located in the container
  *     part_shape: is the actual chunk part_shape. It should be used to compute the chunk size
  *     pointer: pointer to the first chunk element position in memory. It's used to copy the chunk into the container
  *
