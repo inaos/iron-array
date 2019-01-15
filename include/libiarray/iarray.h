@@ -120,7 +120,7 @@ typedef struct iarray_iter_part_value_s {
     uint64_t *elem_index;
     uint64_t nelem;
     uint64_t* part_shape;
-} iarray_itr_part_value_t;
+} iarray_iter_part_value_t;
 
 
 typedef struct iarray_iter_block_read_value_s {
@@ -368,7 +368,7 @@ INA_API(void) iarray_iter_part_free(iarray_context_t *ctx, iarray_iter_part_t *i
 INA_API(void) iarray_iter_part_init(iarray_context_t *ctx, iarray_iter_part_t *itr);
 INA_API(ina_rc_t) iarray_iter_part_next(iarray_context_t *ctx, iarray_iter_part_t *itr);
 INA_API(int) iarray_iter_part_finished(iarray_context_t *ctx, iarray_iter_part_t *itr);
-INA_API(void) iarray_iter_part_value(iarray_context_t *ctx, iarray_iter_part_t *itr, iarray_itr_part_value_t *value);
+INA_API(void) iarray_iter_part_value(iarray_context_t *ctx, iarray_iter_part_t *itr, iarray_iter_part_value_t *value);
 
 INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx, iarray_container_t *container,
                                        iarray_iter_read_t **itr);
