@@ -11,23 +11,9 @@
  */
 
 #include <libiarray/iarray.h>
+#include <iarray_private.h>
 
 #include <tests/iarray_test.h>
-
-/*
- * Check if a file exist using fopen() function
- * return 1 if the file exist otherwise return 0
- */
-bool cfileexists(const char * filename)
-{
-    /* try to open file to read */
-    FILE *file;
-    if ((file = fopen(filename, "r"))) {
-        fclose(file);
-        return true;
-    }
-    return false;
-}
 
 static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint8_t ndim,
                                  const uint64_t *shape, const uint64_t *pshape, iarray_store_properties_t *store)
@@ -69,7 +55,7 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
 
     // Close the container and re-open it from disk
     iarray_container_free(ctx, &c_x);
-    INA_TEST_ASSERT(cfileexists(store->id));
+    INA_TEST_ASSERT(_iarray_file_exists(store->id));
     INA_MUST_SUCCEED(iarray_from_file(ctx, store, &c_x));
 
     // TODO: use the read iterators for testing this
@@ -111,13 +97,13 @@ INA_TEST_SETUP(persistency) {
     iarray_context_new(&cfg, &data->ctx);
 
     data->store.id = "test_persistency.b2frame";
-    if (cfileexists(data->store.id)) {
+    if (_iarray_file_exists(data->store.id)) {
         remove(data->store.id);
     }
 }
 
 INA_TEST_TEARDOWN(persistency) {
-    if (cfileexists(data->store.id)) {
+    if (_iarray_file_exists(data->store.id)) {
         remove(data->store.id);
     }
     iarray_context_free(&data->ctx);

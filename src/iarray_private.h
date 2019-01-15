@@ -152,4 +152,7 @@ void _iarray_iter_matmul_init(iarray_context_t *ctx, iarray_iter_matmul_t *itr);
 void _iarray_iter_matmul_next(iarray_context_t *ctx, iarray_iter_matmul_t *itr);
 int _iarray_iter_matmul_finished(iarray_context_t *ctx, iarray_iter_matmul_t *itr);
 
+// Utilities
+bool _iarray_file_exists(const char * filename);
+
 #endif
