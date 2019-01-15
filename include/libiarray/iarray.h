@@ -18,8 +18,11 @@
 
 typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;
-typedef struct iarray_itr_s iarray_itr_t;
-typedef struct iarray_itr_chunk_s iarray_itr_chunk_t;
+typedef struct iarray_iter_s iarray_iter_t;
+typedef struct iarray_iter_part_s iarray_iter_part_t;
+typedef struct iarray_iter_s iarray_iter_read_t;
+typedef struct iarray_iter_block_read_s iarray_iter_block_read_t;
+
 typedef struct iarray_expression_s iarray_expression_t;
 
 typedef enum iarray_random_rng_e {
@@ -103,19 +106,30 @@ typedef struct iarray_dtshape_s {
     uint64_t pshape[IARRAY_DIMENSION_MAX]; /* Partition-Shape, optional in the future */
 } iarray_dtshape_t;
 
-typedef struct iarray_itr_value_s {
+typedef struct iarray_iter_value_s {
     void *pointer;
     uint64_t *index;
     uint64_t nelem;
-} iarray_itr_value_t;
+} iarray_iter_value_t;
 
-typedef struct iarray_itr_chunk_value_s {
+typedef struct iarray_iter_value_s iarray_iter_read_value_t;
+
+typedef struct iarray_iter_part_value_s {
     void *pointer;
-    uint64_t *index;
-    uint64_t *el_index;
+    uint64_t *part_index;
+    uint64_t *elem_index;
     uint64_t nelem;
-    uint64_t* shape;
-} iarray_itr_chunk_value_t;
+    uint64_t* part_shape;
+} iarray_iter_part_value_t;
+
+
+typedef struct iarray_iter_block_read_value_s {
+    void *pointer;
+    uint64_t *block_index;
+    uint64_t *elem_index;
+    uint64_t nelem;
+    uint64_t* block_shape;
+} iarray_iter_block_read_value_t;
 
 typedef struct iarray_slice_param_s {
     int axis;
@@ -150,12 +164,21 @@ INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
                                 iarray_dtshape_t *dtshape,
-                                int start,
-                                int stop,
-                                int step,
+                                double start,
+                                double stop,
+                                double step,
                                 iarray_store_properties_t *store,
                                 int flags,
                                 iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
+                                  iarray_dtshape_t *dtshape,
+                                  int64_t nelem,
+                                  double start,
+                                  double stop,
+                                  iarray_store_properties_t *store,
+                                  int flags,
+                                  iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
                                iarray_dtshape_t *dtshape,
@@ -213,12 +236,19 @@ INA_API(ina_rc_t) iarray_random_lognormal(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
                                iarray_container_t *c,
-                               uint64_t *start,
-                               uint64_t *stop,
+                               int64_t *start,
+                               int64_t *stop,
                                iarray_dtshape_t *dtshape,
                                iarray_store_properties_t *store,
                                int flags,
                                iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
+                                      iarray_container_t *c,
+                                      int64_t *start,
+                                      int64_t *stop,
+                                      void *buffer,
+                                      uint64_t buflen);
 
 INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
                                    iarray_store_properties_t *store,
@@ -325,19 +355,37 @@ INA_API(ina_rc_t) iarray_reduction_mul(iarray_context_t *ctx, iarray_container_t
 
 /* Iterators */
 
-INA_API(ina_rc_t) iarray_itr_new(iarray_context_t *ctx, iarray_container_t *container, iarray_itr_t **itr);
-INA_API(void) iarray_itr_free(iarray_context_t *ctx, iarray_itr_t *itr);
-INA_API(void) iarray_itr_init(iarray_itr_t *itr);
-INA_API(ina_rc_t) iarray_itr_next(iarray_itr_t *itr);
-INA_API(int) iarray_itr_finished(iarray_itr_t *itr);
-INA_API(void) iarray_itr_value(iarray_itr_t *itr, iarray_itr_value_t *value);
+INA_API(ina_rc_t) iarray_iter_new(iarray_context_t *ctx, iarray_container_t *container, iarray_iter_t **itr);
+INA_API(void) iarray_iter_free(iarray_context_t *ctx, iarray_iter_t *itr);
+INA_API(void) iarray_iter_init(iarray_context_t *ctx, iarray_iter_t *itr);
+INA_API(ina_rc_t) iarray_iter_next(iarray_context_t *ctx, iarray_iter_t *itr);
+INA_API(int) iarray_iter_finished(iarray_context_t *ctx, iarray_iter_t *itr);
+INA_API(void) iarray_iter_value(iarray_context_t *ctx, iarray_iter_t *itr, iarray_iter_value_t *value);
 
-INA_API(ina_rc_t) iarray_itr_chunk_new(iarray_context_t *ctx, iarray_container_t *container, iarray_itr_chunk_t **itr);
-INA_API(void) iarray_itr_chunk_free(iarray_context_t *ctx, iarray_itr_chunk_t *itr);
-INA_API(void) iarray_itr_chunk_init(iarray_itr_chunk_t *itr);
-INA_API(ina_rc_t) iarray_itr_chunk_next(iarray_itr_chunk_t *itr);
-INA_API(int) iarray_itr_chunk_finished(iarray_itr_chunk_t *itr);
-INA_API(void) iarray_itr_chunk_value(iarray_itr_chunk_t *itr, iarray_itr_chunk_value_t *value);
+INA_API(ina_rc_t) iarray_iter_part_new(iarray_context_t *ctx, iarray_container_t *container, iarray_iter_part_t **itr);
+INA_API(void) iarray_iter_part_free(iarray_context_t *ctx, iarray_iter_part_t *itr);
+INA_API(void) iarray_iter_part_init(iarray_context_t *ctx, iarray_iter_part_t *itr);
+INA_API(ina_rc_t) iarray_iter_part_next(iarray_context_t *ctx, iarray_iter_part_t *itr);
+INA_API(int) iarray_iter_part_finished(iarray_context_t *ctx, iarray_iter_part_t *itr);
+INA_API(void) iarray_iter_part_value(iarray_context_t *ctx, iarray_iter_part_t *itr, iarray_iter_part_value_t *value);
+
+INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx, iarray_container_t *container,
+                                       iarray_iter_read_t **itr);
+INA_API(void) iarray_iter_read_free(iarray_context_t *ctx, iarray_iter_read_t *itr);
+INA_API(void) iarray_iter_read_init(iarray_context_t *ctx, iarray_iter_read_t *itr);
+INA_API(ina_rc_t) iarray_iter_read_next(iarray_context_t *ctx, iarray_iter_read_t *itr);
+INA_API(int) iarray_iter_read_finished(iarray_context_t *ctx, iarray_iter_read_t *itr);
+INA_API(void) iarray_iter_read_value(iarray_context_t *ctx, iarray_iter_read_t *itr,
+                                     iarray_iter_read_value_t *val);
+
+INA_API(ina_rc_t) iarray_iter_block_read_new(iarray_context_t *ctx, iarray_container_t *container,
+                                             iarray_iter_block_read_t **itr, uint64_t *blockshape);
+INA_API(void) iarray_iter_block_read_free(iarray_context_t *ctx, iarray_iter_block_read_t *itr);
+INA_API(void) iarray_iter_block_read_init(iarray_context_t *ctx, iarray_iter_block_read_t *itr);
+INA_API(ina_rc_t) iarray_iter_block_read_next(iarray_context_t *ctx, iarray_iter_block_read_t *itr);
+INA_API(int) iarray_iter_block_read_finished(iarray_context_t *ctx, iarray_iter_block_read_t *itr);
+INA_API(void) iarray_iter_block_read_value(iarray_context_t *ctx, iarray_iter_block_read_t *itr,
+                                           iarray_iter_block_read_value_t *value);
 
 /* Expressions */
 INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e);

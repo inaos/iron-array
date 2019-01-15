@@ -33,14 +33,14 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint8_t *b_block = malloc(p_size);
     uint8_t *c_block = malloc(p_size);
 
-    iarray_itr_matmul_t *I;
-    _iarray_itr_matmul_new(ctx, a, b, &I);
+    iarray_iter_matmul_t *I;
+    _iarray_iter_matmul_new(ctx, a, b, &I);
 
     memset(c_block, 0, p_size);
-    for (_iarray_itr_matmul_init(I); !_iarray_itr_matmul_finished(I); _iarray_itr_matmul_next(I)) {
+    for (_iarray_iter_matmul_init(ctx, I); !_iarray_iter_matmul_finished(ctx, I); _iarray_iter_matmul_next(ctx, I)) {
 
-        int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)I->nchunk1, a_block, p_size);
-        int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)I->nchunk2, b_block, p_size);
+        int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)I->npart1, a_block, p_size);
+        int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)I->npart2, b_block, p_size);
 
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
             cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P, 1.0, (double *)a_block, P, (double *)b_block, P, 1.0, (double *)c_block, P);
@@ -80,14 +80,14 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint8_t *b_block = malloc(p_vsize);
     uint8_t *c_block = malloc(p_vsize);
 
-    iarray_itr_matmul_t *I;
-    _iarray_itr_matmul_new(ctx, a, b, &I);
+    iarray_iter_matmul_t *I;
+    _iarray_iter_matmul_new(ctx, a, b, &I);
 
     memset(c_block, 0, p_vsize);
-    for (_iarray_itr_matmul_init(I); !_iarray_itr_matmul_finished(I); _iarray_itr_matmul_next(I)) {
+    for (_iarray_iter_matmul_init(ctx, I); !_iarray_iter_matmul_finished(ctx, I); _iarray_iter_matmul_next(ctx, I)) {
 
-        int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)I->nchunk1, a_block, p_size);
-        int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)I->nchunk2, b_block, p_vsize);
+        int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)I->npart1, a_block, p_size);
+        int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)I->npart2, b_block, p_vsize);
 
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
             cblas_dgemv(CblasRowMajor, CblasNoTrans, P, P, 1.0, (double *) a_block, P, (double *) b_block, 1, 1.0, (double *) c_block, 1);
@@ -101,7 +101,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
             memset(c_block, 0, p_vsize);
         }
     }
-    _iarray_itr_matmul_free(ctx, I);
+    _iarray_iter_matmul_free(ctx, I);
     free(a_block);
     free(b_block);
     free(c_block);

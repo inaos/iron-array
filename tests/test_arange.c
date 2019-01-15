@@ -14,42 +14,25 @@
 
 #include <tests/iarray_test.h>
 
-static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint8_t ndim,
-                              const uint64_t *shape, const uint64_t *pshape) {
+static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint8_t ndim,
+                            const uint64_t *shape, const uint64_t *pshape, double start, double stop) {
 
     // Create dtshape
     iarray_dtshape_t xdtshape;
 
     xdtshape.dtype = dtype;
     xdtshape.ndim = ndim;
+    uint64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
         xdtshape.pshape[i] = pshape[i];
+        size *= shape[i];
     }
 
+    double step = (stop - start) / size;
     iarray_container_t *c_x;
 
-    iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x);
-
-    // Start Iterator
-    iarray_iter_t *I;
-    iarray_iter_new(ctx, c_x, &I);
-
-    for (iarray_iter_init(ctx, I); !iarray_iter_finished(ctx, I); iarray_iter_next(ctx, I)) {
-
-        iarray_iter_value_t val;
-        iarray_iter_value(ctx, I, &val);
-
-        if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value = (double) val.nelem;
-            memcpy(val.pointer, &value, type_size);
-        } else {
-            float value = (float) val.nelem;
-            memcpy(val.pointer, &value, type_size);
-        }
-    }
-
-    iarray_iter_free(ctx, I);
+    iarray_arange(ctx, &xdtshape, start, stop, step, NULL, 0, &c_x);
 
     // Assert iterator reading it
 
@@ -62,10 +45,10 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
         iarray_iter_read_value(ctx, I2, &val);
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value = (double) val.nelem;
+            double value = val.nelem * step + start;
             INA_TEST_ASSERT_EQUAL_FLOATING(value, ((double *) val.pointer)[0]);
         } else {
-            float value = (float) val.nelem;
+            float value = (float) (val.nelem * step + start);
             INA_TEST_ASSERT_EQUAL_FLOATING(value, ((float *) val.pointer)[0]);
         }
     }
@@ -76,11 +59,11 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
     return INA_SUCCESS;
 }
 
-INA_TEST_DATA(iterator) {
+INA_TEST_DATA(arange) {
     iarray_context_t *ctx;
 };
 
-INA_TEST_SETUP(iterator) {
+INA_TEST_SETUP(arange) {
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -90,51 +73,59 @@ INA_TEST_SETUP(iterator) {
     iarray_context_new(&cfg, &data->ctx);
 }
 
-INA_TEST_TEARDOWN(iterator) {
+INA_TEST_TEARDOWN(arange) {
     iarray_context_free(&data->ctx);
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(iterator, double_2) {
+INA_TEST_FIXTURE(arange, double_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
     uint8_t ndim = 2;
-    uint64_t shape[] = {125, 157};
-    uint64_t pshape[] = {12, 13};
+    uint64_t shape[] = {223, 456};
+    uint64_t pshape[] = {31, 43};
+    double start = - 0.1;
+    double stop = - 0.25;
 
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
+    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, type_size, ndim, shape, pshape, start, stop));
 }
 
-INA_TEST_FIXTURE(iterator, float_2) {
+INA_TEST_FIXTURE(arange, float_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
 
     uint8_t ndim = 2;
     uint64_t shape[] = {445, 321};
     uint64_t pshape[] = {21, 17};
+    double start = 3123;
+    double stop = 45654;
 
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
+    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, type_size, ndim, shape, pshape, start, stop));
 }
 
-INA_TEST_FIXTURE(iterator, double_5) {
+INA_TEST_FIXTURE(arange, double_5) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
     uint8_t ndim = 5;
     uint64_t shape[] = {20, 18, 17, 13, 21};
     uint64_t pshape[] = {12, 12, 2, 3, 13};
+    double start = 0.1;
+    double stop = 0.2;
 
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
+    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, type_size, ndim, shape, pshape, start, stop));
 }
 
-INA_TEST_FIXTURE(iterator, float_7) {
+INA_TEST_FIXTURE(arange, float_7) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
 
     uint8_t ndim = 7;
     uint64_t shape[] = {5, 7, 8, 9, 6, 5, 7};
     uint64_t pshape[] = {2, 5, 3, 4, 3, 2, 3};
+    double start = 10;
+    double stop = 0;
 
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
+    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, type_size, ndim, shape, pshape, start, stop));
 }

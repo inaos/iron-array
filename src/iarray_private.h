@@ -68,33 +68,45 @@ struct iarray_container_s {
     } scalar_value;
 };
 
-typedef struct iarray_itr_s {
+typedef struct iarray_iter_s {
     iarray_container_t *container;
     uint8_t *part;
     void *pointer;
     uint64_t *index;
     uint64_t nelem;
     uint64_t cont;
-} iarray_itr_t;
+} iarray_iter_t;
 
-typedef struct iarray_itr_chunk_s {
+typedef struct iarray_iter_part_s {
+    iarray_container_t *container;
+    uint8_t *part;
+    void *pointer;
+    uint64_t *part_shape;
+    uint64_t part_size;
+    uint64_t *part_index;
+    uint64_t *elem_index;
+    uint64_t cont;
+} iarray_iter_part_t;
+
+typedef struct iarray_iter_block_read_s {
     iarray_container_t *container;
     uint8_t *part;
     void *pointer;
     uint64_t *shape;
-    uint64_t size;
-    uint64_t *index;
-    uint64_t *el_index;
+    uint64_t *block_shape;
+    uint64_t block_size;
+    uint64_t *block_index;
+    uint64_t *elem_index;
     uint64_t cont;
-} iarray_itr_chunk_t;
+} iarray_iter_block_read_t;
 
-typedef struct iarray_itr_matmul_s {
+typedef struct iarray_iter_matmul_s {
     iarray_container_t *container1;
     iarray_container_t *container2;
-    uint64_t nchunk1;
-    uint64_t nchunk2;
+    uint64_t npart1;
+    uint64_t npart2;
     uint64_t cont;
-} iarray_itr_matmul_t;
+} iarray_iter_matmul_t;
 
 typedef struct iarray_variable_s {
     const char *name;
@@ -133,11 +145,11 @@ iarray_temporary_t* _iarray_op_divide(iarray_expression_t *expr, iarray_temporar
 
 
 // Iterators
-ina_rc_t _iarray_itr_matmul_new(iarray_context_t *ctx, iarray_container_t *container1,
-                                         iarray_container_t *container2, iarray_itr_matmul_t **itr);
-void _iarray_itr_matmul_free(iarray_context_t *ctx, iarray_itr_matmul_t *itr);
-void _iarray_itr_matmul_init(iarray_itr_matmul_t *itr);
-void _iarray_itr_matmul_next(iarray_itr_matmul_t *itr);
-int _iarray_itr_matmul_finished(iarray_itr_matmul_t *itr);
+ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *container1,
+                                 iarray_container_t *container2, iarray_iter_matmul_t **itr);
+void _iarray_iter_matmul_free(iarray_context_t *ctx, iarray_iter_matmul_t *itr);
+void _iarray_iter_matmul_init(iarray_context_t *ctx, iarray_iter_matmul_t *itr);
+void _iarray_iter_matmul_next(iarray_context_t *ctx, iarray_iter_matmul_t *itr);
+int _iarray_iter_matmul_finished(iarray_context_t *ctx, iarray_iter_matmul_t *itr);
 
 #endif
