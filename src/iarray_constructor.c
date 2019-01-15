@@ -51,7 +51,7 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
 
     double constant = (stop - start) / contsize;
     if (constant != step) {
-        return INA_ERR_ERROR;
+        return INA_ERROR(INA_ERR_FAILED);
     }
 
     INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
@@ -103,7 +103,7 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
     }
 
     if (contsize != nelem) {
-        return INA_ERR_ERROR;
+        return INA_ERROR(INA_ERR_FAILED);
     }
 
     INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
@@ -248,7 +248,7 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
     // TODO: would it be interesting to add a `buffer_len` parameter to `caterva_from_buffer()`?
     caterva_dims_t shape = caterva_new_dims((*container)->dtshape->shape, (*container)->dtshape->ndim);
     if (caterva_from_buffer((*container)->catarr, shape, buffer) != 0) {
-        INA_ERROR(INA_ERR_ERROR);
+        INA_ERROR(INA_ERR_FAILED);
         INA_FAIL_IF(1);
     }
 
@@ -269,7 +269,7 @@ static int32_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_
     pmeta += 1;
     assert(pmeta - smeta == smeta_len);
     if (*dtype >= IARRAY_DATA_TYPE_MAX) {
-        return INA_ERR_ERROR;
+        return INA_ERROR(INA_ERR_FAILED);
     }
 
     return INA_SUCCESS;
@@ -288,7 +288,7 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
 
     caterva_array_t *catarr = caterva_from_file(cat_ctx, store->id);
     if (catarr == NULL) {
-        INA_ERROR(INA_ERR_ERROR);
+        INA_ERROR(INA_ERR_FAILED);
         INA_FAIL_IF(1);
     }
 
@@ -355,7 +355,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(container);
 
     if (caterva_to_buffer(container->catarr, buffer) != 0) {
-        return INA_ERROR(INA_ERR_ERROR);
+        return INA_ERROR(INA_ERR_FAILED);
     }
 
     return INA_SUCCESS;
