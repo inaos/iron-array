@@ -37,10 +37,10 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     iarray_iter_part_t *I;
     iarray_iter_part_new(ctx, c_x, &I);
 
-    for (iarray_iter_part_init(ctx, I); !iarray_iter_part_finished(ctx, I); iarray_iter_part_next(ctx, I)) {
+    for (iarray_iter_part_init(I); !iarray_iter_part_finished(I); iarray_iter_part_next(I)) {
 
         iarray_iter_part_value_t val;
-        iarray_iter_part_value(ctx, I, &val);
+        iarray_iter_part_value(I, &val);
 
         uint64_t part_size = 1;
         for (int i = 0; i < ndim; ++i) {
@@ -62,7 +62,7 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
         free(data);
     }
 
-    iarray_iter_part_free(ctx, I);
+    iarray_iter_part_free(I);
 
     // Testing
 
@@ -70,12 +70,12 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     iarray_iter_block_read_t *I2;
     iarray_iter_block_read_new(ctx, c_x, &I2, pshape);
 
-    for (iarray_iter_block_read_init(ctx, I2);
-         !iarray_iter_block_read_finished(ctx, I2);
-         iarray_iter_block_read_next(ctx, I2)) {
+    for (iarray_iter_block_read_init(I2);
+         !iarray_iter_block_read_finished(I2);
+         iarray_iter_block_read_next(I2)) {
 
         iarray_iter_block_read_value_t val;
-        iarray_iter_block_read_value(ctx, I2, &val);
+        iarray_iter_block_read_value(I2, &val);
 
         uint64_t block_size = 1;
         for (int i = 0; i < ndim; ++i) {
@@ -93,7 +93,7 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
         }
     }
 
-    iarray_iter_block_read_free(ctx, I2);
+    iarray_iter_block_read_free(I2);
 
     iarray_container_free(ctx, &c_x);
 
