@@ -59,9 +59,9 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
     iarray_iter_t *I;
     iarray_iter_new(ctx, *container, &I);
 
-    for (iarray_iter_init(ctx, I); !iarray_iter_finished(ctx, I); iarray_iter_next(ctx, I)) {
+    for (iarray_iter_init(I); !iarray_iter_finished(I); iarray_iter_next(I)) {
         iarray_iter_value_t val;
-        iarray_iter_value(ctx, I, &val);
+        iarray_iter_value(I, &val);
 
         uint64_t i = 0;
         uint64_t inc = 1;
@@ -111,9 +111,9 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
     iarray_iter_t *I;
     iarray_iter_new(ctx, *container, &I);
 
-    for (iarray_iter_init(ctx, I); !iarray_iter_finished(ctx, I); iarray_iter_next(ctx, I)) {
+    for (iarray_iter_init(I); !iarray_iter_finished(I); iarray_iter_next(I)) {
         iarray_iter_value_t val;
-        iarray_iter_value(ctx, I, &val);
+        iarray_iter_value(I, &val);
 
         uint64_t i = 0;
         uint64_t inc = 1;
