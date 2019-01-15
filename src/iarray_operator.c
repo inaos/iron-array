@@ -37,7 +37,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     _iarray_iter_matmul_new(ctx, a, b, &I);
 
     memset(c_block, 0, p_size);
-    for (_iarray_iter_matmul_init(ctx, I); !_iarray_iter_matmul_finished(ctx, I); _iarray_iter_matmul_next(ctx, I)) {
+    for (_iarray_iter_matmul_init(I); !_iarray_iter_matmul_finished(I); _iarray_iter_matmul_next(I)) {
 
         int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)I->npart1, a_block, p_size);
         int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)I->npart2, b_block, p_size);
@@ -54,6 +54,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
     }
 
+    _iarray_iter_matmul_free(I);
     free(a_block);
     free(b_block);
     free(c_block);
@@ -84,7 +85,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     _iarray_iter_matmul_new(ctx, a, b, &I);
 
     memset(c_block, 0, p_vsize);
-    for (_iarray_iter_matmul_init(ctx, I); !_iarray_iter_matmul_finished(ctx, I); _iarray_iter_matmul_next(ctx, I)) {
+    for (_iarray_iter_matmul_init(I); !_iarray_iter_matmul_finished(I); _iarray_iter_matmul_next(I)) {
 
         int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)I->npart1, a_block, p_size);
         int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)I->npart2, b_block, p_vsize);
@@ -101,7 +102,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
             memset(c_block, 0, p_vsize);
         }
     }
-    _iarray_iter_matmul_free(ctx, I);
+    _iarray_iter_matmul_free(I);
     free(a_block);
     free(b_block);
     free(c_block);

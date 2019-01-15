@@ -69,6 +69,7 @@ struct iarray_container_s {
 };
 
 typedef struct iarray_iter_s {
+    iarray_context_t *ctx;
     iarray_container_t *container;
     uint8_t *part;
     void *pointer;
@@ -78,6 +79,7 @@ typedef struct iarray_iter_s {
 } iarray_iter_t;
 
 typedef struct iarray_iter_part_s {
+    iarray_context_t *ctx;
     iarray_container_t *container;
     uint8_t *part;
     void *pointer;
@@ -89,6 +91,7 @@ typedef struct iarray_iter_part_s {
 } iarray_iter_part_t;
 
 typedef struct iarray_iter_block_read_s {
+    iarray_context_t *ctx;
     iarray_container_t *container;
     uint8_t *part;
     void *pointer;
@@ -101,6 +104,7 @@ typedef struct iarray_iter_block_read_s {
 } iarray_iter_block_read_t;
 
 typedef struct iarray_iter_matmul_s {
+    iarray_context_t *ctx;
     iarray_container_t *container1;
     iarray_container_t *container2;
     uint64_t npart1;
@@ -147,10 +151,10 @@ iarray_temporary_t* _iarray_op_divide(iarray_expression_t *expr, iarray_temporar
 // Iterators
 ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *container1,
                                  iarray_container_t *container2, iarray_iter_matmul_t **itr);
-void _iarray_iter_matmul_free(iarray_context_t *ctx, iarray_iter_matmul_t *itr);
-void _iarray_iter_matmul_init(iarray_context_t *ctx, iarray_iter_matmul_t *itr);
-void _iarray_iter_matmul_next(iarray_context_t *ctx, iarray_iter_matmul_t *itr);
-int _iarray_iter_matmul_finished(iarray_context_t *ctx, iarray_iter_matmul_t *itr);
+void _iarray_iter_matmul_free(iarray_iter_matmul_t *itr);
+void _iarray_iter_matmul_init(iarray_iter_matmul_t *itr);
+void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr);
+int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr);
 
 // Utilities
 bool _iarray_file_exists(const char * filename);
