@@ -95,7 +95,6 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
 
     iarray_iter_block_read_free(ctx, I2);
 
-    // Free
     iarray_container_free(ctx, &c_x);
 
     return INA_SUCCESS;
