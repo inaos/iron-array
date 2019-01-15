@@ -192,9 +192,7 @@ static int32_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_
 }
 
 
-INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
-                                   iarray_store_properties_t *store,
-                                   int flags,
+INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_properties_t *store,
                                    iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
@@ -252,7 +250,6 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
     (*container)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
     INA_FAIL_IF((*container)->store == NULL);
     (*container)->store->id = ina_str_new_fromcstr(store->id);
-
 
     return INA_SUCCESS;
 

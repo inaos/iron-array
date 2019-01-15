@@ -14,6 +14,7 @@
 #define _IARRAY_TEST_COMMON_H_
 
 #include <libiarray/iarray.h>
+#include <stdbool.h>
 
 static void ffill_buf(float *x, size_t nitems)
 {
