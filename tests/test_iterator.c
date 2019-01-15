@@ -122,8 +122,8 @@ INA_TEST_FIXTURE(iterator, double_5) {
     size_t type_size = sizeof(double);
 
     uint8_t ndim = 5;
-    uint64_t shape[] = {20, 25, 27, 41, 46};
-    uint64_t pshape[] = {12, 24, 19, 31, 13};
+    uint64_t shape[] = {20, 18, 17, 13, 21};
+    uint64_t pshape[] = {12, 12, 2, 3, 13};
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
@@ -133,8 +133,8 @@ INA_TEST_FIXTURE(iterator, float_7) {
     size_t type_size = sizeof(float);
 
     uint8_t ndim = 7;
-    uint64_t shape[] = {10, 12, 8, 9, 13, 7, 7};
-    uint64_t pshape[] = {2, 5, 3, 4, 3, 3, 3};
+    uint64_t shape[] = {5, 7, 8, 9, 6, 5, 7};
+    uint64_t pshape[] = {2, 5, 3, 4, 3, 2, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
