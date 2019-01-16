@@ -377,7 +377,7 @@ INA_API(int) iarray_iter_write_part_finished(iarray_iter_write_part_t *itr)
  *   return: INA_SUCCESS or an error code
  */
 
-INA_API(void) iarray_iter_write_part_value(iarray_iter_write_part_t *itr, iarray_iter_read_part_value_t *val)
+INA_API(void) iarray_iter_write_part_value(iarray_iter_write_part_t *itr, iarray_iter_write_part_value_t *val)
 {
     val->pointer = itr->pointer;
     val->part_index = itr->part_index;

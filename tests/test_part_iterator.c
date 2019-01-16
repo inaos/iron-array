@@ -42,7 +42,7 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
          !iarray_iter_write_part_finished(I);
          iarray_iter_write_part_next(I)) {
 
-        iarray_iter_read_part_value_t val;
+        iarray_iter_write_part_value_t val;
         iarray_iter_write_part_value(I, &val);
 
         uint64_t part_size = 1;
