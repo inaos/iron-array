@@ -71,7 +71,7 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
             INA_TEST_ASSERT_EQUAL_FLOATING(value, ((float *) val.pointer)[0]);
         }
     }
-    iarray_iter_free(I2);
+    iarray_iter_read_free(I2);
 
     iarray_container_free(ctx, &c_x);
 
