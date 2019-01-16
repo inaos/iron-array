@@ -53,7 +53,7 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, siz
         }
     }
 
-    iarray_iter_free(I2);
+    iarray_iter_write_free(I2);
 
     iarray_container_free(ctx, &c_x);
     return INA_SUCCESS;

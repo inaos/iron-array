@@ -31,12 +31,15 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
     iarray_container_t *c_x;
     iarray_container_new(ctx, &xdtshape, store, IARRAY_CONTAINER_PERSIST, &c_x);
 
-    // Fill values
-    iarray_iter_t *I;
-    iarray_iter_new(ctx, c_x, &I);
-    for (iarray_iter_init(I); !iarray_iter_finished(I); iarray_iter_next(I)) {
-        iarray_iter_value_t val;
-        iarray_iter_value(I, &val);
+    // Start iterator
+    iarray_iter_write_t *I;
+    iarray_iter_write_new(ctx, c_x, &I);
+
+    for (iarray_iter_write_init(I); !iarray_iter_write_finished(I); iarray_iter_write_next(I)) {
+
+        iarray_iter_write_value_t val;
+        iarray_iter_write_value(I, &val);
+
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double value = (double) val.nelem;
             memcpy(val.pointer, &value, type_size);
@@ -45,7 +48,9 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
             memcpy(val.pointer, &value, type_size);
         }
     }
-    iarray_iter_free(I);
+
+    iarray_iter_write_free(I);
+
 
     // Close the container and re-open it from disk
     iarray_container_free(ctx, &c_x);
