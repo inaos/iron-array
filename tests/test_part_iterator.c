@@ -50,19 +50,15 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
             part_size *= val.part_shape[i];
         }
 
-        uint8_t *data = malloc(part_size * type_size);
-
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             for (uint64_t i = 0; i < part_size; ++i) {
-                ( (double *)data)[i] = (double) val.nelem * part_size + i;
+                ((double *)val.pointer)[i] = (double) val.nelem * part_size + i;
             }
         } else {
             for (uint64_t i = 0; i < part_size; ++i) {
-                ( (float *)data)[i] = (float) val.nelem * part_size + i;
+                ((float *)val.pointer)[i] = (float) val.nelem * part_size + i;
             }
         }
-        memcpy(val.pointer, &data[0], part_size * type_size);
-        free(data);
     }
 
     iarray_iter_write_part_free(I);
