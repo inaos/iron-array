@@ -21,7 +21,6 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
 
     // Create dtshape
     iarray_dtshape_t xdtshape;
-
     xdtshape.dtype = dtype;
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
@@ -30,7 +29,6 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
     }
 
     iarray_container_t *c_x;
-
     iarray_container_new(ctx, &xdtshape, store, IARRAY_CONTAINER_PERSIST, &c_x);
 
     // Start iterator
@@ -53,32 +51,30 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
 
     iarray_iter_write_free(I);
 
+
     // Close the container and re-open it from disk
     iarray_container_free(ctx, &c_x);
     INA_TEST_ASSERT(_iarray_file_exists(store->id));
     INA_MUST_SUCCEED(iarray_from_file(ctx, store, &c_x));
 
-    // TODO: use the read iterators for testing this
     // Check values
-    uint64_t bufsize = 1;
-    for (int j = 0; j < ndim; ++j) {
-        bufsize *= xdtshape.shape[j];
-    }
-    uint8_t *bufdest = ina_mem_alloc(bufsize * type_size);
-    INA_MUST_SUCCEED(iarray_to_buffer(ctx, c_x, bufdest, bufsize));
-
-    if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        for (uint64_t k = 1; k < bufsize; ++k) {
-            INA_TEST_ASSERT_EQUAL_FLOATING(((double *)bufdest)[k-1] + 1, ((double *)bufdest)[k]);
-        }
-    } else {
-        for (uint64_t k = 1; k < bufsize; ++k) {
-            INA_TEST_ASSERT_EQUAL_FLOATING(((float *)bufdest)[k-1] + 1, ((float *)bufdest)[k]);
+    iarray_iter_read_t *I2;
+    iarray_iter_read_new(ctx, c_x, &I2);
+    for (iarray_iter_read_init(I2); !iarray_iter_read_finished(I2); iarray_iter_read_next(I2)) {
+        iarray_iter_read_value_t val;
+        iarray_iter_read_value(I2, &val);
+        if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
+            double value = (double) val.nelem;
+            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((double *) val.pointer)[0]);
+        } else {
+            float value = (float) val.nelem;
+            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((float *) val.pointer)[0]);
         }
     }
+    iarray_iter_free(I2);
 
-    ina_mem_free(bufdest);
     iarray_container_free(ctx, &c_x);
+
     return INA_SUCCESS;
 }
 
