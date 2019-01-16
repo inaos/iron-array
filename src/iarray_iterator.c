@@ -28,7 +28,7 @@
  *   itr: an iterator
  */
 
-void _update_iter_index(iarray_iter_t *itr)
+void _update_iter_index(iarray_iter_write_t *itr)
 {
     caterva_array_t *catarr = itr->container->catarr;
 
@@ -72,14 +72,14 @@ void _update_iter_index(iarray_iter_t *itr)
 }
 
 /*
- * Function: iarray_iter_init
+ * Function: iarray_iter_write_init
  * -------------------------
  *   Set the iterator values to the first element
  *
  *   itr: an iterator
  */
 
-INA_API(void) iarray_iter_init(iarray_iter_t *itr)
+INA_API(void) iarray_iter_write_init(iarray_iter_write_t *itr)
 {
     itr->cont = 0;
     itr->nelem = 0;
@@ -92,14 +92,14 @@ INA_API(void) iarray_iter_init(iarray_iter_t *itr)
 }
 
 /*
- * Function: iarray_iter_next
+ * Function: iarray_iter_write_next
  * -------------------------
  *   Compute the next iterator element nad update the iterator with it
  *
  *   itr: an iterator
  */
 
-INA_API(ina_rc_t) iarray_iter_next(iarray_iter_t *itr)
+INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
 {
     caterva_array_t *catarr = itr->container->catarr;
     int ndim = catarr->ndim;
@@ -135,7 +135,7 @@ INA_API(ina_rc_t) iarray_iter_next(iarray_iter_t *itr)
 }
 
 /*
- * Function: iarray_iter_finished
+ * Function: iarray_iter_write_finished
  * -----------------------------
  *   Check if the iteration over a container is finished
  *
@@ -144,13 +144,13 @@ INA_API(ina_rc_t) iarray_iter_next(iarray_iter_t *itr)
  *   return: 1 if iter is finished or 0 if not
  */
 
-INA_API(int) iarray_iter_finished(iarray_iter_t *itr)
+INA_API(int) iarray_iter_write_finished(iarray_iter_write_t *itr)
 {
     return itr->cont >= itr->container->catarr->esize;
 }
 
 /*
- * Function: iarray_iter_value
+ * Function: iarray_iter_write_value
  * ------------------------
  *   Store in `val` some variables of the actual element
  *
@@ -163,7 +163,7 @@ INA_API(int) iarray_iter_finished(iarray_iter_t *itr)
 *   return: INA_SUCCESS or an error code
  */
 
-INA_API(void) iarray_iter_value(iarray_iter_t *itr, iarray_iter_value_t *val)
+INA_API(void) iarray_iter_write_value(iarray_iter_write_t *itr, iarray_iter_write_value_t *val)
 {
     val->pointer = itr->pointer;
     val->index = itr->index;
@@ -171,7 +171,7 @@ INA_API(void) iarray_iter_value(iarray_iter_t *itr, iarray_iter_value_t *val)
 }
 
 /*
- * Function: iarray_iter_new
+ * Function: iarray_iter_write_new
  * ------------------------
  *   Create a new iterator
  *
@@ -182,13 +182,13 @@ INA_API(void) iarray_iter_value(iarray_iter_t *itr, iarray_iter_value_t *val)
 *   return: INA_SUCCESS or an error code
  */
 
-INA_API(ina_rc_t) iarray_iter_new(iarray_context_t *ctx, iarray_container_t *container, iarray_iter_t **itr)
+INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx, iarray_container_t *container, iarray_iter_write_t **itr)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(container);
     INA_VERIFY_NOT_NULL(itr);
 
-    *itr = (iarray_iter_t*)ina_mem_alloc(sizeof(iarray_iter_t));
+    *itr = (iarray_iter_write_t*)ina_mem_alloc(sizeof(iarray_iter_write_t));
     INA_RETURN_IF_NULL(itr);
     caterva_dims_t shape = caterva_new_dims(container->dtshape->shape, container->dtshape->ndim);
     int err = caterva_update_shape(container->catarr, shape);
@@ -204,7 +204,7 @@ INA_API(ina_rc_t) iarray_iter_new(iarray_context_t *ctx, iarray_container_t *con
 }
 
 /*
- * Function: iarray_iter_free
+ * Function: iarray_iter_write_free
  * -------------------------
  *   Free an iterator structure
  *
@@ -213,7 +213,7 @@ INA_API(ina_rc_t) iarray_iter_new(iarray_context_t *ctx, iarray_container_t *con
 *   return: INA_SUCCESS or an error code
  */
 
-INA_API(void) iarray_iter_free(iarray_iter_t *itr)
+INA_API(void) iarray_iter_write_free(iarray_iter_write_t *itr)
 {
     ina_mem_free(itr->index);
     ina_mem_free(itr->part);
@@ -227,14 +227,14 @@ INA_API(void) iarray_iter_free(iarray_iter_t *itr)
  */
 
 /*
- * Function: iarray_iter_part_init
+ * Function: iarray_iter_write_part_init
  * -------------------------------
  *   Set the iterator values to the first element
  *
  *   itr: an iterator
  */
 
-INA_API(void) iarray_iter_part_init(iarray_iter_part_t *itr)
+INA_API(void) iarray_iter_write_part_init(iarray_iter_write_part_t *itr)
 {
     itr->cont = 0;
     memset(itr->part, 0, itr->container->catarr->psize * itr->container->catarr->sc->typesize);
@@ -246,14 +246,14 @@ INA_API(void) iarray_iter_part_init(iarray_iter_part_t *itr)
 }
 
 /*
- * Function: iarray_iter_part_next
+ * Function: iarray_iter_write_part_next
  * -------------------------------
  *   Update the iterator to next element
  *
  *   itr: an iterator
  */
 
-INA_API(ina_rc_t) iarray_iter_part_next(iarray_iter_part_t *itr)
+INA_API(ina_rc_t) iarray_iter_write_part_next(iarray_iter_write_part_t *itr)
 {
     caterva_array_t *catarr = itr->container->catarr;
     int ndim = catarr->ndim;
@@ -347,7 +347,7 @@ INA_API(ina_rc_t) iarray_iter_part_next(iarray_iter_part_t *itr)
 }
 
 /*
- * Function: iarray_iter_part_finished
+ * Function: iarray_iter_write_part_finished
  * -----------------------------------
  *   Check if the iterator is finished
  *
@@ -356,13 +356,13 @@ INA_API(ina_rc_t) iarray_iter_part_next(iarray_iter_part_t *itr)
  *   return: 1 if iter is finished or 0 if not
  */
 
-INA_API(int) iarray_iter_part_finished(iarray_iter_part_t *itr)
+INA_API(int) iarray_iter_write_part_finished(iarray_iter_write_part_t *itr)
 {
     return itr->cont >= itr->container->catarr->esize / itr->container->catarr->psize;
 }
 
 /*
- * Function: iarray_iter_part_value
+ * Function: iarray_iter_write_part_value
  * --------------------------------
  *   Store in `val` parameter some variables of the actual part
  *
@@ -377,7 +377,7 @@ INA_API(int) iarray_iter_part_finished(iarray_iter_part_t *itr)
  *   return: INA_SUCCESS or an error code
  */
 
-INA_API(void) iarray_iter_part_value(iarray_iter_part_t *itr, iarray_iter_part_value_t *val)
+INA_API(void) iarray_iter_write_part_value(iarray_iter_write_part_t *itr, iarray_iter_read_part_value_t *val)
 {
     val->pointer = itr->pointer;
     val->part_index = itr->part_index;
@@ -387,7 +387,7 @@ INA_API(void) iarray_iter_part_value(iarray_iter_part_t *itr, iarray_iter_part_v
 }
 
 /*
- * Function: iarray_iter_part_new
+ * Function: iarray_iter_write_part_new
  * ------------------------------
  *   Create a new iterator
  *
@@ -398,12 +398,13 @@ INA_API(void) iarray_iter_part_value(iarray_iter_part_t *itr, iarray_iter_part_v
 *   return: INA_SUCCESS or an error code
  */
 
-INA_API(ina_rc_t) iarray_iter_part_new(iarray_context_t *ctx, iarray_container_t *container, iarray_iter_part_t **itr)
+INA_API(ina_rc_t) iarray_iter_write_part_new(iarray_context_t *ctx, iarray_container_t *container,
+                                             iarray_iter_write_part_t **itr)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(container);
     INA_VERIFY_NOT_NULL(itr);
-    *itr = (iarray_iter_part_t*)ina_mem_alloc(sizeof(iarray_iter_part_t));
+    *itr = (iarray_iter_write_part_t*)ina_mem_alloc(sizeof(iarray_iter_write_part_t));
     INA_RETURN_IF_NULL(itr);
     caterva_dims_t shape = caterva_new_dims(container->dtshape->shape, container->dtshape->ndim);
     int err = caterva_update_shape(container->catarr, shape);
@@ -422,7 +423,7 @@ INA_API(ina_rc_t) iarray_iter_part_new(iarray_context_t *ctx, iarray_container_t
 }
 
 /*
- * Function: iarray_iter_part_free
+ * Function: iarray_iter_write_part_free
  * -------------------------------
  *   Free an iterator structure
  *
@@ -431,7 +432,7 @@ INA_API(ina_rc_t) iarray_iter_part_new(iarray_context_t *ctx, iarray_container_t
 *   return: INA_SUCCESS or an error code
  */
 
-INA_API(void) iarray_iter_part_free(iarray_iter_part_t *itr)
+INA_API(void) iarray_iter_write_part_free(iarray_iter_write_part_t *itr)
 {
     ina_mem_free(itr->part_index);
     ina_mem_free(itr->elem_index);
@@ -709,10 +710,10 @@ INA_API(void) iarray_iter_read_free(iarray_iter_read_t *itr)
  */
 
 /*
- * Function: iarray_iter_block_read_init
+ * Function: iarray_iter_read_block_init
  */
 
-INA_API(void) iarray_iter_block_read_init(iarray_iter_block_read_t *itr)
+INA_API(void) iarray_iter_read_block_init(iarray_iter_read_block_t *itr)
 {
     for (int i = 0; i <IARRAY_DIMENSION_MAX; ++i) {
         itr->elem_index[i] = 0;
@@ -736,10 +737,10 @@ INA_API(void) iarray_iter_block_read_init(iarray_iter_block_read_t *itr)
 }
 
 /*
- * Function: iarray_iter_block_read_next
+ * Function: iarray_iter_read_block_next
  */
 
-INA_API(ina_rc_t) iarray_iter_block_read_next(iarray_iter_block_read_t *itr)
+INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr)
 {
     uint8_t ndim = itr->container->dtshape->ndim;
     caterva_array_t *catarr = itr->container->catarr;
@@ -786,10 +787,10 @@ INA_API(ina_rc_t) iarray_iter_block_read_next(iarray_iter_block_read_t *itr)
 }
 
 /*
- * Function: iarray_iter_block_read_finished
+ * Function: iarray_iter_read_block_finished
  */
 
-INA_API(int) iarray_iter_block_read_finished(iarray_iter_block_read_t *itr)
+INA_API(int) iarray_iter_read_block_finished(iarray_iter_read_block_t *itr)
 {
     uint64_t size = 1;
     for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
@@ -803,11 +804,11 @@ INA_API(int) iarray_iter_block_read_finished(iarray_iter_block_read_t *itr)
 }
 
 /*
- * Function: iarray_iter_block_read_value
+ * Function: iarray_iter_read_block_value
  */
 
-INA_API(void) iarray_iter_block_read_value(iarray_iter_block_read_t *itr,
-                                           iarray_iter_block_read_value_t *val)
+INA_API(void) iarray_iter_read_block_value(iarray_iter_read_block_t *itr,
+                                           iarray_iter_read_block_value_t *val)
 {
     val->pointer = itr->pointer;
     val->block_index = itr->block_index;
@@ -817,16 +818,16 @@ INA_API(void) iarray_iter_block_read_value(iarray_iter_block_read_t *itr,
 }
 
 /*
- * Function: iarray_iter_block_read_new
+ * Function: iarray_iter_read_block_new
  */
 
-INA_API(ina_rc_t) iarray_iter_block_read_new(iarray_context_t *ctx, iarray_container_t *container,
-                                             iarray_iter_block_read_t **itr, uint64_t *blockshape)
+INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx, iarray_container_t *container,
+                                             iarray_iter_read_block_t **itr, uint64_t *blockshape)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(container);
     INA_VERIFY_NOT_NULL(itr);
-    *itr = (iarray_iter_block_read_t*) ina_mem_alloc(sizeof(iarray_iter_block_read_t));
+    *itr = (iarray_iter_read_block_t*) ina_mem_alloc(sizeof(iarray_iter_read_block_t));
     INA_RETURN_IF_NULL(itr);
 
     (*itr)->ctx = ctx;
@@ -851,10 +852,10 @@ INA_API(ina_rc_t) iarray_iter_block_read_new(iarray_context_t *ctx, iarray_conta
 }
 
 /*
- * Function: iarray_iter_block_read_free
+ * Function: iarray_iter_read_block_free
  */
 
-INA_API(void) iarray_iter_block_read_free(iarray_iter_block_read_t *itr)
+INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr)
 {
     ina_mem_free(itr->shape);
     ina_mem_free(itr->block_shape);

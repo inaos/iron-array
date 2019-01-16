@@ -32,13 +32,13 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
     iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x);
 
     // Start Iterator
-    iarray_iter_t *I;
-    iarray_iter_new(ctx, c_x, &I);
+    iarray_iter_write_t *I;
+    iarray_iter_write_new(ctx, c_x, &I);
 
-    for (iarray_iter_init(I); !iarray_iter_finished(I); iarray_iter_next(I)) {
+    for (iarray_iter_write_init(I); !iarray_iter_write_finished(I); iarray_iter_write_next(I)) {
 
-        iarray_iter_value_t val;
-        iarray_iter_value(I, &val);
+        iarray_iter_write_value_t val;
+        iarray_iter_write_value(I, &val);
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double value = (double) val.nelem;
@@ -49,7 +49,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
         }
     }
 
-    iarray_iter_free(I);
+    iarray_iter_write_free(I);
 
     // Assert iterator reading it
 
@@ -70,7 +70,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
         }
     }
 
-    iarray_iter_free(I2);
+    iarray_iter_read_free(I2);
 
     iarray_container_free(ctx, &c_x);
     return INA_SUCCESS;
