@@ -56,12 +56,12 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
 
     INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
-    iarray_iter_t *I;
-    iarray_iter_new(ctx, *container, &I);
+    iarray_iter_write_t *I;
+    iarray_iter_write_new(ctx, *container, &I);
 
-    for (iarray_iter_init(I); !iarray_iter_finished(I); iarray_iter_next(I)) {
-        iarray_iter_value_t val;
-        iarray_iter_value(I, &val);
+    for (iarray_iter_write_init(I); !iarray_iter_write_finished(I); iarray_iter_write_next(I)) {
+        iarray_iter_write_value_t val;
+        iarray_iter_write_value(I, &val);
 
         uint64_t i = 0;
         uint64_t inc = 1;
@@ -108,12 +108,12 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
 
     INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
-    iarray_iter_t *I;
-    iarray_iter_new(ctx, *container, &I);
+    iarray_iter_write_t *I;
+    iarray_iter_write_new(ctx, *container, &I);
 
-    for (iarray_iter_init(I); !iarray_iter_finished(I); iarray_iter_next(I)) {
-        iarray_iter_value_t val;
-        iarray_iter_value(I, &val);
+    for (iarray_iter_write_init(I); !iarray_iter_write_finished(I); iarray_iter_write_next(I)) {
+        iarray_iter_write_value_t val;
+        iarray_iter_write_value(I, &val);
 
         uint64_t i = 0;
         uint64_t inc = 1;
