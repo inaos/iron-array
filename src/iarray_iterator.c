@@ -113,7 +113,7 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
 
     // check if a part is filled totally and append it
 
-    if (itr->cont_part_elem  == itr->bsize - 1) {
+    if (itr->cont_part_elem  == itr->bsize) {
         int err = blosc2_schunk_append_buffer(catarr->sc, itr->part, catarr->psize * catarr->sc->typesize);
         if (err < 0) {
             return INA_ERROR(INA_ERR_FAILED);
@@ -123,11 +123,11 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
         uint64_t inc = 1;
         itr->bsize = 1;
 
-        for (int i = ndim - 1; i >= 0; --i) {
+        for (int i = 0; i < ndim; ++i) {
             itr->part_index[i] = itr->cont_part % (inc * (catarr->eshape[i] / catarr->pshape[i])) / inc;
             inc *= (catarr->eshape[i] / catarr->pshape[i]);
-            if ((itr->part_index[i] + 1) * catarr->pshape[i] > catarr->shape[i]) {
-                itr->bshape[i] = catarr->shape[i] - itr->part_index[i] * catarr->pshape[i];
+            if ((itr->part_index[i] + 1) * catarr->pshape[i] > catarr->eshape[i]) {
+                itr->bshape[i] = catarr->eshape[i] - itr->part_index[i] * catarr->pshape[i];
             } else {
                 itr->bshape[i] = catarr->pshape[i];
             }
@@ -144,30 +144,18 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
     itr->cont += 1;
 
     uint64_t ind_part_elem[IARRAY_DIMENSION_MAX];
-    uint64_t cont_pointer = 0;
-
     uint64_t inc = 1;
     uint64_t inc_s = 1;
-    uint64_t inc_p = 1;
-
     itr->nelem = 0;
 
     for (int i = ndim - 1; i >= 0; --i) {
         ind_part_elem[i] = itr->cont_part_elem % (inc * itr->bshape[i]) / inc;
-        cont_pointer += ind_part_elem[i] * inc_p;
         itr->index[i] = ind_part_elem[i] + itr->part_index[i] * catarr->pshape[i];
         itr->nelem += itr->index[i] * inc_s;
         inc *= itr->bshape[i];
-        inc_p *= catarr->pshape[i];
         inc_s *= catarr->shape[i];
     }
 
-    // set element pointer
-    if (itr->container->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        itr->pointer = (void *)&((double*)itr->part)[cont_pointer];
-    } else{
-        itr->pointer = (void *)&((float*)itr->part)[cont_pointer];
-    }
     return INA_SUCCESS;
 }
 
