@@ -21,57 +21,6 @@
  */
 
 /*
- * Function: _update_iter_index (private)
- * -------------------------------------
- *   (internal) Update the part_index and the nelem of an iterator
- *
- *   itr: an iterator
- */
-
-void _update_iter_index(iarray_iter_write_t *itr)
-{
-    caterva_array_t *catarr = itr->container->catarr;
-
-    int ndim = catarr->ndim;
-
-    uint64_t cont2 = itr->cont % catarr->psize; // element position in the part
-
-    // set element part_index (in the part)
-    itr->index[ndim - 1] = cont2 % catarr->pshape[ndim-1];
-    uint64_t inc = catarr->pshape[ndim - 1];
-    for (int i = ndim - 2; i >= 0; --i) {
-        itr->index[i] = cont2 % (inc * catarr->pshape[i]) / inc;
-        inc *= catarr->pshape[i];
-    }
-
-    // set element part_index (in entire container)
-    uint64_t npart = itr->cont / catarr->psize;
-    uint64_t aux_npart[CATERVA_MAXDIM];
-    aux_npart[ndim - 1] = catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1];
-    for (int k = ndim - 2; k >= 0; --k) {
-        aux_npart[k] = aux_npart[k + 1] * (catarr->eshape[k] / catarr->pshape[k]);
-    }
-    for (int j = 0; j < ndim; ++j) {
-        itr->index[j] += npart % aux_npart[j] / (aux_npart[j] / (catarr->eshape[j] / catarr->pshape[j])) * catarr->pshape[j];
-    }
-
-    // set element pointer
-    if (itr->container->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        itr->pointer = (void *)&((double*)itr->part)[cont2];
-    } else{
-        itr->pointer = (void *)&((float*)itr->part)[cont2];
-    }
-
-    // set element nelem
-    itr->nelem = 0;
-    inc = 1;
-    for (int i = ndim - 1; i >= 0; --i) {
-        itr->nelem += itr->index[i] * inc;
-        inc *= itr->container->dtshape->shape[i];
-    }
-}
-
-/*
  * Function: iarray_iter_write_init
  * -------------------------
  *   Set the iterator values to the first element
