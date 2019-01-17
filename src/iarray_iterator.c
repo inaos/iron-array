@@ -133,8 +133,6 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
             }
             itr->bsize *= itr->bshape[i];
         }
-
-
         memset(itr->part, 0, catarr->psize * catarr->sc->typesize);
     } else {
         itr->cont_part_elem += 1;
@@ -162,12 +160,8 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
         inc_s *= catarr->shape[i];
     }
 
-    // set element pointer
-    if (itr->container->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        itr->pointer = (void *)&((double*)itr->part)[cont_pointer];
-    } else{
-        itr->pointer = (void *)&((float*)itr->part)[cont_pointer];
-    }
+    itr->pointer = (void *)&(itr->part)[cont_pointer * catarr->sc->typesize];
+
     return INA_SUCCESS;
 }
 
