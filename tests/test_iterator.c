@@ -40,9 +40,6 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
         iarray_iter_write_value_t val;
         iarray_iter_write_value(I, &val);
 
-        printf("%llu\n", val.nelem);
-
-        /*
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double value = (double) val.nelem;
             memcpy(val.pointer, &value, type_size);
@@ -50,7 +47,6 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
             float value = (float) val.nelem;
             memcpy(val.pointer, &value, type_size);
         }
-        */
     }
 
     iarray_iter_write_free(I);
@@ -104,13 +100,13 @@ INA_TEST_FIXTURE(iterator, double_2) {
     size_t type_size = sizeof(double);
 
     uint8_t ndim = 2;
-    uint64_t shape[] = {10, 10};
-    uint64_t pshape[] = {5, 5};
+    uint64_t shape[] = {5, 5};
+    uint64_t pshape[] = {3, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
 
-/*
+
 INA_TEST_FIXTURE(iterator, float_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
@@ -121,6 +117,7 @@ INA_TEST_FIXTURE(iterator, float_2) {
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
+
 
 INA_TEST_FIXTURE(iterator, double_5) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
@@ -143,4 +140,3 @@ INA_TEST_FIXTURE(iterator, float_7) {
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
-*/
