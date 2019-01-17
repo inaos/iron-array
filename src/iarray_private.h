@@ -76,6 +76,11 @@ typedef struct iarray_iter_write_s {
     uint64_t *index;
     uint64_t nelem;
     uint64_t cont;
+    uint64_t cont_part;
+    uint64_t cont_part_elem;
+    uint64_t *bshape;
+    uint64_t bsize;
+    uint64_t *part_index;
 } iarray_iter_write_t;
 
 typedef struct iarray_iter_write_part_s {

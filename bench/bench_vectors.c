@@ -64,11 +64,11 @@ int main(int argc, char** argv)
     const char *eval_method = NULL;
 
     INA_OPTS(opt,
-        INA_OPT_INT("f", "eval-flag", 1, "EVAL_BLOCK = 1, EVAL_CHUNK = 2"),
-        INA_OPT_FLAG("i", "iter", "Use iterator for filling values"),
-        INA_OPT_FLAG("I", "iter-part", "Use partition iterator for filling values"),
-        INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
-        INA_OPT_FLAG("r", "remove", "Remove the previous persistent containers (only valid w/ -p)")
+             INA_OPT_INT("f", "eval-flag", 1, "EVAL_BLOCK = 1, EVAL_CHUNK = 2"),
+             INA_OPT_FLAG("i", "iter", "Use iterator for filling values"),
+             INA_OPT_FLAG("I", "iter-part", "Use partition iterator for filling values"),
+             INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
+             INA_OPT_FLAG("r", "remove", "Remove the previous persistent containers (only valid w/ -p)")
     );
 
     if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
@@ -294,11 +294,11 @@ int main(int argc, char** argv)
     iarray_container_info(con_out, &nbytes, &cbytes);
     printf("\n");
     printf("Time for computing and filling OUT values using iarray (%s):  %.3g s, %.1f MB/s\n",
-        eval_method, elapsed_sec, nbytes / (elapsed_sec * _IARRAY_SIZE_MB));
+           eval_method, elapsed_sec, nbytes / (elapsed_sec * _IARRAY_SIZE_MB));
     nbytes_mb = ((double)nbytes / (double)_IARRAY_SIZE_MB);
     cbytes_mb = ((double)cbytes / (double)_IARRAY_SIZE_MB);
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
-            nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
+           nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
 
     printf("Checking that the outcome of the expression is correct...");
     fflush(stdout);
