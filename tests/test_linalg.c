@@ -19,10 +19,11 @@ static ina_rc_t test_gemm(iarray_context_t *ctx,
                           iarray_container_t *c_x,
                           iarray_container_t *c_y,
                           iarray_container_t *c_out,
+                          uint64_t *bshape,
                           iarray_container_t *c_res,
                           double tol)
 {
-    INA_TEST_ASSERT_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y, c_out, IARRAY_OPERATOR_GENERAL));
+    INA_TEST_ASSERT_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y, c_out, bshape, IARRAY_OPERATOR_GENERAL));
     if (iarray_container_almost_equal(c_out, c_res, tol) == INA_ERR_FAILED) {
         return INA_ERROR(INA_ERR_FAILED);
     }
@@ -32,10 +33,11 @@ static ina_rc_t test_gemm(iarray_context_t *ctx,
 static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
                                      iarray_data_type_t dtype,
                                      size_t type_size,
-                                     uint64_t M,
-                                     uint64_t K,
-                                     uint64_t N,
-                                     int32_t P)
+                                     uint64_t *shape_x,
+                                     uint64_t *pshape_x,
+                                     uint64_t *shape_y,
+                                     uint64_t *pshape_y,
+                                     uint64_t *bshape)
  {
     void *buffer_x;
     void *buffer_y;
@@ -45,27 +47,27 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
     size_t buffer_r_len;
     double tol;
 
-    buffer_x_len = type_size * M * K;
-    buffer_y_len = type_size * K * N;
-    buffer_r_len = type_size * M * N;
+    buffer_x_len = type_size * shape_x[0] * shape_x[1];
+    buffer_y_len = type_size * shape_y[0] * shape_y[1];
+    buffer_r_len = type_size * shape_x[0] * shape_y[1];
     buffer_x = ina_mem_alloc(buffer_x_len);
     buffer_y = ina_mem_alloc(buffer_y_len);
     buffer_r = ina_mem_alloc(buffer_r_len);
 
     if (type_size == sizeof(float)) {
         tol = 1e-06;
-        ffill_buf((float *) buffer_x, M * K);
-        ffill_buf((float *) buffer_y, K * N);
-        cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int32_t) M, (int32_t) N, (int32_t) K, 1.0,
-                    (float *) buffer_x, (int32_t) K, (float *) buffer_y, (int32_t) N, 0.0, (float *) buffer_r,
-                    (int32_t) N);
+        ffill_buf((float *) buffer_x, shape_x[0] * shape_x[1]);
+        ffill_buf((float *) buffer_y, shape_y[0] * shape_y[1]);
+        cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int32_t) shape_x[0], (int32_t) shape_y[1],
+                    (int32_t) shape_x[1], 1.0, (float *) buffer_x, (int32_t) shape_x[1], (float *) buffer_y,
+                    (int32_t) shape_y[1], 0.0, (float *) buffer_r, (int32_t) shape_y[1]);
     } else {
         tol = 1e-14;
-        dfill_buf((double *) buffer_x, M * K);
-        dfill_buf((double *) buffer_y, K * N);
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int32_t) M, (int32_t) N, (int32_t) K, 1.0,
-                    (double *) buffer_x, (int32_t) K, (double *) buffer_y, (int32_t) N, 0.0, (double *) buffer_r,
-                    (int32_t) N);
+        dfill_buf((double *) buffer_x, shape_x[0] * shape_x[1]);
+        dfill_buf((double *) buffer_y, shape_y[0] * shape_y[1]);
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int32_t) shape_x[0], (int32_t) shape_y[1],
+                    (int32_t) shape_x[1], 1.0, (double *) buffer_x, (int32_t) shape_x[1], (double *) buffer_y,
+                    (int32_t) shape_y[1], 0.0, (double *) buffer_r, (int32_t) shape_y[1]);
     }
 
     iarray_dtshape_t xshape;
@@ -75,31 +77,32 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
 
     xshape.dtype = dtype;
     xshape.ndim = 2;
-    xshape.shape[0] = M;
-    xshape.shape[1] = K;
-    xshape.pshape[0] = (uint64_t) P;
-    xshape.pshape[1] = (uint64_t) P;
+     for (int i = 0; i < 2; ++i) {
+         xshape.shape[i] = shape_x[i];
+         xshape.pshape[i] = pshape_x[i];
+     }
+
 
     yshape.dtype = dtype;
     yshape.ndim = 2;
-    yshape.shape[0] = K;
-    yshape.shape[1] = N;
-    yshape.pshape[0] = (uint64_t) P;
-    yshape.pshape[1] = (uint64_t) P;
+     for (int i = 0; i < 2; ++i) {
+         yshape.shape[i] = shape_y[i];
+         yshape.pshape[i] = pshape_y[i];
+     }
 
     oshape.dtype = dtype;
     oshape.ndim = 2;
-    oshape.shape[0] = M;
-    oshape.shape[1] = N;
-    oshape.pshape[0] = (uint64_t) P;
-    oshape.pshape[1] = (uint64_t) P;
+    oshape.shape[0] = shape_x[0];
+    oshape.shape[1] = shape_y[1];
+    oshape.pshape[0] = (uint64_t) bshape[0];
+    oshape.pshape[1] = (uint64_t) bshape[1];
 
     rshape.dtype = dtype;
     rshape.ndim = 2;
-    rshape.shape[0] = M;
-    rshape.shape[1] = N;
-    rshape.pshape[0] = (uint64_t) P;
-    rshape.pshape[1] = (uint64_t) P;
+    rshape.shape[0] = shape_x[0];
+    rshape.shape[1] = shape_y[1];
+    rshape.pshape[0] = (uint64_t) bshape[0];
+    rshape.pshape[1] = (uint64_t) bshape[1];
 
     iarray_container_t *c_x;
     iarray_container_t *c_y;
@@ -111,7 +114,7 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &rshape, buffer_r, buffer_r_len, NULL, 0, &c_res));
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &oshape, NULL, 0, &c_out));
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(ctx, c_x, c_y, c_out, c_res, tol));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(ctx, c_x, c_y, c_out, bshape, c_res, tol));
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
@@ -132,7 +135,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx,
                           iarray_container_t *c_res,
                           double tol)
 {
-    iarray_linalg_matmul(ctx, c_x, c_y, c_out, IARRAY_OPERATOR_GENERAL);
+    iarray_linalg_matmul(ctx, c_x, c_y, c_out, c_x->dtshape->pshape, IARRAY_OPERATOR_GENERAL);
     if (iarray_container_almost_equal(c_out, c_res, tol) == INA_ERR_FAILED) {
         return INA_ERROR(INA_ERR_FAILED);
     }
@@ -255,25 +258,25 @@ INA_TEST_FIXTURE(linalg_gemm, double_data) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    uint64_t M = 1230;
-    uint64_t K = 3456;
-    uint64_t N = 2856;
-    int32_t P = 123;
+    uint64_t shape_x[] = {1230, 3456};
+    uint64_t shape_y[] = {3456, 2856};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, M, K, N, P));
+    uint64_t bshape[] = {123, 123};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, shape_x, bshape,
+                                                 shape_y, bshape, bshape));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, float_data) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
 
-    uint64_t M = 2569;
-    uint64_t K = 2345;
-    uint64_t N = 3453;
-    int32_t P = 100;
+    uint64_t shape_x[] = {2569, 2345};
+    uint64_t shape_y[] = {2345, 3453};
+    uint64_t bshape[] = {100, 100};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, M, K, N, P));
-
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, shape_x, bshape,
+                                                 shape_y, bshape, bshape));
 }
 
 INA_TEST_DATA(linalg_gemv) {
