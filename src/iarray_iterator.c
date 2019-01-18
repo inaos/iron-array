@@ -199,6 +199,8 @@ INA_API(void) iarray_iter_write_free(iarray_iter_write_t *itr)
 {
     ina_mem_free(itr->index);
     ina_mem_free(itr->part);
+    ina_mem_free(itr->part_index);
+    ina_mem_free(itr->bshape);
     ina_mem_free(itr);
 }
 
@@ -704,8 +706,10 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx, iarray_container_t
 
 INA_API(void) iarray_iter_read_free(iarray_iter_read_t *itr)
 {
-    ina_mem_free(itr->part);
     ina_mem_free(itr->index);
+    ina_mem_free(itr->part);
+    ina_mem_free(itr->part_index);
+    ina_mem_free(itr->bshape);
     ina_mem_free(itr);
 }
 
