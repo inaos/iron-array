@@ -458,29 +458,30 @@ void _iarray_iter_matmul_init(iarray_iter_matmul_t *itr)
 
 void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr)
 {
-    uint64_t P = itr->container1->catarr->pshape[0];
-    uint64_t M = itr->container1->catarr->eshape[0];
-    uint64_t N = itr->container2->catarr->eshape[1];
-    uint64_t K = itr->container1->catarr->eshape[1];
+    uint64_t B0 = itr->B0;
+    uint64_t B1 = itr->B1;
+    uint64_t M = itr->M;
+    uint64_t N = itr->N;
+    uint64_t K = itr->K;
 
     itr->cont++;
 
     uint64_t n, k, m;
 
     if (itr->container2->catarr->ndim == 1) {
-        m = itr->cont / ((K/P)) % (M/P);
-        k = itr->cont % (K/P);
+        m = itr->cont / ((K/B1)) % (M/B0);
+        k = itr->cont % (K/B1);
 
-        itr->npart1 = (m * (K/P) + k);
+        itr->npart1 = (m * (K/B1) + k);
         itr->npart2 = k;
 
     } else {
-        m = itr->cont / ((K/P) * (N/P)) % (M/P);
-        k = itr->cont % (K/P);
-        n = itr->cont / ((K/P)) % (N/P);
+        m = itr->cont / ((K/B1) * (N/B0)) % (M/B0);
+        k = itr->cont % (K/B1);
+        n = itr->cont / ((K/B1)) % (N/B0);
 
-        itr->npart1 = (m * (K/P) + k);
-        itr->npart2 = (k * (N/P) + n);
+        itr->npart1 = (m * (K/B1) + k);
+        itr->npart2 = (k * (N/B0) + n);
     }
 }
 
@@ -496,20 +497,17 @@ void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr)
 
 int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr)
 {
-    uint64_t P = itr->container1->catarr->pshape[0];
-    uint64_t M = itr->container1->catarr->eshape[0];
-    uint64_t N = itr->container2->catarr->eshape[1];
-    uint64_t K = itr->container1->catarr->eshape[1];
-
-    if (itr->container1->catarr->ndim == 1) {
-        return itr->cont >= (M/P) * (N/P);
-    }
+    uint64_t B0 = itr->B0;
+    uint64_t B1 = itr->B1;
+    uint64_t M = itr->M;
+    uint64_t N = itr->N;
+    uint64_t K = itr->K;
 
     if (itr->container2->catarr->ndim == 1) {
-        return itr->cont >= (M/P) * (K/P);
+        return itr->cont >= (M/B0) * (K/B1);
     }
 
-    return itr->cont >= (M/P) * (N/P) * (K/P);
+    return itr->cont >= (M/B0) * (N/B0) * (K/B1);
 }
 
 /*
@@ -524,20 +522,49 @@ int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr)
  */
 
 ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, iarray_container_t *c2,
-                                 iarray_iter_matmul_t **itr)
+                                 uint64_t *bshape, iarray_iter_matmul_t **itr)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(c1);
     INA_VERIFY_NOT_NULL(c2);
+    INA_VERIFY_NOT_NULL(bshape);
     INA_VERIFY_NOT_NULL(itr);
+
+    // Verify that block shape is < than container shapes
+    for (int i = 0; i < c1->dtshape->ndim; ++i) {
+        if (c1->dtshape->shape[i] <= bshape[i]) {
+            return INA_ERROR(INA_ERR_FAILED);
+        }
+    }
+    for (int i = 0; i < c2->dtshape->ndim; ++i) {
+        if (c2->dtshape->shape[i] <= bshape[c1->dtshape->ndim - 1 - i]) {
+            return INA_ERROR(INA_ERR_FAILED);
+        }
+    }
 
     *itr = (iarray_iter_matmul_t*)ina_mem_alloc(sizeof(iarray_iter_matmul_t));
     INA_RETURN_IF_NULL(itr);
-
     (*itr)->ctx = ctx;
     (*itr)->container1 = c1;
     (*itr)->container2 = c2;
+    (*itr)->B0 = bshape[0];
+    (*itr)->B1 = bshape[1];
+    if (c1->dtshape->shape[0] % bshape[0] == 0) {
+        (*itr)->M = c1->dtshape->shape[0];
+    } else {
+        (*itr)->M = (c1->dtshape->shape[0] / bshape[0] + 1) * bshape[0];
+    }
+    if (c1->dtshape->shape[1] % bshape[1] == 0) {
+        (*itr)->K = c1->dtshape->shape[1];
+    } else {
+        (*itr)->K = (c1->dtshape->shape[1] / bshape[1] + 1) * bshape[1];
+    }
 
+    if (c2->dtshape->shape[1] % bshape[1] == 0) {
+        (*itr)->N = c2->dtshape->shape[1];
+    } else {
+        (*itr)->N = (c2->dtshape->shape[1] / bshape[1] + 1) * bshape[1];
+    }
     return INA_SUCCESS;
 }
 

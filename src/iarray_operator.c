@@ -33,8 +33,8 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint8_t *b_block = malloc(p_size);
     uint8_t *c_block = malloc(p_size);
 
-    iarray_iter_matmul_t *I;
-    _iarray_iter_matmul_new(ctx, a, b, &I);
+    iarray_iter_matmul_t *I;    _iarray_iter_matmul_new(ctx, a, b, a->catarr->pshape, &I);
+
 
     memset(c_block, 0, p_size);
     for (_iarray_iter_matmul_init(I); !_iarray_iter_matmul_finished(I); _iarray_iter_matmul_next(I)) {
@@ -82,7 +82,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint8_t *c_block = malloc(p_vsize);
 
     iarray_iter_matmul_t *I;
-    _iarray_iter_matmul_new(ctx, a, b, &I);
+    _iarray_iter_matmul_new(ctx, a, b, a->catarr->pshape, &I);
 
     memset(c_block, 0, p_vsize);
     for (_iarray_iter_matmul_init(I); !_iarray_iter_matmul_finished(I); _iarray_iter_matmul_next(I)) {
