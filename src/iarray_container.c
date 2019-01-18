@@ -183,56 +183,75 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     if(a->dtshape->dtype != b->dtshape->dtype){
         return INA_ERR_FAILED;
     }
-    if(a->catarr->size != b->catarr->size) {
+    if(a->dtshape->ndim != b->dtshape->ndim) {
         return INA_ERR_FAILED;
     }
-    size_t size = a->catarr->size;
+    for (int i = 0; i < a->dtshape->ndim; ++i) {
+        INA_TEST_ASSERT_EQUAL_UINT64(a->dtshape->shape[i], b->dtshape->shape[i]);
+    }
 
-    uint8_t *buf_a = malloc(a->catarr->size * a->catarr->sc->typesize);
-    caterva_to_buffer(a->catarr, buf_a);
-    uint8_t *buf_b = malloc(b->catarr->size * b->catarr->sc->typesize);
-    caterva_to_buffer(b->catarr, buf_b);
+    ina_rc_t retcode = INA_SUCCESS;
+    int dtype = a->dtshape->dtype;
+    int ndim = a->dtshape->ndim;
 
-    if(a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        double *b_a = (double *)buf_a;
-        double *b_b = (double *)buf_b;
+    // For the blocksize, choose the maximum of the partition shapes
+    uint64_t *blocksize = malloc(ndim * sizeof(uint64_t));
+    for (int i = 0; i < ndim; ++i) {
+        blocksize[i] = MAX(a->dtshape->pshape[i], b->dtshape->pshape[i]);
+    }
 
-        for (size_t i = 0; i < size; ++i) {
-            double vdiff = fabs((b_a[i] - b_b[i]) / b_a[i]);
-            if (vdiff > tol) {
-                printf("%f, %f\n", b_a[i], b_b[i]);
-                printf("Values differ in (%lu nelem) (diff: %f)\n", i, vdiff);
-                free(buf_a);
-                free(buf_b);
-                return INA_ERR_FAILED;
+    iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
+    iarray_context_t *ctx = NULL;
+    iarray_context_new(&cfg, &ctx);
+    iarray_iter_read_block_t *iter_a;
+    iarray_iter_read_block_new(ctx, a, &iter_a, blocksize);
+    iarray_iter_read_block_t *iter_b;
+    iarray_iter_read_block_new(ctx, b, &iter_b, blocksize);
+
+    for (iarray_iter_read_block_init(iter_a), iarray_iter_read_block_init(iter_b);
+         !iarray_iter_read_block_finished(iter_a);
+         iarray_iter_read_block_next(iter_a), iarray_iter_read_block_next(iter_b)) {
+
+        iarray_iter_read_block_value_t val_a;
+        iarray_iter_read_block_value(iter_a, &val_a);
+        iarray_iter_read_block_value_t val_b;
+        iarray_iter_read_block_value(iter_b, &val_b);
+
+        uint64_t block_size = 1;
+        for (int i = 0; i < ndim; ++i) {
+            block_size *= val_a.block_shape[i];
+        }
+
+        if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
+            for (uint64_t i = 0; i < block_size; ++i) {
+                double vdiff = fabs(((double *)val_a.pointer)[i] - ((double *)val_b.pointer)[i]) / ((double *)val_a.pointer)[i];
+                if (vdiff > tol) {
+                    printf("%f, %f\n", ((double *)val_a.pointer)[i], ((double *)val_b.pointer)[i]);
+                    printf("Values differ in (%llu nelem) (diff: %f)\n", i, vdiff);
+                    retcode = INA_ERR_FAILED;
+                    goto failed;
+                }
             }
         }
-        free(buf_a);
-        free(buf_b);
-        return true;
-    }
-    else if(a->dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        float *b_a = (float *)buf_a;
-        float *b_b = (float *)buf_b;
-
-        for (size_t i = 0; i < size; ++i) {
-            double vdiff = fabs((double)(b_a[i] - b_b[i]) / b_a[i]);
-            if (vdiff > tol) {
-                printf("%f, %f\n", b_a[i], b_b[i]);
-                printf("Values differ in (%lu nelem) (diff: %f)\n", i, vdiff);
-                free(buf_a);
-                free(buf_b);
-                return INA_ERR_FAILED;
+        else {
+            for (uint64_t i = 0; i < block_size; ++i) {
+                double vdiff = fabs(((double *)val_a.pointer)[i] - ((double *)val_b.pointer)[i]) / ((double *)val_a.pointer)[i];
+                if (vdiff > tol) {
+                    printf("%f, %f\n", ((double *)val_a.pointer)[i], ((double *)val_b.pointer)[i]);
+                    printf("Values differ in (%llu nelem) (diff: %f)\n", i, vdiff);
+                    retcode = INA_ERR_FAILED;
+                    goto failed;
+                }
             }
         }
-        free(buf_a);
-        free(buf_b);
-        return INA_SUCCESS;
     }
-    printf("Data type is not supported");
-    free(buf_a);
-    free(buf_b);
-    return INA_ERR_FAILED;
+
+failed:
+    iarray_iter_read_block_free(iter_a);
+    iarray_iter_read_block_free(iter_b);
+    free(blocksize);
+
+    return retcode;
 }
 
 INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container)
