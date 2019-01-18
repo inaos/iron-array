@@ -24,9 +24,26 @@ We use inac cmake build-system.
          mkdir build
          cd build
 
-* Invoke CMAKE, we have to define the generator as well as the build-type 
+* Invoke CMAKE, we have to define the generator as well as the build-type
 
          cmake -G"Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Debug ..
+         cmake -G"Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release ..
+
+#### Mac
+
+* INAC build setup
+    * Make sure that you have a configured repository.txt file in ~/.inaos
+    * Also you'll need a directory under ~/INAOS (can be empty)
+
+* Create a build folder
+
+         mkdir build
+         cd build
+
+* Invoke CMAKE, we have to define the build-type
+
+         cmake -DCMAKE_BUILD_TYPE=Debug ..
+         cmake -DCMAKE_BUILD_TYPE=Release ..
 
 #### Linux
 
@@ -39,10 +56,10 @@ We use inac cmake build-system.
          mkdir build
          cd build
 
-* Invoke CMAKE, we have to define the generator as well as the build-type 
+* Invoke CMAKE, we have to define the build-type, but only two types are supported
 
-         cmake -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug ..
-
+         cmake -DCMAKE_BUILD_TYPE=Debug ..
+         cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 
 ### Limitations
 
