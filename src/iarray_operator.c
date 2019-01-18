@@ -16,28 +16,53 @@
 
 
 
-static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
+static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c,
+                             uint64_t *bshape) {
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     caterva_update_shape(c->catarr, shape);
 
     const int32_t P = (int32_t) a->catarr->pshape[0];
-    uint64_t M = a->catarr->eshape[0];
-    uint64_t K = a->catarr->eshape[1];
-    uint64_t N = b->catarr->eshape[1];
+    uint64_t B0 = bshape[0];
+    uint64_t B1 = bshape[1];
 
-    uint64_t p_size = (uint64_t) P * P * a->catarr->sc->typesize;
+    uint64_t M, N, K;
+
+    if (a->dtshape->shape[0] % bshape[0] == 0) {
+        M = a->dtshape->shape[0];
+    } else {
+        M = (a->dtshape->shape[0] / bshape[0] + 1) * bshape[0];
+    }
+    if (a->dtshape->shape[1] % bshape[1] == 0) {
+        K = a->dtshape->shape[1];
+    } else {
+        K = (a->dtshape->shape[1] / bshape[1] + 1) * bshape[1];
+    }
+
+    if (b->dtshape->shape[1] % bshape[1] == 0) {
+        N = b->dtshape->shape[1];
+    } else {
+        N = (b->dtshape->shape[1] / bshape[1] + 1) * bshape[1];
+    }
+
+    uint64_t p_size = (uint64_t) B0 * B1 * a->catarr->sc->typesize;
     int dtype = a->dtshape->dtype;
 
     uint8_t *a_block = malloc(p_size);
     uint8_t *b_block = malloc(p_size);
     uint8_t *c_block = malloc(p_size);
 
-    iarray_iter_matmul_t *I;    _iarray_iter_matmul_new(ctx, a, b, a->catarr->pshape, &I);
-
+    iarray_iter_matmul_t *I;
+    _iarray_iter_matmul_new(ctx, a, b, a->catarr->pshape, &I);
 
     memset(c_block, 0, p_size);
+
     for (_iarray_iter_matmul_init(I); !_iarray_iter_matmul_finished(I); _iarray_iter_matmul_next(I)) {
+        uint64_t start[IARRAY_DIMENSION_MAX];
+        uint64_t stop[IARRAY_DIMENSION_MAX];
+
+        // iarray_slice_buffer(ctx, a, start, stop, a_block, p_size);
+        // iarray_slice_buffer(ctx, a, start, stop, a_block, p_size);
 
         int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)I->npart1, a_block, p_size);
         int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)I->npart2, b_block, p_size);
@@ -62,7 +87,8 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     return INA_SUCCESS;
 }
 
-static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c) {
+static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c,
+                             uint64_t *bshape) {
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     caterva_update_shape(c->catarr, shape);
@@ -230,6 +256,7 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
                                        iarray_container_t *a,
                                        iarray_container_t *b,
                                        iarray_container_t *c,
+                                       uint64_t *bshape,
                                        iarray_operator_hint_t hint)
 {
     /* FIXME: handle special shapes */
@@ -237,10 +264,10 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
         return INA_ERR_INVALID_ARGUMENT;
     }
     if (b->dtshape->ndim == 1) {
-        return _iarray_gemv(ctx, a, b, c);
+        return _iarray_gemv(ctx, a, b, c, bshape);
     }
     else if (b->dtshape->ndim == 2) {
-        return _iarray_gemm(ctx, a, b, c);
+        return _iarray_gemm(ctx, a, b, c, bshape);
     }
     else {
         return INA_ERR_INVALID_ARGUMENT;
