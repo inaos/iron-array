@@ -58,14 +58,47 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     memset(c_block, 0, p_size);
 
     for (_iarray_iter_matmul_init(I); !_iarray_iter_matmul_finished(I); _iarray_iter_matmul_next(I)) {
-        uint64_t start[IARRAY_DIMENSION_MAX];
-        uint64_t stop[IARRAY_DIMENSION_MAX];
+        uint64_t start_a[IARRAY_DIMENSION_MAX];
+        uint64_t stop_a[IARRAY_DIMENSION_MAX];
+        uint64_t start_b[IARRAY_DIMENSION_MAX];
+        uint64_t stop_b[IARRAY_DIMENSION_MAX];
 
-        // iarray_slice_buffer(ctx, a, start, stop, a_block, p_size);
-        // iarray_slice_buffer(ctx, a, start, stop, a_block, p_size);
+        uint64_t inc_a = 1;
+        uint64_t inc_b = 1;
 
-        int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)I->npart1, a_block, p_size);
-        int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)I->npart2, b_block, p_size);
+        uint64_t part_ind_a[IARRAY_DIMENSION_MAX];
+        uint64_t part_ind_b[IARRAY_DIMENSION_MAX];
+
+        for (int i = a->dtshape->ndim - 1; i >= 0; --i) {
+            part_ind_a[i] = I->npart1 % (inc_a * (a->catarr->eshape[i] / a->catarr->pshape[i])) / inc_a;
+            inc_a *= (a->catarr->eshape[i] / a->catarr->pshape[i]);
+            part_ind_b[i] = I->npart2 % (inc_b * (b->catarr->eshape[i] / b->catarr->pshape[i])) / inc_b;
+            inc_b *= (b->catarr->eshape[i] / b->catarr->pshape[i]);
+        }
+
+        for (int i = 0; i < a->dtshape->ndim; ++i) {
+            start_a[i] = part_ind_a[i] * a->dtshape->pshape[i];
+            start_b[i] = part_ind_b[i] * b->dtshape->pshape[i];
+            if (start_a[i] + a->dtshape->pshape[i] > a->dtshape->shape[i]) {
+                stop_a[i] = a->dtshape->shape[i];
+            } else {
+                stop_a[i] = start_a[i] + a->dtshape->pshape[i];
+            }
+            if (start_b[i] + b->dtshape->pshape[i] > b->dtshape->shape[i]) {
+                stop_b[i] = b->dtshape->shape[i];
+            } else {
+                stop_b[i] = start_b[i] + b->dtshape->pshape[i];
+            }
+        }
+
+        memset(a_block, 0, p_size);
+        memset(b_block, 0, p_size);
+
+        iarray_slice_buffer_(ctx, a, start_a, stop_a, bshape, a_block, p_size);
+        iarray_slice_buffer_(ctx, b, start_b, stop_b, bshape, b_block, p_size);
+
+        //int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)I->npart1, a_block, p_size);
+        //int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)I->npart2, b_block, p_size);
 
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
             cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, P, P, P, 1.0, (double *)a_block, P, (double *)b_block, P, 1.0, (double *)c_block, P);

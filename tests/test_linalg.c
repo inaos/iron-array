@@ -258,15 +258,16 @@ INA_TEST_FIXTURE(linalg_gemm, double_data) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    uint64_t shape_x[] = {1230, 3456};
-    uint64_t shape_y[] = {3456, 2856};
+    uint64_t shape_x[] = {1023, 234};
+    uint64_t shape_y[] = {234, 657};
 
-    uint64_t bshape[] = {123, 123};
+    uint64_t bshape[] = {78, 78};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, shape_x, bshape,
                                                  shape_y, bshape, bshape));
 }
 
+/*
 INA_TEST_FIXTURE(linalg_gemm, float_data) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
@@ -278,6 +279,10 @@ INA_TEST_FIXTURE(linalg_gemm, float_data) {
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, shape_x, bshape,
                                                  shape_y, bshape, bshape));
 }
+
+*/
+
+/*
 
 INA_TEST_DATA(linalg_gemv) {
     iarray_context_t *ctx;
@@ -323,3 +328,4 @@ INA_TEST_FIXTURE(linalg_gemv, float_data)
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemv(data->ctx, dtype, type_size, M, K, P));
 }
+*/

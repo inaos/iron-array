@@ -144,6 +144,64 @@ INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
     return ina_err_get_rc();
 }
 
+ina_rc_t iarray_slice_buffer_(iarray_context_t *ctx,
+                                     iarray_container_t *c,
+                                     int64_t *start,
+                                     int64_t *stop,
+                                     uint64_t *pshape,
+                                     void *buffer,
+                                     uint64_t buflen)
+{
+    INA_VERIFY_NOT_NULL(start);
+    INA_VERIFY_NOT_NULL(stop);
+    INA_VERIFY_NOT_NULL(pshape);
+
+    uint8_t ndim = c->dtshape->ndim;
+
+    uint64_t start_[IARRAY_DIMENSION_MAX];
+    uint64_t stop_[IARRAY_DIMENSION_MAX];
+
+    for (int i = 0; i < ndim; ++i) {
+        if (start[i] < 0) {
+            start_[i] = start[i] + c->dtshape->shape[i];
+        } else{
+            start_[i] = (uint64_t) start[i];
+        }
+        if (stop[i] < 0) {
+            stop_[i] = stop[i] + c->dtshape->shape[i];
+        } else {
+            stop_[i] = (uint64_t) stop[i];
+        }
+    }
+
+    uint64_t psize = 1;
+    for (int i = 0; i < ndim; ++i) {
+        psize *= pshape[i];
+    }
+
+    if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
+        if (psize * sizeof(double) > buflen) {
+            return INA_ERR_ERROR;
+        }
+    } else {
+        if (psize * sizeof(float) > buflen) {
+            return INA_ERR_ERROR;
+        }
+    }
+
+
+    caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, ndim);
+    caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, ndim);
+    caterva_dims_t pshape_ = caterva_new_dims(pshape, ndim);
+
+    INA_FAIL_IF(caterva_get_slice_buffer(buffer, c->catarr, start__, stop__, pshape_) != 0);
+
+    return INA_SUCCESS;
+
+    fail:
+    return ina_err_get_rc();
+}
+
 INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
                                  iarray_container_t *container)
 {
