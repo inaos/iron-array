@@ -38,7 +38,7 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
                                      uint64_t *shape_y,
                                      uint64_t *pshape_y,
                                      uint64_t *bshape)
- {
+{
     void *buffer_x;
     void *buffer_y;
     void *buffer_r;
@@ -77,32 +77,32 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
 
     xshape.dtype = dtype;
     xshape.ndim = 2;
-     for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < 2; ++i) {
          xshape.shape[i] = shape_x[i];
          xshape.pshape[i] = pshape_x[i];
-     }
+    }
 
 
     yshape.dtype = dtype;
     yshape.ndim = 2;
-     for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < 2; ++i) {
          yshape.shape[i] = shape_y[i];
          yshape.pshape[i] = pshape_y[i];
-     }
+    }
 
     oshape.dtype = dtype;
     oshape.ndim = 2;
     oshape.shape[0] = shape_x[0];
     oshape.shape[1] = shape_y[1];
     oshape.pshape[0] = (uint64_t) bshape[0];
-    oshape.pshape[1] = (uint64_t) bshape[1];
+    oshape.pshape[1] = (uint64_t) bshape[0];
 
     rshape.dtype = dtype;
     rshape.ndim = 2;
     rshape.shape[0] = shape_x[0];
     rshape.shape[1] = shape_y[1];
     rshape.pshape[0] = (uint64_t) bshape[0];
-    rshape.pshape[1] = (uint64_t) bshape[1];
+    rshape.pshape[1] = (uint64_t) bshape[0];
 
     iarray_container_t *c_x;
     iarray_container_t *c_y;
@@ -258,10 +258,10 @@ INA_TEST_FIXTURE(linalg_gemm, double_data) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    uint64_t shape_x[] = {1023, 234};
-    uint64_t shape_y[] = {234, 657};
+    uint64_t shape_x[] = {10, 10};
+    uint64_t shape_y[] = {10, 10};
 
-    uint64_t bshape[] = {78, 78};
+    uint64_t bshape[] = {5, 2};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, shape_x, bshape,
                                                  shape_y, bshape, bshape));
