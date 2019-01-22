@@ -25,6 +25,26 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint64_t B0 = bshape[0];
     uint64_t B1 = bshape[1];
 
+    uint64_t bshape_a[IARRAY_DIMENSION_MAX];
+    uint64_t bshape_b[IARRAY_DIMENSION_MAX];
+    uint64_t eshape_a[IARRAY_DIMENSION_MAX];
+    uint64_t eshape_b[IARRAY_DIMENSION_MAX];
+
+    for (int i = 0; i < a->dtshape->ndim; ++i) {
+        bshape_a[i] = bshape[i];
+        bshape_b[i] = bshape[a->dtshape->ndim - 1 - i];
+        if (a->dtshape->shape[i] % bshape_a[i] == 0) {
+            eshape_a[i] = a->dtshape->shape[i];
+        } else {
+            eshape_a[i] = (a->dtshape->shape[i] / bshape_a[i] + 1) * bshape_a[i];
+        }
+        if (b->dtshape->shape[i] % bshape_b[i] == 0) {
+            eshape_b[i] = b->dtshape->shape[i];
+        } else {
+            eshape_b[i] = (b->dtshape->shape[i] / bshape_b[i] + 1) * bshape_b[i];
+        }
+    }
+
     uint64_t M, N, K;
 
     if (a->dtshape->shape[0] % bshape[0] == 0) {
@@ -69,32 +89,13 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         uint64_t part_ind_a[IARRAY_DIMENSION_MAX];
         uint64_t part_ind_b[IARRAY_DIMENSION_MAX];
 
-        uint64_t bshape_a[IARRAY_DIMENSION_MAX];
-        uint64_t bshape_b[IARRAY_DIMENSION_MAX];
-        uint64_t eshape_a[IARRAY_DIMENSION_MAX];
-        uint64_t eshape_b[IARRAY_DIMENSION_MAX];
-
-        for (int i = 0; i < a->dtshape->ndim; ++i) {
-            bshape_a[i] = bshape[i];
-            bshape_b[i] = bshape[a->dtshape->ndim - 1 - i];
-            if (a->dtshape->shape[i] % bshape_a[i] == 0) {
-                eshape_a[i] = a->dtshape->shape[i];
-            } else {
-                eshape_a[i] = (a->dtshape->shape[i] / bshape_a[i] + 1) * bshape_a[i];
-            }
-            if (b->dtshape->shape[i] % bshape_b[i] == 0) {
-                eshape_b[i] = b->dtshape->shape[i];
-            } else {
-                eshape_b[i] = (b->dtshape->shape[i] / bshape_b[i] + 1) * bshape_b[i];
-            }
-        }
-
         for (int i = a->dtshape->ndim - 1; i >= 0; --i) {
             part_ind_a[i] = I->npart1 % (inc_a * (eshape_a[i] / bshape_a[i])) / inc_a;
             inc_a *= (eshape_a[i] / bshape_a[i]);
             part_ind_b[i] = I->npart2 % (inc_b * (eshape_b[i] / bshape_b[i])) / inc_b;
             inc_b *= (eshape_b[i] / bshape_b[i]);
         }
+
 
         for (int i = 0; i < a->dtshape->ndim; ++i) {
             start_a[i] = part_ind_a[i] * bshape_a[i];
@@ -117,21 +118,6 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         iarray_slice_buffer_(ctx, a, start_a, stop_a, bshape_a, a_block, p_size);
         iarray_slice_buffer_(ctx, b, start_b, stop_b, bshape_b, b_block, p_size);
 
-        printf("%llu - %llu\n", I->npart1, I->npart2);
-
-        printf("    a: (%llu, %llu) -> (%llu, %llu)\n", start_a[0], start_a[1], stop_a[0], stop_a[1]);
-        printf("    b: (%llu, %llu) -> (%llu, %llu)\n", start_b[0], start_b[1], stop_b[0], stop_b[1]);
-
-        printf("    a: ");
-        for (int i = 0; i < B0*B1; ++i) {
-            printf("%4.f ", ((double *)a_block)[i]);
-        }
-        printf("\n    b: ");
-        for (int i = 0; i < B0*B1; ++i) {
-            printf("%4.f ", ((double *)b_block)[i]);
-        }
-        printf("\n    c: ");
-
         //int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)I->npart1, a_block, p_size);
         //int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)I->npart2, b_block, p_size);
 
@@ -141,11 +127,6 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
             cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, B0, B0, B1, 1.0, (float *)a_block, B1, (float *)b_block, B0, 1.0, (float *)c_block, B1);
         }
-
-        for (int i = 0; i < B0*B0; ++i) {
-            printf("%4.f ", ((double *)c_block)[i]);
-        }
-        printf("\n");
 
         if((I->cont + 1) % (K / B1) == 0) {
             blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], c_size);
