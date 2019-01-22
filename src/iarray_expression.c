@@ -200,6 +200,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                 // Evaluate the expression for this block
                 const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
                 ina_mem_cpy(outbuf + nblock * e->blocksize, expr_out->data, corrected_blocksize);
+                ina_mempool_reset(e->ctx->mp_tmp_out);
             }
             blosc2_schunk_append_buffer(out.sc, outbuf, nitems_in_chunk * e->typesize);
         }
@@ -229,8 +230,12 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             // Correct the number of items in last chunk
             nitems_in_chunk = (nchunk < e->nchunks - 1) ? nitems_in_chunk : nitems_in_schunk - nchunk * nitems_in_chunk;
             blosc2_schunk_append_buffer(out.sc, expr_out->data, nitems_in_chunk * e->typesize);
+            ina_mempool_reset(e->ctx->mp_tmp_out);
         }
     }
+    ina_mempool_reset(e->ctx->mp);
+    ina_mempool_reset(e->ctx->mp_op);
+    ina_mempool_reset(e->ctx->mp_tmp_out);
     return INA_SUCCESS;
 }
 
@@ -254,8 +259,11 @@ ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)
 ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, iarray_dtshape_t *dtshape,
         iarray_temporary_t **temp)
 {
-    *temp = ina_mempool_dalloc(expr->ctx->mp, sizeof(iarray_temporary_t));
-    (*temp)->dtshape = ina_mempool_dalloc(expr->ctx->mp, sizeof(iarray_dtshape_t));
+    // When c == NULL means a temporary for output, which should go to its own memory pool for being
+    // able to reset it during each block/chunk evaluation
+    ina_mempool_t *mempool = (c != NULL) ? expr->ctx->mp : expr->ctx->mp_tmp_out;
+    *temp = ina_mempool_dalloc(mempool, sizeof(iarray_temporary_t));
+    (*temp)->dtshape = ina_mempool_dalloc(mempool, sizeof(iarray_dtshape_t));
     ina_mem_cpy((*temp)->dtshape, dtshape, sizeof(iarray_dtshape_t));
     size_t size = 0;
     iarray_shape_size(dtshape, &size);
@@ -265,7 +273,7 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
         ina_mem_cpy(&(*temp)->scalar_value, &c->scalar_value, sizeof(double));
     }
     if (size > 0) {
-        (*temp)->data = ina_mempool_dalloc(expr->ctx->mp, size);
+        (*temp)->data = ina_mempool_dalloc(mempool, size);
     }
 
     return INA_SUCCESS;

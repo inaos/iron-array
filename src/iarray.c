@@ -57,6 +57,7 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
     }
     INA_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL_SIZE, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp));
     INA_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_OP_CHUNKS, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_op));
+    INA_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL_SIZE, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_tmp_out));
     return INA_SUCCESS;
 
 fail:
@@ -67,6 +68,7 @@ fail:
 INA_API(void) iarray_context_free(iarray_context_t **ctx)
 {
     INA_VERIFY_FREE(ctx);
+    ina_mempool_free(&(*ctx)->mp_tmp_out);
     ina_mempool_free(&(*ctx)->mp_op);
     ina_mempool_free(&(*ctx)->mp);
     INA_MEM_FREE_SAFE((*ctx)->cfg);
