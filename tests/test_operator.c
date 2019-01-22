@@ -15,9 +15,9 @@
 
 #include <tests/iarray_test.h>
 
-typedef ina_rc_t(*_test_operator_elwise_xy)(iarray_context_t *ctx, 
-                                            iarray_container_t *x, 
-                                            iarray_container_t *y, 
+typedef ina_rc_t(*_test_operator_elwise_xy)(iarray_context_t *ctx,
+                                            iarray_container_t *x,
+                                            iarray_container_t *y,
                                             iarray_container_t *o);
 
 static ina_rc_t _test_operator_xy(iarray_context_t *ctx,
@@ -112,7 +112,7 @@ INA_TEST_SETUP(operator_element_wise)
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
-    cfg.flags = IARRAY_EXPR_EVAL_CHUNK;
+    cfg.eval_flags = IARRAY_EXPR_EVAL_CHUNK;
 
     iarray_context_new(&cfg, &data->ctx);
 }

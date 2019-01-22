@@ -45,14 +45,19 @@ typedef struct iarray_store_properties_s {
     const char *id;
 } iarray_store_properties_t;
 
-typedef enum iarray_config_flags_e {
+typedef enum iarray_eval_flags_e {
     IARRAY_EXPR_EVAL_BLOCK = 0x1,
     IARRAY_EXPR_EVAL_CHUNK = 0x2,
-    IARRAY_COMP_SHUFFLE    = 0x4,
-    IARRAY_COMP_BITSHUFFLE = 0x8,
-    IARRAY_COMP_DELTA      = 0x10,
-    IARRAY_COMP_TRUNC_PREC = 0x20,
-} iarray_config_flags_t;
+    IARRAY_EXPR_EVAL_ITERBLOCK = 0x4,
+    IARRAY_EXPR_EVAL_ITERCHUNK = 0x8,
+} iarray_eval_flags_t;
+
+typedef enum iarray_filter_flags_e {
+    IARRAY_COMP_SHUFFLE    = 0x1,
+    IARRAY_COMP_BITSHUFFLE = 0x2,
+    IARRAY_COMP_DELTA      = 0x4,
+    IARRAY_COMP_TRUNC_PREC = 0x8,
+} iarray_filter_flags_t;
 
 typedef enum iarray_bind_flags_e {
     IARRAY_BIND_UPDATE_CONTAINER = 0x1
@@ -93,7 +98,8 @@ typedef enum iarray_linalg_norm_e {
 typedef struct iarray_config_s {
     iarray_compression_codec_t compression_codec;
     int compression_level;
-    int flags;
+    int filter_flags;
+    int eval_flags;
     int max_num_threads; /* Maximum number of threads to use */
     uint8_t fp_mantissa_bits; /* Only useful together with flag: IARRAY_COMP_TRUNC_PREC */
     int blocksize; /* Advanced Tuning Parameter */
@@ -138,8 +144,23 @@ typedef struct iarray_slice_param_s {
 
 typedef struct iarray_random_ctx_s iarray_random_ctx_t;
 
-static const iarray_config_t IARRAY_CONFIG_DEFAULTS = { IARRAY_COMPRESSION_LZ4, 5, 0, 1, 0, 0 };
-static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = { IARRAY_COMPRESSION_LZ4, 0, 0, 1, 0, 0 };
+static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
+    .compression_codec=IARRAY_COMPRESSION_LZ4,
+    .compression_level=5,
+    .filter_flags=0,
+    .eval_flags=0,
+    .max_num_threads=1,
+    .fp_mantissa_bits=0,
+    .blocksize=0 };
+
+static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = {
+    .compression_codec=IARRAY_COMPRESSION_LZ4,
+    .compression_level=0,
+    .filter_flags=0,
+    .eval_flags=0,
+    .max_num_threads=1,
+    .fp_mantissa_bits=0,
+    .blocksize=0 };
 
 INA_API(ina_rc_t) iarray_init();
 INA_API(void) iarray_destroy();
