@@ -138,8 +138,8 @@ typedef struct iarray_slice_param_s {
 
 typedef struct iarray_random_ctx_s iarray_random_ctx_t;
 
-static const iarray_config_t IARRAY_CONFIG_DEFAULTS = { IARRAY_COMPRESSION_BLOSCLZ, 5, 0, 1, 0, 0 };
-static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = { IARRAY_COMPRESSION_BLOSCLZ, 0, 0, 1, 0, 0 };
+static const iarray_config_t IARRAY_CONFIG_DEFAULTS = { IARRAY_COMPRESSION_LZ4, 5, 0, 1, 0, 0 };
+static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = { IARRAY_COMPRESSION_LZ4, 0, 0, 1, 0, 0 };
 
 INA_API(ina_rc_t) iarray_init();
 INA_API(void) iarray_destroy();

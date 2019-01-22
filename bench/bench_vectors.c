@@ -96,8 +96,8 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(iarray_init());
 
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
-    config.compression_codec = IARRAY_COMPRESSION_BLOSCLZ;
-    config.compression_level = 9;
+    //config.compression_codec = IARRAY_COMPRESSION_BLOSCLZ;
+    //config.compression_level = 9;
     config.max_num_threads = NTHREADS;
     if (eval_flag == 2) {
         eval_method = "EVAL_CHUNK";
