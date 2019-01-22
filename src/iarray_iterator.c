@@ -460,6 +460,7 @@ void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr)
 {
     uint64_t B0 = itr->B0;
     uint64_t B1 = itr->B1;
+    uint64_t B2 = itr->B2;
     uint64_t M = itr->M;
     uint64_t N = itr->N;
     uint64_t K = itr->K;
@@ -476,12 +477,12 @@ void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr)
         itr->npart2 = k;
 
     } else {
-        m = itr->cont / ((K/B1) * (N/B0)) % (M/B0);
+        m = itr->cont / ((K/B1) * (N/B2)) % (M/B0);
         k = itr->cont % (K/B1);
-        n = itr->cont / ((K/B1)) % (N/B0);
+        n = itr->cont / ((K/B1)) % (N/B2);
 
         itr->npart1 = (m * (K/B1) + k);
-        itr->npart2 = (k * (N/B0) + n);
+        itr->npart2 = (k * (N/B2) + n);
     }
 }
 
@@ -499,6 +500,7 @@ int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr)
 {
     uint64_t B0 = itr->B0;
     uint64_t B1 = itr->B1;
+    uint64_t B2 = itr->B2;
     uint64_t M = itr->M;
     uint64_t N = itr->N;
     uint64_t K = itr->K;
@@ -507,7 +509,7 @@ int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr)
         return itr->cont >= (M/B0) * (K/B1);
     }
 
-    return itr->cont >= (M/B0) * (N/B0) * (K/B1);
+    return itr->cont >= (M/B0) * (N/B2) * (K/B1);
 }
 
 /*
@@ -522,22 +524,23 @@ int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr)
  */
 
 ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, iarray_container_t *c2,
-                                 uint64_t *bshape, iarray_iter_matmul_t **itr)
+                                 uint64_t *bshape_a, uint64_t *bshape_b, iarray_iter_matmul_t **itr)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(c1);
     INA_VERIFY_NOT_NULL(c2);
-    INA_VERIFY_NOT_NULL(bshape);
+    INA_VERIFY_NOT_NULL(bshape_a);
+    INA_VERIFY_NOT_NULL(bshape_b);
     INA_VERIFY_NOT_NULL(itr);
 
     // Verify that block shape is < than container shapes
     for (int i = 0; i < c1->dtshape->ndim; ++i) {
-        if (c1->dtshape->shape[i] <= bshape[i]) {
+        if (c1->dtshape->shape[i] <= bshape_a[i]) {
             return INA_ERROR(INA_ERR_FAILED);
         }
     }
     for (int i = 0; i < c2->dtshape->ndim; ++i) {
-        if (c2->dtshape->shape[i] <= bshape[c1->dtshape->ndim - 1 - i]) {
+        if (c2->dtshape->shape[i] <= bshape_b[i]) {
             return INA_ERROR(INA_ERR_FAILED);
         }
     }
@@ -547,23 +550,24 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
     (*itr)->ctx = ctx;
     (*itr)->container1 = c1;
     (*itr)->container2 = c2;
-    (*itr)->B0 = bshape[0];
-    (*itr)->B1 = bshape[1];
-    if (c1->dtshape->shape[0] % bshape[0] == 0) {
+    (*itr)->B0 = bshape_a[0];
+    (*itr)->B1 = bshape_a[1];
+    (*itr)->B2 = bshape_b[1];
+    if (c1->dtshape->shape[0] % bshape_a[0] == 0) {
         (*itr)->M = c1->dtshape->shape[0];
     } else {
-        (*itr)->M = (c1->dtshape->shape[0] / bshape[0] + 1) * bshape[0];
+        (*itr)->M = (c1->dtshape->shape[0] / bshape_a[0] + 1) * bshape_a[0];
     }
-    if (c1->dtshape->shape[1] % bshape[1] == 0) {
+    if (c1->dtshape->shape[1] % bshape_a[1] == 0) {
         (*itr)->K = c1->dtshape->shape[1];
     } else {
-        (*itr)->K = (c1->dtshape->shape[1] / bshape[1] + 1) * bshape[1];
+        (*itr)->K = (c1->dtshape->shape[1] / bshape_a[1] + 1) * bshape_a[1];
     }
 
-    if (c2->dtshape->shape[1] % bshape[0] == 0) {
+    if (c2->dtshape->shape[1] % bshape_b[1] == 0) {
         (*itr)->N = c2->dtshape->shape[1];
     } else {
-        (*itr)->N = (c2->dtshape->shape[1] / bshape[0] + 1) * bshape[0];
+        (*itr)->N = (c2->dtshape->shape[1] / bshape_b[1] + 1) * bshape_b[1];
     }
     return INA_SUCCESS;
 }
