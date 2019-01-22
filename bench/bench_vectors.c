@@ -60,11 +60,12 @@ int main(int argc, char** argv)
     const char *mat_x_name = NULL;
     const char *mat_y_name = NULL;
     const char *mat_out_name = NULL;
-    int eval_flag = 0;
     const char *eval_method = NULL;
 
     INA_OPTS(opt,
              INA_OPT_INT("f", "eval-flag", 1, "EVAL_BLOCK = 1, EVAL_CHUNK = 2"),
+             INA_OPT_INT("c", "clevel", 5, "Compression level"),
+             INA_OPT_INT("l", "codec", 1, "Compression codec"),
              INA_OPT_FLAG("i", "iter", "Use iterator for filling values"),
              INA_OPT_FLAG("I", "iter-part", "Use partition iterator for filling values"),
              INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
@@ -76,7 +77,13 @@ int main(int argc, char** argv)
     }
     ina_set_cleanup_handler(ina_cleanup_handler);
 
+    int eval_flag;
     INA_MUST_SUCCEED(ina_opt_get_int("f", &eval_flag));
+    int clevel;
+    INA_MUST_SUCCEED(ina_opt_get_int("c", &clevel));
+    int codec;
+    INA_MUST_SUCCEED(ina_opt_get_int("l", &codec));
+
     if (INA_SUCCEED(ina_opt_isset("p"))) {
         mat_x_name = "mat_x.b2frame";
         mat_y_name = "mat_y.b2frame";
@@ -96,8 +103,8 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(iarray_init());
 
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
-    //config.compression_codec = IARRAY_COMPRESSION_BLOSCLZ;
-    //config.compression_level = 9;
+    config.compression_level = clevel;
+    config.compression_codec = codec;
     config.max_num_threads = NTHREADS;
     if (eval_flag == 2) {
         eval_method = "EVAL_CHUNK";
