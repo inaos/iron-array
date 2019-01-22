@@ -94,7 +94,7 @@ INA_TEST_SETUP(expression_eval)
     data->cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
     data->cfg.compression_level = 9;
     data->cfg.max_num_threads = NTHREADS;
-    
+
     data->buf_len = sizeof(double)*NELEM;
     data->buffer_x = ina_mem_alloc(data->buf_len);
     data->buffer_y = ina_mem_alloc(data->buf_len);
@@ -113,14 +113,14 @@ INA_TEST_TEARDOWN(expression_eval)
 
 INA_TEST_FIXTURE(expression_eval, chunk1)
 {
-    data->cfg.flags |= IARRAY_EXPR_EVAL_CHUNK;
- 
+    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_CHUNK;
+
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len));
 }
 
 INA_TEST_FIXTURE(expression_eval, block1)
 {
-    data->cfg.flags |= IARRAY_EXPR_EVAL_BLOCK;
-   
+    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_BLOCK;
+
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len));
 }

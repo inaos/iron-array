@@ -63,7 +63,7 @@ int main(int argc, char** argv)
     const char *eval_method = NULL;
 
     INA_OPTS(opt,
-             INA_OPT_INT("f", "eval-flag", 1, "EVAL_BLOCK = 1, EVAL_CHUNK = 2"),
+             INA_OPT_INT("e", "eval-method", 1, "EVAL_BLOCK = 1, EVAL_CHUNK = 2, EVAL_ITERCHUNK = 3"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
              INA_OPT_FLAG("i", "iter", "Use iterator for filling values"),
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
     ina_set_cleanup_handler(ina_cleanup_handler);
 
     int eval_flag;
-    INA_MUST_SUCCEED(ina_opt_get_int("f", &eval_flag));
+    INA_MUST_SUCCEED(ina_opt_get_int("e", &eval_flag));
     int clevel;
     INA_MUST_SUCCEED(ina_opt_get_int("c", &clevel));
     int codec;
@@ -106,13 +106,21 @@ int main(int argc, char** argv)
     config.compression_level = clevel;
     config.compression_codec = codec;
     config.max_num_threads = NTHREADS;
-    if (eval_flag == 2) {
+    if (eval_flag == 1) {
+        eval_method = "EVAL_BLOCK";
+        config.eval_flags = IARRAY_EXPR_EVAL_BLOCK;
+    }
+    else if (eval_flag == 2) {
         eval_method = "EVAL_CHUNK";
-        config.flags = IARRAY_EXPR_EVAL_CHUNK;
+        config.eval_flags = IARRAY_EXPR_EVAL_CHUNK;
+    }
+    else if (eval_flag == 3) {
+        eval_method = "EVAL_ITERCHUNK";
+        config.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
     }
     else {
-        eval_method = "EVAL_BLOCK";
-        config.flags = IARRAY_EXPR_EVAL_BLOCK;
+        printf("eval_flag must be 1, 2 or 3\n");
+        return EXIT_FAILURE;
     }
     config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions
 

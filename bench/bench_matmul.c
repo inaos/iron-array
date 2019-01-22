@@ -13,7 +13,7 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-#define P (100)  /* partition size */  
+#define P (100)  /* partition size */
 #define NELEM_BYTES(nelem) (nelem*sizeof(double))
 #define NTHREADS 1
 
@@ -69,7 +69,7 @@ int main(int argc, char** argv)
     }
     INA_MUST_SUCCEED(ina_opt_get_int("n", &n));
     nelem = n * n;
-    
+
     printf("Measuring time for multiplying matrices of (%ld, %ld), with a partition of (%d, %d)\n", n, n, P, P);
     printf("Working set for the 4 uncompressed matrices: %.1f MB\n", nelem * sizeof(double) * 4 / (double)_IARRAY_SIZE_MB);
 
@@ -79,7 +79,7 @@ int main(int argc, char** argv)
     config.compression_codec = IARRAY_COMPRESSION_LZ4;
     config.compression_level = 5;
     config.max_num_threads = NTHREADS;
-    config.flags = IARRAY_EXPR_EVAL_CHUNK;
+    config.eval_flags = IARRAY_EXPR_EVAL_CHUNK;
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
 
