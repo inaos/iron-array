@@ -560,10 +560,10 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
         (*itr)->K = (c1->dtshape->shape[1] / bshape[1] + 1) * bshape[1];
     }
 
-    if (c2->dtshape->shape[1] % bshape[1] == 0) {
+    if (c2->dtshape->shape[1] % bshape[0] == 0) {
         (*itr)->N = c2->dtshape->shape[1];
     } else {
-        (*itr)->N = (c2->dtshape->shape[1] / bshape[1] + 1) * bshape[1];
+        (*itr)->N = (c2->dtshape->shape[1] / bshape[0] + 1) * bshape[0];
     }
     return INA_SUCCESS;
 }
