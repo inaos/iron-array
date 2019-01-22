@@ -50,6 +50,7 @@ static ina_rc_t _execute_iarray_gemm(iarray_context_t *ctx,
     buffer_x_len = type_size * shape_x[0] * shape_x[1];
     buffer_y_len = type_size * shape_y[0] * shape_y[1];
     buffer_r_len = type_size * shape_x[0] * shape_y[1];
+
     buffer_x = ina_mem_alloc(buffer_x_len);
     buffer_y = ina_mem_alloc(buffer_y_len);
     buffer_r = ina_mem_alloc(buffer_r_len);
@@ -258,10 +259,10 @@ INA_TEST_FIXTURE(linalg_gemm, double_data) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    uint64_t shape_x[] = {10, 10};
-    uint64_t shape_y[] = {10, 10};
+    uint64_t shape_x[] = {200, 20};
+    uint64_t shape_y[] = {20, 60};
 
-    uint64_t bshape[] = {5, 2};
+    uint64_t bshape[] = {20, 10};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, shape_x, bshape,
                                                  shape_y, bshape, bshape));

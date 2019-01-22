@@ -55,7 +55,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     iarray_iter_matmul_t *I;
     _iarray_iter_matmul_new(ctx, a, b, a->catarr->pshape, &I);
 
-    memset(c_block, 0, p_size);
+    memset(c_block, 0, c_size);
 
     for (_iarray_iter_matmul_init(I); !_iarray_iter_matmul_finished(I); _iarray_iter_matmul_next(I)) {
         uint64_t start_a[IARRAY_DIMENSION_MAX];
@@ -154,6 +154,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     _iarray_iter_matmul_free(I);
+
     free(a_block);
     free(b_block);
     free(c_block);
