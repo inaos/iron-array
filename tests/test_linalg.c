@@ -236,7 +236,6 @@ INA_TEST_SETUP(linalg_gemm) {
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
     cfg.flags = IARRAY_EXPR_EVAL_CHUNK;
-
     iarray_context_new(&cfg, &data->ctx);
 }
 
@@ -261,36 +260,37 @@ INA_TEST_FIXTURE(linalg_gemm, double_data) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    uint64_t shape_x[] = {1230, 3456};
-    uint64_t shape_y[] = {3456, 2856};
-    uint64_t pshape_x[] = {80, 123};
-    uint64_t pshape_y[] = {200, 97};
+    uint64_t shape_x[] = {1234, 4567};
+    uint64_t shape_y[] = {4567, 3456};
 
-    uint64_t bshape_x[] = {300, 150};
-    uint64_t bshape_y[] = {150, 300};
+    uint64_t pshape_x[] = {135, 162};
+    uint64_t pshape_y[] = {364, 234};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, shape_x, pshape_x,
-                                                 shape_y, pshape_y, bshape_x, bshape_y));
-}
-
-INA_TEST_FIXTURE(linalg_gemm, float_data) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    size_t type_size = sizeof(float);
-
-    uint64_t shape_x[] = {1243, 1256};
-    uint64_t shape_y[] = {1256, 1234};
-
-    uint64_t pshape_x[] = {124, 356};
-    uint64_t pshape_y[] = {312, 265};
-
-    uint64_t bshape_x[] = {1000, 1000};
-    uint64_t bshape_y[] = {1000, 1000};
+    uint64_t bshape_x[] = {145, 120};
+    uint64_t bshape_y[] = {120, 200};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, shape_x, pshape_x,
                                                  shape_y, pshape_y, bshape_x, bshape_y));
 }
 
 /*
+INA_TEST_FIXTURE(linalg_gemm, float_data) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    size_t type_size = sizeof(float);
+
+    uint64_t shape_x[] = {2569, 2345};
+    uint64_t shape_y[] = {2345, 3453};
+
+    uint64_t pshape_x[] = {100, 100};
+    uint64_t pshape_y[] = {100, 100};
+
+    uint64_t bshape_x[] = {100, 100};
+    uint64_t bshape_y[] = {100, 100};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, shape_x, pshape_x,
+                                                 shape_y, pshape_y, bshape_x, bshape_y));
+}
+
 
 INA_TEST_DATA(linalg_gemv) {
     iarray_context_t *ctx;

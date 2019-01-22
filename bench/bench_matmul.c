@@ -13,7 +13,7 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-#define P (100)  /* partition size */  
+#define P (1000)  /* partition size */
 #define NELEM_BYTES(nelem) (nelem*sizeof(double))
 #define NTHREADS 1
 
@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 
     INA_OPTS(opt,
         INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
-        INA_OPT_INT("n", "elements", 1000, "Number of Elements")
+        INA_OPT_INT("n", "elements", 4000, "Number of Elements")
     );
 
     if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
@@ -99,7 +99,7 @@ int main(int argc, char** argv)
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     printf("Time for filling X and Y matrices: %.3g s, %.1f MB/s\n",
-        elapsed_sec, (sizeof(mat_x) + sizeof(mat_y)) / (elapsed_sec * _IARRAY_SIZE_MB));
+        elapsed_sec, (sizeof(double) * nelem *  2) / (elapsed_sec * _IARRAY_SIZE_MB));
 
     /* Compute naive matrix-matrix multiplication */
     INA_STOPWATCH_START(w);
@@ -108,7 +108,7 @@ int main(int argc, char** argv)
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     printf("Time for multiplying two matrices (pure C): %.3g s, %.1f MB/s\n",
-        elapsed_sec, (sizeof(mat_x) * 3) / (elapsed_sec * _IARRAY_SIZE_MB));
+        elapsed_sec, (sizeof(double) * nelem *  3) / (elapsed_sec * _IARRAY_SIZE_MB));
 
     iarray_dtshape_t shape;
     shape.ndim = 2;
@@ -148,8 +148,10 @@ int main(int argc, char** argv)
     iarray_container_t *con_out;
     iarray_container_new(ctx, &shape, mat_out_name, 0, &con_out);
 
+    uint64_t bshape[] = {P, P};
+
     INA_STOPWATCH_START(w);
-    iarray_linalg_matmul(ctx, con_x, con_y, con_out, IARRAY_OPERATOR_GENERAL); /* FIXME: error handling */
+    iarray_linalg_matmul(ctx, con_x, con_y, con_out, bshape, bshape, IARRAY_OPERATOR_GENERAL); /* FIXME: error handling */
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
