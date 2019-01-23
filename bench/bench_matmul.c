@@ -66,6 +66,8 @@ int main(int argc, char** argv)
     uint64_t pshape_out[] = {bshape_x[0], bshape_y[1]};
     uint64_t size_out = shape_out[0] * shape_out[1];
 
+    uint64_t flops = (2 * shape_x[1] - 1) * shape_x[0] * shape_y[1];
+
     INA_OPTS(opt,
         INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
         INA_OPT_FLAG("r", "remove", "Remove the previous persistent containers (only valid w/ -p)")
@@ -207,8 +209,8 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
     printf("\n");
-    printf("Time for multiplying two matrices (pure C): %.3g s, %.1f MB/s\n",
-        elapsed_sec, NELEM_BYTES(size_x + size_y + size_out) / (elapsed_sec * _IARRAY_SIZE_MB));
+    printf("Time for multiplying two matrices (pure C): %.3g s, %.1f GFLOPs\n",
+        elapsed_sec, flops / (elapsed_sec * 10e9));
 
 
     iarray_dtshape_t outdtshape;
@@ -229,8 +231,9 @@ int main(int argc, char** argv)
 
     iarray_container_info(con_out, &nbytes, &cbytes);
     printf("\n");
-    printf("Time for multiplying two matrices (iarray):  %.3g s, %.1f MB/s\n",
-        elapsed_sec, NELEM_BYTES(size_x + size_y + size_out) / (elapsed_sec * _IARRAY_SIZE_MB));
+    printf("Time for multiplying two matrices (iarray):  %.3g s, %.1f GFLOPs\n",
+        elapsed_sec, flops / (elapsed_sec * 10e9));
+
     nbytes_mb = ((double) nbytes / _IARRAY_SIZE_MB);
     cbytes_mb = ((double) cbytes / _IARRAY_SIZE_MB);
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
