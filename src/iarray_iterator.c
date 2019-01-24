@@ -535,12 +535,12 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
 
     // Verify that block shape is < than container shapes
     for (int i = 0; i < c1->dtshape->ndim; ++i) {
-        if (c1->dtshape->shape[i] <= bshape_a[i]) {
+        if (c1->dtshape->shape[i] < bshape_a[i]) {
             return INA_ERROR(INA_ERR_FAILED);
         }
     }
     for (int i = 0; i < c2->dtshape->ndim; ++i) {
-        if (c2->dtshape->shape[i] <= bshape_b[i]) {
+        if (c2->dtshape->shape[i] < bshape_b[i]) {
             return INA_ERROR(INA_ERR_FAILED);
         }
     }
@@ -553,11 +553,13 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
     (*itr)->B0 = bshape_a[0];
     (*itr)->B1 = bshape_a[1];
     (*itr)->B2 = bshape_b[1];
+
     if (c1->dtshape->shape[0] % bshape_a[0] == 0) {
         (*itr)->M = c1->dtshape->shape[0];
     } else {
         (*itr)->M = (c1->dtshape->shape[0] / bshape_a[0] + 1) * bshape_a[0];
     }
+
     if (c1->dtshape->shape[1] % bshape_a[1] == 0) {
         (*itr)->K = c1->dtshape->shape[1];
     } else {
@@ -569,6 +571,7 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
     } else {
         (*itr)->N = (c2->dtshape->shape[1] / bshape_b[1] + 1) * bshape_b[1];
     }
+
     return INA_SUCCESS;
 }
 

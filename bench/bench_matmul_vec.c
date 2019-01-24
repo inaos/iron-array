@@ -16,6 +16,7 @@
 #define NELEM_BYTES(nelem) (nelem * sizeof(double))
 #define NTHREADS 1
 
+
 /* Check that the values of a super-chunk are equal to a C matrix */
 int test_mat_equal(int nelems, double *c1, double *c2) {
     for (int nelem=0; nelem < nelems; nelem++) {
@@ -53,13 +54,13 @@ int main(int argc, char** argv)
     double cbytes_mb = 0;
 
     uint64_t shape_x[] = {4000, 6000};
-    uint64_t pshape_x[] = {500, 750};
-    uint64_t bshape_x[] = {900, 700};
+    uint64_t pshape_x[] = {4000, 6000};
+    uint64_t bshape_x[] = {4000, 6000};
 
     uint64_t size_x = shape_x[0] * shape_x[1];
     uint64_t shape_y[] = {6000};
-    uint64_t pshape_y[] = {1400};
-    uint64_t bshape_y [] = {700};
+    uint64_t pshape_y[] = {6000};
+    uint64_t bshape_y [] = {6000};
     uint64_t size_y = shape_y[0];
 
     uint64_t shape_out[] = {shape_x[0]};
