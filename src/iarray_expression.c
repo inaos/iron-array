@@ -54,7 +54,9 @@ INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
 {
     INA_ASSERT_NOT_NULL(ctx);
     INA_VERIFY_FREE(e);
-    ina_mempool_reset(ctx->mp); // FIXME
+    ina_mempool_reset(ctx->mp);  // FIXME: should be ina_mempool_free(), but it currently crashes
+    ina_mempool_reset(ctx->mp_op);  // FIXME: ditto
+    ina_mempool_reset(ctx->mp_tmp_out);  // FIXME: ditto
     INA_MEM_FREE_SAFE((*e)->temp_vars);
     INA_MEM_FREE_SAFE(*e);
 }
@@ -251,7 +253,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
         iarray_context_t *ctx = NULL;
         iarray_context_new(&cfg, &ctx);
-        iarray_iter_read_block_t **iter_var = malloc(nvars * sizeof(iter_var));
+        iarray_iter_read_block_t **iter_var = malloc(nvars * sizeof(iarray_iter_read_block_t));
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
             iarray_iter_read_block_new(ctx, var, &iter_var[nvar], &blocksize);
@@ -259,19 +261,19 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
 
         // Evaluate the expression for all the chunks in variables
-        iarray_iter_read_block_value_t *iter_value = malloc(nvars * sizeof(iter_value));
-        for (size_t nchunk = 0; nchunk < e->nchunks; nchunk++) {
+        iarray_iter_read_block_value_t *iter_value = malloc(nvars * sizeof(iarray_iter_read_block_value_t));
+        uint64_t nitems_written = 0;
+        while (nitems_written < nitems_in_schunk) {
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
-                iarray_iter_read_block_next(iter_var[nvar]);
                 iarray_iter_read_block_value(iter_var[nvar], &iter_value[nvar]);
-                e->temp_vars[nvar]->data = iter_value->pointer;
+                e->temp_vars[nvar]->data = iter_value[nvar].pointer;
             }
+
+            // Eval the expression for this chunk
             const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
-            // Correct the number of items in last chunk
-            //nitems_in_chunk = (nchunk < e->nchunks - 1) ? nitems_in_chunk : nitems_in_schunk - nchunk * nitems_in_chunk;
-            nitems_in_chunk = iter_value->nelem;
             blosc2_schunk_append_buffer(out.sc, expr_out->data, nitems_in_chunk * e->typesize);
+            nitems_written += nitems_in_chunk;
             ina_mempool_reset(e->ctx->mp_tmp_out);
 
             // Get ready for the next iteration
@@ -280,6 +282,12 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             }
         }
 
+        for (int nvar = 0; nvar < nvars; nvar++) {
+            iarray_iter_read_block_free(iter_var[nvar]);
+        }
+        free(iter_var);
+        free(iter_value);
+        assert(nitems_written == nitems_in_schunk);
     }
 
     ina_mempool_reset(e->ctx->mp);

@@ -63,7 +63,8 @@ int main(int argc, char** argv)
     const char *eval_method = NULL;
 
     INA_OPTS(opt,
-             INA_OPT_INT("e", "eval-method", 1, "EVAL_BLOCK = 1, EVAL_CHUNK = 2, EVAL_ITERCHUNK = 3"),
+             INA_OPT_INT("e", "eval-method", 1,
+                         "EVAL_BLOCK = 1, EVAL_CHUNK = 2, EVAL_ITERBLOCK = 3, EVAL_ITERCHUNK = 4"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
              INA_OPT_FLAG("i", "iter", "Use iterator for filling values"),
@@ -115,11 +116,15 @@ int main(int argc, char** argv)
         config.eval_flags = IARRAY_EXPR_EVAL_CHUNK;
     }
     else if (eval_flag == 3) {
+        eval_method = "EVAL_ITERBLOCK";
+        config.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
+    }
+    else if (eval_flag == 4) {
         eval_method = "EVAL_ITERCHUNK";
         config.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
     }
     else {
-        printf("eval_flag must be 1, 2 or 3\n");
+        printf("eval_flag must be 1, 2, 3 or 4\n");
         return EXIT_FAILURE;
     }
     config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions
@@ -315,6 +320,8 @@ int main(int argc, char** argv)
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
            nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
 
+    iarray_expr_free(ctx, &e);
+
     printf("Checking that the outcome of the expression is correct...");
     fflush(stdout);
     INA_STOPWATCH_START(w);
@@ -328,7 +335,6 @@ int main(int argc, char** argv)
     printf("Time for checking that two iarrays are equal:  %.3g s, %.1f MB/s\n",
            elapsed_sec, (nbytes * 2) / (elapsed_sec * _IARRAY_SIZE_MB));
 
-    iarray_expr_free(ctx, &e);
 
     iarray_container_free(ctx, &con_x);
     iarray_container_free(ctx, &con_y);
