@@ -235,7 +235,7 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
         }
         else {
             for (uint64_t i = 0; i < block_size; ++i) {
-                double vdiff = fabs(((double *)val_a.pointer)[i] - ((double *)val_b.pointer)[i]) / ((double *)val_a.pointer)[i];
+                float vdiff = fabsf(((float *)val_a.pointer)[i] - ((float *)val_b.pointer)[i]) / ((float *)val_a.pointer)[i];
                 if (vdiff > tol) {
                     printf("%f, %f\n", ((float *)val_a.pointer)[i], ((float *)val_b.pointer)[i]);
                     printf("Values differ in nelem: %llu (diff: %f)\n", i, vdiff);
