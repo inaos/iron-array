@@ -235,8 +235,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                 }
             }
             const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
-            // Correct the number of items in last chunk
-            nitems_in_chunk = (nchunk < e->nchunks - 1) ? nitems_in_chunk : nitems_in_schunk - nchunk * nitems_in_chunk;
             blosc2_schunk_append_buffer(out.sc, expr_out->data, nitems_in_chunk * e->typesize);
             ina_mempool_reset(e->ctx->mp_tmp_out);
         }
