@@ -204,7 +204,6 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         uint64_t stop_b[IARRAY_DIMENSION_MAX];
 
         uint64_t inc_a = 1;
-        uint64_t inc_b = 1;
 
         uint64_t part_ind_a[IARRAY_DIMENSION_MAX];
         uint64_t part_ind_b[IARRAY_DIMENSION_MAX];
@@ -213,8 +212,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
             part_ind_a[i] = I->npart1 % (inc_a * (eshape_a[i] / bshape_a[i])) / inc_a;
             inc_a *= (eshape_a[i] / bshape_a[i]);
         }
-        part_ind_b[0] = I->npart2 % (inc_b * (eshape_b[0] / bshape_b[0])) / inc_b;
-        inc_b *= (eshape_b[0] / bshape_b[0]);
+        part_ind_b[0] = I->npart2 % ( (eshape_b[0] / bshape_b[0]));
 
 
         for (int i = 0; i < a->dtshape->ndim; ++i) {
