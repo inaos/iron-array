@@ -189,7 +189,6 @@ ina_rc_t iarray_slice_buffer_(iarray_context_t *ctx,
         }
     }
 
-
     caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, ndim);
     caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, ndim);
     caterva_dims_t pshape_ = caterva_new_dims(pshape, ndim);
