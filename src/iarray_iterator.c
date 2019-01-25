@@ -252,6 +252,7 @@ INA_API(ina_rc_t) iarray_iter_write_part_next(iarray_iter_write_part_t *itr)
         }
     } else {
         uint8_t *part_aux = malloc(catarr->psize * catarr->sc->typesize);
+        memset(part_aux, 0, catarr->psize * catarr->sc->typesize);
 
         //reverse part_shape
         uint64_t shaper[CATERVA_MAXDIM];
@@ -296,8 +297,8 @@ INA_API(ina_rc_t) iarray_iter_write_part_next(iarray_iter_write_part_t *itr)
                 }
             }
         }
-
         int err = blosc2_schunk_append_buffer(itr->container->catarr->sc, part_aux, catarr->psize * catarr->sc->typesize);
+        memset(part_aux, 0, catarr->psize * catarr->sc->typesize);
         if (err < 0) {
             return INA_ERROR(INA_ERR_FAILED);
         }
