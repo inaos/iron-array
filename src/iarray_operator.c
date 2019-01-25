@@ -15,7 +15,6 @@
 #include <iarray_private.h>
 
 
-
 static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c,
                              uint64_t *bshape_a, uint64_t *bshape_b) {
 
@@ -227,7 +226,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     free(b_block);
     free(c_block);
 
-    return INA_SUCCESS;;
+    return INA_SUCCESS;
 }
 
 static ina_rc_t _iarray_operator_elwise_a(
