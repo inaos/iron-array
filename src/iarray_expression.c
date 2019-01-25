@@ -171,12 +171,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         size_t nitems = e->blocksize / e->typesize;
         uint8_t **var_chunks = ina_mem_alloc(nvars * sizeof(uint8_t*));
         bool *var_needs_free = ina_mem_alloc(nvars * sizeof(bool));
-        // Allocate a buffer for every (compressed) chunk
-        for (int nvar = 0; nvar < nvars; nvar++) {
-            //var_chunks[nvar] = ina_mem_alloc(e->chunksize);  // FIXME: looks like this does not work correctly
-            var_chunks[nvar] = malloc(e->chunksize);
-            var_needs_free[nvar] = false;
-        }
         for (size_t nchunk = 0; nchunk < e->nchunks; nchunk++) {
             size_t chunksize = (nchunk < e->nchunks - 1) ? e->chunksize : schunk0->nbytes - nchunk * e->chunksize;
             size_t nblocks_in_chunk = chunksize / e->blocksize;
@@ -199,7 +193,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                 }
                 // Decompress blocks in variables into temporaries
                 for (int nvar = 0; nvar < nvars; nvar++) {
-                    int dsize = blosc_getitem(var_chunks[nvar], (int)(nblock * nitems), (int)corrected_nitems, e->temp_vars[nvar]->data);
+                    int dsize = blosc_getitem(var_chunks[nvar], (int)(nblock * nitems),
+                                              (int)corrected_nitems, e->temp_vars[nvar]->data);
                     if (dsize < 0) {
                         printf("Decompression error.  Error code: %d\n", dsize);
                         return INA_ERR_FAILED;
@@ -211,11 +206,11 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                 ina_mempool_reset(e->ctx->mp_tmp_out);
             }
             blosc2_schunk_append_buffer(out.sc, outbuf, nitems_in_chunk * e->typesize);
-        }
-        for (int nvar = 0; nvar < nvars; nvar++) {
-            if (var_needs_free[nvar]) {
-                //ina_mem_free(var_chunks[nvar]);  // this raises an error (bug in the ina library?)
-                free(var_chunks[nvar]);
+            for (int nvar = 0; nvar < nvars; nvar++) {
+                if (var_needs_free[nvar]) {
+                    //ina_mem_free(var_chunks[nvar]);  // this raises an error (bug in the ina library?)
+                    free(var_chunks[nvar]);
+                }
             }
         }
         ina_mem_free(var_chunks);
