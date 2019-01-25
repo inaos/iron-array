@@ -103,7 +103,8 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     caterva_array_t *catarr = e->vars[0].c->catarr;
     blosc2_schunk *schunk = catarr->sc;
     int dim0 = 0;
-    if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_BLOCK) {
+    if ((e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_BLOCK) ||
+        (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERBLOCK)) {
         int typesize = schunk->typesize;
         int nchunks = schunk->nchunks;
         void *chunk;
@@ -120,13 +121,8 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         e->blocksize = blocksize;
         e->typesize = typesize;
     }
-    else if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_CHUNK) {
-        dim0 = schunk->chunksize / schunk->typesize;
-        e->nchunks = schunk->nchunks;
-        e->chunksize = schunk->chunksize;
-        e->typesize = schunk->typesize;
-    }
-    else if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNK) {
+    else if ((e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_CHUNK) ||
+             (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNK)) {
         dim0 = schunk->chunksize / schunk->typesize;
         e->nchunks = schunk->nchunks;
         e->chunksize = schunk->chunksize;
@@ -215,6 +211,68 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
         ina_mem_free(var_chunks);
         ina_mem_free(var_needs_free);
+        ina_mem_free(outbuf);
+    }
+    else if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERBLOCK) {
+        // TODO: refine this and choose the blocksize that works 'best' for all the variables
+        uint64_t blocksize = e->blocksize;
+        // Use a chunksize (partition) that is multiple of blocksize.  This is common throughout iron array containers.
+        uint64_t chunksize = e->chunksize / blocksize * blocksize;
+        nitems_in_chunk = chunksize / e->typesize;
+        assert(chunksize % blocksize == 0);
+
+        // Create and initialize an iterator per variable
+        iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
+        iarray_context_t *ctx = NULL;
+        iarray_context_new(&cfg, &ctx);
+        iarray_iter_read_block_t **iter_var = malloc(nvars * sizeof(iarray_iter_read_block_t));
+        for (int nvar = 0; nvar < nvars; nvar++) {
+            iarray_container_t *var = e->vars[nvar].c;
+            iarray_iter_read_block_new(ctx, var, &iter_var[nvar], &blocksize);
+            iarray_iter_read_block_init(iter_var[nvar]);
+        }
+
+        // The output buffer for the chunk
+        int8_t *outbuf = ina_mem_alloc(chunksize);  // FIXME: this could benefit from using a mempool (probably not)
+
+        // Evaluate the expression for all the chunks in variables
+        iarray_iter_read_block_value_t *iter_value = malloc(nvars * sizeof(iarray_iter_read_block_value_t));
+        uint64_t nitems_written = 0;
+        int nblocks = 0;
+        while (nitems_written < nitems_in_schunk) {
+            // Decompress blocks in variables into temporaries
+            for (int nvar = 0; nvar < nvars; nvar++) {
+                iarray_iter_read_block_value(iter_var[nvar], &iter_value[nvar]);
+                e->temp_vars[nvar]->data = iter_value[nvar].pointer;
+            }
+
+            // Eval the expression for this block
+            const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
+            ina_mem_cpy(outbuf + nblocks * blocksize, expr_out->data, blocksize);
+            ina_mempool_reset(e->ctx->mp_tmp_out);
+            nblocks += 1;
+
+            if (nblocks * blocksize == chunksize) {
+                blosc2_schunk_append_buffer(out.sc, outbuf, chunksize);
+                nitems_written += nitems_in_chunk;
+                nblocks = 0;
+            }
+
+            // Get ready for the next iteration
+            for (int nvar = 0; nvar < nvars; nvar++) {
+                iarray_iter_read_block_next(iter_var[nvar]);
+            }
+        }
+        // Write the leftovers in output
+        blosc2_schunk_append_buffer(out.sc, outbuf, nblocks * blocksize);
+        nitems_written += (nblocks * blocksize) / e->typesize;
+        assert(nitems_written >= nitems_in_schunk);  // we use '>=' because of the padding of partition
+
+        for (int nvar = 0; nvar < nvars; nvar++) {
+            iarray_iter_read_block_free(iter_var[nvar]);
+        }
+        free(iter_var);
+        free(iter_value);
         ina_mem_free(outbuf);
     }
     else if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_CHUNK) {
