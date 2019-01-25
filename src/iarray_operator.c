@@ -345,6 +345,32 @@ INA_API(ina_rc_t) iarray_operator_transpose(iarray_context_t *ctx, iarray_contai
     return INA_SUCCESS;
 }
 
+/**
+ * This function performs a matrix multiplication between iarray containers `a` and `b`and stores it
+ * in `c` iarray container (a * b = c).
+ *
+ * The parameter `ctx` is an iarray context that allow users define the compression ratio, the
+ * threads number, ...
+ *
+ * The `a` iarray container must be a dataset of 2 dimensions. If not, an error will be returned.
+ *
+ * In the same way, `b` container must be a dataset of 1 or 2 dimensions. If it have 1 dimension a
+ * matrix-vector multiplication is performed. If it have 2 dimensions a matrix-matrix multiplication
+ * is done.
+ *
+ * The `c` container must be an iarray container whose dimensions are equal to the `b` container.
+ *
+ * `bshape_a` indicates indicates the block size with which the container `a` will be iterated when
+ *  performing block multiplication. The pshape[0] of `c` must be equal to bshape_a[0].
+ *
+ * `bshape_b` indicates indicates the block size with which the container `b` will be iterated when
+ *  performing block multiplication. The pshape[1] of `c` must be equal to bshape_a[1].
+ *
+ *  In addition, in order to perform the multiplication correctly bshape_a[1] = bshape_b[0].
+ *
+ *  This function returns an error code ina_rc_t.
+ */
+
 INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
                                        iarray_container_t *a,
                                        iarray_container_t *b,
