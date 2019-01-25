@@ -221,7 +221,6 @@ INA_API(void) iarray_iter_write_free(iarray_iter_write_t *itr)
 INA_API(void) iarray_iter_write_part_init(iarray_iter_write_part_t *itr)
 {
     itr->cont = 0;
-    memset(itr->part, 0, itr->container->catarr->psize * itr->container->catarr->sc->typesize);
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         itr->part_index[i] = 0;
         itr->part_shape[i] = itr->container->dtshape->pshape[i];
@@ -252,6 +251,7 @@ INA_API(ina_rc_t) iarray_iter_write_part_next(iarray_iter_write_part_t *itr)
         }
     } else {
         uint8_t *part_aux = malloc(catarr->psize * catarr->sc->typesize);
+        memset(part_aux, 0, catarr->psize * catarr->sc->typesize);
 
         //reverse part_shape
         uint64_t shaper[CATERVA_MAXDIM];
@@ -296,8 +296,8 @@ INA_API(ina_rc_t) iarray_iter_write_part_next(iarray_iter_write_part_t *itr)
                 }
             }
         }
-
         int err = blosc2_schunk_append_buffer(itr->container->catarr->sc, part_aux, catarr->psize * catarr->sc->typesize);
+        memset(part_aux, 0, catarr->psize * catarr->sc->typesize);
         if (err < 0) {
             return INA_ERROR(INA_ERR_FAILED);
         }
