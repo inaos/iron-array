@@ -554,6 +554,7 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
     (*itr)->B1 = bshape_a[1];
     (*itr)->B2 = bshape_b[1];
 
+    // Calculate the extended shape from the block shape
     if (c1->dtshape->shape[0] % bshape_a[0] == 0) {
         (*itr)->M = c1->dtshape->shape[0];
     } else {
