@@ -276,11 +276,11 @@ INA_TEST_FIXTURE(linalg_gemm, double_data) {
     uint64_t shape_x[] = {1234, 4567};
     uint64_t shape_y[] = {4567, 3456};
 
-    uint64_t pshape_x[] = {135, 162};
-    uint64_t pshape_y[] = {364, 234};
+    uint64_t pshape_x[] = {300, 400};
+    uint64_t pshape_y[] = {400, 500};
 
-    uint64_t bshape_x[] = {145, 120};
-    uint64_t bshape_y[] = {120, 200};
+    uint64_t bshape_x[] = {400, 600};
+    uint64_t bshape_y[] = {600, 500};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemm(data->ctx, dtype, type_size, shape_x, pshape_x,
                                                  shape_y, pshape_y, bshape_x, bshape_y));
