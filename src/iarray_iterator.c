@@ -221,7 +221,6 @@ INA_API(void) iarray_iter_write_free(iarray_iter_write_t *itr)
 INA_API(void) iarray_iter_write_part_init(iarray_iter_write_part_t *itr)
 {
     itr->cont = 0;
-    memset(itr->part, 0, itr->container->catarr->psize * itr->container->catarr->sc->typesize);
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         itr->part_index[i] = 0;
         itr->part_shape[i] = itr->container->dtshape->pshape[i];
