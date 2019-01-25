@@ -344,7 +344,7 @@ INA_TEST_FIXTURE(linalg_gemv, double_data)
                                                  pshape_x, pshape_y, bshape_x, bshape_y));
 }
 
-/*
+
 INA_TEST_FIXTURE(linalg_gemv, float_data)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -362,4 +362,3 @@ INA_TEST_FIXTURE(linalg_gemv, float_data)
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_gemv(data->ctx, dtype, type_size, shape_x, shape_y,
                             pshape_x, pshape_y, bshape_x, bshape_y));
 }
-*/
