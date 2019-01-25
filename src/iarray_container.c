@@ -144,13 +144,13 @@ INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
     return ina_err_get_rc();
 }
 
-ina_rc_t iarray_slice_buffer_(iarray_context_t *ctx,
-                                     iarray_container_t *c,
-                                     int64_t *start,
-                                     int64_t *stop,
-                                     uint64_t *pshape,
-                                     void *buffer,
-                                     uint64_t buflen)
+ina_rc_t _iarray_slice_buffer(iarray_context_t *ctx,
+                              iarray_container_t *c,
+                              int64_t *start,
+                              int64_t *stop,
+                              uint64_t *pshape,
+                              void *buffer,
+                              uint64_t buflen)
 {
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
