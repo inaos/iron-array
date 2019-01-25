@@ -26,10 +26,9 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint64_t B1 = bshape_a[1];
     uint64_t B2 = bshape_b[1];
 
-
+    // the extended shape is recalculated from the block shape
     uint64_t eshape_a[IARRAY_DIMENSION_MAX];
     uint64_t eshape_b[IARRAY_DIMENSION_MAX];
-
     for (int i = 0; i < a->dtshape->ndim; ++i) {
         if (a->dtshape->shape[i] % bshape_a[i] == 0) {
             eshape_a[i] = a->dtshape->shape[i];
@@ -43,25 +42,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
     }
 
-    uint64_t M, N, K;
-
-    if (a->dtshape->shape[0] % bshape_a[0] == 0) {
-        M = a->dtshape->shape[0];
-    } else {
-        M = (a->dtshape->shape[0] / bshape_a[0] + 1) * bshape_a[0];
-    }
-    if (a->dtshape->shape[1] % bshape_a[1] == 0) {
-        K = a->dtshape->shape[1];
-    } else {
-        K = (a->dtshape->shape[1] / bshape_a[1] + 1) * bshape_a[1];
-    }
-
-    if (b->dtshape->shape[1] % bshape_b[1] == 0) {
-        N = b->dtshape->shape[1];
-    } else {
-        N = (b->dtshape->shape[1] / bshape_b[1] + 1) * bshape_b[1];
-    }
-
+    // block sizes are claculated
     uint64_t a_size = (uint64_t) B0 * B1 * a->catarr->sc->typesize;
     uint64_t b_size = (uint64_t) B1 * B2 * b->catarr->sc->typesize;
     uint64_t c_size = (uint64_t) B0 * B2 * c->catarr->sc->typesize;
@@ -71,6 +52,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint8_t *b_block = malloc(b_size);
     uint8_t *c_block = malloc(c_size);
 
+    // Start a iterator that returns the index matrix blocks
     iarray_iter_matmul_t *I;
     _iarray_iter_matmul_new(ctx, a, b, bshape_a, bshape_b, &I);
 
@@ -85,9 +67,9 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         uint64_t inc_a = 1;
         uint64_t inc_b = 1;
 
+        // the block coords are calculated from the index
         uint64_t part_ind_a[IARRAY_DIMENSION_MAX];
         uint64_t part_ind_b[IARRAY_DIMENSION_MAX];
-
         for (int i = a->dtshape->ndim - 1; i >= 0; --i) {
             part_ind_a[i] = I->npart1 % (inc_a * (eshape_a[i] / bshape_a[i])) / inc_a;
             inc_a *= (eshape_a[i] / bshape_a[i]);
@@ -95,7 +77,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
             inc_b *= (eshape_b[i] / bshape_b[i]);
         }
 
-
+        // a start and a stop are calculated from the block coords
         for (int i = 0; i < a->dtshape->ndim; ++i) {
             start_a[i] = part_ind_a[i] * bshape_a[i];
             start_b[i] = part_ind_b[i] * bshape_b[i];
@@ -111,15 +93,13 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
             }
         }
 
+        // Obtain desired blocks from iarray containers
         memset(a_block, 0, a_size);
         memset(b_block, 0, b_size);
-
         iarray_slice_buffer_(ctx, a, start_a, stop_a, bshape_a, a_block, a_size);
         iarray_slice_buffer_(ctx, b, start_b, stop_b, bshape_b, b_block, b_size);
 
-        //int a_tam = blosc2_schunk_decompress_chunk(a->catarr->sc, (int)I->npart1, a_block, p_size);
-        //int b_tam = blosc2_schunk_decompress_chunk(b->catarr->sc, (int)I->npart2, b_block, p_size);
-
+        // Make blocks multiplication
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
             cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, B0, B2, B1, 1.0, (double *)a_block, B1, (double *)b_block, B2, 1.0, (double *)c_block, B2);
         }
@@ -127,14 +107,14 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
             cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, B0, B2, B1, 1.0, (float *)a_block, B1, (float *)b_block, B2, 1.0, (float *)c_block, B2);
         }
 
-        if((I->cont + 1) % (K / B1) == 0) {
+        // Append it to a new iarray contianer
+        if((I->cont + 1) % (eshape_a[1] / B1) == 0) {
             blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], c_size);
             memset(c_block, 0, c_size);
         }
     }
 
     _iarray_iter_matmul_free(I);
-
     free(a_block);
     free(b_block);
     free(c_block);
@@ -154,6 +134,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint64_t eshape_a[2];
     uint64_t eshape_b[1];
 
+    // the extended shape is recalculated from the block shape
     for (int i = 0; i < a->dtshape->ndim; ++i) {
         if (a->dtshape->shape[i] % bshape_a[i] == 0) {
             eshape_a[i] = a->dtshape->shape[i];
@@ -161,27 +142,13 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
             eshape_a[i] = (a->dtshape->shape[i] / bshape_a[i] + 1) * bshape_a[i];
         }
     }
-
     if (b->dtshape->shape[0] % bshape_b[0] == 0) {
         eshape_b[0] = b->dtshape->shape[0];
     } else {
         eshape_b[0] = (b->dtshape->shape[0] / bshape_b[0] + 1) * bshape_b[0];
     }
 
-    uint64_t M, N, K;
-
-    if (a->dtshape->shape[0] % bshape_a[0] == 0) {
-        M = a->dtshape->shape[0];
-    } else {
-        M = (a->dtshape->shape[0] / bshape_a[0] + 1) * bshape_a[0];
-    }
-    if (a->dtshape->shape[1] % bshape_a[1] == 0) {
-        K = a->dtshape->shape[1];
-    } else {
-        K = (a->dtshape->shape[1] / bshape_a[1] + 1) * bshape_a[1];
-    }
-
-
+    // block sizes are claculated
     uint64_t a_size = (uint64_t) B0 * B1 * a->catarr->sc->typesize;
     uint64_t b_size = (uint64_t) B1 * a->catarr->sc->typesize;
     uint64_t c_size = (uint64_t) B0 * a->catarr->sc->typesize;
@@ -192,6 +159,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint8_t *b_block = malloc(b_size);
     uint8_t *c_block = malloc(c_size);
 
+    // Start a iterator that returns the index matrix blocks
     iarray_iter_matmul_t *I;
     _iarray_iter_matmul_new(ctx, a, b, bshape_a, bshape_b, &I);
 
@@ -208,6 +176,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         uint64_t part_ind_a[IARRAY_DIMENSION_MAX];
         uint64_t part_ind_b[IARRAY_DIMENSION_MAX];
 
+        // the block coords are calculated from the index
         for (int i = a->dtshape->ndim - 1; i >= 0; --i) {
             part_ind_a[i] = I->npart1 % (inc_a * (eshape_a[i] / bshape_a[i])) / inc_a;
             inc_a *= (eshape_a[i] / bshape_a[i]);
@@ -215,6 +184,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         part_ind_b[0] = I->npart2 % ( (eshape_b[0] / bshape_b[0]));
 
 
+        // a start and a stop are calculated from the block coords
         for (int i = 0; i < a->dtshape->ndim; ++i) {
             start_a[i] = part_ind_a[i] * bshape_a[i];
             if (start_a[i] + bshape_a[i] > a->dtshape->shape[i]) {
@@ -224,7 +194,6 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
             }
 
         }
-
         start_b[0] = part_ind_b[0] * bshape_b[0];
         if (start_b[0] + bshape_b[0] > b->dtshape->shape[0]) {
             stop_b[0] = b->dtshape->shape[0];
@@ -232,12 +201,13 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
             stop_b[0] = start_b[0] + bshape_b[0];
         }
 
+        // Obtain desired blocks from iarray containers
         memset(a_block, 0, a_size);
         memset(b_block, 0, b_size);
-
         iarray_slice_buffer_(ctx, a, start_a, stop_a, bshape_a, a_block, a_size);
         iarray_slice_buffer_(ctx, b, start_b, stop_b, bshape_b, b_block, b_size);
 
+        // Make blocks multiplication
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
             cblas_dgemv(CblasRowMajor, CblasNoTrans, B0, B1, 1.0, (double *) a_block, B1, (double *) b_block, 1, 1.0, (double *) c_block, 1);
         }
@@ -245,11 +215,13 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
             cblas_sgemv(CblasRowMajor, CblasNoTrans, B0, B1, 1.0, (float *) a_block, B1, (float *) b_block, 1, 1.0, (float *) c_block, 1);
         }
 
-        if((I->cont + 1) % (K / B1) == 0) {
+        // Append it to a new iarray contianer
+        if((I->cont + 1) % (eshape_a[1] / B1) == 0) {
             blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], c_size);
             memset(c_block, 0, c_size);
         }
     }
+
     _iarray_iter_matmul_free(I);
     free(a_block);
     free(b_block);
