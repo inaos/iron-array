@@ -334,7 +334,7 @@ fail:
     return INA_ERR_ILLEGAL;
 }
 
-INA_API(ina_rc_t) iarray_operator_transpose(iarray_context_t *ctx, iarray_container_t *a)
+INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a)
 {
     if (a->transposed == 0) {
         a->transposed = 1;
