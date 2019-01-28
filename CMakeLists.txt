@@ -27,7 +27,12 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
 endif()
 include("${CMAKE_BINARY_DIR}/inac.cmake")
 
-inac_add_dependency(inac "1.0.1" SNAPSHOT)
+if (APPLE)
+    inac_add_dependency(inac "1.0.1" SNAPSHOT) 
+else()
+    inac_add_dependency(inac "1.0.2")
+endif()
+
 inac_add_contrib_lib(tinyexpr)
 
 add_subdirectory(contribs/c-blosc2)
