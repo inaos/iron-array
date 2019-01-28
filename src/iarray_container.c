@@ -254,7 +254,7 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     // For the blocksize, choose the maximum of the partition shapes
     uint64_t *blocksize = malloc(ndim * sizeof(uint64_t));
     for (int i = 0; i < ndim; ++i) {
-        blocksize[i] = MAX(a->dtshape->pshape[i], b->dtshape->pshape[i]);
+        blocksize[i] = INA_MAX(a->dtshape->pshape[i], b->dtshape->pshape[i]);
     }
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
