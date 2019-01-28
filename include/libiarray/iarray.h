@@ -378,6 +378,14 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr);
 INA_API(int) iarray_iter_read_finished(iarray_iter_read_t *itr);
 INA_API(void) iarray_iter_read_value(iarray_iter_read_t *itr, iarray_iter_read_value_t *val);
 
+INA_API(ina_rc_t) iarray_iter_read_trans_new(iarray_context_t *ctx, iarray_container_t *container,
+                                       iarray_iter_read_t **itr);
+INA_API(void) iarray_iter_read_trans_free(iarray_iter_read_t *itr);
+INA_API(void) iarray_iter_read_trans_init(iarray_iter_read_t *itr);
+INA_API(ina_rc_t) iarray_iter_read_trans_next(iarray_iter_read_t *itr);
+INA_API(int) iarray_iter_read_trans_finished(iarray_iter_read_t *itr);
+INA_API(void) iarray_iter_read_trans_value(iarray_iter_read_t *itr, iarray_iter_read_value_t *val);
+
 INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx, iarray_container_t *container,
                                              iarray_iter_read_block_t **itr, uint64_t *blockshape);
 INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr);

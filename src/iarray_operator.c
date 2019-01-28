@@ -336,6 +336,10 @@ fail:
 
 INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a)
 {
+    if (a->dtshape->ndim != 2) {
+        return INA_FAILED(INA_ERR_INVALID_ARGUMENT);
+    }
+
     if (a->transposed == 0) {
         a->transposed = 1;
     }

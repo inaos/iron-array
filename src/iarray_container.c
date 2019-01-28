@@ -93,7 +93,7 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
     iarray_container_new(ctx, dtshape, store, flags, container);
 
     if (c->transposed == 1) {
-        iarray_linalg_transpose(ctx, *container);
+        (*container)->transposed = 1;
     }
 
     caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, c->dtshape->ndim);
