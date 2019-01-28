@@ -342,6 +342,20 @@ INA_API(ina_rc_t) iarray_operator_transpose(iarray_context_t *ctx, iarray_contai
     else {
         a->transposed = 0;
     }
+
+    uint64_t aux[IARRAY_DIMENSION_MAX];
+    for (int i = 0; i < a->dtshape->ndim; ++i) {
+        aux[i] = a->dtshape->shape[i];
+    }
+    for (int i = 0; i < a->dtshape->ndim; ++i) {
+        a->dtshape->shape[i] = aux[a->dtshape->ndim - 1 - i];
+    }
+    for (int i = 0; i < a->dtshape->ndim; ++i) {
+        aux[i] = a->dtshape->pshape[i];
+    }
+    for (int i = 0; i < a->dtshape->ndim; ++i) {
+        a->dtshape->pshape[i] = aux[a->dtshape->ndim - 1 - i];
+    }
     return INA_SUCCESS;
 }
 
