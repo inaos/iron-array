@@ -216,13 +216,12 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
     else if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERBLOCK) {
         // TODO: refine this and choose the nitems_in_block that works 'best' for all the variables
         uint64_t nitems_in_block = e->blocksize / e->typesize;
-        // Use a chunksize (partition) that is multiple of nitems_in_block.  This is common throughout iron array containers.
-        //uint64_t chunksize = e->chunksize / nitems_in_block * nitems_in_block;
-        size_t blocksize = nitems_in_block * e->typesize;
+        size_t blocksize = e->blocksize;
+        assert(nitems_in_block * e->typesize == blocksize);  // Blosc always ensures this, but anyways
         size_t nblocks_in_chunk = e->chunksize / blocksize;
-        size_t chunksize = nblocks_in_chunk * blocksize;
-        nitems_in_chunk = chunksize / e->typesize;
-        assert(nitems_in_chunk % nitems_in_block == 0);
+        // Use a chunksize (partition) that is multiple of nitems_in_block.  This is common throughout iron array containers.
+        nitems_in_chunk = nitems_in_block * nblocks_in_chunk;
+        size_t chunksize = nitems_in_chunk * e->typesize;
 
         // Create and initialize an iterator per variable
         iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -247,12 +246,14 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             // Decompress blocks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
                 iarray_iter_read_block_value(iter_var[nvar], &iter_value[nvar]);
-                e->temp_vars[nvar]->data = iter_value[nvar].pointer;
+                //e->temp_vars[nvar]->data = iter_value[nvar].pointer;
+                // TODO: I think that a copy would not be necessary here.  Investigate more...
+                memcpy(e->temp_vars[nvar]->data, iter_value[nvar].pointer, blocksize);
             }
 
             // Eval the expression for this block
             const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
-            ina_mem_cpy(outbuf + nblocks_to_write * blocksize, expr_out->data, blocksize);
+            memcpy(outbuf + nblocks_to_write * blocksize, expr_out->data, blocksize);
             ina_mempool_reset(e->ctx->mp_tmp_out);
             nblocks += 1;
             nblocks_to_write += 1;
@@ -270,8 +271,10 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
         // Write the leftovers in output
         size_t items_left = nitems_in_schunk - nitems_written;
-        blosc2_schunk_append_buffer(out.sc, outbuf, items_left * e->typesize);
-        nitems_written += items_left;
+        if (items_left > 0) {
+            blosc2_schunk_append_buffer(out.sc, outbuf, items_left * e->typesize);
+            nitems_written += items_left;
+        }
         assert(nitems_written == nitems_in_schunk);
 
         for (int nvar = 0; nvar < nvars; nvar++) {
