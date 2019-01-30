@@ -131,3 +131,10 @@ INA_TEST_FIXTURE(expression_eval, iterchunk1)
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len));
 }
+
+INA_TEST_FIXTURE(expression_eval, iterblock1)
+{
+    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_ITERBLOCK;
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len));
+}
