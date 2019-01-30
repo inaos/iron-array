@@ -253,7 +253,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                 corrected_blocksize = chunksize - ((nblocks_to_write - 1) * blocksize + leftover);
                 write_chunk = true;
             }
-            memcpy(outbuf + (nblocks_to_write - 1) * blocksize + leftover, expr_out->data, corrected_blocksize);
+            memcpy(outbuf + (nblocks_to_write - 1) * blocksize + leftover, (uint8_t*)expr_out->data, corrected_blocksize);
             ina_mempool_reset(e->ctx->mp_tmp_out);
 
             if (write_chunk) {
@@ -263,7 +263,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                 write_chunk = false;
                 leftover = blocksize - corrected_blocksize;
                 // Copy the leftover at the beginning of the chunk for the next iteration
-                memcpy(outbuf, expr_out->data + corrected_blocksize, leftover);
+                memcpy(outbuf, (uint8_t*)expr_out->data + corrected_blocksize, leftover);
             }
 
             // Get ready for the next iteration
