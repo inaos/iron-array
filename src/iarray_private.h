@@ -113,6 +113,12 @@ typedef struct iarray_iter_matmul_s {
     iarray_context_t *ctx;
     iarray_container_t *container1;
     iarray_container_t *container2;
+    uint64_t B0;
+    uint64_t B1;
+    uint64_t B2;
+    uint64_t M;
+    uint64_t K;
+    uint64_t N;
     uint64_t npart1;
     uint64_t npart2;
     uint64_t cont;
@@ -156,7 +162,8 @@ iarray_temporary_t* _iarray_op_divide(iarray_expression_t *expr, iarray_temporar
 
 // Iterators
 ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *container1,
-                                 iarray_container_t *container2, iarray_iter_matmul_t **itr);
+                                 iarray_container_t *container2, uint64_t *bshape_a,
+                                 uint64_t *bshape_b, iarray_iter_matmul_t **itr);
 void _iarray_iter_matmul_free(iarray_iter_matmul_t *itr);
 void _iarray_iter_matmul_init(iarray_iter_matmul_t *itr);
 void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr);
@@ -165,4 +172,11 @@ int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr);
 // Utilities
 bool _iarray_file_exists(const char * filename);
 
+ina_rc_t _iarray_slice_buffer(iarray_context_t *ctx,
+                              iarray_container_t *c,
+                              int64_t *start,
+                              int64_t *stop,
+                              uint64_t *pshape,
+                              void *buffer,
+                              uint64_t buflen);
 #endif

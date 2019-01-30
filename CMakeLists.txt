@@ -27,7 +27,12 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
 endif()
 include("${CMAKE_BINARY_DIR}/inac.cmake")
 
-inac_add_dependency(inac "1.0.1" SNAPSHOT)
+if (APPLE)
+    inac_add_dependency(inac "1.0.1" SNAPSHOT) 
+else()
+    inac_add_dependency(inac "1.0.2")
+endif()
+
 inac_add_contrib_lib(tinyexpr)
 
 add_subdirectory(contribs/c-blosc2)
@@ -72,9 +77,12 @@ set(BENCH ${CMAKE_SOURCE_DIR}/bench)
 
 add_executable(bench_vectors ${BENCH}/bench_vectors.c)
 add_executable(bench_matmul ${BENCH}/bench_matmul.c)
+add_executable(bench_matmul_vec ${BENCH}/bench_matmul_vec.c)
+
 
 target_link_libraries(bench_vectors LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 target_link_libraries(bench_matmul LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+target_link_libraries(bench_matmul_vec LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 #if (MSVC)
 #    install(TARGETS iarray

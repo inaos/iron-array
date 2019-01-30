@@ -16,6 +16,7 @@
 #define NELEM_BYTES(nelem) (nelem * sizeof(double))
 #define NTHREADS 1
 
+
 /* Check that the values of a super-chunk are equal to a C matrix */
 int test_mat_equal(int nelems, double *c1, double *c2) {
     for (int nelem=0; nelem < nelems; nelem++) {
@@ -52,21 +53,21 @@ int main(int argc, char** argv)
     double nbytes_mb = 0;
     double cbytes_mb = 0;
 
-    uint64_t shape_x[] = {4000, 5000};
-    uint64_t pshape_x[] = {500, 750};
-    uint64_t bshape_x[] = {1000, 1200};
+    uint64_t shape_x[] = {4000, 6000};
+    uint64_t pshape_x[] = {4000, 6000};
+    uint64_t bshape_x[] = {4000, 6000};
 
     uint64_t size_x = shape_x[0] * shape_x[1];
-    uint64_t shape_y[] = {5000, 3000};
-    uint64_t pshape_y[] = {400, 510};
-    uint64_t bshape_y [] = {1200, 1100};
-    uint64_t size_y = shape_y[0] * shape_y[1];
+    uint64_t shape_y[] = {6000};
+    uint64_t pshape_y[] = {6000};
+    uint64_t bshape_y [] = {6000};
+    uint64_t size_y = shape_y[0];
 
-    uint64_t shape_out[] = {shape_x[0], shape_y[1]};
-    uint64_t pshape_out[] = {bshape_x[0], bshape_y[1]};
-    uint64_t size_out = shape_out[0] * shape_out[1];
+    uint64_t shape_out[] = {shape_x[0]};
+    uint64_t pshape_out[] = {bshape_x[0]};
+    uint64_t size_out = shape_out[0];
 
-    uint64_t flops = (2 * shape_x[1] - 1) * shape_x[0] * shape_y[1];
+    uint64_t flops = (2 * shape_x[1] - 1) * shape_x[0];
 
     INA_OPTS(opt,
         INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
@@ -79,19 +80,19 @@ int main(int argc, char** argv)
     ina_set_cleanup_handler(ina_cleanup_handler);
 
     if (INA_SUCCEED(ina_opt_isset("p"))) {
-        mat_x_name = "mat_x.b2frame";
-        mat_y_name = "mat_y.b2frame";
-        mat_out_name = "mat_out.b2frame";
+        mat_x_name = "mat_x_vec.b2frame";
+        mat_y_name = "mat_y_vec.b2frame";
+        mat_out_name = "mat_out_vec.b2frame";
         if (INA_SUCCEED(ina_opt_isset("r"))) {
             remove(mat_x_name);
             remove(mat_y_name);
             remove(mat_out_name);
-            printf("Storage for iarray matrices: *memory*\n");
+            printf("Storage for iarray containers: *memory*\n");
         } else {
-            printf("Storage for iarray matrices: *disk*\n");
+            printf("Storage for iarray containers: *disk*\n");
         }
     } else {
-        printf("Storage for iarray matrices: *memory*\n");
+        printf("Storage for iarray containers: *memory*\n");
     }
 
     iarray_store_properties_t mat_x_prop = {.id = mat_x_name};
@@ -99,13 +100,13 @@ int main(int argc, char** argv)
     iarray_store_properties_t mat_out_prop = {.id = mat_out_name};
 
     printf("\n");
-    printf("Measuring time for multiplying matrices X and Y\n");
+    printf("Measuring time for multiplying matrices X and vector Y\n");
 
     printf("\n");
     printf("Matrix X has a shape of (%lld, %lld) with a partition of (%lld, %lld) \n",
            shape_x[0], shape_x[1], pshape_x[0], pshape_x[1]);
-    printf("Matrix Y has a shape of (%lld, %lld) with a partition of (%lld, %lld) \n",
-           shape_y[0], shape_y[1], pshape_y[0], pshape_y[1]);
+    printf("Vector Y has a shape of (%lld) with a partition of (%lld) \n",
+           shape_y[0], pshape_y[0]);
 
     printf("\n");
     printf("Working set for the 4 uncompressed matrices: %.1f MB\n", (size_x + size_y + size_out * 2) * sizeof(double) / (double)_IARRAY_SIZE_MB);
@@ -116,7 +117,7 @@ int main(int argc, char** argv)
     config.compression_codec = IARRAY_COMPRESSION_LZ4;
     config.compression_level = 5;
     config.max_num_threads = NTHREADS;
-    config.eval_flags = IARRAY_EXPR_EVAL_CHUNK;
+    config.flags = IARRAY_EXPR_EVAL_CHUNK;
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
 
@@ -140,8 +141,8 @@ int main(int argc, char** argv)
         INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_y_prop, &con_y));
         INA_STOPWATCH_STOP(w);
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
-        printf("Time for *opening* X and Y values: %.3g s, %.1f GB/s\n",
-               elapsed_sec, NELEM_BYTES(size_x + size_y) / (elapsed_sec * _IARRAY_SIZE_GB));
+        printf("Time for *opening* X and Y values: %.3g s, %.1f MB/s\n",
+               elapsed_sec, NELEM_BYTES(size_x + size_y) / (elapsed_sec * _IARRAY_SIZE_MB));
     } else {
 
         allocated = true;
@@ -158,7 +159,7 @@ int main(int argc, char** argv)
         INA_STOPWATCH_STOP(w);
 
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
-        printf("Time for filling X and Y matrices: %.3g s, %.1f MB/s\n",
+        printf("Time for filling X and Y: %.3g s, %.1f MB/s\n",
                elapsed_sec, NELEM_BYTES(size_x + size_y) / (elapsed_sec * _IARRAY_SIZE_MB));
 
         iarray_dtshape_t xdtshape;
@@ -170,13 +171,12 @@ int main(int argc, char** argv)
         }
 
         iarray_dtshape_t ydtshape;
-        ydtshape.ndim = 2;
+        ydtshape.ndim = 1;
         ydtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
         for (int i = 0; i < ydtshape.ndim; ++i) {
             ydtshape.shape[i] = shape_y[i];
             ydtshape.pshape[i] = pshape_y[i];
         }
-
 
         INA_STOPWATCH_START(w);
         INA_MUST_SUCCEED(iarray_from_buffer(ctx, &xdtshape, mat_x, size_x, &mat_x_prop, flags, &con_x));
@@ -203,18 +203,18 @@ int main(int argc, char** argv)
 
     /* Compute naive matrix-matrix multiplication */
     INA_STOPWATCH_START(w);
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) shape_x[0], (int) shape_y[1], (int) shape_x[1],
-        1.0, mat_x, (int) shape_x[1], mat_y, (int) shape_y[1], 0.0, mat_res, (int) shape_y[1]);
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, (int) shape_x[0], (int) shape_x[1],
+        1.0, mat_x, (int) shape_x[1], mat_y, 1, 0.0, mat_res, 1);
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
     printf("\n");
-    printf("Time for multiplying two matrices (pure C): %.3g s, %.1f GFLOPs\n",
-        elapsed_sec, flops / (elapsed_sec * 10e9));
+    printf("Time for multiplying X and Y (pure C): %.3g s, %.1f MFLOPs\n",
+        elapsed_sec, flops / (elapsed_sec * 10e6));
 
 
     iarray_dtshape_t outdtshape;
-    outdtshape.ndim = 2;
+    outdtshape.ndim = 1;
     outdtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     for (int i = 0; i < outdtshape.ndim; ++i) {
         outdtshape.shape[i] = shape_out[i];
@@ -231,8 +231,8 @@ int main(int argc, char** argv)
 
     iarray_container_info(con_out, &nbytes, &cbytes);
     printf("\n");
-    printf("Time for multiplying two matrices (iarray):  %.3g s, %.1f GFLOPs\n",
-        elapsed_sec, flops / (elapsed_sec * 10e9));
+    printf("Time for multiplying X and Y (iarray):  %.3g s, %.1f MFLOPs\n",
+        elapsed_sec, flops / (elapsed_sec * 10e6));
 
     nbytes_mb = ((double) nbytes / _IARRAY_SIZE_MB);
     cbytes_mb = ((double) cbytes / _IARRAY_SIZE_MB);
