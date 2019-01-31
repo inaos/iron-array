@@ -52,7 +52,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
     iarray_iter_write_free(I);
 
 
-    // Constianer transposed
+    // Container transposed
 
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x));
 
