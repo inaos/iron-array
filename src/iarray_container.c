@@ -167,12 +167,26 @@ INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
         }
     }
 
-
     caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, ndim);
     caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, ndim);
     caterva_dims_t pshape_ = caterva_new_dims((uint64_t *) pshape, ndim);
 
     INA_FAIL_IF(caterva_get_slice_buffer(buffer, c->catarr, start__, stop__, pshape_) != 0);
+
+    uint64_t rows = stop_[0] - start_[0];
+    uint64_t cols = stop_[1] - start_[1];
+
+    if (c->transposed == 1) {
+        switch (c->dtshape->dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                mkl_dimatcopy('R', 'T', rows, cols, 1.0, (double *) buffer, cols, rows);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                mkl_simatcopy('R', 'T', rows, cols, 1.0,
+                              (float *) buffer, cols, rows);
+                break;
+        }
+    }
 
     return INA_SUCCESS;
 
@@ -250,6 +264,21 @@ ina_rc_t _iarray_slice_buffer(iarray_context_t *ctx,
     caterva_dims_t pshape__ = caterva_new_dims(pshape_, ndim);
 
     INA_FAIL_IF(caterva_get_slice_buffer(buffer, c->catarr, start__, stop__, pshape__) != 0);
+
+    uint64_t rows = stop_[0] - start_[0];
+    uint64_t cols = stop_[1] - start_[1];
+
+    if (c->transposed == 1) {
+        switch (c->dtshape->dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                mkl_dimatcopy('R', 'T', rows, cols, 1.0, (double *) buffer, cols, rows);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                mkl_simatcopy('R', 'T', rows, cols, 1.0,
+                              (float *) buffer, cols, rows);
+                break;
+        }
+    }
 
     return INA_SUCCESS;
 
