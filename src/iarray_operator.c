@@ -124,6 +124,15 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c,
                              uint64_t *bshape_a, uint64_t *bshape_b) {
 
+    int a_trans = CblasNoTrans;
+    if (a->transposed == 1) {
+        a_trans = CblasTrans;
+    }
+    int b_trans = CblasNoTrans;
+    if (b->transposed == 1) {
+        b_trans = CblasTrans;
+    }
+
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     caterva_update_shape(c->catarr, shape);
 
@@ -208,10 +217,10 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
         // Make blocks multiplication
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            cblas_dgemv(CblasRowMajor, CblasNoTrans, B0, B1, 1.0, (double *) a_block, B1, (double *) b_block, 1, 1.0, (double *) c_block, 1);
+            cblas_dgemv(CblasRowMajor, a_trans, B0, B1, 1.0, (double *) a_block, B1, (double *) b_block, 1, 1.0, (double *) c_block, 1);
         }
         else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
-            cblas_sgemv(CblasRowMajor, CblasNoTrans, B0, B1, 1.0, (float *) a_block, B1, (float *) b_block, 1, 1.0, (float *) c_block, 1);
+            cblas_sgemv(CblasRowMajor, b_trans, B0, B1, 1.0, (float *) a_block, B1, (float *) b_block, 1, 1.0, (float *) c_block, 1);
         }
 
         // Append it to a new iarray contianer
