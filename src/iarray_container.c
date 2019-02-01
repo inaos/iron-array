@@ -263,12 +263,13 @@ ina_rc_t _iarray_slice_buffer(iarray_context_t *ctx,
     caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, ndim);
     caterva_dims_t pshape__ = caterva_new_dims(pshape_, ndim);
 
+    memset(buffer, 0, buflen);
+
     INA_FAIL_IF(caterva_get_slice_buffer(buffer, c->catarr, start__, stop__, pshape__) != 0);
 
-    uint64_t rows = stop_[0] - start_[0];
-    uint64_t cols = stop_[1] - start_[1];
-
     if (c->transposed == 1) {
+        uint64_t rows = pshape[1];
+        uint64_t cols = pshape[0];
         switch (c->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 mkl_dimatcopy('R', 'T', rows, cols, 1.0, (double *) buffer, cols, rows);

@@ -505,7 +505,7 @@ int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr)
     uint64_t N = itr->N;
     uint64_t K = itr->K;
 
-    if (itr->container2->catarr->ndim == 1) {
+    if (itr->container2->dtshape->ndim == 1) {
         return itr->cont >= (M/B0) * (K/B1);
     }
 
