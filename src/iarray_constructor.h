@@ -101,20 +101,21 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     cparams.clevel = (uint8_t)ctx->cfg->compression_level; /* Since its just a mapping, we know the cast is ok */
     cparams.blocksize = ctx->cfg->blocksize;
     cparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
-    if (dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE && ctx->cfg->flags & IARRAY_COMP_TRUNC_PREC) {
+    if ((ctx->cfg->filter_flags & IARRAY_COMP_TRUNC_PREC) &&
+        (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT || dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE)) {
         cparams.filters[blosc_filter_idx] = BLOSC_TRUNC_PREC;
         cparams.filters_meta[blosc_filter_idx] = ctx->cfg->fp_mantissa_bits;
         blosc_filter_idx++;
     }
-    if (ctx->cfg->flags & IARRAY_COMP_BITSHUFFLE) {
+    if (ctx->cfg->filter_flags & IARRAY_COMP_BITSHUFFLE) {
         cparams.filters[blosc_filter_idx] = BLOSC_BITSHUFFLE;
         blosc_filter_idx++;
     }
-    if (ctx->cfg->flags & IARRAY_COMP_SHUFFLE) {
+    if (ctx->cfg->filter_flags & IARRAY_COMP_SHUFFLE) {
         cparams.filters[blosc_filter_idx] = BLOSC_SHUFFLE;
         blosc_filter_idx++;
     }
-    if (ctx->cfg->flags & IARRAY_COMP_DELTA) {
+    if (ctx->cfg->filter_flags & IARRAY_COMP_DELTA) {
         cparams.filters[blosc_filter_idx] = BLOSC_DELTA;
         blosc_filter_idx++;
     }

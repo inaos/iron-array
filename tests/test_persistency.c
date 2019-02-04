@@ -51,7 +51,6 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
 
     iarray_iter_write_free(I);
 
-
     // Close the container and re-open it from disk
     iarray_container_free(ctx, &c_x);
     INA_TEST_ASSERT(_iarray_file_exists(store->id));
@@ -88,7 +87,7 @@ INA_TEST_SETUP(persistency) {
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
-    cfg.flags = IARRAY_EXPR_EVAL_CHUNK;
+    cfg.eval_flags = IARRAY_EXPR_EVAL_CHUNK;
 
     iarray_context_new(&cfg, &data->ctx);
 
