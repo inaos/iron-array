@@ -25,6 +25,22 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint64_t B1 = bshape_a[1];
     uint64_t B2 = bshape_b[1];
 
+    int flag_a = CblasNoTrans;
+    int ld_a = (int) B1;
+    if (a->transposed == 1) {
+        flag_a = CblasTrans;
+        ld_a = (int) B0;
+    }
+
+    int flag_b = CblasNoTrans;
+    int ld_b = (int) B2;
+    if (b->transposed == 1) {
+        flag_b = CblasTrans;
+        ld_b = (int) B1;
+    }
+
+    int ld_c = (int) B2;
+
     // the extended shape is recalculated from the block shape
     uint64_t eshape_a[IARRAY_DIMENSION_MAX];
     uint64_t eshape_b[IARRAY_DIMENSION_MAX];
@@ -100,10 +116,10 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
         // Make blocks multiplication
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, B0, B2, B1, 1.0, (double *)a_block, B1, (double *)b_block, B2, 1.0, (double *)c_block, B2);
+            cblas_dgemm(CblasRowMajor, flag_a, flag_b, B0, B2, B1, 1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 1.0, (double *)c_block, ld_c);
         }
         else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
-            cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, B0, B2, B1, 1.0, (float *)a_block, B1, (float *)b_block, B2, 1.0, (float *)c_block, B2);
+            cblas_sgemm(CblasRowMajor, flag_a, flag_b, B0, B2, B1, 1.0, (float *)a_block, ld_a, (float *)b_block, ld_b, 1.0, (float *)c_block, ld_c);
         }
 
         // Append it to a new iarray contianer
@@ -124,20 +140,18 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c,
                              uint64_t *bshape_a, uint64_t *bshape_b) {
 
-    int a_trans = CblasNoTrans;
-    if (a->transposed == 1) {
-        a_trans = CblasTrans;
-    }
-    int b_trans = CblasNoTrans;
-    if (b->transposed == 1) {
-        b_trans = CblasTrans;
-    }
-
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     caterva_update_shape(c->catarr, shape);
 
     uint64_t B0 = bshape_a[0];
     uint64_t B1 = bshape_a[1];
+
+    int flag_a = CblasNoTrans;
+    int ld_a = (int) B1;
+    if (a->transposed == 1) {
+        flag_a = CblasTrans;
+        ld_a = (int) B0;
+    }
 
     uint64_t eshape_a[2];
     uint64_t eshape_b[1];
@@ -216,11 +230,12 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         _iarray_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size);
 
         // Make blocks multiplication
+
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            cblas_dgemv(CblasRowMajor, a_trans, B0, B1, 1.0, (double *) a_block, B1, (double *) b_block, 1, 1.0, (double *) c_block, 1);
+            cblas_dgemv(CblasRowMajor, flag_a, B0, B1, 1.0, (double *) a_block, ld_a, (double *) b_block, 1, 1.0, (double *) c_block, 1);
         }
         else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
-            cblas_sgemv(CblasRowMajor, b_trans, B0, B1, 1.0, (float *) a_block, B1, (float *) b_block, 1, 1.0, (float *) c_block, 1);
+            cblas_sgemv(CblasRowMajor, flag_a, B0, B1, 1.0, (float *) a_block, ld_a, (float *) b_block, 1, 1.0, (float *) c_block, 1);
         }
 
         // Append it to a new iarray contianer
