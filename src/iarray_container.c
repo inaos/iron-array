@@ -267,6 +267,7 @@ ina_rc_t _iarray_slice_buffer(iarray_context_t *ctx,
 
     INA_FAIL_IF(caterva_get_slice_buffer(buffer, c->catarr, start__, stop__, pshape__) != 0);
 
+    /*
     if (c->transposed == 1) {
         uint64_t rows = pshape[1];
         uint64_t cols = pshape[0];
@@ -279,6 +280,7 @@ ina_rc_t _iarray_slice_buffer(iarray_context_t *ctx,
                 break;
         }
     }
+    */
 
     return INA_SUCCESS;
 
