@@ -309,7 +309,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         uint64_t blocksize = UINT64_MAX;
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            blocksize = MIN(blocksize, var->dtshape->pshape[0]);
+            blocksize = INA_MIN(blocksize, var->dtshape->pshape[0]);
         }
 
         // Create and initialize an iterator per variable
