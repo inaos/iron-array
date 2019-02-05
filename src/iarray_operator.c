@@ -63,9 +63,9 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint64_t c_size = (uint64_t) B0 * B2 * c->catarr->sc->typesize;
     int dtype = a->dtshape->dtype;
 
-    uint8_t *a_block = malloc(a_size);
-    uint8_t *b_block = malloc(b_size);
-    uint8_t *c_block = malloc(c_size);
+    uint8_t *a_block = ina_mem_alloc(a_size);
+    uint8_t *b_block = ina_mem_alloc(b_size);
+    uint8_t *c_block = ina_mem_alloc(c_size);
 
     // Start a iterator that returns the index matrix blocks
     iarray_iter_matmul_t *iter;
@@ -130,9 +130,9 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     _iarray_iter_matmul_free(iter);
-    free(a_block);
-    free(b_block);
-    free(c_block);
+    ina_mem_free(a_block);
+    ina_mem_free(b_block);
+    ina_mem_free(c_block);
 
     return INA_SUCCESS;
 }
@@ -143,6 +143,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     caterva_update_shape(c->catarr, shape);
 
+    // Define parameters needed in mkl multiplication
     uint64_t B0 = bshape_a[0];
     uint64_t B1 = bshape_a[1];
 
@@ -181,9 +182,9 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     int dtype = a->dtshape->dtype;
 
-    uint8_t *a_block = malloc(a_size);
-    uint8_t *b_block = malloc(b_size);
-    uint8_t *c_block = malloc(c_size);
+    uint8_t *a_block = ina_mem_alloc(a_size);
+    uint8_t *b_block = ina_mem_alloc(b_size);
+    uint8_t *c_block = ina_mem_alloc(c_size);
 
     // Start a iterator that returns the index matrix blocks
     iarray_iter_matmul_t *iter;
@@ -250,9 +251,9 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     _iarray_iter_matmul_free(iter);
-    free(a_block);
-    free(b_block);
-    free(c_block);
+    ina_mem_free(a_block);
+    ina_mem_free(b_block);
+    ina_mem_free(c_block);
 
     return INA_SUCCESS;
 }
