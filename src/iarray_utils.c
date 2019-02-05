@@ -14,7 +14,6 @@
 
 #include <iarray_private.h>
 
-
 /*
  * Check if a file exist using fopen() function.
  *
