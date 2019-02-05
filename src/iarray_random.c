@@ -175,7 +175,6 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                 ((double *)val.pointer)[i] = r[i];
             }
         }
-
     }
 
     return INA_SUCCESS;
