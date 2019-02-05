@@ -72,6 +72,8 @@ struct iarray_container_s {
 typedef struct iarray_iter_write_s {
     iarray_context_t *ctx;
     iarray_container_t *container;
+    uint64_t *i_shape;
+    uint64_t *i_pshape;
     uint8_t *part;
     void *pointer;
     uint64_t *index;
