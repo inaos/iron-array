@@ -130,11 +130,11 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     return INA_SUCCESS;
 }
 
-INA_TEST_DATA(linalg_gemv_) {
+INA_TEST_DATA(linalg_gemv) {
     iarray_context_t *ctx;
 };
 
-INA_TEST_SETUP(linalg_gemv_) {
+INA_TEST_SETUP(linalg_gemv) {
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -143,12 +143,12 @@ INA_TEST_SETUP(linalg_gemv_) {
     iarray_context_new(&cfg, &data->ctx);
 }
 
-INA_TEST_TEARDOWN(linalg_gemv_) {
+INA_TEST_TEARDOWN(linalg_gemv) {
     iarray_context_free(&data->ctx);
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(linalg_gemv_, float_data_n) {
+INA_TEST_FIXTURE(linalg_gemv, float_data_n) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int typesize = sizeof(float);
@@ -174,7 +174,7 @@ INA_TEST_FIXTURE(linalg_gemv_, float_data_n) {
 
 
 
-INA_TEST_FIXTURE(linalg_gemv_, double_data_n) {
+INA_TEST_FIXTURE(linalg_gemv, double_data_n) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int typesize = sizeof(double);
@@ -200,7 +200,7 @@ INA_TEST_FIXTURE(linalg_gemv_, double_data_n) {
 }
 
 
-INA_TEST_FIXTURE(linalg_gemv_, double_data_t) {
+INA_TEST_FIXTURE(linalg_gemv, double_data_t) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int typesize = sizeof(double);
@@ -226,7 +226,7 @@ INA_TEST_FIXTURE(linalg_gemv_, double_data_t) {
 }
 
 
-INA_TEST_FIXTURE(linalg_gemv_, float_data_t) {
+INA_TEST_FIXTURE(linalg_gemv, float_data_t) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int typesize = sizeof(float);
