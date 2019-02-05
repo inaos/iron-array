@@ -74,11 +74,13 @@ set(BENCH ${CMAKE_SOURCE_DIR}/bench)
 
 add_executable(bench_vectors ${BENCH}/bench_vectors.c)
 add_executable(bench_matmul ${BENCH}/bench_matmul.c)
+add_executable(bench_matmul_trans ${BENCH}/bench_matmul_trans.c)
 add_executable(bench_matmul_vec ${BENCH}/bench_matmul_vec.c)
 
 
 target_link_libraries(bench_vectors LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 target_link_libraries(bench_matmul LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+target_link_libraries(bench_matmul_trans LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 target_link_libraries(bench_matmul_vec LINK_PUBLIC iarray_c blosc_static caterva tinyexpr ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 #if (MSVC)

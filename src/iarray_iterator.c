@@ -505,7 +505,7 @@ int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr)
     uint64_t N = itr->N;
     uint64_t K = itr->K;
 
-    if (itr->container2->catarr->ndim == 1) {
+    if (itr->container2->dtshape->ndim == 1) {
         return itr->cont >= (M/B0) * (K/B1);
     }
 
@@ -677,9 +677,9 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
         cont_pointer += ind_part_elem[i] * inc_p;
         itr->index[i] = ind_part_elem[i] + itr->part_index[i] * catarr->pshape[i];
         itr->nelem += itr->index[i] * inc_s;
+        inc_s *= catarr->shape[i];
         inc *= itr->bshape[i];
         inc_p *= catarr->pshape[i];
-        inc_s *= catarr->shape[i];
     }
     itr->pointer = (void *)&(itr->part)[cont_pointer * catarr->sc->typesize];
 
@@ -719,11 +719,7 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx, iarray_container_t
 
     *itr = (iarray_iter_write_t*)ina_mem_alloc(sizeof(iarray_iter_write_t));
     INA_RETURN_IF_NULL(itr);
-    caterva_dims_t shape = caterva_new_dims(container->dtshape->shape, container->dtshape->ndim);
-    int err = caterva_update_shape(container->catarr, shape);
-    if (err < 0) {
-        return INA_ERROR(INA_ERR_FAILED);
-    }
+
     (*itr)->ctx = ctx;
     (*itr)->container = container;
     (*itr)->part = (uint8_t *) ina_mem_alloc(container->catarr->psize * container->catarr->sc->typesize);
@@ -747,6 +743,7 @@ INA_API(void) iarray_iter_read_free(iarray_iter_read_t *itr)
     ina_mem_free(itr->bshape);
     ina_mem_free(itr);
 }
+
 
 /*
  * Read iterator by blocks

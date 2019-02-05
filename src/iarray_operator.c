@@ -21,9 +21,26 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     caterva_update_shape(c->catarr, shape);
 
+    // define mkl parameters
     uint64_t B0 = bshape_a[0];
     uint64_t B1 = bshape_a[1];
     uint64_t B2 = bshape_b[1];
+
+    int flag_a = CblasNoTrans;
+    int ld_a = (int) B1;
+    if (a->transposed == 1) {
+        flag_a = CblasTrans;
+        ld_a = (int) B0;
+    }
+
+    int flag_b = CblasNoTrans;
+    int ld_b = (int) B2;
+    if (b->transposed == 1) {
+        flag_b = CblasTrans;
+        ld_b = (int) B1;
+    }
+
+    int ld_c = (int) B2;
 
     // the extended shape is recalculated from the block shape
     uint64_t eshape_a[IARRAY_DIMENSION_MAX];
@@ -47,9 +64,9 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint64_t c_size = (uint64_t) B0 * B2 * c->catarr->sc->typesize;
     int dtype = a->dtshape->dtype;
 
-    uint8_t *a_block = malloc(a_size);
-    uint8_t *b_block = malloc(b_size);
-    uint8_t *c_block = malloc(c_size);
+    uint8_t *a_block = ina_mem_alloc(a_size);
+    uint8_t *b_block = ina_mem_alloc(b_size);
+    uint8_t *c_block = ina_mem_alloc(c_size);
 
     // Start a iterator that returns the index matrix blocks
     iarray_iter_matmul_t *iter;
@@ -95,15 +112,15 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         // Obtain desired blocks from iarray containers
         memset(a_block, 0, a_size);
         memset(b_block, 0, b_size);
-        _iarray_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size);
-        _iarray_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size);
+        INA_MUST_SUCCEED(_iarray_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+        INA_MUST_SUCCEED(_iarray_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
 
         // Make blocks multiplication
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, B0, B2, B1, 1.0, (double *)a_block, B1, (double *)b_block, B2, 1.0, (double *)c_block, B2);
+            cblas_dgemm(CblasRowMajor, flag_a, flag_b, B0, B2, B1, 1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 1.0, (double *)c_block, ld_c);
         }
         else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
-            cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, B0, B2, B1, 1.0, (float *)a_block, B1, (float *)b_block, B2, 1.0, (float *)c_block, B2);
+            cblas_sgemm(CblasRowMajor, flag_a, flag_b, B0, B2, B1, 1.0, (float *)a_block, ld_a, (float *)b_block, ld_b, 1.0, (float *)c_block, ld_c);
         }
 
         // Append it to a new iarray contianer
@@ -114,9 +131,9 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     _iarray_iter_matmul_free(iter);
-    free(a_block);
-    free(b_block);
-    free(c_block);
+    ina_mem_free(a_block);
+    ina_mem_free(b_block);
+    ina_mem_free(c_block);
 
     return INA_SUCCESS;
 }
@@ -127,8 +144,20 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     caterva_update_shape(c->catarr, shape);
 
+    // Define parameters needed in mkl multiplication
     uint64_t B0 = bshape_a[0];
     uint64_t B1 = bshape_a[1];
+
+    int M = (int) bshape_a[0];
+    int K = (int) bshape_a[1];
+    int ld_a = K;
+    int flag_a = CblasNoTrans;
+    if (a->transposed == 1) {
+        flag_a = CblasTrans;
+        ld_a = M;
+        M = (int) bshape_a[1];
+        K = (int) bshape_a[0];
+    }
 
     uint64_t eshape_a[2];
     uint64_t eshape_b[1];
@@ -154,9 +183,9 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     int dtype = a->dtshape->dtype;
 
-    uint8_t *a_block = malloc(a_size);
-    uint8_t *b_block = malloc(b_size);
-    uint8_t *c_block = malloc(c_size);
+    uint8_t *a_block = ina_mem_alloc(a_size);
+    uint8_t *b_block = ina_mem_alloc(b_size);
+    uint8_t *c_block = ina_mem_alloc(c_size);
 
     // Start a iterator that returns the index matrix blocks
     iarray_iter_matmul_t *iter;
@@ -203,15 +232,16 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         // Obtain desired blocks from iarray containers
         memset(a_block, 0, a_size);
         memset(b_block, 0, b_size);
-        _iarray_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size);
-        _iarray_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size);
+        INA_MUST_SUCCEED(_iarray_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+        INA_MUST_SUCCEED(_iarray_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
 
         // Make blocks multiplication
+
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            cblas_dgemv(CblasRowMajor, CblasNoTrans, B0, B1, 1.0, (double *) a_block, B1, (double *) b_block, 1, 1.0, (double *) c_block, 1);
+            cblas_dgemv(CblasRowMajor, flag_a, M, K, 1.0, (double *) a_block, ld_a, (double *) b_block, 1, 1.0, (double *) c_block, 1);
         }
         else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
-            cblas_sgemv(CblasRowMajor, CblasNoTrans, B0, B1, 1.0, (float *) a_block, B1, (float *) b_block, 1, 1.0, (float *) c_block, 1);
+            cblas_sgemv(CblasRowMajor, flag_a, M, K, 1.0, (float *) a_block, ld_a, (float *) b_block, 1, 1.0, (float *) c_block, 1);
         }
 
         // Append it to a new iarray contianer
@@ -222,9 +252,9 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     _iarray_iter_matmul_free(iter);
-    free(a_block);
-    free(b_block);
-    free(c_block);
+    ina_mem_free(a_block);
+    ina_mem_free(b_block);
+    ina_mem_free(c_block);
 
     return INA_SUCCESS;
 }
@@ -334,13 +364,31 @@ fail:
     return INA_ERR_ILLEGAL;
 }
 
-INA_API(ina_rc_t) iarray_operator_transpose(iarray_context_t *ctx, iarray_container_t *a)
+INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a)
 {
+    if (a->dtshape->ndim != 2) {
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
+
     if (a->transposed == 0) {
         a->transposed = 1;
     }
     else {
         a->transposed = 0;
+    }
+
+    uint64_t aux[IARRAY_DIMENSION_MAX];
+    for (int i = 0; i < a->dtshape->ndim; ++i) {
+        aux[i] = a->dtshape->shape[i];
+    }
+    for (int i = 0; i < a->dtshape->ndim; ++i) {
+        a->dtshape->shape[i] = aux[a->dtshape->ndim - 1 - i];
+    }
+    for (int i = 0; i < a->dtshape->ndim; ++i) {
+        aux[i] = a->dtshape->pshape[i];
+    }
+    for (int i = 0; i < a->dtshape->ndim; ++i) {
+        a->dtshape->pshape[i] = aux[a->dtshape->ndim - 1 - i];
     }
     return INA_SUCCESS;
 }
@@ -387,18 +435,18 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     INA_ASSERT_NOT_NULL(bshape_b);
 
     if (bshape_a[0] != c->dtshape->pshape[0]){
-        return INA_ERR_INVALID_ARGUMENT;
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     if (a->dtshape->ndim != 2) {
-        return INA_ERR_INVALID_ARGUMENT;
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
     if (b->dtshape->ndim == 1) {
         return _iarray_gemv(ctx, a, b, c, bshape_a, bshape_b);
     }
     else if (b->dtshape->ndim == 2) {
         if (bshape_b[1] != c->dtshape->pshape[1]) {
-            return INA_ERR_INVALID_ARGUMENT;
+            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }
         return _iarray_gemm(ctx, a, b, c, bshape_a, bshape_b);
     }

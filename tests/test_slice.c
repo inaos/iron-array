@@ -24,7 +24,7 @@ static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_x, int64
 
 static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint8_t ndim,
                                       const uint64_t *shape, const uint64_t *pshape, const uint64_t *pshape_dest,
-                                      int64_t *start, int64_t *stop, const void *result) {
+                                      int64_t *start, int64_t *stop, const void *result, int transposed) {
     void *buffer_x;
     size_t buffer_x_len;
 
@@ -65,6 +65,11 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     iarray_container_t *c_out;
 
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buffer_x, buffer_x_len * type_size, NULL, 0, &c_x));
+
+    if (transposed == 1) {
+        iarray_linalg_transpose(ctx, c_x);
+    }
+
 
     INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, outdtshape, NULL, 0, &c_out));
 
@@ -134,7 +139,7 @@ INA_TEST_FIXTURE(slice, double_data_2) {
                            77, 78, 79, 83, 84, 85, 86, 87, 88, 89};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
-        start, stop, result));
+        start, stop, result, 0));
 }
 
 INA_TEST_FIXTURE(slice, float_data_3) {
@@ -161,7 +166,7 @@ INA_TEST_FIXTURE(slice, float_data_3) {
                            563, 564, 565, 566, 567, 568, 569};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
-        start, stop, result));
+        start, stop, result, 0));
 }
 
 INA_TEST_FIXTURE(slice, double_data_4) {
@@ -183,7 +188,7 @@ INA_TEST_FIXTURE(slice, double_data_4) {
 
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
-        start, stop, result));
+        start, stop, result, 0));
 }
 
 INA_TEST_FIXTURE(slice, float_data_5) {
@@ -205,7 +210,7 @@ INA_TEST_FIXTURE(slice, float_data_5) {
                            77559, 78557, 78558, 78559};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
-                                                  start, stop, result));
+                                                  start, stop, result, 0));
 }
 
 INA_TEST_FIXTURE(slice, double_data_6) {
@@ -229,7 +234,7 @@ INA_TEST_FIXTURE(slice, double_data_6) {
                            63571, 63572};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
-                                                  start, stop, result));
+                                                  start, stop, result, 0));
 }
 
 INA_TEST_FIXTURE(slice, float_data_7) {
@@ -263,7 +268,7 @@ INA_TEST_FIXTURE(slice, float_data_7) {
                            7548551, 7548552, 7548561, 7548562, 7548651, 7548652, 7548661, 7548662};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
-                                                  start, stop, result));
+                                                  start, stop, result, 0));
 }
 
 INA_TEST_FIXTURE(slice, double_data_8) {
@@ -300,5 +305,58 @@ INA_TEST_FIXTURE(slice, double_data_8) {
                            55356162, 55356260, 55356261, 55356262};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
-                                                  start, stop, result));
+                                                  start, stop, result, 0));
+}
+
+INA_TEST_DATA(slice_trans) {
+    iarray_context_t *ctx;
+};
+
+INA_TEST_SETUP(slice_trans) {
+    iarray_init();
+
+    iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
+    cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
+    cfg.flags = IARRAY_EXPR_EVAL_CHUNK;
+
+    iarray_context_new(&cfg, &data->ctx);
+}
+
+INA_TEST_TEARDOWN(slice_trans) {
+    iarray_context_free(&data->ctx);
+    iarray_destroy();
+}
+
+INA_TEST_FIXTURE(slice_trans, double_data_2) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    size_t type_size = sizeof(double);
+
+    const uint64_t ndim = 2;
+    uint64_t shape[] = {10, 10};
+    uint64_t pshape[] = {3, 4};
+    int64_t start[] = {2, 1};
+    int64_t stop[] = {7, 3};
+    uint64_t pshape_dest[] = {2, 2};
+
+    double result[] = {12, 22, 13, 23, 14, 24, 15, 25, 16, 26};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
+                                                  start, stop, result, 1));
+}
+
+INA_TEST_FIXTURE(slice_trans, float_data_2) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    size_t type_size = sizeof(float);
+
+    const uint64_t ndim = 2;
+    uint64_t shape[] = {10, 10};
+    uint64_t pshape[] = {2, 7};
+    int64_t start[] = {3, 1};
+    int64_t stop[] = {5, 8};
+    uint64_t pshape_dest[] = {2, 3};
+
+    float result[] = {13, 23, 33, 43, 53, 63, 73, 14, 24, 34, 44, 54, 64, 74};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
+                                                  start, stop, result, 1));
 }
