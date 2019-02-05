@@ -139,11 +139,11 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     return INA_SUCCESS;
 }
 
-INA_TEST_DATA(linalg_gemm_) {
+INA_TEST_DATA(linalg_gemm) {
     iarray_context_t *ctx;
 };
 
-INA_TEST_SETUP(linalg_gemm_) {
+INA_TEST_SETUP(linalg_gemm) {
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -152,12 +152,12 @@ INA_TEST_SETUP(linalg_gemm_) {
     iarray_context_new(&cfg, &data->ctx);
 }
 
-INA_TEST_TEARDOWN(linalg_gemm_) {
+INA_TEST_TEARDOWN(linalg_gemm) {
     iarray_context_free(&data->ctx);
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(linalg_gemm_, float_data_nn) {
+INA_TEST_FIXTURE(linalg_gemm, float_data_nn) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int typesize = sizeof(float);
@@ -182,7 +182,7 @@ INA_TEST_FIXTURE(linalg_gemm_, float_data_nn) {
 }
 
 
-INA_TEST_FIXTURE(linalg_gemm_, double_data_nn) {
+INA_TEST_FIXTURE(linalg_gemm, double_data_nn) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int typesize = sizeof(double);
@@ -207,7 +207,7 @@ INA_TEST_FIXTURE(linalg_gemm_, double_data_nn) {
                                       yshape, ypshape, ybshape, ytrans, zshape, zpshape));
 }
 
-INA_TEST_FIXTURE(linalg_gemm_, float_data_nt) {
+INA_TEST_FIXTURE(linalg_gemm, float_data_nt) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int typesize = sizeof(float);
@@ -231,7 +231,7 @@ INA_TEST_FIXTURE(linalg_gemm_, float_data_nt) {
                                       yshape, ypshape, ybshape, ytrans, zshape, zpshape));
 }
 
-INA_TEST_FIXTURE(linalg_gemm_, double_data_tn) {
+INA_TEST_FIXTURE(linalg_gemm, double_data_tn) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int typesize = sizeof(double);
@@ -256,7 +256,7 @@ INA_TEST_FIXTURE(linalg_gemm_, double_data_tn) {
                                       yshape, ypshape, ybshape, ytrans, zshape, zpshape));
 }
 
-INA_TEST_FIXTURE(linalg_gemm_, float_data_tt) {
+INA_TEST_FIXTURE(linalg_gemm, float_data_tt) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int typesize = sizeof(float);
@@ -281,7 +281,7 @@ INA_TEST_FIXTURE(linalg_gemm_, float_data_tt) {
 }
 
 
-INA_TEST_FIXTURE(linalg_gemm_, double_data_tt) {
+INA_TEST_FIXTURE(linalg_gemm, double_data_tt) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int typesize = sizeof(double);
