@@ -29,7 +29,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
 
     iarray_container_t *c_x;
 
-    iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x);
+    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x));
 
     // Start Iterator
     iarray_iter_write_t *I;
@@ -54,7 +54,9 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
 
     // Container transposed
 
-    INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x));
+    if (ndim == 2) {
+        INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x));
+    }
 
     // Assert iterator reading it
 
