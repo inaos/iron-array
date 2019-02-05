@@ -21,6 +21,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     caterva_update_shape(c->catarr, shape);
 
+    // define mkl parameters
     uint64_t B0 = bshape_a[0];
     uint64_t B1 = bshape_a[1];
     uint64_t B2 = bshape_b[1];
@@ -111,8 +112,8 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         // Obtain desired blocks from iarray containers
         memset(a_block, 0, a_size);
         memset(b_block, 0, b_size);
-        _iarray_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size);
-        _iarray_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size);
+        INA_MUST_SUCCEED(_iarray_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+        INA_MUST_SUCCEED(_iarray_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
 
         // Make blocks multiplication
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
@@ -231,8 +232,8 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         // Obtain desired blocks from iarray containers
         memset(a_block, 0, a_size);
         memset(b_block, 0, b_size);
-        _iarray_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size);
-        _iarray_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size);
+        INA_MUST_SUCCEED(_iarray_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+        INA_MUST_SUCCEED(_iarray_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
 
         // Make blocks multiplication
 
