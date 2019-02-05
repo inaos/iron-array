@@ -29,7 +29,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
 
     iarray_container_t *c_x;
 
-    iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x);
+    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x));
 
     // Start Iterator
     iarray_iter_write_t *I;
@@ -50,6 +50,13 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, s
     }
 
     iarray_iter_write_free(I);
+
+
+    // Container transposed
+
+    if (ndim == 2) {
+        INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x));
+    }
 
     // Assert iterator reading it
 
@@ -100,8 +107,8 @@ INA_TEST_FIXTURE(iterator, double_2) {
     size_t type_size = sizeof(double);
 
     uint8_t ndim = 2;
-    uint64_t shape[] = {5, 5};
-    uint64_t pshape[] = {3, 3};
+    uint64_t shape[] = {4, 6};
+    uint64_t pshape[] = {2, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
