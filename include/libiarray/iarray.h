@@ -30,6 +30,12 @@ typedef enum iarray_random_rng_e {
     IARRAY_RANDOM_RNG_SOBOL,
 } iarray_random_rng_t;
 
+typedef enum iarray_random_dist_parameter_e {
+    IARRAY_RANDOM_DIST_PARAM_ALPHA = 1,
+    IARRAY_RANDOM_DIST_PARAM_BETA,
+    IARRAY_RANDOM_DIST_PARAM_SENTINEL /* marks end of list */
+} iarray_random_dist_parameter_t;
+
 typedef enum iarray_data_type_e {
     IARRAY_DATA_TYPE_DOUBLE,
     IARRAY_DATA_TYPE_FLOAT,
@@ -176,6 +182,14 @@ INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
                                         iarray_random_ctx_t **rng_ctx);
 
 INA_API(void) iarray_random_ctx_free(iarray_context_t *ctx, iarray_random_ctx_t **rng_ctx);
+
+INA_API(ina_rc_t) iarray_random_dist_set_param_float(iarray_random_ctx_t *ctx, 
+                                                     iarray_random_dist_parameter_t key, 
+                                                     float value);
+
+INA_API(ina_rc_t) iarray_random_dist_set_param_double(iarray_random_ctx_t *ctx,
+                                                      iarray_random_dist_parameter_t key,
+                                                      double value);
 
 INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
                                        iarray_dtshape_t *dtshape,
