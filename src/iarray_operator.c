@@ -367,7 +367,7 @@ fail:
 INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a)
 {
     if (a->dtshape->ndim != 2) {
-        return INA_FAILED(INA_ERR_INVALID_ARGUMENT);
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     if (a->transposed == 0) {
@@ -435,18 +435,18 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     INA_ASSERT_NOT_NULL(bshape_b);
 
     if (bshape_a[0] != c->dtshape->pshape[0]){
-        return INA_ERR_INVALID_ARGUMENT;
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     if (a->dtshape->ndim != 2) {
-        return INA_ERR_INVALID_ARGUMENT;
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
     if (b->dtshape->ndim == 1) {
         return _iarray_gemv(ctx, a, b, c, bshape_a, bshape_b);
     }
     else if (b->dtshape->ndim == 2) {
         if (bshape_b[1] != c->dtshape->pshape[1]) {
-            return INA_ERR_INVALID_ARGUMENT;
+            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }
         return _iarray_gemm(ctx, a, b, c, bshape_a, bshape_b);
     }
