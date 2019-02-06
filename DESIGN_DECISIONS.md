@@ -1,3 +1,11 @@
+## Containers
+
+### General
+
+#### Shape Immutability
+
+For now we decided that it is not a priority for iron-array to change the shape of a container after creation. For now the containers are immutable in term of shape and size. The content however can of course be updated.
+
 ## Operations on Matrices and Vectors
 
 * We follow the numpy convention (e.g. matmul) and leverage the dtshape information to determine whether we have to issue a BLAS level 2 oder level 3 function.
