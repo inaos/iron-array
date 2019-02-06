@@ -552,7 +552,7 @@ INA_API(ina_rc_t) iarray_operator_floor(iarray_context_t *ctx, iarray_container_
 
 INA_API(ina_rc_t) iarray_operator_log(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
 {
-    return INA_ERR_NOT_IMPLEMENTED;
+    return _iarray_operator_elwise_a(ctx, a, result, vdLn, vsLn);
 }
 
 INA_API(ina_rc_t) iarray_operator_log10(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
