@@ -20,11 +20,6 @@ INA_BENCH_DATA(matmul) {
     iarray_context_t *ctx;
     iarray_config_t config;
 
-    uint64_t nbytes;
-    uint64_t cbytes;
-    double nbytes_mb;
-    double cbytes_mb;
-
     uint64_t shape_x_0;
     uint64_t shape_x_1;
 
@@ -212,7 +207,8 @@ INA_BENCH_BEGIN(matmul, native_mkl)
 }
 
 INA_BENCH_SCALE(matmul) {
-    //data->shape_x_0 = data->shape_x_0 + (100 * ina_bench_get_iteration());
+    // FIXME: find sensible increments -> data->shape_x_0 = data->shape_x_0 * (10 * ina_bench_get_iteration());
+    // FIXME: find sensible increments -> data->pshape_x_0 = data->pshape_x_0 * (2 * ina_bench_get_iteration());
     ina_bench_set_scale(data->size_out);
 }
 
@@ -231,11 +227,13 @@ INA_BENCH(matmul, native_mkl, 2)
     ina_bench_set_int64(ina_bench_stopwatch_stop());
 
     ina_mem_free(mat_res);
+
+    _teardown_matrices(data);
 }
 
 INA_BENCH_END(matmul, native_mkl)
 {
-    _teardown_matrices(data);
+    INA_UNUSED(data);
 }
 
 INA_BENCH_BEGIN(matmul, linalg_matmul)
@@ -268,10 +266,14 @@ INA_BENCH(matmul, linalg_matmul, 2)
     ina_bench_stopwatch_start();
     INA_MUST_SUCCEED(iarray_linalg_matmul(data->ctx, data->con_x, data->con_y, con_out, bshape_x, bshape_y, IARRAY_OPERATOR_GENERAL));
     ina_bench_set_int64(ina_bench_stopwatch_stop());
+
+    iarray_container_free(data->ctx, &con_out);
+
+    _teardown_matrices(data);
 }
 
 INA_BENCH_END(matmul, linalg_matmul)
 {
-    _teardown_matrices(data);
+    INA_UNUSED(data);
 }
 
