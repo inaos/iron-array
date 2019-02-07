@@ -135,9 +135,9 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     break;
                 case _IARRAY_RANDOM_METHOD_BETA:
                 {
-                    float a = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
-                    float b = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA];
-                    //status = vsRngBeta(method, random_ctx->stream, part_size, r, p, q, a, beta);
+                    float alpha = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
+                    float beta = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA];
+                    status = vsRngBeta(VSL_RNG_METHOD_BETA_CJA, random_ctx->stream, (int) part_size, r, alpha, beta, 0, 1);
                 }
                 case _IARRAY_RANDOM_METHOD_LOGNORMAL:
                     //status = vsRngLognormal(method, random_ctx->stream, part_size, r, a, sigma, b, beta);
@@ -160,9 +160,9 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     break;
                 case _IARRAY_RANDOM_METHOD_BETA:
                 {
-                    double a = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
-                    double b = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA];
-                    //status = vdRngBeta(method, random_ctx->stream, part_size, r, p, q, a, beta);
+                    double alpha = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
+                    double beta = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA];
+                    status = vdRngBeta(VSL_RNG_METHOD_BETA_CJA, random_ctx->stream, (int) part_size, r, alpha, beta, 0, 1);
                 }
                     break;
                 case _IARRAY_RANDOM_METHOD_LOGNORMAL:
