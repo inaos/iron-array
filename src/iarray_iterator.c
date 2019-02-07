@@ -890,7 +890,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx, iarray_conta
 
     // Create a cache in the underlying container so as to accelerate the getting of a slice
     INA_FAIL_IF(container->catarr->part_cache.data != NULL);
-    INA_FAIL_IF(container->catarr->part_cache.nchunk == -1);
+    INA_FAIL_IF(container->catarr->part_cache.nchunk != -1);
     // TODO: Using ina_mem_alloc instead of ina_mempool_dalloc makes the
     //  `./perf_vectors -I -e 3 -c 5` bench to fail.  Investigate more.
     // container->catarr->part_cache.data = ina_mem_alloc((size_t)size);
