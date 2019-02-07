@@ -879,18 +879,29 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx, iarray_conta
     (*itr)->block_index = (uint64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(uint64_t));
     (*itr)->elem_index = (uint64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(uint64_t));
 
-    uint64_t size = 1;
+    int32_t typesize = container->catarr->sc->typesize;
+    int64_t size = typesize;
     for (int i = 0; i < (*itr)->container->dtshape->ndim; ++i) {
         (*itr)->shape[i] = blockshape[i];
         size *= (*itr)->shape[i];
     }
-    if ((*itr)->container->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        (*itr)->part = ina_mem_alloc(size * sizeof(double));
-    } else {
-        (*itr)->part = ina_mem_alloc(size * sizeof(float));
-    }
+    (*itr)->part = ina_mem_alloc((size_t)size);
     (*itr)->pointer = &((*itr)->part[0]);
+
+    // Create a cache in the underlying container so as to accelerate the getting of a slice
+    INA_FAIL_IF(container->catarr->part_cache.data != NULL);
+    INA_FAIL_IF(container->catarr->part_cache.nchunk == -1);
+    // TODO: Using ina_mem_alloc instead of ina_mempool_dalloc makes the
+    //  `./perf_vectors -I -e 3 -c 5` bench to fail.  Investigate more.
+    // container->catarr->part_cache.data = ina_mem_alloc((size_t)size);
+    // memset(container->catarr->part_cache.data, 0, (size_t)size);
+    container->catarr->part_cache.data = ina_mempool_dalloc(ctx->mp, (size_t)size);
+
     return INA_SUCCESS;
+
+fail:
+    return ina_err_get_rc();
+
 }
 
 /*
@@ -904,5 +915,8 @@ INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr)
     ina_mem_free(itr->block_index);
     ina_mem_free(itr->elem_index);
     ina_mem_free(itr->part);
+    //ina_mem_free(itr->container->catarr->part_cache.data);  // TODO: investigate (see above)
+    itr->container->catarr->part_cache.data = NULL;  // reset to NULL here (the memory pool will be reset later)
+    itr->container->catarr->part_cache.nchunk = -1;  // means no valid cache yet
     ina_mem_free(itr);
 }
