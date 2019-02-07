@@ -26,8 +26,11 @@
 #define _IARRAY_SIZE_GB  (1024*_IARRAY_SIZE_MB)
 
 /* Mempools */
-#define _IARRAY_MEMPOOL_OP_CHUNKS (8*1024*1024) /* FIXME: evaluate L3 during context init) */
-#define _IARRAY_MEMPOOL_EVAL_SIZE (8*1024*1024)
+/* FIXME: do some serious benchmarking for finding the optimal values below
+ * (decide this at runtime maybe?) */
+#define _IARRAY_MEMPOOL_OP_CHUNKS (1024*1024)
+#define _IARRAY_MEMPOOL_EVAL (1024*1024)
+#define _IARRAY_MEMPOOL_EVAL_TMP (1024*1024)
 
 typedef enum iarray_optype_e {
     IARRAY_OPERATION_TYPE_ADD,
