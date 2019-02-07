@@ -31,7 +31,9 @@ typedef enum iarray_random_rng_e {
 } iarray_random_rng_t;
 
 typedef enum iarray_random_dist_parameter_e {
-    IARRAY_RANDOM_DIST_PARAM_ALPHA = 1,
+    IARRAY_RANDOM_DIST_PARAM_MU,
+    IARRAY_RANDOM_DIST_PARAM_SIGMA,
+    IARRAY_RANDOM_DIST_PARAM_ALPHA,
     IARRAY_RANDOM_DIST_PARAM_BETA,
     IARRAY_RANDOM_DIST_PARAM_SENTINEL /* marks end of list */
 } iarray_random_dist_parameter_t;
