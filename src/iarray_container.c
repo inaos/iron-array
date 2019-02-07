@@ -44,14 +44,14 @@ INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
     return _iarray_container_new(ctx, dtshape, store, flags, container);
 }
 
-INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
-                               iarray_container_t *c,
-                               int64_t *start,
-                               int64_t *stop,
-                               iarray_dtshape_t *dtshape,
-                               iarray_store_properties_t *store,
-                               int flags,
-                               iarray_container_t **container)
+INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
+                                   iarray_container_t *c,
+                                   int64_t *start,
+                                   int64_t *stop,
+                                   uint64_t *pshape,
+                                   iarray_store_properties_t *store,
+                                   int flags,
+                                   iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(start);
@@ -60,7 +60,7 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
     uint64_t start_[IARRAY_DIMENSION_MAX];
     uint64_t stop_[IARRAY_DIMENSION_MAX];
 
-    for (int i = 0; i < dtshape->ndim; ++i) {
+    for (int i = 0; i < c->dtshape->ndim; ++i) {
         if (start[i] < 0) {
             start_[i] = start[i] + c->dtshape->shape[i];
         } else{
@@ -73,24 +73,34 @@ INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
         }
     }
 
+    iarray_dtshape_t dtshape;
+
+    dtshape.ndim = c->dtshape->ndim;
+    dtshape.dtype = c->dtshape->dtype;
+
+    for (int i = 0; i < dtshape.ndim; ++i) {
+        dtshape.shape[i] = stop_[i] - start_[i];
+        dtshape.pshape[i] = pshape[i];
+    }
+
     // Check if matrix is transposed
 
     if (c->transposed == 1) {
         uint64_t aux_stop[IARRAY_DIMENSION_MAX];
         uint64_t aux_start[IARRAY_DIMENSION_MAX];
 
-        for (int i = 0; i < dtshape->ndim; ++i) {
+        for (int i = 0; i < c->dtshape->ndim; ++i) {
             aux_start[i] = start_[i];
             aux_stop[i] = stop_[i];
         }
 
-        for (int i = 0; i < dtshape->ndim; ++i) {
-            start_[i] = aux_start[dtshape->ndim - 1 - i];
-            stop_[i] = aux_stop[dtshape->ndim - 1 - i];
+        for (int i = 0; i < c->dtshape->ndim; ++i) {
+            start_[i] = aux_start[c->dtshape->ndim - 1 - i];
+            stop_[i] = aux_stop[c->dtshape->ndim - 1 - i];
         }
     }
 
-    iarray_container_new(ctx, dtshape, store, flags, container);
+    iarray_container_new(ctx, &dtshape, store, flags, container);
 
     if (c->transposed == 1) {
         (*container)->transposed = 1;
@@ -107,12 +117,12 @@ fail:
     return ina_err_get_rc();
 }
 
-INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
-                                      iarray_container_t *c,
-                                      int64_t *start,
-                                      int64_t *stop,
-                                      void *buffer,
-                                      uint64_t buflen)
+INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
+                                          iarray_container_t *c,
+                                          int64_t *start,
+                                          int64_t *stop,
+                                          void *buffer,
+                                          uint64_t buflen)
 {
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
@@ -194,13 +204,13 @@ INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
     return ina_err_get_rc();
 }
 
-ina_rc_t _iarray_slice_buffer(iarray_context_t *ctx,
-                              iarray_container_t *c,
-                              int64_t *start,
-                              int64_t *stop,
-                              uint64_t *pshape,
-                              void *buffer,
-                              uint64_t buflen)
+ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
+                                  iarray_container_t *c,
+                                  int64_t *start,
+                                  int64_t *stop,
+                                  uint64_t *pshape,
+                                  void *buffer,
+                                  uint64_t buflen)
 {
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
