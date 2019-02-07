@@ -889,15 +889,19 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx, iarray_conta
     (*itr)->pointer = &((*itr)->part[0]);
 
     // Create a cache in the underlying container so as to accelerate the getting of a slice
-    assert(container->catarr->part_cache.data == NULL);
-    assert(container->catarr->part_cache.nchunk == -1);
+    INA_FAIL_IF(container->catarr->part_cache.data != NULL);
+    INA_FAIL_IF(container->catarr->part_cache.nchunk == -1);
     // TODO: Using ina_mem_alloc instead of ina_mempool_dalloc makes the
     //  `./perf_vectors -I -e 3 -c 5` bench to fail.  Investigate more.
-//    container->catarr->part_cache.data = ina_mem_alloc((size_t)size);
-//    memset(container->catarr->part_cache.data, 0, (size_t)size);
+    // container->catarr->part_cache.data = ina_mem_alloc((size_t)size);
+    // memset(container->catarr->part_cache.data, 0, (size_t)size);
     container->catarr->part_cache.data = ina_mempool_dalloc(ctx->mp, (size_t)size);
 
     return INA_SUCCESS;
+
+fail:
+    return ina_err_get_rc();
+
 }
 
 /*
@@ -911,7 +915,7 @@ INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr)
     ina_mem_free(itr->block_index);
     ina_mem_free(itr->elem_index);
     ina_mem_free(itr->part);
-    //ina_mem_free(itr->container->catarr->part_cache.data);
+    //ina_mem_free(itr->container->catarr->part_cache.data);  // TODO: investigate (see above)
     itr->container->catarr->part_cache.data = NULL;  // reset to NULL here (the memory pool will be reset later)
     itr->container->catarr->part_cache.nchunk = -1;  // means no valid cache yet
     ina_mem_free(itr);

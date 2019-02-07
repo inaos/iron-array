@@ -284,7 +284,7 @@ ina_rc_t _iarray_slice_buffer(iarray_context_t *ctx,
 
     return INA_SUCCESS;
 
-    fail:
+fail:
     return ina_err_get_rc();
 }
 
