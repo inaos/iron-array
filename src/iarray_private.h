@@ -174,11 +174,11 @@ int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr);
 // Utilities
 bool _iarray_file_exists(const char * filename);
 
-ina_rc_t _iarray_slice_buffer(iarray_context_t *ctx,
-                              iarray_container_t *c,
-                              int64_t *start,
-                              int64_t *stop,
-                              uint64_t *pshape,
-                              void *buffer,
-                              uint64_t buflen);
+ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
+                                  iarray_container_t *c,
+                                  int64_t *start,
+                                  int64_t *stop,
+                                  uint64_t *pshape,
+                                  void *buffer,
+                                  uint64_t buflen);
 #endif

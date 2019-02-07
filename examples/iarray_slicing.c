@@ -67,17 +67,9 @@ int main()
     }
     printf("\n");
 
-    iarray_dtshape_t outdtshape;
-    outdtshape.ndim = outndim;
-    outdtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
-    for (int i = 0; i < outdtshape.ndim; ++i) {
-        outdtshape.shape[i] = stop[i] - start[i];
-        outdtshape.partshape[i] = outpshape[i];
-    }
-
     // Slicing c_x into c_out
     printf("Slicing c_x into c_out container...\n");
-    iarray_slice(ctx, c_x, start, stop, &outdtshape, NULL, 0, &c_out);
+    iarray_get_slice(ctx, c_x, start, stop, outpshape, NULL, 0, &c_out);
 
     printf("- c_out shape: ");
     for (int i = 0; i < c_out->dtshape->ndim; ++i) {
