@@ -112,8 +112,8 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         // Obtain desired blocks from iarray containers
         memset(a_block, 0, a_size);
         memset(b_block, 0, b_size);
-        INA_MUST_SUCCEED(_iarray_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
-        INA_MUST_SUCCEED(_iarray_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
+        INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+        INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
 
         // Make blocks multiplication
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
@@ -232,8 +232,8 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         // Obtain desired blocks from iarray containers
         memset(a_block, 0, a_size);
         memset(b_block, 0, b_size);
-        INA_MUST_SUCCEED(_iarray_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
-        INA_MUST_SUCCEED(_iarray_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
+        INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+        INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
 
         // Make blocks multiplication
 

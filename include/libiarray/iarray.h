@@ -269,21 +269,21 @@ INA_API(ina_rc_t) iarray_random_lognormal(iarray_context_t *ctx,
                                           int flags,
                                           iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
-                               iarray_container_t *c,
-                               int64_t *start,
-                               int64_t *stop,
-                               iarray_dtshape_t *dtshape,
-                               iarray_store_properties_t *store,
-                               int flags,
-                               iarray_container_t **container);
+INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
+                                   iarray_container_t *c,
+                                   int64_t *start,
+                                   int64_t *stop,
+                                   iarray_dtshape_t *dtshape,
+                                   iarray_store_properties_t *store,
+                                   int flags,
+                                   iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
-                                      iarray_container_t *c,
-                                      int64_t *start,
-                                      int64_t *stop,
-                                      void *buffer,
-                                      uint64_t buflen);
+INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
+                                          iarray_container_t *c,
+                                          int64_t *start,
+                                          int64_t *stop,
+                                          void *buffer,
+                                          uint64_t buflen);
 
 INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
                                    iarray_store_properties_t *store,

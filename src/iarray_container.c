@@ -44,14 +44,14 @@ INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
     return _iarray_container_new(ctx, dtshape, store, flags, container);
 }
 
-INA_API(ina_rc_t) iarray_slice(iarray_context_t *ctx,
-                               iarray_container_t *c,
-                               int64_t *start,
-                               int64_t *stop,
-                               iarray_dtshape_t *dtshape,
-                               iarray_store_properties_t *store,
-                               int flags,
-                               iarray_container_t **container)
+INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
+                                   iarray_container_t *c,
+                                   int64_t *start,
+                                   int64_t *stop,
+                                   iarray_dtshape_t *dtshape,
+                                   iarray_store_properties_t *store,
+                                   int flags,
+                                   iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(start);
@@ -107,12 +107,12 @@ fail:
     return ina_err_get_rc();
 }
 
-INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
-                                      iarray_container_t *c,
-                                      int64_t *start,
-                                      int64_t *stop,
-                                      void *buffer,
-                                      uint64_t buflen)
+INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
+                                          iarray_container_t *c,
+                                          int64_t *start,
+                                          int64_t *stop,
+                                          void *buffer,
+                                          uint64_t buflen)
 {
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
@@ -194,13 +194,13 @@ INA_API(ina_rc_t) iarray_slice_buffer(iarray_context_t *ctx,
     return ina_err_get_rc();
 }
 
-ina_rc_t _iarray_slice_buffer(iarray_context_t *ctx,
-                              iarray_container_t *c,
-                              int64_t *start,
-                              int64_t *stop,
-                              uint64_t *pshape,
-                              void *buffer,
-                              uint64_t buflen)
+ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
+                                  iarray_container_t *c,
+                                  int64_t *start,
+                                  int64_t *stop,
+                                  uint64_t *pshape,
+                                  void *buffer,
+                                  uint64_t buflen)
 {
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
