@@ -15,8 +15,8 @@
 #include <tests/iarray_test.h>
 
 static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_x, int64_t * start, int64_t *stop,
-    iarray_dtshape_t dtshape, iarray_store_properties_t *stores, int flags, iarray_container_t **c_out) {
-    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, &dtshape, stores, flags, c_out));
+    uint64_t *pshape, iarray_store_properties_t *stores, int flags, iarray_container_t **c_out) {
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, pshape, stores, flags, c_out));
     INA_TEST_ASSERT_SUCCEED(iarray_squeeze(ctx, *c_out));
 
     return INA_SUCCESS;
@@ -50,17 +50,6 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
         xdtshape.pshape[j] = pshape[j];
     }
 
-    iarray_dtshape_t outdtshape;
-
-    outdtshape.dtype = dtype;
-    outdtshape.ndim = ndim;
-    for (int j = 0; j < xdtshape.ndim; ++j) {
-        int64_t st = (start[j] + shape[j]) % shape[j];
-        int64_t sp = (stop[j] + shape[j] - 1) % shape[j] + 1;
-        outdtshape.shape[j] = (uint64_t) sp - st;
-        outdtshape.pshape[j] = pshape_dest[j];
-    }
-
     iarray_container_t *c_x;
     iarray_container_t *c_out;
 
@@ -71,7 +60,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     }
 
 
-    INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, outdtshape, NULL, 0, &c_out));
+    INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, pshape_dest, NULL, 0, &c_out));
 
     uint64_t bufdes_size = 1;
 
