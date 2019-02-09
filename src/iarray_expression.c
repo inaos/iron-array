@@ -316,7 +316,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
         iarray_context_t *ctx = NULL;
         iarray_context_new(&cfg, &ctx);
-        iarray_iter_read_block_t **iter_var = malloc(nvars * sizeof(iarray_iter_read_block_t));
+        iarray_iter_read_block_t **iter_var = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_t));
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
             iarray_iter_read_block_new(ctx, var, &iter_var[nvar], &blocksize);
@@ -324,7 +324,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
 
         // Evaluate the expression for all the chunks in variables
-        iarray_iter_read_block_value_t *iter_value = malloc(nvars * sizeof(iarray_iter_read_block_value_t));
+        iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
         uint64_t nitems_written = 0;
         while (nitems_written < nitems_in_schunk) {
             // Decompress chunks in variables into temporaries
@@ -348,8 +348,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_iter_read_block_free(iter_var[nvar]);
         }
-        free(iter_var);
-        free(iter_value);
+        ina_mem_free(iter_var);
+        ina_mem_free(iter_value);
         assert(nitems_written == nitems_in_schunk);
     }
 
