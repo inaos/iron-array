@@ -256,7 +256,7 @@ int main(int argc, char** argv)
     if (!test_mat_equal((int) osize, mat_res, mat_out)) {
         return EXIT_FAILURE; /* FIXME: error-handling */
     } else {
-        printf("\nThe multiplication has been done correctly!");
+        printf("\nThe multiplication has been done correctly!\n");
     }
 
     iarray_container_free(ctx, &con_x);
