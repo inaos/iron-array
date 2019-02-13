@@ -74,6 +74,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     INA_FAIL_IF((*c)->dparams == NULL);
 
     (*c)->transposed = 0;
+    (*c)->view = 0;
 
     if (flags & IARRAY_CONTAINER_PERSIST) {
         (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
