@@ -32,7 +32,6 @@ static int32_t serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
     return smeta_len;
 }
 
-
 static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *dtshape,
                                       iarray_store_properties_t *store,
                                       int flags,
@@ -142,6 +141,55 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 fail:
     iarray_container_free(ctx, c);
     caterva_free_ctx(cat_ctx);
+    return ina_err_get_rc();
+}
+
+static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
+                                 iarray_container_t *pred,
+                                 iarray_dtshape_t *dtshape,
+                                 iarray_container_t **c)
+{
+    blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
+    blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
+
+    int blosc_filter_idx = 0;
+
+    /* validation */
+    if (dtshape->ndim > CATERVA_MAXDIM) {
+        return INA_ERROR(INA_ERR_EXCEEDED);
+    }
+
+    for (int i = 0; i < dtshape->ndim; ++i) {
+        if (dtshape->shape[i] < dtshape->pshape[i]) {
+            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        }
+    }
+
+    *c = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
+    INA_RETURN_IF_NULL(c);
+
+    (*c)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
+    INA_FAIL_IF((*c)->dtshape == NULL);
+    ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
+
+    (*c)->frame = pred->frame;
+
+    (*c)->cparams = pred->cparams;
+
+    (*c)->dparams = pred->dparams;
+
+    (*c)->transposed = pred->transposed;
+
+    (*c)->view = 1;
+
+    (*c)->store = pred->store;
+
+    (*c)->catarr = pred->catarr;
+
+    return INA_SUCCESS;
+
+    fail:
+    iarray_container_free(ctx, c);
     return ina_err_get_rc();
 }
 
