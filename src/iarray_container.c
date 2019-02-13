@@ -57,60 +57,84 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
 
+
     uint64_t start_[IARRAY_DIMENSION_MAX];
     uint64_t stop_[IARRAY_DIMENSION_MAX];
 
+    uint64_t *offset = c->dtshape->offset;
+
     for (int i = 0; i < c->dtshape->ndim; ++i) {
+        uint64_t of = offset[i];
         if (start[i] < 0) {
-            start_[i] = start[i] + c->dtshape->shape[i];
+            start_[i] =  of + start[i] + c->dtshape->shape[i];
         } else{
-            start_[i] = (uint64_t) start[i];
+            start_[i] = of + (uint64_t) start[i];
         }
         if (stop[i] < 0) {
-            stop_[i] = stop[i] + c->dtshape->shape[i];
+            stop_[i] =  of + stop[i] + c->dtshape->shape[i];
         } else {
-            stop_[i] = (uint64_t) stop[i];
+            stop_[i] = of + (uint64_t) stop[i];
         }
     }
 
-    iarray_dtshape_t dtshape;
+    if (flags == 1) { //TODO: Create a flag to indicate if a view is desired or not
 
-    dtshape.ndim = c->dtshape->ndim;
-    dtshape.dtype = c->dtshape->dtype;
+        iarray_dtshape_t dtshape;
+        dtshape.ndim = c->dtshape->ndim;
+        dtshape.dtype = c->dtshape->dtype;
 
-    for (int i = 0; i < dtshape.ndim; ++i) {
-        dtshape.shape[i] = stop_[i] - start_[i];
-        dtshape.pshape[i] = pshape[i];
-    }
-
-    // Check if matrix is transposed
-
-    if (c->transposed == 1) {
-        uint64_t aux_stop[IARRAY_DIMENSION_MAX];
-        uint64_t aux_start[IARRAY_DIMENSION_MAX];
-
-        for (int i = 0; i < c->dtshape->ndim; ++i) {
-            aux_start[i] = start_[i];
-            aux_stop[i] = stop_[i];
+        for (int i = 0; i < dtshape.ndim; ++i) {
+            dtshape.shape[i] = stop_[i] - start_[i];
+            dtshape.pshape[i] = pshape[i];
+            dtshape.offset[i] = start_[i];
         }
 
-        for (int i = 0; i < c->dtshape->ndim; ++i) {
-            start_[i] = aux_start[c->dtshape->ndim - 1 - i];
-            stop_[i] = aux_stop[c->dtshape->ndim - 1 - i];
+        iarray_container_new(ctx, &dtshape, store, flags, container);
+        (*container)->view = 1;
+        if (c->transposed == 1) {
+            (*container)->transposed = 1;
         }
+
+    } else {
+        iarray_dtshape_t dtshape;
+
+        dtshape.ndim = c->dtshape->ndim;
+        dtshape.dtype = c->dtshape->dtype;
+
+        for (int i = 0; i < dtshape.ndim; ++i) {
+            dtshape.shape[i] = stop_[i] - start_[i];
+            dtshape.pshape[i] = pshape[i];
+            dtshape.offset[i] = 0;
+        }
+
+        // Check if matrix is transposed
+
+        if (c->transposed == 1) {
+            uint64_t aux_stop[IARRAY_DIMENSION_MAX];
+            uint64_t aux_start[IARRAY_DIMENSION_MAX];
+
+            for (int i = 0; i < c->dtshape->ndim; ++i) {
+                aux_start[i] = start_[i];
+                aux_stop[i] = stop_[i];
+            }
+
+            for (int i = 0; i < c->dtshape->ndim; ++i) {
+                start_[i] = aux_start[c->dtshape->ndim - 1 - i];
+                stop_[i] = aux_stop[c->dtshape->ndim - 1 - i];
+            }
+        }
+
+        iarray_container_new(ctx, &dtshape, store, flags, container);
+
+        if (c->transposed == 1) {
+            (*container)->transposed = 1;
+        }
+
+        caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, c->dtshape->ndim);
+        caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, c->dtshape->ndim);
+
+        INA_FAIL_IF(caterva_get_slice((*container)->catarr, c->catarr, start__, stop__) != 0);
     }
-
-    iarray_container_new(ctx, &dtshape, store, flags, container);
-
-    if (c->transposed == 1) {
-        (*container)->transposed = 1;
-    }
-
-    caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, c->dtshape->ndim);
-    caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, c->dtshape->ndim);
-
-    INA_FAIL_IF(caterva_get_slice((*container)->catarr, c->catarr, start__, stop__) != 0);
-
     return INA_SUCCESS;
 
 fail:
