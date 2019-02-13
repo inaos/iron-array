@@ -51,6 +51,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    uint64_t *pshape,
                                    iarray_store_properties_t *store,
                                    int flags,
+                                   int view,
                                    iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
@@ -77,7 +78,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         }
     }
 
-    if (flags == 1) { //TODO: Create a flag to indicate if a view is desired or not
+    if (view == 1) { //TODO: Create a flag to indicate if a view is desired or not
 
         iarray_dtshape_t dtshape;
         dtshape.ndim = c->dtshape->ndim;
@@ -124,7 +125,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
             }
         }
 
-        iarray_container_new(ctx, &dtshape, store, flags, container);
+        _iarray_view_new(ctx, c, &dtshape, container);
 
         if (c->transposed == 1) {
             (*container)->transposed = 1;
@@ -435,14 +436,19 @@ failed:
 INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container)
 {
     INA_VERIFY_FREE(container);
-    if ((*container)->catarr != NULL) {
-        caterva_free_array((*container)->catarr);
+
+    if ((*container)->view = 1) {
+        INA_MEM_FREE_SAFE((*container)->dtshape);
+    } else {
+        if ((*container)->catarr != NULL) {
+            caterva_free_array((*container)->catarr);
+        }
+        INA_MEM_FREE_SAFE((*container)->frame);
+        INA_MEM_FREE_SAFE((*container)->cparams);
+        INA_MEM_FREE_SAFE((*container)->dparams);
+        INA_MEM_FREE_SAFE((*container)->dtshape);
+        INA_MEM_FREE_SAFE(*container);
     }
-    INA_MEM_FREE_SAFE((*container)->frame);
-    INA_MEM_FREE_SAFE((*container)->cparams);
-    INA_MEM_FREE_SAFE((*container)->dparams);
-    INA_MEM_FREE_SAFE((*container)->dtshape);
-    INA_MEM_FREE_SAFE(*container);
 }
 
 INA_API(ina_rc_t) iarray_container_gt(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
