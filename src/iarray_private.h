@@ -66,6 +66,7 @@ struct iarray_container_s {
     caterva_array_t *catarr;
     _iarray_container_store_t *store;
     int transposed;
+    int view;
     union {
         float f;
         double d;
