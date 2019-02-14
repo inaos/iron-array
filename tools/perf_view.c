@@ -50,6 +50,7 @@ int main(int argc, char **argv)
         size_x *= shape_x[i];
     }
 
+
     iarray_container_t *c_x;
     INA_MUST_SUCCEED(iarray_arange(ctx, &dtshape_x, 0, size_x, 1, NULL, 0, &c_x));
 
@@ -74,43 +75,30 @@ int main(int argc, char **argv)
     INA_STOPWATCH_FREE(&w);
 
     iarray_iter_read_block_t *iter_y;
+    iarray_iter_read_block_t *iter_z;
 
     iarray_iter_read_block_new(ctx, c_y, &iter_y, bshape);
+    iarray_iter_read_block_new(ctx, c_z, &iter_z, bshape);
 
-    for (iarray_iter_read_block_init(iter_y); !iarray_iter_read_block_finished(iter_y); iarray_iter_read_block_next(iter_y)) {
-        iarray_iter_read_block_value_t value;
-        iarray_iter_read_block_value(iter_y, &value);
+    for (iarray_iter_read_block_init(iter_y), iarray_iter_read_block_init(iter_z);
+         !iarray_iter_read_block_finished(iter_y);
+         iarray_iter_read_block_next(iter_y), iarray_iter_read_block_next(iter_z)) {
+        iarray_iter_read_block_value_t value_y;
+        iarray_iter_read_block_value(iter_y, &value_y);
+        iarray_iter_read_block_value_t value_z;
+        iarray_iter_read_block_value(iter_y, &value_z);
 
         uint64_t bsize = 1;
         for (int i = 0; i < c_y->dtshape->ndim; ++i) {
-            bsize *= value.block_shape[i];
+            bsize *= value_y.block_shape[i];
         }
 
         for (int i = 0; i < bsize; ++i) {
-            //printf("%f\n", ((double *) value.pointer)[i]);
+            INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_y.pointer)[i], ((double *) value_z.pointer)[i]);
         }
     }
 
     iarray_iter_read_block_free(iter_y);
-
-    iarray_iter_read_block_t *iter_z;
-
-    iarray_iter_read_block_new(ctx, c_z, &iter_z, bshape);
-
-    for (iarray_iter_read_block_init(iter_z); !iarray_iter_read_block_finished(iter_z); iarray_iter_read_block_next(iter_z)) {
-        iarray_iter_read_block_value_t value;
-        iarray_iter_read_block_value(iter_z, &value);
-
-        uint64_t bsize = 1;
-        for (int i = 0; i < c_z->dtshape->ndim; ++i) {
-            bsize *= value.block_shape[i];
-        }
-
-        for (int i = 0; i < bsize; ++i) {
-            printf("%f\n", ((double *) value.pointer)[i]);
-        }
-    }
-
     iarray_iter_read_block_free(iter_z);
     
     iarray_container_free(ctx, &c_x);
@@ -118,5 +106,6 @@ int main(int argc, char **argv)
     iarray_container_free(ctx, &c_z);
 
     iarray_context_free(&ctx);
+
     return 0;
 }
