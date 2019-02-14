@@ -790,10 +790,10 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr)
 
     uint64_t aux[IARRAY_DIMENSION_MAX];
     for (int i = ndim - 1; i >= 0; --i) {
-        if (catarr->shape[i] % itr->shape[i] == 0) {
-            aux[i] = catarr->shape[i] / itr->shape[i];
+        if (itr->container->dtshape->shape[i] % itr->shape[i] == 0) {
+            aux[i] = itr->container->dtshape->shape[i] / itr->shape[i];
         } else {
-            aux[i] = catarr->shape[i] / itr->shape[i] + 1;
+            aux[i] = itr->container->dtshape->shape[i] / itr->shape[i] + 1;
         }
     }
 
@@ -812,10 +812,10 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr)
     uint64_t stop_[IARRAY_DIMENSION_MAX];
     uint64_t buflen = 1;
     for (int i = ndim - 1; i >= 0; --i) {
-        if(start_[i] + itr->shape[i] <= catarr->shape[i]) {
+        if(start_[i] + itr->shape[i] <= itr->container->dtshape->shape[i]) {
             stop_[i] = start_[i] + itr->shape[i];
         } else {
-            stop_[i] = catarr->shape[i];
+            stop_[i] = itr->container->dtshape->shape[i];
         }
         itr->block_shape[i] = stop_[i] - start_[i];
         itr->block_size *= itr->block_shape[i];
