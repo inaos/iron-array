@@ -19,15 +19,16 @@ int main(int argc, char **argv)
     double elapsed_slice, elapsed_view;
     INA_STOPWATCH_NEW(-1, -1, &w);
 
-    uint64_t shape_x[] = {10, 10};
-    uint64_t pshape_x[] = {2, 2};
-    uint64_t offset_x[] = {0, 0};
+    uint64_t shape_x[] = {10, 10, 10};
+    uint64_t pshape_x[] = {2, 2, 2};
+    uint64_t offset_x[] = {0, 0, 0};
+    uint8_t ndim_x = 3;
 
-    uint64_t pshape_y[] = {2, 2};
-    uint64_t pshape_z[] = {2, 2};
+    uint64_t pshape_y[] = {2, 1, 2};
+    uint64_t pshape_z[] = {2, 1, 2};
 
-    int64_t start[] = {1, 3};
-    int64_t stop[] = {5, 7};
+    int64_t start[] = {1, 3, 3};
+    int64_t stop[] = {5, 4, 7};
 
     uint64_t bshape[] = {2, 2};
     iarray_context_t *ctx;
@@ -41,7 +42,7 @@ int main(int argc, char **argv)
 
     iarray_dtshape_t dtshape_x;
     dtshape_x.dtype = IARRAY_DATA_TYPE_DOUBLE;
-    dtshape_x.ndim = 2;
+    dtshape_x.ndim = ndim_x;
     uint64_t size_x = 1;
     for (int i = 0; i < dtshape_x.ndim; ++i) {
         dtshape_x.shape[i] = shape_x[i];
