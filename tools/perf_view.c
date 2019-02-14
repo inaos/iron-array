@@ -11,8 +11,7 @@
 */
 
 #include <libiarray/iarray.h>
-
-
+#include <src/iarray_private.h>
 
 int main(int argc, char **argv)
 {
@@ -20,16 +19,17 @@ int main(int argc, char **argv)
     double elapsed_slice, elapsed_view;
     INA_STOPWATCH_NEW(-1, -1, &w);
 
-    uint64_t shape_x[] = {3000, 3000};
-    uint64_t pshape_x[] = {20, 20};
+    uint64_t shape_x[] = {10, 10};
+    uint64_t pshape_x[] = {2, 2};
     uint64_t offset_x[] = {0, 0};
 
-    uint64_t pshape_y[] = {10, 10};
-    uint64_t pshape_z[] = {10, 10};
+    uint64_t pshape_y[] = {2, 2};
+    uint64_t pshape_z[] = {2, 2};
 
-    int64_t start[] = {10, 1000};
-    int64_t stop[] = {2400, 2600};
+    int64_t start[] = {1, 3};
+    int64_t stop[] = {5, 7};
 
+    uint64_t bshape[] = {2, 2};
     iarray_context_t *ctx;
 
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
@@ -69,10 +69,50 @@ int main(int argc, char **argv)
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_view));
     printf("Time for get_slice (view): %f\n", elapsed_view);
 
-    printf("Speed-up: %f", elapsed_slice / elapsed_view);
+    printf("Speed-up: %f\n", elapsed_slice / elapsed_view);
 
     INA_STOPWATCH_FREE(&w);
 
+    iarray_iter_read_block_t *iter_y;
+
+    iarray_iter_read_block_new(ctx, c_y, &iter_y, bshape);
+
+    for (iarray_iter_read_block_init(iter_y); !iarray_iter_read_block_finished(iter_y); iarray_iter_read_block_next(iter_y)) {
+        iarray_iter_read_block_value_t value;
+        iarray_iter_read_block_value(iter_y, &value);
+
+        uint64_t bsize = 1;
+        for (int i = 0; i < c_y->dtshape->ndim; ++i) {
+            bsize *= value.block_shape[i];
+        }
+
+        for (int i = 0; i < bsize; ++i) {
+            //printf("%f\n", ((double *) value.pointer)[i]);
+        }
+    }
+
+    iarray_iter_read_block_free(iter_y);
+
+    iarray_iter_read_block_t *iter_z;
+
+    iarray_iter_read_block_new(ctx, c_z, &iter_z, bshape);
+
+    for (iarray_iter_read_block_init(iter_z); !iarray_iter_read_block_finished(iter_z); iarray_iter_read_block_next(iter_z)) {
+        iarray_iter_read_block_value_t value;
+        iarray_iter_read_block_value(iter_z, &value);
+
+        uint64_t bsize = 1;
+        for (int i = 0; i < c_z->dtshape->ndim; ++i) {
+            bsize *= value.block_shape[i];
+        }
+
+        for (int i = 0; i < bsize; ++i) {
+            printf("%f\n", ((double *) value.pointer)[i]);
+        }
+    }
+
+    iarray_iter_read_block_free(iter_z);
+    
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_z);

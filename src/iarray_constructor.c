@@ -54,7 +54,7 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
         return INA_ERROR(INA_ERR_FAILED);
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, store, flags, container));
 
     iarray_iter_write_t *I;
     iarray_iter_write_new(ctx, *container, &I);
@@ -106,7 +106,7 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
         return INA_ERROR(INA_ERR_FAILED);
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, store, flags, container));
 
     iarray_iter_write_t *I;
     iarray_iter_write_new(ctx, *container, &I);
@@ -144,7 +144,7 @@ INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(container);
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, store, flags, container));
 
     switch (dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
@@ -170,7 +170,7 @@ INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(container);
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, store, flags, container));
 
     switch (dtshape->dtype) {
     case IARRAY_DATA_TYPE_DOUBLE:
@@ -197,7 +197,7 @@ INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(container);
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, store, flags, container));
 
     INA_FAIL_IF_ERROR(_iarray_container_fill_float(*container, value));
 
@@ -219,7 +219,7 @@ INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(container);
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, store, flags, container));
 
     INA_FAIL_IF_ERROR(_iarray_container_fill_double(*container, value));
 
@@ -243,7 +243,7 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(buffer);
     INA_VERIFY_NOT_NULL(container);
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, store, flags, container));
 
     // TODO: would it be interesting to add a `buffer_len` parameter to `caterva_from_buffer()`?
     caterva_dims_t shape = caterva_new_dims((*container)->dtshape->shape, (*container)->dtshape->ndim);
