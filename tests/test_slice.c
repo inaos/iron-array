@@ -48,7 +48,6 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     for (int j = 0; j < xdtshape.ndim; ++j) {
         xdtshape.shape[j] = shape[j];
         xdtshape.pshape[j] = pshape[j];
-        xdtshape.offset[j] = 0;
     }
 
     iarray_container_t *c_x;
