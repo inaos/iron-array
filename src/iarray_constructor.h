@@ -77,6 +77,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         auxshape.shape_wos[i] = dtshape->shape[i];
         auxshape.pshape_wos[i] = dtshape->pshape[i];
         auxshape.offset[i] = 0;
+        auxshape.index[i] = (uint8_t) i;
     }
     (*c)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
     INA_FAIL_IF((*c)->auxshape == NULL);
@@ -187,6 +188,7 @@ static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
         auxshape.shape_wos[i] = dtshape->shape[i];
         auxshape.pshape_wos[i] = dtshape->pshape[i];
         auxshape.offset[i] = offset[i];
+        auxshape.index[i] = (uint8_t) i;
     }
     (*c)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
     INA_FAIL_IF((*c)->auxshape == NULL);

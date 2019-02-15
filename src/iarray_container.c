@@ -153,20 +153,26 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
 
     uint8_t ndim = c->dtshape->ndim;
     uint64_t *off = c->auxshape->offset;
+    uint8_t *index = c->auxshape->index;
 
     uint64_t start_[IARRAY_DIMENSION_MAX];
     uint64_t stop_[IARRAY_DIMENSION_MAX];
 
+    for (int i = 0; i < c->catarr->ndim; ++i) {
+        start_[i] = 0 + off[i];
+        stop_[i] = 1 + off[i];
+    }
+
     for (int i = 0; i < ndim; ++i) {
         if (start[i] < 0) {
-            start_[i] = off[i] + start[i] + c->dtshape->shape[i];
+            start_[index[i]] = off[i] + start[i] + c->dtshape->shape[i];
         } else{
-            start_[i] = off[i] + (uint64_t) start[i];
+            start_[index[i]] = off[i] + (uint64_t) start[i];
         }
         if (stop[i] < 0) {
-            stop_[i] = off[i] + stop[i] + c->dtshape->shape[i];
+            stop_[index[i]] = off[i] + stop[i] + c->dtshape->shape[i];
         } else {
-            stop_[i] = off[i] + (uint64_t) stop[i];
+            stop_[index[i]] = off[i] + (uint64_t) stop[i];
         }
     }
 
@@ -187,7 +193,7 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
 
     int64_t pshape[IARRAY_DIMENSION_MAX];
     uint64_t psize = 1;
-    for (int i = 0; i < ndim; ++i) {
+    for (int i = 0; i < c->catarr->ndim; ++i) {
         pshape[i] = stop_[i] - start_[i];
         psize *= pshape[i];
     }
@@ -202,9 +208,9 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
         }
     }
 
-    caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, ndim);
-    caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, ndim);
-    caterva_dims_t pshape_ = caterva_new_dims((uint64_t *) pshape, ndim);
+    caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, c->catarr->ndim);
+    caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, c->catarr->ndim);
+    caterva_dims_t pshape_ = caterva_new_dims((uint64_t *) pshape, c->catarr->ndim);
 
     INA_FAIL_IF(caterva_get_slice_buffer(buffer, c->catarr, start__, stop__, pshape_) != 0);
 
@@ -241,13 +247,13 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(stop);
     INA_VERIFY_NOT_NULL(pshape);
 
-    uint8_t ndim = c->dtshape->ndim;
+    uint8_t ndim = c->catarr->ndim;
 
     uint64_t start_[IARRAY_DIMENSION_MAX];
     uint64_t stop_[IARRAY_DIMENSION_MAX];
     uint64_t pshape_[IARRAY_DIMENSION_MAX];
 
-    for (int i = 0; i < ndim; ++i) {
+    for (int i = 0; i < c->dtshape->ndim; ++i) {
         pshape_[i] = pshape[i];
         if (start[i] < 0) {
             start_[i] = start[i] + c->dtshape->shape[i];
@@ -269,7 +275,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
         for (int i = 0; i < c->dtshape->ndim; ++i) {
             aux_start[i] = start_[i];
             aux_stop[i] = stop_[i];
-            aux_pshape[i] = pshape[i];
+            aux_pshape[i] = pshape_[i];
         }
 
         for (int i = 0; i < c->dtshape->ndim; ++i) {
@@ -281,7 +287,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
 
     uint64_t psize = 1;
     for (int i = 0; i < ndim; ++i) {
-        psize *= pshape[i];
+        psize *= pshape_[i];
     }
 
     if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
@@ -355,6 +361,7 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
             } else {
                 container->dtshape->shape[i - inc] = container->dtshape->shape[i];
                 container->dtshape->pshape[i - inc] = container->dtshape->pshape[i];
+                container->auxshape->index[i - inc] = (uint8_t) i;
             }
         }
         container->dtshape->ndim -= inc;
