@@ -62,6 +62,7 @@ typedef struct iarray_auxshape_s {
     uint64_t offset[IARRAY_DIMENSION_MAX];
     uint64_t shape_wos[IARRAY_DIMENSION_MAX];
     uint64_t pshape_wos[IARRAY_DIMENSION_MAX];
+    uint8_t ndim_wos;
 } iarray_auxshape_t;
 
 struct iarray_container_s {

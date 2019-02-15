@@ -329,18 +329,35 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(container);
 
-    INA_FAIL_IF(caterva_squeeze(container->catarr) != 0);
     uint8_t inc = 0;
-    if (container->dtshape->ndim != container->catarr->ndim) {
-        container->dtshape->ndim = (uint8_t) container->catarr->ndim;
-        for (int i = 0; i < container->catarr->ndim; ++i) {
-            if (container->dtshape->shape[i] != container->catarr->shape[i]) {
-                inc += 1;
+
+    if (container->view == 0) {
+        INA_FAIL_IF(caterva_squeeze(container->catarr) != 0);
+
+        if (container->dtshape->ndim != container->catarr->ndim) {
+            container->dtshape->ndim = (uint8_t) container->catarr->ndim;
+            for (int i = 0; i < container->catarr->ndim; ++i) {
+                if (container->dtshape->shape[i] != container->catarr->shape[i]) {
+                    inc += 1;
+                }
+                container->dtshape->shape[i] = container->catarr->shape[i];
+                container->dtshape->pshape[i] = container->catarr->pshape[i];
+                container->auxshape->shape_wos[i] = container->catarr->shape[i];
+                container->auxshape->pshape_wos[i] = container->catarr->pshape[i];
+                container->auxshape->offset[i] = container->auxshape->offset[i + inc];
             }
-            container->dtshape->shape[i] = container->catarr->shape[i];
-            container->dtshape->pshape[i] = container->catarr->pshape[i];
-            container->auxshape->offset[i] = container->auxshape->offset[i + inc];
         }
+    } else {
+        inc = 0;
+        for (int i = 0; i < container->dtshape->ndim; ++i) {
+            if (container->dtshape->shape[i] == 1) {
+                inc ++;
+            } else {
+                container->dtshape->shape[i - inc] = container->dtshape->shape[i];
+                container->dtshape->pshape[i - inc] = container->dtshape->pshape[i];
+            }
+        }
+        container->dtshape->ndim -= inc;
     }
 
     return INA_SUCCESS;
