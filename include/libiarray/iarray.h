@@ -116,7 +116,7 @@ typedef struct iarray_dtshape_s {
     uint8_t ndim;     /* IF ndim = 0 THEN it is a scalar */
     uint64_t shape[IARRAY_DIMENSION_MAX];
     uint64_t pshape[IARRAY_DIMENSION_MAX]; /* Partition-Shape, optional in the future */
-    uint64_t offset[IARRAY_DIMENSION_MAX];
+    //uint64_t offset[IARRAY_DIMENSION_MAX];
 } iarray_dtshape_t;
 
 typedef struct iarray_iter_write_value_s {

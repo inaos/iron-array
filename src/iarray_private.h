@@ -58,8 +58,15 @@ typedef struct _iarray_container_store_s {
     ina_str_t id;
 } _iarray_container_store_t;
 
+typedef struct iarray_auxshape_s {
+    uint64_t offset[IARRAY_DIMENSION_MAX];
+    uint64_t shape_wos[IARRAY_DIMENSION_MAX];
+    uint64_t pshape_wos[IARRAY_DIMENSION_MAX];
+} iarray_auxshape_t;
+
 struct iarray_container_s {
     iarray_dtshape_t *dtshape;
+    iarray_auxshape_t *auxshape;
     blosc2_cparams *cparams;
     blosc2_dparams *dparams;
     blosc2_frame *frame;

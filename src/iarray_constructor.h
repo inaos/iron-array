@@ -72,6 +72,13 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     (*c)->dparams = (blosc2_dparams*)ina_mem_alloc(sizeof(blosc2_dparams));
     INA_FAIL_IF((*c)->dparams == NULL);
 
+    iarray_auxshape_t auxshape;
+    for (int i = 0; i < dtshape->ndim; ++i) {
+        auxshape.offset[i] = 0;
+    }
+    (*c)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
+    INA_FAIL_IF((*c)->auxshape == NULL);
+    ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
     (*c)->transposed = 0;
     (*c)->view = 0;
 
@@ -147,6 +154,7 @@ fail:
 static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
                                  iarray_container_t *pred,
                                  iarray_dtshape_t *dtshape,
+                                 uint64_t *offset,
                                  iarray_container_t **c)
 {
     blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
@@ -171,6 +179,14 @@ static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     (*c)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
     INA_FAIL_IF((*c)->dtshape == NULL);
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
+
+    iarray_auxshape_t auxshape;
+    for (int i = 0; i < dtshape->ndim; ++i) {
+        auxshape.offset[i] = offset[i];
+    }
+    (*c)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
+    INA_FAIL_IF((*c)->auxshape == NULL);
+    ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
 
     (*c)->frame = pred->frame;
 

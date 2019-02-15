@@ -41,10 +41,6 @@ INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(container);
 
-    for (int i = 0; i < dtshape->ndim; ++i) {
-        dtshape->offset[i] = 0;
-    }
-
     return _iarray_container_new(ctx, dtshape, store, flags, container);
 }
 
@@ -66,7 +62,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
     uint64_t start_[IARRAY_DIMENSION_MAX];
     uint64_t stop_[IARRAY_DIMENSION_MAX];
 
-    uint64_t *offset = c->dtshape->offset;
+    uint64_t *offset = c->auxshape->offset;
 
     for (int i = 0; i < c->dtshape->ndim; ++i) {
         uint64_t of = offset[i];
@@ -91,10 +87,9 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         for (int i = 0; i < dtshape.ndim; ++i) {
             dtshape.shape[i] = stop_[i] - start_[i];
             dtshape.pshape[i] = pshape[i];
-            dtshape.offset[i] = start_[i];
         }
 
-        _iarray_view_new(ctx, c, &dtshape, container);
+        _iarray_view_new(ctx, c, &dtshape, start_, container);
 
         (*container)->view = 1;
         if (c->transposed == 1) {
@@ -110,7 +105,6 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         for (int i = 0; i < dtshape.ndim; ++i) {
             dtshape.shape[i] = stop_[i] - start_[i];
             dtshape.pshape[i] = pshape[i];
-            dtshape.offset[i] = 0;
         }
 
         // Check if matrix is transposed
@@ -158,7 +152,7 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(stop);
 
     uint8_t ndim = c->dtshape->ndim;
-    uint64_t *off = c->dtshape->offset;
+    uint64_t *off = c->auxshape->offset;
 
     uint64_t start_[IARRAY_DIMENSION_MAX];
     uint64_t stop_[IARRAY_DIMENSION_MAX];
@@ -345,7 +339,7 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
             }
             container->dtshape->shape[i] = container->catarr->shape[i];
             container->dtshape->pshape[i] = container->catarr->pshape[i];
-            container->dtshape->offset[i] = container->dtshape->offset[i + inc];
+            container->auxshape->offset[i] = container->auxshape->offset[i + inc];
         }
     }
 
@@ -447,7 +441,7 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
 {
     INA_VERIFY_FREE(container);
 
-    if ((*container)->view = 1) {
+    if ((*container)->view == 1) {
         INA_MEM_FREE_SAFE((*container)->dtshape);
     } else {
         if ((*container)->catarr != NULL) {
