@@ -21,7 +21,6 @@ int main(int argc, char **argv)
 
     uint64_t shape_x[] = {10, 10, 10};
     uint64_t pshape_x[] = {2, 2, 2};
-    uint64_t offset_x[] = {0, 0, 0};
     uint8_t ndim_x = 3;
 
     uint64_t pshape_y[] = {2, 1, 2};
@@ -47,10 +46,8 @@ int main(int argc, char **argv)
     for (int i = 0; i < dtshape_x.ndim; ++i) {
         dtshape_x.shape[i] = shape_x[i];
         dtshape_x.pshape[i] = pshape_x[i];
-        dtshape_x.offset[i] = offset_x[i];
         size_x *= shape_x[i];
     }
-
 
     iarray_container_t *c_x;
     INA_MUST_SUCCEED(iarray_arange(ctx, &dtshape_x, 0, size_x, 1, NULL, 0, &c_x));
@@ -58,6 +55,7 @@ int main(int argc, char **argv)
     INA_STOPWATCH_START(w);
     iarray_container_t *c_y;
     INA_MUST_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, pshape_y, NULL, 0, 0, &c_y));
+    INA_MUST_SUCCEED(iarray_squeeze(ctx, c_y));
     INA_STOPWATCH_STOP(w);
 
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_slice));
@@ -66,6 +64,7 @@ int main(int argc, char **argv)
     INA_STOPWATCH_START(w);
     iarray_container_t *c_z;
     INA_MUST_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, pshape_z, NULL, 0, 1, &c_z));
+    iarray_squeeze(ctx, c_z);
     INA_STOPWATCH_STOP(w);
 
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_view));
@@ -87,7 +86,7 @@ int main(int argc, char **argv)
         iarray_iter_read_block_value_t value_y;
         iarray_iter_read_block_value(iter_y, &value_y);
         iarray_iter_read_block_value_t value_z;
-        iarray_iter_read_block_value(iter_y, &value_z);
+        iarray_iter_read_block_value(iter_z, &value_z);
 
         uint64_t bsize = 1;
         for (int i = 0; i < c_y->dtshape->ndim; ++i) {
