@@ -80,9 +80,11 @@ int main(int argc, char **argv)
     iarray_iter_read_block_new(ctx, c_y, &iter_y, bshape);
     iarray_iter_read_block_new(ctx, c_z, &iter_z, bshape);
 
-    for (iarray_iter_read_block_init(iter_y), iarray_iter_read_block_init(iter_z);
+    for (iarray_iter_read_block_init(iter_y),
+        iarray_iter_read_block_init(iter_z);
          !iarray_iter_read_block_finished(iter_y);
-         iarray_iter_read_block_next(iter_y), iarray_iter_read_block_next(iter_z)) {
+         iarray_iter_read_block_next(iter_y),
+         iarray_iter_read_block_next(iter_z)) {
         iarray_iter_read_block_value_t value_y;
         iarray_iter_read_block_value(iter_y, &value_y);
         iarray_iter_read_block_value_t value_z;
