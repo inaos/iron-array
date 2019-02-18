@@ -51,7 +51,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    uint64_t *pshape,
                                    iarray_store_properties_t *store,
                                    int flags,
-                                   int view,
+                                   boolean_t view,
                                    iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
@@ -78,7 +78,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         }
     }
 
-    if (view == 1) { //TODO: Create a flag to indicate if a view is desired or not
+    if (view) { //TODO: Create a flag to indicate if a view is desired or not
 
         iarray_dtshape_t dtshape;
         dtshape.ndim = c->dtshape->ndim;
@@ -109,7 +109,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
 
         // Check if matrix is transposed
 
-        if (c->transposed == 1) {
+        if (c->transposed) {
             uint64_t aux_stop[IARRAY_DIMENSION_MAX];
             uint64_t aux_start[IARRAY_DIMENSION_MAX];
 
@@ -126,8 +126,8 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
 
         iarray_container_new(ctx, &dtshape, store, flags, container);
 
-        if (c->transposed == 1) {
-            (*container)->transposed = 1;
+        if (c->transposed) {
+            (*container)->transposed = true;
         }
 
         caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, c->dtshape->ndim);
@@ -176,7 +176,7 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
         }
     }
 
-    if (c->transposed == 1) {
+    if (c->transposed) {
         uint64_t aux_stop[IARRAY_DIMENSION_MAX];
         uint64_t aux_start[IARRAY_DIMENSION_MAX];
 
@@ -217,7 +217,7 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
     uint64_t rows = stop_[0] - start_[0];
     uint64_t cols = stop_[1] - start_[1];
 
-    if (c->transposed == 1) {
+    if (c->transposed) {
         switch (c->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 mkl_dimatcopy('R', 'T', rows, cols, 1.0, (double *) buffer, cols, rows);
@@ -276,7 +276,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
         }
     }
 
-    if (c->transposed == 1) {
+    if (c->transposed) {
         uint64_t aux_stop[IARRAY_DIMENSION_MAX];
         uint64_t aux_start[IARRAY_DIMENSION_MAX];
         uint64_t aux_pshape[IARRAY_DIMENSION_MAX];
@@ -346,7 +346,7 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
 
     uint8_t inc = 0;
 
-    if (container->view == 0) {
+    if (!container->view) {
         INA_FAIL_IF(caterva_squeeze(container->catarr) != 0);
 
         if (container->dtshape->ndim != container->catarr->ndim) {
@@ -474,7 +474,7 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
 {
     INA_VERIFY_FREE(container);
 
-    if ((*container)->view == 1) {
+    if ((*container)->view) {
         INA_MEM_FREE_SAFE((*container)->dtshape);
     } else {
         if ((*container)->catarr != NULL) {
