@@ -49,6 +49,21 @@ Following our guideline:
 * Alwalys use ina_rc_t as return type of functions
 * Only for functions that end in suffix '_free' we should use the 'void'
 
+### Conditionals for data types
+
+Although right now we only support floats and doubles for IronArray, it is recommended to use
+a `switch` for dealing with the different data types rather than an `if ... else`.  Example:
+
+    switch (dtshape->dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            type_size = sizeof(double);
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            type_size = sizeof(float);
+            break;
+    }
+
+
 ### File names
 
 Source files should prefer '_' (underscores) to '-' (dashes).  Example:
