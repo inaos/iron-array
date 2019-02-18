@@ -82,8 +82,8 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     (*c)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
     INA_FAIL_IF((*c)->auxshape == NULL);
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
-    (*c)->transposed = 0;
-    (*c)->view = 0;
+    (*c)->transposed = false;
+    (*c)->view = false;
 
     if (flags & IARRAY_CONTAINER_PERSIST) {
         (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
@@ -202,7 +202,7 @@ static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
 
     (*c)->transposed = pred->transposed;
 
-    (*c)->view = 1;
+    (*c)->view = true;
 
     (*c)->store = pred->store;
 
