@@ -13,7 +13,7 @@
 #include <libiarray/iarray.h>
 #include <src/iarray_private.h>
 
-int main(int argc, char **argv)
+int main()
 {
     ina_stopwatch_t *w;
     double elapsed, elapsed_view;
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
             bsize *= value_y.block_shape[i];
         }
 
-        for (int i = 0; i < bsize; ++i) {
+        for (uint64_t i = 0; i < bsize; ++i) {
             switch (dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
                     INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_y.pointer)[i], ((double *) value_z.pointer)[i]);
@@ -164,7 +164,7 @@ int main(int argc, char **argv)
             bsize *= value_mul.block_shape[i];
         }
 
-        for (int i = 0; i < bsize; ++i) {
+        for (uint64_t i = 0; i < bsize; ++i) {
             switch (dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
                     INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_mul.pointer)[i], ((double *) value_mul_view.pointer)[i]);
