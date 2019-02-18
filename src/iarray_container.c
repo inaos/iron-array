@@ -247,23 +247,32 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(stop);
     INA_VERIFY_NOT_NULL(pshape);
 
-    uint8_t ndim = c->catarr->ndim;
+
+    uint8_t ndim = c->dtshape->ndim;
+    uint64_t *off = c->auxshape->offset;
+    uint8_t *index = c->auxshape->index;
 
     uint64_t start_[IARRAY_DIMENSION_MAX];
     uint64_t stop_[IARRAY_DIMENSION_MAX];
     uint64_t pshape_[IARRAY_DIMENSION_MAX];
 
+    for (int i = 0; i < c->catarr->ndim; ++i) {
+        start_[i] = 0 + off[i];
+        stop_[i] = 1 + off[i];
+        pshape_[i] = 1;
+    }
+
     for (int i = 0; i < c->dtshape->ndim; ++i) {
         pshape_[i] = pshape[i];
         if (start[i] < 0) {
-            start_[i] = start[i] + c->dtshape->shape[i];
+            start_[index[i]] = off[i] + start[i] + c->dtshape->shape[i];
         } else{
-            start_[i] = (uint64_t) start[i];
+            start_[index[i]] = off[i] + (uint64_t) start[i];
         }
         if (stop[i] < 0) {
-            stop_[i] = stop[i] + c->dtshape->shape[i];
+            stop_[index[i]] = off[i] + stop[i] + c->dtshape->shape[i];
         } else {
-            stop_[i] = (uint64_t) stop[i];
+            stop_[index[i]] = off[i] + (uint64_t) stop[i];
         }
     }
 
@@ -287,7 +296,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
 
     uint64_t psize = 1;
     for (int i = 0; i < ndim; ++i) {
-        psize *= pshape_[i];
+        psize *= pshape[i];
     }
 
     if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
@@ -300,9 +309,9 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
         }
     }
 
-    caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, ndim);
-    caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, ndim);
-    caterva_dims_t pshape__ = caterva_new_dims(pshape_, ndim);
+    caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, c->catarr->ndim);
+    caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, c->catarr->ndim);
+    caterva_dims_t pshape__ = caterva_new_dims(pshape_, c->catarr->ndim);
 
     memset(buffer, 0, buflen);
 
