@@ -19,6 +19,8 @@ int main(int argc, char **argv)
     double elapsed, elapsed_view;
     INA_STOPWATCH_NEW(-1, -1, &w);
 
+    int dtype = IARRAY_DATA_TYPE_FLOAT;
+
     uint64_t shape_x[] = {10, 10, 10};
     uint64_t pshape_x[] = {2, 2, 2};
     uint8_t ndim_x = 3;
@@ -44,7 +46,7 @@ int main(int argc, char **argv)
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
 
     iarray_dtshape_t dtshape_x;
-    dtshape_x.dtype = IARRAY_DATA_TYPE_DOUBLE;
+    dtshape_x.dtype = dtype;
     dtshape_x.ndim = ndim_x;
     uint64_t size_x = 1;
     for (int i = 0; i < dtshape_x.ndim; ++i) {
@@ -98,7 +100,14 @@ int main(int argc, char **argv)
         }
 
         for (int i = 0; i < bsize; ++i) {
-            INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_y.pointer)[i], ((double *) value_z.pointer)[i]);
+            switch (dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_y.pointer)[i], ((double *) value_z.pointer)[i]);
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    INA_TEST_ASSERT_EQUAL_FLOATING(((float *) value_y.pointer)[i], ((float *) value_z.pointer)[i]);
+                    break;
+            }
         }
     }
 
@@ -107,7 +116,7 @@ int main(int argc, char **argv)
 
     iarray_dtshape_t dtshape_mul;
 
-    dtshape_mul.dtype = IARRAY_DATA_TYPE_DOUBLE;
+    dtshape_mul.dtype = dtype;
     dtshape_mul.ndim = ndim_mul;
     for (int i = 0; i < dtshape_mul.ndim; ++i) {
         dtshape_mul.shape[i] = shape_mul[i];
@@ -156,7 +165,14 @@ int main(int argc, char **argv)
         }
 
         for (int i = 0; i < bsize; ++i) {
-            INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_mul.pointer)[i], ((double *) value_mul_view.pointer)[i]);
+            switch (dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_mul.pointer)[i], ((double *) value_mul_view.pointer)[i]);
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    INA_TEST_ASSERT_EQUAL_FLOATING(((float *) value_mul.pointer)[i], ((float *) value_mul_view.pointer)[i]);
+                    break;
+            }
         }
     }
 
