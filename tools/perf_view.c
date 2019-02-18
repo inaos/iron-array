@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 
     INA_STOPWATCH_START(w);
     iarray_container_t *c_y;
-    INA_MUST_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, pshape_y, NULL, 0, 0, &c_y));
+    INA_MUST_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, pshape_y, NULL, 0, false, &c_y));
     INA_MUST_SUCCEED(iarray_squeeze(ctx, c_y));
     INA_STOPWATCH_STOP(w);
 
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 
     INA_STOPWATCH_START(w);
     iarray_container_t *c_z;
-    INA_MUST_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, pshape_z, NULL, 0, 1, &c_z));
+    INA_MUST_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, pshape_z, NULL, 0, true, &c_z));
     iarray_squeeze(ctx, c_z);
     INA_STOPWATCH_STOP(w);
 
