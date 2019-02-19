@@ -82,6 +82,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     (*c)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
     INA_FAIL_IF((*c)->auxshape == NULL);
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
+
     (*c)->transposed = false;
     (*c)->view = false;
 
