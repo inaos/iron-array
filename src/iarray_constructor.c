@@ -310,6 +310,16 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
         dtshape->pshape[i] = catarr->pshape[i];
     }
 
+    // Build the auxshape
+    (*container)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
+    iarray_auxshape_t* auxshape = (*container)->auxshape;
+    for (int i = 0; i < catarr->ndim; ++i) {
+        auxshape->index[i] = (uint8_t) i;
+        auxshape->offset[i] = 0;
+        auxshape->shape_wos[i] = catarr->shape[i];
+        auxshape->pshape_wos[i] = catarr->pshape[i];
+    }
+
     // Populate the frame
     (*container)->frame = (blosc2_frame*)ina_mem_alloc(sizeof(blosc2_frame));
     INA_FAIL_IF((*container)->frame == NULL);
