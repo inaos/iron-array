@@ -96,7 +96,6 @@ INA_TEST_FIXTURE(arange, double_2) {
     INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, type_size, ndim, shape, pshape, start, stop));
 }
 
-
 INA_TEST_FIXTURE(arange, float_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
