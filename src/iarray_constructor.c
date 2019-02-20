@@ -340,6 +340,7 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
     (*container)->dparams = dparams2;  // we need an INA-allocated struct (to match INA_MEM_FREE_SAFE)
 
     (*container)->transposed = false;  // TODO: complete this
+    (*container)->view = false;
 
     (*container)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
     INA_FAIL_IF((*container)->store == NULL);

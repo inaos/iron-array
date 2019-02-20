@@ -48,13 +48,13 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, siz
         iarray_iter_read_value_t val;
         iarray_iter_read_value(I2, &val);
 
-        if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value = val.nelem * step + start;
-            //printf("%f - %f\n", value, ((double *) val.pointer)[0]);
-            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((double *) val.pointer)[0]);
-        } else {
-            float value = (float) (val.nelem * step + start);
-            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((float *) val.pointer)[0]);
+        switch(dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                INA_TEST_ASSERT_EQUAL_FLOATING(val.nelem * step + start, ((double *) val.pointer)[0]);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                INA_TEST_ASSERT_EQUAL_FLOATING( (float) (val.nelem * step + start), ((float *) val.pointer)[0]);
+                break;
         }
     }
 
