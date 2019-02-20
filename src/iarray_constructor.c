@@ -361,8 +361,18 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(buffer);
     INA_VERIFY_NOT_NULL(container);
 
-    if (caterva_to_buffer(container->catarr, buffer) != 0) {
-        return INA_ERROR(INA_ERR_FAILED);
+    if(container->view) {
+        int64_t start[IARRAY_DIMENSION_MAX];
+        int64_t stop[IARRAY_DIMENSION_MAX];
+        for (int i = 0; i < container->dtshape->ndim; ++i) {
+            start[i] = 0;
+            stop[i] = container->dtshape->shape[i];
+        }
+        INA_MUST_SUCCEED(iarray_get_slice_buffer(ctx, container, start, stop, buffer, buffer_len));
+    } else {
+        if (caterva_to_buffer(container->catarr, buffer) != 0) {
+            return INA_ERROR(INA_ERR_FAILED);
+        }
     }
 
     if (container->transposed == 1) {

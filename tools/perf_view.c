@@ -20,6 +20,7 @@ int main()
     INA_STOPWATCH_NEW(-1, -1, &w);
 
     int dtype = IARRAY_DATA_TYPE_FLOAT;
+    int typesize = sizeof(float);
 
     uint64_t shape_x[] = {10, 10, 10};
     uint64_t pshape_x[] = {2, 2, 2};
@@ -143,41 +144,62 @@ int main()
 
     printf("Speed-up: %f\n", elapsed / elapsed_view);
 
-    iarray_iter_read_block_t *iter_mul;
-    iarray_iter_read_block_t *iter_mul_view;
+    iarray_iter_read_t *iter_mul;
+    iarray_iter_read_t *iter_mul_view;
 
-    iarray_iter_read_block_new(ctx, c_mul, &iter_mul, bshape);
-    iarray_iter_read_block_new(ctx, c_mul_view, &iter_mul_view, bshape);
+    iarray_iter_read_new(ctx, c_mul, &iter_mul);
+    iarray_iter_read_new(ctx, c_mul_view, &iter_mul_view);
 
-    for (iarray_iter_read_block_init(iter_mul),
-             iarray_iter_read_block_init(iter_mul_view);
-         !iarray_iter_read_block_finished(iter_mul);
-         iarray_iter_read_block_next(iter_mul),
-             iarray_iter_read_block_next(iter_mul_view)) {
-        iarray_iter_read_block_value_t value_mul;
-        iarray_iter_read_block_value(iter_mul, &value_mul);
-        iarray_iter_read_block_value_t value_mul_view;
-        iarray_iter_read_block_value(iter_mul_view, &value_mul_view);
+    for (iarray_iter_read_init(iter_mul),
+             iarray_iter_read_init(iter_mul_view);
+         !iarray_iter_read_finished(iter_mul);
+         iarray_iter_read_next(iter_mul),
+             iarray_iter_read_next(iter_mul_view)) {
+        iarray_iter_read_value_t value_mul;
+        iarray_iter_read_value(iter_mul, &value_mul);
+        iarray_iter_read_value_t value_mul_view;
+        iarray_iter_read_value(iter_mul_view, &value_mul_view);
 
-        uint64_t bsize = 1;
-        for (int i = 0; i < c_mul->dtshape->ndim; ++i) {
-            bsize *= value_mul.block_shape[i];
+
+        switch (dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_mul.pointer)[0], ((double *) value_mul_view.pointer)[0]);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                INA_TEST_ASSERT_EQUAL_FLOATING(((float *) value_mul.pointer)[0], ((float *) value_mul_view.pointer)[0]);
+                break;
         }
 
-        for (uint64_t i = 0; i < bsize; ++i) {
-            switch (dtype) {
-                case IARRAY_DATA_TYPE_DOUBLE:
-                    INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_mul.pointer)[i], ((double *) value_mul_view.pointer)[i]);
-                    break;
-                case IARRAY_DATA_TYPE_FLOAT:
-                    INA_TEST_ASSERT_EQUAL_FLOATING(((float *) value_mul.pointer)[i], ((float *) value_mul_view.pointer)[i]);
-                    break;
-            }
+    }
+
+    iarray_iter_read_free(iter_mul);
+    iarray_iter_read_free(iter_mul_view);
+
+    uint64_t size = 1;
+    for (int i = 0; i < c_y->dtshape->ndim; ++i) {
+        size *= c_y->dtshape->shape[i];
+    }
+
+    uint8_t *buffer_y = ina_mem_alloc(size * typesize);
+    INA_MUST_SUCCEED(iarray_to_buffer(ctx, c_y, buffer_y, size * typesize));
+
+    uint8_t *buffer_z = ina_mem_alloc(size * typesize);
+    INA_MUST_SUCCEED(iarray_to_buffer(ctx, c_z, buffer_z, size * typesize));
+
+    for (uint64_t i = 0; i < size; ++i) {
+        switch (dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                INA_TEST_ASSERT_EQUAL_FLOATING(((double *) buffer_y)[i], ((double *) buffer_z)[i]);
+
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                INA_TEST_ASSERT_EQUAL_FLOATING(((float *) buffer_y)[i], ((float *) buffer_z)[i]);
+                break;
         }
     }
 
-    iarray_iter_read_block_free(iter_mul);
-    iarray_iter_read_block_free(iter_mul_view);
+    ina_mem_free(buffer_y);
+    ina_mem_free(buffer_z);
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
