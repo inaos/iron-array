@@ -164,14 +164,14 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
 
     for (int i = 0; i < ndim; ++i) {
         if (start[i] < 0) {
-            start_[index[i]] = offset[i] + start[i] + c->dtshape->shape[i];
+            start_[index[i]] += start[i] + c->dtshape->shape[i];
         } else{
-            start_[index[i]] = offset[i] + (uint64_t) start[i];
+            start_[index[i]] += (uint64_t) start[i];
         }
         if (stop[i] < 0) {
-            stop_[index[i]] = offset[i] + stop[i] + c->dtshape->shape[i];
+            stop_[index[i]] += stop[i] + c->dtshape->shape[i] - 1;
         } else {
-            stop_[index[i]] = offset[i] + (uint64_t) stop[i];
+            stop_[index[i]] += (uint64_t) stop[i] - 1;
         }
     }
 
@@ -264,14 +264,14 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
     for (int i = 0; i < ndim; ++i) {
         pshape_[i] = pshape[i];
         if (start[i] < 0) {
-            start_[index[i]] = offset[i] + start[i] + c->dtshape->shape[i];
+            start_[index[i]] += start[i] + c->dtshape->shape[i];
         } else{
-            start_[index[i]] = offset[i] + (uint64_t) start[i];
+            start_[index[i]] += (uint64_t) start[i];
         }
         if (stop[i] < 0) {
-            stop_[index[i]] = offset[i] + stop[i] + c->dtshape->shape[i];
+            stop_[index[i]] += stop[i] + c->dtshape->shape[i] - 1;
         } else {
-            stop_[index[i]] = offset[i] + (uint64_t) stop[i];
+            stop_[index[i]] += (uint64_t) stop[i] - 1;
         }
     }
 
