@@ -206,7 +206,8 @@ INA_TEST_FIXTURE(view, double_3_2) {
     uint64_t bshape_2[] = {2, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_view(data->ctx, dtype, typesize, shape_x, pshape_x, ndim_x,
-        pshape_y, pshape_z, shape_mul, pshape_mul, ndim_mul, start, stop, bshape_1, bshape_2));
+                                      pshape_y, pshape_z, shape_mul, pshape_mul, ndim_mul, start,
+                                      stop, bshape_1, bshape_2));
 }
 
 INA_TEST_FIXTURE(view, float_5_2) {
@@ -227,8 +228,36 @@ INA_TEST_FIXTURE(view, float_5_2) {
     int64_t start[] = {1, 3, 3, 6, 2};
     int64_t stop[] = {5, 4, 4, 10, 3};
 
-    uint64_t bshape[] = {2, 2};
+    uint64_t bshape_1[] = {2, 3};
+    uint64_t bshape_2[] = {3, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_view(data->ctx, dtype, typesize, shape_x, pshape_x, ndim_x,
-                                      pshape_y, pshape_z, shape_mul, pshape_mul, ndim_mul, start, stop, bshape, bshape));
+                                      pshape_y, pshape_z, shape_mul, pshape_mul, ndim_mul, start,
+                                      stop, bshape_1, bshape_2));
+}
+
+INA_TEST_FIXTURE(view, double_8_2) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    int typesize = sizeof(double);
+
+    uint64_t shape_x[] = {5, 5, 5, 5, 5, 5, 5, 5};
+    uint64_t pshape_x[] = {2, 2, 3, 3, 2, 2, 3, 2};
+    uint8_t ndim_x = 8;
+
+    uint64_t pshape_y[] = {2, 1, 1, 2, 1, 1, 1, 1};
+    uint64_t pshape_z[] = {2, 1, 1, 2, 1, 1, 1, 1};
+
+    uint64_t shape_mul[] = {4, 4};
+    uint64_t pshape_mul[] = {2, 2};
+    uint8_t ndim_mul = 2;
+
+    int64_t start[] = {1, 3, 3, 0, 0, 2, 4, 3};
+    int64_t stop[] = {5, 4, 4, 4, 1, 3, 5, 4};
+
+    uint64_t bshape_1[] = {2, 2};
+    uint64_t bshape_2[] = {2, 2};
+
+    INA_TEST_ASSERT_SUCCEED(test_view(data->ctx, dtype, typesize, shape_x, pshape_x, ndim_x,
+                                      pshape_y, pshape_z, shape_mul, pshape_mul, ndim_mul, start,
+                                      stop, bshape_1, bshape_2));
 }

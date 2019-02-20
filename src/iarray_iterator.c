@@ -628,8 +628,8 @@ INA_API(void) iarray_iter_read_init(iarray_iter_read_t *itr)
 
     // Decompress first block
     INA_MUST_SUCCEED(iarray_get_slice_buffer(itr->ctx, itr->container, (int64_t *) itr->elem_index,
-                                             (int64_t *) stop_, itr->part, buflen * sizeof(double)));
-
+                                             (int64_t *) stop_, itr->part,
+                                             buflen * itr->container->catarr->sc->typesize));
 }
 
 /*
@@ -642,7 +642,6 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
     int ndim = catarr->ndim;
 
     // check if a block is readed totally and decompress next
-
     if (itr->elem_cont_block  == itr->block_size - 1) {
         if(itr->elem_cont == itr->c_size - 1) {
             itr->elem_cont++;
@@ -827,7 +826,8 @@ INA_API(void) iarray_iter_read_block_init(iarray_iter_read_block_t *itr)
     }
 
     INA_MUST_SUCCEED(iarray_get_slice_buffer(itr->ctx, itr->container, (int64_t *) itr->elem_index,
-                                             (int64_t *) stop_, itr->part, buflen * sizeof(double)));
+                                             (int64_t *) stop_, itr->part,
+                                             buflen * itr->container->catarr->sc->typesize));
 }
 
 /*
