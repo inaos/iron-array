@@ -90,7 +90,6 @@ INA_TEST_FIXTURE(linspace, double_2) {
     INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, type_size, ndim, shape, pshape, start, stop));
 }
 
-
 INA_TEST_FIXTURE(linspace, float_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
@@ -129,4 +128,3 @@ INA_TEST_FIXTURE(linspace, float_7) {
 
     INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, type_size, ndim, shape, pshape, start, stop));
 }
-
