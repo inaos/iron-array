@@ -116,11 +116,13 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
 
         // Make blocks multiplication
-        if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            cblas_dgemm(CblasRowMajor, flag_a, flag_b, B0, B2, B1, 1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 1.0, (double *)c_block, ld_c);
-        }
-        else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
-            cblas_sgemm(CblasRowMajor, flag_a, flag_b, B0, B2, B1, 1.0, (float *)a_block, ld_a, (float *)b_block, ld_b, 1.0, (float *)c_block, ld_c);
+        switch (dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                cblas_dgemm(CblasRowMajor, flag_a, flag_b, B0, B2, B1, 1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 1.0, (double *)c_block, ld_c);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                cblas_sgemm(CblasRowMajor, flag_a, flag_b, B0, B2, B1, 1.0, (float *)a_block, ld_a, (float *)b_block, ld_b, 1.0, (float *)c_block, ld_c);
+                break;
         }
 
         // Append it to a new iarray contianer
@@ -236,12 +238,13 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
 
         // Make blocks multiplication
-
-        if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            cblas_dgemv(CblasRowMajor, flag_a, M, K, 1.0, (double *) a_block, ld_a, (double *) b_block, 1, 1.0, (double *) c_block, 1);
-        }
-        else if (dtype == IARRAY_DATA_TYPE_FLOAT) {
-            cblas_sgemv(CblasRowMajor, flag_a, M, K, 1.0, (float *) a_block, ld_a, (float *) b_block, 1, 1.0, (float *) c_block, 1);
+        switch (dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                cblas_dgemv(CblasRowMajor, flag_a, M, K, 1.0, (double *) a_block, ld_a, (double *) b_block, 1, 1.0, (double *) c_block, 1);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                cblas_sgemv(CblasRowMajor, flag_a, M, K, 1.0, (float *) a_block, ld_a, (float *) b_block, 1, 1.0, (float *) c_block, 1);
+                break;
         }
 
         // Append it to a new iarray contianer
