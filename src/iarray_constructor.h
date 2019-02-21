@@ -196,17 +196,11 @@ static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
 
     (*c)->frame = pred->frame;
-
     (*c)->cparams = pred->cparams;
-
     (*c)->dparams = pred->dparams;
-
     (*c)->transposed = pred->transposed;
-
     (*c)->view = true;
-
     (*c)->store = pred->store;
-
     (*c)->catarr = pred->catarr;
 
     return INA_SUCCESS;

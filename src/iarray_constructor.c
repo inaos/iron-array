@@ -362,7 +362,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(buffer);
     INA_VERIFY_NOT_NULL(container);
 
-    if(container->view) {
+    if (container->view) {
         int64_t start[IARRAY_DIMENSION_MAX];
         int64_t stop[IARRAY_DIMENSION_MAX];
         for (int i = 0; i < container->dtshape->ndim; ++i) {

@@ -107,7 +107,6 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         }
 
         // Check if matrix is transposed
-
         if (c->transposed) {
             uint64_t aux_stop[IARRAY_DIMENSION_MAX];
             uint64_t aux_start[IARRAY_DIMENSION_MAX];
