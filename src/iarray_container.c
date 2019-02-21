@@ -51,7 +51,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    uint64_t *pshape,
                                    iarray_store_properties_t *store,
                                    int flags,
-                                   boolean_t view,
+                                   bool view,
                                    iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);

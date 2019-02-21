@@ -73,8 +73,8 @@ struct iarray_container_s {
     blosc2_frame *frame;
     caterva_array_t *catarr;
     _iarray_container_store_t *store;
-    boolean_t transposed;
-    boolean_t view;
+    bool transposed;
+    bool view;
     union {
         float f;
         double d;

@@ -13,6 +13,7 @@
 #define _IARRAY_H_
 
 #include <libinac/lib.h>
+#include <stdbool.h>
 
 #define IARRAY_DIMENSION_MAX 8 /* A fixed size simplifies the code and should be enough for most IronArray cases */
 
@@ -276,7 +277,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    uint64_t *pshape,
                                    iarray_store_properties_t *store,
                                    int flags,
-                                   boolean_t view,
+                                   bool view,
                                    iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
