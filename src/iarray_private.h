@@ -58,14 +58,23 @@ typedef struct _iarray_container_store_s {
     ina_str_t id;
 } _iarray_container_store_t;
 
+typedef struct iarray_auxshape_s {
+    uint64_t offset[IARRAY_DIMENSION_MAX];
+    uint64_t shape_wos[IARRAY_DIMENSION_MAX];
+    uint64_t pshape_wos[IARRAY_DIMENSION_MAX];
+    uint8_t index[IARRAY_DIMENSION_MAX];
+} iarray_auxshape_t;
+
 struct iarray_container_s {
     iarray_dtshape_t *dtshape;
+    iarray_auxshape_t *auxshape;
     blosc2_cparams *cparams;
     blosc2_dparams *dparams;
     blosc2_frame *frame;
     caterva_array_t *catarr;
     _iarray_container_store_t *store;
-    int transposed;
+    bool transposed;
+    bool view;
     union {
         float f;
         double d;
@@ -100,6 +109,29 @@ typedef struct iarray_iter_write_part_s {
     uint64_t *elem_index;
     uint64_t cont;
 } iarray_iter_write_part_t;
+
+typedef struct iarray_iter_read_s {
+    iarray_context_t *ctx;
+    iarray_container_t *container;
+    uint64_t *elem_index;
+    uint64_t elem_cont;
+    uint64_t elem_cont_block;
+
+    uint64_t *block_index;
+    uint64_t block_size;
+    uint64_t *block_shape;
+    uint64_t block_cont;
+
+    uint64_t *shape;
+    uint64_t c_size;
+    
+    uint8_t *part;
+    
+    void *pointer;
+    uint64_t *index;
+    uint64_t nelem;
+    
+} iarray_iter_read_t;
 
 typedef struct iarray_iter_read_block_s {
     iarray_context_t *ctx;

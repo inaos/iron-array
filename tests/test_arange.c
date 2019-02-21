@@ -34,6 +34,10 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, siz
 
     iarray_arange(ctx, &xdtshape, start, stop, step, NULL, 0, &c_x);
 
+    double *buffer = (double *) malloc(size * sizeof(double));
+
+    iarray_to_buffer(ctx, c_x, buffer, size * sizeof(buffer));
+
     // Assert iterator reading it
 
     iarray_iter_read_t *I2;
@@ -44,16 +48,17 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, siz
         iarray_iter_read_value_t val;
         iarray_iter_read_value(I2, &val);
 
-        if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value = val.nelem * step + start;
-            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((double *) val.pointer)[0]);
-        } else {
-            float value = (float) (val.nelem * step + start);
-            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((float *) val.pointer)[0]);
+        switch(dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                INA_TEST_ASSERT_EQUAL_FLOATING(val.nelem * step + start, ((double *) val.pointer)[0]);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                INA_TEST_ASSERT_EQUAL_FLOATING( (float) (val.nelem * step + start), ((float *) val.pointer)[0]);
+                break;
         }
     }
 
-    iarray_iter_write_free(I2);
+    iarray_iter_read_free(I2);
 
     iarray_container_free(ctx, &c_x);
     return INA_SUCCESS;
@@ -83,8 +88,8 @@ INA_TEST_FIXTURE(arange, double_2) {
     size_t type_size = sizeof(double);
 
     uint8_t ndim = 2;
-    uint64_t shape[] = {223, 456};
-    uint64_t pshape[] = {31, 43};
+    uint64_t shape[] = {10, 10};
+    uint64_t pshape[] = {5, 5};
     double start = - 0.1;
     double stop = - 0.25;
 

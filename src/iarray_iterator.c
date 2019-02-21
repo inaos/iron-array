@@ -601,24 +601,35 @@ void _iarray_iter_matmul_free(iarray_iter_matmul_t *itr)
 
 INA_API(void) iarray_iter_read_init(iarray_iter_read_t *itr)
 {
-    caterva_array_t *catarr = itr->container->catarr;
-
-    itr->cont = 0;
-    itr->cont_part = 0;
-    itr->cont_part_elem = 0;
-
-    itr->nelem = 0;
-
-    itr->bsize = itr->container->catarr->psize;
-
-    for (int i = 0; i < CATERVA_MAXDIM; ++i) {
-        itr->index[i] = 0;
-        itr->part_index[i] = 0;
-        itr->bshape[i] = itr->container->catarr->pshape[i];
+    // Initialize element and block index
+    for (int i = 0; i <IARRAY_DIMENSION_MAX; ++i) {
+        itr->elem_index[i] = 0;
+        itr->block_index[i] = 0;
     }
-    itr->pointer = &itr->part[0];
 
-    blosc2_schunk_decompress_chunk(catarr->sc, 0, itr->part, catarr->psize * catarr->sc->typesize);
+    // Initialize counters
+    itr->elem_cont = 0;
+    itr->block_cont = 0;
+    itr->elem_cont_block = 0;
+
+    // Initialize block_ params
+    uint64_t stop_[IARRAY_DIMENSION_MAX];
+    uint64_t buflen = 1;
+
+    itr->block_size = 1;
+    itr->c_size = 1;
+    for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
+        itr->block_shape[i] = itr->shape[i];
+        itr->block_size *= itr->block_shape[i];
+        stop_[i] = itr->elem_index[i] + itr->shape[i];
+        buflen *= itr->shape[i];
+        itr->c_size *= itr->container->dtshape->shape[i];
+    }
+
+    // Decompress first block
+    INA_MUST_SUCCEED(iarray_get_slice_buffer(itr->ctx, itr->container, (int64_t *) itr->elem_index,
+                                             (int64_t *) stop_, itr->part,
+                                             buflen * itr->container->catarr->sc->typesize));
 }
 
 /*
@@ -630,58 +641,68 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
     caterva_array_t *catarr = itr->container->catarr;
     int ndim = catarr->ndim;
 
-    // check if a part is filled totally and append it
-
-    if (itr->cont_part_elem  == itr->bsize - 1) {
-        if(itr->cont == catarr->size - 1) {
-            itr->cont++;
+    // check if a block is readed totally and decompress next
+    if (itr->elem_cont_block  == itr->block_size - 1) {
+        if(itr->elem_cont == itr->c_size - 1) {
+            itr->elem_cont++;
             return INA_SUCCESS;
         }
-        int err = blosc2_schunk_decompress_chunk(catarr->sc, (int) itr->cont_part + 1, itr->part, catarr->psize * catarr->sc->typesize);
-        if (err < 0) {
-            return INA_ERROR(INA_ERR_FAILED);
-        }
-        itr->cont_part_elem = 0;
-        itr->cont_part += 1;
-        uint64_t inc = 1;
-        itr->bsize = 1;
 
+        uint8_t ndim = itr->container->dtshape->ndim;
+        caterva_array_t *catarr = itr->container->catarr;
+
+        // Update block counter
+        itr->block_cont += 1;
+
+        // Calculate aux variables
+        uint64_t aux[IARRAY_DIMENSION_MAX];
         for (int i = ndim - 1; i >= 0; --i) {
-            itr->part_index[i] = itr->cont_part % (inc * (catarr->eshape[i] / catarr->pshape[i])) / inc;
-            inc *= (catarr->eshape[i] / catarr->pshape[i]);
-            if ((itr->part_index[i] + 1) * catarr->pshape[i] > catarr->shape[i]) {
-                itr->bshape[i] = catarr->shape[i] - itr->part_index[i] * catarr->pshape[i];
+            if (itr->container->dtshape->shape[i] % itr->shape[i] == 0) {
+                aux[i] = itr->container->dtshape->shape[i] / itr->shape[i];
             } else {
-                itr->bshape[i] = catarr->pshape[i];
+                aux[i] = itr->container->dtshape->shape[i] / itr->shape[i] + 1;
             }
-            itr->bsize *= itr->bshape[i];
         }
+
+        // Calculate the start of the next block
+        uint64_t start_[IARRAY_DIMENSION_MAX];
+
+        uint64_t inc = 1;
+        for (int i = ndim - 1; i >= 0; --i) {
+            start_[i] = itr->block_cont % (aux[i] * inc) / inc;
+            itr->block_index[i] = start_[i];
+            start_[i] *= itr->shape[i];
+            itr->elem_index[i] = start_[i];
+            inc *= aux[i];
+        }
+
+        // Calculate the stop of the next block
+        uint64_t stop_[IARRAY_DIMENSION_MAX];
+        uint64_t buflen = 1;
+        itr->block_size = 1;
+        for (int i = ndim - 1; i >= 0; --i) {
+            if(start_[i] + itr->shape[i] <= itr->container->dtshape->shape[i]) {
+                stop_[i] = start_[i] + itr->shape[i];
+            } else {
+                stop_[i] = itr->container->dtshape->shape[i];
+            }
+            itr->block_shape[i] = stop_[i] - start_[i];
+            itr->block_size *= itr->block_shape[i];
+            buflen *= itr->shape[i];
+        }
+
+        // Decompress the next block
+        INA_MUST_SUCCEED(iarray_get_slice_buffer(itr->ctx, itr->container, (int64_t *) start_,
+                                                 (int64_t *) stop_, itr->part, buflen * catarr->sc->typesize));
+
+        itr->elem_cont_block = 0;
     } else {
-        itr->cont_part_elem += 1;
+        // Go to next element of the block if it is not read totally
+        itr->elem_cont_block += 1;
     }
 
     // jump to the next element
-    itr->cont += 1;
-
-    uint64_t ind_part_elem[IARRAY_DIMENSION_MAX];
-    uint64_t cont_pointer = 0;
-
-    uint64_t inc = 1;
-    uint64_t inc_s = 1;
-    uint64_t inc_p = 1;
-
-    itr->nelem = 0;
-
-    for (int i = ndim - 1; i >= 0; --i) {
-        ind_part_elem[i] = itr->cont_part_elem % (inc * itr->bshape[i]) / inc;
-        cont_pointer += ind_part_elem[i] * inc_p;
-        itr->index[i] = ind_part_elem[i] + itr->part_index[i] * catarr->pshape[i];
-        itr->nelem += itr->index[i] * inc_s;
-        inc_s *= catarr->shape[i];
-        inc *= itr->bshape[i];
-        inc_p *= catarr->pshape[i];
-    }
-    itr->pointer = (void *)&(itr->part)[cont_pointer * catarr->sc->typesize];
+    itr->elem_cont += 1;
 
     return INA_SUCCESS;
 }
@@ -692,7 +713,7 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
 
 INA_API(int) iarray_iter_read_finished(iarray_iter_read_t *itr)
 {
-    return itr->cont >= itr->container->catarr->size;
+    return itr->elem_cont >= itr->c_size;
 }
 
 /*
@@ -701,6 +722,27 @@ INA_API(int) iarray_iter_read_finished(iarray_iter_read_t *itr)
 
 INA_API(void) iarray_iter_read_value(iarray_iter_read_t *itr, iarray_iter_read_value_t *val)
 {
+
+    uint8_t ndim = itr->container->dtshape->ndim;
+    uint64_t *c_pshape = itr->container->dtshape->pshape;
+    uint64_t *c_shape = itr->container->dtshape->shape;
+
+    uint64_t ind_part_elem[IARRAY_DIMENSION_MAX];
+
+    uint64_t inc = 1;
+    uint64_t inc_s = 1;
+
+    itr->nelem = 0;
+
+    for (int i = ndim - 1; i >= 0; --i) {
+        ind_part_elem[i] = itr->elem_cont_block % (inc * itr->block_shape[i]) / inc;
+        itr->index[i] = ind_part_elem[i] + itr->block_index[i] * itr->shape[i];
+        itr->nelem += itr->index[i] * inc_s;
+        inc_s *= c_shape[i];
+        inc *= itr->block_shape[i];
+    }
+    itr->pointer = (void *)&(itr->part)[itr->elem_cont_block * itr->container->catarr->sc->typesize];
+
     val->index = itr->index;
     val->pointer = itr->pointer;
     val->nelem = itr->nelem;
@@ -724,9 +766,16 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx, iarray_container_t
     (*itr)->container = container;
     (*itr)->part = (uint8_t *) ina_mem_alloc(container->catarr->psize * container->catarr->sc->typesize);
     (*itr)->index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
-    (*itr)->part_index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
-    (*itr)->bshape = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
 
+    (*itr)->shape = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
+
+    (*itr)->block_shape = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
+    (*itr)->block_index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
+    (*itr)->elem_index = (uint64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(uint64_t));
+
+    for (int i = 0; i < container->dtshape->ndim; ++i) {
+        (*itr)->shape[i] = container->dtshape->pshape[i];
+    }
 
     return INA_SUCCESS;
 }
@@ -739,8 +788,10 @@ INA_API(void) iarray_iter_read_free(iarray_iter_read_t *itr)
 {
     ina_mem_free(itr->index);
     ina_mem_free(itr->part);
-    ina_mem_free(itr->part_index);
-    ina_mem_free(itr->bshape);
+    ina_mem_free(itr->shape);
+    ina_mem_free(itr->block_shape);
+    ina_mem_free(itr->block_index);
+    ina_mem_free(itr->elem_index);
     ina_mem_free(itr);
 }
 
@@ -775,7 +826,8 @@ INA_API(void) iarray_iter_read_block_init(iarray_iter_read_block_t *itr)
     }
 
     INA_MUST_SUCCEED(iarray_get_slice_buffer(itr->ctx, itr->container, (int64_t *) itr->elem_index,
-                                             (int64_t *) stop_, itr->part, buflen * sizeof(double)));
+                                             (int64_t *) stop_, itr->part,
+                                             buflen * itr->container->catarr->sc->typesize));
 }
 
 /*
@@ -790,10 +842,10 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr)
 
     uint64_t aux[IARRAY_DIMENSION_MAX];
     for (int i = ndim - 1; i >= 0; --i) {
-        if (catarr->shape[i] % itr->shape[i] == 0) {
-            aux[i] = catarr->shape[i] / itr->shape[i];
+        if (itr->container->dtshape->shape[i] % itr->shape[i] == 0) {
+            aux[i] = itr->container->dtshape->shape[i] / itr->shape[i];
         } else {
-            aux[i] = catarr->shape[i] / itr->shape[i] + 1;
+            aux[i] = itr->container->dtshape->shape[i] / itr->shape[i] + 1;
         }
     }
 
@@ -811,11 +863,12 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr)
 
     uint64_t stop_[IARRAY_DIMENSION_MAX];
     uint64_t buflen = 1;
+    itr->block_size = 1;
     for (int i = ndim - 1; i >= 0; --i) {
-        if(start_[i] + itr->shape[i] <= catarr->shape[i]) {
+        if(start_[i] + itr->shape[i] <= itr->container->dtshape->shape[i]) {
             stop_[i] = start_[i] + itr->shape[i];
         } else {
-            stop_[i] = catarr->shape[i];
+            stop_[i] = itr->container->dtshape->shape[i];
         }
         itr->block_shape[i] = stop_[i] - start_[i];
         itr->block_size *= itr->block_shape[i];

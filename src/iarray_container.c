@@ -51,66 +51,88 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    uint64_t *pshape,
                                    iarray_store_properties_t *store,
                                    int flags,
+                                   bool view,
                                    iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
 
+
     uint64_t start_[IARRAY_DIMENSION_MAX];
     uint64_t stop_[IARRAY_DIMENSION_MAX];
 
+    uint64_t *offset = c->auxshape->offset;
+
     for (int i = 0; i < c->dtshape->ndim; ++i) {
         if (start[i] < 0) {
-            start_[i] = start[i] + c->dtshape->shape[i];
+            start_[i] =  offset[i] + start[i] + c->dtshape->shape[i];
         } else{
-            start_[i] = (uint64_t) start[i];
+            start_[i] = offset[i] + (uint64_t) start[i];
         }
         if (stop[i] < 0) {
-            stop_[i] = stop[i] + c->dtshape->shape[i];
+            stop_[i] =  offset[i] + stop[i] + c->dtshape->shape[i];
         } else {
-            stop_[i] = (uint64_t) stop[i];
+            stop_[i] = offset[i] + (uint64_t) stop[i];
         }
     }
 
-    iarray_dtshape_t dtshape;
+    if (view) {
 
-    dtshape.ndim = c->dtshape->ndim;
-    dtshape.dtype = c->dtshape->dtype;
+        iarray_dtshape_t dtshape;
+        dtshape.ndim = c->dtshape->ndim;
+        dtshape.dtype = c->dtshape->dtype;
 
-    for (int i = 0; i < dtshape.ndim; ++i) {
-        dtshape.shape[i] = stop_[i] - start_[i];
-        dtshape.pshape[i] = pshape[i];
-    }
-
-    // Check if matrix is transposed
-
-    if (c->transposed == 1) {
-        uint64_t aux_stop[IARRAY_DIMENSION_MAX];
-        uint64_t aux_start[IARRAY_DIMENSION_MAX];
-
-        for (int i = 0; i < c->dtshape->ndim; ++i) {
-            aux_start[i] = start_[i];
-            aux_stop[i] = stop_[i];
+        for (int i = 0; i < dtshape.ndim; ++i) {
+            dtshape.shape[i] = stop_[i] - start_[i];
+            dtshape.pshape[i] = pshape[i];
         }
 
-        for (int i = 0; i < c->dtshape->ndim; ++i) {
-            start_[i] = aux_start[c->dtshape->ndim - 1 - i];
-            stop_[i] = aux_stop[c->dtshape->ndim - 1 - i];
+        _iarray_view_new(ctx, c, &dtshape, start_, container);
+
+        (*container)->view = 1;
+        if (c->transposed == 1) {
+            (*container)->transposed = 1;
         }
+
+    } else {
+        iarray_dtshape_t dtshape;
+
+        dtshape.ndim = c->dtshape->ndim;
+        dtshape.dtype = c->dtshape->dtype;
+
+        for (int i = 0; i < dtshape.ndim; ++i) {
+            dtshape.shape[i] = stop_[i] - start_[i];
+            dtshape.pshape[i] = pshape[i];
+        }
+
+        // Check if matrix is transposed
+        if (c->transposed) {
+            uint64_t aux_stop[IARRAY_DIMENSION_MAX];
+            uint64_t aux_start[IARRAY_DIMENSION_MAX];
+
+            for (int i = 0; i < c->dtshape->ndim; ++i) {
+                aux_start[i] = start_[i];
+                aux_stop[i] = stop_[i];
+            }
+
+            for (int i = 0; i < c->dtshape->ndim; ++i) {
+                start_[i] = aux_start[c->dtshape->ndim - 1 - i];
+                stop_[i] = aux_stop[c->dtshape->ndim - 1 - i];
+            }
+        }
+
+        iarray_container_new(ctx, &dtshape, store, flags, container);
+
+        if (c->transposed) {
+            (*container)->transposed = true;
+        }
+
+        caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, c->dtshape->ndim);
+        caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, c->dtshape->ndim);
+
+        INA_FAIL_IF(caterva_get_slice((*container)->catarr, c->catarr, start__, stop__) != 0);
     }
-
-    iarray_container_new(ctx, &dtshape, store, flags, container);
-
-    if (c->transposed == 1) {
-        (*container)->transposed = 1;
-    }
-
-    caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, c->dtshape->ndim);
-    caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, c->dtshape->ndim);
-
-    INA_FAIL_IF(caterva_get_slice((*container)->catarr, c->catarr, start__, stop__) != 0);
-
     return INA_SUCCESS;
 
 fail:
@@ -128,24 +150,31 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(stop);
 
     uint8_t ndim = c->dtshape->ndim;
+    uint64_t *offset = c->auxshape->offset;
+    uint8_t *index = c->auxshape->index;
 
     uint64_t start_[IARRAY_DIMENSION_MAX];
     uint64_t stop_[IARRAY_DIMENSION_MAX];
 
+    for (int i = 0; i < c->catarr->ndim; ++i) {
+        start_[i] = 0 + offset[i];
+        stop_[i] = 1 + offset[i];
+    }
+
     for (int i = 0; i < ndim; ++i) {
         if (start[i] < 0) {
-            start_[i] = start[i] + c->dtshape->shape[i];
+            start_[index[i]] += start[i] + c->dtshape->shape[i];
         } else{
-            start_[i] = (uint64_t) start[i];
+            start_[index[i]] += (uint64_t) start[i];
         }
         if (stop[i] < 0) {
-            stop_[i] = stop[i] + c->dtshape->shape[i];
+            stop_[index[i]] += stop[i] + c->dtshape->shape[i] - 1;
         } else {
-            stop_[i] = (uint64_t) stop[i];
+            stop_[index[i]] += (uint64_t) stop[i] - 1;
         }
     }
 
-    if (c->transposed == 1) {
+    if (c->transposed) {
         uint64_t aux_stop[IARRAY_DIMENSION_MAX];
         uint64_t aux_start[IARRAY_DIMENSION_MAX];
 
@@ -162,7 +191,7 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
 
     int64_t pshape[IARRAY_DIMENSION_MAX];
     uint64_t psize = 1;
-    for (int i = 0; i < ndim; ++i) {
+    for (int i = 0; i < c->catarr->ndim; ++i) {
         pshape[i] = stop_[i] - start_[i];
         psize *= pshape[i];
     }
@@ -177,16 +206,16 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
         }
     }
 
-    caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, ndim);
-    caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, ndim);
-    caterva_dims_t pshape_ = caterva_new_dims((uint64_t *) pshape, ndim);
+    caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, c->catarr->ndim);
+    caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, c->catarr->ndim);
+    caterva_dims_t pshape_ = caterva_new_dims((uint64_t *) pshape, c->catarr->ndim);
 
     INA_FAIL_IF(caterva_get_slice_buffer(buffer, c->catarr, start__, stop__, pshape_) != 0);
 
     uint64_t rows = stop_[0] - start_[0];
     uint64_t cols = stop_[1] - start_[1];
 
-    if (c->transposed == 1) {
+    if (c->transposed) {
         switch (c->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 mkl_dimatcopy('R', 'T', rows, cols, 1.0, (double *) buffer, cols, rows);
@@ -216,41 +245,50 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(stop);
     INA_VERIFY_NOT_NULL(pshape);
 
+
     uint8_t ndim = c->dtshape->ndim;
+    uint64_t *offset = c->auxshape->offset;
+    uint8_t *index = c->auxshape->index;
 
     uint64_t start_[IARRAY_DIMENSION_MAX];
     uint64_t stop_[IARRAY_DIMENSION_MAX];
     uint64_t pshape_[IARRAY_DIMENSION_MAX];
 
+    for (int i = 0; i < c->catarr->ndim; ++i) {
+        start_[i] = 0 + offset[i];
+        stop_[i] = 1 + offset[i];
+        pshape_[i] = 1;
+    }
+
     for (int i = 0; i < ndim; ++i) {
         pshape_[i] = pshape[i];
         if (start[i] < 0) {
-            start_[i] = start[i] + c->dtshape->shape[i];
+            start_[index[i]] += start[i] + c->dtshape->shape[i];
         } else{
-            start_[i] = (uint64_t) start[i];
+            start_[index[i]] += (uint64_t) start[i];
         }
         if (stop[i] < 0) {
-            stop_[i] = stop[i] + c->dtshape->shape[i];
+            stop_[index[i]] += stop[i] + c->dtshape->shape[i] - 1;
         } else {
-            stop_[i] = (uint64_t) stop[i];
+            stop_[index[i]] += (uint64_t) stop[i] - 1;
         }
     }
 
-    if (c->transposed == 1) {
+    if (c->transposed) {
         uint64_t aux_stop[IARRAY_DIMENSION_MAX];
         uint64_t aux_start[IARRAY_DIMENSION_MAX];
         uint64_t aux_pshape[IARRAY_DIMENSION_MAX];
 
-        for (int i = 0; i < c->dtshape->ndim; ++i) {
+        for (int i = 0; i < c->catarr->ndim; ++i) {
             aux_start[i] = start_[i];
             aux_stop[i] = stop_[i];
-            aux_pshape[i] = pshape[i];
+            aux_pshape[i] = pshape_[i];
         }
 
-        for (int i = 0; i < c->dtshape->ndim; ++i) {
-            start_[i] = aux_start[c->dtshape->ndim - 1 - i];
-            stop_[i] = aux_stop[c->dtshape->ndim - 1 - i];
-            pshape_[i] = aux_pshape[c->dtshape->ndim - 1 - i];
+        for (int i = 0; i < c->catarr->ndim; ++i) {
+            start_[i] = aux_start[c->catarr->ndim - 1 - i];
+            stop_[i] = aux_stop[c->catarr->ndim - 1 - i];
+            pshape_[i] = aux_pshape[c->catarr->ndim - 1 - i];
         }
     }
 
@@ -259,38 +297,22 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
         psize *= pshape[i];
     }
 
-    if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        if (psize * sizeof(double) > buflen) {
+    switch (c->dtshape->dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            if (psize * sizeof(double) > buflen)
             return INA_ERR_ERROR;
-        }
-    } else {
-        if (psize * sizeof(float) > buflen) {
-            return INA_ERR_ERROR;
-        }
+        case IARRAY_DATA_TYPE_FLOAT:
+            if (psize * sizeof(float) > buflen)
+                return INA_ERR_ERROR;
     }
 
-    caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, ndim);
-    caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, ndim);
-    caterva_dims_t pshape__ = caterva_new_dims(pshape_, ndim);
+    caterva_dims_t start__ = caterva_new_dims((uint64_t *) start_, c->catarr->ndim);
+    caterva_dims_t stop__ = caterva_new_dims((uint64_t *) stop_, c->catarr->ndim);
+    caterva_dims_t pshape__ = caterva_new_dims(pshape_, c->catarr->ndim);
 
     memset(buffer, 0, buflen);
 
     INA_FAIL_IF(caterva_get_slice_buffer(buffer, c->catarr, start__, stop__, pshape__) != 0);
-
-    /*
-    if (c->transposed == 1) {
-        uint64_t rows = pshape[1];
-        uint64_t cols = pshape[0];
-        switch (c->dtshape->dtype) {
-            case IARRAY_DATA_TYPE_DOUBLE:
-                mkl_dimatcopy('R', 'T', rows, cols, 1.0, (double *) buffer, cols, rows);
-                break;
-            case IARRAY_DATA_TYPE_FLOAT:
-                mkl_simatcopy('R', 'T', rows, cols, 1.0, (float *) buffer, cols, rows);
-                break;
-        }
-    }
-    */
 
     return INA_SUCCESS;
 
@@ -304,14 +326,36 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(container);
 
-    INA_FAIL_IF(caterva_squeeze(container->catarr) != 0);
+    uint8_t inc = 0;
 
-    if (container->dtshape->ndim != container->catarr->ndim) {
-        container->dtshape->ndim = (uint8_t) container->catarr->ndim;
-        for (int i = 0; i < container->catarr->ndim; ++i) {
-            container->dtshape->shape[i] = container->catarr->shape[i];
-            container->dtshape->pshape[i] = container->catarr->pshape[i];
+    if (!container->view) {
+        INA_FAIL_IF(caterva_squeeze(container->catarr) != 0);
+
+        if (container->dtshape->ndim != container->catarr->ndim) {
+            container->dtshape->ndim = (uint8_t) container->catarr->ndim;
+            for (int i = 0; i < container->catarr->ndim; ++i) {
+                if (container->dtshape->shape[i] != container->catarr->shape[i]) {
+                    inc += 1;
+                }
+                container->dtshape->shape[i] = container->catarr->shape[i];
+                container->dtshape->pshape[i] = container->catarr->pshape[i];
+                container->auxshape->shape_wos[i] = container->catarr->shape[i];
+                container->auxshape->pshape_wos[i] = container->catarr->pshape[i];
+                container->auxshape->offset[i] = container->auxshape->offset[i + inc];
+            }
         }
+    } else {
+        inc = 0;
+        for (int i = 0; i < container->dtshape->ndim; ++i) {
+            if (container->dtshape->shape[i] == 1) {
+                inc ++;
+            } else {
+                container->dtshape->shape[i - inc] = container->dtshape->shape[i];
+                container->dtshape->pshape[i - inc] = container->dtshape->pshape[i];
+                container->auxshape->index[i - inc] = (uint8_t) i;
+            }
+        }
+        container->dtshape->ndim -= inc;
     }
 
     return INA_SUCCESS;
@@ -411,14 +455,19 @@ failed:
 INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container)
 {
     INA_VERIFY_FREE(container);
-    if ((*container)->catarr != NULL) {
-        caterva_free_array((*container)->catarr);
+
+    if ((*container)->view) {
+        INA_MEM_FREE_SAFE((*container)->dtshape);
+    } else {
+        if ((*container)->catarr != NULL) {
+            caterva_free_array((*container)->catarr);
+        }
+        INA_MEM_FREE_SAFE((*container)->frame);
+        INA_MEM_FREE_SAFE((*container)->cparams);
+        INA_MEM_FREE_SAFE((*container)->dparams);
+        INA_MEM_FREE_SAFE((*container)->dtshape);
+        INA_MEM_FREE_SAFE(*container);
     }
-    INA_MEM_FREE_SAFE((*container)->frame);
-    INA_MEM_FREE_SAFE((*container)->cparams);
-    INA_MEM_FREE_SAFE((*container)->dparams);
-    INA_MEM_FREE_SAFE((*container)->dtshape);
-    INA_MEM_FREE_SAFE(*container);
 }
 
 INA_API(ina_rc_t) iarray_container_gt(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
