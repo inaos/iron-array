@@ -52,7 +52,7 @@ static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx, i
         }
     }
 
-    iarray_iter_write_free(iter);
+    iarray_iter_read_free(iter);
     iarray_container_free(ctx, &c_x);
 
     return INA_SUCCESS;
