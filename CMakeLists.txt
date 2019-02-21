@@ -27,7 +27,7 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
 endif()
 include("${CMAKE_BINARY_DIR}/inac.cmake")
 
-inac_add_dependency(inac "1.0.2")
+inac_add_dependency(inac "1.0.3")
 
 inac_add_contrib_lib(tinyexpr)
 
@@ -59,7 +59,7 @@ set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc_static)
 endif()
 
 inac_add_tests(iarray)
-#inac_add_benchmarks(iarray)
+inac_add_benchmarks(iarray)
 inac_add_tools(iarray)
 #inac_add_examples(iarray)
 
