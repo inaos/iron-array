@@ -24,7 +24,7 @@ static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_x, int64
 
 static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint8_t ndim,
                                       const uint64_t *shape, const uint64_t *pshape, const uint64_t *pshape_dest,
-                                      int64_t *start, int64_t *stop, const void *result, boolean_t transposed) {
+                                      int64_t *start, int64_t *stop, const void *result, bool transposed) {
     void *buffer_x;
     size_t buffer_x_len;
 
