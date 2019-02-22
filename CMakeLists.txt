@@ -82,6 +82,6 @@ inac_add_tools(iarrays)
 
 # dist lib
 add_library(iarray SHARED ${src})
-target_link_libraries(iarray ${INAC_LIBS} caterva ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+target_link_libraries(iarray ${INAC_LIBS} blosc_static caterva ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 inac_package()
