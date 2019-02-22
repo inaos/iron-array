@@ -27,7 +27,7 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
 endif()
 include("${CMAKE_BINARY_DIR}/inac.cmake")
 
-inac_add_dependency(inac "1.0.3")
+inac_add_dependency(inac "1.0.4")
 
 inac_add_contrib_lib(tinyexpr)
 
@@ -51,17 +51,17 @@ set_target_properties(
 include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac"
         "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
 
-inac_merge_static_libs(iarray iarray_c blosc_static caterva ${INAC_LIBS})
+inac_merge_static_libs(iarrays iarray_c blosc_static caterva ${INAC_LIBS})
 
 if (UNIX)
 set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc_static)
 endif()
 
-inac_add_tests(iarray)
-#inac_add_benchmarks(iarray)
-inac_add_tools(iarray)
-#inac_add_examples(iarray)
+inac_add_tests(iarrays)
+#inac_add_benchmarks(iarrays)
+inac_add_tools(iarrays)
+#inac_add_examples(iarrays)
 
 # Playing with OpenMP (available mainly on GCC)
 #if (UNIX AND NOT CMAKE_C_COMPILER_ID STREQUAL Clang)
@@ -79,5 +79,9 @@ inac_add_tools(iarray)
 #            DESTINATION lib
 #            COMPONENT libraries)
 #endif()
+
+# dist lib
+add_library(iarray SHARED ${src})
+target_link_libraries(iarray ${INAC_LIBS} caterva ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 inac_package()
