@@ -759,7 +759,7 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx, iarray_container_t
     INA_VERIFY_NOT_NULL(container);
     INA_VERIFY_NOT_NULL(itr);
 
-    *itr = (iarray_iter_write_t*)ina_mem_alloc(sizeof(iarray_iter_write_t));
+    *itr = (iarray_iter_read_t*)ina_mem_alloc(sizeof(iarray_iter_read_t));
     INA_RETURN_IF_NULL(itr);
 
     (*itr)->ctx = ctx;
