@@ -292,7 +292,7 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
 
     uint8_t *smeta;
     uint32_t smeta_len;
-    blosc2_frame_get_namespace(catarr->sc->frame, "iarray", &smeta, &smeta_len);
+    blosc2_frame_get_metalayer(catarr->sc->frame, "iarray", &smeta, &smeta_len);
     iarray_data_type_t dtype;
     deserialize_meta(smeta, smeta_len, &dtype);
 
