@@ -94,8 +94,8 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         uint8_t *smeta;
         int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
         INA_FAIL_IF(smeta_len < 0);
-        // And store it in iarray namespace
-        int retcode = blosc2_frame_add_namespace((*c)->frame, "iarray", smeta, (uint32_t)smeta_len);
+        // And store it in iarray metalayer
+        int retcode = blosc2_frame_add_metalayer((*c)->frame, "iarray", smeta, (uint32_t)smeta_len);
         INA_FAIL_IF(retcode < 0);
         free(smeta);
     }
