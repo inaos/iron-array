@@ -153,6 +153,8 @@ INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
         case IARRAY_DATA_TYPE_FLOAT:
             INA_FAIL_IF_ERROR(_iarray_container_fill_float(*container, 0.0f));
             break;
+        default:
+            return INA_ERR_EXCEEDED;
     }
     return INA_SUCCESS;
 fail:
@@ -179,6 +181,8 @@ INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
     case IARRAY_DATA_TYPE_FLOAT:
         INA_FAIL_IF_ERROR(_iarray_container_fill_float(*container, 1.0f));
         break;
+    default:
+        return INA_ERR_EXCEEDED;
     }
     return INA_SUCCESS;
 fail:
@@ -386,6 +390,8 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
                 mkl_simatcopy('R', 'T', container->dtshape->shape[1], container->dtshape->shape[0], 1.0,
                               (float *) buffer, container->dtshape->shape[0], container->dtshape->shape[1]);
                 break;
+            default:
+                return INA_ERR_EXCEEDED;
         }
     }
 
