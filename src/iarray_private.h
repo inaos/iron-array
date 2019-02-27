@@ -59,10 +59,10 @@ typedef struct _iarray_container_store_s {
 } _iarray_container_store_t;
 
 typedef struct iarray_auxshape_s {
-    uint64_t offset[IARRAY_DIMENSION_MAX];
-    uint64_t shape_wos[IARRAY_DIMENSION_MAX];
-    uint64_t pshape_wos[IARRAY_DIMENSION_MAX];
-    uint8_t index[IARRAY_DIMENSION_MAX];
+    int64_t offset[IARRAY_DIMENSION_MAX];
+    int64_t shape_wos[IARRAY_DIMENSION_MAX];
+    int64_t pshape_wos[IARRAY_DIMENSION_MAX];
+    int8_t index[IARRAY_DIMENSION_MAX];
 } iarray_auxshape_t;
 
 struct iarray_container_s {
@@ -84,18 +84,18 @@ struct iarray_container_s {
 typedef struct iarray_iter_write_s {
     iarray_context_t *ctx;
     iarray_container_t *container;
-    uint64_t *i_shape;
-    uint64_t *i_pshape;
+    int64_t *i_shape;
+    int64_t *i_pshape;
     uint8_t *part;
     void *pointer;
-    uint64_t *index;
-    uint64_t nelem;
-    uint64_t cont;
-    uint64_t cont_part;
-    uint64_t cont_part_elem;
-    uint64_t *bshape;
-    uint64_t bsize;
-    uint64_t *part_index;
+    int64_t *index;
+    int64_t nelem;
+    int64_t cont;
+    int64_t cont_part;
+    int64_t cont_part_elem;
+    int64_t *bshape;
+    int64_t bsize;
+    int64_t *part_index;
 } iarray_iter_write_t;
 
 typedef struct iarray_iter_write_part_s {
@@ -103,34 +103,34 @@ typedef struct iarray_iter_write_part_s {
     iarray_container_t *container;
     uint8_t *part;
     void *pointer;
-    uint64_t *part_shape;
-    uint64_t part_size;
-    uint64_t *part_index;
-    uint64_t *elem_index;
-    uint64_t cont;
+    int64_t *part_shape;
+    int64_t part_size;
+    int64_t *part_index;
+    int64_t *elem_index;
+    int64_t cont;
 } iarray_iter_write_part_t;
 
 typedef struct iarray_iter_read_s {
     iarray_context_t *ctx;
     iarray_container_t *container;
-    uint64_t *elem_index;
-    uint64_t elem_cont;
-    uint64_t elem_cont_block;
+    int64_t *elem_index;
+    int64_t elem_cont;
+    int64_t elem_cont_block;
 
-    uint64_t *block_index;
-    uint64_t block_size;
-    uint64_t *block_shape;
-    uint64_t block_cont;
+    int64_t *block_index;
+    int64_t block_size;
+    int64_t *block_shape;
+    int64_t block_cont;
 
-    uint64_t *shape;
-    uint64_t c_size;
-    
+    int64_t *shape;
+    int64_t c_size;
+
     uint8_t *part;
-    
+
     void *pointer;
-    uint64_t *index;
-    uint64_t nelem;
-    
+    int64_t *index;
+    int64_t nelem;
+
 } iarray_iter_read_t;
 
 typedef struct iarray_iter_read_block_s {
@@ -138,27 +138,27 @@ typedef struct iarray_iter_read_block_s {
     iarray_container_t *container;
     uint8_t *part;
     void *pointer;
-    uint64_t *shape;
-    uint64_t *block_shape;
-    uint64_t block_size;
-    uint64_t *block_index;
-    uint64_t *elem_index;
-    uint64_t cont;
+    int64_t *shape;
+    int64_t *block_shape;
+    int64_t block_size;
+    int64_t *block_index;
+    int64_t *elem_index;
+    int64_t cont;
 } iarray_iter_read_block_t;
 
 typedef struct iarray_iter_matmul_s {
     iarray_context_t *ctx;
     iarray_container_t *container1;
     iarray_container_t *container2;
-    uint64_t B0;
-    uint64_t B1;
-    uint64_t B2;
-    uint64_t M;
-    uint64_t K;
-    uint64_t N;
-    uint64_t npart1;
-    uint64_t npart2;
-    uint64_t cont;
+    int64_t B0;
+    int64_t B1;
+    int64_t B2;
+    int64_t M;
+    int64_t K;
+    int64_t N;
+    int64_t npart1;
+    int64_t npart2;
+    int64_t cont;
 } iarray_iter_matmul_t;
 
 typedef struct iarray_variable_s {
@@ -199,8 +199,8 @@ iarray_temporary_t* _iarray_op_divide(iarray_expression_t *expr, iarray_temporar
 
 // Iterators
 ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *container1,
-                                 iarray_container_t *container2, uint64_t *bshape_a,
-                                 uint64_t *bshape_b, iarray_iter_matmul_t **itr);
+                                 iarray_container_t *container2, int64_t *bshape_a,
+                                 int64_t *bshape_b, iarray_iter_matmul_t **itr);
 void _iarray_iter_matmul_free(iarray_iter_matmul_t *itr);
 void _iarray_iter_matmul_init(iarray_iter_matmul_t *itr);
 void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr);
@@ -213,7 +213,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
                                   iarray_container_t *c,
                                   int64_t *start,
                                   int64_t *stop,
-                                  uint64_t *pshape,
+                                  int64_t *pshape,
                                   void *buffer,
-                                  uint64_t buflen);
+                                  int64_t buflen);
 #endif
