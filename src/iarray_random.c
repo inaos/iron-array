@@ -134,11 +134,10 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     status = vsRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, random_ctx->stream, (int)part_size, r, 0.0, 1.0);
                     break;
                 case _IARRAY_RANDOM_METHOD_BETA:
-                {
-                    float a = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
-                    float b = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA];
+                    //float a = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
+                    //float b = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA];
                     //status = vsRngBeta(method, random_ctx->stream, part_size, r, p, q, a, beta);
-                }
+                    break;
                 case _IARRAY_RANDOM_METHOD_LOGNORMAL:
                     //status = vsRngLognormal(method, random_ctx->stream, part_size, r, a, sigma, b, beta);
                     break;
@@ -159,11 +158,9 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     status = vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, random_ctx->stream, (int)part_size, r, 0.0, 1.0);
                     break;
                 case _IARRAY_RANDOM_METHOD_BETA:
-                {
-                    double a = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
-                    double b = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA];
+                    //double a = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
+                    //double b = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA];
                     //status = vdRngBeta(method, random_ctx->stream, part_size, r, p, q, a, beta);
-                }
                     break;
                 case _IARRAY_RANDOM_METHOD_LOGNORMAL:
                     //status = vdRngLognormal(method, random_ctx->stream, part_size, r, a, sigma, b, beta);
@@ -194,7 +191,7 @@ INA_API(ina_rc_t) iarray_random_rand(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(random_ctx);
     INA_VERIFY_NOT_NULL(container);
-    
+
     INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_UNIFORM);
