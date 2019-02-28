@@ -83,18 +83,18 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
 //  return INA_SUCCESS;
 //}
 
-INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val)
-{
-    iarray_container_t *c = ina_mempool_dalloc(e->ctx->mp, sizeof(iarray_container_t));
-    c->dtshape = ina_mempool_dalloc(e->ctx->mp, sizeof(iarray_dtshape_t));
-    c->dtshape->ndim = 0;
-    c->dtshape->dtype = IARRAY_DATA_TYPE_DOUBLE;
-    c->scalar_value.d = val;
-    e->vars[e->nvars].var = var;
-    e->vars[e->nvars].c = c;
-    e->nvars++;
-    return INA_SUCCESS;
-}
+//INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val)
+//{
+//    iarray_container_t *c = ina_mempool_dalloc(e->ctx->mp, sizeof(iarray_container_t));
+//    c->dtshape = ina_mempool_dalloc(e->ctx->mp, sizeof(iarray_dtshape_t));
+//    c->dtshape->ndim = 0;
+//    c->dtshape->dtype = IARRAY_DATA_TYPE_DOUBLE;
+//    c->scalar_value.d = val;
+//    e->vars[e->nvars].var = var;
+//    e->vars[e->nvars].c = c;
+//    e->nvars++;
+//    return INA_SUCCESS;
+//}
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 {
