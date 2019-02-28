@@ -183,9 +183,9 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     // block sizes are claculated
-    int64_t a_size = (int64_t) B0 * B1 * a->catarr->sc->typesize;
-    int64_t b_size = (int64_t) B1 * a->catarr->sc->typesize;
-    int64_t c_size = (int64_t) B0 * a->catarr->sc->typesize;
+    size_t a_size = (size_t) B0 * B1 * a->catarr->sc->typesize;
+    size_t b_size = (size_t) B1 * a->catarr->sc->typesize;
+    size_t c_size = (size_t) B0 * a->catarr->sc->typesize;
 
     int dtype = a->dtshape->dtype;
 
@@ -249,6 +249,8 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
             case IARRAY_DATA_TYPE_FLOAT:
                 cblas_sgemv(CblasRowMajor, flag_a, M, K, 1.0, (float *) a_block, ld_a, (float *) b_block, 1, 1.0, (float *) c_block, 1);
                 break;
+            default:
+                return INA_ERR_EXCEEDED;
         }
 
         // Append it to a new iarray contianer
@@ -439,6 +441,7 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
                                        int64_t *bshape_b,
                                        iarray_operator_hint_t hint)
 {
+    INA_UNUSED(hint);
     INA_ASSERT_NOT_NULL(ctx);
     INA_ASSERT_NOT_NULL(a);
     INA_ASSERT_NOT_NULL(b);
@@ -469,26 +472,46 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_operator_and(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(b);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
 INA_API(ina_rc_t) iarray_operator_or(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(b);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
 INA_API(ina_rc_t) iarray_operator_xor(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(b);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
 INA_API(ina_rc_t) iarray_operator_nand(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(b);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
 INA_API(ina_rc_t) iarray_operator_not(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(b);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
@@ -529,11 +552,17 @@ INA_API(ina_rc_t) iarray_operator_asin(iarray_context_t *ctx, iarray_container_t
 
 INA_API(ina_rc_t) iarray_operator_atanc(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
 INA_API(ina_rc_t) iarray_operator_atan2(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
