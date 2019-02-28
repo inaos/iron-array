@@ -47,6 +47,8 @@ static void _compute_y(const double* x, double* y)
 
 static void ina_cleanup_handler(int error, int *exitcode)
 {
+    INA_UNUSED(error);
+    INA_UNUSED(exitcode);
     iarray_destroy();
 }
 
@@ -142,8 +144,8 @@ int main(int argc, char** argv)
     shape.shape[0] = NELEM;
     shape.pshape[0] = PART_SIZE;
 
-    uint64_t nbytes = 0;
-    uint64_t cbytes = 0;
+    int64_t nbytes = 0;
+    int64_t cbytes = 0;
     double nbytes_mb = 0;
     double cbytes_mb = 0;
 
@@ -188,8 +190,8 @@ int main(int argc, char** argv)
             for (iarray_iter_write_part_init(I); !iarray_iter_write_part_finished(I); iarray_iter_write_part_next(I)) {
                 iarray_iter_write_part_value_t val;
                 iarray_iter_write_part_value(I, &val);
-                uint64_t part_size = val.part_shape[0];  // 1-dim vector
-                for (uint64_t i = 0; i < part_size; ++i) {
+                int64_t part_size = val.part_shape[0];  // 1-dim vector
+                for (int64_t i = 0; i < part_size; ++i) {
                     ((double *)val.pointer)[i] = incx * (double) (i + val.nelem * part_size);
                 }
             }
@@ -261,8 +263,8 @@ int main(int argc, char** argv)
                  iarray_iter_write_part_next(I)) {
                 iarray_iter_write_part_value_t val;
                 iarray_iter_write_part_value(I, &val);
-                uint64_t part_size = val.part_shape[0];  // 1-dim vector
-                for (uint64_t i = 0; i < part_size; ++i) {
+                int64_t part_size = val.part_shape[0];  // 1-dim vector
+                for (int64_t i = 0; i < part_size; ++i) {
                     ((double *) val.pointer)[i] = _poly(incx * (double) (i + val.nelem * part_size));
                 }
             }

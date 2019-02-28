@@ -36,6 +36,8 @@ static double *mat_res = NULL;
 
 static void ina_cleanup_handler(int error, int *exitcode)
 {
+    INA_UNUSED(error);
+    INA_UNUSED(exitcode);
     iarray_destroy();
 }
 
@@ -47,26 +49,26 @@ int main(int argc, char** argv)
     const char *mat_y_name = NULL;
     const char *mat_out_name = NULL;
 
-    uint64_t nbytes = 0;
-    uint64_t cbytes = 0;
+    int64_t nbytes = 0;
+    int64_t cbytes = 0;
     double nbytes_mb = 0;
     double cbytes_mb = 0;
 
-    uint64_t shape_x[] = {4056, 3230};
-    uint64_t pshape_x[] = {675, 300};
-    uint64_t bshape_x[] = {800, 400};
+    int64_t shape_x[] = {4056, 3230};
+    int64_t pshape_x[] = {675, 300};
+    int64_t bshape_x[] = {800, 400};
 
-    uint64_t size_x = shape_x[0] * shape_x[1];
-    uint64_t shape_y[] = {3230, 3712};
-    uint64_t pshape_y[] = {300, 478};
-    uint64_t bshape_y [] = {400, 600};
-    uint64_t size_y = shape_y[0] * shape_y[1];
+    int64_t size_x = shape_x[0] * shape_x[1];
+    int64_t shape_y[] = {3230, 3712};
+    int64_t pshape_y[] = {300, 478};
+    int64_t bshape_y [] = {400, 600};
+    int64_t size_y = shape_y[0] * shape_y[1];
 
-    uint64_t shape_out[] = {shape_x[0], shape_y[1]};
-    uint64_t pshape_out[] = {bshape_x[0], bshape_y[1]};
-    uint64_t size_out = shape_out[0] * shape_out[1];
+    int64_t shape_out[] = {shape_x[0], shape_y[1]};
+    int64_t pshape_out[] = {bshape_x[0], bshape_y[1]};
+    int64_t size_out = shape_out[0] * shape_out[1];
 
-    uint64_t flops = (2 * shape_x[1] - 1) * shape_x[0] * shape_y[1];
+    int64_t flops = (2 * shape_x[1] - 1) * shape_x[0] * shape_y[1];
 
     INA_OPTS(opt,
              INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
@@ -148,11 +150,11 @@ int main(int argc, char** argv)
 
         INA_STOPWATCH_START(w);
         double incx = 10. / size_x;
-        for (uint64_t i = 0; i < size_x; i++) {
+        for (int64_t i = 0; i < size_x; i++) {
             mat_x[i] = i * incx;
         }
         double incy = 10. / size_y;
-        for (uint64_t i = 0; i < size_y; i++) {
+        for (int64_t i = 0; i < size_y; i++) {
             mat_y[i] = i * incy;
         }
         INA_STOPWATCH_STOP(w);

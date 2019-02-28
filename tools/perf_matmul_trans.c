@@ -9,6 +9,7 @@
  * Information and shall use it only in accordance with the terms of the license agreement.
  */
 
+#include <stdbool.h>
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
@@ -35,6 +36,8 @@ static double *mat_res = NULL;
 
 static void ina_cleanup_handler(int error, int *exitcode)
 {
+    INA_UNUSED(error);
+    INA_UNUSED(exitcode);
     iarray_destroy();
 }
 
@@ -46,33 +49,41 @@ int main(int argc, char** argv)
     const char *mat_y_name = NULL;
     const char *mat_out_name = NULL;
 
-    uint64_t nbytes = 0;
-    uint64_t cbytes = 0;
+    int64_t nbytes = 0;
+    int64_t cbytes = 0;
     double nbytes_mb = 0;
     double cbytes_mb = 0;
 
-    uint64_t xshape[] = {3230, 4056};
-    uint64_t xpshape[] = {300, 675};
-    uint64_t xbshape[] = {800, 400};
-    int xtrans = 1;
-    int xflag = CblasNoTrans;
+    int64_t xshape[] = {3230, 4056};
+    int64_t xpshape[] = {300, 675};
+    int64_t xbshape[] = {800, 400};
+    int64_t xsize = xshape[0] * xshape[1];
+    bool xtrans = true;
+    if (argc > 1) {
+        // TODO: fix this codepath (see )
+        if (strcmp(argv[1], "notrans") == 0) {
+            xtrans = false;
+        }
+    }
+    int xflag = xtrans ? CblasTrans : CblasNoTrans;
 
-    uint64_t xsize = xshape[0] * xshape[1];
 
-    uint64_t yshape[] = {3712, 3230};
-    uint64_t ypshape[] = {478, 300};
-    uint64_t ybshape [] = {400, 600};
-    int ytrans = 1;
-    int yflag = CblasNoTrans;
+    int64_t yshape[] = {3712, 3230};
+    int64_t ypshape[] = {478, 300};
+    int64_t ybshape [] = {400, 600};
+    bool ytrans = true;
+    if (argc > 2) {
+        if (strcmp(argv[2], "notrans") == 0) {
+            ytrans = false;
+        }
+    }
+    int yflag = ytrans ? CblasTrans : CblasNoTrans;
 
-    uint64_t ysize = yshape[0] * yshape[1];
-
-    uint64_t oshape[] = {xshape[1], yshape[0]};
-    uint64_t opshape[] = {xbshape[0], ybshape[1]};
-
-    uint64_t osize = oshape[0] * oshape[1];
-
-    uint64_t flops = (2 * xshape[1] - 1) * xshape[0] * yshape[1];
+    int64_t ysize = yshape[0] * yshape[1];
+    int64_t oshape[] = {xshape[1], yshape[0]};
+    int64_t opshape[] = {xbshape[0], ybshape[1]};
+    int64_t osize = oshape[0] * oshape[1];
+    int64_t flops = (2 * xshape[1] - 1) * xshape[0] * yshape[1];
 
     INA_OPTS(opt,
         INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
@@ -134,8 +145,6 @@ int main(int argc, char** argv)
 
     int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
 
-    bool allocated = false;
-
     mat_x = (double *) ina_mem_alloc((sizeof(double) * xsize));
     mat_y = (double *) ina_mem_alloc((sizeof(double) * ysize));
 
@@ -185,13 +194,11 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(iarray_to_buffer(ctx, con_x, mat_x, NELEM_BYTES(xsize)));
     INA_MUST_SUCCEED(iarray_to_buffer(ctx, con_y, mat_y, NELEM_BYTES(ysize)));
 
-    if (xtrans == 1) {
-        xflag = CblasTrans;
+    if (xtrans) {
         INA_MUST_SUCCEED(iarray_linalg_transpose(ctx, con_x));
     }
 
-    if (ytrans == 1) {
-        yflag = CblasTrans;
+    if (ytrans) {
         INA_MUST_SUCCEED(iarray_linalg_transpose(ctx, con_y));
     }
 
@@ -204,11 +211,11 @@ int main(int argc, char** argv)
     int N = (int) con_y->dtshape->shape[1];
 
     int ldx = K;
-    if (xtrans == 1) {
+    if (xtrans) {
         ldx = M;
     }
     int ldy = N;
-    if (ytrans == 1) {
+    if (ytrans) {
         ldy = K;
     }
     int ldr = N;
