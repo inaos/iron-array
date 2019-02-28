@@ -242,6 +242,7 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      int flags,
                                      iarray_container_t **container)
 {
+    INA_UNUSED(buffer_len);
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(buffer);

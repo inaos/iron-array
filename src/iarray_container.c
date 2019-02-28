@@ -461,6 +461,7 @@ failed:
 
 INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container)
 {
+    INA_UNUSED(ctx);
     INA_VERIFY_FREE(container);
 
     if ((*container)->view) {
@@ -479,25 +480,45 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
 
 INA_API(ina_rc_t) iarray_container_gt(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(b);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
 INA_API(ina_rc_t) iarray_container_lt(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(b);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
 INA_API(ina_rc_t) iarray_container_gte(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(b);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
 INA_API(ina_rc_t) iarray_container_lte(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(b);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
 INA_API(ina_rc_t) iarray_container_eq(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(b);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
