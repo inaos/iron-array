@@ -14,9 +14,9 @@
 
 #include <tests/iarray_test.h>
 
-static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint8_t ndim,
-                              const uint64_t *shape, const uint64_t *pshape, double start, double stop) {
-
+static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, uint8_t ndim,
+                             const uint64_t *shape, const uint64_t *pshape, double start,
+                             double stop) {
     // Create dtshape
     iarray_dtshape_t xdtshape;
 
@@ -44,11 +44,15 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, s
 
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                INA_TEST_ASSERT_EQUAL_FLOATING(val.nelem * (stop - start) / (size - 1) + start, ((double *) val.pointer)[0]);
+                INA_TEST_ASSERT_EQUAL_FLOATING(val.nelem * (stop - start) / (size - 1) + start,
+                                               ((double *) val.pointer)[0]);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                INA_TEST_ASSERT_EQUAL_FLOATING((float) (val.nelem * (stop - start) / (size - 1) + start), ((float *) val.pointer)[0]);
+                INA_TEST_ASSERT_EQUAL_FLOATING((float) (val.nelem * (stop - start) / (size - 1) + start),
+                                               ((float *) val.pointer)[0]);
                 break;
+            default:
+                return INA_ERR_EXCEEDED;
         }
     }
 
@@ -79,7 +83,6 @@ INA_TEST_TEARDOWN(linspace) {
 
 INA_TEST_FIXTURE(linspace, double_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    size_t type_size = sizeof(double);
 
     uint8_t ndim = 2;
     uint64_t shape[] = {223, 456};
@@ -87,12 +90,11 @@ INA_TEST_FIXTURE(linspace, double_2) {
     double start = - 0.1;
     double stop = - 0.25;
 
-    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, type_size, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
 INA_TEST_FIXTURE(linspace, float_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    size_t type_size = sizeof(float);
 
     uint8_t ndim = 2;
     uint64_t shape[] = {445, 321};
@@ -100,12 +102,11 @@ INA_TEST_FIXTURE(linspace, float_2) {
     double start = 3123;
     double stop = 45654;
 
-    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, type_size, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
 INA_TEST_FIXTURE(linspace, double_5) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    size_t type_size = sizeof(double);
 
     uint8_t ndim = 5;
     uint64_t shape[] = {20, 18, 17, 13, 21};
@@ -113,12 +114,11 @@ INA_TEST_FIXTURE(linspace, double_5) {
     double start = 0.1;
     double stop = 0.2;
 
-    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, type_size, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
 INA_TEST_FIXTURE(linspace, float_7) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    size_t type_size = sizeof(float);
 
     uint8_t ndim = 7;
     uint64_t shape[] = {5, 7, 8, 9, 6, 5, 7};
@@ -126,5 +126,5 @@ INA_TEST_FIXTURE(linspace, float_7) {
     double start = 10;
     double stop = 0;
 
-    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, type_size, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
