@@ -914,7 +914,8 @@ INA_API(void) iarray_iter_read_block_value(iarray_iter_read_block_t *itr,
  */
 
 INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx, iarray_container_t *container,
-                                             iarray_iter_read_block_t **itr, int64_t *blockshape)
+                                             iarray_iter_read_block_t **itr,
+                                             const int64_t *blockshape)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(container);

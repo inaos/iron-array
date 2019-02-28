@@ -275,7 +275,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    iarray_container_t *c,
                                    int64_t *start,
                                    int64_t *stop,
-                                   int64_t *pshape,
+                                   const int64_t *pshape,
                                    iarray_store_properties_t *store,
                                    int flags,
                                    bool view,
@@ -425,7 +425,8 @@ INA_API(int) iarray_iter_read_trans_finished(iarray_iter_read_t *itr);
 INA_API(void) iarray_iter_read_trans_value(iarray_iter_read_t *itr, iarray_iter_read_value_t *val);
 
 INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx, iarray_container_t *container,
-                                             iarray_iter_read_block_t **itr, int64_t *blockshape);
+                                             iarray_iter_read_block_t **itr,
+                                             const int64_t *blockshape);
 INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr);
 INA_API(void) iarray_iter_read_block_init(iarray_iter_read_block_t *itr);
 INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr);
