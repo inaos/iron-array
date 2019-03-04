@@ -13,7 +13,6 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-#include <tests/iarray_test.h>
 
 static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint8_t ndim,
                                  const uint64_t *shape, const uint64_t *pshape, iarray_store_properties_t *store)

@@ -13,8 +13,6 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-#include <tests/iarray_test.h>
-
 
 static ina_rc_t test_view(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize,
                           const int64_t *shape_x, const int64_t *pshape_x, int8_t ndim_x, int64_t *pshape_y,

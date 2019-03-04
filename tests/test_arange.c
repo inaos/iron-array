@@ -12,12 +12,11 @@
 
 #include <libiarray/iarray.h>
 
-#include <tests/iarray_test.h>
 
 static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, uint8_t ndim,
                            const uint64_t *shape, const uint64_t *pshape, double start,
-                           double stop) {
-
+                           double stop)
+{
     // Create dtshape
     iarray_dtshape_t xdtshape;
 

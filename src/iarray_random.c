@@ -11,12 +11,8 @@
  */
 
 #include <libiarray/iarray.h>
-
-#include <iarray_private.h>
-
-#include <mkl_vsl.h>
-
 #include "iarray_constructor.h"
+#include <mkl_vsl.h>
 
 #define _IARRAY_RNG_CHUNK_SIZE 1024
 

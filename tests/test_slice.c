@@ -11,7 +11,6 @@
  */
 
 #include <libiarray/iarray.h>
-
 #include <tests/iarray_test.h>
 
 static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_x, int64_t *start, int64_t *stop,

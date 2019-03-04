@@ -11,7 +11,6 @@
  */
 
 #include <libiarray/iarray.h>
-
 #include <iarray_private.h>
 
 /*

@@ -13,7 +13,6 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-#include <tests/iarray_test.h>
 
 static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize,
                           const int64_t *xshape, const int64_t *xpshape, int64_t *xbshape, int xtrans,

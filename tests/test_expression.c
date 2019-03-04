@@ -11,8 +11,6 @@
  */
 
 #include <libiarray/iarray.h>
-#include <iarray_private.h>
-
 #include <tests/iarray_test.h>
 
 #define NCHUNKS  10
