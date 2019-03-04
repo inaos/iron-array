@@ -26,14 +26,14 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     iarray_dtshape_t xdtshape;
     xdtshape.ndim = 2;
     xdtshape.dtype = dtype;
-    uint64_t xsize = 1;
+    size_t xsize = 1;
     for (int i = 0; i < xdtshape.ndim; ++i) {
         xdtshape.shape[i] = xshape[i];
         xdtshape.pshape[i] = xpshape[i];
         xsize *= xshape[i];
     }
     iarray_container_t *c_x;
-    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &xdtshape, xsize, 0, 10, NULL, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &xdtshape, (int64_t)xsize, 0, 10, NULL, 0, &c_x));
 
     // iarray container x to buffer
     uint8_t *xbuffer = malloc(xsize * typesize);
@@ -49,14 +49,14 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     iarray_dtshape_t ydtshape;
     ydtshape.ndim = 2;
     ydtshape.dtype = dtype;
-    uint64_t ysize = 1;
+    size_t ysize = 1;
     for (int i = 0; i < ydtshape.ndim; ++i) {
         ydtshape.shape[i] = yshape[i];
         ydtshape.pshape[i] = ypshape[i];
         ysize *= yshape[i];
     }
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &ydtshape, ysize, 0, 10, NULL, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &ydtshape, (int64_t)ysize, 0, 10, NULL, 0, &c_y));
 
     // iarray container y to buffer
     uint8_t *ybuffer = malloc(ysize * typesize);
@@ -104,7 +104,7 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     iarray_dtshape_t zdtshape;
     zdtshape.ndim = 2;
     zdtshape.dtype = dtype;
-    uint64_t zsize = 1;
+    size_t zsize = 1;
     for (int i = 0; i < zdtshape.ndim; ++i) {
         zdtshape.shape[i] = zshape[i];
         zdtshape.pshape[i] = zpshape[i];
@@ -122,7 +122,7 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
 
     // assert
     double res;
-    for (uint64_t i = 0; i < zsize; ++i) {
+    for (size_t i = 0; i < zsize; ++i) {
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 res = (((double *) zbuffer)[i] - ((double *) obuffer)[i]) / ((double *) zbuffer)[i];

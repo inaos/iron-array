@@ -13,15 +13,15 @@
 #include <libiarray/iarray.h>
 
 
-static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, uint8_t ndim,
-                             const uint64_t *shape, const uint64_t *pshape, double start,
-                             double stop) {
+static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim,
+                              const int64_t *shape, const int64_t *pshape, double start,
+                              double stop) {
     // Create dtshape
     iarray_dtshape_t xdtshape;
 
     xdtshape.dtype = dtype;
     xdtshape.ndim = ndim;
-    uint64_t size = 1;
+    int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
         xdtshape.pshape[i] = pshape[i];
@@ -83,9 +83,9 @@ INA_TEST_TEARDOWN(linspace) {
 INA_TEST_FIXTURE(linspace, double_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
-    uint8_t ndim = 2;
-    uint64_t shape[] = {223, 456};
-    uint64_t pshape[] = {31, 43};
+    int8_t ndim = 2;
+    int64_t shape[] = {223, 456};
+    int64_t pshape[] = {31, 43};
     double start = - 0.1;
     double stop = - 0.25;
 
@@ -95,9 +95,9 @@ INA_TEST_FIXTURE(linspace, double_2) {
 INA_TEST_FIXTURE(linspace, float_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
-    uint8_t ndim = 2;
-    uint64_t shape[] = {445, 321};
-    uint64_t pshape[] = {21, 17};
+    int8_t ndim = 2;
+    int64_t shape[] = {445, 321};
+    int64_t pshape[] = {21, 17};
     double start = 3123;
     double stop = 45654;
 
@@ -107,9 +107,9 @@ INA_TEST_FIXTURE(linspace, float_2) {
 INA_TEST_FIXTURE(linspace, double_5) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
-    uint8_t ndim = 5;
-    uint64_t shape[] = {20, 18, 17, 13, 21};
-    uint64_t pshape[] = {12, 12, 2, 3, 13};
+    int8_t ndim = 5;
+    int64_t shape[] = {20, 18, 17, 13, 21};
+    int64_t pshape[] = {12, 12, 2, 3, 13};
     double start = 0.1;
     double stop = 0.2;
 
@@ -119,9 +119,9 @@ INA_TEST_FIXTURE(linspace, double_5) {
 INA_TEST_FIXTURE(linspace, float_7) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
-    uint8_t ndim = 7;
-    uint64_t shape[] = {5, 7, 8, 9, 6, 5, 7};
-    uint64_t pshape[] = {2, 5, 3, 4, 3, 2, 3};
+    int8_t ndim = 7;
+    int64_t shape[] = {5, 7, 8, 9, 6, 5, 7};
+    int64_t pshape[] = {2, 5, 3, 4, 3, 2, 3};
     double start = 10;
     double stop = 0;
 
