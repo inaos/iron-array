@@ -61,12 +61,12 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, pshape_dest, NULL, 0, &c_out));
 
-    uint64_t bufdes_size = 1;
+    int64_t bufdes_size = 1;
 
     for (int k = 0; k < ndim; ++k) {
         int64_t st = (start[k] + shape[k]) % shape[k];
         int64_t sp = (stop[k] + shape[k] - 1) % shape[k] + 1;
-        bufdes_size *= (uint64_t) sp - st;;
+        bufdes_size *= sp - st;;
     }
 
     uint8_t *bufdes;
@@ -74,13 +74,13 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
         bufdes = ina_mem_alloc(bufdes_size * sizeof(double));
         iarray_to_buffer(ctx, c_out, bufdes, bufdes_size * sizeof(double));
-        for (uint64_t l = 0; l < bufdes_size; ++l) {
+        for (int64_t l = 0; l < bufdes_size; ++l) {
             INA_TEST_ASSERT_EQUAL_FLOATING(((double *) bufdes)[l], ((double *) result)[l]);
         }
     } else {
         bufdes = ina_mem_alloc(bufdes_size * sizeof(float));
         iarray_to_buffer(ctx, c_out, bufdes, bufdes_size * sizeof(float));
-        for (uint64_t l = 0; l < bufdes_size; ++l) {
+        for (int64_t l = 0; l < bufdes_size; ++l) {
             INA_TEST_ASSERT_EQUAL_FLOATING(((float *) bufdes)[l], ((float *) result)[l]);
         }
     }

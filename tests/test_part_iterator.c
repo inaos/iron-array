@@ -21,7 +21,7 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     iarray_dtshape_t xdtshape;
     xdtshape.dtype = dtype;
     xdtshape.ndim = ndim;
-    uint64_t size = 1;
+    int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
         xdtshape.pshape[i] = pshape[i];
@@ -43,17 +43,17 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
         iarray_iter_write_part_value_t val;
         iarray_iter_write_part_value(I, &val);
 
-        uint64_t part_size = 1;
+        int64_t part_size = 1;
         for (int i = 0; i < ndim; ++i) {
             part_size *= val.part_shape[i];
         }
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            for (uint64_t i = 0; i < part_size; ++i) {
+            for (int64_t i = 0; i < part_size; ++i) {
                 ((double *)val.pointer)[i] = (double) val.nelem * part_size + i;
             }
         } else {
-            for (uint64_t i = 0; i < part_size; ++i) {
+            for (int64_t i = 0; i < part_size; ++i) {
                 ((float *)val.pointer)[i] = (float) val.nelem * part_size + i;
             }
         }

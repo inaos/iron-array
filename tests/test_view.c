@@ -22,7 +22,7 @@ static ina_rc_t test_view(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     iarray_dtshape_t dtshape_x;
     dtshape_x.dtype = dtype;
     dtshape_x.ndim = ndim_x;
-    uint64_t size_x = 1;
+    int64_t size_x = 1;
     for (int i = 0; i < dtshape_x.ndim; ++i) {
         dtshape_x.shape[i] = shape_x[i];
         dtshape_x.pshape[i] = pshape_x[i];
@@ -58,12 +58,12 @@ static ina_rc_t test_view(iarray_context_t *ctx, iarray_data_type_t dtype, int t
         iarray_iter_read_block_value_t value_z;
         iarray_iter_read_block_value(iter_z, &value_z);
 
-        uint64_t bsize = 1;
+        int64_t bsize = 1;
         for (int i = 0; i < c_y->dtshape->ndim; ++i) {
             bsize *= value_y.block_shape[i];
         }
 
-        for (uint64_t i = 0; i < bsize; ++i) {
+        for (int64_t i = 0; i < bsize; ++i) {
             switch (dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
                     INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_y.pointer)[i], ((double *) value_z.pointer)[i]);
@@ -131,18 +131,18 @@ static ina_rc_t test_view(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     iarray_iter_read_free(iter_mul);
     iarray_iter_read_free(iter_mul_view);
 
-    uint64_t size = 1;
+    int64_t size = 1;
     for (int i = 0; i < c_y->dtshape->ndim; ++i) {
         size *= c_y->dtshape->shape[i];
     }
 
-    uint8_t *buffer_y = ina_mem_alloc(size * typesize);
+    uint8_t *buffer_y = ina_mem_alloc((size_t)size * typesize);
     INA_MUST_SUCCEED(iarray_to_buffer(ctx, c_y, buffer_y, size * typesize));
 
-    uint8_t *buffer_z = ina_mem_alloc(size * typesize);
+    uint8_t *buffer_z = ina_mem_alloc((size_t)size * typesize);
     INA_MUST_SUCCEED(iarray_to_buffer(ctx, c_z, buffer_z, size * typesize));
 
-    for (uint64_t i = 0; i < size; ++i) {
+    for (int64_t i = 0; i < size; ++i) {
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 INA_TEST_ASSERT_EQUAL_FLOATING(((double *) buffer_y)[i], ((double *) buffer_z)[i]);

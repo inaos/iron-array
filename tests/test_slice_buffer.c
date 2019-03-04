@@ -14,15 +14,15 @@
 #include <tests/iarray_test.h>
 
 static ina_rc_t test_slice_buffer(iarray_context_t *ctx, iarray_container_t *c_x, int64_t * start, int64_t *stop,
-    void *buffer, uint64_t buflen) {
+    void *buffer, int64_t buflen) {
 
     INA_TEST_ASSERT_SUCCEED(iarray_get_slice_buffer(ctx, c_x, start, stop, buffer, buflen));
 
     return INA_SUCCESS;
 }
 
-static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint8_t ndim,
-                                      const uint64_t *shape, const uint64_t *pshape,
+static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, int8_t ndim,
+                                      const int64_t *shape, const int64_t *pshape,
                                       int64_t *start, int64_t *stop, const void *result, int transposed) {
     void *buffer_x;
     size_t buffer_x_len;
@@ -49,17 +49,17 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
         xdtshape.pshape[j] = pshape[j];
     }
 
-    uint64_t bufdes_size = 1;
+    int64_t bufdes_size = 1;
 
     for (int k = 0; k < ndim; ++k) {
         int64_t st = (start[k] + shape[k]) % shape[k];
         int64_t sp = (stop[k] + shape[k] - 1) % shape[k] + 1;
-        bufdes_size *= (uint64_t) sp - st;
+        bufdes_size *= (int64_t) sp - st;
     }
 
     uint8_t *bufdes;
 
-    uint64_t buflen = bufdes_size;
+    int64_t buflen = bufdes_size;
 
     if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
         buflen *= sizeof(double);
@@ -81,11 +81,11 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
 
     if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        for (uint64_t l = 0; l < bufdes_size; ++l) {
+        for (int64_t l = 0; l < bufdes_size; ++l) {
             INA_TEST_ASSERT_EQUAL_FLOATING(((double *) bufdes)[l], ((double *) result)[l]);
         }
     } else {
-        for (uint64_t l = 0; l < bufdes_size; ++l) {
+        for (int64_t l = 0; l < bufdes_size; ++l) {
             INA_TEST_ASSERT_EQUAL_FLOATING(((float *) bufdes)[l], ((float *) result)[l]);
         }
     }
@@ -121,9 +121,9 @@ INA_TEST_FIXTURE(slice_buffer, double_data_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    const uint64_t ndim = 2;
-    uint64_t shape[] = {10, 10};
-    uint64_t pshape[] = {3, 2};
+    const int64_t ndim = 2;
+    int64_t shape[] = {10, 10};
+    int64_t pshape[] = {3, 2};
     int64_t start[] = {5, -7};
     int64_t stop[] = {-1, 10};
 
@@ -140,9 +140,9 @@ INA_TEST_FIXTURE(slice_buffer, float_data_3) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
 
-    uint64_t const ndim = 3;
-    uint64_t shape[] = {10, 10, 10};
-    uint64_t pshape[] = {3, 5, 2};
+    int64_t const ndim = 3;
+    int64_t shape[] = {10, 10, 10};
+    int64_t pshape[] = {3, 5, 2};
     int64_t start[] = {-7, 0, 3};
     int64_t stop[] = {6, -3, 10};
 
@@ -161,7 +161,7 @@ INA_TEST_FIXTURE(slice_buffer, float_data_3) {
                            563, 564, 565, 566, 567, 568, 569};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape,
-        start, stop, result, transposed));
+                            start, stop, result, transposed));
 }
 
 
@@ -189,9 +189,9 @@ INA_TEST_FIXTURE(slice_buffer_trans, double_data_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    const uint64_t ndim = 2;
-    uint64_t shape[] = {10, 10};
-    uint64_t pshape[] = {3, 4};
+    const int64_t ndim = 2;
+    int64_t shape[] = {10, 10};
+    int64_t pshape[] = {3, 4};
     int64_t start[] = {2, 1};
     int64_t stop[] = {7, 3};
 
@@ -208,9 +208,9 @@ INA_TEST_FIXTURE(slice_buffer_trans, float_data_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
 
-    const uint64_t ndim = 2;
-    uint64_t shape[] = {10, 10};
-    uint64_t pshape[] = {2, 7};
+    const int64_t ndim = 2;
+    int64_t shape[] = {10, 10};
+    int64_t pshape[] = {2, 7};
     int64_t start[] = {3, 1};
     int64_t stop[] = {5, 8};
 
