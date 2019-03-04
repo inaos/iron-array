@@ -12,9 +12,8 @@
 
 #include <libiarray/iarray.h>
 
-#include <tests/iarray_test.h>
 
-static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx, iarray_data_type_t dtype, 
+static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx, iarray_data_type_t dtype,
                           uint8_t ndim, const uint64_t *shape, const uint64_t *pshape) {
 
     // Create dtshape
@@ -45,7 +44,7 @@ static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx, i
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double v = *((double*)val.pointer);
             INA_TEST_ASSERT_TRUE(v > .0 && v < 1.);
-        } 
+        }
         else {
             float v = *((float*)val.pointer);
             INA_TEST_ASSERT_TRUE(v > .0 && v < 1.);

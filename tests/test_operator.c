@@ -12,7 +12,6 @@
 
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
-
 #include <tests/iarray_test.h>
 
 typedef ina_rc_t(*_test_operator_elwise_x)(iarray_context_t *ctx,

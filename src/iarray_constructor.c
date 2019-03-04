@@ -14,7 +14,6 @@
 
 #include <iarray_private.h>
 
-#include "iarray_constructor.h"
 
 static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
 {

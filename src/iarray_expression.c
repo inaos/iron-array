@@ -11,9 +11,6 @@
  */
 
 #include <libiarray/iarray.h>
-
-#include <iarray_private.h>
-
 #include <contribs/tinyexpr/tinyexpr.h>
 
 #define _IARRAY_EXPR_VAR_MAX      (128)

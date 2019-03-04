@@ -11,9 +11,6 @@
  */
 
 #include <libiarray/iarray.h>
-#include <iarray_private.h>
-
-#include <tests/iarray_test.h>
 
 static ina_rc_t test_fill(iarray_context_t *ctx,
                           iarray_data_type_t dtype,
