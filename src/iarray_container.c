@@ -385,14 +385,14 @@ INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c,
 }
 
 INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_container_t *b, double tol) {
-    if(a->dtshape->dtype != b->dtshape->dtype){
+    if (a->dtshape->dtype != b->dtshape->dtype){
         return INA_ERR_FAILED;
     }
-    if(a->dtshape->ndim != b->dtshape->ndim) {
+    if (a->dtshape->ndim != b->dtshape->ndim) {
         return INA_ERR_FAILED;
     }
     for (int i = 0; i < a->dtshape->ndim; ++i) {
-        INA_TEST_ASSERT_EQUAL_UINT64(a->dtshape->shape[i], b->dtshape->shape[i]);
+        INA_TEST_ASSERT_EQUAL_INT64(a->dtshape->shape[i], b->dtshape->shape[i]);
     }
 
     ina_rc_t retcode = INA_SUCCESS;
@@ -432,7 +432,7 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
                 double vdiff = fabs(((double *)val_a.pointer)[i] - ((double *)val_b.pointer)[i]) / ((double *)val_a.pointer)[i];
                 if (vdiff > tol) {
                     printf("%f, %f\n", ((double *)val_a.pointer)[i], ((double *)val_b.pointer)[i]);
-                    printf("Values differ in nelem: %llu (diff: %f)\n", i + val_a.nelem * block_size, vdiff);
+                    printf("Values differ in nelem: %ld (diff: %f)\n", (long)(i + val_a.nelem * block_size), vdiff);
                     retcode = INA_ERR_FAILED;
                     goto failed;
                 }
@@ -443,7 +443,7 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
                 float vdiff = fabsf(((float *)val_a.pointer)[i] - ((float *)val_b.pointer)[i]) / ((float *)val_a.pointer)[i];
                 if (vdiff > tol) {
                     printf("%f, %f\n", ((float *)val_a.pointer)[i], ((float *)val_b.pointer)[i]);
-                    printf("Values differ in nelem: %llu (diff: %f)\n", i, vdiff);
+                    printf("Values differ in nelem: %ld (diff: %f)\n", (long)i, vdiff);
                     retcode = INA_ERR_FAILED;
                     goto failed;
                 }

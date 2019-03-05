@@ -104,10 +104,10 @@ int main(int argc, char** argv)
     printf("Measuring time for multiplying matrices X and Y\n");
 
     printf("\n");
-    printf("Matrix X has a shape of (%lld, %lld) with a partition of (%lld, %lld) \n",
-           shape_x[0], shape_x[1], pshape_x[0], pshape_x[1]);
-    printf("Matrix Y has a shape of (%lld, %lld) with a partition of (%lld, %lld) \n",
-           shape_y[0], shape_y[1], pshape_y[0], pshape_y[1]);
+    printf("Matrix X has a shape of (%ld, %ld) with a partition of (%ld, %ld) \n",
+           (long)shape_x[0], (long)shape_x[1], (long)pshape_x[0], (long)pshape_x[1]);
+    printf("Matrix Y has a shape of (%ld, %ld) with a partition of (%ld, %ld) \n",
+           (long)shape_y[0], (long)shape_y[1], (long)pshape_y[0], (long)pshape_y[1]);
 
     printf("\n");
     printf("Working set for the 4 uncompressed matrices: %.1f MB\n", (size_x + size_y + size_out * 2) * sizeof(double) / (double)_IARRAY_SIZE_MB);
