@@ -16,7 +16,7 @@
 #include <libiarray/iarray.h>
 #include <stdbool.h>
 
-static void ffill_buf(float *x, size_t nitems)
+inline static void ffill_buf(float *x, size_t nitems)
 {
     /* Fill with even values between 0 and 10 */
 
@@ -25,7 +25,7 @@ static void ffill_buf(float *x, size_t nitems)
     }
 }
 
-static void dfill_buf(double *x, size_t nitems)
+inline static void dfill_buf(double *x, size_t nitems)
 {
     /* Fill with even values between 0 and 10 */
 
@@ -34,7 +34,8 @@ static void dfill_buf(double *x, size_t nitems)
     }
 }
 
-static ina_rc_t _iarray_test_container_dbl_buffer_cmp(iarray_context_t *ctx, iarray_container_t *c, const double *buffer, size_t buffer_len)
+inline static ina_rc_t _iarray_test_container_dbl_buffer_cmp(
+    iarray_context_t *ctx, iarray_container_t *c, const double *buffer, size_t buffer_len)
 {
     double *bufcmp = ina_mem_alloc(buffer_len);
 
