@@ -54,14 +54,14 @@ int main(int argc, char** argv)
     double nbytes_mb = 0;
     double cbytes_mb = 0;
 
-    int64_t shape_x[] = {4056, 3230};
-    int64_t pshape_x[] = {675, 300};
-    int64_t bshape_x[] = {800, 400};
+    int64_t shape_x[2] = {4056, 3230};
+    int64_t pshape_x[2] = {675, 300};
+    int64_t bshape_x[2] = {800, 400};
 
     int64_t size_x = shape_x[0] * shape_x[1];
-    int64_t shape_y[] = {3230, 3712};
-    int64_t pshape_y[] = {300, 478};
-    int64_t bshape_y [] = {400, 600};
+    int64_t shape_y[2] = {3230, 3712};
+    int64_t pshape_y[2] = {300, 478};
+    int64_t bshape_y[2] = {400, 600};
     int64_t size_y = shape_y[0] * shape_y[1];
 
     int64_t shape_out[] = {shape_x[0], shape_y[1]};

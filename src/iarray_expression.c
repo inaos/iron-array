@@ -238,7 +238,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
         // Evaluate the expression for all the chunks in variables
         iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
-        int32_t nitems_written = 0;
+        int64_t nitems_written = 0;
         int32_t nblocks_to_write = 0;
         int32_t leftover = 0;
         bool write_chunk = false;
@@ -281,7 +281,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         int64_t items_left = nitems_in_schunk - nitems_written;
         if (items_left > 0) {
             blosc2_schunk_append_buffer(out.sc, outbuf, (size_t)items_left * e->typesize);
-            nitems_written += items_left;
+            // nitems_written += items_left;  // commented out to avoid an 'unused variable' warning
         }
         assert(nitems_written == nitems_in_schunk);
 
