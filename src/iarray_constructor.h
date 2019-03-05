@@ -161,11 +161,11 @@ fail:
 }
 
 // TODO: clang complains about unused function.  provide a test using this.
-static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
-                                 iarray_container_t *pred,
-                                 iarray_dtshape_t *dtshape,
-                                 int64_t *offset,
-                                 iarray_container_t **c)
+inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
+                                        iarray_container_t *pred,
+                                        iarray_dtshape_t *dtshape,
+                                        int64_t *offset,
+                                        iarray_container_t **c)
 {
     /* validation */
     if (dtshape->ndim > CATERVA_MAXDIM) {
