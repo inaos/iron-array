@@ -294,6 +294,10 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
 INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
                                  iarray_container_t *container);
 
+INA_API(ina_rc_t) iarray_container_dtshape(iarray_context_t *ctx,
+                                           iarray_container_t *c,
+                                           iarray_dtshape_t **dtshape);
+
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
                                      void *buffer,
