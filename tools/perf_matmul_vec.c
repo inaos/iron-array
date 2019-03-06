@@ -55,16 +55,25 @@ int main(int argc, char** argv)
     double nbytes_mb = 0;
     double cbytes_mb = 0;
 
-    int64_t shape_x[] = {4000, 6000};
-    int64_t pshape_x[] = {4000, 6000};
-    int64_t bshape_x[] = {4000, 6000};
+    const int64_t shape_x0 = 4000;
+    const int64_t shape_x1 = 6000;
+    const int64_t pshape_x0 = 4000;
+    const int64_t pshape_x1 = 6000;
+    const int64_t bshape_x0 = 4000;
+    const int64_t bshape_x1 = 6000;
+    const int64_t shape_y0 = shape_x1;
+    const int64_t pshape_y0 = 6000;
+    const int64_t bshape_y0 = bshape_x1;
+
+    int64_t shape_x[] = {shape_x0, shape_x1};
+    int64_t pshape_x[] = {pshape_x0, pshape_x1};
+    int64_t bshape_x[] = {bshape_x0, bshape_x1};
 
     int64_t size_x = shape_x[0] * shape_x[1];
-    int64_t shape_y[] = {6000};
-    int64_t pshape_y[] = {6000};
-    int64_t bshape_y [] = {6000};
+    int64_t shape_y[] = {shape_y0};
+    int64_t pshape_y[] = {pshape_y0};
+    int64_t bshape_y [] = {bshape_y0};
     int64_t size_y = shape_y[0];
-
     int64_t shape_out[] = {shape_x[0]};
     int64_t pshape_out[] = {bshape_x[0]};
     int64_t size_out = shape_out[0];
