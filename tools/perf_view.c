@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     iarray_dtshape_t dtshape_x;
     dtshape_x.dtype = dtype;
     dtshape_x.ndim = ndim_x;
-    uint64_t size_x = 1;
+    size_t size_x = 1;
     for (int i = 0; i < dtshape_x.ndim; ++i) {
         dtshape_x.shape[i] = shape_x[i];
         dtshape_x.pshape[i] = pshape_x[i];
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     }
 
     iarray_container_t *c_x;
-    INA_MUST_SUCCEED(iarray_arange(ctx, &dtshape_x, 0, size_x, 1, NULL, 0, &c_x));
+    INA_MUST_SUCCEED(iarray_arange(ctx, &dtshape_x, 0., (double)size_x, 1., NULL, 0, &c_x));
 
     INA_STOPWATCH_START(w);
     iarray_container_t *c_y;
@@ -165,7 +165,6 @@ int main(int argc, char *argv[])
         iarray_iter_read_value_t value_mul_view;
         iarray_iter_read_value(iter_mul_view, &value_mul_view);
 
-
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_mul.pointer)[0], ((double *) value_mul_view.pointer)[0]);
@@ -176,7 +175,6 @@ int main(int argc, char *argv[])
             default:
                 return INA_ERR_EXCEEDED;
         }
-
     }
 
     iarray_iter_read_free(iter_mul);
