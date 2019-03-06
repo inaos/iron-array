@@ -121,7 +121,7 @@ INA_TEST_FIXTURE(slice_buffer, double_data_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    const int64_t ndim = 2;
+    const int8_t ndim = 2;
     int64_t shape[] = {10, 10};
     int64_t pshape[] = {3, 2};
     int64_t start[] = {5, -7};
@@ -140,7 +140,7 @@ INA_TEST_FIXTURE(slice_buffer, float_data_3) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
 
-    int64_t const ndim = 3;
+    const int8_t ndim = 3;
     int64_t shape[] = {10, 10, 10};
     int64_t pshape[] = {3, 5, 2};
     int64_t start[] = {-7, 0, 3};
@@ -189,7 +189,7 @@ INA_TEST_FIXTURE(slice_buffer_trans, double_data_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    const int64_t ndim = 2;
+    const int8_t ndim = 2;
     int64_t shape[] = {10, 10};
     int64_t pshape[] = {3, 4};
     int64_t start[] = {2, 1};
@@ -208,7 +208,7 @@ INA_TEST_FIXTURE(slice_buffer_trans, float_data_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
 
-    const int64_t ndim = 2;
+    const int8_t ndim = 2;
     int64_t shape[] = {10, 10};
     int64_t pshape[] = {2, 7};
     int64_t start[] = {3, 1};

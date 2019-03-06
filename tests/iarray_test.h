@@ -21,7 +21,7 @@ inline static void ffill_buf(float *x, size_t nitems)
     /* Fill with even values between 0 and 10 */
 
     for (size_t i = 0; i < nitems; i++) {
-        x[i] = i;
+        x[i] = (float)i;
     }
 }
 
@@ -30,7 +30,7 @@ inline static void dfill_buf(double *x, size_t nitems)
     /* Fill with even values between 0 and 10 */
 
     for (size_t i = 0; i < nitems; i++) {
-        x[i] = i;
+        x[i] = (double)i;
     }
 }
 
