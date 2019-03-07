@@ -98,13 +98,11 @@ int main(int argc, char** argv)
         }
     }
 
-    // Unfortunately we cannot use the handy `mat_x = {.id = mat_x_name};` idiom because of MSVC
-    iarray_store_properties_t mat_x;
-    mat_x.id = mat_x_name;
-    iarray_store_properties_t mat_y;
-    mat_y.id = mat_y_name;
-    iarray_store_properties_t mat_out;
-    mat_out.id = mat_out_name;
+    INA_DISABLE_WARNING_MSVC(4204)
+    iarray_store_properties_t mat_x = { .id = mat_x_name };
+    iarray_store_properties_t mat_y = { .id = mat_y_name };
+    iarray_store_properties_t mat_out = { .id = mat_out_name };
+    INA_ENABLE_WARNING_MSVC(4204)
 
     int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
 
