@@ -133,13 +133,15 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         fprintf(stderr, "Flag %d is not supported\n", e->ctx->cfg->eval_flags);
         return INA_ERR_NOT_SUPPORTED;
     }
-    iarray_dtshape_t shape_var = {
-        .ndim = 1,
-        .shape = {dim0},
-        .dtype = e->vars[0].c->dtshape->dtype,
-    };
+
+    // Create temporaries for intermediate results
+    // TODO: make this more general and accept multidimensional containers
+    iarray_dtshape_t dtshape_var = {};  // initialize to 0s
+    dtshape_var.ndim = 1;
+    dtshape_var.shape[0] = dim0;
+    dtshape_var.dtype = e->vars[0].c->dtshape->dtype;
     for (int nvar = 0; nvar < e->nvars; nvar++) {
-        iarray_temporary_new(e, e->vars[nvar].c, &shape_var, &e->temp_vars[nvar]);
+        iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[nvar]);
         te_vars[nvar].name = e->vars[nvar].var;
         te_vars[nvar].address = &e->temp_vars[nvar];
         te_vars[nvar].type = TE_VARIABLE;
@@ -412,8 +414,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
     bool scalar = false;
     bool scalar_vector = false;
     bool vector_vector = false;
-    iarray_dtshape_t dtshape;
-    ina_mem_set(&dtshape, 0, sizeof(iarray_dtshape_t));
+    iarray_dtshape_t dtshape = {};  // initialize to 0s
     iarray_temporary_t *scalar_tmp = NULL;
     iarray_temporary_t *scalar_lhs = NULL;
     iarray_temporary_t *out;
