@@ -54,18 +54,20 @@ int main(int argc, char** argv)
     double nbytes_mb = 0;
     double cbytes_mb = 0;
 
-    int64_t shape_x[2] = {4056, 3230};
-    int64_t pshape_x[2] = {675, 300};
-    int64_t bshape_x[2] = {800, 400};
+    int64_t shape_x[] = {4056, 3230};
+    int64_t pshape_x[] = {675, 300};
+    int64_t bshape_x[] = {800, 400};
 
     int64_t size_x = shape_x[0] * shape_x[1];
-    int64_t shape_y[2] = {3230, 3712};
-    int64_t pshape_y[2] = {300, 478};
-    int64_t bshape_y[2] = {400, 600};
+    int64_t shape_y[] = {3230, 3712};
+    int64_t pshape_y[] = {300, 478};
+    int64_t bshape_y[] = {400, 600};
     int64_t size_y = shape_y[0] * shape_y[1];
 
-    int64_t shape_out[] = {shape_x[0], shape_y[1]};
-    int64_t pshape_out[] = {bshape_x[0], bshape_y[1]};
+    int64_t shape_out[2];
+    shape_out[0] = shape_x[0]; shape_out[1] = shape_y[1];
+    int64_t pshape_out[2];
+    pshape_out[0] = bshape_x[0]; pshape_out[1] = bshape_y[1];
     int64_t size_out = shape_out[0] * shape_out[1];
 
     int64_t flops = (2 * shape_x[1] - 1) * shape_x[0] * shape_y[1];
@@ -96,9 +98,13 @@ int main(int argc, char** argv)
         printf("Storage for iarray matrices: *memory*\n");
     }
 
-    iarray_store_properties_t mat_x_prop = {.id = mat_x_name};
-    iarray_store_properties_t mat_y_prop = {.id = mat_y_name};
-    iarray_store_properties_t mat_out_prop = {.id = mat_out_name};
+    // Unfortunately we cannot use the handy `mat_x_prop = {.id = mat_x_name};` idiom because of MSVC
+    iarray_store_properties_t mat_x_prop;
+    mat_x_prop.id = mat_x_name;
+    iarray_store_properties_t mat_y_prop;
+    mat_y_prop.id = mat_y_name;
+    iarray_store_properties_t mat_out_prop;
+    mat_out_prop.id = mat_out_name;
 
     printf("\n");
     printf("Measuring time for multiplying matrices X and Y\n");
