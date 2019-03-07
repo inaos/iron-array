@@ -136,7 +136,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 
     // Create temporaries for intermediate results
     // TODO: make this more general and accept multidimensional containers
-    iarray_dtshape_t dtshape_var = {};  // initialize to 0s
+    iarray_dtshape_t dtshape_var = {0};  // initialize to 0s
     dtshape_var.ndim = 1;
     dtshape_var.shape[0] = dim0;
     dtshape_var.dtype = e->vars[0].c->dtshape->dtype;
@@ -414,7 +414,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
     bool scalar = false;
     bool scalar_vector = false;
     bool vector_vector = false;
-    iarray_dtshape_t dtshape = {};  // initialize to 0s
+    iarray_dtshape_t dtshape = {0};  // initialize to 0s
     iarray_temporary_t *scalar_tmp = NULL;
     iarray_temporary_t *scalar_lhs = NULL;
     iarray_temporary_t *out;
