@@ -470,7 +470,9 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
         if ((*container)->catarr != NULL) {
             caterva_free_array((*container)->catarr);
         }
-        INA_MEM_FREE_SAFE((*container)->frame);
+        if ((*container)->frame) {
+            blosc2_free_frame((*container)->frame);
+        }
         INA_MEM_FREE_SAFE((*container)->cparams);
         INA_MEM_FREE_SAFE((*container)->dparams);
         INA_MEM_FREE_SAFE((*container)->dtshape);

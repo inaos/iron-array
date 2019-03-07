@@ -64,9 +64,12 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     INA_FAIL_IF((*c)->dtshape == NULL);
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
 
-    (*c)->frame = (blosc2_frame*)ina_mem_alloc(sizeof(blosc2_frame));
+    char* fname = NULL;
+    if (flags & IARRAY_CONTAINER_PERSIST) {
+        fname = (char*)store->id;
+    }
+    (*c)->frame = blosc2_new_frame(fname);
     INA_FAIL_IF((*c)->frame == NULL);
-    ina_mem_cpy((*c)->frame, &BLOSC_EMPTY_FRAME, sizeof(blosc2_frame));
 
     (*c)->cparams = (blosc2_cparams*)ina_mem_alloc(sizeof(blosc2_cparams));
     INA_FAIL_IF((*c)->cparams == NULL);
@@ -92,7 +95,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
         INA_FAIL_IF((*c)->store == NULL);
         (*c)->store->id = ina_str_new_fromcstr(store->id);
-        (*c)->frame->fname = (char*)ina_str_cstr((*c)->store->id); /* FIXME: shouldn't fname be a const char? */
         uint8_t *smeta;
         int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
         INA_FAIL_IF(smeta_len < 0);
@@ -164,7 +166,7 @@ fail:
 inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
                                         iarray_container_t *pred,
                                         iarray_dtshape_t *dtshape,
-                                        int64_t *offset,
+                                        const int64_t *offset,
                                         iarray_container_t **c)
 {
     /* validation */
