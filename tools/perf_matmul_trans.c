@@ -80,9 +80,12 @@ int main(int argc, char** argv)
     int yflag = ytrans ? CblasTrans : CblasNoTrans;
 
     int64_t ysize = yshape[0] * yshape[1];
-    int64_t oshape[] = {xshape[1], yshape[0]};
-    int64_t opshape[] = {xbshape[0], ybshape[1]};
+    int64_t oshape[2];
+    oshape[0] = xshape[0]; oshape[1] = xshape[1];
+    int64_t opshape[2];
+    opshape[0] = xbshape[0]; opshape[1] = xbshape[1];
     int64_t osize = oshape[0] * oshape[1];
+
     int64_t flops = (2 * xshape[1] - 1) * xshape[0] * yshape[1];
 
     INA_OPTS(opt,
@@ -111,9 +114,13 @@ int main(int argc, char** argv)
         printf("Storage for iarray matrices: *memory*\n");
     }
 
-    iarray_store_properties_t mat_x_prop = {.id = mat_x_name};
-    iarray_store_properties_t mat_y_prop = {.id = mat_y_name};
-    iarray_store_properties_t mat_out_prop = {.id = mat_out_name};
+    // Unfortunately we cannot use the handy `mat_x_prop = {.id = mat_x_name};` idiom because of MSVC
+    iarray_store_properties_t mat_x_prop;
+    mat_x_prop.id = mat_x_name;
+    iarray_store_properties_t mat_y_prop;
+    mat_y_prop.id = mat_y_name;
+    iarray_store_properties_t mat_out_prop;
+    mat_out_prop.id = mat_out_name;
 
     printf("\n");
     printf("Measuring time for multiplying matrices X and Y\n");
