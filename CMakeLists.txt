@@ -37,8 +37,13 @@ set(BLOSC_LIB blosc_static) # required for caterva tests
 add_subdirectory(contribs/caterva)
 include_directories(contribs/caterva/caterva)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR})
+# add CMake modules
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/contribs/c-blosc2/cmake)
+#configure Intel MKL
 find_package(MKL)
+#configure Intel IPP
+find_package(IPP)
+set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${IPP_LIBRARIES})
 
 set(SRC ${CMAKE_SOURCE_DIR}/src)
 file(GLOB src ${SRC_DIR}/*.c)
@@ -55,7 +60,7 @@ inac_merge_static_libs(iarrays iarray_c blosc_static caterva ${INAC_LIBS})
 
 if (UNIX)
 set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
-set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc_static)
+set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc_static ${IPP_LIBRARIES})
 endif()
 
 inac_add_tests(iarrays)
