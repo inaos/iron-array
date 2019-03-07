@@ -325,7 +325,7 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
     }
 
     // Populate the frame
-    (*container)->frame = (blosc2_frame*)ina_mem_alloc(sizeof(blosc2_frame));
+    (*container)->frame = blosc2_new_frame(NULL);
     INA_FAIL_IF((*container)->frame == NULL);
     ina_mem_cpy((*container)->frame, catarr->sc->frame, sizeof(blosc2_frame));
 
