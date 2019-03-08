@@ -371,6 +371,18 @@ fail:
     return ina_err_get_rc();
 }
 
+INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
+                                     iarray_container_t *c,
+                                     iarray_dtshape_t *dtshape)
+{
+    dtshape->ndim = c->dtshape->ndim;
+    dtshape->dtype = c->dtshape->dtype;
+    for (int i = 0; i < c->dtshape->ndim; ++i) {
+        dtshape->shape[i] = c->dtshape->shape[i];
+        dtshape->pshape[i] = c->dtshape->pshape[i];
+    }
+    return INA_SUCCESS;
+}
 
 INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c,
     int64_t *nbytes,
