@@ -9,6 +9,7 @@
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
+
 #ifndef _IARRAY_H_
 #define _IARRAY_H_
 
@@ -114,34 +115,34 @@ typedef struct iarray_config_s {
 
 typedef struct iarray_dtshape_s {
     iarray_data_type_t dtype;
-    uint8_t ndim;     /* IF ndim = 0 THEN it is a scalar */
-    uint64_t shape[IARRAY_DIMENSION_MAX];
-    uint64_t pshape[IARRAY_DIMENSION_MAX]; /* Partition-Shape, optional in the future */
+    int8_t ndim;     /* IF ndim = 0 THEN it is a scalar */
+    int64_t shape[IARRAY_DIMENSION_MAX];
+    int64_t pshape[IARRAY_DIMENSION_MAX]; /* Partition-Shape, optional in the future */
 } iarray_dtshape_t;
 
 typedef struct iarray_iter_write_value_s {
     void *pointer;
-    uint64_t *index;
-    uint64_t nelem;
+    int64_t *index;
+    int64_t nelem;
 } iarray_iter_write_value_t;
 
 typedef struct iarray_iter_write_value_s iarray_iter_read_value_t;
 
 typedef struct iarray_iter_write_part_value_s {
     void *pointer;
-    uint64_t *part_index;
-    uint64_t *elem_index;
-    uint64_t nelem;
-    uint64_t* part_shape;
+    int64_t *part_index;
+    int64_t *elem_index;
+    int64_t nelem;
+    int64_t* part_shape;
 } iarray_iter_write_part_value_t;
 
 
 typedef struct iarray_iter_read_block_value_s {
     void *pointer;
-    uint64_t *block_index;
-    uint64_t *elem_index;
-    uint64_t nelem;
-    uint64_t* block_shape;
+    int64_t *block_index;
+    int64_t *elem_index;
+    int64_t nelem;
+    int64_t* block_shape;
 } iarray_iter_read_block_value_t;
 
 typedef struct iarray_slice_param_s {
@@ -184,8 +185,8 @@ INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
 
 INA_API(void) iarray_random_ctx_free(iarray_context_t *ctx, iarray_random_ctx_t **rng_ctx);
 
-INA_API(ina_rc_t) iarray_random_dist_set_param_float(iarray_random_ctx_t *ctx, 
-                                                     iarray_random_dist_parameter_t key, 
+INA_API(ina_rc_t) iarray_random_dist_set_param_float(iarray_random_ctx_t *ctx,
+                                                     iarray_random_dist_parameter_t key,
                                                      float value);
 
 INA_API(ina_rc_t) iarray_random_dist_set_param_double(iarray_random_ctx_t *ctx,
@@ -274,7 +275,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    iarray_container_t *c,
                                    int64_t *start,
                                    int64_t *stop,
-                                   uint64_t *pshape,
+                                   const int64_t *pshape,
                                    iarray_store_properties_t *store,
                                    int flags,
                                    bool view,
@@ -285,7 +286,7 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                                           int64_t *start,
                                           int64_t *stop,
                                           void *buffer,
-                                          uint64_t buflen);
+                                          int64_t buflen);
 
 INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
                                    iarray_store_properties_t *store,
@@ -293,6 +294,10 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
                                  iarray_container_t *container);
+
+INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
+                                     iarray_container_t *c,
+                                     iarray_dtshape_t *dtshape);
 
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
@@ -309,7 +314,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
 
 
 INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dtshape_t *b);
-INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, uint64_t *nbytes, uint64_t *cbytes);
+INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, int64_t *nbytes, int64_t *cbytes);
 
 INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container);
 
@@ -342,7 +347,7 @@ INA_API(ina_rc_t) iarray_operator_div(iarray_context_t *ctx, iarray_container_t 
 INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a);
 INA_API(ina_rc_t) iarray_linalg_inverse(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result,
-                                       uint64_t *bshape_a, uint64_t *bshape_b, iarray_operator_hint_t hint);
+                                       int64_t *bshape_a, int64_t *bshape_b, iarray_operator_hint_t hint);
 INA_API(ina_rc_t) iarray_linalg_dot(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result, iarray_operator_hint_t hint);
 INA_API(ina_rc_t) iarray_linalg_det(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 INA_API(ina_rc_t) iarray_linalg_eigen(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
@@ -424,7 +429,8 @@ INA_API(int) iarray_iter_read_trans_finished(iarray_iter_read_t *itr);
 INA_API(void) iarray_iter_read_trans_value(iarray_iter_read_t *itr, iarray_iter_read_value_t *val);
 
 INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx, iarray_container_t *container,
-                                             iarray_iter_read_block_t **itr, uint64_t *blockshape);
+                                             iarray_iter_read_block_t **itr,
+                                             const int64_t *blockshape);
 INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr);
 INA_API(void) iarray_iter_read_block_init(iarray_iter_read_block_t *itr);
 INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr);

@@ -20,10 +20,10 @@
 
 static int32_t serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
 {
-    if (dtype > 127) {
+    if (dtype > IARRAY_DATA_TYPE_MAX) {
         return -1;
     }
-    int32_t smeta_len = 1;  // the dtype only takes 7-bit, so up to 128 values
+    int32_t smeta_len = 1;  // the dtype should take less than 7-bit, so 1 byte is enough to store it
     *smeta = malloc((size_t)smeta_len);
 
     // dtype entry
@@ -32,6 +32,7 @@ static int32_t serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
     return smeta_len;
 }
 
+// TODO: clang complains about unused function.  provide a test using this.
 static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *dtshape,
                                       iarray_store_properties_t *store,
                                       int flags,
@@ -39,6 +40,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 {
     blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
     blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
+    caterva_ctx_t *cat_ctx = NULL;
 
     int blosc_filter_idx = 0;
 
@@ -62,9 +64,12 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     INA_FAIL_IF((*c)->dtshape == NULL);
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
 
-    (*c)->frame = (blosc2_frame*)ina_mem_alloc(sizeof(blosc2_frame));
+    char* fname = NULL;
+    if (flags & IARRAY_CONTAINER_PERSIST) {
+        fname = (char*)store->id;
+    }
+    (*c)->frame = blosc2_new_frame(fname);
     INA_FAIL_IF((*c)->frame == NULL);
-    ina_mem_cpy((*c)->frame, &BLOSC_EMPTY_FRAME, sizeof(blosc2_frame));
 
     (*c)->cparams = (blosc2_cparams*)ina_mem_alloc(sizeof(blosc2_cparams));
     INA_FAIL_IF((*c)->cparams == NULL);
@@ -90,7 +95,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
         INA_FAIL_IF((*c)->store == NULL);
         (*c)->store->id = ina_str_new_fromcstr(store->id);
-        (*c)->frame->fname = (char*)ina_str_cstr((*c)->store->id); /* FIXME: shouldn't fname be a const char? */
         uint8_t *smeta;
         int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
         INA_FAIL_IF(smeta_len < 0);
@@ -106,6 +110,9 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
             break;
         case IARRAY_DATA_TYPE_FLOAT:
             cparams.typesize = sizeof(float);
+            break;
+        default:
+            printf("Unknown type; cannot never happen.\n");
             break;
     }
     cparams.compcode = ctx->cfg->compression_codec;
@@ -135,7 +142,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     dparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
     ina_mem_cpy((*c)->dparams, &dparams, sizeof(blosc2_dparams));
 
-    caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, cparams, dparams);
+    cat_ctx = caterva_new_ctx(NULL, NULL, cparams, dparams);
 
     caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
 
@@ -151,21 +158,17 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
 fail:
     iarray_container_free(ctx, c);
-    caterva_free_ctx(cat_ctx);
+    if (cat_ctx != NULL) caterva_free_ctx(cat_ctx);
     return ina_err_get_rc();
 }
 
-static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
-                                 iarray_container_t *pred,
-                                 iarray_dtshape_t *dtshape,
-                                 uint64_t *offset,
-                                 iarray_container_t **c)
+// TODO: clang complains about unused function.  provide a test using this.
+inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
+                                        iarray_container_t *pred,
+                                        iarray_dtshape_t *dtshape,
+                                        const int64_t *offset,
+                                        iarray_container_t **c)
 {
-    blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
-    blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
-
-    int blosc_filter_idx = 0;
-
     /* validation */
     if (dtshape->ndim > CATERVA_MAXDIM) {
         return INA_ERROR(INA_ERR_EXCEEDED);
