@@ -129,12 +129,14 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     status = vsRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, random_ctx->stream, (int)part_size, r, 0.0, 1.0);
                     break;
                 case _IARRAY_RANDOM_METHOD_BETA:
-                    //float a = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
-                    //float b = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA];
-                    //status = vsRngBeta(method, random_ctx->stream, part_size, r, p, q, a, beta);
-                    break;
+                    float alpha = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
+                    float beta = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA];
+                    status = vsRngBeta(VSL_RNG_METHOD_BETA_CJA, random_ctx->stream, (int) part_size, r, alpha, beta, 0, 1);
+
                 case _IARRAY_RANDOM_METHOD_LOGNORMAL:
-                    //status = vsRngLognormal(method, random_ctx->stream, part_size, r, a, sigma, b, beta);
+                    float mu = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_MU];
+                    float sigma = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_SIGMA];
+                    status = vsRngLognormal(method, random_ctx->stream, (int) part_size, r, mu, sigma, 0, 1);
                     break;
             }
             INA_FAIL_IF(status != VSL_ERROR_OK);
@@ -153,12 +155,14 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     status = vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, random_ctx->stream, (int)part_size, r, 0.0, 1.0);
                     break;
                 case _IARRAY_RANDOM_METHOD_BETA:
-                    //double a = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
-                    //double b = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA];
-                    //status = vdRngBeta(method, random_ctx->stream, part_size, r, p, q, a, beta);
+                    double alpha = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
+                    double beta = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA];
+                    status = vdRngBeta(VSL_RNG_METHOD_BETA_CJA, random_ctx->stream, (int) part_size, r, alpha, beta, 0, 1);
                     break;
                 case _IARRAY_RANDOM_METHOD_LOGNORMAL:
-                    //status = vdRngLognormal(method, random_ctx->stream, part_size, r, a, sigma, b, beta);
+                    double mu = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_MU];
+                    double sigma = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_SIGMA];
+                    status = vdRngLognormal(method, random_ctx->stream, (int) part_size, r, mu, sigma, 0, 1);
                     break;
             }
             INA_FAIL_IF(status != VSL_ERROR_OK);
