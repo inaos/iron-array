@@ -23,7 +23,7 @@ bool _iarray_file_exists(const char * filename)
 {
     /* try to open file to read */
     FILE *file;
-    if ((file = fopen(filename, "r"))) {
+    if ((file = fopen(filename, "r")) != NULL) {
         fclose(file);
         return true;
     }

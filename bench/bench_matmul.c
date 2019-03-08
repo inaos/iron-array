@@ -202,13 +202,14 @@ INA_BENCH_TEARDOWN(matmul)
 
 INA_BENCH_BEGIN(matmul, native_mkl)
 {
-    _set_matrix_config(data, 4000, 5000, 500, 750, 1000,
-        1200, 5000, 3000, 400, 510, 1200, 1100);
+    INA_UNUSED(data);
 }
 
 INA_BENCH_SCALE(matmul) {
-    // FIXME: find sensible increments -> data->shape_x_0 = data->shape_x_0 * (10 * ina_bench_get_iteration());
-    // FIXME: find sensible increments -> data->pshape_x_0 = data->pshape_x_0 * (2 * ina_bench_get_iteration());
+    //int increment = (10 * (ina_bench_get_iteration()-1));
+    _set_matrix_config(data, 4000, 5000, 500, 750, 1000,
+        1200, 5000, 3000, 400, 510, 1200, 1100);
+
     ina_bench_set_scale(data->size_out);
 }
 

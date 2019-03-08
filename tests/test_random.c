@@ -12,17 +12,16 @@
 
 #include <libiarray/iarray.h>
 
-#include <tests/iarray_test.h>
 
-static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx, iarray_data_type_t dtype, 
-                          uint8_t ndim, const uint64_t *shape, const uint64_t *pshape) {
+static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx, iarray_data_type_t dtype,
+                          int8_t ndim, const int64_t *shape, const int64_t *pshape) {
 
     // Create dtshape
     iarray_dtshape_t xdtshape;
 
     xdtshape.dtype = dtype;
     xdtshape.ndim = ndim;
-    uint64_t size = 1;
+    int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
         xdtshape.pshape[i] = pshape[i];
@@ -45,14 +44,14 @@ static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx, i
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double v = *((double*)val.pointer);
             INA_TEST_ASSERT_TRUE(v > .0 && v < 1.);
-        } 
+        }
         else {
             float v = *((float*)val.pointer);
             INA_TEST_ASSERT_TRUE(v > .0 && v < 1.);
         }
     }
 
-    iarray_iter_write_free(iter);
+    iarray_iter_read_free(iter);
     iarray_container_free(ctx, &c_x);
 
     return INA_SUCCESS;
@@ -85,10 +84,9 @@ INA_TEST_TEARDOWN(random_mt) {
 INA_TEST_FIXTURE(random_mt, rand_double) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
-    uint8_t ndim = 2;
-    uint64_t shape[] = {223, 456};
-    uint64_t pshape[] = { 31, 43 };
+    int8_t ndim = 2;
+    int64_t shape[] = {223, 456};
+    int64_t pshape[] = { 31, 43 };
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape));
 }
-
