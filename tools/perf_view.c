@@ -13,7 +13,7 @@
 #include <libiarray/iarray.h>
 #include <src/iarray_private.h>
 
-int main()
+int main(int argc, char *argv[])
 {
     ina_stopwatch_t *w;
     double elapsed, elapsed_view;
@@ -21,22 +21,26 @@ int main()
 
     int dtype = IARRAY_DATA_TYPE_FLOAT;
     int typesize = sizeof(float);
+    if ((argc > 1) && (strcmp(argv[1], "double") == 0)) {
+        dtype = IARRAY_DATA_TYPE_DOUBLE;
+        typesize = sizeof(double);
+    }
 
-    uint64_t shape_x[] = {10, 10, 10};
-    uint64_t pshape_x[] = {2, 2, 2};
-    uint8_t ndim_x = 3;
+    int64_t shape_x[] = {10, 10, 10};
+    int64_t pshape_x[] = {2, 2, 2};
+    int8_t ndim_x = 3;
 
-    uint64_t pshape_y[] = {2, 1, 2};
-    uint64_t pshape_z[] = {2, 1, 2};
+    int64_t pshape_y[] = {2, 1, 2};
+    int64_t pshape_z[] = {2, 1, 2};
 
-    uint64_t shape_mul[] = {4, 4};
-    uint64_t pshape_mul[] = {2, 2};
-    uint8_t ndim_mul = 2;
+    int64_t shape_mul[] = {4, 4};
+    int64_t pshape_mul[] = {2, 2};
+    int8_t ndim_mul = 2;
 
     int64_t start[] = {1, 3, 3};
     int64_t stop[] = {5, 4, 7};
 
-    uint64_t bshape[] = {2, 2};
+    int64_t bshape[] = {2, 2};
     iarray_context_t *ctx;
 
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
@@ -49,7 +53,7 @@ int main()
     iarray_dtshape_t dtshape_x;
     dtshape_x.dtype = dtype;
     dtshape_x.ndim = ndim_x;
-    uint64_t size_x = 1;
+    size_t size_x = 1;
     for (int i = 0; i < dtshape_x.ndim; ++i) {
         dtshape_x.shape[i] = shape_x[i];
         dtshape_x.pshape[i] = pshape_x[i];
@@ -57,7 +61,7 @@ int main()
     }
 
     iarray_container_t *c_x;
-    INA_MUST_SUCCEED(iarray_arange(ctx, &dtshape_x, 0, size_x, 1, NULL, 0, &c_x));
+    INA_MUST_SUCCEED(iarray_arange(ctx, &dtshape_x, 0., (double)size_x, 1., NULL, 0, &c_x));
 
     INA_STOPWATCH_START(w);
     iarray_container_t *c_y;
@@ -85,22 +89,21 @@ int main()
     iarray_iter_read_block_new(ctx, c_y, &iter_y, bshape);
     iarray_iter_read_block_new(ctx, c_z, &iter_z, bshape);
 
-    for (iarray_iter_read_block_init(iter_y),
-        iarray_iter_read_block_init(iter_z);
+    for (iarray_iter_read_block_init(iter_y), iarray_iter_read_block_init(iter_z);
          !iarray_iter_read_block_finished(iter_y);
-         iarray_iter_read_block_next(iter_y),
-         iarray_iter_read_block_next(iter_z)) {
+         iarray_iter_read_block_next(iter_y), iarray_iter_read_block_next(iter_z)) {
+
         iarray_iter_read_block_value_t value_y;
         iarray_iter_read_block_value(iter_y, &value_y);
         iarray_iter_read_block_value_t value_z;
         iarray_iter_read_block_value(iter_z, &value_z);
 
-        uint64_t bsize = 1;
+        int64_t bsize = 1;
         for (int i = 0; i < c_y->dtshape->ndim; ++i) {
             bsize *= value_y.block_shape[i];
         }
 
-        for (uint64_t i = 0; i < bsize; ++i) {
+        for (int64_t i = 0; i < bsize; ++i) {
             switch (dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
                     INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_y.pointer)[i], ((double *) value_z.pointer)[i]);
@@ -108,6 +111,8 @@ int main()
                 case IARRAY_DATA_TYPE_FLOAT:
                     INA_TEST_ASSERT_EQUAL_FLOATING(((float *) value_y.pointer)[i], ((float *) value_z.pointer)[i]);
                     break;
+                default:
+                    return INA_ERR_EXCEEDED;
             }
         }
     }
@@ -160,7 +165,6 @@ int main()
         iarray_iter_read_value_t value_mul_view;
         iarray_iter_read_value(iter_mul_view, &value_mul_view);
 
-
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_mul.pointer)[0], ((double *) value_mul_view.pointer)[0]);
@@ -168,8 +172,9 @@ int main()
             case IARRAY_DATA_TYPE_FLOAT:
                 INA_TEST_ASSERT_EQUAL_FLOATING(((float *) value_mul.pointer)[0], ((float *) value_mul_view.pointer)[0]);
                 break;
+            default:
+                return INA_ERR_EXCEEDED;
         }
-
     }
 
     iarray_iter_read_free(iter_mul);
@@ -195,6 +200,8 @@ int main()
             case IARRAY_DATA_TYPE_FLOAT:
                 INA_TEST_ASSERT_EQUAL_FLOATING(((float *) buffer_y)[i], ((float *) buffer_z)[i]);
                 break;
+            default:
+                return INA_ERR_EXCEEDED;
         }
     }
 

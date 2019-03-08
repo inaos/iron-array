@@ -61,8 +61,31 @@ a `switch` for dealing with the different data types rather than an `if ... else
         case IARRAY_DATA_TYPE_FLOAT:
             type_size = sizeof(float);
             break;
+        default:
+            return INA_ERR_EXCEEDED;
     }
 
+Note that the 'default' statement is there mainly for avoiding compiler warnings.
+
+### Types for lengths in containers
+
+IronArray containers lengths are expressed just as `int64_t`, so all the shapes, lengths and
+other related variables should be exactly of this type.  Also, the `ndim` type is `int8_t` so this
+is the type that must be used to express the number of dimensions.
+
+### Be proactive and avoid compiler warnings
+
+Since 2018-03-08 IronArray can compile mostly warning free (except in `Release` mode, where `assert`
+checks and related macros like `INA_ASSERT_NOT_NULL` are removed by the optimizer).
+
+Being able to compile warning free is a good practice that we must observe carefully *before*
+doing a commit.  A nice way to be proactive is to look at the interactive CLion code analysis
+and keep the number of warnings to a minimum (beware, some are false positives or not too important,
+so try to get a balance by keeping CLion warnings under a minimum).
+
+Also, it is useful to have a look at the building logs of the CI because MSVC and GCC can throw
+different warnings in different places of the code.  Please regularly visit these logs and
+try to fix the ones that you introduced.
 
 ### File names
 

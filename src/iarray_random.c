@@ -11,14 +11,9 @@
  */
 
 #include <libiarray/iarray.h>
-
-#include <iarray_private.h>
-
+#include "iarray_constructor.h"
 #include <mkl_vsl.h>
 
-#include "iarray_constructor.h"
-
-#define _IARRAY_RNG_CHUNK_SIZE 1024
 
 typedef enum _iarray_random_method_e {
     _IARRAY_RANDOM_METHOD_UNIFORM,
@@ -106,7 +101,7 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     iarray_iter_write_part_t *iter;
     iarray_iter_write_part_new(ctx, container, &iter);
 
-    uint64_t max_part_size = 1;
+    int64_t max_part_size = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {
         max_part_size *= dtshape->pshape[i];
     }
@@ -119,7 +114,7 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
         iarray_iter_write_part_value_t val;
         iarray_iter_write_part_value(iter, &val);
 
-        uint64_t part_size = 1;
+        int64_t part_size = 1;
         for (int i = 0; i < dtshape->ndim; ++i) {
             part_size *= val.part_shape[i];
         }
@@ -134,18 +129,17 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     status = vsRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, random_ctx->stream, (int)part_size, r, 0.0, 1.0);
                     break;
                 case _IARRAY_RANDOM_METHOD_BETA:
-                {
-                    float a = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
-                    float b = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA];
+                    //float a = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
+                    //float b = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA];
                     //status = vsRngBeta(method, random_ctx->stream, part_size, r, p, q, a, beta);
-                }
+                    break;
                 case _IARRAY_RANDOM_METHOD_LOGNORMAL:
                     //status = vsRngLognormal(method, random_ctx->stream, part_size, r, a, sigma, b, beta);
                     break;
             }
             INA_FAIL_IF(status != VSL_ERROR_OK);
 
-            for (uint64_t i = 0; i < part_size; ++i) {
+            for (int64_t i = 0; i < part_size; ++i) {
                 ((float *)val.pointer)[i] = r[i];
             }
         }
@@ -159,11 +153,9 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     status = vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, random_ctx->stream, (int)part_size, r, 0.0, 1.0);
                     break;
                 case _IARRAY_RANDOM_METHOD_BETA:
-                {
-                    double a = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
-                    double b = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA];
+                    //double a = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
+                    //double b = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA];
                     //status = vdRngBeta(method, random_ctx->stream, part_size, r, p, q, a, beta);
-                }
                     break;
                 case _IARRAY_RANDOM_METHOD_LOGNORMAL:
                     //status = vdRngLognormal(method, random_ctx->stream, part_size, r, a, sigma, b, beta);
@@ -171,7 +163,7 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
             }
             INA_FAIL_IF(status != VSL_ERROR_OK);
 
-            for (uint64_t i = 0; i < part_size; ++i) {
+            for (int64_t i = 0; i < part_size; ++i) {
                 ((double *)val.pointer)[i] = r[i];
             }
         }
@@ -194,7 +186,7 @@ INA_API(ina_rc_t) iarray_random_rand(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(random_ctx);
     INA_VERIFY_NOT_NULL(container);
-    
+
     INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_UNIFORM);
