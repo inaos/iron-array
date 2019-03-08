@@ -29,7 +29,7 @@ We use inac cmake build-system.
 * Invoke CMAKE, we have to define the generator as well as the build-type
 
          cmake -G"Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Debug ..
-         cmake -G"Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release ..
+         cmake -G"Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 
 #### Mac
 
@@ -45,7 +45,7 @@ We use inac cmake build-system.
 * Invoke CMAKE, we have to define the build-type
 
          cmake -DCMAKE_BUILD_TYPE=Debug ..
-         cmake -DCMAKE_BUILD_TYPE=Release ..
+         cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 
 #### Linux
 
