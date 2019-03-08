@@ -375,6 +375,7 @@ INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
                                      iarray_container_t *c,
                                      iarray_dtshape_t *dtshape)
 {
+    INA_UNUSED(ctx);
     dtshape->ndim = c->dtshape->ndim;
     dtshape->dtype = c->dtshape->dtype;
     for (int i = 0; i < c->dtshape->ndim; ++i) {
