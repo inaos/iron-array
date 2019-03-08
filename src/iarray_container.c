@@ -364,13 +364,16 @@ fail:
     return ina_err_get_rc();
 }
 
-INA_API(ina_rc_t) iarray_container_dtshape(iarray_context_t *ctx,
+INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
                                            iarray_container_t *c,
-                                           iarray_dtshape_t **dtshape)
+                                           iarray_dtshape_t *dtshape)
 {
-    (*dtshape) = (iarray_dtshape_t *) malloc(sizeof(iarray_dtshape_t));
-    ina_mem_cpy((*dtshape), c->dtshape, sizeof(iarray_dtshape_t));
-
+    dtshape->ndim = c->dtshape->ndim;
+    dtshape->dtype = c->dtshape->dtype;
+    for (int i = 0; i < c->dtshape->ndim; ++i) {
+        dtshape->shape[i] = c->dtshape->shape[i];
+        dtshape->pshape[i] = c->dtshape->pshape[i];
+    }
     return INA_SUCCESS;
 }
 
