@@ -11,20 +11,19 @@
  */
 
 #include <libiarray/iarray.h>
-
 #include <iarray_private.h>
 
 
 static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c,
-                             uint64_t *bshape_a, uint64_t *bshape_b) {
+                             int64_t *bshape_a, int64_t *bshape_b) {
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     caterva_update_shape(c->catarr, shape);
 
     // define mkl parameters
-    uint64_t B0 = bshape_a[0];
-    uint64_t B1 = bshape_a[1];
-    uint64_t B2 = bshape_b[1];
+    int64_t B0 = bshape_a[0];
+    int64_t B1 = bshape_a[1];
+    int64_t B2 = bshape_b[1];
 
     int flag_a = CblasNoTrans;
     int ld_a = (int) B1;
@@ -43,8 +42,8 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     int ld_c = (int) B2;
 
     // the extended shape is recalculated from the block shape
-    uint64_t eshape_a[IARRAY_DIMENSION_MAX];
-    uint64_t eshape_b[IARRAY_DIMENSION_MAX];
+    int64_t eshape_a[IARRAY_DIMENSION_MAX];
+    int64_t eshape_b[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < a->dtshape->ndim; ++i) {
         if (a->dtshape->shape[i] % bshape_a[i] == 0) {
             eshape_a[i] = a->dtshape->shape[i];
@@ -59,9 +58,9 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     // block sizes are claculated
-    uint64_t a_size = (uint64_t) B0 * B1 * a->catarr->sc->typesize;
-    uint64_t b_size = (uint64_t) B1 * B2 * b->catarr->sc->typesize;
-    uint64_t c_size = (uint64_t) B0 * B2 * c->catarr->sc->typesize;
+    size_t a_size = (size_t) B0 * B1 * a->catarr->sc->typesize;
+    size_t b_size = (size_t) B1 * B2 * b->catarr->sc->typesize;
+    size_t c_size = (size_t) B0 * B2 * c->catarr->sc->typesize;
     int dtype = a->dtshape->dtype;
 
     uint8_t *a_block = ina_mem_alloc(a_size);
@@ -75,17 +74,17 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     memset(c_block, 0, c_size);
 
     for (_iarray_iter_matmul_init(iter); !_iarray_iter_matmul_finished(iter); _iarray_iter_matmul_next(iter)) {
-        uint64_t start_a[IARRAY_DIMENSION_MAX];
-        uint64_t stop_a[IARRAY_DIMENSION_MAX];
-        uint64_t start_b[IARRAY_DIMENSION_MAX];
-        uint64_t stop_b[IARRAY_DIMENSION_MAX];
+        int64_t start_a[IARRAY_DIMENSION_MAX];
+        int64_t stop_a[IARRAY_DIMENSION_MAX];
+        int64_t start_b[IARRAY_DIMENSION_MAX];
+        int64_t stop_b[IARRAY_DIMENSION_MAX];
 
-        uint64_t inc_a = 1;
-        uint64_t inc_b = 1;
+        int64_t inc_a = 1;
+        int64_t inc_b = 1;
 
         // the block coords are calculated from the index
-        uint64_t part_ind_a[IARRAY_DIMENSION_MAX];
-        uint64_t part_ind_b[IARRAY_DIMENSION_MAX];
+        int64_t part_ind_a[IARRAY_DIMENSION_MAX];
+        int64_t part_ind_b[IARRAY_DIMENSION_MAX];
         for (int i = a->dtshape->ndim - 1; i >= 0; --i) {
             part_ind_a[i] = iter->npart1 % (inc_a * (eshape_a[i] / bshape_a[i])) / inc_a;
             inc_a *= (eshape_a[i] / bshape_a[i]);
@@ -118,11 +117,15 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         // Make blocks multiplication
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                cblas_dgemm(CblasRowMajor, flag_a, flag_b, B0, B2, B1, 1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 1.0, (double *)c_block, ld_c);
+                cblas_dgemm(CblasRowMajor, flag_a, flag_b, (const int)B0, (const int)B2, (const int)B1,
+                            1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 1.0, (double *)c_block, ld_c);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                cblas_sgemm(CblasRowMajor, flag_a, flag_b, B0, B2, B1, 1.0, (float *)a_block, ld_a, (float *)b_block, ld_b, 1.0, (float *)c_block, ld_c);
+                cblas_sgemm(CblasRowMajor, flag_a, flag_b, (const int)B0, (const int)B2, (const int)B1,
+                            1.0, (float *)a_block, ld_a, (float *)b_block, ld_b, 1.0, (float *)c_block, ld_c);
                 break;
+            default:
+                return INA_ERR_EXCEEDED;
         }
 
         // Append it to a new iarray contianer
@@ -141,14 +144,14 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 }
 
 static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c,
-                             uint64_t *bshape_a, uint64_t *bshape_b) {
+                             int64_t *bshape_a, int64_t *bshape_b) {
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     caterva_update_shape(c->catarr, shape);
 
     // Define parameters needed in mkl multiplication
-    uint64_t B0 = bshape_a[0];
-    uint64_t B1 = bshape_a[1];
+    int64_t B0 = bshape_a[0];
+    int64_t B1 = bshape_a[1];
 
     int M = (int) bshape_a[0];
     int K = (int) bshape_a[1];
@@ -161,8 +164,8 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         K = (int) bshape_a[0];
     }
 
-    uint64_t eshape_a[2];
-    uint64_t eshape_b[1];
+    int64_t eshape_a[2];
+    int64_t eshape_b[1];
 
     // the extended shape is recalculated from the block shape
     for (int i = 0; i < a->dtshape->ndim; ++i) {
@@ -179,9 +182,9 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     // block sizes are claculated
-    uint64_t a_size = (uint64_t) B0 * B1 * a->catarr->sc->typesize;
-    uint64_t b_size = (uint64_t) B1 * a->catarr->sc->typesize;
-    uint64_t c_size = (uint64_t) B0 * a->catarr->sc->typesize;
+    size_t a_size = (size_t) B0 * B1 * a->catarr->sc->typesize;
+    size_t b_size = (size_t) B1 * a->catarr->sc->typesize;
+    size_t c_size = (size_t) B0 * a->catarr->sc->typesize;
 
     int dtype = a->dtshape->dtype;
 
@@ -196,15 +199,15 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     memset(c_block, 0, c_size);
     for (_iarray_iter_matmul_init(iter); !_iarray_iter_matmul_finished(iter); _iarray_iter_matmul_next(iter)) {
 
-        uint64_t start_a[IARRAY_DIMENSION_MAX];
-        uint64_t stop_a[IARRAY_DIMENSION_MAX];
-        uint64_t start_b[IARRAY_DIMENSION_MAX];
-        uint64_t stop_b[IARRAY_DIMENSION_MAX];
+        int64_t start_a[IARRAY_DIMENSION_MAX];
+        int64_t stop_a[IARRAY_DIMENSION_MAX];
+        int64_t start_b[IARRAY_DIMENSION_MAX];
+        int64_t stop_b[IARRAY_DIMENSION_MAX];
 
-        uint64_t inc_a = 1;
+        int64_t inc_a = 1;
 
-        uint64_t part_ind_a[IARRAY_DIMENSION_MAX];
-        uint64_t part_ind_b[IARRAY_DIMENSION_MAX];
+        int64_t part_ind_a[IARRAY_DIMENSION_MAX];
+        int64_t part_ind_b[IARRAY_DIMENSION_MAX];
 
         // the block coords are calculated from the index
         for (int i = a->dtshape->ndim - 1; i >= 0; --i) {
@@ -245,6 +248,8 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
             case IARRAY_DATA_TYPE_FLOAT:
                 cblas_sgemv(CblasRowMajor, flag_a, M, K, 1.0, (float *) a_block, ld_a, (float *) b_block, 1, 1.0, (float *) c_block, 1);
                 break;
+            default:
+                return INA_ERR_EXCEEDED;
         }
 
         // Append it to a new iarray contianer
@@ -295,6 +300,8 @@ static ina_rc_t _iarray_operator_elwise_a(
         case IARRAY_DATA_TYPE_FLOAT:
             mkl_fun_s((const int)psize / sizeof(float), (const float*)a_chunk, (float*)c_chunk);
             break;
+        default:
+            return INA_ERR_EXCEEDED;
         }
         blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize);
     }
@@ -353,6 +360,8 @@ static ina_rc_t _iarray_operator_elwise_ab(
             case IARRAY_DATA_TYPE_FLOAT:
                 mkl_fun_s((const int)psize/sizeof(float), (const float*)a_chunk, (const float*)b_chunk, (float*)c_chunk);
                 break;
+            default:
+                return INA_ERR_EXCEEDED;
         }
         blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize);
     }
@@ -369,6 +378,7 @@ fail:
 
 INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a)
 {
+    INA_VERIFY_NOT_NULL(ctx);
     if (a->dtshape->ndim != 2) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
@@ -380,7 +390,7 @@ INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_containe
         a->transposed = 0;
     }
 
-    uint64_t aux[IARRAY_DIMENSION_MAX];
+    int64_t aux[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < a->dtshape->ndim; ++i) {
         aux[i] = a->dtshape->shape[i];
     }
@@ -426,10 +436,11 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
                                        iarray_container_t *a,
                                        iarray_container_t *b,
                                        iarray_container_t *c,
-                                       uint64_t *bshape_a,
-                                       uint64_t *bshape_b,
+                                       int64_t *bshape_a,
+                                       int64_t *bshape_b,
                                        iarray_operator_hint_t hint)
 {
+    INA_UNUSED(hint);
     INA_ASSERT_NOT_NULL(ctx);
     INA_ASSERT_NOT_NULL(a);
     INA_ASSERT_NOT_NULL(b);
@@ -460,26 +471,46 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_operator_and(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(b);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
 INA_API(ina_rc_t) iarray_operator_or(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(b);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
 INA_API(ina_rc_t) iarray_operator_xor(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(b);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
 INA_API(ina_rc_t) iarray_operator_nand(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(b);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
 INA_API(ina_rc_t) iarray_operator_not(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(b);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
@@ -520,11 +551,17 @@ INA_API(ina_rc_t) iarray_operator_asin(iarray_context_t *ctx, iarray_container_t
 
 INA_API(ina_rc_t) iarray_operator_atanc(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
 INA_API(ina_rc_t) iarray_operator_atan2(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
 {
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(result);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 

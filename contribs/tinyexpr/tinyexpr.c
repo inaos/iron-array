@@ -91,7 +91,7 @@ static te_expr *new_expr(state *state, const int type, const te_expr *parameters
     //te_expr *ret = malloc(size);
 	ina_mempool_t *mp;
 	iarray_expr_get_mp(state->expr, &mp);
-    te_expr *ret = ina_mempool_dalloc(mp, size);
+    te_expr *ret = ina_mempool_dalloc(mp, (size_t)size);
     memset(ret, 0, size);
     if (arity && parameters) {
         memcpy(ret->parameters, parameters, psize);
@@ -268,7 +268,7 @@ void next_token(state *s) {
                     {
                         case TE_VARIABLE:
                             s->type = TOK_VARIABLE;
-                            s->bound = var->address;
+                            s->bound = (const iarray_temporary_t**)var->address;
                             break;
 
                         case TE_CLOSURE0: case TE_CLOSURE1: case TE_CLOSURE2: case TE_CLOSURE3:         /* Falls through. */
@@ -279,6 +279,9 @@ void next_token(state *s) {
                         case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:     /* Falls through. */
                             s->type = var->type;
                             s->function = var->address;
+                            break;
+                        default:
+                            printf("Unknown type; cannot never happen.  If you see this, inform about it.\n");
                             break;
                     }
                 }
@@ -552,7 +555,7 @@ iarray_temporary_t *te_eval(iarray_expression_t *expr, const te_expr *n) {
 
     switch(TYPE_MASK(n->type)) {
         case TE_CONSTANT: return n->value;
-        case TE_VARIABLE: return *n->bound;
+        case TE_VARIABLE: return (iarray_temporary_t*)*n->bound;
 
         case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:
         case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:
@@ -611,7 +614,7 @@ static void optimize(iarray_expression_t *expr, te_expr *n) {
             const iarray_temporary_t *value = te_eval(expr, n);
             te_free_parameters(n);
             n->type = TE_CONSTANT;
-            n->value = value;
+            n->value = (iarray_temporary_t *)value;
         }
     }
 }
@@ -676,6 +679,9 @@ static void pn (const te_expr *n, int depth) {
              pn(n->parameters[i], depth + 1);
          }
          break;
+    default:
+        printf("Unknown type; cannot never happen.  If you see this, inform about it.\n");
+        break;
     }
 }
 

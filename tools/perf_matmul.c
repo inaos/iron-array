@@ -36,6 +36,8 @@ static double *mat_res = NULL;
 
 static void ina_cleanup_handler(int error, int *exitcode)
 {
+    INA_UNUSED(error);
+    INA_UNUSED(exitcode);
     iarray_destroy();
 }
 
@@ -47,26 +49,28 @@ int main(int argc, char** argv)
     const char *mat_y_name = NULL;
     const char *mat_out_name = NULL;
 
-    uint64_t nbytes = 0;
-    uint64_t cbytes = 0;
+    int64_t nbytes = 0;
+    int64_t cbytes = 0;
     double nbytes_mb = 0;
     double cbytes_mb = 0;
 
-    uint64_t shape_x[] = {4056, 3230};
-    uint64_t pshape_x[] = {675, 300};
-    uint64_t bshape_x[] = {800, 400};
+    int64_t shape_x[] = {4056, 3230};
+    int64_t pshape_x[] = {675, 300};
+    int64_t bshape_x[] = {800, 400};
 
-    uint64_t size_x = shape_x[0] * shape_x[1];
-    uint64_t shape_y[] = {3230, 3712};
-    uint64_t pshape_y[] = {300, 478};
-    uint64_t bshape_y [] = {400, 600};
-    uint64_t size_y = shape_y[0] * shape_y[1];
+    int64_t size_x = shape_x[0] * shape_x[1];
+    int64_t shape_y[] = {3230, 3712};
+    int64_t pshape_y[] = {300, 478};
+    int64_t bshape_y[] = {400, 600};
 
-    uint64_t shape_out[] = {shape_x[0], shape_y[1]};
-    uint64_t pshape_out[] = {bshape_x[0], bshape_y[1]};
-    uint64_t size_out = shape_out[0] * shape_out[1];
+    INA_DISABLE_WARNING_MSVC(4204)
+    int64_t shape_out[] = {shape_x[0], shape_y[1]};
+    int64_t pshape_out[] = {bshape_x[0], bshape_y[1]};
+    INA_ENABLE_WARNING_MSVC(4204)
 
-    uint64_t flops = (2 * shape_x[1] - 1) * shape_x[0] * shape_y[1];
+    int64_t size_y = shape_y[0] * shape_y[1];
+    int64_t size_out = shape_out[0] * shape_out[1];
+    int64_t flops = (2 * shape_x[1] - 1) * shape_x[0] * shape_y[1];
 
     INA_OPTS(opt,
              INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
@@ -94,18 +98,20 @@ int main(int argc, char** argv)
         printf("Storage for iarray matrices: *memory*\n");
     }
 
-    iarray_store_properties_t mat_x_prop = {.id = mat_x_name};
-    iarray_store_properties_t mat_y_prop = {.id = mat_y_name};
-    iarray_store_properties_t mat_out_prop = {.id = mat_out_name};
+    INA_DISABLE_WARNING_MSVC(4204)
+    iarray_store_properties_t mat_x_prop = { .id = mat_x_name };
+    iarray_store_properties_t mat_y_prop = { .id = mat_y_name };
+    iarray_store_properties_t mat_out_prop = { .id = mat_out_name };
+    INA_ENABLE_WARNING_MSVC(4204)
 
     printf("\n");
     printf("Measuring time for multiplying matrices X and Y\n");
 
     printf("\n");
-    printf("Matrix X has a shape of (%lld, %lld) with a partition of (%lld, %lld) \n",
-           shape_x[0], shape_x[1], pshape_x[0], pshape_x[1]);
-    printf("Matrix Y has a shape of (%lld, %lld) with a partition of (%lld, %lld) \n",
-           shape_y[0], shape_y[1], pshape_y[0], pshape_y[1]);
+    printf("Matrix X has a shape of (%ld, %ld) with a partition of (%ld, %ld) \n",
+           (long)shape_x[0], (long)shape_x[1], (long)pshape_x[0], (long)pshape_x[1]);
+    printf("Matrix Y has a shape of (%ld, %ld) with a partition of (%ld, %ld) \n",
+           (long)shape_y[0], (long)shape_y[1], (long)pshape_y[0], (long)pshape_y[1]);
 
     printf("\n");
     printf("Working set for the 4 uncompressed matrices: %.1f MB\n", (size_x + size_y + size_out * 2) * sizeof(double) / (double)_IARRAY_SIZE_MB);
@@ -148,11 +154,11 @@ int main(int argc, char** argv)
 
         INA_STOPWATCH_START(w);
         double incx = 10. / size_x;
-        for (uint64_t i = 0; i < size_x; i++) {
+        for (int64_t i = 0; i < size_x; i++) {
             mat_x[i] = i * incx;
         }
         double incy = 10. / size_y;
-        for (uint64_t i = 0; i < size_y; i++) {
+        for (int64_t i = 0; i < size_y; i++) {
             mat_y[i] = i * incy;
         }
         INA_STOPWATCH_STOP(w);

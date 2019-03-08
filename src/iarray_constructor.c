@@ -14,7 +14,6 @@
 
 #include <iarray_private.h>
 
-#include "iarray_constructor.h"
 
 static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
 {
@@ -63,8 +62,8 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
         iarray_iter_write_value_t val;
         iarray_iter_write_value(I, &val);
 
-        uint64_t i = 0;
-        uint64_t inc = 1;
+        int64_t i = 0;
+        int64_t inc = 1;
         for (int j = dtshape->ndim - 1; j >= 0; --j) {
             i += val.index[j] * inc;
             inc *= dtshape->shape[j];
@@ -115,8 +114,8 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
         iarray_iter_write_value_t val;
         iarray_iter_write_value(I, &val);
 
-        uint64_t i = 0;
-        uint64_t inc = 1;
+        int64_t i = 0;
+        int64_t inc = 1;
         for (int j = dtshape->ndim - 1; j >= 0; --j) {
             i += val.index[j] * inc;
             inc *= dtshape->shape[j];
@@ -153,6 +152,8 @@ INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
         case IARRAY_DATA_TYPE_FLOAT:
             INA_FAIL_IF_ERROR(_iarray_container_fill_float(*container, 0.0f));
             break;
+        default:
+            return INA_ERR_EXCEEDED;
     }
     return INA_SUCCESS;
 fail:
@@ -179,6 +180,8 @@ INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
     case IARRAY_DATA_TYPE_FLOAT:
         INA_FAIL_IF_ERROR(_iarray_container_fill_float(*container, 1.0f));
         break;
+    default:
+        return INA_ERR_EXCEEDED;
     }
     return INA_SUCCESS;
 fail:
@@ -238,6 +241,7 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      int flags,
                                      iarray_container_t **container)
 {
+    INA_UNUSED(buffer_len);
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(buffer);
@@ -260,7 +264,7 @@ fail:
 }
 
 
-static int32_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype)
+static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype)
 {
     uint8_t *pmeta = smeta;
 
@@ -313,15 +317,15 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
     // Build the auxshape
     (*container)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
     iarray_auxshape_t* auxshape = (*container)->auxshape;
-    for (int i = 0; i < catarr->ndim; ++i) {
-        auxshape->index[i] = (uint8_t) i;
+    for (int8_t i = 0; i < catarr->ndim; ++i) {
+        auxshape->index[i] = i;
         auxshape->offset[i] = 0;
         auxshape->shape_wos[i] = catarr->shape[i];
         auxshape->pshape_wos[i] = catarr->pshape[i];
     }
 
     // Populate the frame
-    (*container)->frame = (blosc2_frame*)ina_mem_alloc(sizeof(blosc2_frame));
+    (*container)->frame = blosc2_new_frame(NULL);
     INA_FAIL_IF((*container)->frame == NULL);
     ina_mem_cpy((*container)->frame, catarr->sc->frame, sizeof(blosc2_frame));
 
@@ -379,13 +383,15 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
     if (container->transposed == 1) {
         switch (container->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                mkl_dimatcopy('R', 'T', container->dtshape->shape[1], container->dtshape->shape[0], 1.0,
-                              (double *) buffer, container->dtshape->shape[0], container->dtshape->shape[1]);
+                mkl_dimatcopy('R', 'T', (size_t)container->dtshape->shape[1], (size_t)container->dtshape->shape[0], 1.0,
+                              (double *) buffer, (size_t)container->dtshape->shape[0], (size_t)container->dtshape->shape[1]);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                mkl_simatcopy('R', 'T', container->dtshape->shape[1], container->dtshape->shape[0], 1.0,
-                              (float *) buffer, container->dtshape->shape[0], container->dtshape->shape[1]);
+                mkl_simatcopy('R', 'T', (size_t)container->dtshape->shape[1], (size_t)container->dtshape->shape[0], 1.0,
+                              (float *) buffer, (size_t)container->dtshape->shape[0], (size_t)container->dtshape->shape[1]);
                 break;
+            default:
+                return INA_ERR_EXCEEDED;
         }
     }
 

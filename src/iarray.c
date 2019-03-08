@@ -41,6 +41,9 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_data_type_t dtype, int *max_nel
     /* Use INAC to determine L3 cache size */
     // high = L3 / 4 (2x operand, 1x temporary, 1x reserve) / dtype
     //low = 4k (determine a better solution later)
+    INA_UNUSED(dtype);
+    INA_UNUSED(max_nelem);
+    INA_UNUSED(min_nelem);
     return INA_SUCCESS;
 }
 

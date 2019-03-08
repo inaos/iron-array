@@ -13,10 +13,9 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-#include <tests/iarray_test.h>
 
-static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, uint8_t ndim,
-                                 const uint64_t *shape, const uint64_t *pshape, iarray_store_properties_t *store)
+static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, int8_t ndim,
+                                 const int64_t *shape, const int64_t *pshape, iarray_store_properties_t *store)
 {
 
     // Create dtshape
@@ -109,9 +108,9 @@ INA_TEST_FIXTURE(persistency, double_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    uint8_t ndim = 2;
-    uint64_t shape[] = {125, 157};
-    uint64_t pshape[] = {12, 13};
+    int8_t ndim = 2;
+    int64_t shape[] = {125, 157};
+    int64_t pshape[] = {12, 13};
 
     INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, pshape, &data->store));
 }
@@ -120,9 +119,9 @@ INA_TEST_FIXTURE(persistency, float_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
 
-    uint8_t ndim = 2;
-    uint64_t shape[] = {445, 321};
-    uint64_t pshape[] = {21, 17};
+    int8_t ndim = 2;
+    int64_t shape[] = {445, 321};
+    int64_t pshape[] = {21, 17};
 
     INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, pshape, &data->store));
 }
@@ -131,9 +130,9 @@ INA_TEST_FIXTURE(persistency, double_5) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    uint8_t ndim = 5;
-    uint64_t shape[] = {20, 25, 27, 4, 46};
-    uint64_t pshape[] = {12, 24, 19, 3, 13};
+    int8_t ndim = 5;
+    int64_t shape[] = {20, 25, 27, 4, 46};
+    int64_t pshape[] = {12, 24, 19, 3, 13};
 
     INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, pshape, &data->store));
 }
@@ -142,9 +141,9 @@ INA_TEST_FIXTURE(persistency, float_7) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
 
-    uint8_t ndim = 7;
-    uint64_t shape[] = {10, 12, 8, 9, 1, 7, 7};
-    uint64_t pshape[] = {2, 5, 3, 4, 1, 3, 3};
+    int8_t ndim = 7;
+    int64_t shape[] = {10, 12, 8, 9, 1, 7, 7};
+    int64_t pshape[] = {2, 5, 3, 4, 1, 3, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, pshape, &data->store));
 }
