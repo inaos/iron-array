@@ -65,12 +65,12 @@ int main(int argc, char** argv)
     int64_t bshape_y [] = {6000};
     int64_t size_y = shape_y[0];
 
-    int64_t shape_out[1];
-    shape_out[0] = shape_x[0];
-    int64_t pshape_out[1];
-    pshape_out[0] = bshape_x[0];
-    int64_t size_out = shape_out[0];
+    INA_DISABLE_WARNING_MSVC(4204)
+    int64_t shape_out[] = {shape_x[0]};
+    int64_t pshape_out[] = {bshape_x[0]};
+    INA_ENABLE_WARNING_MSVC(4204)
 
+    int64_t size_out = shape_out[0];
     int64_t flops = (2 * shape_x[1] - 1) * shape_x[0];
 
     INA_OPTS(opt,

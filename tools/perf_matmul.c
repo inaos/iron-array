@@ -62,14 +62,14 @@ int main(int argc, char** argv)
     int64_t shape_y[] = {3230, 3712};
     int64_t pshape_y[] = {300, 478};
     int64_t bshape_y[] = {400, 600};
-    int64_t size_y = shape_y[0] * shape_y[1];
 
     INA_DISABLE_WARNING_MSVC(4204)
     int64_t shape_out[] = {shape_x[0], shape_y[1]};
     int64_t pshape_out[] = {bshape_x[0], bshape_y[1]};
     INA_ENABLE_WARNING_MSVC(4204)
-    int64_t size_out = shape_out[0] * shape_out[1];
 
+    int64_t size_y = shape_y[0] * shape_y[1];
+    int64_t size_out = shape_out[0] * shape_out[1];
     int64_t flops = (2 * shape_x[1] - 1) * shape_x[0] * shape_y[1];
 
     INA_OPTS(opt,
