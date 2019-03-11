@@ -273,6 +273,18 @@ INA_API(ina_rc_t) iarray_random_lognormal(iarray_context_t *ctx,
                                           int flags,
                                           iarray_container_t **container);
 
+INA_API(ina_rc_t) iarray_random_exponential(iarray_context_t *ctx,
+                                            iarray_dtshape_t *dtshape,
+                                            iarray_random_ctx_t *random_ctx,
+                                            iarray_store_properties_t *store,
+                                            int flags,
+                                            iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
+                                       iarray_container_t *c1,
+                                       iarray_container_t *c2,
+                                       bool *res);
+
 INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    iarray_container_t *c,
                                    int64_t *start,

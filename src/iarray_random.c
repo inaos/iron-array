@@ -20,6 +20,7 @@ typedef enum _iarray_random_method_e {
     _IARRAY_RANDOM_METHOD_GAUSSIAN,
     _IARRAY_RANDOM_METHOD_BETA,
     _IARRAY_RANDOM_METHOD_LOGNORMAL,
+    _IARRAY_RANDOM_METHOD_EXPONENTIAL,
 } _iarray_random_method_t;
 
 struct iarray_random_ctx_s {
@@ -135,13 +136,18 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                 case _IARRAY_RANDOM_METHOD_BETA: {
                     float alpha = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
                     float beta = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA];
-                    status =
-                        vsRngBeta(VSL_RNG_METHOD_BETA_CJA, random_ctx->stream, (int) part_size, r, alpha, beta, 0, 1);
+                    status = vsRngBeta(VSL_RNG_METHOD_BETA_CJA, random_ctx->stream, (int) part_size, r, alpha, beta, 0, 1);
+                    break;
                 }
                 case _IARRAY_RANDOM_METHOD_LOGNORMAL: {
                     float mu = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_MU];
                     float sigma = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_SIGMA];
-                    status = vsRngLognormal(method, random_ctx->stream, (int) part_size, r, mu, sigma, 0, 1);
+                    status = vsRngLognormal(VSL_RNG_METHOD_LOGNORMAL_BOXMULLER2, random_ctx->stream, (int) part_size, r, mu, sigma, 0, 1);
+                    break;
+                }
+                case _IARRAY_RANDOM_METHOD_EXPONENTIAL: {
+                    float beta = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA];
+                    status = vsRngExponential(VSL_RNG_METHOD_EXPONENTIAL_ICDF, random_ctx->stream, (int) part_size, r, 0, beta);
                     break;
                 }
             }
@@ -167,14 +173,18 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                 case _IARRAY_RANDOM_METHOD_BETA: {
                     double alpha = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
                     double beta = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA];
-                    status =
-                        vdRngBeta(VSL_RNG_METHOD_BETA_CJA, random_ctx->stream, (int) part_size, r, alpha, beta, 0, 1);
+                    status = vdRngBeta(VSL_RNG_METHOD_BETA_CJA, random_ctx->stream, (int) part_size, r, alpha, beta, 0, 1);
                     break;
                 }
                 case _IARRAY_RANDOM_METHOD_LOGNORMAL: {
                     double mu = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_MU];
                     double sigma = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_SIGMA];
-                    status = vdRngLognormal(method, random_ctx->stream, (int) part_size, r, mu, sigma, 0, 1);
+                    status = vdRngLognormal(VSL_RNG_METHOD_LOGNORMAL_BOXMULLER2, random_ctx->stream, (int) part_size, r, mu, sigma, 0, 1);
+                    break;
+                }
+                case _IARRAY_RANDOM_METHOD_EXPONENTIAL: {
+                    double beta = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA];
+                    status = vdRngExponential(VSL_RNG_METHOD_EXPONENTIAL_ICDF, random_ctx->stream, (int) part_size, r, 0, beta);
                     break;
                 }
             }
@@ -271,4 +281,132 @@ INA_API(ina_rc_t) iarray_random_lognormal(iarray_context_t *ctx,
     INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_LOGNORMAL);
+}
+
+INA_API(ina_rc_t) iarray_random_exponential(iarray_context_t *ctx,
+                                           iarray_dtshape_t *dtshape,
+                                           iarray_random_ctx_t *random_ctx,
+                                           iarray_store_properties_t *store,
+                                           int flags,
+                                           iarray_container_t **container)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(random_ctx);
+    INA_VERIFY_NOT_NULL(container);
+
+    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+
+    return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_EXPONENTIAL);
+}
+
+INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
+                                       iarray_container_t *c1,
+                                       iarray_container_t *c2,
+                                       bool *res)
+{
+
+    INA_ASSERT_SUCCEED(c1->catarr->size != c2->catarr->size);
+    int64_t size = c1->catarr->size;
+
+    int nbins = 100;
+    double bins[nbins];
+
+    double hist1[nbins];
+    double hist2[nbins];
+
+    double max = -INFINITY;
+    double min = INFINITY;
+
+    iarray_iter_read_t *iter;
+
+    iarray_iter_read_new(ctx, c1, &iter);
+    for (iarray_iter_read_init(iter);
+         !iarray_iter_read_finished(iter);
+         iarray_iter_read_next(iter)) {
+
+        iarray_iter_read_value_t val;
+        iarray_iter_read_value(iter, &val);
+
+        double data = ((double *) val.pointer)[0];
+
+        max = (data > max) ? data : max;
+        min = (data < min) ? data : min;
+    }
+    iarray_iter_read_free(iter);
+
+    iarray_iter_read_new(ctx, c2, &iter);
+    for (iarray_iter_read_init(iter);
+         !iarray_iter_read_finished(iter);
+         iarray_iter_read_next(iter)) {
+
+        iarray_iter_read_value_t val;
+        iarray_iter_read_value(iter, &val);
+
+        double data = ((double *) val.pointer)[0];
+
+        max = (data > max) ? data : max;
+        min = (data < min) ? data : min;
+    }
+    iarray_iter_read_free(iter);
+
+    for (int i = 0; i < nbins; ++i) {
+        bins[i] = min + (max-min)/nbins * (i+1);
+        hist1[i] = 0;
+        hist2[i] = 0;
+    }
+
+    iarray_iter_read_new(ctx, c1, &iter);
+    for (iarray_iter_read_init(iter);
+         !iarray_iter_read_finished(iter);
+         iarray_iter_read_next(iter)) {
+
+        iarray_iter_read_value_t val;
+        iarray_iter_read_value(iter, &val);
+
+        double data = ((double *) val.pointer)[0];
+
+        for (int i = 0; i < nbins; ++i) {
+            if (data <= bins[i]) {
+                hist1[i] += 1;
+                break;
+            }
+        }
+    }
+    iarray_iter_read_free(iter);
+
+    iarray_iter_read_new(ctx, c2, &iter);
+    for (iarray_iter_read_init(iter);
+         !iarray_iter_read_finished(iter);
+         iarray_iter_read_next(iter)) {
+
+        iarray_iter_read_value_t val;
+        iarray_iter_read_value(iter, &val);
+
+        double data = ((double *) val.pointer)[0];
+
+        for (int i = 0; i < nbins; ++i) {
+            if (data <= bins[i]) {
+                hist2[i] += 1;
+                break;
+            }
+        }
+    }
+    iarray_iter_read_free(iter);
+
+    for (int i = 1; i < nbins; ++i) {
+        hist1[i] += hist1[i-1];
+        hist2[i] += hist2[i-1];
+    }
+
+    double max_dif = -INFINITY;
+    for (int i = 0; i < nbins; ++i) {
+        max_dif = (fabs(hist1[i] - hist2[i]) / size > max_dif) ? fabs(hist1[i] - hist2[i]) / size : max_dif;
+    }
+
+    double a = 0.01;
+    double threshold = sqrt(- log(a) / 2) * sqrt(2 * ((double) size) / (size * size));
+
+    *res = (max_dif < threshold);
+    return INA_SUCCESS;
 }
