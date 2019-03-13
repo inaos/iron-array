@@ -415,8 +415,8 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
     INA_ASSERT_SUCCEED(c1->catarr->size != c2->catarr->size);
     int64_t size = c1->catarr->size;
 
+    int nbins = 100;
     double bins[100];
-
     double hist1[100];
     double hist2[100];
 
