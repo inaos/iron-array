@@ -53,12 +53,12 @@ static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx,
 }
 
 
-INA_TEST_DATA(random) {
+INA_TEST_DATA(random_mt) {
     iarray_context_t *ctx;
     iarray_random_ctx_t *rnd_ctx;
 };
 
-INA_TEST_SETUP(random) {
+INA_TEST_SETUP(random_mt) {
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -71,13 +71,13 @@ INA_TEST_SETUP(random) {
         data->ctx, 777, IARRAY_RANDOM_RNG_MERSENNE_TWISTER, &data->rnd_ctx));
 }
 
-INA_TEST_TEARDOWN(random) {
+INA_TEST_TEARDOWN(random_mt) {
     iarray_random_ctx_free(data->ctx, &data->rnd_ctx);
     iarray_context_free(&data->ctx);
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(random, rand) {
+INA_TEST_FIXTURE(random_mt, rand) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 1;
@@ -92,7 +92,7 @@ INA_TEST_FIXTURE(random, rand) {
                                       &iarray_random_rand));
 }
 
-INA_TEST_FIXTURE(random, rand_f) {
+INA_TEST_FIXTURE(random_mt, rand_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 1;
@@ -107,7 +107,7 @@ INA_TEST_FIXTURE(random, rand_f) {
                                       &iarray_random_rand));
 }
 
-INA_TEST_FIXTURE(random, randn) {
+INA_TEST_FIXTURE(random_mt, randn) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 1;
@@ -122,7 +122,7 @@ INA_TEST_FIXTURE(random, randn) {
                                       &iarray_random_randn));
 }
 
-INA_TEST_FIXTURE(random, randn_f) {
+INA_TEST_FIXTURE(random_mt, randn_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 1;
@@ -137,7 +137,7 @@ INA_TEST_FIXTURE(random, randn_f) {
                                       &iarray_random_randn));
 }
 
-INA_TEST_FIXTURE(random, beta) {
+INA_TEST_FIXTURE(random_mt, beta) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 1;
@@ -155,7 +155,7 @@ INA_TEST_FIXTURE(random, beta) {
                                       &iarray_random_beta));
 }
 
-INA_TEST_FIXTURE(random, beta_f) {
+INA_TEST_FIXTURE(random_mt, beta_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 1;
@@ -172,7 +172,7 @@ INA_TEST_FIXTURE(random, beta_f) {
                                       &iarray_random_beta));
 }
 
-INA_TEST_FIXTURE(random, lognormal) {
+INA_TEST_FIXTURE(random_mt, lognormal) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 1;
@@ -189,7 +189,7 @@ INA_TEST_FIXTURE(random, lognormal) {
                                       &iarray_random_lognormal));
 }
 
-INA_TEST_FIXTURE(random, lognormal_f) {
+INA_TEST_FIXTURE(random_mt, lognormal_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 1;
@@ -206,7 +206,7 @@ INA_TEST_FIXTURE(random, lognormal_f) {
                                       &iarray_random_lognormal));
 }
 
-INA_TEST_FIXTURE(random, exponential) {
+INA_TEST_FIXTURE(random_mt, exponential) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 1;
@@ -222,7 +222,7 @@ INA_TEST_FIXTURE(random, exponential) {
                                       &iarray_random_exponential));
 }
 
-INA_TEST_FIXTURE(random, exponential_f) {
+INA_TEST_FIXTURE(random_mt, exponential_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 1;
@@ -239,7 +239,7 @@ INA_TEST_FIXTURE(random, exponential_f) {
                                       &iarray_random_exponential));
 }
 
-INA_TEST_FIXTURE(random, uniform) {
+INA_TEST_FIXTURE(random_mt, uniform) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 1;
@@ -256,7 +256,7 @@ INA_TEST_FIXTURE(random, uniform) {
                                       &iarray_random_uniform));
 }
 
-INA_TEST_FIXTURE(random, uniform_f) {
+INA_TEST_FIXTURE(random_mt, uniform_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 1;
@@ -273,7 +273,7 @@ INA_TEST_FIXTURE(random, uniform_f) {
                                       &iarray_random_uniform));
 }
 
-INA_TEST_FIXTURE(random, normal) {
+INA_TEST_FIXTURE(random_mt, normal) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 1;
@@ -290,7 +290,7 @@ INA_TEST_FIXTURE(random, normal) {
                                       &iarray_random_normal));
 }
 
-INA_TEST_FIXTURE(random, normal_f) {
+INA_TEST_FIXTURE(random_mt, normal_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 1;
