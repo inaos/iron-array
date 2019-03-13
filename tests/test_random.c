@@ -52,6 +52,7 @@ static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx,
     return INA_SUCCESS;
 }
 
+
 INA_TEST_DATA(random) {
     iarray_context_t *ctx;
     iarray_random_ctx_t *rnd_ctx;
