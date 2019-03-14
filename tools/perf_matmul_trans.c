@@ -54,37 +54,42 @@ int main(int argc, char** argv)
     double nbytes_mb = 0;
     double cbytes_mb = 0;
 
-    int64_t xshape[] = {3230, 4056};
-    int64_t xpshape[] = {300, 675};
-    int64_t xbshape[] = {800, 400};
-    int64_t xsize = xshape[0] * xshape[1];
-    bool xtrans = true;
-    if (argc > 1) {
-        // TODO: fix this codepath (see )
-        if (strcmp(argv[1], "notrans") == 0) {
-            xtrans = false;
-        }
-    }
-    int xflag = xtrans ? CblasTrans : CblasNoTrans;
+    int64_t xshape[] = {4200, 4000};
+    int64_t xpshape[] = {300, 300};
+    int64_t xbshape[] = {100, 200};
 
+    int64_t yshape[] = {4400, 4000};
+    int64_t ypshape[] = {400, 300};
+    int64_t ybshape [] = {200, 300};
 
-    int64_t yshape[] = {3712, 3230};
-    int64_t ypshape[] = {478, 300};
-    int64_t ybshape [] = {400, 600};
-    bool ytrans = true;
-    if (argc > 2) {
-        if (strcmp(argv[2], "notrans") == 0) {
-            ytrans = false;
-        }
-    }
     INA_DISABLE_WARNING_MSVC(4204)
-    int64_t oshape[] = {xshape[1], yshape[0]};
+    int64_t oshape[] = {xshape[0], yshape[1]};
     int64_t opshape[] = {xbshape[0], ybshape[1]};
     INA_ENABLE_WARNING_MSVC(4204)
 
-    int yflag = ytrans ? CblasTrans : CblasNoTrans;
+    bool xtrans = false;
+    if (argc > 1) {
+        if (strcmp(argv[1], "trans") == 0) {
+            xtrans = true;
+            oshape[0] = xshape[1];
+        }
+    }
+
+    int64_t xsize = xshape[0] * xshape[1];
+    int xflag = xtrans ? CblasTrans : CblasNoTrans;
+
+    bool ytrans = false;
+    if (argc > 2) {
+        if (strcmp(argv[2], "trans") == 0) {
+            ytrans = true;
+            oshape[1] = yshape[0];
+        }
+    }
     int64_t ysize = yshape[0] * yshape[1];
+    int yflag = ytrans ? CblasTrans : CblasNoTrans;
+
     int64_t osize = oshape[0] * oshape[1];
+
     int64_t flops = (2 * xshape[1] - 1) * xshape[0] * yshape[1];
 
     INA_OPTS(opt,
@@ -208,7 +213,6 @@ int main(int argc, char** argv)
 
     mat_out = (double *) ina_mem_alloc((sizeof(double) * osize));
     mat_res = (double *) ina_mem_alloc((sizeof(double) * osize));
-
 
     int M = (int) con_x->dtshape->shape[0];
     int K = (int) con_x->dtshape->shape[1];
