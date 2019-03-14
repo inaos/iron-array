@@ -88,7 +88,6 @@ int main(int argc, char** argv)
     int64_t ysize = yshape[0] * yshape[1];
     int yflag = ytrans ? CblasTrans : CblasNoTrans;
 
-
     int64_t osize = oshape[0] * oshape[1];
 
     int64_t flops = (2 * xshape[1] - 1) * xshape[0] * yshape[1];
@@ -214,7 +213,6 @@ int main(int argc, char** argv)
 
     mat_out = (double *) ina_mem_alloc((sizeof(double) * osize));
     mat_res = (double *) ina_mem_alloc((sizeof(double) * osize));
-
 
     int M = (int) con_x->dtshape->shape[0];
     int K = (int) con_x->dtshape->shape[1];
