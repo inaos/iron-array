@@ -162,8 +162,8 @@ INA_TEST_FIXTURE(random_mt, beta_f) {
     int64_t shape[] = {10000};
     int64_t pshape[] = {100};
 
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_ALPHA, 4.0);
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 5.0);
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_ALPHA, 4.0f);
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 5.0f);
 
     iarray_store_properties_t store_y;
     store_y.id = "test_beta_f_4_5.iarray";
@@ -196,8 +196,8 @@ INA_TEST_FIXTURE(random_mt, lognormal_f) {
     int64_t shape[] = {10000};
     int64_t pshape[] = {100};
 
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 4.0);
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 0.7);
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 4.0f);
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 0.7f);
 
     iarray_store_properties_t store_y;
     store_y.id = "test_lognormal_f_4_07.iarray";
@@ -229,7 +229,7 @@ INA_TEST_FIXTURE(random_mt, exponential_f) {
     int64_t shape[] = {10000};
     int64_t pshape[] = {100};
 
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 0.5);
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 0.5f);
 
 
     iarray_store_properties_t store_y;
@@ -263,8 +263,8 @@ INA_TEST_FIXTURE(random_mt, uniform_f) {
     int64_t shape[] = {10000};
     int64_t pshape[] = {100};
 
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_A, 0.3);
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_B, 0.5);
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_A, 0.3f);
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_B, 0.5f);
 
     iarray_store_properties_t store_y;
     store_y.id = "test_uniform_f_03_05.iarray";
@@ -297,8 +297,8 @@ INA_TEST_FIXTURE(random_mt, normal_f) {
     int64_t shape[] = {10000};
     int64_t pshape[] = {100};
 
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 3);
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 0.5);
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 3.0f);
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 0.5f);
 
     iarray_store_properties_t store_y;
     store_y.id = "test_normal_f_3_05.iarray";
