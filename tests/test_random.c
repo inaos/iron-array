@@ -13,8 +13,12 @@
 #include <libiarray/iarray.h>
 
 
-static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx, iarray_data_type_t dtype,
-                          int8_t ndim, const int64_t *shape, const int64_t *pshape) {
+static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx,
+                          iarray_data_type_t dtype, int8_t ndim, const int64_t *shape,
+                          const int64_t *pshape, iarray_store_properties_t store_y,
+                          ina_rc_t (*random_fun)(iarray_context_t*, iarray_dtshape_t*,
+                              iarray_random_ctx_t*, iarray_store_properties_t*, int, iarray_container_t**))
+{
 
     // Create dtshape
     iarray_dtshape_t xdtshape;
@@ -29,33 +33,25 @@ static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx, i
     }
 
     iarray_container_t *c_x;
+    INA_TEST_ASSERT_SUCCEED(random_fun(ctx, &xdtshape, rnd_ctx, NULL, 0, &c_x));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_random_rand(ctx, &xdtshape, rnd_ctx, NULL, 0, &c_x));
+    iarray_container_t *c_y;
+    INA_TEST_ASSERT_SUCCEED(iarray_from_file(ctx, &store_y, &c_y));
 
-    // Assert iterator reading it
+    bool res = false;
 
-    iarray_iter_read_t *iter;
-    iarray_iter_read_new(ctx, c_x, &iter);
-    for (iarray_iter_read_init(iter); !iarray_iter_read_finished(iter); iarray_iter_read_next(iter)) {
+    INA_TEST_ASSERT_SUCCEED(iarray_random_kstest(ctx, c_x, c_y, &res));
 
-        iarray_iter_read_value_t val;
-        iarray_iter_read_value(iter, &val);
-
-        if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double v = *((double*)val.pointer);
-            INA_TEST_ASSERT_TRUE(v > .0 && v < 1.);
-        }
-        else {
-            float v = *((float*)val.pointer);
-            INA_TEST_ASSERT_TRUE(v > .0 && v < 1.);
-        }
+    if (!res) {
+        return INA_ERROR(INA_ERR_FAILED);
     }
 
-    iarray_iter_read_free(iter);
     iarray_container_free(ctx, &c_x);
+    iarray_container_free(ctx, &c_y);
 
     return INA_SUCCESS;
 }
+
 
 INA_TEST_DATA(random_mt) {
     iarray_context_t *ctx;
@@ -81,12 +77,232 @@ INA_TEST_TEARDOWN(random_mt) {
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(random_mt, rand_double) {
+INA_TEST_FIXTURE(random_mt, rand) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
-    int8_t ndim = 2;
-    int64_t shape[] = {223, 456};
-    int64_t pshape[] = { 31, 43 };
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape));
+    iarray_store_properties_t store_y;
+    store_y.id = "test_rand.iarray";
+
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_rand));
+}
+
+INA_TEST_FIXTURE(random_mt, rand_f) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_rand_f.iarray";
+
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_rand));
+}
+
+INA_TEST_FIXTURE(random_mt, randn) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_randn.iarray";
+
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_randn));
+}
+
+INA_TEST_FIXTURE(random_mt, randn_f) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_randn_f.iarray";
+
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_randn));
+}
+
+INA_TEST_FIXTURE(random_mt, beta) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_ALPHA, 2.0);
+    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 4.0);
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_beta_2_4.iarray";
+
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_beta));
+}
+
+INA_TEST_FIXTURE(random_mt, beta_f) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_ALPHA, 4.0f);
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 5.0f);
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_beta_f_4_5.iarray";
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_beta));
+}
+
+INA_TEST_FIXTURE(random_mt, lognormal) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 0.0);
+    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 0.4);
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_lognormal_0_04.iarray";
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_lognormal));
+}
+
+INA_TEST_FIXTURE(random_mt, lognormal_f) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 4.0f);
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 0.7f);
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_lognormal_f_4_07.iarray";
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_lognormal));
+}
+
+INA_TEST_FIXTURE(random_mt, exponential) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 6.0);
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_exponential_6.iarray";
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_exponential));
+}
+
+INA_TEST_FIXTURE(random_mt, exponential_f) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 0.5f);
+
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_exponential_f_05.iarray";
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_exponential));
+}
+
+INA_TEST_FIXTURE(random_mt, uniform) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_A, -1.0);
+    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_B, 4.0);
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_uniform_-1_4.iarray";
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_uniform));
+}
+
+INA_TEST_FIXTURE(random_mt, uniform_f) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_A, 0.3f);
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_B, 0.5f);
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_uniform_f_03_05.iarray";
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_uniform));
+}
+
+INA_TEST_FIXTURE(random_mt, normal) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, -2.0);
+    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 4.0);
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_normal_-2_4.iarray";
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_normal));
+}
+
+INA_TEST_FIXTURE(random_mt, normal_f) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 3.0f);
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 0.5f);
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_normal_f_3_05.iarray";
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_normal));
 }
