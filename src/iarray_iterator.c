@@ -220,12 +220,38 @@ INA_API(void) iarray_iter_write_free(iarray_iter_write_t *itr)
 
 INA_API(void) iarray_iter_write_part_init(iarray_iter_write_part_t *itr)
 {
+    int8_t ndim = itr->container->dtshape->ndim;
+    caterva_array_t *catarr = itr->container->catarr;
+
     itr->cont = 0;
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         itr->part_index[i] = 0;
         itr->part_shape[i] = itr->container->dtshape->pshape[i];
     }
     itr->part_size = itr->container->catarr->psize;
+
+    //update_index
+    itr->part_index[ndim - 1] = itr->cont % (catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1]);
+    itr->elem_index[ndim - 1] = itr->part_index[ndim - 1] * catarr->pshape[ndim - 1];
+
+    int64_t inc = catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1];
+
+    for (int i = ndim - 2; i >= 0; --i) {
+        itr->part_index[i] = itr->cont % (inc * catarr->eshape[i] / catarr->pshape[i]) / (inc);
+        itr->elem_index[i] = itr->part_index[i] * catarr->pshape[i];
+        inc *= catarr->eshape[i] / catarr->pshape[i];
+    }
+
+    //calculate the buffer size
+    itr->part_size = 1;
+    for (int i = 0; i < ndim; ++i) {
+        if ((itr->part_index[i] + 1) * catarr->pshape[i] > catarr->shape[i]) {
+            itr->part_shape[i] = catarr->shape[i] - catarr->eshape[i] + catarr->pshape[i];
+        } else {
+            itr->part_shape[i] = catarr->pshape[i];
+        }
+        itr->part_size *= itr->part_shape[i];
+    }
 }
 
 /*
@@ -311,6 +337,8 @@ INA_API(ina_rc_t) iarray_iter_write_part_next(iarray_iter_write_part_t *itr)
 
     //update_index
     itr->part_index[ndim - 1] = itr->cont % (catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1]);
+    itr->elem_index[ndim - 1] = itr->part_index[ndim - 1] * catarr->pshape[ndim - 1];
+
     int64_t inc = catarr->eshape[ndim - 1] / catarr->pshape[ndim - 1];
 
     for (int i = ndim - 2; i >= 0; --i) {
