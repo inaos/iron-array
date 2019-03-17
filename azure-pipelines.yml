@@ -49,7 +49,7 @@ jobs:
     env:
       gitlab_priv_key: $(gitlab_priv_key)
   - script: |
-      start "" "%SYSTEMDRIVE%\Program Files (x86)\Git\bin\sh.exe" --login
+      "%SYSTEMDRIVE%\Program Files (x86)\Git\bin\sh.exe"
       git submodule update -q --init --recursive
   - script: |
       call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
