@@ -42,6 +42,7 @@ jobs:
       echo "-----END RSA PRIVATE KEY-----" >> $HOME/.ssh/id_rsa
       cat $HOME/.ssh/id_rsa
       ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts
+      ssh -v git@gitlab.com
       git submodule update --init --recursive
     env:
       gitlab_priv_key: $(gitlab_priv_key)
