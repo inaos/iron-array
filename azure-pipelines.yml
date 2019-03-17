@@ -1,0 +1,33 @@
+variables:
+- group: jfrog-artifactory
+
+jobs:
+- job: BuildWindows
+  
+  strategy:
+    matrix:
+      windows:
+        imageName: 'vs2017-win2016'
+        BUILD_CONFIGURATION: Debug
+        VSINSTALL: "Microsoft Visual Studio\\2017\\Enterprise\\VC\\Auxiliary\\Build"
+        MSVC_PLATFORM: amd64
+
+  pool:
+    vmImage: $(imageName)
+  
+  timeoutInMinutes: 0
+  
+  steps:
+  - script: |
+      choco source add -n "inaos" -s "https://inaos.jfrog.io/inaos/api/nuget/nuget-release-local/" -u %jfrog_artifactory_uid% -p %jfrog_artifactory_pwd%
+      choco install inaos-dev-quality-tools -y --force
+      conda install -y -c intel mkl-include
+      conda install -y -c intel mkl-static
+      call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
+    env:
+      BUILD_CONFIGURATION: $(BUILD_CONFIGURATION)
+      VSINSTALL: $(VSINSTALL)
+      MSVC_PLATFORM: $(MSVC_PLATFORM)
+      jfrog_artifactory_uid: $(jfrog_artifactory_uid)
+      jfrog_artifactory_pwd: $(jfrog_artifactory_pwd)
+      
