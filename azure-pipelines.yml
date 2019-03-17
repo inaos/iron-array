@@ -20,6 +20,7 @@ jobs:
   timeoutInMinutes: 0
   
   steps:
+  - powershell: gci env:* | sort-object name
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
   - script: |
@@ -36,12 +37,13 @@ jobs:
       jfrog_artifactory_pwd: $(jfrog_artifactory_pwd)
   - powershell: |
       mkdir -p $HOME/.inaos/cmake
-      $inac_home = Join-Path -Path $env:HOME -ChildPath "INAOS"
+      $inac_home = Join-Path -Path $HOME -ChildPath "INAOS"
       mkdir -p $inac_home
       $repos = "INAC_REPOSITORY_LOCAL=$inac_home`nINAC_REPOSITORY_REMOTE=https://inaos.jfrog.io/inaos/libs-release-local/inaos`nINAC_REPOSITORY_USRPWD=licensed:AKCp5bBraH7CasbsYCURsjzkbjXwVwdYcT7u39EiuL6GjnK1VKfKQWCd1E2E64mHokU5YUHku"
       Set-Content $HOME/.inaos/cmake/repository.txt $repos
       $fileContent = "-----BEGIN RSA PRIVATE KEY-----`n"
       $fileContent += $env:gitlab_priv_key.Replace(' ', "`n")
       $fileContent += "`n-----END RSA PRIVATE KEY-----`n"
-      Set-Content $HOME/.ssh/id_rsa $fileContent   
+      Set-Content $HOME/.ssh/id_rsa $fileContent  
+      
       
