@@ -37,7 +37,12 @@ jobs:
     env:
       gitlab_priv_key: $(gitlab_priv_key)
   - bash: |
-      GIT_SSH_COMMAND='ssh -i $HOME/.ssh/id_rsa' git submodule update -q --init --recursive
+      echo "-----BEGIN RSA PRIVATE KEY-----" > $HOME/.ssh/id_rsa
+      echo "${gitlab_priv_key}" | tr " " "\n" >> $HOME/.ssh/id_rsa
+      echo "-----END RSA PRIVATE KEY-----" >> $HOME/.ssh/id_rsa
+      git submodule update --init --recursive
+    env:
+      gitlab_priv_key: $(gitlab_priv_key)
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
   - script: |
