@@ -30,7 +30,6 @@ jobs:
       #choco install inaos-dev-quality-tools -y --force
       conda install -y -c intel mkl-include
       conda install -y -c intel mkl-static
-      call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
     env:
       VSINSTALL: $(VSINSTALL)
       MSVC_PLATFORM: $(MSVC_PLATFORM)
@@ -50,6 +49,7 @@ jobs:
     env:
       gitlab_priv_key: $(gitlab_priv_key)
   - script: |
+      call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
       git submodule update -q --init --recursive
       mkdir cmake-build-%BUILD_CONFIGURATION%
       cd cmake-build-%BUILD_CONFIGURATION%
