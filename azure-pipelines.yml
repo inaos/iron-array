@@ -49,9 +49,10 @@ jobs:
     env:
       gitlab_priv_key: $(gitlab_priv_key)
   - script: |
-      call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
-      git config --global core.sshCommand 'ssh -i %USERPROFILE%\.ssh\id_rsa'
+      start "" "%SYSTEMDRIVE%\Program Files (x86)\Git\bin\sh.exe" --login
       git submodule update -q --init --recursive
+  - script: |
+      call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
       mkdir cmake-build-%BUILD_CONFIGURATION%
       cd cmake-build-%BUILD_CONFIGURATION%
       cmake -G "NMake Makefiles" ../ -DCMAKE_BUILD_TYPE=%BUILD_CONFIGURATION% -DINAC_TARGET_ARCH=%BUILD_ARCH%
