@@ -38,6 +38,9 @@ jobs:
       gitlab_priv_key: $(gitlab_priv_key)
   - script: |
       choco install git -y --force
+      dir "C:\Program Files\Git"
+      dir "C:\Program Files\Git\bin\"
+      "C:\Program Files\Git\bin\sh.exe"
       git submodule update -q --init --recursive
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
