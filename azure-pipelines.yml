@@ -46,11 +46,11 @@ jobs:
       $fileContent += "`n-----END RSA PRIVATE KEY-----`n"
       mkdir -p $HOME/.ssh
       Set-Content $HOME/.ssh/id_rsa $fileContent
-      get-content $HOME/.ssh/id_rsa $fileContent
     env:
       gitlab_priv_key: $(gitlab_priv_key)
   - script: |
       call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
+      type %USERPROFILE%\.ssh\id_rsa
       git submodule update -q --init --recursive
       mkdir cmake-build-%BUILD_CONFIGURATION%
       cd cmake-build-%BUILD_CONFIGURATION%
