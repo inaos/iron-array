@@ -25,8 +25,8 @@ jobs:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
   - script: |
-      choco source add -n "inaos" -s "https://inaos.jfrog.io/inaos/api/nuget/nuget-release-local/" -u %jfrog_artifactory_uid% -p %jfrog_artifactory_pwd%
-      choco install inaos-dev-quality-tools -y --force
+      #choco source add -n "inaos" -s "https://inaos.jfrog.io/inaos/api/nuget/nuget-release-local/" -u %jfrog_artifactory_uid% -p %jfrog_artifactory_pwd%
+      #choco install inaos-dev-quality-tools -y --force
       conda install -y -c intel mkl-include
       conda install -y -c intel mkl-static
       call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
@@ -45,6 +45,7 @@ jobs:
       $fileContent = "-----BEGIN RSA PRIVATE KEY-----`n"
       $fileContent += $env:gitlab_priv_key.Replace(' ', "`n")
       $fileContent += "`n-----END RSA PRIVATE KEY-----`n"
+      mkdir -p $HOME/.ssh
       Set-Content $HOME/.ssh/id_rsa $fileContent  
     env:
       gitlab_priv_key: $(gitlab_priv_key)
