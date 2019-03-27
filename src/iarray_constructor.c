@@ -18,14 +18,14 @@
 static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
 {
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    caterva_fill(c->catarr, shape, &value);
+    caterva_fill(c->catarr, &shape, &value);
     return INA_SUCCESS;
 }
 
 static ina_rc_t _iarray_container_fill_double(iarray_container_t *c, double value)
 {
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    caterva_fill(c->catarr, shape, &value);
+    caterva_fill(c->catarr, &shape, &value);
     return INA_SUCCESS;
 }
 
@@ -251,7 +251,7 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
     // TODO: would it be interesting to add a `buffer_len` parameter to `caterva_from_buffer()`?
     caterva_dims_t shape = caterva_new_dims((*container)->dtshape->shape, (*container)->dtshape->ndim);
-    if (caterva_from_buffer((*container)->catarr, shape, buffer) != 0) {
+    if (caterva_from_buffer((*container)->catarr, &shape, buffer) != 0) {
         INA_ERROR(INA_ERR_FAILED);
         INA_FAIL_IF(1);
     }

@@ -18,7 +18,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
                              int64_t *bshape_a, int64_t *bshape_b) {
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    caterva_update_shape(c->catarr, shape);
+    caterva_update_shape(c->catarr, &shape);
 
     // define mkl parameters
     int64_t B0 = bshape_a[0];
@@ -147,7 +147,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
                              int64_t *bshape_a, int64_t *bshape_b) {
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    caterva_update_shape(c->catarr, shape);
+    caterva_update_shape(c->catarr, &shape);
 
     // Define parameters needed in mkl multiplication
     int64_t B0 = bshape_a[0];
@@ -281,7 +281,7 @@ static ina_rc_t _iarray_operator_elwise_a(
     INA_ASSERT_NOT_NULL(mkl_fun_s);
 
     caterva_dims_t shape = caterva_new_dims(result->dtshape->shape, result->dtshape->ndim);
-    caterva_update_shape(result->catarr, shape);
+    caterva_update_shape(result->catarr, &shape);
 
     size_t psize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {
@@ -336,7 +336,7 @@ static ina_rc_t _iarray_operator_elwise_ab(
     }
 
     caterva_dims_t shape = caterva_new_dims(result->dtshape->shape, result->dtshape->ndim);
-    caterva_update_shape(result->catarr, shape);
+    caterva_update_shape(result->catarr, &shape);
 
     size_t psize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {
