@@ -149,8 +149,10 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     if (flags & IARRAY_CONTAINER_PERSIST) {
         (*c)->catarr = caterva_empty_array(cat_ctx, (*c)->frame, &pshape);
     }
-    else {
+    else if (pshape.dims[0] != 0) {
         (*c)->catarr = caterva_empty_array(cat_ctx, NULL, &pshape);
+    } else {
+        (*c)->catarr = caterva_empty_array(cat_ctx, NULL, NULL);
     }
     INA_FAIL_IF((*c)->catarr == NULL);
 
