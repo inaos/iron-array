@@ -92,24 +92,24 @@ INA_TEST_FIXTURE(constructor_linspace, 2_d) {
     INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
-INA_TEST_FIXTURE(constructor_linspace, 2_f) {
+INA_TEST_FIXTURE(constructor_linspace, 2_f_p) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 2;
     int64_t shape[] = {445, 321};
-    int64_t pshape[] = {21, 17};
+    int64_t pshape[] = {0, 0};
     double start = 3123;
     double stop = 45654;
 
     INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
-INA_TEST_FIXTURE(constructor_linspace, 5_d) {
+INA_TEST_FIXTURE(constructor_linspace, 5_d_p) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 5;
     int64_t shape[] = {20, 18, 17, 13, 21};
-    int64_t pshape[] = {12, 12, 2, 3, 13};
+    int64_t pshape[] = {0, 0, 0, 0, 0};
     double start = 0.1;
     double stop = 0.2;
 
