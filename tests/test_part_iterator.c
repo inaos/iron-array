@@ -61,7 +61,7 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
 
     iarray_iter_write_part_free(I);
 
-    uint8_t *buf = malloc((size_t)c_x->catarr->size * type_size);
+    uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));
 
     if (c_x->dtshape->ndim == 2) {
@@ -99,6 +99,7 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     iarray_iter_read_block_t *I3;
     iarray_iter_read_block_new(ctx, c_y, &I3, pshape);
 
+
     for (iarray_iter_read_block_init(I2), iarray_iter_read_block_init(I3);
          !iarray_iter_read_block_finished(I2);
          iarray_iter_read_block_next(I2), iarray_iter_read_block_next(I3)) {
@@ -133,11 +134,14 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
         }
     }
 
-    free(buf);
 
     iarray_iter_read_block_free(I2);
+    iarray_iter_read_block_free(I3);
 
     iarray_container_free(ctx, &c_x);
+    iarray_container_free(ctx, &c_y);
+
+    ina_mem_free(buf);
 
     return INA_SUCCESS;
 }
