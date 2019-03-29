@@ -85,3 +85,11 @@ add_library(iarray SHARED ${src})
 target_link_libraries(iarray ${INAC_LIBS} blosc_static caterva ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 inac_package()
+
+# Copy test files
+file(GLOB TESTS_DATA tests/data/*.iarray)
+
+foreach (data ${TESTS_DATA})
+    file(COPY ${data}
+            DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+endforeach(data)
