@@ -85,12 +85,12 @@ INA_TEST_TEARDOWN(constructor_arange) {
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(constructor_arange, 2_d) {
+INA_TEST_FIXTURE(constructor_arange, 2_d_p) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
     int64_t shape[] = {10, 10};
-    int64_t pshape[] = {5, 5};
+    int64_t pshape[] = {0, 0};
     double start = - 0.1;
     double stop = - 0.25;
 
@@ -121,12 +121,12 @@ INA_TEST_FIXTURE(constructor_arange, 5_d) {
     INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
-INA_TEST_FIXTURE(constructor_arange, 7_f) {
+INA_TEST_FIXTURE(constructor_arange, 7_f_) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 7;
     int64_t shape[] = {5, 7, 8, 9, 6, 5, 7};
-    int64_t pshape[] = {2, 5, 3, 4, 3, 2, 3};
+    int64_t pshape[] = {0, 0, 0, 0, 0, 0, 0};
     double start = 10;
     double stop = 0;
 
