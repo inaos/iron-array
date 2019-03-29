@@ -221,8 +221,7 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                 mkl_dimatcopy('R', 'T', rows, cols, 1.0, (double *) buffer, cols, rows);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                mkl_simatcopy('R', 'T', rows, cols, 1.0,
-                              (float *) buffer, cols, rows);
+                mkl_simatcopy('R', 'T', rows, cols, 1.0, (float *) buffer, cols, rows);
                 break;
             default:
                 return INA_ERR_EXCEEDED;

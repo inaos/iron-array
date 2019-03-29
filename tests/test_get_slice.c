@@ -304,7 +304,6 @@ INA_TEST_FIXTURE(get_slice, 8_d_p_v) {
                                                   start, stop, result, false, view));
 }
 
-
 INA_TEST_DATA(get_slice_trans) {
     iarray_context_t *ctx;
 };
