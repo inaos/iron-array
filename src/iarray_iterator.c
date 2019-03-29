@@ -989,7 +989,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx, iarray_conta
         (*itr)->shape[i] = blockshape[i];
         size *= (*itr)->shape[i];
     }
-    (*itr)->part = ina_mem_alloc((size_t)size);
+    (*itr)->part = ina_mem_alloc((size_t) size);
     (*itr)->pointer = &((*itr)->part[0]);
 
     // Create a cache in the underlying container so as to accelerate the getting of a slice
