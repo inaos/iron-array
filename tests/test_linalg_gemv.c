@@ -102,6 +102,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     iarray_container_t *c_z;
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &zdtshape, NULL, 0, &c_z));
 
+
     // iarray multiplication
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y, c_z, xbshape, ybshape, IARRAY_OPERATOR_GENERAL));
 
@@ -114,12 +115,16 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     for (size_t i = 0; i < zsize; ++i) {
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
+                printf("%f-%f\n", ((double *) zbuffer)[i], ((double *) obuffer)[i]);
+
                 res = (((double *) zbuffer)[i] - ((double *) obuffer)[i]) / ((double *) zbuffer)[i];
                 if (res > 1e-14) {
                     return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
                 }
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
+                printf("%f-%f\n", ((float *) zbuffer)[i], ((float *) obuffer)[i]);
+
                 res = (((float *) zbuffer)[i] - ((float *) obuffer)[i]) / ((float *) zbuffer)[i];
                 if (res > 1e-5) {
                     return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
@@ -129,6 +134,10 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
                 return INA_ERR_EXCEEDED;
         }
     }
+
+    iarray_container_free(ctx, &c_x);
+    iarray_container_free(ctx, &c_y);
+    iarray_container_free(ctx, &c_z);
 
     return INA_SUCCESS;
 }
@@ -151,7 +160,7 @@ INA_TEST_TEARDOWN(linalg_gemv) {
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(linalg_gemv, float_data_n) {
+INA_TEST_FIXTURE(linalg_gemv, f_n) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int typesize = sizeof(float);
@@ -174,61 +183,58 @@ INA_TEST_FIXTURE(linalg_gemv, float_data_n) {
                                       yshape, ypshape, ybshape, zshape, zpshape));
 }
 
-
-
-INA_TEST_FIXTURE(linalg_gemv, double_data_n) {
+INA_TEST_FIXTURE(linalg_gemv, d_n_p) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int typesize = sizeof(double);
 
     int64_t xshape[] = {1300, 1670};
-    int64_t xpshape[] = {287, 300};
+    int64_t xpshape[] = {0, 0};
 
-    int64_t xbshape[] = {430, 200};
+    int64_t xbshape[] = {1300, 1670};
     int xtrans = 0;
 
 
     int64_t yshape[] = {1670};
-    int64_t ypshape[] = {200};
+    int64_t ypshape[] = {0};
 
-    int64_t ybshape[] = {200};
+    int64_t ybshape[] = {1670};
 
     int64_t zshape[] = {1300};
-    int64_t zpshape[] = {430};
+    int64_t zpshape[] = {0};
 
     INA_TEST_ASSERT_SUCCEED(test_gemv(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
                                       yshape, ypshape, ybshape, zshape, zpshape));
 }
 
-
-INA_TEST_FIXTURE(linalg_gemv, double_data_t) {
-
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int typesize = sizeof(double);
-
-    int64_t xshape[] = {1670, 1300};
-    int64_t xpshape[] = {287, 300};
-
-    int64_t xbshape[] = {430, 200};
-    int xtrans = 1;
-
-    int64_t yshape[] = {1670};
-    int64_t ypshape[] = {200};
-
-    int64_t ybshape[] = {200};
-
-    int64_t zshape[] = {1300};
-    int64_t zpshape[] = {430};
-
-    INA_TEST_ASSERT_SUCCEED(test_gemv(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, zshape, zpshape));
-}
-
-
-INA_TEST_FIXTURE(linalg_gemv, float_data_t) {
+INA_TEST_FIXTURE(linalg_gemv, f_t_p) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int typesize = sizeof(float);
+
+    int64_t xshape[] = {1670, 1300};
+    int64_t xpshape[] = {0, 0};
+
+    int64_t xbshape[] = {1300, 1670};
+    int xtrans = 1;
+
+    int64_t yshape[] = {1670};
+    int64_t ypshape[] = {0};
+
+    int64_t ybshape[] = {1670};
+
+    int64_t zshape[] = {1300};
+    int64_t zpshape[] = {0};
+
+    INA_TEST_ASSERT_SUCCEED(test_gemv(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
+                                      yshape, ypshape, ybshape, zshape, zpshape));
+}
+
+
+INA_TEST_FIXTURE_SKIP(linalg_gemv, d_t) {
+
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    int typesize = sizeof(double);
 
     int64_t xshape[] = {900, 650};
     int64_t xpshape[] = {200, 140};
