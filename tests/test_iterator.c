@@ -180,7 +180,7 @@ INA_TEST_FIXTURE(iterator, 8_f_p) {
 
     int8_t ndim = 8;
     int64_t shape[] = {5, 7, 8, 9, 6, 5, 3, 5};
-    int64_t pshape[] = {2, 5, 3, 4, 3, 2, 2, 2};
+    int64_t pshape[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
