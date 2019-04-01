@@ -172,6 +172,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     caterva_update_shape(c->catarr, &shape);
+    int64_t typesize = a->catarr->ctx->cparams.typesize;
 
     // Define parameters needed in mkl multiplication
     int64_t B0 = bshape_a[0];
@@ -188,6 +189,26 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         K = (int) bshape_a[0];
     }
 
+    if (a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        size_t c_size = (size_t) B0 * typesize;
+        c->catarr->buf = c->catarr->ctx->alloc(c_size);
+        int dtype = a->dtshape->dtype;
+
+        // Make blocks multiplication
+        switch (dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                cblas_dgemv(CblasRowMajor, flag_a, M, K, 1.0, (double *) a->catarr->buf, ld_a,
+                    (double *) b->catarr->buf, 1, 1.0, (double *) c->catarr->buf, 1);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                cblas_sgemv(CblasRowMajor, flag_a, M, K, 1.0, (float *) a->catarr->buf, ld_a,
+                    (float *) b->catarr->buf, 1, 1.0, (float *) c->catarr->buf, 1);
+                break;
+            default:
+                return INA_ERR_EXCEEDED;
+        }
+        return INA_SUCCESS;
+    }
     int64_t eshape_a[2];
     int64_t eshape_b[1];
 
@@ -206,9 +227,9 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     // block sizes are claculated
-    size_t a_size = (size_t) B0 * B1 * a->catarr->sc->typesize;
-    size_t b_size = (size_t) B1 * a->catarr->sc->typesize;
-    size_t c_size = (size_t) B0 * a->catarr->sc->typesize;
+    size_t a_size = (size_t) B0 * B1 * typesize;
+    size_t b_size = (size_t) B1 * typesize;
+    size_t c_size = (size_t) B0 * typesize;
 
     int dtype = a->dtshape->dtype;
 
