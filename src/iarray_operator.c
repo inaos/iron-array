@@ -19,6 +19,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     caterva_update_shape(c->catarr, &shape);
+    int64_t typesize = a->catarr->ctx->cparams.typesize;
 
     // define mkl parameters
     int64_t B0 = bshape_a[0];
@@ -41,6 +42,29 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     int ld_c = (int) B2;
 
+    if (a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        size_t c_size = (size_t) B0 * B2 * typesize;
+        c->catarr->buf = c->catarr->ctx->alloc(c_size);
+        int dtype = a->dtshape->dtype;
+
+        // Make blocks multiplication
+        switch (dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                cblas_dgemm(CblasRowMajor, flag_a, flag_b, (const int)B0, (const int)B2, (const int)B1,
+                            1.0, (double *)a->catarr->buf, ld_a, (double *)b->catarr->buf, ld_b, 1.0,
+                            (double *)c->catarr->buf, ld_c);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                cblas_sgemm(CblasRowMajor, flag_a, flag_b, (const int)B0, (const int)B2, (const int)B1,
+                            1.0, (float *)a->catarr->buf, ld_a, (float *)b->catarr->buf, ld_b, 1.0,
+                            (float *)c->catarr->buf, ld_c);
+                break;
+            default:
+                return INA_ERR_EXCEEDED;
+        }
+        return INA_SUCCESS;
+    }
+
     // the extended shape is recalculated from the block shape
     int64_t eshape_a[IARRAY_DIMENSION_MAX];
     int64_t eshape_b[IARRAY_DIMENSION_MAX];
@@ -58,9 +82,9 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     // block sizes are claculated
-    size_t a_size = (size_t) B0 * B1 * a->catarr->sc->typesize;
-    size_t b_size = (size_t) B1 * B2 * b->catarr->sc->typesize;
-    size_t c_size = (size_t) B0 * B2 * c->catarr->sc->typesize;
+    size_t a_size = (size_t) B0 * B1 * typesize;
+    size_t b_size = (size_t) B1 * B2 * typesize;
+    size_t c_size = (size_t) B0 * B2 * typesize;
     int dtype = a->dtshape->dtype;
 
     uint8_t *a_block = ina_mem_alloc(a_size);
@@ -128,7 +152,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
                 return INA_ERR_EXCEEDED;
         }
 
-        // Append it to a new iarray contianer
+        // Append it to a new iarray container
         if((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
             blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], c_size);
             memset(c_block, 0, c_size);

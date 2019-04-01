@@ -80,9 +80,8 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
     iarray_auxshape_t auxshape;
     for (int i = 0; i < dtshape->ndim; ++i) {
-        (*c)->dtshape->pshape[i] = dtshape->shape[i];
         auxshape.shape_wos[i] = dtshape->shape[i];
-        auxshape.pshape_wos[i] = dtshape->shape[i];
+        auxshape.pshape_wos[i] = dtshape->pshape[i];
         auxshape.offset[i] = 0;
         auxshape.index[i] = (uint8_t) i;
     }
@@ -154,6 +153,10 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     else if (pshape.dims[0] != 0) {
         (*c)->catarr = caterva_empty_array(cat_ctx, NULL, &pshape);
     } else {
+        for (int i = 0; i < dtshape->ndim; ++i) {
+            (*c)->dtshape->pshape[i] = dtshape->shape[i];
+            (*c)->auxshape->pshape_wos[i] = dtshape->shape[i];
+        }
         (*c)->catarr = caterva_empty_array(cat_ctx, NULL, NULL);
     }
     INA_FAIL_IF((*c)->catarr == NULL);

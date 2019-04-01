@@ -165,19 +165,19 @@ INA_TEST_TEARDOWN(part_iterator) {
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(part_iterator, double_2) {
+INA_TEST_FIXTURE(part_iterator, 2_d_p) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
     int8_t ndim = 2;
     int64_t shape[] = {10, 10};
-    int64_t pshape[] = {2, 2};
+    int64_t pshape[] = {0, 0};
 
     INA_TEST_ASSERT_SUCCEED(test_part_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
 
 
-INA_TEST_FIXTURE(part_iterator, float_3) {
+INA_TEST_FIXTURE(part_iterator, 3_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
@@ -189,40 +189,40 @@ INA_TEST_FIXTURE(part_iterator, float_3) {
 }
 
 
-INA_TEST_FIXTURE(part_iterator, double_4) {
+INA_TEST_FIXTURE(part_iterator, 4_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
     int8_t ndim = 4;
-    int64_t shape[] = {80, 64, 80, 99};
+    int64_t shape[] = {30, 64, 50, 43};
     int64_t pshape[] = {11, 8, 12, 21};
 
     INA_TEST_ASSERT_SUCCEED(test_part_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
 
-INA_TEST_FIXTURE(part_iterator, float_5) {
+INA_TEST_FIXTURE(part_iterator, 5_f_p) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
     int8_t ndim = 5;
     int64_t shape[] = {40, 26, 35, 23, 21};
-    int64_t pshape[] = {5, 8, 10, 7, 9};
+    int64_t pshape[] = {0, 0, 0, 0, 0};
 
     INA_TEST_ASSERT_SUCCEED(test_part_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
 
-INA_TEST_FIXTURE(part_iterator, double_6) {
+INA_TEST_FIXTURE(part_iterator, 6_d_p) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
     int8_t ndim = 6;
     int64_t shape[] = {12, 13, 21, 19, 13, 15};
-    int64_t pshape[] = {5, 4, 7, 3, 4, 12};
+    int64_t pshape[] = {0, 0, 0, 0, 0, 0};
 
     INA_TEST_ASSERT_SUCCEED(test_part_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
 
-INA_TEST_FIXTURE(part_iterator, float_7) {
+INA_TEST_FIXTURE(part_iterator, 7_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
@@ -232,3 +232,4 @@ INA_TEST_FIXTURE(part_iterator, float_7) {
 
     INA_TEST_ASSERT_SUCCEED(test_part_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
+
