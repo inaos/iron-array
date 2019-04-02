@@ -170,13 +170,13 @@ INA_TEST_FIXTURE(linalg_gemm, f_nn_p) {
     int64_t xshape[] = {1000, 2000};
     int64_t xpshape[] = {0, 0};
 
-    int64_t xbshape[] = {1000, 2000};
+    int64_t *xbshape = NULL;
     int xtrans = 0;
 
     int64_t yshape[] = {2000, 1500};
     int64_t ypshape[] = {0, 0};
 
-    int64_t ybshape[] = {2000, 1500};
+    int64_t *ybshape = NULL;
     int ytrans = 0;
 
     int64_t zshape[] = {1000, 1500};
@@ -245,13 +245,13 @@ INA_TEST_FIXTURE(linalg_gemm, d_tn_p) {
     int64_t xshape[] = {1670, 1300};
     int64_t xpshape[] = {0, 0};
 
-    int64_t xbshape[] = {1300, 1670};
+    int64_t *xbshape = NULL;
     int xtrans = 1;
 
     int64_t yshape[] = {1670, 2100};
     int64_t ypshape[] = {0, 0};
 
-    int64_t ybshape[] = {1670, 2100};
+    int64_t *ybshape = NULL;
     int ytrans = 0;
 
     int64_t zshape[] = {1300, 2100};
@@ -294,13 +294,13 @@ INA_TEST_FIXTURE(linalg_gemm, d_tt_p) {
     int64_t xshape[] = {1230, 456};
     int64_t xpshape[] = {0, 0};
 
-    int64_t xbshape[] = {456, 1230};
+    int64_t *xbshape = NULL;
     int xtrans = 1;
 
     int64_t yshape[] = {874, 1230};
     int64_t ypshape[] = {0, 0};
 
-    int64_t ybshape[] = {1230, 874};
+    int64_t *ybshape = NULL;
     int ytrans = 1;
 
     int64_t zshape[] = {456, 874};
