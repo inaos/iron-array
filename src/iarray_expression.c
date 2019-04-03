@@ -51,6 +51,9 @@ INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
 {
     INA_ASSERT_NOT_NULL(ctx);
     INA_VERIFY_FREE(e);
+    for (int nvar=0; nvar < (*e)->nvars; nvar++) {
+        free((void*)((*e)->vars[nvar].var));
+    }
     ina_mempool_reset(ctx->mp);  // FIXME: should be ina_mempool_free(), but it currently crashes
     ina_mempool_reset(ctx->mp_op);  // FIXME: ditto
     ina_mempool_reset(ctx->mp_tmp_out);  // FIXME: ditto
@@ -63,7 +66,7 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
     if (val->dtshape->ndim > 2) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
-    e->vars[e->nvars].var = var;
+    e->vars[e->nvars].var = strdup(var);   // yes, we want a copy here!
     e->vars[e->nvars].c = val;
     e->nvars++;
     return INA_SUCCESS;
