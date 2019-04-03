@@ -285,6 +285,7 @@ INA_API(ina_rc_t) iarray_iter_write_part_next(iarray_iter_write_part_t *itr)
 
     if (itr->container->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
         caterva_dims_t start = caterva_new_dims(itr->elem_index, ndim);
+
         int64_t stop_[IARRAY_DIMENSION_MAX];
         for (int i = 0; i < ndim; ++i) {
             stop_[i] = start.dims[i] + itr->part_shape[i];
