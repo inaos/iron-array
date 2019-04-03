@@ -98,18 +98,6 @@ typedef struct iarray_iter_write_s {
     int64_t *part_index;
 } iarray_iter_write_t;
 
-typedef struct iarray_iter_write_part_s {
-    iarray_context_t *ctx;
-    iarray_container_t *container;
-    uint8_t *part;
-    void *pointer;
-    int64_t *part_shape;
-    int64_t part_size;
-    int64_t *part_index;
-    int64_t *elem_index;
-    int64_t cont;
-} iarray_iter_write_part_t;
-
 typedef struct iarray_iter_read_s {
     iarray_context_t *ctx;
     iarray_container_t *container;
@@ -132,6 +120,22 @@ typedef struct iarray_iter_read_s {
     int64_t nelem;
 
 } iarray_iter_read_t;
+
+typedef struct iarray_iter_write_part_s {
+    iarray_context_t *ctx;
+    iarray_container_t *container;
+    uint8_t *part;
+    void *pointer;
+    int64_t *shape;
+    int64_t shape_size;
+    int64_t *part_shape;
+    int64_t part_size;
+    int64_t *part_index;
+    int64_t *elem_index;
+    int64_t *eshape;
+    int64_t esize;
+    int64_t cont;
+} iarray_iter_write_part_t;
 
 typedef struct iarray_iter_read_block_s {
     iarray_context_t *ctx;
