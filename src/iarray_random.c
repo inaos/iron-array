@@ -101,7 +101,7 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
 {
     int status = VSL_ERROR_OK;
     iarray_iter_write_part_t *iter;
-    iarray_iter_write_part_new(ctx, container, &iter);
+    iarray_iter_write_part_new(ctx, container, &iter, NULL);
 
     int64_t max_part_size = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {
@@ -433,7 +433,17 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         iarray_iter_read_value_t val;
         iarray_iter_read_value(iter, &val);
 
-        double data = ((double *) val.pointer)[0];
+        double data;
+        switch(c1->dtshape->dtype){
+            case IARRAY_DATA_TYPE_DOUBLE:
+                data = ((double *) val.pointer)[0];
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                data = ((float *) val.pointer)[0];
+                break;
+            default:
+                return INA_ERR_MISSING;
+        }
 
         max = (data > max) ? data : max;
         min = (data < min) ? data : min;
@@ -448,7 +458,17 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         iarray_iter_read_value_t val;
         iarray_iter_read_value(iter, &val);
 
-        double data = ((double *) val.pointer)[0];
+        double data;
+        switch(c1->dtshape->dtype){
+            case IARRAY_DATA_TYPE_DOUBLE:
+                data = ((double *) val.pointer)[0];
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                data = ((float *) val.pointer)[0];
+                break;
+            default:
+                return INA_ERR_MISSING;
+        }
 
         max = (data > max) ? data : max;
         min = (data < min) ? data : min;
@@ -469,7 +489,17 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         iarray_iter_read_value_t val;
         iarray_iter_read_value(iter, &val);
 
-        double data = ((double *) val.pointer)[0];
+        double data;
+        switch(c1->dtshape->dtype){
+            case IARRAY_DATA_TYPE_DOUBLE:
+                data = ((double *) val.pointer)[0];
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                data = ((float *) val.pointer)[0];
+                break;
+            default:
+                return INA_ERR_MISSING;
+        }
 
         for (int i = 0; i < nbins; ++i) {
             if (data <= bins[i]) {
@@ -488,8 +518,17 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         iarray_iter_read_value_t val;
         iarray_iter_read_value(iter, &val);
 
-        double data = ((double *) val.pointer)[0];
-
+        double data;
+        switch(c1->dtshape->dtype){
+            case IARRAY_DATA_TYPE_DOUBLE:
+                data = ((double *) val.pointer)[0];
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                data = ((float *) val.pointer)[0];
+                break;
+            default:
+                return INA_ERR_MISSING;
+        }
         for (int i = 0; i < nbins; ++i) {
             if (data <= bins[i]) {
                 hist2[i] += 1;
