@@ -188,7 +188,7 @@ int main(int argc, char** argv)
             INA_STOPWATCH_START(w);
             iarray_container_new(ctx, &shape, &mat_x, flags, &con_x);
             iarray_iter_write_part_t *I;
-            iarray_iter_write_part_new(ctx, con_x, &I);
+            iarray_iter_write_part_new(ctx, con_x, &I, NULL);
             double incx = XMAX / NELEM;
             for (iarray_iter_write_part_init(I); !iarray_iter_write_part_finished(I); iarray_iter_write_part_next(I)) {
                 iarray_iter_write_part_value_t val;
@@ -260,7 +260,7 @@ int main(int argc, char** argv)
             INA_STOPWATCH_START(w);
             iarray_container_new(ctx, &shape, &mat_y, flags, &con_y);
             iarray_iter_write_part_t *I;
-            iarray_iter_write_part_new(ctx, con_y, &I);
+            iarray_iter_write_part_new(ctx, con_y, &I, NULL);
             double incx = XMAX / NELEM;
             for (iarray_iter_write_part_init(I); !iarray_iter_write_part_finished(I);
                  iarray_iter_write_part_next(I)) {
