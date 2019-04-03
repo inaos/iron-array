@@ -130,7 +130,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         caterva_dims_t start__ = caterva_new_dims((int64_t *) start_, c->dtshape->ndim);
         caterva_dims_t stop__ = caterva_new_dims((int64_t *) stop_, c->dtshape->ndim);
 
-        INA_FAIL_IF(caterva_get_slice((*container)->catarr, c->catarr, start__, stop__) != 0);
+        INA_FAIL_IF(caterva_get_slice((*container)->catarr, c->catarr, &start__, &stop__) != 0);
     }
     return INA_SUCCESS;
 
@@ -210,7 +210,7 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
     caterva_dims_t stop__ = caterva_new_dims((int64_t *) stop_, c->catarr->ndim);
     caterva_dims_t pshape_ = caterva_new_dims((int64_t *) pshape, c->catarr->ndim);
 
-    INA_FAIL_IF(caterva_get_slice_buffer(buffer, c->catarr, start__, stop__, pshape_) != 0);
+    INA_FAIL_IF(caterva_get_slice_buffer(buffer, c->catarr, &start__, &stop__, &pshape_) != 0);
 
     size_t rows = (size_t)stop_[0] - start_[0];
     size_t cols = (size_t)stop_[1] - start_[1];
@@ -221,8 +221,7 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                 mkl_dimatcopy('R', 'T', rows, cols, 1.0, (double *) buffer, cols, rows);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                mkl_simatcopy('R', 'T', rows, cols, 1.0,
-                              (float *) buffer, cols, rows);
+                mkl_simatcopy('R', 'T', rows, cols, 1.0, (float *) buffer, cols, rows);
                 break;
             default:
                 return INA_ERR_EXCEEDED;
@@ -319,7 +318,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
 
     memset(buffer, 0, buflen);
 
-    INA_FAIL_IF(caterva_get_slice_buffer(buffer, c->catarr, start__, stop__, pshape__) != 0);
+    INA_FAIL_IF(caterva_get_slice_buffer(buffer, c->catarr, &start__, &stop__, &pshape__) != 0);
 
     return INA_SUCCESS;
 

@@ -64,6 +64,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     INA_FAIL_IF((*c)->dtshape == NULL);
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
 
+
     char* fname = NULL;
     if (flags & IARRAY_CONTAINER_PERSIST) {
         fname = (char*)store->id;
@@ -147,10 +148,16 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
 
     if (flags & IARRAY_CONTAINER_PERSIST) {
-        (*c)->catarr = caterva_empty_array(cat_ctx, (*c)->frame, pshape);
+        (*c)->catarr = caterva_empty_array(cat_ctx, (*c)->frame, &pshape);
     }
-    else {
-        (*c)->catarr = caterva_empty_array(cat_ctx, NULL, pshape);
+    else if (pshape.dims[0] != 0) {
+        (*c)->catarr = caterva_empty_array(cat_ctx, NULL, &pshape);
+    } else {
+        for (int i = 0; i < dtshape->ndim; ++i) {
+            (*c)->dtshape->pshape[i] = dtshape->shape[i];
+            (*c)->auxshape->pshape_wos[i] = dtshape->shape[i];
+        }
+        (*c)->catarr = caterva_empty_array(cat_ctx, NULL, NULL);
     }
     INA_FAIL_IF((*c)->catarr == NULL);
 
