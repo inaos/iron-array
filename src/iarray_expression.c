@@ -12,6 +12,9 @@
 
 #include <libiarray/iarray.h>
 #include <contribs/tinyexpr/tinyexpr.h>
+#ifndef __clang__
+#include <omp.h>
+#endif
 
 #define _IARRAY_EXPR_VAR_MAX      (128)
 
@@ -28,6 +31,7 @@ struct iarray_expression_s {
     int32_t typesize;
     int32_t chunksize;
     int nvars;
+    int max_out_len;
     te_expr *texpr;
     iarray_temporary_t **temp_vars;
     iarray_container_t *out;
@@ -42,7 +46,7 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e
     INA_RETURN_IF_NULL(e);
     (*e)->ctx = ctx;
     (*e)->nvars = 0;
-    (*e)->temp_vars = ina_mem_alloc(sizeof(iarray_temporary_t*)*_IARRAY_EXPR_VAR_MAX);
+    (*e)->max_out_len = 0;   // helper for leftovers
     ina_mem_set(&(*e)->vars, 0, sizeof(_iarray_tinyexpr_var_t)*_IARRAY_EXPR_VAR_MAX);
     return INA_SUCCESS;
 }
@@ -98,12 +102,30 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 {
+    int nthreads = e->ctx->cfg->max_num_threads;
+    // The number of threads in config may get overridden by the OMP_NUM_THREADS variable
+    char *envvar = getenv("OMP_NUM_THREADS");
+    if (envvar != NULL) {
+        long value;
+        value = strtol(envvar, NULL, 10);
+        if ((value != EINVAL) && (value >= 0)) {
+            //printf("Overriding max_num_threads to: %d\n", (int)value);
+            nthreads = (int)value;
+        }
+    }
+    if (nthreads > 128) {
+        printf("Number of threads exceeded!\n");
+        return INA_ERR_EXCEEDED;
+    }
+
     e->expr = ina_str_new_fromcstr(expr);
+    e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t*));
     te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(te_variable));
     caterva_array_t *catarr = e->vars[0].c->catarr;
     blosc2_schunk *schunk = catarr->sc;
     int dim0 = 0;
     if ((e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_BLOCK) ||
+        (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNKPARA) ||
         (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERBLOCK)) {
         int32_t typesize = schunk->typesize;
         int32_t nchunks = schunk->nchunks;
@@ -144,11 +166,15 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     dtshape_var.shape[0] = dim0;
     dtshape_var.dtype = e->vars[0].c->dtshape->dtype;
     for (int nvar = 0; nvar < e->nvars; nvar++) {
-        iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[nvar]);
         te_vars[nvar].name = e->vars[nvar].var;
-        te_vars[nvar].address = &e->temp_vars[nvar];
         te_vars[nvar].type = TE_VARIABLE;
         te_vars[nvar].context = NULL;
+        te_vars[nvar].address = ina_mem_alloc(nthreads * sizeof(void*));
+        for (int nthread = 0; nthread < nthreads; nthread++) {
+            int ntvar = nthread * e->nvars + nvar;
+            iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[ntvar]);
+            te_vars[nvar].address[nthread] = *(e->temp_vars + ntvar);
+        }
     }
     int err = 0;
     e->texpr = te_compile(e, ina_str_cstr(e->expr), te_vars, e->nvars, &err);
@@ -191,7 +217,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                     return INA_ERR_FAILED;
                 }
             }
-// #pragma omp parallel for schedule(dynamic)
             for (int32_t nblock = 0; nblock < nblocks_in_chunk; nblock++) {
                 if ((nblock + 1 == nblocks_in_chunk) && (nblock + 1) * e->blocksize > chunksize) {
                     corrected_blocksize = chunksize - nblock * e->blocksize;
@@ -316,11 +341,11 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
     }
     else if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNK) {
-        // For the blocksize, choose the minimum of the partition shapes (chunks in Blosc parlance)
-        int64_t blocksize = INT64_MAX;
+        // For the chunksize, choose the minimum of the partition shapes (chunks in Blosc parlance)
+        int64_t chunksize = INT64_MAX;
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            blocksize = INA_MIN(blocksize, var->dtshape->pshape[0]);
+            chunksize = INA_MIN(chunksize, var->dtshape->pshape[0]);
         }
 
         // Create and initialize an iterator per variable
@@ -330,7 +355,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_read_block_t **iter_var = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_t));
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, var, &iter_var[nvar], &blocksize);
+            iarray_iter_read_block_new(ctx, var, &iter_var[nvar], &chunksize);
             iarray_iter_read_block_init(iter_var[nvar]);
         }
 
@@ -361,6 +386,84 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);
+        assert(nitems_written == nitems_in_schunk);
+    }
+    else if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNKPARA) {
+        int32_t blocksize = e->blocksize;
+        int64_t chunksize = e->chunksize;
+
+        // Create and initialize an iterator per variable
+        iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
+        iarray_context_t *ctx = NULL;
+        iarray_context_new(&cfg, &ctx);
+        iarray_iter_read_block_t **iter_var = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_t));
+        int64_t nitems = chunksize / e->typesize;
+        for (int nvar = 0; nvar < nvars; nvar++) {
+            iarray_container_t *var = e->vars[nvar].c;
+            iarray_iter_read_block_new(ctx, var, &iter_var[nvar], &nitems);
+            iarray_iter_read_block_init(iter_var[nvar]);
+        }
+
+        // Evaluate the expression for all the chunks in variables
+        iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
+        int64_t nitems_written = 0;
+        int nblocks = (int)chunksize / blocksize;
+        int8_t *outbuf = ina_mem_alloc((size_t)chunksize);
+        while (nitems_written < nitems_in_schunk) {
+            // Decompress chunks in variables into temporaries
+            for (int nvar = 0; nvar < nvars; nvar++) {
+                iarray_iter_read_block_value(iter_var[nvar], &iter_value[nvar]);
+            }
+
+            // Eval the expression for this chunk, split by blocks
+#ifndef __clang__
+#pragma omp parallel for // schedule(dynamic)
+#endif
+            for (int nblock = 0; nblock < nblocks ; nblock++) {
+                for (int nvar = 0; nvar < nvars; nvar++) {
+                    int nthread = 0;
+#ifndef __clang__
+                    nthread = omp_get_thread_num();
+#endif
+                    int ntvar = nthread * e->nvars + nvar;
+                    //printf("nthread (PARA): %d, ", nthread);
+                    e->temp_vars[ntvar]->data = iter_value[nvar].pointer + nblock * blocksize;
+                }
+                const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
+                memcpy(outbuf + nblock * blocksize, (uint8_t*)expr_out->data, blocksize);
+            }
+
+            // Do a possible last evaluation with the leftovers
+            int leftover = chunksize - nblocks * blocksize;
+            if (leftover > 0) {
+                for (int nvar = 0; nvar < nvars; nvar++) {
+                    e->temp_vars[nvar]->data = iter_value[nvar].pointer + nblocks * blocksize;
+                }
+                e->max_out_len = leftover / e->typesize;  // so as to prevent operating beyond the leftover
+                const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
+                e->max_out_len = 0;
+                memcpy(outbuf + nblocks * blocksize, (uint8_t*)expr_out->data, leftover);
+            }
+
+            // Write the resulting chunk in output
+            blosc2_schunk_append_buffer(out.sc, outbuf, (size_t)chunksize);
+            nitems_written += nitems_in_chunk;
+
+            ina_mempool_reset(e->ctx->mp_tmp_out);
+
+            // Get ready for the next iteration
+            for (int nvar = 0; nvar < nvars; nvar++) {
+                iarray_iter_read_block_next(iter_var[nvar]);
+            }
+        }
+
+        for (int nvar = 0; nvar < nvars; nvar++) {
+            iarray_iter_read_block_free(iter_var[nvar]);
+        }
+        ina_mem_free(iter_var);
+        ina_mem_free(iter_value);
+        ina_mem_free(outbuf);
+
         assert(nitems_written == nitems_in_schunk);
     }
 
@@ -455,11 +558,12 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
         /* FIXME: matrix/vector and matrix/matrix addition */
     }
 
+#pragma omp critical
     iarray_temporary_new(expr, NULL, &dtshape, &out);
 
     switch (dtshape.dtype) {
         case IARRAY_DATA_TYPE_DOUBLE: {
-            int len = (int)out->size / sizeof(double);
+            int len = expr->max_out_len == 0 ? (int)(out->size / sizeof(double)) : expr->max_out_len;
             if (scalar) {
                 switch(op) {
                 case IARRAY_OPERATION_TYPE_ADD:
@@ -485,25 +589,21 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                 double *ldata = (double*)scalar_lhs->data;
                 switch(op) {
                 case IARRAY_OPERATION_TYPE_ADD:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         odata[i] = ldata[i] + dscalar;
                     }
                     break;
                 case IARRAY_OPERATION_TYPE_SUB:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         odata[i] = ldata[i] - dscalar;
                     }
                     break;
                 case IARRAY_OPERATION_TYPE_MUL:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         odata[i] = ldata[i] * dscalar;
                     }
                     break;
                 case IARRAY_OPERATION_TYPE_DIVIDE:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         odata[i] = ldata[i] / dscalar;
                     }
@@ -516,25 +616,21 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
             else if (vector_vector) {
                 switch(op) {
                 case IARRAY_OPERATION_TYPE_ADD:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         ((double*)out->data)[i] = ((double*)lhs->data)[i] + ((double*)rhs->data)[i];
                     }
                     break;
                 case IARRAY_OPERATION_TYPE_SUB:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         ((double*)out->data)[i] = ((double*)lhs->data)[i] - ((double*)rhs->data)[i];
                     }
                     break;
                 case IARRAY_OPERATION_TYPE_MUL:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         ((double*)out->data)[i] = ((double*)lhs->data)[i] * ((double*)rhs->data)[i];
                     }
                     break;
                 case IARRAY_OPERATION_TYPE_DIVIDE:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         ((double*)out->data)[i] = ((double*)lhs->data)[i] / ((double*)rhs->data)[i];
                     }
@@ -551,7 +647,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
         }
         break;
         case IARRAY_DATA_TYPE_FLOAT: {
-            int len = (int)out->size / sizeof(float);
+            int len = expr->max_out_len == 0 ? (int)(out->size / sizeof(float)) : expr->max_out_len;
             if (scalar) {
                 switch(op) {
                 case IARRAY_OPERATION_TYPE_ADD:
@@ -577,25 +673,21 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                 float *ldata = (float*)scalar_lhs->data;
                 switch(op) {
                 case IARRAY_OPERATION_TYPE_ADD:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         odata[i] = ldata[i] + dscalar;
                     }
                     break;
                 case IARRAY_OPERATION_TYPE_SUB:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         odata[i] = ldata[i] - dscalar;
                     }
                     break;
                 case IARRAY_OPERATION_TYPE_MUL:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         odata[i] = ldata[i] * dscalar;
                     }
                     break;
                 case IARRAY_OPERATION_TYPE_DIVIDE:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         odata[i] = ldata[i] / dscalar;
                     }
@@ -608,25 +700,21 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
             else if (vector_vector) {
                 switch(op) {
                 case IARRAY_OPERATION_TYPE_ADD:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         ((float*)out->data)[i] = ((float*)lhs->data)[i] + ((float*)rhs->data)[i];
                     }
                     break;
                 case IARRAY_OPERATION_TYPE_SUB:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         ((float*)out->data)[i] = ((float*)lhs->data)[i] - ((float*)rhs->data)[i];
                     }
                     break;
                 case IARRAY_OPERATION_TYPE_MUL:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         ((float*)out->data)[i] = ((float*)lhs->data)[i] * ((float*)rhs->data)[i];
                     }
                     break;
                 case IARRAY_OPERATION_TYPE_DIVIDE:
-// #pragma omp parallel for
                     for (int i = 0; i < len; ++i) {
                         ((float*)out->data)[i] = ((float*)lhs->data)[i] / ((float*)rhs->data)[i];
                     }
@@ -673,5 +761,11 @@ iarray_temporary_t* _iarray_op_divide(iarray_expression_t *expr, iarray_temporar
 INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp)
 {
     *mp = e->ctx->mp;
+    return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_expr_get_nthreads(iarray_expression_t *e, int *nthreads)
+{
+    *nthreads = e->ctx->cfg->max_num_threads;
     return INA_SUCCESS;
 }
