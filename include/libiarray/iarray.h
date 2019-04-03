@@ -62,6 +62,7 @@ typedef enum iarray_eval_flags_e {
     IARRAY_EXPR_EVAL_CHUNK = 0x2,
     IARRAY_EXPR_EVAL_ITERBLOCK = 0x4,
     IARRAY_EXPR_EVAL_ITERCHUNK = 0x8,
+    IARRAY_EXPR_EVAL_ITERCHUNKPARA = 0x10,
 } iarray_eval_flags_t;
 
 typedef enum iarray_filter_flags_e {
@@ -480,5 +481,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret); 
 
 //FIXME: remove
 INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp);
+INA_API(ina_rc_t) iarray_expr_get_nthreads(iarray_expression_t *e, int *nthreads);
 
 #endif
