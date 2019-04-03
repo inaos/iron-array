@@ -101,7 +101,7 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
 {
     int status = VSL_ERROR_OK;
     iarray_iter_write_part_t *iter;
-    iarray_iter_write_part_new(ctx, container, &iter);
+    iarray_iter_write_part_new(ctx, container, &iter, NULL);
 
     int64_t max_part_size = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {

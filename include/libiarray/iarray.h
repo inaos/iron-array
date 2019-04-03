@@ -434,14 +434,6 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr);
 INA_API(int) iarray_iter_write_finished(iarray_iter_write_t *itr);
 INA_API(void) iarray_iter_write_value(iarray_iter_write_t *itr, iarray_iter_write_value_t *value);
 
-INA_API(ina_rc_t) iarray_iter_write_part_new(iarray_context_t *ctx, iarray_container_t *container,
-                                             iarray_iter_write_part_t **itr);
-INA_API(void) iarray_iter_write_part_free(iarray_iter_write_part_t *itr);
-INA_API(void) iarray_iter_write_part_init(iarray_iter_write_part_t *itr);
-INA_API(ina_rc_t) iarray_iter_write_part_next(iarray_iter_write_part_t *itr);
-INA_API(int) iarray_iter_write_part_finished(iarray_iter_write_part_t *itr);
-INA_API(void) iarray_iter_write_part_value(iarray_iter_write_part_t *itr, iarray_iter_write_part_value_t *value);
-
 INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx, iarray_container_t *container,
                                        iarray_iter_read_t **itr);
 INA_API(void) iarray_iter_read_free(iarray_iter_read_t *itr);
@@ -450,13 +442,14 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr);
 INA_API(int) iarray_iter_read_finished(iarray_iter_read_t *itr);
 INA_API(void) iarray_iter_read_value(iarray_iter_read_t *itr, iarray_iter_read_value_t *val);
 
-INA_API(ina_rc_t) iarray_iter_read_trans_new(iarray_context_t *ctx, iarray_container_t *container,
-                                       iarray_iter_read_t **itr);
-INA_API(void) iarray_iter_read_trans_free(iarray_iter_read_t *itr);
-INA_API(void) iarray_iter_read_trans_init(iarray_iter_read_t *itr);
-INA_API(ina_rc_t) iarray_iter_read_trans_next(iarray_iter_read_t *itr);
-INA_API(int) iarray_iter_read_trans_finished(iarray_iter_read_t *itr);
-INA_API(void) iarray_iter_read_trans_value(iarray_iter_read_t *itr, iarray_iter_read_value_t *val);
+INA_API(ina_rc_t) iarray_iter_write_part_new(iarray_context_t *ctx, iarray_container_t *container,
+                                             iarray_iter_write_part_t **itr,
+                                             const int64_t *blockshape);
+INA_API(void) iarray_iter_write_part_free(iarray_iter_write_part_t *itr);
+INA_API(void) iarray_iter_write_part_init(iarray_iter_write_part_t *itr);
+INA_API(ina_rc_t) iarray_iter_write_part_next(iarray_iter_write_part_t *itr);
+INA_API(int) iarray_iter_write_part_finished(iarray_iter_write_part_t *itr);
+INA_API(void) iarray_iter_write_part_value(iarray_iter_write_part_t *itr, iarray_iter_write_part_value_t *value);
 
 INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx, iarray_container_t *container,
                                              iarray_iter_read_block_t **itr,
