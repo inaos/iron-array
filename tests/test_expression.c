@@ -16,7 +16,7 @@
 #define NCHUNKS  10
 #define NITEMS_CHUNK (20 * 1000)
 #define NELEM (((NCHUNKS - 1) * NITEMS_CHUNK) + 10)
-#define NTHREADS 1
+#define NTHREADS 2
 
 static double _poly(const double x)
 {
@@ -109,6 +109,13 @@ INA_TEST_TEARDOWN(expression_eval)
     iarray_destroy();
 }
 
+INA_TEST_FIXTURE(expression_eval, block1)
+{
+    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_BLOCK;
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len));
+}
+
 INA_TEST_FIXTURE(expression_eval, chunk1)
 {
     data->cfg.eval_flags |= IARRAY_EXPR_EVAL_CHUNK;
@@ -116,9 +123,9 @@ INA_TEST_FIXTURE(expression_eval, chunk1)
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len));
 }
 
-INA_TEST_FIXTURE(expression_eval, block1)
+INA_TEST_FIXTURE(expression_eval, iterblock1)
 {
-    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_BLOCK;
+    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_ITERBLOCK;
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len));
 }
@@ -130,9 +137,9 @@ INA_TEST_FIXTURE(expression_eval, iterchunk1)
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len));
 }
 
-INA_TEST_FIXTURE(expression_eval, iterblock1)
+INA_TEST_FIXTURE(expression_eval, iterblockpara1)
 {
-    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_ITERBLOCK;
+    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_ITERCHUNKPARA;
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len));
 }

@@ -102,20 +102,24 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 {
-    int nthreads = e->ctx->cfg->max_num_threads;
-    // The number of threads in config may get overridden by the OMP_NUM_THREADS variable
-    char *envvar = getenv("OMP_NUM_THREADS");
-    if (envvar != NULL) {
-        long value;
-        value = strtol(envvar, NULL, 10);
-        if ((value != EINVAL) && (value >= 0)) {
-            //printf("Overriding max_num_threads to: %d\n", (int)value);
-            nthreads = (int)value;
+    int nthreads = 1;
+
+    if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNKPARA) {
+        // Set a number of threads different from one in case the compiler supports OpemMP
+        // This is not the case for the clang that comes with Mac OSX, but probably the newer
+        // clang that come with later LLVM releases does have support for it.
+#ifndef __clang__
+        nthreads = e->ctx->cfg->max_num_threads;
+        // The number of threads in config may get overridden by the OMP_NUM_THREADS variable
+        char *envvar = getenv("OMP_NUM_THREADS");
+        if (envvar != NULL) {
+            long value;
+            value = strtol(envvar, NULL, 10);
+            if ((value != EINVAL) && (value >= 0)) {
+                nthreads = (int)value;
+            }
         }
-    }
-    if (nthreads > 128) {
-        printf("Number of threads exceeded!\n");
-        return INA_ERR_EXCEEDED;
+#endif
     }
 
     e->expr = ina_str_new_fromcstr(expr);
@@ -159,7 +163,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         return INA_ERR_NOT_SUPPORTED;
     }
 
-    // Create temporaries for intermediate results
+    // Create temporaries for initial variables
     // TODO: make this more general and accept multidimensional containers
     iarray_dtshape_t dtshape_var = {0};  // initialize to 0s
     dtshape_var.ndim = 1;
@@ -170,6 +174,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         te_vars[nvar].type = TE_VARIABLE;
         te_vars[nvar].context = NULL;
         te_vars[nvar].address = ina_mem_alloc(nthreads * sizeof(void*));
+        // Allocate different buffers for each thread too
         for (int nthread = 0; nthread < nthreads; nthread++) {
             int ntvar = nthread * e->nvars + nvar;
             iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[ntvar]);
@@ -389,6 +394,12 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         assert(nitems_written == nitems_in_schunk);
     }
     else if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNKPARA) {
+        // This version of the evaluation engine works by using a chunk iterator and use OpenMP
+        // for performing the computations.  The OpenMP loop split the chunk into smaller blocks that
+        // are passed the tinyexpr evaluator.
+        // Although this works perfectly well, this is still preliminary because we may want to
+        // get rid of the overhead of creating/destroying the thread per every chunk.  One possibility
+        // is to use pthreads, but we need more discussion about this.
         int32_t blocksize = e->blocksize;
         int64_t chunksize = e->chunksize;
 
@@ -426,7 +437,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                     nthread = omp_get_thread_num();
 #endif
                     int ntvar = nthread * e->nvars + nvar;
-                    //printf("nthread (PARA): %d, ", nthread);
                     e->temp_vars[ntvar]->data = iter_value[nvar].pointer + nblock * blocksize;
                 }
                 const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
@@ -558,6 +568,8 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
         /* FIXME: matrix/vector and matrix/matrix addition */
     }
 
+    // Creating the temporary means interacting with the INA memory allocator, which is not thread-safe.
+    // We should investigate on how to overcome this syncronization point (if possible at all).
 #pragma omp critical
     iarray_temporary_new(expr, NULL, &dtshape, &out);
 
