@@ -346,11 +346,6 @@ static te_expr *base(state *s) {
 
         case TOK_VARIABLE:
             ret = new_expr(s, TE_VARIABLE, 0);
-            int nthread = 0;
-#ifndef __clang__
-            nthread = omp_get_thread_num();
-#endif
-            //tf("nthread (base): %d, ", nthread);
             ret->bound = s->bound;
             next_token(s);
             break;
