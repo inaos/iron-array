@@ -99,12 +99,10 @@ int main(int argc, char** argv)
         printf("Storage for iarray containers: *memory*\n");
     }
 
-    INA_DISABLE_WARNING_MSVC(4204)
     iarray_store_properties_t mat_x_prop = { .id = mat_x_name };
     iarray_store_properties_t mat_y_prop = { .id = mat_y_name };
     iarray_store_properties_t mat_out_prop = { .id = mat_out_name };
-    INA_ENABLE_WARNING_MSVC(4204)
-
+    
     printf("\n");
     printf("Measuring time for multiplying matrices X and vector Y\n");
 

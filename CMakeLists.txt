@@ -11,9 +11,10 @@
 cmake_minimum_required (VERSION 3.12)
 project(iarray)
 
-# Disable unused warnings
-# SET(WARNING_FLAGS "-Wno-unused-parameter" "-Wno-unused-variable" "-Wno-unused-function")
-#add_compile_options(${WARNING_FLAGS})
+# Disable weird MSVC warnings
+if (MSVC)
+add_compile_options(/wd4204)
+endif()
 
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
     if (NOT EXISTS "${CMAKE_SOURCE_DIR}/inac.cmake")
