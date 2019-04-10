@@ -1102,60 +1102,50 @@ INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr)
  * Function: iarray_iter_read_block_next
  */
 
-INA_API(ina_rc_t) iarray_iter_read_block2_next(iarray_iter_read_block_t *itr)
+INA_API(ina_rc_t) iarray_iter_read_block2_next(iarray_iter_read_block2_t *itr)
 {
-    int64_t typesize = itr->container->catarr->ctx->cparams.typesize;
-    int8_t ndim = itr->container->dtshape->ndim;
-
-    // TODO: See if the aux var can be calculated in the new function
-    int64_t aux[IARRAY_DIMENSION_MAX];
-    for (int i = ndim - 1; i >= 0; --i) {
-        if (itr->container->dtshape->shape[i] % itr->shape[i] == 0) {
-            aux[i] = itr->container->dtshape->shape[i] / itr->shape[i];
-        } else {
-            aux[i] = itr->container->dtshape->shape[i] / itr->shape[i] + 1;
-        }
-    }
+    int64_t typesize = itr->cont->catarr->ctx->cparams.typesize;
+    int8_t ndim = itr->cont->dtshape->ndim;
 
     // Calculate the start of the desired block
     int64_t start_[IARRAY_DIMENSION_MAX];
     int64_t inc = 1;
     for (int i = ndim - 1; i >= 0; --i) {
-        start_[i] = itr->cont % (aux[i] * inc) / inc;
-        itr->block_index[i] = start_[i];
-        start_[i] *= itr->shape[i];
-        itr->elem_index[i] = start_[i];
-        inc *= aux[i];
+        start_[i] = itr->nblock % (itr->aux[i] * inc) / inc;
+        itr->act_block_index[i] = start_[i];
+        start_[i] *= itr->block_shape[i];
+        itr->act_elem_index[i] = start_[i];
+        inc *= itr->aux[i];
     }
 
     // Calculate the stop of the desired block
     int64_t stop_[IARRAY_DIMENSION_MAX];
-    int64_t buflen = 1;
-    itr->block_size = 1;
+    int64_t actual_block_size = 1;
+    itr->act_block_size = 1;
     for (int i = ndim - 1; i >= 0; --i) {
-        if(start_[i] + itr->shape[i] <= itr->container->dtshape->shape[i]) {
-            stop_[i] = start_[i] + itr->shape[i];
+        if(start_[i] + itr->block_shape[i] <= itr->cont->dtshape->shape[i]) {
+            stop_[i] = start_[i] + itr->block_shape[i];
         } else {
-            stop_[i] = itr->container->dtshape->shape[i];
+            stop_[i] = itr->cont->dtshape->shape[i];
         }
-        itr->block_shape[i] = stop_[i] - start_[i];
-        itr->block_size *= itr->block_shape[i];
-        buflen *= itr->shape[i];
+        itr->actual_block_shape[i] = stop_[i] - start_[i];
+        itr->act_block_size *= itr->actual_block_shape[i];
+        actual_block_size *= itr->block_shape[i];
     }
 
     // Get the desired block
-    INA_MUST_SUCCEED(iarray_get_slice_buffer(itr->ctx, itr->container, (int64_t *) start_,
-                                             (int64_t *) stop_, itr->part, buflen * typesize));
+    INA_MUST_SUCCEED(iarray_get_slice_buffer(itr->ctx, itr->cont, (int64_t *) start_,
+                                             (int64_t *) stop_, itr->part, actual_block_size * typesize));
 
     // Update the structure that user can see
     itr->val->pointer = itr->pointer;
-    itr->val->block_index = itr->block_index;
-    itr->val->elem_index = itr->elem_index;
-    itr->val->nelem = itr->cont;
-    itr->val->block_shape = itr->block_shape;
-
+    itr->val->block_index = itr->act_block_index;
+    itr->val->elem_index = itr->act_elem_index;
+    itr->val->nelem = itr->nblock;
+    itr->val->block_shape = itr->actual_block_shape;
+    itr->val->block_size = actual_block_size;
     // Increment the block counter
-    itr->cont += 1;
+    itr->nblock += 1;
 
     return INA_SUCCESS;
 }
@@ -1164,18 +1154,9 @@ INA_API(ina_rc_t) iarray_iter_read_block2_next(iarray_iter_read_block_t *itr)
  * Function: iarray_iter_read_block_finished
  */
 
-INA_API(int) iarray_iter_read_block2_has_next(iarray_iter_read_block_t *itr)
+INA_API(int) iarray_iter_read_block2_has_next(iarray_iter_read_block2_t *itr)
 {
-    // Compute de total number of blocks TODO: decide if is better calculate in new or init functions to avoid calculate in each iteration
-    int64_t size = 1;
-    for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
-        if(itr->container->dtshape->shape[i] % itr->shape[i] == 0) {
-            size *= itr->container->dtshape->shape[i] / itr->shape[i];
-        } else {
-            size *= itr->container->dtshape->shape[i] / itr->shape[i] + 1;
-        }
-    }
-    return itr->cont < size;
+    return itr->nblock < itr->total_blocks;
 }
 
 
@@ -1184,47 +1165,68 @@ INA_API(int) iarray_iter_read_block2_has_next(iarray_iter_read_block_t *itr)
  */
 
 INA_API(ina_rc_t) iarray_iter_read_block2_new(iarray_context_t *ctx,
-                                              iarray_iter_read_block_t **itr,
-                                              iarray_container_t *container,
+                                              iarray_iter_read_block2_t **itr,
+                                              iarray_container_t *cont,
                                               const int64_t *blockshape,
-                                              iarray_iter_read_block_value_t *val)
+                                              iarray_iter_read_block2_value_t *val)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(itr);
-    *itr = (iarray_iter_read_block_t*) ina_mem_alloc(sizeof(iarray_iter_read_block_t));
+    *itr = (iarray_iter_read_block2_t*) ina_mem_alloc(sizeof(iarray_iter_read_block2_t));
     INA_RETURN_IF_NULL(itr);
 
     (*itr)->ctx = ctx;
 
-    INA_VERIFY_NOT_NULL(container);
-    (*itr)->container = container;
-    int64_t typesize = (*itr)->container->catarr->ctx->cparams.typesize;
-
-    (*itr)->shape = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
-    (*itr)->block_shape = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
-    (*itr)->block_index = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
-    (*itr)->elem_index = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
+    INA_VERIFY_NOT_NULL(cont);
+    (*itr)->cont = cont;
+    int64_t typesize = (*itr)->cont->catarr->ctx->cparams.typesize;
 
     if (blockshape == NULL) {
-        blockshape = container->dtshape->shape;
+        blockshape = cont->dtshape->shape;
     }
 
-    int64_t size = typesize;
-    for (int i = 0; i < container->dtshape->ndim; ++i) {
-        (*itr)->shape[i] = blockshape[i];
-        size *= (*itr)->shape[i];
-    }
+    (*itr)->aux = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
+    (*itr)->block_shape = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
+    (*itr)->actual_block_shape = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
+    (*itr)->act_block_index = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
+    (*itr)->act_elem_index = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
 
-    (*itr)->part = ina_mem_alloc((size_t) size);
+    // Create a buffer where data is stored to pass it to the user
+    int64_t block_size = typesize;
+    for (int i = 0; i < cont->dtshape->ndim; ++i) {
+        (*itr)->block_shape[i] = blockshape[i];
+        block_size *= (*itr)->block_shape[i];
+    }
+    (*itr)->part = ina_mem_alloc((size_t) block_size);
     (*itr)->pointer = &((*itr)->part[0]);
 
     (*itr)->val = val;
 
-    for (int i = 0; i <IARRAY_DIMENSION_MAX; ++i) {
-        (*itr)->elem_index[i] = 0;
-        (*itr)->block_index[i] = 0;
+    // Calculate the total number of blocks
+    (*itr)->total_blocks = 1;
+    for (int i = 0; i < cont->dtshape->ndim; ++i) {
+        if(cont->dtshape->shape[i] % (*itr)->block_shape[i] == 0) {
+            (*itr)->total_blocks *= cont->dtshape->shape[i] / (*itr)->block_shape[i];
+        } else {
+            (*itr)->total_blocks *= cont->dtshape->shape[i] / (*itr)->block_shape[i] + 1;
+        }
     }
-    (*itr)->cont = 0;
+
+    // Calculate aux param
+    for (int i = cont->dtshape->ndim - 1; i >= 0; --i) {
+        if (cont->dtshape->shape[i] % (*itr)->block_shape[i] == 0) {
+            (*itr)->aux[i] = cont->dtshape->shape[i] / (*itr)->block_shape[i];
+        } else {
+            (*itr)->aux[i] = cont->dtshape->shape[i] / (*itr)->block_shape[i] + 1;
+        }
+    }
+    // Set params to 0
+    for (int i = 0; i <IARRAY_DIMENSION_MAX; ++i) {
+        (*itr)->act_elem_index[i] = 0;
+        (*itr)->act_block_index[i] = 0;
+    }
+    (*itr)->nblock = 0;
+
     // Create a cache in the underlying container so as to accelerate the getting of a slice
     // INA_FAIL_IF(container->catarr->part_cache.data != NULL);
     // INA_FAIL_IF(container->catarr->part_cache.nchunk != -1);
@@ -1241,17 +1243,17 @@ INA_API(ina_rc_t) iarray_iter_read_block2_new(iarray_context_t *ctx,
  * Function: iarray_iter_read_block_free
  */
 
-INA_API(void) iarray_iter_read_block2_free(iarray_iter_read_block_t *itr)
+INA_API(void) iarray_iter_read_block2_free(iarray_iter_read_block2_t *itr)
 {
-    ina_mem_free(itr->shape);
     ina_mem_free(itr->block_shape);
-    ina_mem_free(itr->block_index);
-    ina_mem_free(itr->elem_index);
+    ina_mem_free(itr->actual_block_shape);
+    ina_mem_free(itr->act_block_index);
+    ina_mem_free(itr->act_elem_index);
     ina_mem_free(itr->part);
 
     //ina_mem_free(itr->container->catarr->part_cache.data);  // TODO: investigate (see above)
-    itr->container->catarr->part_cache.data = NULL;  // reset to NULL here (the memory pool will be reset later)
-    itr->container->catarr->part_cache.nchunk = -1;  // means no valid cache yet
+    itr->cont->catarr->part_cache.data = NULL;  // reset to NULL here (the memory pool will be reset later)
+    itr->cont->catarr->part_cache.nchunk = -1;  // means no valid cache yet
     ina_mem_free(itr);
 }
 
