@@ -100,8 +100,9 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     _iarray_random_method_t method)
 {
     int status = VSL_ERROR_OK;
-    iarray_iter_write_part_t *iter;
-    iarray_iter_write_part_new(ctx, container, &iter, NULL);
+    iarray_iter_write_block2_t *iter;
+    iarray_iter_write_block2_value_t val;
+    iarray_iter_write_block2_new(ctx, &iter, container, NULL, &val);
 
     int64_t max_part_size = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {
@@ -109,17 +110,10 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     }
     void *buffer_mem = ina_mem_alloc(max_part_size * sizeof(double));
 
-    for (iarray_iter_write_part_init(iter);
-        !iarray_iter_write_part_finished(iter);
-        iarray_iter_write_part_next(iter)) {
+    while (iarray_iter_write_block2_has_next(iter)) {
+        iarray_iter_write_block2_next(iter);
 
-        iarray_iter_write_part_value_t val;
-        iarray_iter_write_part_value(iter, &val);
-
-        int64_t part_size = 1;
-        for (int i = 0; i < dtshape->ndim; ++i) {
-            part_size *= val.part_shape[i];
-        }
+        int64_t block_size = val.block_size;
 
         if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
             float *r = (float*)buffer_mem;
@@ -128,37 +122,37 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     float a = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_A];
                     float b = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_B];
                     status = vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, random_ctx->stream,
-                                          (int) part_size, r, a, b);
+                                          (int) block_size, r, a, b);
                     break;
                 }
                 case _IARRAY_RANDOM_METHOD_GAUSSIAN: {
                     float mu = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_MU];
                     float sigma = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_SIGMA];
                     status = vsRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, random_ctx->stream,
-                                           (int) part_size, r, mu, sigma);
+                                           (int) block_size, r, mu, sigma);
                     break;
                 }
                 case _IARRAY_RANDOM_METHOD_BETA: {
                     float alpha = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
                     float beta = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA];
-                    status = vsRngBeta(VSL_RNG_METHOD_BETA_CJA, random_ctx->stream, (int) part_size, r, alpha, beta, 0, 1);
+                    status = vsRngBeta(VSL_RNG_METHOD_BETA_CJA, random_ctx->stream, (int) block_size, r, alpha, beta, 0, 1);
                     break;
                 }
                 case _IARRAY_RANDOM_METHOD_LOGNORMAL: {
                     float mu = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_MU];
                     float sigma = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_SIGMA];
-                    status = vsRngLognormal(VSL_RNG_METHOD_LOGNORMAL_BOXMULLER2, random_ctx->stream, (int) part_size, r, mu, sigma, 0, 1);
+                    status = vsRngLognormal(VSL_RNG_METHOD_LOGNORMAL_BOXMULLER2, random_ctx->stream, (int) block_size, r, mu, sigma, 0, 1);
                     break;
                 }
                 case _IARRAY_RANDOM_METHOD_EXPONENTIAL: {
                     float beta = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA];
-                    status = vsRngExponential(VSL_RNG_METHOD_EXPONENTIAL_ICDF, random_ctx->stream, (int) part_size, r, 0, beta);
+                    status = vsRngExponential(VSL_RNG_METHOD_EXPONENTIAL_ICDF, random_ctx->stream, (int) block_size, r, 0, beta);
                     break;
                 }
             }
             INA_FAIL_IF(status != VSL_ERROR_OK);
 
-            for (int64_t i = 0; i < part_size; ++i) {
+            for (int64_t i = 0; i < block_size; ++i) {
                 ((float *)val.pointer)[i] = r[i];
             }
         }
@@ -169,41 +163,42 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     double a = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_A];
                     double b = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_B];
                     status = vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD, random_ctx->stream,
-                                          (int) part_size, r, a, b);
+                                          (int) block_size, r, a, b);
                     break;
                 }
                 case _IARRAY_RANDOM_METHOD_GAUSSIAN: {
                     double mu = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_MU];
                     double sigma = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_SIGMA];
                     status = vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, random_ctx->stream,
-                                           (int) part_size, r, mu, sigma);
+                                           (int) block_size, r, mu, sigma);
                     break;
                 }
                 case _IARRAY_RANDOM_METHOD_BETA: {
                     double alpha = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
                     double beta = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA];
-                    status = vdRngBeta(VSL_RNG_METHOD_BETA_CJA, random_ctx->stream, (int) part_size, r, alpha, beta, 0, 1);
+                    status = vdRngBeta(VSL_RNG_METHOD_BETA_CJA, random_ctx->stream, (int) block_size, r, alpha, beta, 0, 1);
                     break;
                 }
                 case _IARRAY_RANDOM_METHOD_LOGNORMAL: {
                     double mu = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_MU];
                     double sigma = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_SIGMA];
-                    status = vdRngLognormal(VSL_RNG_METHOD_LOGNORMAL_BOXMULLER2, random_ctx->stream, (int) part_size, r, mu, sigma, 0, 1);
+                    status = vdRngLognormal(VSL_RNG_METHOD_LOGNORMAL_BOXMULLER2, random_ctx->stream, (int) block_size, r, mu, sigma, 0, 1);
                     break;
                 }
                 case _IARRAY_RANDOM_METHOD_EXPONENTIAL: {
                     double beta = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA];
-                    status = vdRngExponential(VSL_RNG_METHOD_EXPONENTIAL_ICDF, random_ctx->stream, (int) part_size, r, 0, beta);
+                    status = vdRngExponential(VSL_RNG_METHOD_EXPONENTIAL_ICDF, random_ctx->stream, (int) block_size, r, 0, beta);
                     break;
                 }
             }
             INA_FAIL_IF(status != VSL_ERROR_OK);
 
-            for (int64_t i = 0; i < part_size; ++i) {
+            for (int64_t i = 0; i < block_size; ++i) {
                 ((double *)val.pointer)[i] = r[i];
             }
         }
     }
+    iarray_iter_write_block2_free(iter);
 
     return INA_SUCCESS;
 
