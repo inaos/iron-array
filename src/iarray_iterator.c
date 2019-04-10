@@ -1128,8 +1128,8 @@ INA_API(ina_rc_t) iarray_iter_read_block2_next(iarray_iter_read_block2_t *itr)
         } else {
             stop_[i] = itr->cont->dtshape->shape[i];
         }
-        itr->actual_block_shape[i] = stop_[i] - start_[i];
-        itr->act_block_size *= itr->actual_block_shape[i];
+        itr->act_block_shape[i] = stop_[i] - start_[i];
+        itr->act_block_size *= itr->act_block_shape[i];
         actual_block_size *= itr->block_shape[i];
     }
 
@@ -1142,7 +1142,7 @@ INA_API(ina_rc_t) iarray_iter_read_block2_next(iarray_iter_read_block2_t *itr)
     itr->val->block_index = itr->act_block_index;
     itr->val->elem_index = itr->act_elem_index;
     itr->val->nelem = itr->nblock;
-    itr->val->block_shape = itr->actual_block_shape;
+    itr->val->block_shape = itr->act_block_shape;
     itr->val->block_size = actual_block_size;
     // Increment the block counter
     itr->nblock += 1;
@@ -1187,7 +1187,7 @@ INA_API(ina_rc_t) iarray_iter_read_block2_new(iarray_context_t *ctx,
 
     (*itr)->aux = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
     (*itr)->block_shape = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
-    (*itr)->actual_block_shape = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
+    (*itr)->act_block_shape = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
     (*itr)->act_block_index = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
     (*itr)->act_elem_index = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
 
@@ -1246,7 +1246,7 @@ INA_API(ina_rc_t) iarray_iter_read_block2_new(iarray_context_t *ctx,
 INA_API(void) iarray_iter_read_block2_free(iarray_iter_read_block2_t *itr)
 {
     ina_mem_free(itr->block_shape);
-    ina_mem_free(itr->actual_block_shape);
+    ina_mem_free(itr->act_block_shape);
     ina_mem_free(itr->act_block_index);
     ina_mem_free(itr->act_elem_index);
     ina_mem_free(itr->part);
