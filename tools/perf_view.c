@@ -88,13 +88,13 @@ int main(int argc, char *argv[])
 
     iarray_iter_read_block2_value_t value_y;
     iarray_iter_read_block2_value_t value_z;
-    
-    iarray_iter_read_block2_new(ctx, &iter_y, c_y, bshape, &value_y);
-    iarray_iter_read_block2_new(ctx,  &iter_z, c_z, bshape, &value_z);
 
-    while (iarray_iter_read_block2_has_next(iter_y)) {
-        iarray_iter_read_block2_next(iter_y);
-        iarray_iter_read_block2_next(iter_z);
+    iarray_iter_read_block_new(ctx, &iter_y, c_y, bshape, &value_y);
+    iarray_iter_read_block_new(ctx, &iter_z, c_z, bshape, &value_z);
+
+    while (iarray_iter_read_block_has_next(iter_y)) {
+        iarray_iter_read_block_next(iter_y);
+        iarray_iter_read_block_next(iter_z);
         
         for (int64_t i = 0; i < value_y.block_size; ++i) {
             switch (dtype) {
@@ -110,8 +110,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    iarray_iter_read_block2_free(iter_y);
-    iarray_iter_read_block2_free(iter_z);
+    iarray_iter_read_block_free(iter_y);
+    iarray_iter_read_block_free(iter_z);
 
     iarray_dtshape_t dtshape_mul;
 

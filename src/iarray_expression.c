@@ -239,7 +239,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block2_new(ctx, &iter_var[nvar], var, &nitems_in_block, &iter_value[nvar]);
+            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, &nitems_in_block, &iter_value[nvar]);
         }
 
         // Evaluate the expression for all the chunks in variables
@@ -247,11 +247,11 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         int32_t nblocks_to_write = 0;
         int32_t leftover = 0;
         bool write_chunk = false;
-        while (iarray_iter_read_block2_has_next(iter_var[0])) {
+        while (iarray_iter_read_block_has_next(iter_var[0])) {
 
             // Decompress blocks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
-                iarray_iter_read_block2_next(iter_var[nvar]);
+                iarray_iter_read_block_next(iter_var[nvar]);
                 e->temp_vars[nvar]->data = iter_value[nvar].pointer;
             }
 
@@ -287,7 +287,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         assert(nitems_written == nitems_in_schunk);
 
         for (int nvar = 0; nvar < nvars; nvar++) {
-            iarray_iter_read_block2_free(iter_var[nvar]);
+            iarray_iter_read_block_free(iter_var[nvar]);
         }
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);
@@ -328,16 +328,16 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block2_new(ctx, &iter_var[nvar], var, &blocksize, &iter_value[nvar]);
+            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, &blocksize, &iter_value[nvar]);
         }
 
         // Evaluate the expression for all the chunks in variables
         int64_t nitems_written = 0;
-        while (iarray_iter_read_block2_has_next(iter_var[0])) {
+        while (iarray_iter_read_block_has_next(iter_var[0])) {
 
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
-                iarray_iter_read_block2_next(iter_var[nvar]);
+                iarray_iter_read_block_next(iter_var[nvar]);
                 e->temp_vars[nvar]->data = iter_value[nvar].pointer;
             }
 
@@ -349,7 +349,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
 
         for (int nvar = 0; nvar < nvars; nvar++) {
-            iarray_iter_read_block2_free(iter_var[nvar]);
+            iarray_iter_read_block_free(iter_var[nvar]);
         }
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);
