@@ -234,23 +234,24 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
         iarray_context_t *ctx = NULL;
         iarray_context_new(&cfg, &ctx);
-        iarray_iter_read_block_t **iter_var = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_t));
+        iarray_iter_read_block2_t **iter_var = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block2_t));
+        iarray_iter_read_block2_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block2_value_t));
+
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, var, &iter_var[nvar], &nitems_in_block);
-            iarray_iter_read_block_init(iter_var[nvar]);
+            iarray_iter_read_block2_new(ctx, &iter_var[nvar], var, &nitems_in_block, &iter_value[nvar]);
         }
 
         // Evaluate the expression for all the chunks in variables
-        iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
         int64_t nitems_written = 0;
         int32_t nblocks_to_write = 0;
         int32_t leftover = 0;
         bool write_chunk = false;
-        while (!iarray_iter_read_block_finished(iter_var[0])) {
+        while (iarray_iter_read_block2_has_next(iter_var[0])) {
+
             // Decompress blocks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
-                iarray_iter_read_block_value(iter_var[nvar], &iter_value[nvar]);
+                iarray_iter_read_block2_next(iter_var[nvar]);
                 e->temp_vars[nvar]->data = iter_value[nvar].pointer;
             }
 
@@ -275,11 +276,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                 // Copy the leftover at the beginning of the chunk for the next iteration
                 memcpy(outbuf, (uint8_t*)expr_out->data + corrected_blocksize, leftover);
             }
-
-            // Get ready for the next iteration
-            for (int nvar = 0; nvar < nvars; nvar++) {
-                iarray_iter_read_block_next(iter_var[nvar]);
-            }
         }
 
         // Write the leftovers of the expression in output
@@ -291,7 +287,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         assert(nitems_written == nitems_in_schunk);
 
         for (int nvar = 0; nvar < nvars; nvar++) {
-            iarray_iter_read_block_free(iter_var[nvar]);
+            iarray_iter_read_block2_free(iter_var[nvar]);
         }
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);
@@ -327,20 +323,21 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
         iarray_context_t *ctx = NULL;
         iarray_context_new(&cfg, &ctx);
-        iarray_iter_read_block_t **iter_var = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_t));
+        iarray_iter_read_block2_t **iter_var = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block2_t));
+        iarray_iter_read_block2_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block2_value_t));
+
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, var, &iter_var[nvar], &blocksize);
-            iarray_iter_read_block_init(iter_var[nvar]);
+            iarray_iter_read_block2_new(ctx, &iter_var[nvar], var, &blocksize, &iter_value[nvar]);
         }
 
         // Evaluate the expression for all the chunks in variables
-        iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
         int64_t nitems_written = 0;
-        while (nitems_written < nitems_in_schunk) {
+        while (iarray_iter_read_block2_has_next(iter_var[0])) {
+
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
-                iarray_iter_read_block_value(iter_var[nvar], &iter_value[nvar]);
+                iarray_iter_read_block2_next(iter_var[nvar]);
                 e->temp_vars[nvar]->data = iter_value[nvar].pointer;
             }
 
@@ -349,15 +346,10 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             blosc2_schunk_append_buffer(out.sc, expr_out->data, (size_t)nitems_in_chunk * e->typesize);
             nitems_written += nitems_in_chunk;
             ina_mempool_reset(e->ctx->mp_tmp_out);
-
-            // Get ready for the next iteration
-            for (int nvar = 0; nvar < nvars; nvar++) {
-                iarray_iter_read_block_next(iter_var[nvar]);
-            }
         }
 
         for (int nvar = 0; nvar < nvars; nvar++) {
-            iarray_iter_read_block_free(iter_var[nvar]);
+            iarray_iter_read_block2_free(iter_var[nvar]);
         }
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);

@@ -46,7 +46,7 @@ int main()
         iarray_iter_write_block2_next(iter_w);
         int64_t size = 1;
         for (int i = 0; i < ndim; ++i) {
-            size *= val_w.part_shape[i];
+            size *= val_w.block_shape[i];
         }
         for (int i = 0; i < size; ++i) {
             ((double *) val_w.pointer)[i] = (double) i + n;
