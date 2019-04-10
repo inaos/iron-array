@@ -35,10 +35,10 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     // Start Iterator
     iarray_iter_write_block2_t *I;
     iarray_iter_write_block2_value_t val;
-    iarray_iter_write_block2_new(ctx, &I, c_x, blockshape, &val);
+    iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val);
 
-    while (iarray_iter_write_block2_has_next(I)) {
-        iarray_iter_write_block2_next(I);
+    while (iarray_iter_write_block_has_next(I)) {
+        iarray_iter_write_block_next(I);
 
         int64_t nelem = 0;
         int64_t inc = 1;
@@ -57,7 +57,7 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
         }
     }
 
-    iarray_iter_write_block2_free(I);
+    iarray_iter_write_block_free(I);
 
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));
@@ -94,15 +94,15 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     // Start Iterator
     iarray_iter_read_block2_t *I2;
     iarray_iter_read_block2_value_t val2;
-    iarray_iter_read_block2_new(ctx, &I2, c_x, blockshape, &val2);
+    iarray_iter_read_block_new(ctx, &I2, c_x, blockshape, &val2);
 
     iarray_iter_read_block2_t *I3;
     iarray_iter_read_block2_value_t val3;
-    iarray_iter_read_block2_new(ctx, &I3, c_y, blockshape, &val3);
+    iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3);
 
-    while (iarray_iter_read_block2_has_next(I2) & iarray_iter_read_block2_has_next(I3)) {
-        iarray_iter_read_block2_next(I2);
-        iarray_iter_read_block2_next(I3);
+    while (iarray_iter_read_block_has_next(I2) & iarray_iter_read_block_has_next(I3)) {
+        iarray_iter_read_block_next(I2);
+        iarray_iter_read_block_next(I3);
 
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
@@ -122,9 +122,8 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
         }
     }
 
-
-    iarray_iter_read_block2_free(I2);
-    iarray_iter_read_block2_free(I3);
+    iarray_iter_read_block_free(I2);
+    iarray_iter_read_block_free(I3);
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);

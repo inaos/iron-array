@@ -422,14 +422,14 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     iarray_context_new(&cfg, &ctx);
     iarray_iter_read_block2_t *iter_a;
     iarray_iter_read_block2_value_t val_a;
-    iarray_iter_read_block2_new(ctx, &iter_a, a, blocksize, &val_a);
+    iarray_iter_read_block_new(ctx, &iter_a, a, blocksize, &val_a);
     iarray_iter_read_block2_t *iter_b;
     iarray_iter_read_block2_value_t val_b;
-    iarray_iter_read_block2_new(ctx, &iter_b, b, blocksize, &val_b);
+    iarray_iter_read_block_new(ctx, &iter_b, b, blocksize, &val_b);
 
-    while (iarray_iter_read_block2_has_next(iter_a)) {
-        iarray_iter_read_block2_next(iter_a);
-        iarray_iter_read_block2_next(iter_b);
+    while (iarray_iter_read_block_has_next(iter_a)) {
+        iarray_iter_read_block_next(iter_a);
+        iarray_iter_read_block_next(iter_b);
 
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
             for (int64_t i = 0; i < val_a.block_size; ++i) {
@@ -456,8 +456,8 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     }
 
 failed:
-    iarray_iter_read_block2_free(iter_a);
-    iarray_iter_read_block2_free(iter_b);
+    iarray_iter_read_block_free(iter_a);
+    iarray_iter_read_block_free(iter_b);
     free(blocksize);
 
     return retcode;

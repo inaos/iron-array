@@ -189,16 +189,16 @@ int main(int argc, char** argv)
             iarray_container_new(ctx, &shape, &mat_x, flags, &con_x);
             iarray_iter_write_block2_t *I;
             iarray_iter_write_block2_value_t val;
-            iarray_iter_write_block2_new(ctx, &I, con_x, NULL, &val);
+            iarray_iter_write_block_new(ctx, &I, con_x, NULL, &val);
             double incx = XMAX / NELEM;
-            while (iarray_iter_write_block2_has_next(I)) {
-                iarray_iter_write_block2_next(I);
+            while (iarray_iter_write_block_has_next(I)) {
+                iarray_iter_write_block_next(I);
                 int64_t part_size = val.block_size;  // 1-dim vector
                 for (int64_t i = 0; i < part_size; ++i) {
                     ((double *)val.pointer)[i] = incx * (double) (i + val.nelem * part_size);
                 }
             }
-            iarray_iter_write_block2_free(I);
+            iarray_iter_write_block_free(I);
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf("Time for computing and filling X values via partition iterator: %.3g s, %.1f MB/s\n",
@@ -261,16 +261,16 @@ int main(int argc, char** argv)
             iarray_container_new(ctx, &shape, &mat_y, flags, &con_y);
             iarray_iter_write_block2_t *I;
             iarray_iter_write_block2_value_t val;
-            iarray_iter_write_block2_new(ctx, &I, con_y, NULL, &val);
+            iarray_iter_write_block_new(ctx, &I, con_y, NULL, &val);
             double incx = XMAX / NELEM;
-            while (iarray_iter_write_block2_has_next(I)) {
-                iarray_iter_write_block2_next(I);
+            while (iarray_iter_write_block_has_next(I)) {
+                iarray_iter_write_block_next(I);
                 int64_t part_size = val.block_size;
                 for (int64_t i = 0; i < part_size; ++i) {
                     ((double *) val.pointer)[i] = _poly(incx * (double) (i + val.nelem * part_size));
                 }
             }
-            iarray_iter_write_block2_free(I);
+            iarray_iter_write_block_free(I);
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf(
