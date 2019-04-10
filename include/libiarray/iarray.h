@@ -24,9 +24,9 @@ typedef struct iarray_iter_write_s iarray_iter_write_t;
 typedef struct iarray_iter_write_part_s iarray_iter_write_part_t;
 typedef struct iarray_iter_read_s iarray_iter_read_t;
 typedef struct iarray_iter_read_block_s iarray_iter_read_block_t;
-typedef struct iarray_iter_read_block2_s iarray_iter_read_block2_t;
 
-typedef struct iarray_iter_write_part_s iarray_iter_write_block2_t;
+typedef struct iarray_iter_read_block2_s iarray_iter_read_block2_t;
+typedef struct iarray_iter_write_block2_s iarray_iter_write_block2_t;
 
 typedef struct iarray_expression_s iarray_expression_t;
 
@@ -157,7 +157,7 @@ typedef struct iarray_iter_read_block2_value_s {
     void *pointer;
     int64_t *block_index;
     int64_t *elem_index;
-    int64_t nelem;
+    int64_t nblock;
     int64_t* block_shape;
     int64_t block_size;
 } iarray_iter_read_block2_value_t;
