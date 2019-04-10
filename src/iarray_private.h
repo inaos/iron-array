@@ -161,7 +161,7 @@ typedef struct iarray_iter_read_block2_s {
     int64_t total_blocks; // Total number of blocks
     int64_t *aux; // Aux variable used
     int64_t *block_shape; // The blockshape to be iterated
-    int64_t *actual_block_shape; // The shape of the actual block (can be diff to the block shape passed)
+    int64_t *act_block_shape; // The shape of the actual block (can be diff to the block shape passed)
     int64_t act_block_size; // The size of the actual block
     int64_t *act_block_index; // The position of the block in the container
     int64_t *act_elem_index; // The position of the first element of the block in the container
