@@ -57,15 +57,11 @@ int main()
 
 
     iarray_iter_read_block2_t *iter;
-    iarray_iter_read_block_value_t val;
+    iarray_iter_read_block2_value_t val;
     iarray_iter_read_block2_new(ctx, &iter, cont, blockshape, &val);
     while (iarray_iter_read_block2_has_next(iter)) {
         iarray_iter_read_block2_next(iter);
-        int64_t size = 1;
-        for (int i = 0; i < ndim; ++i) {
-            size *= val.block_shape[i];
-        }
-        for (int i = 0; i < size; ++i) {
+        for (int i = 0; i < val.block_size; ++i) {
             printf("%f\n", ((double *) val.pointer)[i]);
         }
     }

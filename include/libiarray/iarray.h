@@ -24,7 +24,8 @@ typedef struct iarray_iter_write_s iarray_iter_write_t;
 typedef struct iarray_iter_write_part_s iarray_iter_write_part_t;
 typedef struct iarray_iter_read_s iarray_iter_read_t;
 typedef struct iarray_iter_read_block_s iarray_iter_read_block_t;
-typedef struct iarray_iter_read_block_s iarray_iter_read_block2_t;
+typedef struct iarray_iter_read_block2_s iarray_iter_read_block2_t;
+
 typedef struct iarray_iter_write_part_s iarray_iter_write_block2_t;
 
 typedef struct iarray_expression_s iarray_expression_t;
@@ -151,6 +152,15 @@ typedef struct iarray_iter_read_block_value_s {
     int64_t nelem;
     int64_t* block_shape;
 } iarray_iter_read_block_value_t;
+
+typedef struct iarray_iter_read_block2_value_s {
+    void *pointer;
+    int64_t *block_index;
+    int64_t *elem_index;
+    int64_t nelem;
+    int64_t* block_shape;
+    int64_t block_size;
+} iarray_iter_read_block2_value_t;
 
 typedef struct iarray_slice_param_s {
     int axis;
@@ -465,9 +475,9 @@ INA_API(void) iarray_iter_read_block_value(iarray_iter_read_block_t *itr, iarray
 
 INA_API(ina_rc_t) iarray_iter_read_block2_new(iarray_context_t *ctx,
                                               iarray_iter_read_block2_t **itr,
-                                              iarray_container_t *container,
+                                              iarray_container_t *cont,
                                               const int64_t *blockshape,
-                                              iarray_iter_read_block_value_t *value);
+                                              iarray_iter_read_block2_value_t *value);
 INA_API(void) iarray_iter_read_block2_free(iarray_iter_read_block2_t *itr);
 INA_API(ina_rc_t) iarray_iter_read_block2_next(iarray_iter_read_block2_t *itr);
 INA_API(int) iarray_iter_read_block2_has_next(iarray_iter_read_block2_t *itr);
