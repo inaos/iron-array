@@ -420,42 +420,34 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_t *ctx = NULL;
     iarray_context_new(&cfg, &ctx);
-    iarray_iter_read_block_t *iter_a;
-    iarray_iter_read_block_new(ctx, a, &iter_a, blocksize);
-    iarray_iter_read_block_t *iter_b;
-    iarray_iter_read_block_new(ctx, b, &iter_b, blocksize);
+    iarray_iter_read_block2_t *iter_a;
+    iarray_iter_read_block2_value_t val_a;
+    iarray_iter_read_block2_new(ctx, &iter_a, a, blocksize, &val_a);
+    iarray_iter_read_block2_t *iter_b;
+    iarray_iter_read_block2_value_t val_b;
+    iarray_iter_read_block2_new(ctx, &iter_b, b, blocksize, &val_b);
 
-    for (iarray_iter_read_block_init(iter_a), iarray_iter_read_block_init(iter_b);
-         !iarray_iter_read_block_finished(iter_a);
-         iarray_iter_read_block_next(iter_a), iarray_iter_read_block_next(iter_b)) {
-
-        iarray_iter_read_block_value_t val_a;
-        iarray_iter_read_block_value(iter_a, &val_a);
-        iarray_iter_read_block_value_t val_b;
-        iarray_iter_read_block_value(iter_b, &val_b);
-
-        int64_t block_size = 1;
-        for (int i = 0; i < ndim; ++i) {
-            block_size *= val_a.block_shape[i];
-        }
+    while (iarray_iter_read_block2_has_next(iter_a)) {
+        iarray_iter_read_block2_next(iter_a);
+        iarray_iter_read_block2_next(iter_b);
 
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            for (int64_t i = 0; i < block_size; ++i) {
+            for (int64_t i = 0; i < val_a.block_size; ++i) {
                 double vdiff = fabs(((double *)val_a.pointer)[i] - ((double *)val_b.pointer)[i]) / ((double *)val_a.pointer)[i];
                 if (vdiff > tol) {
                     printf("%f, %f\n", ((double *)val_a.pointer)[i], ((double *)val_b.pointer)[i]);
-                    printf("Values differ in nelem: %ld (diff: %f)\n", (long)(i + val_a.nelem * block_size), vdiff);
+                    printf("Values differ in nelem: %ld (diff: %f)\n", (long)(i + val_a.nblock * val_a.block_size), vdiff);
                     retcode = INA_ERR_FAILED;
                     goto failed;
                 }
             }
         }
         else {
-            for (int64_t i = 0; i < block_size; ++i) {
+            for (int64_t i = 0; i < val_a.block_size; ++i) {
                 float vdiff = fabsf(((float *)val_a.pointer)[i] - ((float *)val_b.pointer)[i]) / ((float *)val_a.pointer)[i];
                 if (vdiff > tol) {
                     printf("%f, %f\n", ((float *)val_a.pointer)[i], ((float *)val_b.pointer)[i]);
-                    printf("Values differ in nelem: %ld (diff: %f)\n", (long)i, vdiff);
+                    printf("Values differ in nelem: %ld (diff: %f)\n", (long)(i + val_a.nblock * val_a.block_size), vdiff);
                     retcode = INA_ERR_FAILED;
                     goto failed;
                 }
@@ -464,8 +456,8 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     }
 
 failed:
-    iarray_iter_read_block_free(iter_a);
-    iarray_iter_read_block_free(iter_b);
+    iarray_iter_read_block2_free(iter_a);
+    iarray_iter_read_block2_free(iter_b);
     free(blocksize);
 
     return retcode;
