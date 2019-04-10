@@ -102,7 +102,7 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     int status = VSL_ERROR_OK;
     iarray_iter_write_block2_t *iter;
     iarray_iter_write_block2_value_t val;
-    iarray_iter_write_block2_new(ctx, &iter, container, NULL, &val);
+    iarray_iter_write_block_new(ctx, &iter, container, NULL, &val);
 
     int64_t max_part_size = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {
@@ -110,8 +110,8 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     }
     void *buffer_mem = ina_mem_alloc(max_part_size * sizeof(double));
 
-    while (iarray_iter_write_block2_has_next(iter)) {
-        iarray_iter_write_block2_next(iter);
+    while (iarray_iter_write_block_has_next(iter)) {
+        iarray_iter_write_block_next(iter);
 
         int64_t block_size = val.block_size;
 
@@ -198,7 +198,7 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
             }
         }
     }
-    iarray_iter_write_block2_free(iter);
+    iarray_iter_write_block_free(iter);
 
     return INA_SUCCESS;
 

@@ -462,23 +462,23 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr);
 INA_API(int) iarray_iter_read_finished(iarray_iter_read_t *itr);
 INA_API(void) iarray_iter_read_value(iarray_iter_read_t *itr, iarray_iter_read_value_t *val);
 
-INA_API(ina_rc_t) iarray_iter_read_block2_new(iarray_context_t *ctx,
-                                              iarray_iter_read_block2_t **itr,
-                                              iarray_container_t *cont,
-                                              const int64_t *blockshape,
-                                              iarray_iter_read_block2_value_t *value);
-INA_API(void) iarray_iter_read_block2_free(iarray_iter_read_block2_t *itr);
-INA_API(ina_rc_t) iarray_iter_read_block2_next(iarray_iter_read_block2_t *itr);
-INA_API(int) iarray_iter_read_block2_has_next(iarray_iter_read_block2_t *itr);
+INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
+                                             iarray_iter_read_block2_t **itr,
+                                             iarray_container_t *cont,
+                                             const int64_t *blockshape,
+                                             iarray_iter_read_block2_value_t *value);
+INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block2_t *itr);
+INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block2_t *itr);
+INA_API(int) iarray_iter_read_block_has_next(iarray_iter_read_block2_t *itr);
 
-INA_API(ina_rc_t) iarray_iter_write_block2_new(iarray_context_t *ctx,
+INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_iter_write_block2_t **itr,
                                               iarray_container_t *container,
                                               const int64_t *blockshape,
                                               iarray_iter_write_block2_value_t *value);
-INA_API(void) iarray_iter_write_block2_free(iarray_iter_write_block2_t *itr);
-INA_API(ina_rc_t) iarray_iter_write_block2_next(iarray_iter_write_block2_t *itr);
-INA_API(int) iarray_iter_write_block2_has_next(iarray_iter_write_block2_t *itr);
+INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block2_t *itr);
+INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block2_t *itr);
+INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block2_t *itr);
 
 /* Expressions */
 INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e);
