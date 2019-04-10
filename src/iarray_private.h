@@ -124,6 +124,7 @@ typedef struct iarray_iter_read_s {
 typedef struct iarray_iter_write_part_s {
     iarray_context_t *ctx;
     iarray_container_t *container;
+    iarray_iter_write_block2_value_t *val;
     uint8_t *part;
     void *pointer;
     int64_t *shape;
