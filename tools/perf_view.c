@@ -83,27 +83,20 @@ int main(int argc, char *argv[])
 
     printf("Speed-up: %f\n", elapsed / elapsed_view);
 
-    iarray_iter_read_block_t *iter_y;
-    iarray_iter_read_block_t *iter_z;
+    iarray_iter_read_block2_t *iter_y;
+    iarray_iter_read_block2_t *iter_z;
 
-    iarray_iter_read_block_new(ctx, c_y, &iter_y, bshape);
-    iarray_iter_read_block_new(ctx, c_z, &iter_z, bshape);
+    iarray_iter_read_block2_value_t value_y;
+    iarray_iter_read_block2_value_t value_z;
+    
+    iarray_iter_read_block2_new(ctx, &iter_y, c_y, bshape, &value_y);
+    iarray_iter_read_block2_new(ctx,  &iter_z, c_z, bshape, &value_z);
 
-    for (iarray_iter_read_block_init(iter_y), iarray_iter_read_block_init(iter_z);
-         !iarray_iter_read_block_finished(iter_y);
-         iarray_iter_read_block_next(iter_y), iarray_iter_read_block_next(iter_z)) {
-
-        iarray_iter_read_block_value_t value_y;
-        iarray_iter_read_block_value(iter_y, &value_y);
-        iarray_iter_read_block_value_t value_z;
-        iarray_iter_read_block_value(iter_z, &value_z);
-
-        int64_t bsize = 1;
-        for (int i = 0; i < c_y->dtshape->ndim; ++i) {
-            bsize *= value_y.block_shape[i];
-        }
-
-        for (int64_t i = 0; i < bsize; ++i) {
+    while (iarray_iter_read_block2_has_next(iter_y)) {
+        iarray_iter_read_block2_next(iter_y);
+        iarray_iter_read_block2_next(iter_z);
+        
+        for (int64_t i = 0; i < value_y.block_size; ++i) {
             switch (dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
                     INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_y.pointer)[i], ((double *) value_z.pointer)[i]);
@@ -117,8 +110,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    iarray_iter_read_block_free(iter_y);
-    iarray_iter_read_block_free(iter_z);
+    iarray_iter_read_block2_free(iter_y);
+    iarray_iter_read_block2_free(iter_z);
 
     iarray_dtshape_t dtshape_mul;
 

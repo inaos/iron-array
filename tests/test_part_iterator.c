@@ -33,20 +33,12 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x));
 
     // Start Iterator
-    iarray_iter_write_part_t *I;
-    iarray_iter_write_part_new(ctx, c_x, &I, blockshape);
+    iarray_iter_write_block2_t *I;
+    iarray_iter_write_block2_value_t val;
+    iarray_iter_write_block2_new(ctx, &I, c_x, blockshape, &val);
 
-    for (iarray_iter_write_part_init(I);
-         !iarray_iter_write_part_finished(I);
-         iarray_iter_write_part_next(I)) {
-
-        iarray_iter_write_part_value_t val;
-        iarray_iter_write_part_value(I, &val);
-
-        int64_t part_size = 1;
-        for (int i = 0; i < ndim; ++i) {
-            part_size *= val.part_shape[i];
-        }
+    while (iarray_iter_write_block2_has_next(I)) {
+        iarray_iter_write_block2_next(I);
 
         int64_t nelem = 0;
         int64_t inc = 1;
@@ -54,19 +46,18 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
             nelem += val.elem_index[i] * inc;
             inc *= c_x->dtshape->shape[i];
         }
-
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            for (int64_t i = 0; i < part_size; ++i) {
+            for (int64_t i = 0; i < val.block_size; ++i) {
                 ((double *)val.pointer)[i] = (double) nelem + i;
             }
         } else {
-            for (int64_t i = 0; i < part_size; ++i) {
+            for (int64_t i = 0; i < val.block_size; ++i) {
                 ((float *)val.pointer)[i] = (float) nelem  + i;
             }
         }
     }
 
-    iarray_iter_write_part_free(I);
+    iarray_iter_write_block2_free(I);
 
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));
@@ -101,39 +92,27 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     }
 
     // Start Iterator
-    iarray_iter_read_block_t *I2;
-    iarray_iter_read_block_new(ctx, c_x, &I2, blockshape);
+    iarray_iter_read_block2_t *I2;
+    iarray_iter_read_block2_value_t val2;
+    iarray_iter_read_block2_new(ctx, &I2, c_x, blockshape, &val2);
 
-    iarray_iter_read_block_t *I3;
-    iarray_iter_read_block_new(ctx, c_y, &I3, blockshape);
+    iarray_iter_read_block2_t *I3;
+    iarray_iter_read_block2_value_t val3;
+    iarray_iter_read_block2_new(ctx, &I3, c_y, blockshape, &val3);
 
-
-    for (iarray_iter_read_block_init(I2), iarray_iter_read_block_init(I3);
-         !iarray_iter_read_block_finished(I2);
-         iarray_iter_read_block_next(I2), iarray_iter_read_block_next(I3)) {
-
-        iarray_iter_read_block_value_t val2;
-        iarray_iter_read_block_value(I2, &val2);
-
-
-        iarray_iter_read_block_value_t val3;
-        iarray_iter_read_block_value(I3, &val3);
-
-        int64_t block_size = 1;
-        for (int i = 0; i < ndim; ++i) {
-            block_size *= val2.block_shape[i];
-        }
+    while (iarray_iter_read_block2_has_next(I2) & iarray_iter_read_block2_has_next(I3)) {
+        iarray_iter_read_block2_next(I2);
+        iarray_iter_read_block2_next(I3);
 
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                for (int64_t i = 0; i < block_size; ++i) {
+                for (int64_t i = 0; i < val2.block_size; ++i) {
                     INA_TEST_ASSERT_EQUAL_FLOATING(((double *) val2.pointer)[i],
                         ((double *) val3.pointer)[i]);
                 }
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-
-                for (int64_t i = 0; i < block_size; ++i) {
+                for (int64_t i = 0; i < val3.block_size; ++i) {
                     INA_TEST_ASSERT_EQUAL_FLOATING(((float *) val2.pointer)[i],
                                                    ((float *) val3.pointer)[i]);
                 }
@@ -144,8 +123,8 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     }
 
 
-    iarray_iter_read_block_free(I2);
-    iarray_iter_read_block_free(I3);
+    iarray_iter_read_block2_free(I2);
+    iarray_iter_read_block2_free(I3);
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);

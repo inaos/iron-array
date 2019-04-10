@@ -1385,10 +1385,11 @@ INA_API(ina_rc_t) iarray_iter_write_block2_next(iarray_iter_write_block2_t *itr)
     itr->nblock += 1;
 
     itr->val->pointer = itr->pointer;
-    itr->val->part_index = itr->cur_block_index;
+    itr->val->block_index = itr->cur_block_index;
     itr->val->elem_index = itr->cur_elem_index;
     itr->val->nelem = itr->nblock;
-    itr->val->part_shape = itr->cur_block_shape;
+    itr->val->block_shape = itr->cur_block_shape;
+    itr->val->block_size = itr->cur_block_size;
 
     return INA_SUCCESS;
 }
