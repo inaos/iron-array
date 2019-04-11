@@ -420,11 +420,11 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_t *ctx = NULL;
     iarray_context_new(&cfg, &ctx);
-    iarray_iter_read_block2_t *iter_a;
-    iarray_iter_read_block2_value_t val_a;
+    iarray_iter_read_block_t *iter_a;
+    iarray_iter_read_block_value_t val_a;
     iarray_iter_read_block_new(ctx, &iter_a, a, blocksize, &val_a);
-    iarray_iter_read_block2_t *iter_b;
-    iarray_iter_read_block2_value_t val_b;
+    iarray_iter_read_block_t *iter_b;
+    iarray_iter_read_block_value_t val_b;
     iarray_iter_read_block_new(ctx, &iter_b, b, blocksize, &val_b);
 
     while (iarray_iter_read_block_has_next(iter_a)) {
