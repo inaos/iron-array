@@ -40,10 +40,10 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
         iarray_iter_write_value(I, &val);
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value = (double) val.nelem;
+            double value = (double) val.elem_index_2;
             memcpy(val.pointer, &value, type_size);
         } else {
-            float value = (float) val.nelem;
+            float value = (float) val.elem_index_2;
             memcpy(val.pointer, &value, type_size);
         }
     }
@@ -53,18 +53,17 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
 
     // Assert iterator reading it
     iarray_iter_read_t *I2;
-    iarray_iter_read_new(ctx, c_x, &I2);
+    iarray_iter_read_value_t val;
+    iarray_iter_read_new(ctx, &I2, c_x, &val);
 
-    for (iarray_iter_read_init(I2); !iarray_iter_read_finished(I2); iarray_iter_read_next(I2)) {
-
-        iarray_iter_read_value_t val;
-        iarray_iter_read_value(I2, &val);
+    while (iarray_iter_read_has_next(I2)) {
+        iarray_iter_read_next(I2);
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value = (double) val.nelem;
+            double value = (double) val.elem_index_2;
             INA_TEST_ASSERT_EQUAL_FLOATING(value, ((double *) val.pointer)[0]);
         } else {
-            float value = (float) val.nelem;
+            float value = (float) val.elem_index_2;
             INA_TEST_ASSERT_EQUAL_FLOATING(value, ((float *) val.pointer)[0]);
         }
     }

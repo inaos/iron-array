@@ -41,19 +41,18 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
     // Assert iterator reading it
 
     iarray_iter_read_t *I2;
-    iarray_iter_read_new(ctx, c_x, &I2);
+    iarray_iter_read_value_t val;
+    iarray_iter_read_new(ctx, &I2, c_x, &val);
 
-    for (iarray_iter_read_init(I2); !iarray_iter_read_finished(I2); iarray_iter_read_next(I2)) {
-
-        iarray_iter_read_value_t val;
-        iarray_iter_read_value(I2, &val);
+    while (iarray_iter_read_has_next(I2)) {
+        iarray_iter_read_next(I2);
 
         switch(dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                INA_TEST_ASSERT_EQUAL_FLOATING(val.nelem * step + start, ((double *) val.pointer)[0]);
+                INA_TEST_ASSERT_EQUAL_FLOATING(val.elem_index_2 * step + start, ((double *) val.pointer)[0]);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                INA_TEST_ASSERT_EQUAL_FLOATING( (float) (val.nelem * step + start), ((float *) val.pointer)[0]);
+                INA_TEST_ASSERT_EQUAL_FLOATING( (float) (val.elem_index_2 * step + start), ((float *) val.pointer)[0]);
                 break;
             default:
                 return INA_ERR_EXCEEDED;
