@@ -19,7 +19,7 @@ int main()
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int64_t shape[] = {100, 100};
-    int64_t pshape[] = {10, 10};
+    int64_t pshape[] = {0, 0};
     int64_t blockshape[] = {10, 10};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -40,32 +40,25 @@ int main()
     iarray_iter_write_block_t *iter_w;
     iarray_iter_write_block_value_t val_w;
     iarray_iter_write_block_new(ctx, &iter_w, cont, NULL, &val_w);
-
     int64_t n = 0;
     while (iarray_iter_write_block_has_next(iter_w)) {
         iarray_iter_write_block_next(iter_w);
-        int64_t size = 1;
-        for (int i = 0; i < ndim; ++i) {
-            size *= val_w.block_shape[i];
-        }
-        for (int i = 0; i < size; ++i) {
+        for (int i = 0; i < val_w.block_size; ++i) {
             ((double *) val_w.pointer)[i] = (double) i + n;
         }
-        n += size;
+        n += val_w.block_size;
     }
     iarray_iter_write_block_free(iter_w);
 
 
-    iarray_iter_read_block_t *iter;
-    iarray_iter_read_block_value_t val;
-    iarray_iter_read_block_new(ctx, &iter, cont, blockshape, &val);
-    while (iarray_iter_read_block_has_next(iter)) {
-        iarray_iter_read_block_next(iter);
-        for (int i = 0; i < val.block_size; ++i) {
-            printf("%f\n", ((double *) val.pointer)[i]);
-        }
+    iarray_iter_read_t *iter;
+    iarray_iter_read_value_t val;
+    iarray_iter_read_new(ctx, &iter, cont, &val);
+    while (iarray_iter_read_has_next(iter)) {
+        iarray_iter_read_next(iter);
+        printf("%f\n", ((double *) val.pointer)[0]);
     }
-    iarray_iter_read_block_free(iter);
+    iarray_iter_read_free(iter);
 
     return EXIT_SUCCESS;
 }

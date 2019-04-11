@@ -175,7 +175,7 @@ int main(int argc, char** argv)
             for (iarray_iter_write_init(I); !iarray_iter_write_finished(I); iarray_iter_write_next(I)) {
                 iarray_iter_write_value_t val;
                 iarray_iter_write_value(I, &val);
-                double value = incx * (double) val.nelem;
+                double value = incx * (double) val.elem_index_2;
                 memcpy(val.pointer, &value, sizeof(double));
             }
             iarray_iter_write_free(I);
@@ -247,7 +247,7 @@ int main(int argc, char** argv)
             for (iarray_iter_write_init(I); !iarray_iter_write_finished(I); iarray_iter_write_next(I)) {
                 iarray_iter_write_value_t val;
                 iarray_iter_write_value(I, &val);
-                double value = _poly(incx * (double) val.nelem);
+                double value = _poly(incx * (double) val.elem_index_2);
                 memcpy(val.pointer, &value, sizeof(double));
             }
             iarray_iter_write_free(I);

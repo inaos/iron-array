@@ -419,14 +419,11 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
     double min = INFINITY;
 
     iarray_iter_read_t *iter;
+    iarray_iter_read_value_t val;
+    iarray_iter_read_new(ctx, &iter, c1, &val);
 
-    iarray_iter_read_new(ctx, c1, &iter);
-    for (iarray_iter_read_init(iter);
-         !iarray_iter_read_finished(iter);
-         iarray_iter_read_next(iter)) {
-
-        iarray_iter_read_value_t val;
-        iarray_iter_read_value(iter, &val);
+    while (iarray_iter_read_has_next(iter)) {
+        iarray_iter_read_next(iter);
 
         double data;
         switch(c1->dtshape->dtype){
@@ -445,13 +442,9 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
     }
     iarray_iter_read_free(iter);
 
-    iarray_iter_read_new(ctx, c2, &iter);
-    for (iarray_iter_read_init(iter);
-         !iarray_iter_read_finished(iter);
-         iarray_iter_read_next(iter)) {
-
-        iarray_iter_read_value_t val;
-        iarray_iter_read_value(iter, &val);
+    iarray_iter_read_new(ctx, &iter, c2, &val);
+    while (iarray_iter_read_has_next(iter)) {
+        iarray_iter_read_next(iter);
 
         double data;
         switch(c1->dtshape->dtype){
@@ -476,13 +469,10 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         hist2[i] = 0;
     }
 
-    iarray_iter_read_new(ctx, c1, &iter);
-    for (iarray_iter_read_init(iter);
-         !iarray_iter_read_finished(iter);
-         iarray_iter_read_next(iter)) {
+    iarray_iter_read_new(ctx, &iter, c1, &val);
 
-        iarray_iter_read_value_t val;
-        iarray_iter_read_value(iter, &val);
+    while (iarray_iter_read_has_next(iter)) {
+        iarray_iter_read_next(iter);
 
         double data;
         switch(c1->dtshape->dtype){
@@ -505,13 +495,10 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
     }
     iarray_iter_read_free(iter);
 
-    iarray_iter_read_new(ctx, c2, &iter);
-    for (iarray_iter_read_init(iter);
-         !iarray_iter_read_finished(iter);
-         iarray_iter_read_next(iter)) {
+    iarray_iter_read_new(ctx, &iter, c1, &val);
 
-        iarray_iter_read_value_t val;
-        iarray_iter_read_value(iter, &val);
+    while (iarray_iter_read_has_next(iter)) {
+        iarray_iter_read_next(iter);
 
         double data;
         switch(c1->dtshape->dtype){
