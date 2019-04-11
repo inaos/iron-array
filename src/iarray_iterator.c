@@ -610,7 +610,7 @@ INA_API(void) iarray_iter_read_free(iarray_iter_read_t *itr)
  * Function: iarray_iter_read_block_next
  */
 
-INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block2_t *itr)
+INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr)
 {
     int64_t typesize = itr->cont->catarr->ctx->cparams.typesize;
     int8_t ndim = itr->cont->dtshape->ndim;
@@ -663,7 +663,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block2_t *itr)
  * Function: iarray_iter_read_block_finished
  */
 
-INA_API(int) iarray_iter_read_block_has_next(iarray_iter_read_block2_t *itr)
+INA_API(int) iarray_iter_read_block_has_next(iarray_iter_read_block_t *itr)
 {
     return itr->nblock < itr->total_blocks;
 }
@@ -674,14 +674,14 @@ INA_API(int) iarray_iter_read_block_has_next(iarray_iter_read_block2_t *itr)
  */
 
 INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
-                                             iarray_iter_read_block2_t **itr,
+                                             iarray_iter_read_block_t **itr,
                                              iarray_container_t *cont,
                                              const int64_t *blockshape,
-                                             iarray_iter_read_block2_value_t *value)
+                                             iarray_iter_read_block_value_t *value)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(itr);
-    *itr = (iarray_iter_read_block2_t*) ina_mem_alloc(sizeof(iarray_iter_read_block2_t));
+    *itr = (iarray_iter_read_block_t *) ina_mem_alloc(sizeof(iarray_iter_read_block_t));
     INA_RETURN_IF_NULL(itr);
 
     (*itr)->ctx = ctx;
@@ -748,11 +748,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
-/*
- * Function: iarray_iter_read_block_free
- */
-
-INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block2_t *itr)
+INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr)
 {
     ina_mem_free(itr->block_shape);
     ina_mem_free(itr->cur_block_shape);
@@ -760,29 +756,19 @@ INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block2_t *itr)
     ina_mem_free(itr->cur_elem_index);
     ina_mem_free(itr->part);
 
-    //ina_mem_free(itr->container->catarr->part_cache.data);  // TODO: investigate (see above)
+    // ina_mem_free(itr->container->catarr->part_cache.data);  // TODO: investigate (see above)
     itr->cont->catarr->part_cache.data = NULL;  // reset to NULL here (the memory pool will be reset later)
     itr->cont->catarr->part_cache.nchunk = -1;  // means no valid cache yet
+
     ina_mem_free(itr);
 }
 
 
 /*
- * Partition by partition iterator
- *
- * Unlike the previous, the next collection of functions are used to fill an iarray container part by part
+ * Block-wise write iterator
  */
 
-
-/*
- * Function: iarray_iter_write_part_next
- * -------------------------------
- *   Update the iterator to next element
- *
- *   itr: an iterator
- */
-
-INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block2_t *itr) {
+INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr) {
     caterva_array_t *catarr = itr->cont->catarr;
     int8_t ndim = catarr->ndim;
     int64_t typesize = itr->cont->catarr->ctx->cparams.typesize;
@@ -902,17 +888,8 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block2_t *itr) 
     return INA_SUCCESS;
 }
 
-/*
- * Function: iarray_iter_write_part_finished
- * -----------------------------------
- *   Check if the iterator is finished
- *
- *   itr: an iterator
- *
- *   return: 1 if iter is finished or 0 if not
- */
 
-INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block2_t *itr)
+INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
 {
     if ( itr->nblock == (itr->cont_esize / itr->block_shape_size)) {
         caterva_array_t *catarr = itr->cont->catarr;
@@ -996,28 +973,16 @@ INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block2_t *itr)
 }
 
 
-/*
- * Function: iarray_iter_write_part_new
- * ------------------------------
- *   Create a new iterator
- *
- *   ctx: iarray context
- *   container: the container used in the iterator
- *   itr: an iterator
- *
-*   return: INA_SUCCESS or an error code
- */
-
 INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
-                                              iarray_iter_write_block2_t **itr,
+                                              iarray_iter_write_block_t **itr,
                                               iarray_container_t *container,
                                               const int64_t *blockshape,
-                                              iarray_iter_write_block2_value_t *value)
+                                              iarray_iter_write_block_value_t *value)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(container);
     INA_VERIFY_NOT_NULL(itr);
-    *itr = (iarray_iter_write_block2_t*)ina_mem_alloc(sizeof(iarray_iter_write_block2_t));
+    *itr = (iarray_iter_write_block_t *)ina_mem_alloc(sizeof(iarray_iter_write_block_t));
     INA_RETURN_IF_NULL(itr);
 
     if (blockshape != NULL & container->catarr->storage == CATERVA_STORAGE_BLOSC) {
@@ -1104,23 +1069,14 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
-/*
- * Function: iarray_iter_write_part_free
- * -------------------------------
- *   Free an iterator structure
- *
- *   itr: an iterator
- *
-*   return: INA_SUCCESS or an error code
- */
 
-INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block2_t *itr)
+INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t *itr)
 {
-    ina_mem_free(itr->cur_block_index);
-    ina_mem_free(itr->cur_elem_index);
-    ina_mem_free(itr->cur_block_shape);
     ina_mem_free(itr->part);
     ina_mem_free(itr->block_shape);
+    ina_mem_free(itr->cur_block_shape);
+    ina_mem_free(itr->cur_block_index);
+    ina_mem_free(itr->cur_elem_index);
     ina_mem_free(itr->cont_eshape);
 
     ina_mem_free(itr);

@@ -187,8 +187,8 @@ int main(int argc, char** argv)
         else if (INA_SUCCEED(ina_opt_isset("I"))) {
             INA_STOPWATCH_START(w);
             iarray_container_new(ctx, &shape, &mat_x, flags, &con_x);
-            iarray_iter_write_block2_t *I;
-            iarray_iter_write_block2_value_t val;
+            iarray_iter_write_block_t *I;
+            iarray_iter_write_block_value_t val;
             iarray_iter_write_block_new(ctx, &I, con_x, NULL, &val);
             double incx = XMAX / NELEM;
             while (iarray_iter_write_block_has_next(I)) {
@@ -259,8 +259,8 @@ int main(int argc, char** argv)
         else if (INA_SUCCEED(ina_opt_isset("I"))) {
             INA_STOPWATCH_START(w);
             iarray_container_new(ctx, &shape, &mat_y, flags, &con_y);
-            iarray_iter_write_block2_t *I;
-            iarray_iter_write_block2_value_t val;
+            iarray_iter_write_block_t *I;
+            iarray_iter_write_block_value_t val;
             iarray_iter_write_block_new(ctx, &I, con_y, NULL, &val);
             double incx = XMAX / NELEM;
             while (iarray_iter_write_block_has_next(I)) {

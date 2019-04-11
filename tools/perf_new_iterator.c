@@ -37,8 +37,8 @@ int main()
     iarray_container_new(ctx, &dtshape, NULL, 0, &cont);
 
 
-    iarray_iter_write_block2_t *iter_w;
-    iarray_iter_write_block2_value_t val_w;
+    iarray_iter_write_block_t *iter_w;
+    iarray_iter_write_block_value_t val_w;
     iarray_iter_write_block_new(ctx, &iter_w, cont, NULL, &val_w);
 
     int64_t n = 0;
@@ -56,8 +56,8 @@ int main()
     iarray_iter_write_block_free(iter_w);
 
 
-    iarray_iter_read_block2_t *iter;
-    iarray_iter_read_block2_value_t val;
+    iarray_iter_read_block_t *iter;
+    iarray_iter_read_block_value_t val;
     iarray_iter_read_block_new(ctx, &iter, cont, blockshape, &val);
     while (iarray_iter_read_block_has_next(iter)) {
         iarray_iter_read_block_next(iter);
