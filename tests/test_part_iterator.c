@@ -33,8 +33,8 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x));
 
     // Start Iterator
-    iarray_iter_write_block2_t *I;
-    iarray_iter_write_block2_value_t val;
+    iarray_iter_write_block_t *I;
+    iarray_iter_write_block_value_t val;
     iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val);
 
     while (iarray_iter_write_block_has_next(I)) {
@@ -92,12 +92,12 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     }
 
     // Start Iterator
-    iarray_iter_read_block2_t *I2;
-    iarray_iter_read_block2_value_t val2;
+    iarray_iter_read_block_t *I2;
+    iarray_iter_read_block_value_t val2;
     iarray_iter_read_block_new(ctx, &I2, c_x, blockshape, &val2);
 
-    iarray_iter_read_block2_t *I3;
-    iarray_iter_read_block2_value_t val3;
+    iarray_iter_read_block_t *I3;
+    iarray_iter_read_block_value_t val3;
     iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3);
 
     while (iarray_iter_read_block_has_next(I2) & iarray_iter_read_block_has_next(I3)) {

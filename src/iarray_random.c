@@ -100,8 +100,8 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     _iarray_random_method_t method)
 {
     int status = VSL_ERROR_OK;
-    iarray_iter_write_block2_t *iter;
-    iarray_iter_write_block2_value_t val;
+    iarray_iter_write_block_t *iter;
+    iarray_iter_write_block_value_t val;
     iarray_iter_write_block_new(ctx, &iter, container, NULL, &val);
 
     int64_t max_part_size = 1;
