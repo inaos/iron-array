@@ -22,6 +22,7 @@ typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;
 
 typedef struct iarray_iter_write_s iarray_iter_write_t;
+
 typedef struct iarray_iter_read_s iarray_iter_read_t;
 typedef struct iarray_iter_read_block_s iarray_iter_read_block_t;
 typedef struct iarray_iter_write_block_s iarray_iter_write_block_t;
@@ -127,12 +128,15 @@ typedef struct iarray_dtshape_s {
 
 typedef struct iarray_iter_write_value_s {
     void *pointer;
-    int64_t *index;
-    int64_t nelem;
+    int64_t *elem_index;
+    int64_t elem_index_2;
 } iarray_iter_write_value_t;
 
-typedef struct iarray_iter_write_value_s iarray_iter_read_value_t;
-
+typedef struct iarray_iter_read_value_s {
+    void *pointer;
+    int64_t *elem_index;
+    int64_t elem_index_2;
+} iarray_iter_read_value_t;
 
 typedef struct iarray_iter_write_block_value_s {
     void *pointer;
@@ -142,7 +146,6 @@ typedef struct iarray_iter_write_block_value_s {
     int64_t* block_shape;
     int64_t block_size;
 } iarray_iter_write_block_value_t;
-
 
 typedef struct iarray_iter_read_block_value_s {
     void *pointer;
@@ -438,13 +441,14 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr);
 INA_API(int) iarray_iter_write_finished(iarray_iter_write_t *itr);
 INA_API(void) iarray_iter_write_value(iarray_iter_write_t *itr, iarray_iter_write_value_t *value);
 
-INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx, iarray_container_t *container,
-                                       iarray_iter_read_t **itr);
+
+INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
+                                       iarray_iter_read_t **itr,
+                                       iarray_container_t *cont,
+                                       iarray_iter_read_value_t *val);
 INA_API(void) iarray_iter_read_free(iarray_iter_read_t *itr);
-INA_API(void) iarray_iter_read_init(iarray_iter_read_t *itr);
 INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr);
-INA_API(int) iarray_iter_read_finished(iarray_iter_read_t *itr);
-INA_API(void) iarray_iter_read_value(iarray_iter_read_t *itr, iarray_iter_read_value_t *val);
+INA_API(int) iarray_iter_read_has_next(iarray_iter_read_t *itr);
 
 INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_iter_read_block_t **itr,
