@@ -169,7 +169,7 @@ int main(int argc, char** argv)
         if (INA_SUCCEED(ina_opt_isset("i"))) {
             INA_STOPWATCH_START(w);
             iarray_container_new(ctx, &shape, &mat_x, flags, &con_x);
-            iarray_iter_write2_t *I;
+            iarray_iter_write_t *I;
             iarray_iter_write_value_t val;
             iarray_iter_write_new(ctx, &I, con_x, &val);
             double incx = XMAX / NELEM;
@@ -241,7 +241,7 @@ int main(int argc, char** argv)
         if (INA_SUCCEED(ina_opt_isset("i"))) {
             INA_STOPWATCH_START(w);
             iarray_container_new(ctx, &shape, &mat_y, flags, &con_y);
-            iarray_iter_write2_t *I;
+            iarray_iter_write_t *I;
             iarray_iter_write_value_t val;
             iarray_iter_write_new(ctx, &I, con_y, &val);
             double incx = XMAX / NELEM;

@@ -144,8 +144,8 @@ int main(int argc, char *argv[])
 
     iarray_iter_read_t *iter_mul;
     iarray_iter_read_t *iter_mul_view;
-    iarray_iter_read2_value_t value_mul;
-    iarray_iter_read2_value_t value_mul_view;
+    iarray_iter_read_value_t value_mul;
+    iarray_iter_read_value_t value_mul_view;
     iarray_iter_read_new(ctx, &iter_mul, c_mul, &value_mul);
     iarray_iter_read_new(ctx, &iter_mul_view, c_mul_view, &value_mul_view);
 
