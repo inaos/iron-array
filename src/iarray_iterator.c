@@ -312,9 +312,9 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     // INA_FAIL_IF(container->catarr->part_cache.nchunk != -1);
     // TODO: Using ina_mem_alloc instead of ina_mempool_dalloc makes the
     //  `./perf_vectors -I -e 3 -c 5` bench to fail.  Investigate more.
-    // container->catarr->part_cache.data = ina_mem_alloc((size_t)size);
-    // memset(container->catarr->part_cache.data, 0, (size_t)size);
-    //container->catarr->part_cache.data = ina_mempool_dalloc(ctx->mp, (size_t)size);
+    cont->catarr->part_cache.data = ina_mem_alloc((size_t) cont->catarr->psize);
+    memset(cont->catarr->part_cache.data, 0, (size_t)cont->catarr->psize);
+    cont->catarr->part_cache.data = ina_mempool_dalloc(ctx->mp, (size_t) cont->catarr->psize);
 
     return INA_SUCCESS;
 }
