@@ -36,7 +36,7 @@ int main()
     iarray_container_new(ctx, &dtshape, NULL, 0, &cont);
 
 
-    iarray_iter_write2_t *iter_w;
+    iarray_iter_write_t *iter_w;
     iarray_iter_write_value_t val_w;
     iarray_iter_write_new(ctx, &iter_w, cont, &val_w);
 
