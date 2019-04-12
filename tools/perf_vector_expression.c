@@ -169,12 +169,12 @@ int main(int argc, char** argv)
         if (INA_SUCCEED(ina_opt_isset("i"))) {
             INA_STOPWATCH_START(w);
             iarray_container_new(ctx, &shape, &mat_x, flags, &con_x);
-            iarray_iter_write_t *I;
-            iarray_iter_write_new(ctx, con_x, &I);
+            iarray_iter_write2_t *I;
+            iarray_iter_write_value_t val;
+            iarray_iter_write_new(ctx, &I, con_x, &val);
             double incx = XMAX / NELEM;
-            for (iarray_iter_write_init(I); !iarray_iter_write_finished(I); iarray_iter_write_next(I)) {
-                iarray_iter_write_value_t val;
-                iarray_iter_write_value(I, &val);
+            while (iarray_iter_write_has_next(I)) {
+                iarray_iter_write_next(I);
                 double value = incx * (double) val.elem_index_2;
                 memcpy(val.pointer, &value, sizeof(double));
             }
@@ -241,12 +241,12 @@ int main(int argc, char** argv)
         if (INA_SUCCEED(ina_opt_isset("i"))) {
             INA_STOPWATCH_START(w);
             iarray_container_new(ctx, &shape, &mat_y, flags, &con_y);
-            iarray_iter_write_t *I;
-            iarray_iter_write_new(ctx, con_y, &I);
+            iarray_iter_write2_t *I;
+            iarray_iter_write_value_t val;
+            iarray_iter_write_new(ctx, &I, con_y, &val);
             double incx = XMAX / NELEM;
-            for (iarray_iter_write_init(I); !iarray_iter_write_finished(I); iarray_iter_write_next(I)) {
-                iarray_iter_write_value_t val;
-                iarray_iter_write_value(I, &val);
+            while (iarray_iter_write_has_next(I)) {
+                iarray_iter_write_next(I);
                 double value = _poly(incx * (double) val.elem_index_2);
                 memcpy(val.pointer, &value, sizeof(double));
             }

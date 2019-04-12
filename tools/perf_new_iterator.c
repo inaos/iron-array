@@ -37,13 +37,13 @@ int main()
 
 
     iarray_iter_write2_t *iter_w;
-    iarray_iter_write2_value_t val_w;
-    iarray_iter_write2_new(ctx, &iter_w, cont, &val_w);
+    iarray_iter_write_value_t val_w;
+    iarray_iter_write_new(ctx, &iter_w, cont, &val_w);
 
-    while (iarray_iter_write2_has_next(iter_w)) {
-        iarray_iter_write2_next(iter_w);
+    while (iarray_iter_write_has_next(iter_w)) {
+        iarray_iter_write_next(iter_w);
     }
-    iarray_iter_write2_free(iter_w);
+    iarray_iter_write_free(iter_w);
 
 
     iarray_iter_read_t *iter;
