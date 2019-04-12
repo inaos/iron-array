@@ -42,8 +42,6 @@ int main()
 
     while (iarray_iter_write2_has_next(iter_w)) {
         iarray_iter_write2_next(iter_w);
-        ((double *) val_w.pointer)[0] = (double) val_w.elem_index_2;
-        printf("%f\n", (double) val_w.elem_index_2);
     }
     iarray_iter_write2_free(iter_w);
 
@@ -53,7 +51,6 @@ int main()
     iarray_iter_read_new(ctx, &iter, cont, &val);
     while (iarray_iter_read_has_next(iter)) {
         iarray_iter_read_next(iter);
-        printf("%f\n", ((double *) val.pointer)[0]);
     }
     iarray_iter_read_free(iter);
 

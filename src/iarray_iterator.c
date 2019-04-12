@@ -1074,8 +1074,6 @@ INA_API(ina_rc_t) iarray_iter_write2_next(iarray_iter_write2_t *itr)
 
     if (itr->nelem_block == itr->cur_block_size - 1) {
         if (itr->container->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-
-            printf("Append block\n");
             int err = blosc2_schunk_append_buffer(catarr->sc, itr->part,
                                                   (size_t) catarr->psize * typesize);
             if (err < 0) {
@@ -1084,6 +1082,8 @@ INA_API(ina_rc_t) iarray_iter_write2_next(iarray_iter_write2_t *itr)
 
             int64_t inc = 1;
             itr->cur_block_size = 1;
+
+            itr->nblock += 1;
 
             for (int i = ndim - 1; i >= 0; --i) {
                 itr->cur_block_index[i] = itr->nblock % (inc * (catarr->eshape[i] / catarr->pshape[i])) / inc;
@@ -1097,9 +1097,9 @@ INA_API(ina_rc_t) iarray_iter_write2_next(iarray_iter_write2_t *itr)
             }
             memset(itr->part, 0, catarr->psize * typesize);
             itr->nelem_block = 0;
-            itr->nblock += 1;
+
         }
-    } else {
+    } else if (itr->nelem != 0) {
         itr->nelem_block += 1;
     }
 
@@ -1152,7 +1152,6 @@ INA_API(int) iarray_iter_write2_has_next(iarray_iter_write2_t *itr)
                                         (size_t) itr->container->catarr->psize * typesize);
         }
     }
-    printf("Element %llu of %llu\n", itr->nelem, itr->container->catarr->size);
     return itr->nelem < itr->container->catarr->size;
 }
 
