@@ -84,12 +84,9 @@ struct iarray_container_s {
 typedef struct iarray_iter_write_s {
     iarray_context_t *ctx;
     iarray_container_t *container;
-    iarray_iter_write2_value_t *val;
+    iarray_iter_write_value_t *val;
     uint8_t *part;
     void *pointer;
-
-    int64_t *i_shape;
-    int64_t *i_pshape;
 
     int64_t nelem;
     int64_t nblock;
