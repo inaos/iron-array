@@ -820,252 +820,11 @@ INA_API(void) iarray_iter_read_free(iarray_iter_read_t *itr)
 
 
 /*
- * Element by element iterator
- *
- * Next functions are used to fill an iarray container element by element
+ * Element by element write iterator
  */
 
-/*
- * Function: iarray_iter_write_init
- * -------------------------
- *   Set the iterator values to the first element
- *
- *   itr: an iterator
- */
-
-INA_API(void) iarray_iter_write_init(iarray_iter_write_t *itr)
-{
-    itr->nelem = 0;
-    itr->nblock = 0;
-    itr->nelem_block = 0;
-
-    itr->elem_index_2 = 0;
-
-    itr->cur_block_size = itr->container->catarr->psize;
-
-    memset(itr->part, 0, itr->container->catarr->psize * itr->container->catarr->ctx->cparams.typesize);
-    for (int i = 0; i < CATERVA_MAXDIM; ++i) {
-        itr->elem_index[i] = 0;
-        itr->cur_block_index[i] = 0;
-        itr->cur_block_shape[i] = itr->container->catarr->pshape[i];
-    }
-    itr->pointer = &itr->part[0];
-}
-
-/*
- * Function: iarray_iter_write_next
- * -------------------------
- *   Compute the next iterator element nad update the iterator with it
- *
- *   itr: an iterator
- */
 
 INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
-{
-    caterva_array_t *catarr = itr->container->catarr;
-    int ndim = catarr->ndim;
-    int64_t typesize = itr->container->catarr->ctx->cparams.typesize;
-    // check if a part is filled totally and append it
-
-    if (itr->nelem_block  == itr->cur_block_size - 1) {
-        if (itr->container->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-            itr->nelem = itr->container->catarr->size;
-        } else {
-
-            int err = blosc2_schunk_append_buffer(catarr->sc, itr->part,
-                                                  (size_t) catarr->psize * typesize);
-            if (err < 0) {
-                return INA_ERROR(INA_ERR_FAILED);
-            }
-
-            int64_t inc = 1;
-            itr->cur_block_size = 1;
-            for (int i = ndim - 1; i >= 0; --i) {
-                itr->cur_block_index[i] = itr->nblock % (inc * (catarr->eshape[i] / catarr->pshape[i])) / inc;
-                inc *= (catarr->eshape[i] / catarr->pshape[i]);
-                if ((itr->cur_block_index[i] + 1) * catarr->pshape[i] > catarr->shape[i]) {
-                    itr->cur_block_shape[i] = catarr->shape[i] - itr->cur_block_index[i] * catarr->pshape[i];
-                } else {
-                    itr->cur_block_shape[i] = catarr->pshape[i];
-                }
-                itr->cur_block_size *= itr->cur_block_shape[i];
-            }
-            itr->nelem_block = 0;
-            itr->nblock += 1;
-            memset(itr->part, 0, catarr->psize * typesize);
-        }
-    } else {
-        itr->nelem_block += 1;
-    }
-
-    int64_t ind_part_elem[IARRAY_DIMENSION_MAX];
-    int64_t cont_pointer = 0;
-
-    int64_t inc = 1;
-    int64_t inc_s = 1;
-    int64_t inc_p = 1;
-
-    itr->elem_index_2 = 0;
-
-    for (int i = ndim - 1; i >= 0; --i) {
-        ind_part_elem[i] = itr->nelem_block % (inc * itr->cur_block_shape[i]) / inc;
-        cont_pointer += ind_part_elem[i] * inc_p;
-        itr->elem_index[i] = ind_part_elem[i] + itr->cur_block_index[i] * catarr->pshape[i];
-        itr->elem_index_2 += itr->elem_index[i] * inc_s;
-        inc *= itr->cur_block_shape[i];
-        inc_p *= catarr->pshape[i];
-        inc_s *= catarr->shape[i];
-    }
-    itr->pointer = (void *)&(itr->part)[cont_pointer * typesize];
-
-    // jump to the next element
-    itr->nelem += 1;
-    return INA_SUCCESS;
-}
-
-/*
- * Function: iarray_iter_write_finished
- * -----------------------------
- *   Check if the iteration over a container is finished
- *
- *   itr: an iterator
- *
- *   return: 1 if iter is finished or 0 if not
- */
-
-INA_API(int) iarray_iter_write_finished(iarray_iter_write_t *itr)
-{
-    return itr->nelem >= itr->container->catarr->size;
-}
-
-/*
- * Function: iarray_iter_write_value
- * ------------------------
- *   Store in `val` some variables of the actual element
- *
- *   itr: an iterator
- *   val: a struct where data needed by the user is stored
- *     part_index: position in coord where the element is located in the container
- *     nelem: if the container is row-wise flatten, `nelem` is the element position in the container
- *     pointer: pointer to element position in memory. It's used to copy the element into the container
- *
-*   return: INA_SUCCESS or an error code
- */
-
-INA_API(void) iarray_iter_write_value(iarray_iter_write_t *itr, iarray_iter_write_value_t *val)
-{
-    val->pointer = itr->pointer;
-    val->elem_index = itr->elem_index;
-    val->elem_index_2 = itr->elem_index_2;
-}
-
-/*
- * Function: iarray_iter_write_new
- * ------------------------
- *   Create a new iterator
- *
- *   ctx: iarrat context
- *   container: the container used in the iterator
- *   itr: an iterator pointer
- *
-*   return: INA_SUCCESS or an error code
- */
-
-INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx, iarray_container_t *container, iarray_iter_write_t **itr)
-{
-    INA_VERIFY_NOT_NULL(ctx);
-    INA_VERIFY_NOT_NULL(container);
-    INA_VERIFY_NOT_NULL(itr);
-
-    *itr = (iarray_iter_write_t*)ina_mem_alloc(sizeof(iarray_iter_write_t));
-    INA_RETURN_IF_NULL(itr);
-    caterva_dims_t shape = caterva_new_dims(container->dtshape->shape, container->dtshape->ndim);
-    int err = caterva_update_shape(container->catarr, &shape);
-    if (err < 0) {
-        return INA_ERROR(INA_ERR_FAILED);
-    }
-    (*itr)->ctx = ctx;
-    (*itr)->container = container;
-    if (container->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        (*itr)->part = (uint8_t *) container->catarr->ctx->alloc((size_t)container->catarr->psize *
-            container->catarr->ctx->cparams.typesize);
-        container->catarr->buf = (*itr)->part;
-    } else {
-        (*itr)->part = (uint8_t *) ina_mem_alloc((size_t)container->catarr->psize * container->catarr->ctx->cparams.typesize);
-    }
-
-    (*itr)->elem_index = (int64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(int64_t));
-    (*itr)->cur_block_index = (int64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(int64_t));
-    (*itr)->cur_block_shape = (int64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(int64_t));
-
-
-    return INA_SUCCESS;
-}
-
-/*
- * Function: iarray_iter_write_free
- * -------------------------
- *   Free an iterator structure
- *
- *   itr: an iterator
- *
-*   return: INA_SUCCESS or an error code
- */
-
-INA_API(void) iarray_iter_write_free(iarray_iter_write_t *itr)
-{
-    ina_mem_free(itr->elem_index);
-    if (itr->container->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-        ina_mem_free(itr->part);
-    }
-    ina_mem_free(itr->cur_block_index);
-    ina_mem_free(itr->cur_block_shape);
-    ina_mem_free(itr);
-}
-
-
-/*
- * Element by element iterator
- *
- * Next functions are used to fill an iarray container element by element
- */
-
-/*
- * Function: iarray_iter_write_init
- * -------------------------
- *   Set the iterator values to the first element
- *
- *   itr: an iterator
- */
-
-INA_API(void) iarray_iter_write2_init(iarray_iter_write2_t *itr)
-{
-    itr->nelem = 0;
-    itr->nblock = 0;
-    itr->nelem_block = 0;
-
-    itr->elem_index_2 = 0;
-
-    itr->cur_block_size = itr->container->catarr->psize;
-
-    memset(itr->part, 0, itr->container->catarr->psize * itr->container->catarr->ctx->cparams.typesize);
-    for (int i = 0; i < CATERVA_MAXDIM; ++i) {
-        itr->elem_index[i] = 0;
-        itr->cur_block_index[i] = 0;
-        itr->cur_block_shape[i] = itr->container->catarr->pshape[i];
-    }
-    itr->pointer = &itr->part[0];
-}
-
-/*
- * Function: iarray_iter_write_next
- * -------------------------
- *   Compute the next iterator element nad update the iterator with it
- *
- *   itr: an iterator
- */
-
-INA_API(ina_rc_t) iarray_iter_write2_next(iarray_iter_write2_t *itr)
 {
     caterva_array_t *catarr = itr->container->catarr;
     int ndim = catarr->ndim;
@@ -1133,17 +892,7 @@ INA_API(ina_rc_t) iarray_iter_write2_next(iarray_iter_write2_t *itr)
     return INA_SUCCESS;
 }
 
-/*
- * Function: iarray_iter_write_finished
- * -----------------------------
- *   Check if the iteration over a container is finished
- *
- *   itr: an iterator
- *
- *   return: 1 if iter is finished or 0 if not
- */
-
-INA_API(int) iarray_iter_write2_has_next(iarray_iter_write2_t *itr)
+INA_API(int) iarray_iter_write_has_next(iarray_iter_write_t *itr)
 {
     int64_t typesize = itr->container->catarr->ctx->cparams.typesize;
     if (itr->nelem == itr->container->catarr->size) {
@@ -1155,63 +904,39 @@ INA_API(int) iarray_iter_write2_has_next(iarray_iter_write2_t *itr)
     return itr->nelem < itr->container->catarr->size;
 }
 
-/*
- * Function: iarray_iter_write_value
- * ------------------------
- *   Store in `val` some variables of the actual element
- *
- *   itr: an iterator
- *   val: a struct where data needed by the user is stored
- *     part_index: position in coord where the element is located in the container
- *     nelem: if the container is row-wise flatten, `nelem` is the element position in the container
- *     pointer: pointer to element position in memory. It's used to copy the element into the container
- *
-*   return: INA_SUCCESS or an error code
- */
 
-INA_API(void) iarray_iter_write2_value(iarray_iter_write2_t *itr, iarray_iter_write2_value_t *val)
+INA_API(void) iarray_iter_write2_value(iarray_iter_write_t *itr, iarray_iter_write_value_t *val)
 {
     val->pointer = itr->pointer;
     val->elem_index = itr->elem_index;
     val->elem_index_2 = itr->elem_index_2;
 }
 
-/*
- * Function: iarray_iter_write_new
- * ------------------------
- *   Create a new iterator
- *
- *   ctx: iarrat context
- *   container: the container used in the iterator
- *   itr: an iterator pointer
- *
-*   return: INA_SUCCESS or an error code
- */
 
-INA_API(ina_rc_t) iarray_iter_write2_new(iarray_context_t *ctx,
-                                         iarray_iter_write2_t **itr,
-                                         iarray_container_t *container,
-                                         iarray_iter_write2_value_t *val)
+INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
+                                        iarray_iter_write_t **itr,
+                                        iarray_container_t *cont,
+                                        iarray_iter_write_value_t *val)
 {
     INA_VERIFY_NOT_NULL(ctx);
-    INA_VERIFY_NOT_NULL(container);
+    INA_VERIFY_NOT_NULL(cont);
     INA_VERIFY_NOT_NULL(itr);
 
     *itr = (iarray_iter_write_t*)ina_mem_alloc(sizeof(iarray_iter_write_t));
     INA_RETURN_IF_NULL(itr);
-    caterva_dims_t shape = caterva_new_dims(container->dtshape->shape, container->dtshape->ndim);
-    int err = caterva_update_shape(container->catarr, &shape);
+    caterva_dims_t shape = caterva_new_dims(cont->dtshape->shape, cont->dtshape->ndim);
+    int err = caterva_update_shape(cont->catarr, &shape);
     if (err < 0) {
         return INA_ERROR(INA_ERR_FAILED);
     }
     (*itr)->ctx = ctx;
-    (*itr)->container = container;
-    if (container->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        (*itr)->part = (uint8_t *) container->catarr->ctx->alloc((size_t)container->catarr->psize *
-            container->catarr->ctx->cparams.typesize);
-        container->catarr->buf = (*itr)->part;
+    (*itr)->container = cont;
+    if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        (*itr)->part = (uint8_t *) cont->catarr->ctx->alloc((size_t)cont->catarr->psize *
+            cont->catarr->ctx->cparams.typesize);
+        cont->catarr->buf = (*itr)->part;
     } else {
-        (*itr)->part = (uint8_t *) ina_mem_alloc((size_t)container->catarr->psize * container->catarr->ctx->cparams.typesize);
+        (*itr)->part = (uint8_t *) ina_mem_alloc((size_t)cont->catarr->psize * cont->catarr->ctx->cparams.typesize);
     }
 
     (*itr)->elem_index = (int64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(int64_t));
@@ -1233,22 +958,13 @@ INA_API(ina_rc_t) iarray_iter_write2_new(iarray_context_t *ctx,
         (*itr)->cur_block_shape[i] = (*itr)->container->catarr->pshape[i];
     }
 
-    memset((*itr)->part, 0, container->catarr->psize * container->catarr->ctx->cparams.typesize);
+    memset((*itr)->part, 0, cont->catarr->psize * cont->catarr->ctx->cparams.typesize);
 
     return INA_SUCCESS;
 }
 
-/*
- * Function: iarray_iter_write_free
- * -------------------------
- *   Free an iterator structure
- *
- *   itr: an iterator
- *
-*   return: INA_SUCCESS or an error code
- */
 
-INA_API(void) iarray_iter_write2_free(iarray_iter_write2_t *itr)
+INA_API(void) iarray_iter_write_free(iarray_iter_write_t *itr)
 {
     ina_mem_free(itr->elem_index);
     if (itr->container->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {

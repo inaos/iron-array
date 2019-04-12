@@ -22,7 +22,6 @@ typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;
 
 typedef struct iarray_iter_write_s iarray_iter_write_t;
-typedef struct iarray_iter_write_s iarray_iter_write2_t;
 
 typedef struct iarray_iter_read_s iarray_iter_read_t;
 typedef struct iarray_iter_read_block_s iarray_iter_read_block_t;
@@ -133,7 +132,6 @@ typedef struct iarray_iter_write_value_s {
     int64_t elem_index_2;
 } iarray_iter_write_value_t;
 
-typedef struct iarray_iter_write_value_s iarray_iter_write2_value_t;
 
 typedef struct iarray_iter_read_value_s {
     void *pointer;
@@ -437,21 +435,13 @@ INA_API(ina_rc_t) iarray_reduction_mul(iarray_context_t *ctx, iarray_container_t
 
 /* Iterators */
 
-INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx, iarray_container_t *container, iarray_iter_write_t **itr);
+INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
+                                        iarray_iter_write_t **itr,
+                                        iarray_container_t *cont,
+                                        iarray_iter_write_value_t *val);
 INA_API(void) iarray_iter_write_free(iarray_iter_write_t *itr);
-INA_API(void) iarray_iter_write_init(iarray_iter_write_t *itr);
 INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr);
-INA_API(int) iarray_iter_write_finished(iarray_iter_write_t *itr);
-INA_API(void) iarray_iter_write_value(iarray_iter_write_t *itr, iarray_iter_write_value_t *value);
-
-
-INA_API(ina_rc_t) iarray_iter_write2_new(iarray_context_t *ctx,
-                                         iarray_iter_write2_t **itr,
-                                         iarray_container_t *cont,
-                                         iarray_iter_write2_value_t *val);
-INA_API(void) iarray_iter_write2_free(iarray_iter_write2_t *itr);
-INA_API(ina_rc_t) iarray_iter_write2_next(iarray_iter_write2_t *itr);
-INA_API(int) iarray_iter_write2_has_next(iarray_iter_write2_t *itr);
+INA_API(int) iarray_iter_write_has_next(iarray_iter_write_t *itr);
 
 
 INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
