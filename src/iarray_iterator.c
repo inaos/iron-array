@@ -312,15 +312,18 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     // INA_FAIL_IF(container->catarr->part_cache.nchunk != -1);
     // TODO: Using ina_mem_alloc instead of ina_mempool_dalloc makes the
     //  `./perf_vectors -I -e 3 -c 5` bench to fail.  Investigate more.
-    switch (cont->dtshape->dtype) {
-        case IARRAY_DATA_TYPE_DOUBLE:
-            cont->catarr->part_cache.data = ina_mempool_dalloc(ctx->mp, (size_t) cont->catarr->psize * sizeof(double));
-            break;
-        case IARRAY_DATA_TYPE_FLOAT:
-            cont->catarr->part_cache.data = ina_mempool_dalloc(ctx->mp, (size_t) cont->catarr->psize * sizeof(float));
-            break;
-        default:
-            break;
+    if (cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
+        switch (cont->dtshape->dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                cont->catarr->part_cache.data =
+                    ina_mempool_dalloc(ctx->mp, (size_t) cont->catarr->psize * sizeof(double));
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                cont->catarr->part_cache.data =
+                    ina_mempool_dalloc(ctx->mp, (size_t) cont->catarr->psize * sizeof(float));
+                break;
+            default:break;
+        }
     }
     return INA_SUCCESS;
 }
