@@ -20,6 +20,7 @@ int main()
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int64_t shape[] = {10, 10};
     int64_t pshape[] = {2, 2};
+    int64_t bshape[] = {2, 10};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_t *ctx;
@@ -42,17 +43,23 @@ int main()
 
     while (iarray_iter_write_has_next(iter_w)) {
         iarray_iter_write_next(iter_w);
+        ((double *) val_w.pointer)[0] = (double) val_w.elem_index_2;
     }
     iarray_iter_write_free(iter_w);
 
 
-    iarray_iter_read_t *iter;
-    iarray_iter_read_value_t val;
-    iarray_iter_read_new(ctx, &iter, cont, &val);
-    while (iarray_iter_read_has_next(iter)) {
-        iarray_iter_read_next(iter);
+    iarray_iter_read_block_t *iter;
+    iarray_iter_read_block_value_t val;
+    iarray_iter_read_block_new(ctx, &iter, cont, bshape, &val);
+    while (iarray_iter_read_block_has_next(iter)) {
+        iarray_iter_read_block_next(iter);
+        for (int i = 0; i < val.block_size; ++i) {
+            double value = ((double *) val.pointer)[i];
+            printf("%f - ", value);
+        }
+        printf("\n");
     }
-    iarray_iter_read_free(iter);
+    iarray_iter_read_block_free(iter);
 
     return EXIT_SUCCESS;
 }

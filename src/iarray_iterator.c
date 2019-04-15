@@ -220,10 +220,19 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr)
     }
 
     // Get the desired block
-    INA_MUST_SUCCEED(iarray_get_slice_buffer(itr->ctx, itr->cont, (int64_t *) start_,
-                                             (int64_t *) stop_, itr->part, actual_block_size * typesize));
+    if (itr->contiguous) {
+        INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(itr->ctx, itr->cont, (int64_t *) start_,
+                                                          (int64_t *) stop_, (void **) &itr->part,
+                                                          actual_block_size * typesize));
+    } else {
+        INA_MUST_SUCCEED(iarray_get_slice_buffer(itr->ctx, itr->cont, (int64_t *) start_,
+                                                 (int64_t *) stop_, itr->part,
+                                                 actual_block_size * typesize));
+    }
+    //printf("IT %p\n", (void *) itr->part);
 
     // Update the structure that user can see
+    itr->pointer = &(itr->part[0]);
     itr->val->pointer = itr->pointer;
     itr->val->block_index = itr->cur_block_index;
     itr->val->elem_index = itr->cur_elem_index;
@@ -277,8 +286,20 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
         (*itr)->block_shape[i] = blockshape[i];
         block_size *= (*itr)->block_shape[i];
     }
-    (*itr)->part = ina_mem_alloc((size_t) block_size);
-    (*itr)->pointer = &((*itr)->part[0]);
+
+    // Check if the blocks are contiguous in memory
+    (*itr)->contiguous = (cont->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
+    if ((*itr)->contiguous) {
+        for (int i = 1; i < cont->dtshape->ndim; ++i) {
+            if (blockshape[i] != cont->dtshape->shape[i]) {
+                (*itr)->contiguous = false;
+                break;
+            }
+        }
+    }
+    if (!(*itr)->contiguous) {
+        (*itr)->part = ina_mem_alloc((size_t) block_size);
+    }
 
     (*itr)->val = value;
 
@@ -330,14 +351,17 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
 
 INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr)
 {
+    if (!itr->contiguous) {
+        ina_mem_free(itr->part);
+    }
+
+    itr->cont->catarr->part_cache.data = NULL;  // reset to NULL here (the memory pool will be reset later)
+    itr->cont->catarr->part_cache.nchunk = -1;  // means no valid cache yet
+
     ina_mem_free(itr->block_shape);
     ina_mem_free(itr->cur_block_shape);
     ina_mem_free(itr->cur_block_index);
     ina_mem_free(itr->cur_elem_index);
-    ina_mem_free(itr->part);
-
-    itr->cont->catarr->part_cache.data = NULL;  // reset to NULL here (the memory pool will be reset later)
-    itr->cont->catarr->part_cache.nchunk = -1;  // means no valid cache yet
 
     ina_mem_free(itr);
 }
@@ -713,8 +737,8 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
         }
 
         // Decompress the next block
-        INA_MUST_SUCCEED(iarray_get_slice_buffer(itr->ctx, itr->cont, (int64_t *) start_,
-                                                 (int64_t *) stop_, itr->part, buflen * typesize));
+        INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(itr->ctx, itr->cont, (int64_t *) start_,
+                                                          (int64_t *) stop_, (void **) &itr->part, buflen * typesize));
         itr->nelem_block = 0;
 
         // Update block counter
