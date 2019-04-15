@@ -312,10 +312,16 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     // INA_FAIL_IF(container->catarr->part_cache.nchunk != -1);
     // TODO: Using ina_mem_alloc instead of ina_mempool_dalloc makes the
     //  `./perf_vectors -I -e 3 -c 5` bench to fail.  Investigate more.
-    //cont->catarr->part_cache.data = ina_mem_alloc((size_t) cont->catarr->psize);
-    cont->catarr->part_cache.data = ina_mempool_dalloc(ctx->mp, (size_t) cont->catarr->psize);
-    memset(cont->catarr->part_cache.data, 0, (size_t)cont->catarr->psize);
-
+    switch (cont->dtshape->dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            cont->catarr->part_cache.data = ina_mempool_dalloc(ctx->mp, (size_t) cont->catarr->psize * sizeof(double));
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            cont->catarr->part_cache.data = ina_mempool_dalloc(ctx->mp, (size_t) cont->catarr->psize * sizeof(float));
+            break;
+        default:
+            break;
+    }
     return INA_SUCCESS;
 }
 
@@ -327,7 +333,6 @@ INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr)
     ina_mem_free(itr->cur_elem_index);
     ina_mem_free(itr->part);
 
-    //ina_mem_free(itr->cont->catarr->part_cache.data);  // TODO: investigate (see above)
     itr->cont->catarr->part_cache.data = NULL;  // reset to NULL here (the memory pool will be reset later)
     itr->cont->catarr->part_cache.nchunk = -1;  // means no valid cache yet
 
