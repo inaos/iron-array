@@ -156,6 +156,7 @@ typedef struct iarray_iter_read_block_s {
     int64_t *cur_block_index; // The position of the block in the container
     int64_t *cur_elem_index; // The position of the first element of the block in the container
     int64_t nblock; // The block counter
+    bool contiguous;
 } iarray_iter_read_block_t;
 
 typedef struct iarray_iter_matmul_s {
@@ -228,4 +229,12 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
                                   int64_t *pshape,
                                   void *buffer,
                                   int64_t buflen);
+
+INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
+                                                   iarray_container_t *c,
+                                                   int64_t *start,
+                                                   int64_t *stop,
+                                                   void **buffer,
+                                                   int64_t buflen);
+
 #endif
