@@ -121,6 +121,7 @@ typedef struct iarray_iter_read_s {
 
     int64_t *elem_index; // The elem index in coord
     int64_t elem_index_2; // The elem index if the container will be flatten
+    bool contiguous;
 
 } iarray_iter_read_t;
 
