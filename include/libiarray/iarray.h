@@ -129,14 +129,14 @@ typedef struct iarray_dtshape_s {
 typedef struct iarray_iter_write_value_s {
     void *pointer;
     int64_t *elem_index;
-    int64_t elem_index_flatten;
+    int64_t elem_flat_index;
 } iarray_iter_write_value_t;
 
 
 typedef struct iarray_iter_read_value_s {
     void *pointer;
     int64_t *elem_index;
-    int64_t elem_index_flatten;
+    int64_t elem_flat_index;
 } iarray_iter_read_value_t;
 
 typedef struct iarray_iter_write_block_value_s {

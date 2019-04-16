@@ -39,10 +39,10 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
         iarray_iter_write_next(I);
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value = (double) val.elem_index_flatten;
+            double value = (double) val.elem_flat_index;
             memcpy(val.pointer, &value, type_size);
         } else {
-            float value = (float) val.elem_index_flatten;
+            float value = (float) val.elem_flat_index;
             memcpy(val.pointer, &value, type_size);
         }
     }
@@ -59,10 +59,10 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
         iarray_iter_read_next(I2);
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value = (double) val2.elem_index_flatten;
+            double value = (double) val2.elem_flat_index;
             INA_TEST_ASSERT_EQUAL_FLOATING(value, ((double *) val2.pointer)[0]);
         } else {
-            float value = (float) val2.elem_index_flatten;
+            float value = (float) val2.elem_flat_index;
             INA_TEST_ASSERT_EQUAL_FLOATING(value, ((float *) val2.pointer)[0]);
         }
     }
