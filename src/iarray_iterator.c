@@ -427,7 +427,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr) {
     itr->val->pointer = itr->pointer;
     itr->val->block_index = itr->cur_block_index;
     itr->val->elem_index = itr->cur_elem_index;
-    itr->val->nelem = itr->nblock;
+    itr->val->nblock = itr->nblock;
     itr->val->block_shape = itr->cur_block_shape;
     itr->val->block_size = itr->cur_block_size;
 
@@ -705,11 +705,11 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
     int64_t inc = 1;
     int64_t inc_s = 1;
 
-    itr->elem_index_2 = 0;
+    itr->elem_flat_index = 0;
     for (int i = ndim - 1; i >= 0; --i) {
         ind_part_elem[i] = itr->nelem_block % (inc * itr->cur_block_shape[i]) / inc;
         itr->elem_index[i] = ind_part_elem[i] + itr->cur_block_index[i] * itr->block_shape[i];
-        itr->elem_index_2 += itr->elem_index[i] * inc_s;
+        itr->elem_flat_index += itr->elem_index[i] * inc_s;
         inc_s *= c_shape[i];
         inc *= itr->cur_block_shape[i];
     }
@@ -717,7 +717,7 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
 
     itr->val->pointer = itr->pointer;
     itr->val->elem_index = itr->elem_index;
-    itr->val->elem_index_2 = itr->elem_index_2;
+    itr->val->elem_index_flatten = itr->elem_flat_index;
 
     itr->nelem += 1;
 
@@ -852,13 +852,13 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
     int64_t inc_s = 1;
     int64_t inc_p = 1;
 
-    itr->elem_index_2 = 0;
+    itr->elem_flat_index = 0;
 
     for (int i = ndim - 1; i >= 0; --i) {
         ind_part_elem[i] = itr->nelem_block % (inc * itr->cur_block_shape[i]) / inc;
         cont_pointer += ind_part_elem[i] * inc_p;
         itr->elem_index[i] = ind_part_elem[i] + itr->cur_block_index[i] * catarr->pshape[i];
-        itr->elem_index_2 += itr->elem_index[i] * inc_s;
+        itr->elem_flat_index += itr->elem_index[i] * inc_s;
         inc *= itr->cur_block_shape[i];
         inc_p *= catarr->pshape[i];
         inc_s *= catarr->shape[i];
@@ -867,7 +867,7 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
 
     itr->val->pointer = itr->pointer;
     itr->val->elem_index = itr->elem_index;
-    itr->val->elem_index_2 = itr->elem_index_2;
+    itr->val->elem_index_flatten = itr->elem_flat_index;
 
     itr->nelem += 1;
 
@@ -921,7 +921,7 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
     (*itr)->nelem = 0;
     (*itr)->nblock = 0;
     (*itr)->nelem_block = 0;
-    (*itr)->elem_index_2 = 0;
+    (*itr)->elem_flat_index = 0;
 
     (*itr)->cur_block_size = (*itr)->container->catarr->psize;
 

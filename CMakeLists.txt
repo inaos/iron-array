@@ -65,7 +65,7 @@ endif()
 inac_add_tests(iarrays)
 #inac_add_benchmarks(iarrays)
 inac_add_tools(iarrays)
-#inac_add_examples(iarrays)
+inac_add_examples(iarrays)
 
 # Playing with OpenMP (available mainly on GCC)
 #if (UNIX AND NOT CMAKE_C_COMPILER_ID STREQUAL Clang)
