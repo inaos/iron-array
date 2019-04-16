@@ -175,7 +175,7 @@ int main(int argc, char** argv)
             double incx = XMAX / NELEM;
             while (iarray_iter_write_has_next(I)) {
                 iarray_iter_write_next(I);
-                double value = incx * (double) val.elem_index_flatten;
+                double value = incx * (double) val.elem_flat_index;
                 memcpy(val.pointer, &value, sizeof(double));
             }
             iarray_iter_write_free(I);
@@ -247,7 +247,7 @@ int main(int argc, char** argv)
             double incx = XMAX / NELEM;
             while (iarray_iter_write_has_next(I)) {
                 iarray_iter_write_next(I);
-                double value = _poly(incx * (double) val.elem_index_flatten);
+                double value = _poly(incx * (double) val.elem_flat_index);
                 memcpy(val.pointer, &value, sizeof(double));
             }
             iarray_iter_write_free(I);

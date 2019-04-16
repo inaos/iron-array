@@ -43,7 +43,7 @@ int main()
 
     while (iarray_iter_write_has_next(iter_w)) {
         iarray_iter_write_next(iter_w);
-        ((double *) val_w.pointer)[0] = (double) val_w.elem_index_flatten;
+        ((double *) val_w.pointer)[0] = (double) val_w.elem_flat_index;
     }
     iarray_iter_write_free(iter_w);
 
