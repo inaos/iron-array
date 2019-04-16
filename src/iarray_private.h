@@ -96,8 +96,8 @@ typedef struct iarray_iter_write_s {
     int64_t cur_block_size;
     int64_t *cur_block_index;
 
-    int64_t *elem_index;
-    int64_t elem_index_2;
+    int64_t *elem_index; // The elem index in coord
+    int64_t elem_flat_index; // The elem index if the container will be flatten
 
 } iarray_iter_write_t;
 
@@ -120,9 +120,7 @@ typedef struct iarray_iter_read_s {
     int64_t cont_size; // The container size
 
     int64_t *elem_index; // The elem index in coord
-    int64_t elem_index_2; // The elem index if the container will be flatten
-    bool contiguous;
-
+    int64_t elem_flat_index; // The elem index if the container will be flatten
 } iarray_iter_read_t;
 
 typedef struct iarray_iter_write_block_s {
