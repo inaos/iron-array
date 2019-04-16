@@ -717,7 +717,7 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
 
     itr->val->pointer = itr->pointer;
     itr->val->elem_index = itr->elem_index;
-    itr->val->elem_index_flatten = itr->elem_flat_index;
+    itr->val->elem_flat_index = itr->elem_flat_index;
 
     itr->nelem += 1;
 
@@ -867,7 +867,7 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
 
     itr->val->pointer = itr->pointer;
     itr->val->elem_index = itr->elem_index;
-    itr->val->elem_index_flatten = itr->elem_flat_index;
+    itr->val->elem_flat_index = itr->elem_flat_index;
 
     itr->nelem += 1;
 
