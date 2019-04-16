@@ -15,19 +15,8 @@
 
 /*
  * Matmul iterator
- *
- * Internal iterator used to perform easily matrix-matrix or vector-matrix multiplications by blocks
- *
  */
 
-
-/*
- * Function: iarray_iter_matmul_init
- * --------------------------------
- *   Set the iterator values to the first element
- *
- *   itr: an iterator
- */
 
 void _iarray_iter_matmul_init(iarray_iter_matmul_t *itr)
 {
@@ -35,14 +24,6 @@ void _iarray_iter_matmul_init(iarray_iter_matmul_t *itr)
     itr->npart1 = 0;
     itr->npart2 = 0;
 }
-
-/*
- * Function: iarray_iter_matmul_next
- * --------------------------------
- *   Update the block to be used of each container
- *
-*   itr: an iterator
- */
 
 void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr)
 {
@@ -74,16 +55,6 @@ void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr)
     }
 }
 
-/*
- * Function: iarray_iter_matmul_finished
- * ------------------------------------
- *   Check if the iterator is finished
- *
- *   itr: an iterator
- *
- *   return: 1 if iter is finished or 0 if not
- */
-
 int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr)
 {
     int64_t B0 = itr->B0;
@@ -99,17 +70,6 @@ int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr)
 
     return itr->cont >= (M/B0) * (N/B2) * (K/B1);
 }
-
-/*
- * Function: iarray_iter_matmul_new
- * ------------------------
- *   Create a matmul iterator
- *
- *   ctx: iarray context
- *   itr: an iterator
- *
-*   return: INA_SUCCESS or an error code
- */
 
 ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, iarray_container_t *c2,
                                  int64_t *bshape_a, int64_t *bshape_b, iarray_iter_matmul_t **itr)
@@ -166,16 +126,6 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
     return INA_SUCCESS;
 }
 
-/*
- * Function: iarray_iter_matmul_free
- * --------------------------------
- *   Free an iterator structure
- *
- *   itr: an iterator
- *
-*   return: INA_SUCCESS or an error code
- */
-
 void _iarray_iter_matmul_free(iarray_iter_matmul_t *itr)
 {
     ina_mem_free(itr);
@@ -220,7 +170,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr)
     }
 
     // Get the desired block
-    if (itr->contiguous) {
+    if (itr->contiguous & (itr->cont->view == false)) {
         INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(itr->ctx, itr->cont, (int64_t *) start_,
                                                           (int64_t *) stop_, (void **) &itr->part,
                                                           actual_block_size * typesize));
@@ -259,11 +209,11 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              const int64_t *blockshape,
                                              iarray_iter_read_block_value_t *value)
 {
-    INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(itr);
     *itr = (iarray_iter_read_block_t *) ina_mem_alloc(sizeof(iarray_iter_read_block_t));
     INA_RETURN_IF_NULL(itr);
 
+    INA_VERIFY_NOT_NULL(ctx);
     (*itr)->ctx = ctx;
 
     INA_VERIFY_NOT_NULL(cont);
@@ -271,7 +221,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     int64_t typesize = (*itr)->cont->catarr->ctx->cparams.typesize;
 
     if (blockshape == NULL) {
-        blockshape = cont->dtshape->shape;
+        blockshape = cont->dtshape->pshape;
     }
 
     (*itr)->aux = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
@@ -328,11 +278,6 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     }
     (*itr)->nblock = 0;
 
-    // Create a cache in the underlying container so as to accelerate the getting of a slice
-    // INA_FAIL_IF(container->catarr->part_cache.data != NULL);
-    // INA_FAIL_IF(container->catarr->part_cache.nchunk != -1);
-    // TODO: Using ina_mem_alloc instead of ina_mempool_dalloc makes the
-    //  `./perf_vectors -I -e 3 -c 5` bench to fail.  Investigate more.
     if (cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
         switch (cont->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
@@ -351,7 +296,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
 
 INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr)
 {
-    if (!itr->contiguous) {
+    if (!itr->contiguous | (itr->cont->view == true)) {
         ina_mem_free(itr->part);
     }
 
@@ -737,8 +682,16 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
         }
 
         // Decompress the next block
-        INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(itr->ctx, itr->cont, (int64_t *) start_,
-                                                          (int64_t *) stop_, (void **) &itr->part, buflen * typesize));
+        if (itr->cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER & itr->cont->view == false) {
+            INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(itr->ctx, itr->cont, (int64_t *) start_,
+                                                              (int64_t *) stop_, (void **) &itr->part,
+                                                              buflen * typesize));
+        } else {
+            INA_MUST_SUCCEED(iarray_get_slice_buffer(itr->ctx, itr->cont, (int64_t *) start_,
+                                                     (int64_t *) stop_, itr->part,
+                                                     buflen * typesize));
+        }
+
         itr->nelem_block = 0;
 
         // Update block counter
@@ -795,9 +748,7 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
 
     (*itr)->ctx = ctx;
     (*itr)->cont = cont;
-    if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        (*itr)->part = cont->catarr->buf;
-    } else {
+    if (cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
         (*itr)->part = (uint8_t *) ina_mem_alloc((size_t) cont->catarr->psize * cont->catarr->sc->typesize);
     }
     (*itr)->elem_index = (int64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(int64_t));
@@ -812,7 +763,6 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
     }
 
     (*itr)->val = val;
-
 
     // Initialize element and block index
     for (int i = 0; i <IARRAY_DIMENSION_MAX; ++i) {
@@ -935,15 +885,6 @@ INA_API(int) iarray_iter_write_has_next(iarray_iter_write_t *itr)
     }
     return itr->nelem < itr->container->catarr->size;
 }
-
-
-INA_API(void) iarray_iter_write2_value(iarray_iter_write_t *itr, iarray_iter_write_value_t *val)
-{
-    val->pointer = itr->pointer;
-    val->elem_index = itr->elem_index;
-    val->elem_index_2 = itr->elem_index_2;
-}
-
 
 INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
                                         iarray_iter_write_t **itr,
