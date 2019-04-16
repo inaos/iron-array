@@ -168,12 +168,12 @@ int main(int argc, char** argv)
             INA_STOPWATCH_START(w);
             iarray_container_new(ctx, &shape, &mat_x, flags, &con_x);
             iarray_iter_write_t *I;
-            iarray_iter_write_new(ctx, con_x, &I);
+            iarray_iter_write_value_t val;
+            iarray_iter_write_new(ctx, &I, con_x, &val);
             double incx = XMAX / NELEM;
-            for (iarray_iter_write_init(I); !iarray_iter_write_finished(I); iarray_iter_write_next(I)) {
-                iarray_iter_write_value_t val;
-                iarray_iter_write_value(I, &val);
-                double value = incx * (double) val.nelem;
+            while (iarray_iter_write_has_next(I)) {
+                iarray_iter_write_next(I);
+                double value = incx * (double) val.elem_flat_index;
                 memcpy(val.pointer, &value, sizeof(double));
             }
             iarray_iter_write_free(I);
@@ -185,18 +185,18 @@ int main(int argc, char** argv)
         else if (INA_SUCCEED(ina_opt_isset("I"))) {
             INA_STOPWATCH_START(w);
             iarray_container_new(ctx, &shape, &mat_x, flags, &con_x);
-            iarray_iter_write_part_t *I;
-            iarray_iter_write_part_new(ctx, con_x, &I, NULL);
+            iarray_iter_write_block_t *I;
+            iarray_iter_write_block_value_t val;
+            iarray_iter_write_block_new(ctx, &I, con_x, NULL, &val);
             double incx = XMAX / NELEM;
-            for (iarray_iter_write_part_init(I); !iarray_iter_write_part_finished(I); iarray_iter_write_part_next(I)) {
-                iarray_iter_write_part_value_t val;
-                iarray_iter_write_part_value(I, &val);
-                int64_t part_size = val.part_shape[0];  // 1-dim vector
+            while (iarray_iter_write_block_has_next(I)) {
+                iarray_iter_write_block_next(I);
+                int64_t part_size = val.block_size;  // 1-dim vector
                 for (int64_t i = 0; i < part_size; ++i) {
-                    ((double *)val.pointer)[i] = incx * (double) (i + val.nelem * part_size);
+                    ((double *)val.pointer)[i] = incx * (double) (i + val.nblock * part_size);
                 }
             }
-            iarray_iter_write_part_free(I);
+            iarray_iter_write_block_free(I);
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf("Time for computing and filling X values via partition iterator: %.3g s, %.1f MB/s\n",
@@ -240,12 +240,12 @@ int main(int argc, char** argv)
             INA_STOPWATCH_START(w);
             iarray_container_new(ctx, &shape, &mat_y, flags, &con_y);
             iarray_iter_write_t *I;
-            iarray_iter_write_new(ctx, con_y, &I);
+            iarray_iter_write_value_t val;
+            iarray_iter_write_new(ctx, &I, con_y, &val);
             double incx = XMAX / NELEM;
-            for (iarray_iter_write_init(I); !iarray_iter_write_finished(I); iarray_iter_write_next(I)) {
-                iarray_iter_write_value_t val;
-                iarray_iter_write_value(I, &val);
-                double value = _poly(incx * (double) val.nelem);
+            while (iarray_iter_write_has_next(I)) {
+                iarray_iter_write_next(I);
+                double value = _poly(incx * (double) val.elem_flat_index);
                 memcpy(val.pointer, &value, sizeof(double));
             }
             iarray_iter_write_free(I);
@@ -257,19 +257,18 @@ int main(int argc, char** argv)
         else if (INA_SUCCEED(ina_opt_isset("I"))) {
             INA_STOPWATCH_START(w);
             iarray_container_new(ctx, &shape, &mat_y, flags, &con_y);
-            iarray_iter_write_part_t *I;
-            iarray_iter_write_part_new(ctx, con_y, &I, NULL);
+            iarray_iter_write_block_t *I;
+            iarray_iter_write_block_value_t val;
+            iarray_iter_write_block_new(ctx, &I, con_y, NULL, &val);
             double incx = XMAX / NELEM;
-            for (iarray_iter_write_part_init(I); !iarray_iter_write_part_finished(I);
-                 iarray_iter_write_part_next(I)) {
-                iarray_iter_write_part_value_t val;
-                iarray_iter_write_part_value(I, &val);
-                int64_t part_size = val.part_shape[0];  // 1-dim vector
+            while (iarray_iter_write_block_has_next(I)) {
+                iarray_iter_write_block_next(I);
+                int64_t part_size = val.block_size;
                 for (int64_t i = 0; i < part_size; ++i) {
-                    ((double *) val.pointer)[i] = _poly(incx * (double) (i + val.nelem * part_size));
+                    ((double *) val.pointer)[i] = _poly(incx * (double) (i + val.nblock * part_size));
                 }
             }
-            iarray_iter_write_part_free(I);
+            iarray_iter_write_block_free(I);
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf(
