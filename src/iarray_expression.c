@@ -289,6 +289,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_iter_read_block_free(iter_var[nvar]);
         }
+        iarray_context_free(&ctx);
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);
         ina_mem_free(outbuf);

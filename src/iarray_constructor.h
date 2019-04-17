@@ -159,13 +159,14 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         }
         (*c)->catarr = caterva_empty_array(cat_ctx, NULL, NULL);
     }
+
+    if (cat_ctx != NULL) caterva_free_ctx(cat_ctx);
     INA_FAIL_IF((*c)->catarr == NULL);
 
     return INA_SUCCESS;
 
 fail:
     iarray_container_free(ctx, c);
-    if (cat_ctx != NULL) caterva_free_ctx(cat_ctx);
     return ina_err_get_rc();
 }
 
