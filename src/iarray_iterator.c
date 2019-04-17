@@ -533,6 +533,10 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     *itr = (iarray_iter_write_block_t *)ina_mem_alloc(sizeof(iarray_iter_write_block_t));
     INA_RETURN_IF_NULL(itr);
 
+    if (container->catarr->size != 1) {
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT); //TODO: Should we allow a rewrite a non-empty iarray cont
+    }
+
     if (blockshape != NULL & container->catarr->storage == CATERVA_STORAGE_BLOSC) {
         return INA_ERROR(INA_ERR_FAILED);
     }
@@ -540,11 +544,15 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     if (blockshape == NULL) {
         blockshape = container->dtshape->pshape;
     }
+
     int64_t typesize = container->catarr->ctx->cparams.typesize;
 
     caterva_dims_t shape = caterva_new_dims(container->dtshape->shape, container->dtshape->ndim);
     int err = caterva_update_shape(container->catarr, &shape);
-    container->catarr->buf = container->catarr->ctx->alloc((size_t) container->catarr->size * typesize);
+
+    if (container->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        container->catarr->buf = container->catarr->ctx->alloc((size_t) container->catarr->size * typesize);
+    }
 
     if (err < 0) {
         return INA_ERROR(INA_ERR_FAILED);
