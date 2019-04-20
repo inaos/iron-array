@@ -2,7 +2,6 @@ trigger: none
 
 variables:
 - group: jfrog-artifactory
-- group: gitlab
 
 jobs:
 - job: BuildWindows
@@ -29,23 +28,8 @@ jobs:
       mkdir -p $inac_home
       $repos = "INAC_REPOSITORY_LOCAL=$inac_home`nINAC_REPOSITORY_REMOTE=https://inaos.jfrog.io/inaos/libs-release-local/inaos`nINAC_REPOSITORY_USRPWD=licensed:AKCp5bBraH7CasbsYCURsjzkbjXwVwdYcT7u39EiuL6GjnK1VKfKQWCd1E2E64mHokU5YUHku"
       Set-Content $HOME/.inaos/cmake/repository.txt $repos
-      $fileContent = "-----BEGIN RSA PRIVATE KEY-----`n"
-      $fileContent += $env:gitlab_priv_key.Replace(' ', "`n")
-      $fileContent += "`n-----END RSA PRIVATE KEY-----`n"
-      mkdir -p $HOME/.ssh
-      Set-Content $HOME/.ssh/id_rsa $fileContent
-    env:
-      gitlab_priv_key: $(gitlab_priv_key)
   - bash: |
-      echo "-----BEGIN RSA PRIVATE KEY-----" > $HOME/.ssh/id_rsa
-      echo "${gitlab_priv_key}" | tr " " "\n" >> $HOME/.ssh/id_rsa
-      echo "-----END RSA PRIVATE KEY-----" >> $HOME/.ssh/id_rsa
-      cat $HOME/.ssh/id_rsa
-      ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts
-      ssh -v git@gitlab.com
       git submodule update --init --recursive
-    env:
-      gitlab_priv_key: $(gitlab_priv_key)
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
   - script: |
