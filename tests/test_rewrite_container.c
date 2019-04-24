@@ -17,6 +17,7 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
                                   int32_t type_size, int8_t ndim, const int64_t *shape,
                                   const int64_t *pshape, const int64_t *blockshape, bool rewrite)
 {
+    INA_UNUSED(type_size);
     // Create dtshape
     iarray_dtshape_t xdtshape;
     xdtshape.dtype = dtype;
