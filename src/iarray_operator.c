@@ -470,10 +470,11 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     INA_ASSERT_NOT_NULL(b);
     INA_ASSERT_NOT_NULL(c);
 
-    if (bshape_a != NULL && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+    if (a->dtshape->ndim != 2) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
-    if (bshape_b != NULL && b->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+
+    if (a->dtshape->shape[1] != b->dtshape->shape[0]) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
@@ -483,13 +484,11 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     if (bshape_b == NULL) {
         bshape_b = b->dtshape->shape;
     }
+
     if (bshape_a[0] != c->dtshape->pshape[0]){
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
-    if (a->dtshape->ndim != 2) {
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
-    }
     if (b->dtshape->ndim == 1) {
         return _iarray_gemv(ctx, a, b, c, bshape_a, bshape_b);
     }
@@ -500,7 +499,7 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
         return _iarray_gemm(ctx, a, b, c, bshape_a, bshape_b);
     }
     else {
-        return INA_ERR_INVALID_ARGUMENT;
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 }
 
