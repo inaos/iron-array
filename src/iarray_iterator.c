@@ -303,6 +303,7 @@ INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr)
     itr->cont->catarr->part_cache.data = NULL;  // reset to NULL here (the memory pool will be reset later)
     itr->cont->catarr->part_cache.nchunk = -1;  // means no valid cache yet
 
+    ina_mem_free(itr->aux);
     ina_mem_free(itr->block_shape);
     ina_mem_free(itr->cur_block_shape);
     ina_mem_free(itr->cur_block_index);
