@@ -117,6 +117,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
             break;
     }
     cparams.compcode = ctx->cfg->compression_codec;
+    cparams.use_dict = ctx->cfg->use_dict;
     cparams.clevel = (uint8_t)ctx->cfg->compression_level; /* Since its just a mapping, we know the cast is ok */
     cparams.blocksize = ctx->cfg->blocksize;
     cparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
