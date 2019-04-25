@@ -170,7 +170,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr)
     }
 
     // Get the desired block
-    if (itr->contiguous & (itr->cont->view == false)) {
+    if (itr->contiguous && (itr->cont->view == false)) {
         INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(itr->ctx, itr->cont, (int64_t *) start_,
                                                           (int64_t *) stop_, (void **) &itr->part,
                                                           actual_block_size * typesize));
@@ -538,7 +538,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT); //TODO: Should we allow a rewrite a non-empty iarray cont
     }
 
-    if (blockshape != NULL & container->catarr->storage == CATERVA_STORAGE_BLOSC) {
+    if (blockshape != NULL && container->catarr->storage == CATERVA_STORAGE_BLOSC) {
         return INA_ERROR(INA_ERR_FAILED);
     }
 
@@ -691,7 +691,7 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
         }
 
         // Decompress the next block
-        if (itr->cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER & itr->cont->view == false) {
+        if (itr->cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && itr->cont->view == false) {
             INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(itr->ctx, itr->cont, (int64_t *) start_,
                                                               (int64_t *) stop_, (void **) &itr->part,
                                                               buflen * typesize));
