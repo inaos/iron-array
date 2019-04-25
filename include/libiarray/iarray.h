@@ -112,6 +112,7 @@ typedef enum iarray_linalg_norm_e {
 typedef struct iarray_config_s {
     iarray_compression_codec_t compression_codec;
     int compression_level;
+    int use_dict;
     int filter_flags;
     int eval_flags;
     int max_num_threads; /* Maximum number of threads to use */
