@@ -470,12 +470,24 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     INA_ASSERT_NOT_NULL(b);
     INA_ASSERT_NOT_NULL(c);
 
+    if (a->dtshape->dtype != b->dtshape->dtype) {
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
+
+    if (a->catarr->storage != b->catarr->storage) {
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
+
     if (a->dtshape->ndim != 2) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     if (a->dtshape->shape[1] != b->dtshape->shape[0]) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
+
+    if ((bshape_a != NULL || bshape_b != NULL) && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     if (bshape_a == NULL) {
