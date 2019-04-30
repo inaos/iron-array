@@ -12,7 +12,7 @@
 
 #include <libiarray/iarray.h>
 #include <contribs/tinyexpr/tinyexpr.h>
-#ifndef __clang__
+#if defined(_OPENMP)
 #include <omp.h>
 #endif
 
@@ -104,7 +104,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 {
     int nthreads = 1;
 
-#ifndef __clang__
+#if defined(_OPENMP)
     if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNKPARA) {
         // Set a number of threads different from one in case the compiler supports OpemMP
         // This is not the case for the clang that comes with Mac OSX, but probably the newer
@@ -430,13 +430,13 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             }
 
             // Eval the expression for this chunk, split by blocks
-#ifndef __clang__
+#if defined(_OPENMP)
 #pragma omp parallel for // schedule(dynamic)
 #endif
             for (int nblock = 0; nblock < nblocks ; nblock++) {
                 for (int nvar = 0; nvar < nvars; nvar++) {
                     int nthread = 0;
-#ifndef __clang__
+#if defined(_OPENMP)
                     nthread = omp_get_thread_num();
 #endif
                     int ntvar = nthread * e->nvars + nvar;
