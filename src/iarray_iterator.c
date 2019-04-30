@@ -538,7 +538,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT); //TODO: Should we allow a rewrite a non-empty iarray cont
     }
 
-    if (blockshape != NULL & container->catarr->storage == CATERVA_STORAGE_BLOSC) {
+    if (blockshape != NULL && container->catarr->storage == CATERVA_STORAGE_BLOSC) {
         return INA_ERROR(INA_ERR_FAILED);
     }
 
