@@ -397,22 +397,33 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         int32_t chunksize = e->chunksize;
         int nblocks = (int)chunksize / blocksize;
 
-        // Create and initialize an iterator per variable
+        ret->catarr->size = 1;  // TODO: fix this workaround (see caterva_update_shape() call above)
+
+        // Create and initialize an iterator per each variable
         iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
         iarray_context_t *ctx = NULL;
         iarray_context_new(&cfg, &ctx);
         iarray_iter_read_block_t **iter_var = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_t));
         iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
-
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, &nitems_in_chunk, &iter_value[nvar]);
+            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out.pshape, &iter_value[nvar]);
+        }
+
+        // Write iterator for output
+        iarray_iter_write_block_t *iter_out;
+        iarray_iter_write_block_value_t out_value;
+        ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, NULL, &out_value);
+        if (err != INA_SUCCESS) {
+            return err;
         }
 
         // Evaluate the expression for all the chunks in variables
         int64_t nitems_written = 0;
         int8_t *outbuf = ina_mem_alloc((size_t)chunksize);
-        while (nitems_written < nitems_in_schunk) {
+        while (iarray_iter_write_block_has_next(iter_out)) {
+            iarray_iter_write_block_next(iter_out);
+
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
                 iarray_iter_read_block_next(iter_var[nvar]);
@@ -432,7 +443,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                     e->temp_vars[ntvar]->data = (char*)iter_value[nvar].pointer + nblock * blocksize;
                 }
                 const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
-                memcpy(outbuf + nblock * blocksize, (uint8_t*)expr_out->data, blocksize);
+                memcpy((char*)out_value.pointer + nblock * blocksize, (uint8_t*)expr_out->data, blocksize);
             }
 
             // Do a possible last evaluation with the leftovers
@@ -444,11 +455,10 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                 e->max_out_len = leftover / e->typesize;  // so as to prevent operating beyond the leftover
                 const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
                 e->max_out_len = 0;
-                memcpy(outbuf + nblocks * blocksize, (uint8_t*)expr_out->data, leftover);
+                memcpy((char*)out_value.pointer + nblocks * blocksize, (uint8_t*)expr_out->data, leftover);
             }
 
             // Write the resulting chunk in output
-            blosc2_schunk_append_buffer(out.sc, outbuf, (size_t)chunksize);
             nitems_written += nitems_in_chunk;
             ina_mempool_reset(e->ctx->mp_tmp_out);
         }
@@ -456,6 +466,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_iter_read_block_free(iter_var[nvar]);
         }
+        iarray_iter_write_block_free(iter_out);
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);
         ina_mem_free(outbuf);
