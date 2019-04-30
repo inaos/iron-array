@@ -134,8 +134,12 @@ int main(int argc, char** argv)
         eval_method = "EVAL_ITERCHUNK";
         config.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
     }
+    else if (eval_flag == 5) {
+        eval_method = "EVAL_ITERCHUNKPARA";
+        config.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNKPARA;
+    }
     else {
-        printf("eval_flag must be 1, 2, 3 or 4\n");
+        printf("eval_flag must be 1, 2, 3, 4 or 5\n");
         return EXIT_FAILURE;
     }
     config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions
