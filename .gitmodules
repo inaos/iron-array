@@ -4,4 +4,4 @@
 	branch = master
 [submodule "caterva"]
 	path = contribs/caterva
-	url = git@gitlab.com:blosc/caterva/caterva.git
+	url = https://github.com/Blosc/Caterva

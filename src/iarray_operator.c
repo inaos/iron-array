@@ -18,7 +18,8 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
                              int64_t *bshape_a, int64_t *bshape_b) {
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    caterva_update_shape(c->catarr, shape);
+    caterva_update_shape(c->catarr, &shape);
+    int64_t typesize = a->catarr->ctx->cparams.typesize;
 
     // define mkl parameters
     int64_t B0 = bshape_a[0];
@@ -58,14 +59,19 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     // block sizes are claculated
-    size_t a_size = (size_t) B0 * B1 * a->catarr->sc->typesize;
-    size_t b_size = (size_t) B1 * B2 * b->catarr->sc->typesize;
-    size_t c_size = (size_t) B0 * B2 * c->catarr->sc->typesize;
+    size_t a_size = (size_t) B0 * B1 * typesize;
+    size_t b_size = (size_t) B1 * B2 * typesize;
+    size_t c_size = (size_t) B0 * B2 * typesize;
     int dtype = a->dtshape->dtype;
 
     uint8_t *a_block = ina_mem_alloc(a_size);
     uint8_t *b_block = ina_mem_alloc(b_size);
-    uint8_t *c_block = ina_mem_alloc(c_size);
+    uint8_t *c_block;
+    if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        c_block = c->catarr->ctx->alloc(c_size);
+    } else {
+        c_block = ina_mem_alloc(c_size);
+    }
 
     // Start a iterator that returns the index matrix blocks
     iarray_iter_matmul_t *iter;
@@ -128,7 +134,12 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
                 return INA_ERR_EXCEEDED;
         }
 
-        // Append it to a new iarray contianer
+        if (a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+            c->catarr->buf = c_block;
+            break;
+        }
+
+        // Append it to a new iarray container
         if((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
             blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], c_size);
             memset(c_block, 0, c_size);
@@ -138,7 +149,9 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     _iarray_iter_matmul_free(iter);
     ina_mem_free(a_block);
     ina_mem_free(b_block);
-    ina_mem_free(c_block);
+    if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
+        ina_mem_free(c_block);
+    }
 
     return INA_SUCCESS;
 }
@@ -147,7 +160,8 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
                              int64_t *bshape_a, int64_t *bshape_b) {
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    caterva_update_shape(c->catarr, shape);
+    caterva_update_shape(c->catarr, &shape);
+    int64_t typesize = a->catarr->ctx->cparams.typesize;
 
     // Define parameters needed in mkl multiplication
     int64_t B0 = bshape_a[0];
@@ -182,15 +196,20 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     // block sizes are claculated
-    size_t a_size = (size_t) B0 * B1 * a->catarr->sc->typesize;
-    size_t b_size = (size_t) B1 * a->catarr->sc->typesize;
-    size_t c_size = (size_t) B0 * a->catarr->sc->typesize;
+    size_t a_size = (size_t) B0 * B1 * typesize;
+    size_t b_size = (size_t) B1 * typesize;
+    size_t c_size = (size_t) B0 * typesize;
 
     int dtype = a->dtshape->dtype;
 
     uint8_t *a_block = ina_mem_alloc(a_size);
     uint8_t *b_block = ina_mem_alloc(b_size);
-    uint8_t *c_block = ina_mem_alloc(c_size);
+    uint8_t *c_block;
+    if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        c_block = c->catarr->ctx->alloc(c_size);
+    } else {
+        c_block = ina_mem_alloc(c_size);
+    }
 
     // Start a iterator that returns the index matrix blocks
     iarray_iter_matmul_t *iter;
@@ -252,6 +271,10 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
                 return INA_ERR_EXCEEDED;
         }
 
+        if (a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+            c->catarr->buf = c_block;
+            break;
+        }
         // Append it to a new iarray contianer
         if((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
             blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], c_size);
@@ -262,8 +285,9 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     _iarray_iter_matmul_free(iter);
     ina_mem_free(a_block);
     ina_mem_free(b_block);
-    ina_mem_free(c_block);
-
+    if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
+        ina_mem_free(c_block);
+    }
     return INA_SUCCESS;
 }
 
@@ -281,7 +305,7 @@ static ina_rc_t _iarray_operator_elwise_a(
     INA_ASSERT_NOT_NULL(mkl_fun_s);
 
     caterva_dims_t shape = caterva_new_dims(result->dtshape->shape, result->dtshape->ndim);
-    caterva_update_shape(result->catarr, shape);
+    caterva_update_shape(result->catarr, &shape);
 
     size_t psize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {
@@ -336,7 +360,7 @@ static ina_rc_t _iarray_operator_elwise_ab(
     }
 
     caterva_dims_t shape = caterva_new_dims(result->dtshape->shape, result->dtshape->ndim);
-    caterva_update_shape(result->catarr, shape);
+    caterva_update_shape(result->catarr, &shape);
 
     size_t psize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {
@@ -445,9 +469,20 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     INA_ASSERT_NOT_NULL(a);
     INA_ASSERT_NOT_NULL(b);
     INA_ASSERT_NOT_NULL(c);
-    INA_ASSERT_NOT_NULL(bshape_a);
-    INA_ASSERT_NOT_NULL(bshape_b);
 
+    if (bshape_a != NULL && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
+    if (bshape_b != NULL && b->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
+
+    if (bshape_a == NULL) {
+        bshape_a = a->dtshape->shape;
+    }
+    if (bshape_b == NULL) {
+        bshape_b = b->dtshape->shape;
+    }
     if (bshape_a[0] != c->dtshape->pshape[0]){
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }

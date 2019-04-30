@@ -35,19 +35,19 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, i
     // Assert iterator reading it
 
     iarray_iter_read_t *I2;
-    iarray_iter_read_new(ctx, c_x, &I2);
-    for (iarray_iter_read_init(I2); !iarray_iter_read_finished(I2); iarray_iter_read_next(I2)) {
+    iarray_iter_read_value_t val;
+    iarray_iter_read_new(ctx, &I2, c_x, &val);
 
-        iarray_iter_read_value_t val;
-        iarray_iter_read_value(I2, &val);
+    while (iarray_iter_read_has_next(I2)) {
+        iarray_iter_read_next(I2);
 
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                INA_TEST_ASSERT_EQUAL_FLOATING(val.nelem * (stop - start) / (size - 1) + start,
+                INA_TEST_ASSERT_EQUAL_FLOATING(val.elem_flat_index * (stop - start) / (size - 1) + start,
                                                ((double *) val.pointer)[0]);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                INA_TEST_ASSERT_EQUAL_FLOATING((float) (val.nelem * (stop - start) / (size - 1) + start),
+                INA_TEST_ASSERT_EQUAL_FLOATING((float) (val.elem_flat_index * (stop - start) / (size - 1) + start),
                                                ((float *) val.pointer)[0]);
                 break;
             default:
@@ -61,11 +61,11 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, i
     return INA_SUCCESS;
 }
 
-INA_TEST_DATA(linspace) {
+INA_TEST_DATA(constructor_linspace) {
     iarray_context_t *ctx;
 };
 
-INA_TEST_SETUP(linspace) {
+INA_TEST_SETUP(constructor_linspace) {
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -75,12 +75,12 @@ INA_TEST_SETUP(linspace) {
     iarray_context_new(&cfg, &data->ctx);
 }
 
-INA_TEST_TEARDOWN(linspace) {
+INA_TEST_TEARDOWN(constructor_linspace) {
     iarray_context_free(&data->ctx);
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(linspace, double_2) {
+INA_TEST_FIXTURE(constructor_linspace, 2_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
@@ -92,31 +92,31 @@ INA_TEST_FIXTURE(linspace, double_2) {
     INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
-INA_TEST_FIXTURE(linspace, float_2) {
+INA_TEST_FIXTURE(constructor_linspace, 2_f_p) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 2;
     int64_t shape[] = {445, 321};
-    int64_t pshape[] = {21, 17};
+    int64_t pshape[] = {0, 0};
     double start = 3123;
     double stop = 45654;
 
     INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
-INA_TEST_FIXTURE(linspace, double_5) {
+INA_TEST_FIXTURE(constructor_linspace, 5_d_p) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 5;
     int64_t shape[] = {20, 18, 17, 13, 21};
-    int64_t pshape[] = {12, 12, 2, 3, 13};
+    int64_t pshape[] = {0, 0, 0, 0, 0};
     double start = 0.1;
     double stop = 0.2;
 
     INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
-INA_TEST_FIXTURE(linspace, float_7) {
+INA_TEST_FIXTURE(constructor_linspace, 7_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 7;

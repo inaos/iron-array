@@ -64,6 +64,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     INA_FAIL_IF((*c)->dtshape == NULL);
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
 
+
     char* fname = NULL;
     if (flags & IARRAY_CONTAINER_PERSIST) {
         fname = (char*)store->id;
@@ -116,6 +117,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
             break;
     }
     cparams.compcode = ctx->cfg->compression_codec;
+    cparams.use_dict = ctx->cfg->use_dict;
     cparams.clevel = (uint8_t)ctx->cfg->compression_level; /* Since its just a mapping, we know the cast is ok */
     cparams.blocksize = ctx->cfg->blocksize;
     cparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
@@ -147,18 +149,25 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
 
     if (flags & IARRAY_CONTAINER_PERSIST) {
-        (*c)->catarr = caterva_empty_array(cat_ctx, (*c)->frame, pshape);
+        (*c)->catarr = caterva_empty_array(cat_ctx, (*c)->frame, &pshape);
     }
-    else {
-        (*c)->catarr = caterva_empty_array(cat_ctx, NULL, pshape);
+    else if (pshape.dims[0] != 0) {
+        (*c)->catarr = caterva_empty_array(cat_ctx, NULL, &pshape);
+    } else {
+        for (int i = 0; i < dtshape->ndim; ++i) {
+            (*c)->dtshape->pshape[i] = dtshape->shape[i];
+            (*c)->auxshape->pshape_wos[i] = dtshape->shape[i];
+        }
+        (*c)->catarr = caterva_empty_array(cat_ctx, NULL, NULL);
     }
+
+    if (cat_ctx != NULL) caterva_free_ctx(cat_ctx);
     INA_FAIL_IF((*c)->catarr == NULL);
 
     return INA_SUCCESS;
 
 fail:
     iarray_container_free(ctx, c);
-    if (cat_ctx != NULL) caterva_free_ctx(cat_ctx);
     return ina_err_get_rc();
 }
 

@@ -32,18 +32,17 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
 
     // Start iterator
     iarray_iter_write_t *I;
-    iarray_iter_write_new(ctx, c_x, &I);
+    iarray_iter_write_value_t val;
+    iarray_iter_write_new(ctx, &I, c_x, &val);
 
-    for (iarray_iter_write_init(I); !iarray_iter_write_finished(I); iarray_iter_write_next(I)) {
-
-        iarray_iter_write_value_t val;
-        iarray_iter_write_value(I, &val);
+    while (iarray_iter_write_has_next(I)) {
+        iarray_iter_write_next(I);
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value = (double) val.nelem;
+            double value = (double) val.elem_flat_index;
             memcpy(val.pointer, &value, type_size);
         } else {
-            float value = (float) val.nelem;
+            float value = (float) val.elem_flat_index;
             memcpy(val.pointer, &value, type_size);
         }
     }
@@ -57,16 +56,17 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
 
     // Check values
     iarray_iter_read_t *I2;
-    iarray_iter_read_new(ctx, c_x, &I2);
-    for (iarray_iter_read_init(I2); !iarray_iter_read_finished(I2); iarray_iter_read_next(I2)) {
-        iarray_iter_read_value_t val;
-        iarray_iter_read_value(I2, &val);
+    iarray_iter_read_value_t val2;
+    iarray_iter_read_new(ctx, &I2, c_x, &val2);
+    while (iarray_iter_read_has_next(I2)) {
+        iarray_iter_read_next(I2);
+
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value = (double) val.nelem;
-            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((double *) val.pointer)[0]);
+            double value = (double) val2.elem_flat_index;
+            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((double *) val2.pointer)[0]);
         } else {
-            float value = (float) val.nelem;
-            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((float *) val.pointer)[0]);
+            float value = (float) val2.elem_flat_index;
+            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((float *) val2.pointer)[0]);
         }
     }
     iarray_iter_read_free(I2);
