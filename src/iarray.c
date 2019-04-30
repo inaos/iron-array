@@ -80,4 +80,3 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx)
     INA_MEM_FREE_SAFE((*ctx)->cfg);
     INA_MEM_FREE_SAFE(*ctx);
 }
-

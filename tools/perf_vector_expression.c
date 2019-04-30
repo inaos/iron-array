@@ -14,10 +14,10 @@
 #include <iarray_private.h>
 
 #define NCHUNKS  100
-#define NITEMS_CHUNK (200 * 1000)  // fits well in modern L3 caches
+#define NITEMS_CHUNK (256 * 1024)  // fits well in modern L3 caches
 #define NELEM (NCHUNKS * NITEMS_CHUNK)  // multiple of NITEMS_CHUNKS for now
 #define PART_SIZE NITEMS_CHUNK
-#define NTHREADS 1
+#define NTHREADS 2
 #define XMAX 10.
 
 static double _poly(const double x)
@@ -69,6 +69,8 @@ int main(int argc, char** argv)
                          "EVAL_BLOCK = 1, EVAL_CHUNK = 2, EVAL_ITERBLOCK = 3, EVAL_ITERCHUNK = 4"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
+             INA_OPT_INT("d", "dict", 0, "Use dictionary (only for Zstd (codec 5))"),
+             INA_OPT_INT("b", "blocksize", 0, "Use blocksize for chunks (0 means automatic)"),
              INA_OPT_FLAG("i", "iter", "Use iterator for filling values"),
              INA_OPT_FLAG("I", "iter-part", "Use partition iterator for filling values"),
              INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
@@ -86,6 +88,10 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_opt_get_int("c", &clevel));
     int codec;
     INA_MUST_SUCCEED(ina_opt_get_int("l", &codec));
+    int use_dict;
+    INA_MUST_SUCCEED(ina_opt_get_int("d", &use_dict));
+    int blocksize;
+    INA_MUST_SUCCEED(ina_opt_get_int("b", &blocksize));
 
     if (INA_SUCCEED(ina_opt_isset("p"))) {
         mat_x_name = "mat_x.b2frame";
@@ -98,11 +104,9 @@ int main(int argc, char** argv)
         }
     }
 
-    INA_DISABLE_WARNING_MSVC(4204)
     iarray_store_properties_t mat_x = { .id = mat_x_name };
     iarray_store_properties_t mat_y = { .id = mat_y_name };
     iarray_store_properties_t mat_out = { .id = mat_out_name };
-    INA_ENABLE_WARNING_MSVC(4204)
 
     int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
 
@@ -111,6 +115,8 @@ int main(int argc, char** argv)
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_level = clevel;
     config.compression_codec = codec;
+    config.use_dict = use_dict;
+    config.blocksize = blocksize;
     config.max_num_threads = NTHREADS;
     if (eval_flag == 1) {
         eval_method = "EVAL_BLOCK";
@@ -141,11 +147,11 @@ int main(int argc, char** argv)
 
     size_t buffer_len = sizeof(double) * NELEM;
 
-    iarray_dtshape_t shape;
-    shape.ndim = 1;
-    shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
-    shape.shape[0] = NELEM;
-    shape.pshape[0] = PART_SIZE;
+    iarray_dtshape_t dtshape;
+    dtshape.ndim = 1;
+    dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
+    dtshape.shape[0] = NELEM;
+    dtshape.pshape[0] = PART_SIZE;
 
     int64_t nbytes = 0;
     int64_t cbytes = 0;
@@ -168,14 +174,14 @@ int main(int argc, char** argv)
     else {
         if (INA_SUCCEED(ina_opt_isset("i"))) {
             INA_STOPWATCH_START(w);
-            iarray_container_new(ctx, &shape, &mat_x, flags, &con_x);
+            iarray_container_new(ctx, &dtshape, &mat_x, flags, &con_x);
             iarray_iter_write_t *I;
-            iarray_iter_write_new(ctx, con_x, &I);
+            iarray_iter_write_value_t val;
+            iarray_iter_write_new(ctx, &I, con_x, &val);
             double incx = XMAX / NELEM;
-            for (iarray_iter_write_init(I); !iarray_iter_write_finished(I); iarray_iter_write_next(I)) {
-                iarray_iter_write_value_t val;
-                iarray_iter_write_value(I, &val);
-                double value = incx * (double) val.nelem;
+            while (iarray_iter_write_has_next(I)) {
+                iarray_iter_write_next(I);
+                double value = incx * (double) val.elem_flat_index;
                 memcpy(val.pointer, &value, sizeof(double));
             }
             iarray_iter_write_free(I);
@@ -186,19 +192,19 @@ int main(int argc, char** argv)
         }
         else if (INA_SUCCEED(ina_opt_isset("I"))) {
             INA_STOPWATCH_START(w);
-            iarray_container_new(ctx, &shape, &mat_x, flags, &con_x);
-            iarray_iter_write_part_t *I;
-            iarray_iter_write_part_new(ctx, con_x, &I);
+            iarray_container_new(ctx, &dtshape, &mat_x, flags, &con_x);
+            iarray_iter_write_block_t *I;
+            iarray_iter_write_block_value_t val;
+            iarray_iter_write_block_new(ctx, &I, con_x, NULL, &val);
             double incx = XMAX / NELEM;
-            for (iarray_iter_write_part_init(I); !iarray_iter_write_part_finished(I); iarray_iter_write_part_next(I)) {
-                iarray_iter_write_part_value_t val;
-                iarray_iter_write_part_value(I, &val);
-                int64_t part_size = val.part_shape[0];  // 1-dim vector
+            while (iarray_iter_write_block_has_next(I)) {
+                iarray_iter_write_block_next(I);
+                int64_t part_size = val.block_size;  // 1-dim vector
                 for (int64_t i = 0; i < part_size; ++i) {
-                    ((double *)val.pointer)[i] = incx * (double) (i + val.nelem * part_size);
+                    ((double *)val.pointer)[i] = incx * (double) (i + val.nblock * part_size);
                 }
             }
-            iarray_iter_write_part_free(I);
+            iarray_iter_write_block_free(I);
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf("Time for computing and filling X values via partition iterator: %.3g s, %.1f MB/s\n",
@@ -215,7 +221,7 @@ int main(int argc, char** argv)
             printf("Time for computing and filling X values: %.3g s, %.1f MB/s\n",
                    elapsed_sec, buffer_len / (elapsed_sec * _IARRAY_SIZE_MB));
             INA_STOPWATCH_START(w);
-            INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, x, buffer_len, &mat_x, flags, &con_x));
+            INA_MUST_SUCCEED(iarray_from_buffer(ctx, &dtshape, x, buffer_len, &mat_x, flags, &con_x));
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf("Time for compressing and *storing* X values: %.3g s, %.1f MB/s\n",
@@ -240,14 +246,14 @@ int main(int argc, char** argv)
     else {
         if (INA_SUCCEED(ina_opt_isset("i"))) {
             INA_STOPWATCH_START(w);
-            iarray_container_new(ctx, &shape, &mat_y, flags, &con_y);
+            iarray_container_new(ctx, &dtshape, &mat_y, flags, &con_y);
             iarray_iter_write_t *I;
-            iarray_iter_write_new(ctx, con_y, &I);
+            iarray_iter_write_value_t val;
+            iarray_iter_write_new(ctx, &I, con_y, &val);
             double incx = XMAX / NELEM;
-            for (iarray_iter_write_init(I); !iarray_iter_write_finished(I); iarray_iter_write_next(I)) {
-                iarray_iter_write_value_t val;
-                iarray_iter_write_value(I, &val);
-                double value = _poly(incx * (double) val.nelem);
+            while (iarray_iter_write_has_next(I)) {
+                iarray_iter_write_next(I);
+                double value = _poly(incx * (double) val.elem_flat_index);
                 memcpy(val.pointer, &value, sizeof(double));
             }
             iarray_iter_write_free(I);
@@ -258,20 +264,19 @@ int main(int argc, char** argv)
         }
         else if (INA_SUCCEED(ina_opt_isset("I"))) {
             INA_STOPWATCH_START(w);
-            iarray_container_new(ctx, &shape, &mat_y, flags, &con_y);
-            iarray_iter_write_part_t *I;
-            iarray_iter_write_part_new(ctx, con_y, &I);
+            iarray_container_new(ctx, &dtshape, &mat_y, flags, &con_y);
+            iarray_iter_write_block_t *I;
+            iarray_iter_write_block_value_t val;
+            iarray_iter_write_block_new(ctx, &I, con_y, NULL, &val);
             double incx = XMAX / NELEM;
-            for (iarray_iter_write_part_init(I); !iarray_iter_write_part_finished(I);
-                 iarray_iter_write_part_next(I)) {
-                iarray_iter_write_part_value_t val;
-                iarray_iter_write_part_value(I, &val);
-                int64_t part_size = val.part_shape[0];  // 1-dim vector
+            while (iarray_iter_write_block_has_next(I)) {
+                iarray_iter_write_block_next(I);
+                int64_t part_size = val.block_size;
                 for (int64_t i = 0; i < part_size; ++i) {
-                    ((double *) val.pointer)[i] = _poly(incx * (double) (i + val.nelem * part_size));
+                    ((double *) val.pointer)[i] = _poly(incx * (double) (i + val.nblock * part_size));
                 }
             }
-            iarray_iter_write_part_free(I);
+            iarray_iter_write_block_free(I);
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf(
@@ -289,7 +294,7 @@ int main(int argc, char** argv)
             printf("Time for computing and filling Y values: %.3g s, %.1f MB/s\n",
                    elapsed_sec, buffer_len/(elapsed_sec*_IARRAY_SIZE_MB));
             INA_STOPWATCH_START(w);
-            INA_MUST_SUCCEED(iarray_from_buffer(ctx, &shape, y, buffer_len, &mat_y, flags, &con_y));
+            INA_MUST_SUCCEED(iarray_from_buffer(ctx, &dtshape, y, buffer_len, &mat_y, flags, &con_y));
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf("Time for compressing and *storing* Y values: %.3g s, %.1f MB/s\n",
@@ -310,7 +315,7 @@ int main(int argc, char** argv)
     iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
 
     iarray_container_t *con_out;
-    INA_MUST_SUCCEED(iarray_container_new(ctx, &shape, &mat_out, flags, &con_out));
+    INA_MUST_SUCCEED(iarray_container_new(ctx, &dtshape, &mat_out, flags, &con_out));
 
     INA_STOPWATCH_START(w);
     iarray_eval(e, con_out);

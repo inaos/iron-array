@@ -18,14 +18,14 @@
 static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
 {
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    caterva_fill(c->catarr, shape, &value);
+    caterva_fill(c->catarr, &shape, &value);
     return INA_SUCCESS;
 }
 
 static ina_rc_t _iarray_container_fill_double(iarray_container_t *c, double value)
 {
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    caterva_fill(c->catarr, shape, &value);
+    caterva_fill(c->catarr, &shape, &value);
     return INA_SUCCESS;
 }
 
@@ -56,16 +56,16 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
     INA_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, store, flags, container));
 
     iarray_iter_write_t *I;
-    iarray_iter_write_new(ctx, *container, &I);
+    iarray_iter_write_value_t val;
+    iarray_iter_write_new(ctx, &I, *container, &val);
 
-    for (iarray_iter_write_init(I); !iarray_iter_write_finished(I); iarray_iter_write_next(I)) {
-        iarray_iter_write_value_t val;
-        iarray_iter_write_value(I, &val);
+    while (iarray_iter_write_has_next(I)) {
+        iarray_iter_write_next(I);
 
         int64_t i = 0;
         int64_t inc = 1;
         for (int j = dtshape->ndim - 1; j >= 0; --j) {
-            i += val.index[j] * inc;
+            i += val.elem_index[j] * inc;
             inc *= dtshape->shape[j];
         }
 
@@ -77,6 +77,7 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
             memcpy(val.pointer, &value, sizeof(float));
         }
     }
+    iarray_iter_write_free(I);
 
     return INA_SUCCESS;
 }
@@ -108,16 +109,16 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
     INA_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, store, flags, container));
 
     iarray_iter_write_t *I;
-    iarray_iter_write_new(ctx, *container, &I);
+    iarray_iter_write_value_t val;
+    iarray_iter_write_new(ctx, &I, *container, &val);
 
-    for (iarray_iter_write_init(I); !iarray_iter_write_finished(I); iarray_iter_write_next(I)) {
-        iarray_iter_write_value_t val;
-        iarray_iter_write_value(I, &val);
+    while (iarray_iter_write_has_next(I)) {
+        iarray_iter_write_next(I);
 
         int64_t i = 0;
         int64_t inc = 1;
         for (int j = dtshape->ndim - 1; j >= 0; --j) {
-            i += val.index[j] * inc;
+            i += val.elem_index[j] * inc;
             inc *= dtshape->shape[j];
         }
 
@@ -129,6 +130,7 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
             memcpy(val.pointer, &value, sizeof(float));
         }
     }
+    iarray_iter_write_free(I);
 
     return INA_SUCCESS;
 }
@@ -251,7 +253,7 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
     // TODO: would it be interesting to add a `buffer_len` parameter to `caterva_from_buffer()`?
     caterva_dims_t shape = caterva_new_dims((*container)->dtshape->shape, (*container)->dtshape->ndim);
-    if (caterva_from_buffer((*container)->catarr, shape, buffer) != 0) {
+    if (caterva_from_buffer((*container)->catarr, &shape, buffer) != 0) {
         INA_ERROR(INA_ERR_FAILED);
         INA_FAIL_IF(1);
     }
@@ -380,7 +382,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
         }
     }
 
-    if (container->transposed == 1) {
+    if ((!container->view) & (container->transposed == 1)) {
         switch (container->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 mkl_dimatcopy('R', 'T', (size_t)container->dtshape->shape[1], (size_t)container->dtshape->shape[0], 1.0,

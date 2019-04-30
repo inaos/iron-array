@@ -65,10 +65,8 @@ int main(int argc, char** argv)
     int64_t bshape_y [] = {6000};
     int64_t size_y = shape_y[0];
 
-    INA_DISABLE_WARNING_MSVC(4204)
     int64_t shape_out[] = {shape_x[0]};
     int64_t pshape_out[] = {bshape_x[0]};
-    INA_ENABLE_WARNING_MSVC(4204)
 
     int64_t size_out = shape_out[0];
     int64_t flops = (2 * shape_x[1] - 1) * shape_x[0];
@@ -99,11 +97,9 @@ int main(int argc, char** argv)
         printf("Storage for iarray containers: *memory*\n");
     }
 
-    INA_DISABLE_WARNING_MSVC(4204)
     iarray_store_properties_t mat_x_prop = { .id = mat_x_name };
     iarray_store_properties_t mat_y_prop = { .id = mat_y_name };
     iarray_store_properties_t mat_out_prop = { .id = mat_out_name };
-    INA_ENABLE_WARNING_MSVC(4204)
 
     printf("\n");
     printf("Measuring time for multiplying matrices X and vector Y\n");

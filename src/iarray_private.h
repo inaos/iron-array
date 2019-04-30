@@ -84,66 +84,78 @@ struct iarray_container_s {
 typedef struct iarray_iter_write_s {
     iarray_context_t *ctx;
     iarray_container_t *container;
-    int64_t *i_shape;
-    int64_t *i_pshape;
+    iarray_iter_write_value_t *val;
     uint8_t *part;
     void *pointer;
-    int64_t *index;
-    int64_t nelem;
-    int64_t cont;
-    int64_t cont_part;
-    int64_t cont_part_elem;
-    int64_t *bshape;
-    int64_t bsize;
-    int64_t *part_index;
-} iarray_iter_write_t;
 
-typedef struct iarray_iter_write_part_s {
-    iarray_context_t *ctx;
-    iarray_container_t *container;
-    uint8_t *part;
-    void *pointer;
-    int64_t *part_shape;
-    int64_t part_size;
-    int64_t *part_index;
-    int64_t *elem_index;
-    int64_t cont;
-} iarray_iter_write_part_t;
+    int64_t nelem;
+    int64_t nblock;
+    int64_t nelem_block;
+
+    int64_t *cur_block_shape;
+    int64_t cur_block_size;
+    int64_t *cur_block_index;
+
+    int64_t *elem_index; // The elem index in coord
+    int64_t elem_flat_index; // The elem index if the container will be flatten
+
+} iarray_iter_write_t;
 
 typedef struct iarray_iter_read_s {
     iarray_context_t *ctx;
-    iarray_container_t *container;
-    int64_t *elem_index;
-    int64_t elem_cont;
-    int64_t elem_cont_block;
-
-    int64_t *block_index;
-    int64_t block_size;
-    int64_t *block_shape;
-    int64_t block_cont;
-
-    int64_t *shape;
-    int64_t c_size;
-
+    iarray_container_t *cont;
+    iarray_iter_read_value_t *val;
     uint8_t *part;
-
     void *pointer;
-    int64_t *index;
-    int64_t nelem;
 
+    int64_t nelem; // The element counter in container
+    int64_t nelem_block; // The element counter in a block
+    int64_t nblock; // The block counter
+
+    int64_t *cur_block_index; // The current block index
+    int64_t cur_block_size; // The current block size
+    int64_t *cur_block_shape; // The current block shape
+
+    int64_t *block_shape; // The desired block shape (it will be the shape or the pshape)
+    int64_t cont_size; // The container size
+
+    int64_t *elem_index; // The elem index in coord
+    int64_t elem_flat_index; // The elem index if the container will be flatten
 } iarray_iter_read_t;
+
+typedef struct iarray_iter_write_block_s {
+    iarray_context_t *ctx;
+    iarray_container_t *cont;
+    iarray_iter_write_block_value_t *val;
+    uint8_t *part;
+    void *pointer;
+    int64_t total_blocks; // Total number of blocks
+    int64_t *block_shape; // The desired block shape
+    int64_t block_shape_size; //The block shape size
+    int64_t *cur_block_shape; // The shape of the current block (can be diff to the block shape passed)
+    int64_t cur_block_size; // The size of the current block
+    int64_t *cur_block_index; // The position of the block in the container
+    int64_t *cur_elem_index; // The position of the first element of the block in the container
+    int64_t *cont_eshape; // The extended shape of the container
+    int64_t cont_esize; // The size of the extended shape
+    int64_t nblock; // The block counter
+} iarray_iter_write_block_t;
 
 typedef struct iarray_iter_read_block_s {
     iarray_context_t *ctx;
-    iarray_container_t *container;
+    iarray_container_t *cont;
+    iarray_iter_read_block_value_t *val;
     uint8_t *part;
     void *pointer;
-    int64_t *shape;
-    int64_t *block_shape;
-    int64_t block_size;
-    int64_t *block_index;
-    int64_t *elem_index;
-    int64_t cont;
+    int64_t total_blocks; // Total number of blocks
+    int64_t *aux; // Aux variable used
+    int64_t *block_shape; // The blockshape to be iterated
+    int64_t *cur_block_shape; // The shape of the current block (can be diff to the block shape passed)
+    int64_t cur_block_size; // The size of the current block
+    int64_t *cur_block_index; // The position of the block in the container
+    int64_t *cur_elem_index; // The position of the first element of the block in the container
+    int64_t nblock; // The block counter
+    bool contiguous;
 } iarray_iter_read_block_t;
 
 typedef struct iarray_iter_matmul_s {
@@ -216,4 +228,12 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
                                   int64_t *pshape,
                                   void *buffer,
                                   int64_t buflen);
+
+INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
+                                                   iarray_container_t *c,
+                                                   int64_t *start,
+                                                   int64_t *stop,
+                                                   void **buffer,
+                                                   int64_t buflen);
+
 #endif
