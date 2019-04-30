@@ -91,10 +91,10 @@ target_link_libraries(iarray ${INAC_LIBS} blosc_static caterva ${INAC_DEPENDENCY
 
 inac_package()
 
-## Copy test files
-#file(GLOB TESTS_DATA tests/data/*.iarray)
-#
-#foreach (data ${TESTS_DATA})
-#    file(COPY ${data}
-#            DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
-#endforeach(data)
+# Copy test files
+file(GLOB TESTS_DATA tests/data/*.iarray)
+
+foreach (data ${TESTS_DATA})
+    file(COPY ${data}
+            DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+endforeach(data)
