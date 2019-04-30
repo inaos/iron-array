@@ -62,10 +62,8 @@ int main(int argc, char** argv)
     int64_t ypshape[] = {400, 300};
     int64_t ybshape [] = {200, 300};
 
-    INA_DISABLE_WARNING_MSVC(4204)
     int64_t oshape[] = {xshape[0], yshape[1]};
     int64_t opshape[] = {xbshape[0], ybshape[1]};
-    INA_ENABLE_WARNING_MSVC(4204)
 
     bool xtrans = false;
     if (argc > 1) {
@@ -118,11 +116,9 @@ int main(int argc, char** argv)
         printf("Storage for iarray matrices: *memory*\n");
     }
 
-    INA_DISABLE_WARNING_MSVC(4204)
     iarray_store_properties_t mat_x_prop = { .id = mat_x_name };
     iarray_store_properties_t mat_y_prop = { .id = mat_y_name };
     iarray_store_properties_t mat_out_prop = { .id = mat_out_name };
-    INA_ENABLE_WARNING_MSVC(4204)
 
     printf("\n");
     printf("Measuring time for multiplying matrices X and Y\n");

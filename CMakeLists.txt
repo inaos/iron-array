@@ -11,6 +11,11 @@
 cmake_minimum_required (VERSION 3.12)
 project(iarray)
 
+# Disable weird MSVC warnings
+if (MSVC)
+add_compile_options(/wd4204)
+endif()
+
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
     if (NOT EXISTS "${CMAKE_SOURCE_DIR}/inac.cmake")
         message(STATUS "Downloading inac.cmake from https://github.com/inaos/inac-cmake")
@@ -61,7 +66,7 @@ endif()
 inac_add_tests(iarrays)
 #inac_add_benchmarks(iarrays)
 inac_add_tools(iarrays)
-#inac_add_examples(iarrays)
+inac_add_examples(iarrays)
 
 # Playing with OpenMP (available mainly on GCC)
 #if (UNIX AND NOT CMAKE_C_COMPILER_ID STREQUAL Clang)

@@ -86,24 +86,17 @@ int main(int argc, char *argv[])
     iarray_iter_read_block_t *iter_y;
     iarray_iter_read_block_t *iter_z;
 
-    iarray_iter_read_block_new(ctx, c_y, &iter_y, bshape);
-    iarray_iter_read_block_new(ctx, c_z, &iter_z, bshape);
+    iarray_iter_read_block_value_t value_y;
+    iarray_iter_read_block_value_t value_z;
 
-    for (iarray_iter_read_block_init(iter_y), iarray_iter_read_block_init(iter_z);
-         !iarray_iter_read_block_finished(iter_y);
-         iarray_iter_read_block_next(iter_y), iarray_iter_read_block_next(iter_z)) {
+    iarray_iter_read_block_new(ctx, &iter_y, c_y, bshape, &value_y);
+    iarray_iter_read_block_new(ctx, &iter_z, c_z, bshape, &value_z);
 
-        iarray_iter_read_block_value_t value_y;
-        iarray_iter_read_block_value(iter_y, &value_y);
-        iarray_iter_read_block_value_t value_z;
-        iarray_iter_read_block_value(iter_z, &value_z);
-
-        int64_t bsize = 1;
-        for (int i = 0; i < c_y->dtshape->ndim; ++i) {
-            bsize *= value_y.block_shape[i];
-        }
-
-        for (int64_t i = 0; i < bsize; ++i) {
+    while (iarray_iter_read_block_has_next(iter_y)) {
+        iarray_iter_read_block_next(iter_y);
+        iarray_iter_read_block_next(iter_z);
+        
+        for (int64_t i = 0; i < value_y.block_size; ++i) {
             switch (dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
                     INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_y.pointer)[i], ((double *) value_z.pointer)[i]);
@@ -151,19 +144,14 @@ int main(int argc, char *argv[])
 
     iarray_iter_read_t *iter_mul;
     iarray_iter_read_t *iter_mul_view;
+    iarray_iter_read_value_t value_mul;
+    iarray_iter_read_value_t value_mul_view;
+    iarray_iter_read_new(ctx, &iter_mul, c_mul, &value_mul);
+    iarray_iter_read_new(ctx, &iter_mul_view, c_mul_view, &value_mul_view);
 
-    iarray_iter_read_new(ctx, c_mul, &iter_mul);
-    iarray_iter_read_new(ctx, c_mul_view, &iter_mul_view);
-
-    for (iarray_iter_read_init(iter_mul),
-             iarray_iter_read_init(iter_mul_view);
-         !iarray_iter_read_finished(iter_mul);
-         iarray_iter_read_next(iter_mul),
-             iarray_iter_read_next(iter_mul_view)) {
-        iarray_iter_read_value_t value_mul;
-        iarray_iter_read_value(iter_mul, &value_mul);
-        iarray_iter_read_value_t value_mul_view;
-        iarray_iter_read_value(iter_mul_view, &value_mul_view);
+    while (iarray_iter_read_has_next(iter_mul)) {
+        iarray_iter_read_next(iter_mul);
+        iarray_iter_read_next(iter_mul_view);
 
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
