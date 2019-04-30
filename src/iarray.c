@@ -56,7 +56,9 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
     INA_FAIL_IF((*ctx)->cfg == NULL);
     ina_mem_cpy((*ctx)->cfg, cfg, sizeof(iarray_config_t));
     if (!(cfg->eval_flags & IARRAY_EXPR_EVAL_BLOCK) && !(cfg->eval_flags & IARRAY_EXPR_EVAL_CHUNK)
-        && !(cfg->eval_flags & IARRAY_EXPR_EVAL_ITERBLOCK) && !(cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNK)) {
+        && !(cfg->eval_flags & IARRAY_EXPR_EVAL_ITERBLOCK)
+        && !(cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNKPARA)
+        &&!(cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNK)) {
         (*ctx)->cfg->eval_flags |= IARRAY_EXPR_EVAL_BLOCK;
     }
     INA_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp));

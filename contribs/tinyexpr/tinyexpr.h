@@ -37,7 +37,7 @@ typedef struct te_expr {
     int type;
     union {
         iarray_temporary_t *value;
-        const iarray_temporary_t **bound;
+        const void **bound;
         const void *function;
     };
     void *parameters[1];
@@ -58,11 +58,11 @@ enum {
 
 typedef struct te_variable {
     const char *name;
-    const void *address;
+    const void **address;
+    const void *function;
     int type;
     void *context;
 } te_variable;
-
 
 
 /* Parses the input expression, evaluates it, and frees it. */

@@ -41,6 +41,9 @@ For log = natural log uncomment the next line. */
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
+#ifndef __clang__
+#include <omp.h>
+#endif
 
 #ifndef NAN
 #define NAN (0.0/0.0)
@@ -67,8 +70,9 @@ typedef struct state {
     const char *start;
     const char *next;
     int type;
+    int nthreads;
 	double scalar;
-    union {iarray_temporary_t *value; const iarray_temporary_t **bound; const void *function;};
+    union {iarray_temporary_t *value; const void **bound; const void *function;};
     void *context;
 	iarray_expression_t *expr;
     const te_variable *lookup;
@@ -91,6 +95,7 @@ static te_expr *new_expr(state *state, const int type, const te_expr *parameters
     //te_expr *ret = malloc(size);
 	ina_mempool_t *mp;
 	iarray_expr_get_mp(state->expr, &mp);
+    iarray_expr_get_nthreads(state->expr, &state->nthreads);
     te_expr *ret = ina_mempool_dalloc(mp, (size_t)size);
     memset(ret, 0, size);
     if (arity && parameters) {
@@ -158,35 +163,35 @@ static double npr(double n, double r) {return ncr(n, r) * fac(r);}
 INA_DISABLE_WARNING_MSVC(4152);
 static const te_variable functions[] = {
     /* must be in alphabetical order */
-    {"abs", fabs,     TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"acos", acos,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"asin", asin,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"atan", atan,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"atan2", atan2,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
-//    {"ceil", ceil,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"cos", cos,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"cosh", cosh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"e", e,          TE_FUNCTION0 | TE_FLAG_PURE, 0},
-    {"exp", exp,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"fac", fac,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"abs", NULL, fabs,     TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"acos", NULL, acos,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"asin", NULL, asin,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"atan", NULL, atan,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"atan2", NULL, atan2,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
+//    {"ceil", NULL, ceil,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"cos", NULL, cos,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"cosh", NULL, cosh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"e", NULL, e,          TE_FUNCTION0 | TE_FLAG_PURE, 0},
+    {"exp", NULL, exp,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"fac", NULL, fac,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
 //    {"floor", floor,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"ln", log,       TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"ln", NULL, log,       TE_FUNCTION1 | TE_FLAG_PURE, 0},
 #ifdef TE_NAT_LOG
-    {"log", log,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"log", NULL, log,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
 #else
-    {"log", log10,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"log", NULL, log10,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
 #endif
-    {"log10", log10,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"ncr", ncr,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
-    {"npr", npr,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
-    {"pi", pi,        TE_FUNCTION0 | TE_FLAG_PURE, 0},
-    {"pow", pow,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
-    {"sin", sin,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"sinh", sinh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"sqrt", sqrt,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"tan", tan,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"tanh", tanh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {0, 0, 0, 0}
+    {"log10", NULL, log10,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"ncr", NULL, ncr,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"npr", NULL, npr,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"pi", NULL, pi,        TE_FUNCTION0 | TE_FLAG_PURE, 0},
+    {"pow", NULL, pow,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"sin", NULL, sin,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"sinh", NULL, sinh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"sqrt", NULL, sqrt,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"tan", NULL, tan,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"tanh", NULL, tanh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {0, 0, 0, 0, 0}
 };
 INA_ENABLE_WARNING_MSVC(4152);
 
@@ -268,7 +273,7 @@ void next_token(state *s) {
                     {
                         case TE_VARIABLE:
                             s->type = TOK_VARIABLE;
-                            s->bound = (const iarray_temporary_t**)var->address;
+                            s->bound = var->address;
                             break;
 
                         case TE_CLOSURE0: case TE_CLOSURE1: case TE_CLOSURE2: case TE_CLOSURE3:         /* Falls through. */
@@ -278,7 +283,7 @@ void next_token(state *s) {
                         case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:     /* Falls through. */
                         case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:     /* Falls through. */
                             s->type = var->type;
-                            s->function = var->address;
+                            s->function = var->function;
                             break;
                         default:
                             printf("Unknown type; cannot never happen.  If you see this, inform about it.\n");
@@ -553,10 +558,18 @@ INA_ENABLE_WARNING_MSVC(4204);
 iarray_temporary_t *te_eval(iarray_expression_t *expr, const te_expr *n) {
     if (!n) return NULL;
 
+    int nthread = 0;
+#ifndef __clang__
+    nthread = omp_get_thread_num();
+#endif
+    //printf("nthread (te_eval): %d\n", nthread);
+
     switch(TYPE_MASK(n->type)) {
         case TE_CONSTANT: return n->value;
-        case TE_VARIABLE: return (iarray_temporary_t*)*n->bound;
-
+        case TE_VARIABLE: {
+            iarray_temporary_t *iatemp = (iarray_temporary_t *) (n->bound[nthread]);
+            return iatemp;
+        }
         case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:
         case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:
             //printf("Arity: %d\n", ARITY(n->type));
@@ -663,7 +676,7 @@ static void pn (const te_expr *n, int depth) {
 
     switch(TYPE_MASK(n->type)) {
     case TE_CONSTANT: printf("%f\n", n->value->scalar_value.d); break;
-    case TE_VARIABLE: printf("bound %p\n", n->bound); break;
+    case TE_VARIABLE: printf("bound %p\n", n->bound[0]); break;
 
     case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:
     case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:
