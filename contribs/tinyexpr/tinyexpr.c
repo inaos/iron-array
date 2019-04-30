@@ -559,7 +559,7 @@ iarray_temporary_t *te_eval(iarray_expression_t *expr, const te_expr *n) {
     if (!n) return NULL;
 
     int nthread = 0;
-#ifndef __clang__
+#if defined(_OPENMP)
     nthread = omp_get_thread_num();
 #endif
     //printf("nthread (te_eval): %d\n", nthread);
