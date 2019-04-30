@@ -394,7 +394,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         // get rid of the overhead of creating/destroying the thread per every chunk.  One possibility
         // is to use pthreads, but we need more discussion about this.
         int32_t blocksize = e->blocksize;
-        int64_t chunksize = e->chunksize;
+        int32_t chunksize = e->chunksize;
+        int nblocks = (int)chunksize / blocksize;
 
         // Create and initialize an iterator per variable
         iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -410,7 +411,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
         // Evaluate the expression for all the chunks in variables
         int64_t nitems_written = 0;
-        int nblocks = (int)chunksize / blocksize;
         int8_t *outbuf = ina_mem_alloc((size_t)chunksize);
         while (nitems_written < nitems_in_schunk) {
             // Decompress chunks in variables into temporaries
@@ -429,7 +429,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                     nthread = omp_get_thread_num();
 #endif
                     int ntvar = nthread * e->nvars + nvar;
-                    e->temp_vars[ntvar]->data = iter_value[nvar].pointer + nblock * blocksize;
+                    e->temp_vars[ntvar]->data = (char*)iter_value[nvar].pointer + nblock * blocksize;
                 }
                 const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
                 memcpy(outbuf + nblock * blocksize, (uint8_t*)expr_out->data, blocksize);
@@ -439,7 +439,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             int leftover = chunksize - nblocks * blocksize;
             if (leftover > 0) {
                 for (int nvar = 0; nvar < nvars; nvar++) {
-                    e->temp_vars[nvar]->data = iter_value[nvar].pointer + nblocks * blocksize;
+                    e->temp_vars[nvar]->data = (char*)iter_value[nvar].pointer + nblocks * blocksize;
                 }
                 e->max_out_len = leftover / e->typesize;  // so as to prevent operating beyond the leftover
                 const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
