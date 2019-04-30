@@ -104,11 +104,11 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 {
     int nthreads = 1;
 
+#ifndef __clang__
     if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNKPARA) {
         // Set a number of threads different from one in case the compiler supports OpemMP
         // This is not the case for the clang that comes with Mac OSX, but probably the newer
         // clang that come with later LLVM releases does have support for it.
-#ifndef __clang__
         nthreads = e->ctx->cfg->max_num_threads;
         // The number of threads in config may get overridden by the OMP_NUM_THREADS variable
         char *envvar = getenv("OMP_NUM_THREADS");
@@ -119,8 +119,8 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
                 nthreads = (int)value;
             }
         }
-#endif
     }
+#endif
 
     e->expr = ina_str_new_fromcstr(expr);
     e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t*));
@@ -402,9 +402,10 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_context_new(&cfg, &ctx);
         iarray_iter_read_block_t **iter_var = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_t));
         iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
+
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, &chunksize, &iter_value[nvar]);
+            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, &nitems_in_chunk, &iter_value[nvar]);
         }
 
         // Evaluate the expression for all the chunks in variables
@@ -449,13 +450,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             // Write the resulting chunk in output
             blosc2_schunk_append_buffer(out.sc, outbuf, (size_t)chunksize);
             nitems_written += nitems_in_chunk;
-
             ina_mempool_reset(e->ctx->mp_tmp_out);
-
-            // Get ready for the next iteration
-            for (int nvar = 0; nvar < nvars; nvar++) {
-                iarray_iter_read_block_next(iter_var[nvar]);
-            }
         }
 
         for (int nvar = 0; nvar < nvars; nvar++) {
