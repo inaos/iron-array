@@ -41,6 +41,7 @@ typedef enum iarray_random_dist_parameter_e {
     IARRAY_RANDOM_DIST_PARAM_BETA,
     IARRAY_RANDOM_DIST_PARAM_A,
     IARRAY_RANDOM_DIST_PARAM_B,
+    IARRAY_RANDOM_DIST_PARAM_P,
     IARRAY_RANDOM_DIST_PARAM_SENTINEL /* marks end of list */
 } iarray_random_dist_parameter_t;
 
@@ -169,6 +170,7 @@ typedef struct iarray_random_ctx_s iarray_random_ctx_t;
 static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .compression_codec=IARRAY_COMPRESSION_LZ4,
     .compression_level=5,
+    .use_dict=0,
     .filter_flags=0,
     .eval_flags=0,
     .max_num_threads=1,
@@ -178,6 +180,7 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
 static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = {
     .compression_codec=IARRAY_COMPRESSION_LZ4,
     .compression_level=0,
+    .use_dict=0,
     .filter_flags=0,
     .eval_flags=0,
     .max_num_threads=1,
@@ -305,6 +308,13 @@ INA_API(ina_rc_t) iarray_random_normal(iarray_context_t *ctx,
                                        iarray_store_properties_t *store,
                                        int flags,
                                        iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_random_bernoulli(iarray_context_t *ctx,
+                                          iarray_dtshape_t *dtshape,
+                                          iarray_random_ctx_t *random_ctx,
+                                          iarray_store_properties_t *store,
+                                          int flags,
+                                          iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
                                        iarray_container_t *c1,
