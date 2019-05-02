@@ -24,6 +24,7 @@ typedef enum _iarray_random_method_e {
     _IARRAY_RANDOM_METHOD_CHISQUARE, //TODO: Not find in mkl.h
     _IARRAY_RANDOM_METHOD_BERNOUILLI,
     _IARRAY_RANDOM_METHOD_BINOMIAL,
+    _IARRAY_RANDOM_METHOD_POISSON,
 } _iarray_random_method_t;
 
 struct iarray_random_ctx_s {
@@ -163,11 +164,17 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     status = viRngBinomial(VSL_RNG_METHOD_BINOMIAL_BTPE, random_ctx->stream, (int) block_size, (int *) r, m, p);
                     break;
                 }
+                case _IARRAY_RANDOM_METHOD_POISSON: {
+                    float lambda = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_LAMBDA];
+                    status = viRngPoisson(VSL_RNG_METHOD_POISSON_PTPE, random_ctx->stream, (int) block_size, (int *) r, lambda);
+                    break;
+                }
             }
             INA_FAIL_IF(status != VSL_ERROR_OK);
 
             for (int64_t i = 0; i < block_size; ++i) {
                 if ((method == _IARRAY_RANDOM_METHOD_BERNOUILLI) ||
+                    (method == _IARRAY_RANDOM_METHOD_POISSON) ||
                     (method == _IARRAY_RANDOM_METHOD_BINOMIAL)) {
                     ((float *) val.pointer)[i] = (float) ((int *) r)[i];
                 } else {
@@ -220,11 +227,17 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     status = viRngBinomial(VSL_RNG_METHOD_BINOMIAL_BTPE, random_ctx->stream, (int) block_size, (int *) r, m, p);
                     break;
                 }
+                case _IARRAY_RANDOM_METHOD_POISSON: {
+                    double lambda = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_LAMBDA];
+                    status = viRngPoisson(VSL_RNG_METHOD_POISSON_PTPE, random_ctx->stream, (int) block_size, (int *) r, lambda);
+                    break;
+                }
             }
             INA_FAIL_IF(status != VSL_ERROR_OK);
 
             for (int64_t i = 0; i < block_size; ++i) {
                 if ((method == _IARRAY_RANDOM_METHOD_BERNOUILLI) ||
+                    (method == _IARRAY_RANDOM_METHOD_POISSON) ||
                     (method == _IARRAY_RANDOM_METHOD_BINOMIAL)) {
                     ((double *) val.pointer)[i] = (double) ((int *) r)[i];
                 } else {
@@ -494,6 +507,35 @@ INA_API(ina_rc_t) iarray_random_binomial(iarray_context_t *ctx,
     INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_BINOMIAL);
+
+    fail:
+    return INA_ERR_MISSING;
+}
+
+INA_API(ina_rc_t) iarray_random_poisson(iarray_context_t *ctx,
+                                        iarray_dtshape_t *dtshape,
+                                        iarray_random_ctx_t *random_ctx,
+                                        iarray_store_properties_t *store,
+                                        int flags,
+                                        iarray_container_t **container)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(random_ctx);
+    INA_VERIFY_NOT_NULL(container);
+
+    /* validate distribution parameters */
+    if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
+        INA_FAIL_IF(random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_LAMBDA] <= 0);
+    }
+    else {
+        INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_LAMBDA] <= 0);
+
+    }
+
+    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+
+    return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_POISSON);
 
     fail:
     return INA_ERR_MISSING;
