@@ -43,11 +43,13 @@ static void _fill_y(const double* x, double* y)
     }
 }
 
-static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_x, const double *buffer_y, size_t buffer_len)
+static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg,
+                                     const double *buffer_x, const double *buffer_y, const double *buffer_z,
+                                     const double *buffer_out, size_t buffer_len)
 {
     iarray_context_t *ctx;
     iarray_expression_t* e;
-    iarray_container_t* c_x;
+    iarray_container_t *c_x, *c_y, *c_z;
     iarray_container_t* c_out;
 
     iarray_dtshape_t shape;
@@ -59,14 +61,18 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
 
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, (void*)buffer_x, buffer_len, NULL, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, (void*)buffer_y, buffer_len, NULL, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, (void*)buffer_z, buffer_len, NULL, 0, &c_z));
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &shape, NULL, 0, &c_out));
 
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
-    INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)"));
+    INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "y", c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "z", c_z));
+    INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, "(x - 1.35) * (y - 4.45) * (z - 8.5)"));
     INA_TEST_ASSERT_SUCCEED(iarray_eval(e, c_out));
 
-    INA_TEST_ASSERT_SUCCEED(_iarray_test_container_dbl_buffer_cmp(ctx, c_out, buffer_y, buffer_len));
+    INA_TEST_ASSERT_SUCCEED(_iarray_test_container_dbl_buffer_cmp(ctx, c_out, buffer_out, buffer_len));
 
     iarray_expr_free(ctx, &e);
     iarray_container_free(ctx, &c_out);
@@ -81,6 +87,8 @@ INA_TEST_DATA(expression_eval)
     size_t buf_len;
     double *buffer_x;
     double *buffer_y;
+    double *buffer_z;
+    double *buffer_out;
     iarray_config_t cfg;
 };
 
@@ -96,6 +104,8 @@ INA_TEST_SETUP(expression_eval)
     data->buf_len = sizeof(double)*NELEM;
     data->buffer_x = ina_mem_alloc(data->buf_len);
     data->buffer_y = ina_mem_alloc(data->buf_len);
+    data->buffer_z = ina_mem_alloc(data->buf_len);
+    data->buffer_out = ina_mem_alloc(data->buf_len);
 
     _fill_x(data->buffer_x);
     _fill_y(data->buffer_x, data->buffer_y);
@@ -105,6 +115,8 @@ INA_TEST_TEARDOWN(expression_eval)
 {
     ina_mem_free(data->buffer_x);
     ina_mem_free(data->buffer_y);
+    ina_mem_free(data->buffer_z);
+    ina_mem_free(data->buffer_out);
 
     iarray_destroy();
 }
