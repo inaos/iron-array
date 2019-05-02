@@ -42,6 +42,7 @@ typedef enum iarray_random_dist_parameter_e {
     IARRAY_RANDOM_DIST_PARAM_A,
     IARRAY_RANDOM_DIST_PARAM_B,
     IARRAY_RANDOM_DIST_PARAM_P,
+    IARRAY_RANDOM_DIST_PARAM_M,
     IARRAY_RANDOM_DIST_PARAM_SENTINEL /* marks end of list */
 } iarray_random_dist_parameter_t;
 
@@ -315,6 +316,13 @@ INA_API(ina_rc_t) iarray_random_bernoulli(iarray_context_t *ctx,
                                           iarray_store_properties_t *store,
                                           int flags,
                                           iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_random_binomial(iarray_context_t *ctx,
+                                         iarray_dtshape_t *dtshape,
+                                         iarray_random_ctx_t *random_ctx,
+                                         iarray_store_properties_t *store,
+                                         int flags,
+                                         iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
                                        iarray_container_t *c1,
