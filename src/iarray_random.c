@@ -635,7 +635,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
     }
     iarray_iter_read_free(iter);
 
-    iarray_iter_read_new(ctx, &iter, c1, &val);
+    iarray_iter_read_new(ctx, &iter, c2, &val);
 
     while (iarray_iter_read_has_next(iter)) {
         iarray_iter_read_next(iter);
