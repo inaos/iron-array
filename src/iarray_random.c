@@ -21,6 +21,8 @@ typedef enum _iarray_random_method_e {
     _IARRAY_RANDOM_METHOD_BETA,
     _IARRAY_RANDOM_METHOD_LOGNORMAL,
     _IARRAY_RANDOM_METHOD_EXPONENTIAL,
+    _IARRAY_RANDOM_METHOD_CHISQUARE, //TODO: Not find in mkl.h
+    _IARRAY_RANDOM_METHOD_BERNOUILLI,
 } _iarray_random_method_t;
 
 struct iarray_random_ctx_s {
@@ -149,11 +151,21 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     status = vsRngExponential(VSL_RNG_METHOD_EXPONENTIAL_ICDF, random_ctx->stream, (int) block_size, r, 0, beta);
                     break;
                 }
+                case _IARRAY_RANDOM_METHOD_BERNOUILLI: {
+                    float p = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_P];
+                    status = viRngBernoulli(VSL_RNG_METHOD_BERNOULLI_ICDF, random_ctx->stream, (int) block_size, (int *) r, p);
+                    break;
+                }
             }
             INA_FAIL_IF(status != VSL_ERROR_OK);
 
             for (int64_t i = 0; i < block_size; ++i) {
-                ((float *)val.pointer)[i] = r[i];
+                if (method == (_IARRAY_RANDOM_METHOD_BERNOUILLI)) {
+                    ((float *) val.pointer)[i] = (float) ((int *) r)[i];
+
+                } else {
+                    ((float *) val.pointer)[i] = r[i];
+                }
             }
         }
         else {
@@ -190,11 +202,21 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     status = vdRngExponential(VSL_RNG_METHOD_EXPONENTIAL_ICDF, random_ctx->stream, (int) block_size, r, 0, beta);
                     break;
                 }
+                case _IARRAY_RANDOM_METHOD_BERNOUILLI: {
+                    double p = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_P];
+                    status = viRngBernoulli(VSL_RNG_METHOD_BERNOULLI_ICDF, random_ctx->stream, (int) block_size, (int *) r, p);
+                    break;
+                }
             }
             INA_FAIL_IF(status != VSL_ERROR_OK);
 
             for (int64_t i = 0; i < block_size; ++i) {
-                ((double *)val.pointer)[i] = r[i];
+                if (method == (_IARRAY_RANDOM_METHOD_BERNOUILLI)) {
+                    ((double *) val.pointer)[i] = (double) ((int *) r)[i];
+
+                } else {
+                    ((double *) val.pointer)[i] = r[i];
+                }
             }
         }
     }
@@ -395,6 +417,37 @@ INA_API(ina_rc_t) iarray_random_normal(iarray_context_t *ctx,
     INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_GAUSSIAN);
+
+    fail:
+    return INA_ERR_MISSING;
+}
+
+INA_API(ina_rc_t) iarray_random_bernoulli(iarray_context_t *ctx,
+                                          iarray_dtshape_t *dtshape,
+                                          iarray_random_ctx_t *random_ctx,
+                                          iarray_store_properties_t *store,
+                                          int flags,
+                                          iarray_container_t **container)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(random_ctx);
+    INA_VERIFY_NOT_NULL(container);
+
+    /* validate distribution parameters */
+    if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
+        INA_FAIL_IF(random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_P] < 0);
+        INA_FAIL_IF(random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_P] > 1);
+
+    }
+    else {
+        INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_P] < 0);
+        INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_P] > 1);
+    }
+
+    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+
+    return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_BERNOUILLI);
 
     fail:
     return INA_ERR_MISSING;
