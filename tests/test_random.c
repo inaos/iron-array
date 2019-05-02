@@ -77,6 +77,7 @@ INA_TEST_TEARDOWN(random_mt) {
     iarray_destroy();
 }
 
+
 INA_TEST_FIXTURE(random_mt, rand) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
@@ -307,7 +308,7 @@ INA_TEST_FIXTURE(random_mt, normal_f) {
                                       &iarray_random_normal));
 }
 
-INA_TEST_FIXTURE_SKIP(random_mt, binomial) {
+INA_TEST_FIXTURE(random_mt, binomial) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 1;
@@ -321,5 +322,54 @@ INA_TEST_FIXTURE_SKIP(random_mt, binomial) {
     store_y.id = "test_binomial_10_025.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
-                                      &iarray_random_normal));
+                                      &iarray_random_binomial));
+}
+
+INA_TEST_FIXTURE(random_mt, binomial_f) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_M, 23.f);
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.85f);
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_binomial_f_23_085.iarray";
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_binomial));
+}
+
+INA_TEST_FIXTURE(random_mt, poisson) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_LAMBDA, 10.f);
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_poisson_10.iarray";
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_poisson));
+}
+
+INA_TEST_FIXTURE(random_mt, poisson_f) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10000};
+    int64_t pshape[] = {100};
+
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_LAMBDA, 0.6f);
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_poisson_f_06.iarray";
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, dtype, ndim, shape, pshape, store_y,
+                                      &iarray_random_poisson));
 }
