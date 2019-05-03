@@ -64,20 +64,25 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     size_t c_size = (size_t) B0 * B2 * typesize;
     int dtype = a->dtshape->dtype;
 
-    uint8_t *a_block = ina_mem_alloc(a_size);
-    uint8_t *b_block = ina_mem_alloc(b_size);
+    uint8_t *a_block = NULL;
+    uint8_t *b_block = NULL;
+
     uint8_t *c_block;
+
     if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
         c_block = c->catarr->ctx->alloc(c_size);
     } else {
         c_block = ina_mem_alloc(c_size);
     }
+    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC) {
+        a_block = ina_mem_alloc(a_size);
+        b_block = ina_mem_alloc(b_size);
+        memset(c_block, 0, c_size);
+    }
 
     // Start a iterator that returns the index matrix blocks
     iarray_iter_matmul_t *iter;
     _iarray_iter_matmul_new(ctx, a, b, bshape_a, bshape_b, &iter);
-
-    memset(c_block, 0, c_size);
 
     for (_iarray_iter_matmul_init(iter); !_iarray_iter_matmul_finished(iter); _iarray_iter_matmul_next(iter)) {
         int64_t start_a[IARRAY_DIMENSION_MAX];
@@ -115,18 +120,23 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
 
         // Obtain desired blocks from iarray containers
-        INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
-        INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
+        if (!a->view && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+            INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
+            INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
+        } else {
+            INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+            INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
+        }
 
         // Make blocks multiplication
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 cblas_dgemm(CblasRowMajor, flag_a, flag_b, (const int)B0, (const int)B2, (const int)B1,
-                            1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 1.0, (double *)c_block, ld_c);
+                            1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 0.0, (double *)c_block, ld_c);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 cblas_sgemm(CblasRowMajor, flag_a, flag_b, (const int)B0, (const int)B2, (const int)B1,
-                            1.0, (float *)a_block, ld_a, (float *)b_block, ld_b, 1.0, (float *)c_block, ld_c);
+                            1.0, (float *)a_block, ld_a, (float *)b_block, ld_b, 0.0, (float *)c_block, ld_c);
                 break;
             default:
                 return INA_ERR_EXCEEDED;
@@ -145,8 +155,10 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     _iarray_iter_matmul_free(iter);
-    ina_mem_free(a_block);
-    ina_mem_free(b_block);
+    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC) {
+        ina_mem_free(a_block);
+        ina_mem_free(b_block);
+    }
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
         ina_mem_free(c_block);
     }
