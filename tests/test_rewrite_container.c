@@ -82,9 +82,6 @@ INA_TEST_SETUP(rewrite_cont) {
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
-    cfg.eval_flags = IARRAY_EXPR_EVAL_CHUNK;
-
     iarray_context_new(&cfg, &data->ctx);
 }
 
