@@ -138,7 +138,6 @@ int main(int argc, char** argv)
     config.compression_codec = IARRAY_COMPRESSION_LZ4;
     config.compression_level = 5;
     config.max_num_threads = NTHREADS;
-    config.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
 
@@ -228,11 +227,9 @@ int main(int argc, char** argv)
     cblas_dgemm(CblasRowMajor, xflag, yflag, M, N, K, 1.0, mat_x, ldx, mat_y, ldy, 0.0, mat_res, ldr);
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
-
     printf("\n");
     printf("Time for multiplying two matrices (pure C): %.3g s, %.1f GFLOPs\n",
         elapsed_sec, flops / (elapsed_sec * 10e9));
-
 
     iarray_dtshape_t outdtshape;
     outdtshape.ndim = 2;
@@ -249,11 +246,11 @@ int main(int argc, char** argv)
     iarray_linalg_matmul(ctx, con_x, con_y, con_out, xbshape, ybshape, IARRAY_OPERATOR_GENERAL); /* FIXME: error handling */
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
-
-    iarray_container_info(con_out, &nbytes, &cbytes);
     printf("\n");
     printf("Time for multiplying two matrices (iarray):  %.3g s, %.1f GFLOPs\n",
-        elapsed_sec, flops / (elapsed_sec * 10e9));
+           elapsed_sec, flops / (elapsed_sec * 10e9));
+
+    iarray_container_info(con_out, &nbytes, &cbytes);
 
     nbytes_mb = ((double) nbytes / _IARRAY_SIZE_MB);
     cbytes_mb = ((double) cbytes / _IARRAY_SIZE_MB);
