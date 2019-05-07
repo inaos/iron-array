@@ -65,8 +65,7 @@ int main(int argc, char** argv)
     const char *eval_method = NULL;
 
     INA_OPTS(opt,
-             INA_OPT_INT("e", "eval-method", 1,
-                         "EVAL_BLOCK = 1, EVAL_CHUNK = 2, EVAL_ITERBLOCK = 3, EVAL_ITERCHUNK = 4"),
+             INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERBLOCK = 1, EVAL_ITERCHUNK = 2"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
              INA_OPT_INT("d", "dict", 0, "Use dictionary (only for Zstd (codec 5))"),
@@ -119,27 +118,15 @@ int main(int argc, char** argv)
     config.blocksize = blocksize;
     config.max_num_threads = NTHREADS;
     if (eval_flag == 1) {
-        eval_method = "EVAL_BLOCK";
-        config.eval_flags = IARRAY_EXPR_EVAL_BLOCK;
-    }
-    else if (eval_flag == 2) {
-        eval_method = "EVAL_CHUNK";
-        config.eval_flags = IARRAY_EXPR_EVAL_CHUNK;
-    }
-    else if (eval_flag == 3) {
         eval_method = "EVAL_ITERBLOCK";
         config.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
     }
-    else if (eval_flag == 4) {
+    else if (eval_flag == 2) {
         eval_method = "EVAL_ITERCHUNK";
         config.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
     }
-    else if (eval_flag == 5) {
-        eval_method = "EVAL_ITERCHUNKPARA";
-        config.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNKPARA;
-    }
     else {
-        printf("eval_flag must be 1, 2, 3, 4 or 5\n");
+        printf("eval_flag must be 1, 2\n");
         return EXIT_FAILURE;
     }
     config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions
