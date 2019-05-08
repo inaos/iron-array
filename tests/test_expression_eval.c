@@ -110,30 +110,30 @@ INA_TEST_TEARDOWN(expression_eval)
     iarray_destroy();
 }
 
-//INA_TEST_FIXTURE(expression_eval, iterblock1)
-//{
-//    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_ITERBLOCK;
-//
-//    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, false));
-//}
-//
-//INA_TEST_FIXTURE(expression_eval, iterchunk1)
-//{
-//    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_ITERCHUNK;
-//
-//    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, false));
-//}
-//
-//INA_TEST_FIXTURE(expression_eval, iterblock_plain)
-//{
-//    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_ITERBLOCK;
-//
-//    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, true));
-//}
+INA_TEST_FIXTURE(expression_eval, iterblock1)
+{
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, false));
+}
+
+INA_TEST_FIXTURE(expression_eval, iterchunk1)
+{
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, false));
+}
+
+INA_TEST_FIXTURE(expression_eval, iterblock_plain)
+{
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, true));
+}
 
 INA_TEST_FIXTURE(expression_eval, iterchunk_plain)
 {
-    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_ITERCHUNK;
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, true));
 }
