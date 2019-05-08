@@ -124,6 +124,8 @@ INA_TEST_FIXTURE(expression_eval, iterchunk_superchunk)
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, false));
 }
 
+// FIX: Valgrind still complains about 'invalid read' for the plain buffer arrays.
+// Strongly suspect of extend partitions (or the lack of them).
 //INA_TEST_FIXTURE(expression_eval, iterblock_plainbuffer)
 //{
 //    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
