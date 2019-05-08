@@ -206,11 +206,10 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 {
     int64_t nitems_in_schunk = e->nbytes / e->typesize;
-    int64_t nitems_in_chunk = e->chunksize / e->typesize;
+    int64_t nitems_written = 0;
     int nvars = e->nvars;
     caterva_dims_t shape = caterva_new_dims(e->vars[0].c->dtshape->shape, e->vars[0].c->dtshape->ndim);
     caterva_update_shape(ret->catarr, &shape);
-    caterva_array_t out = *ret->catarr;
     int64_t out_pshape = e->chunksize / e->typesize;
 
     if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNK) {
@@ -236,7 +235,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
 
         // Evaluate the expression for all the chunks in variables
-        int64_t nitems_written = 0;
         while (iarray_iter_write_block_has_next(iter_out)) {
             iarray_iter_write_block_next(iter_out);
             int out_items = iter_out->cur_block_size;
@@ -260,8 +258,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_write_block_free(iter_out);
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);
-
-        assert(nitems_written == nitems_in_schunk);
     }
     else if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERBLOCK) {
         // This version of the evaluation engine works by using a chunk iterator and use OpenMP
@@ -296,7 +292,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
 
         // Evaluate the expression for all the chunks in variables
-        int64_t nitems_written = 0;
         int8_t *outbuf = ina_mem_alloc((size_t)chunksize);
         while (iarray_iter_write_block_has_next(iter_out)) {
             iarray_iter_write_block_next(iter_out);
@@ -348,13 +343,17 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);
         ina_mem_free(outbuf);
-
-        assert(nitems_written == nitems_in_schunk);
     }
 
     ina_mempool_reset(e->ctx->mp);
     ina_mempool_reset(e->ctx->mp_op);
     ina_mempool_reset(e->ctx->mp_tmp_out);
+
+    if (nitems_written != nitems_in_schunk) {
+        printf("nitems written is different from items in final container\n");
+        return INA_ERR_ERROR;
+    }
+
     return INA_SUCCESS;
 }
 
