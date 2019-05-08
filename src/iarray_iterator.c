@@ -221,7 +221,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     int64_t typesize = (*itr)->cont->catarr->ctx->cparams.typesize;
 
     if (blockshape == NULL) {
-        blockshape = cont->dtshape->pshape;
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     (*itr)->aux = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
@@ -538,14 +538,18 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT); //TODO: Should we allow a rewrite a non-empty iarray cont
     }
 
-    if (blockshape != NULL && container->catarr->storage == CATERVA_STORAGE_BLOSC) {
-        return INA_ERROR(INA_ERR_FAILED);
-    }
-
     if (blockshape == NULL) {
-        blockshape = container->dtshape->pshape;
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
-
+    
+    if (container->catarr->storage == CATERVA_STORAGE_BLOSC) {
+        for (int i = 0; i < container->dtshape->ndim; ++i) {
+            if (blockshape[i] != container->dtshape->pshape[i]) {
+                return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            }
+        }
+    }
+    
     int64_t typesize = container->catarr->ctx->cparams.typesize;
 
     caterva_dims_t shape = caterva_new_dims(container->dtshape->shape, container->dtshape->ndim);
