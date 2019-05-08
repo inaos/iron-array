@@ -16,6 +16,10 @@
 
 int main()
 {
+    ina_stopwatch_t *w = NULL;
+    double elapsed_sec = 0;
+    INA_STOPWATCH_NEW(-1, -1, &w);
+
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int64_t shape[] = {2000, 2000};
@@ -24,6 +28,7 @@ int main()
     int64_t *bshape = NULL;
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
+    cfg.max_num_threads = 2;
     iarray_context_t *ctx;
     iarray_context_new(&cfg, &ctx);
 
@@ -43,16 +48,48 @@ int main()
     iarray_container_t *c_z;
     iarray_container_new(ctx, &dtshape, NULL, 0, &c_z);
 
+    INA_STOPWATCH_START(w);
     iarray_linalg_matmul(ctx, c_x, c_y ,c_z, bshape, bshape, IARRAY_OPERATOR_GENERAL);
+    INA_STOPWATCH_STOP(w);
+    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
-    for (int i = 0; i <10e6; ++i) {
+    printf("Time iarray: %.4f\n", elapsed_sec);
 
+    double *b_x = (double *) malloc(size * sizeof(double));
+    double *b_y = (double *) malloc(size * sizeof(double));
+    double *b_z = (double *) malloc(size * sizeof(double));
+    double *b_res = (double *) malloc(size * sizeof(double));
+
+    iarray_to_buffer(ctx, c_x, b_x, size * sizeof(double));
+    iarray_to_buffer(ctx, c_y, b_y, size * sizeof(double));
+    iarray_to_buffer(ctx, c_z, b_res, size * sizeof(double));
+
+    INA_STOPWATCH_START(w);
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) shape[0], (int) shape[1], (int) shape[1],
+                1.0, b_x, (int) shape[1], b_y, (int) shape[1], 0.0, b_z, (int) shape[1]);
+    INA_STOPWATCH_STOP(w);
+
+    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+
+    printf("Time mkl (C): %.4f\n", elapsed_sec);
+
+    for (int i = 0; i < size; ++i) {
+        if (b_res[i] != b_z[i]) {
+            printf("Error in element %d\n", i);
+            return INA_ERROR(INA_ERR_ERROR);
+        }
     }
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_z);
+    free(b_x);
+    free(b_y);
+    free(b_z);
+    free(b_res);
     iarray_context_free(&ctx);
+
+    INA_STOPWATCH_FREE(&w);
 
     return EXIT_SUCCESS;
 }
