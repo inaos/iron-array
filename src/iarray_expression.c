@@ -444,7 +444,9 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
 
     // Creating the temporary means interacting with the INA memory allocator, which is not thread-safe.
     // We should investigate on how to overcome this syncronization point (if possible at all).
+#if defined(_OPENMP)
 #pragma omp critical
+#endif
     iarray_temporary_new(expr, NULL, &dtshape, &out);
 
     switch (dtshape.dtype) {
