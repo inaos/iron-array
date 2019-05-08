@@ -131,8 +131,8 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     e->typesize = catarr->ctx->cparams.typesize;
     e->nbytes = catarr->size * e->typesize;
     if (catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        // Somewhat arbitrary values come
-        e->blocksize = 1024 * 8;
+        // Somewhat arbitrary values follows
+        e->blocksize = 1024 * e->typesize;
         e->chunksize = 16 * e->blocksize;
     }
     else {
@@ -210,10 +210,10 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
     int nvars = e->nvars;
     caterva_dims_t shape = caterva_new_dims(e->vars[0].c->dtshape->shape, e->vars[0].c->dtshape->ndim);
     caterva_update_shape(ret->catarr, &shape);
+    ret->catarr->size = 1;  // TODO: fix this workaround (see caterva_update_shape() call above)
     int64_t out_pshape = e->chunksize / e->typesize;
 
     if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNK) {
-        ret->catarr->size = 1;  // TODO: fix this workaround (see caterva_update_shape() call above)
 
         // Create and initialize an iterator per variable
         iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -258,19 +258,17 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_write_block_free(iter_out);
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);
+        iarray_context_free(&ctx);
     }
     else if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERBLOCK) {
         // This version of the evaluation engine works by using a chunk iterator and use OpenMP
         // for performing the computations.  The OpenMP loop split the chunk into smaller *blocks* that
         // are passed the tinyexpr evaluator.
-        // Although this works perfectly well, this is still work in progress because we may want to
-        // get rid of the overhead of creating/destroying the thread per every chunk.  One possibility
-        // is to use pthreads, but we need more discussion about this.
+        // In the future we may want to get rid of the cost of creating/destroying the thread per every chunk.
+        // One possibility is to use pthreads, but this would require more complex code, so we need to discuss it more.
         int32_t blocksize = e->blocksize;
         int32_t chunksize = e->chunksize;
         int nblocks = (int)chunksize / blocksize;
-
-        ret->catarr->size = 1;  // TODO: fix this workaround (see caterva_update_shape() call above)
 
         // Create and initialize an iterator per each variable
         iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -343,6 +341,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);
         ina_mem_free(outbuf);
+        iarray_context_free(&ctx);
     }
 
     ina_mempool_reset(e->ctx->mp);

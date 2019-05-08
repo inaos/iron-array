@@ -549,7 +549,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     if (blockshape == NULL) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
-    
+
     if (cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
         for (int i = 0; i < cont->dtshape->ndim; ++i) {
             if (blockshape[i] != cont->dtshape->pshape[i]) {
@@ -557,7 +557,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
             }
         }
     }
-    
+
     int64_t typesize = cont->catarr->ctx->cparams.typesize;
 
     caterva_dims_t shape = caterva_new_dims(cont->dtshape->shape, cont->dtshape->ndim);
