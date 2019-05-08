@@ -77,8 +77,9 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC) {
         a_block = ina_mem_alloc(a_size);
         b_block = ina_mem_alloc(b_size);
-        memset(c_block, 0, c_size);
     }
+
+    memset(c_block, 0, c_size);
 
     // Start a iterator that returns the index matrix blocks
     iarray_iter_matmul_t *iter;
@@ -132,11 +133,11 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 cblas_dgemm(CblasRowMajor, flag_a, flag_b, (const int)B0, (const int)B2, (const int)B1,
-                            1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 0.0, (double *)c_block, ld_c);
+                            1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 1.0, (double *)c_block, ld_c);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 cblas_sgemm(CblasRowMajor, flag_a, flag_b, (const int)B0, (const int)B2, (const int)B1,
-                            1.0, (float *)a_block, ld_a, (float *)b_block, ld_b, 0.0, (float *)c_block, ld_c);
+                            1.0, (float *)a_block, ld_a, (float *)b_block, ld_b, 1.0, (float *)c_block, ld_c);
                 break;
             default:
                 return INA_ERR_EXCEEDED;
