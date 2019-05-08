@@ -106,7 +106,8 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     int status = VSL_ERROR_OK;
     iarray_iter_write_block_t *iter;
     iarray_iter_write_block_value_t val;
-    iarray_iter_write_block_new(ctx, &iter, container, NULL, &val);
+
+    iarray_iter_write_block_new(ctx, &iter, container, container->dtshape->pshape, &val);
 
     int64_t max_part_size = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {
