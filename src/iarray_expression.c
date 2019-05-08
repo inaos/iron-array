@@ -63,6 +63,7 @@ INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
     ina_mempool_reset(ctx->mp_op);  // FIXME: ditto
     ina_mempool_reset(ctx->mp_tmp_out);  // FIXME: ditto
     INA_MEM_FREE_SAFE((*e)->temp_vars);
+    ina_str_free((*e)->expr);
     INA_MEM_FREE_SAFE(*e);
 }
 
@@ -187,7 +188,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         te_vars[nvar].name = e->vars[nvar].var;
         te_vars[nvar].type = TE_VARIABLE;
         te_vars[nvar].context = NULL;
-        te_vars[nvar].address = ina_mem_alloc(nthreads * sizeof(void*));
+        te_vars[nvar].address = ina_mempool_dalloc(e->ctx->mp, nthreads * sizeof(void*));
         // Allocate different buffers for each thread too
         for (int nthread = 0; nthread < nthreads; nthread++) {
             int ntvar = nthread * e->nvars + nvar;
