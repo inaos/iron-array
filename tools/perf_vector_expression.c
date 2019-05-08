@@ -68,8 +68,9 @@ int main(int argc, char** argv)
              INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERBLOCK = 1, EVAL_ITERCHUNK = 2"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
-             INA_OPT_INT("d", "dict", 0, "Use dictionary (only for Zstd (codec 5))"),
              INA_OPT_INT("b", "blocksize", 0, "Use blocksize for chunks (0 means automatic)"),
+             INA_OPT_FLAG("d", "dict", "Use dictionary (only for Zstd (codec 5))"),
+             INA_OPT_FLAG("P", "plainbuffer", "Use plain buffer arrays"),
              INA_OPT_FLAG("i", "iter", "Use iterator for filling values"),
              INA_OPT_FLAG("I", "iter-part", "Use partition iterator for filling values"),
              INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
@@ -87,8 +88,6 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_opt_get_int("c", &clevel));
     int codec;
     INA_MUST_SUCCEED(ina_opt_get_int("l", &codec));
-    int use_dict;
-    INA_MUST_SUCCEED(ina_opt_get_int("d", &use_dict));
     int blocksize;
     INA_MUST_SUCCEED(ina_opt_get_int("b", &blocksize));
 
@@ -114,7 +113,7 @@ int main(int argc, char** argv)
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_level = clevel;
     config.compression_codec = codec;
-    config.use_dict = use_dict;
+    config.use_dict = INA_SUCCEED(ina_opt_isset("d")) ? 1 : 0;
     config.blocksize = blocksize;
     config.max_num_threads = NTHREADS;
     if (eval_flag == 1) {
@@ -142,7 +141,7 @@ int main(int argc, char** argv)
     dtshape.ndim = 1;
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     dtshape.shape[0] = NELEM;
-    dtshape.pshape[0] = PART_SIZE;
+    dtshape.pshape[0] = INA_SUCCEED(ina_opt_isset("P")) ? 0 : PART_SIZE;
 
     int64_t nbytes = 0;
     int64_t cbytes = 0;
