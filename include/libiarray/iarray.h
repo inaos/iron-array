@@ -63,8 +63,8 @@ typedef struct iarray_store_properties_s {
 } iarray_store_properties_t;
 
 typedef enum iarray_eval_flags_e {
-    IARRAY_EXPR_EVAL_ITERBLOCK = 0x1,
-    IARRAY_EXPR_EVAL_ITERCHUNK = 0x2,
+    IARRAY_EXPR_EVAL_ITERCHUNK = 0x1,
+    IARRAY_EXPR_EVAL_ITERBLOCK = 0x2,
 } iarray_eval_flags_t;
 
 typedef enum iarray_filter_flags_e {
@@ -171,7 +171,7 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .compression_level=5,
     .use_dict=0,
     .filter_flags=0,
-    .eval_flags=IARRAY_EXPR_EVAL_ITERBLOCK,
+    .eval_flags=IARRAY_EXPR_EVAL_ITERCHUNK,
     .max_num_threads=1,
     .fp_mantissa_bits=0,
     .blocksize=0 };
