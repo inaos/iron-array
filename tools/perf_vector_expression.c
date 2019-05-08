@@ -116,13 +116,12 @@ int main(int argc, char** argv)
     config.use_dict = INA_SUCCEED(ina_opt_isset("d")) ? 1 : 0;
     config.blocksize = blocksize;
     config.max_num_threads = NTHREADS;
-    if (eval_flag == 1) {
-        eval_method = "EVAL_ITERBLOCK";
-        config.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
-    }
-    else if (eval_flag == 2) {
+    config.eval_flags = eval_flag;
+    if (eval_flag == IARRAY_EXPR_EVAL_ITERCHUNK) {
         eval_method = "EVAL_ITERCHUNK";
-        config.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
+    }
+    else if (eval_flag == IARRAY_EXPR_EVAL_ITERBLOCK) {
+        eval_method = "EVAL_ITERBLOCK";
     }
     else {
         printf("eval_flag must be 1, 2\n");
