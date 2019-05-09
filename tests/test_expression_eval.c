@@ -16,7 +16,7 @@
 #define NCHUNKS  10
 #define NITEMS_CHUNK (20 * 1000)
 #define NELEM (((NCHUNKS - 1) * NITEMS_CHUNK) + 10)
-#define NTHREADS 1
+#define NTHREADS 2
 
 static double _poly(const double x)
 {
@@ -124,18 +124,16 @@ INA_TEST_FIXTURE(expression_eval, iterchunk_superchunk)
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, false));
 }
 
-// FIX: Valgrind still complains about 'invalid read' for the plain buffer arrays.
-// Strongly suspect of extend partitions (or the lack of them).
-//INA_TEST_FIXTURE(expression_eval, iterblock_plainbuffer)
-//{
-//    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
-//
-//    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, true));
-//}
+INA_TEST_FIXTURE(expression_eval, iterblock_plainbuffer)
+{
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
 
-//INA_TEST_FIXTURE(expression_eval, iterchunk_plainbuffer)
-//{
-//    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
-//
-//    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, true));
-//}
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, true));
+}
+
+INA_TEST_FIXTURE(expression_eval, iterchunk_plainbuffer)
+{
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, true));
+}

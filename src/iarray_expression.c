@@ -247,6 +247,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             }
 
             // Eval the expression for this chunk
+            e->max_out_len = out_items;  // so as to prevent operating beyond the limits
             const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
             memcpy((char*)out_value.pointer, (uint8_t*)expr_out->data, out_items * e->typesize);
             nitems_written += out_items;
@@ -269,7 +270,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         // One possibility is to use pthreads, but this would require more complex code, so we need to discuss it more.
         int32_t blocksize = e->blocksize;
         int32_t chunksize = e->chunksize;
-        int nblocks = (int)chunksize / blocksize;
 
         // Create and initialize an iterator per each variable
         iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -295,6 +295,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         while (iarray_iter_write_block_has_next(iter_out)) {
             iarray_iter_write_block_next(iter_out);
             int out_items = iter_out->cur_block_size;
+            int nblocks = out_items * e->typesize / blocksize;
 
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
@@ -314,12 +315,13 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                     int ntvar = nthread * e->nvars + nvar;
                     e->temp_vars[ntvar]->data = (char*)iter_value[nvar].pointer + nblock * blocksize;
                 }
+                e->max_out_len = blocksize / e->typesize;  // so as to prevent operating beyond the limits
                 const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
                 memcpy((char*)out_value.pointer + nblock * blocksize, (uint8_t*)expr_out->data, blocksize);
             }
 
             // Do a possible last evaluation with the leftovers
-            int leftover = chunksize - nblocks * blocksize;
+            int leftover = out_items * e->typesize - nblocks * blocksize;
             if (leftover > 0) {
                 for (int nvar = 0; nvar < nvars; nvar++) {
                     e->temp_vars[nvar]->data = (char*)iter_value[nvar].pointer + nblocks * blocksize;
