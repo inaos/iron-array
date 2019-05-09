@@ -21,6 +21,25 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     caterva_update_shape(c->catarr, &shape);
     int64_t typesize = a->catarr->ctx->cparams.typesize;
 
+    bool a_contiguous = (a->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
+    if (a_contiguous) {
+        for (int i = 1; i < a->dtshape->ndim; ++i) {
+            if (bshape_a[i] != a->dtshape->shape[i]) {
+                a_contiguous = false;
+                break;
+            }
+        }
+    }
+    bool b_contiguous = (b->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
+    if (b_contiguous) {
+        for (int i = 1; i < b->dtshape->ndim; ++i) {
+            if (bshape_b[i] != b->dtshape->shape[i]) {
+                b_contiguous = false;
+                break;
+            }
+        }
+    }
+
     // define mkl parameters
     int64_t B0 = bshape_a[0];
     int64_t B1 = bshape_a[1];
@@ -74,11 +93,12 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     } else {
         c_block = ina_mem_alloc(c_size);
     }
-    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC) {
+    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
         a_block = ina_mem_alloc(a_size);
+    }
+    if (b->view || b->catarr->storage == CATERVA_STORAGE_BLOSC || !b_contiguous) {
         b_block = ina_mem_alloc(b_size);
     }
-
     memset(c_block, 0, c_size);
 
     // Start a iterator that returns the index matrix blocks
@@ -121,11 +141,14 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
 
         // Obtain desired blocks from iarray containers
-        if (!a->view && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        if (!a->view && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && a_contiguous) {
             INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
-            INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
         } else {
             INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+        }
+        if (!b->view && b->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && b_contiguous) {
+            INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
+        } else {
             INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
         }
 
@@ -143,7 +166,9 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
                 return INA_ERR_EXCEEDED;
         }
 
-        if (a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        if (a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER &&
+            b->catarr->storage == CATERVA_STORAGE_PLAINBUFFER &&
+            c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
             c->catarr->buf = c_block;
             break;
         }
@@ -156,8 +181,11 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     _iarray_iter_matmul_free(iter);
-    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC) {
+    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
+        printf("A bot contiguous\n");
         ina_mem_free(a_block);
+    }
+    if (b->view || b->catarr->storage == CATERVA_STORAGE_BLOSC || !b_contiguous) {
         ina_mem_free(b_block);
     }
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
@@ -173,6 +201,26 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     caterva_update_shape(c->catarr, &shape);
     int64_t typesize = a->catarr->ctx->cparams.typesize;
+
+    bool a_contiguous = (a->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
+    if (a_contiguous) {
+        for (int i = 1; i < a->dtshape->ndim; ++i) {
+            if (bshape_a[i] != a->dtshape->shape[i]) {
+                a_contiguous = false;
+                break;
+            }
+        }
+    }
+
+    bool b_contiguous = (b->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
+    if (b_contiguous) {
+        for (int i = 1; i < b->dtshape->ndim; ++i) {
+            if (bshape_b[i] != b->dtshape->shape[i]) {
+                b_contiguous = false;
+                break;
+            }
+        }
+    }
 
     // Define parameters needed in mkl multiplication
     int64_t B0 = bshape_a[0];
@@ -223,8 +271,10 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     } else {
         c_block = ina_mem_alloc(c_size);
     }
-    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC) {
+    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
         a_block = ina_mem_alloc(a_size);
+    }
+    if (b->view || b->catarr->storage == CATERVA_STORAGE_BLOSC || !b_contiguous) {
         b_block = ina_mem_alloc(b_size);
     }
     memset(c_block, 0, c_size);
@@ -271,11 +321,14 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
 
         // Obtain desired blocks from iarray containers
-        if (!a->view && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        if (!a->view && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && a_contiguous) {
             INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
-            INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
         } else {
             INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+        }
+        if (!b->view && b->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && b_contiguous) {
+            INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
+        } else {
             INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
         }
 
@@ -291,7 +344,9 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
                 return INA_ERR_EXCEEDED;
         }
 
-        if (a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        if (a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER &&
+            b->catarr->storage == CATERVA_STORAGE_PLAINBUFFER &&
+            c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
             c->catarr->buf = c_block;
             break;
         }
@@ -303,8 +358,10 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     _iarray_iter_matmul_free(iter);
-    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC) {
+    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
         ina_mem_free(a_block);
+    }
+    if (b->view || b->catarr->storage == CATERVA_STORAGE_BLOSC || !b_contiguous) {
         ina_mem_free(b_block);
     }
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
@@ -492,11 +549,11 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     INA_ASSERT_NOT_NULL(b);
     INA_ASSERT_NOT_NULL(c);
 
-    if (a->dtshape->dtype != b->dtshape->dtype) {
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    if (mkl_get_max_threads() != ctx->cfg->max_num_threads) {
+        mkl_set_num_threads(ctx->cfg->max_num_threads);
     }
 
-    if (a->catarr->storage != b->catarr->storage) {
+    if (a->dtshape->dtype != b->dtshape->dtype) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
@@ -508,7 +565,11 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
-    if ((bshape_a != NULL || bshape_b != NULL) && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+    if (bshape_a != NULL && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
+
+    if (bshape_b != NULL && b->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
         INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
@@ -517,6 +578,10 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     }
     if (bshape_b == NULL) {
         bshape_b = b->dtshape->shape;
+    }
+
+    if (bshape_a[1] != bshape_b[0]) {
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     if (bshape_a[0] != c->dtshape->pshape[0]){
