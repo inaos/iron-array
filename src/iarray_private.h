@@ -139,6 +139,7 @@ typedef struct iarray_iter_write_block_s {
     int64_t *cont_eshape; // The extended shape of the container
     int64_t cont_esize; // The size of the extended shape
     int64_t nblock; // The block counter
+    bool contiguous; // Flag to avoid copies using plainbuffer
 } iarray_iter_write_block_t;
 
 typedef struct iarray_iter_read_block_s {
@@ -155,7 +156,7 @@ typedef struct iarray_iter_read_block_s {
     int64_t *cur_block_index; // The position of the block in the container
     int64_t *cur_elem_index; // The position of the first element of the block in the container
     int64_t nblock; // The block counter
-    bool contiguous;
+    bool contiguous; // Flag to avoid copies using plainbuffer
 } iarray_iter_read_block_t;
 
 typedef struct iarray_iter_matmul_s {

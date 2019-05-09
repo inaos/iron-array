@@ -21,7 +21,7 @@ typedef enum _iarray_random_method_e {
     _IARRAY_RANDOM_METHOD_BETA,
     _IARRAY_RANDOM_METHOD_LOGNORMAL,
     _IARRAY_RANDOM_METHOD_EXPONENTIAL,
-    _IARRAY_RANDOM_METHOD_CHISQUARE, //TODO: Not find in mkl.h
+    // _IARRAY_RANDOM_METHOD_CHISQUARE, // TODO: It is in documentation but not found in mkl.h ; bug?
     _IARRAY_RANDOM_METHOD_BERNOUILLI,
     _IARRAY_RANDOM_METHOD_BINOMIAL,
     _IARRAY_RANDOM_METHOD_POISSON,
@@ -106,7 +106,8 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     int status = VSL_ERROR_OK;
     iarray_iter_write_block_t *iter;
     iarray_iter_write_block_value_t val;
-    iarray_iter_write_block_new(ctx, &iter, container, NULL, &val);
+
+    iarray_iter_write_block_new(ctx, &iter, container, container->dtshape->pshape, &val);
 
     int64_t max_part_size = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {

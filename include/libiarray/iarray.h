@@ -63,11 +63,8 @@ typedef struct iarray_store_properties_s {
 } iarray_store_properties_t;
 
 typedef enum iarray_eval_flags_e {
-    IARRAY_EXPR_EVAL_BLOCK = 0x1,
-    IARRAY_EXPR_EVAL_CHUNK = 0x2,
-    IARRAY_EXPR_EVAL_ITERBLOCK = 0x4,
-    IARRAY_EXPR_EVAL_ITERCHUNK = 0x8,
-    IARRAY_EXPR_EVAL_ITERCHUNKPARA = 0x10,
+    IARRAY_EXPR_EVAL_ITERCHUNK = 0x1,
+    IARRAY_EXPR_EVAL_ITERBLOCK = 0x2,
 } iarray_eval_flags_t;
 
 typedef enum iarray_filter_flags_e {
@@ -118,7 +115,7 @@ typedef struct iarray_config_s {
     int compression_level;
     int use_dict;
     int filter_flags;
-    int eval_flags;
+    unsigned int eval_flags;
     int max_num_threads; /* Maximum number of threads to use */
     uint8_t fp_mantissa_bits; /* Only useful together with flag: IARRAY_COMP_TRUNC_PREC */
     int blocksize; /* Advanced Tuning Parameter */
@@ -174,7 +171,7 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .compression_level=5,
     .use_dict=0,
     .filter_flags=0,
-    .eval_flags=0,
+    .eval_flags=IARRAY_EXPR_EVAL_ITERCHUNK,
     .max_num_threads=1,
     .fp_mantissa_bits=0,
     .blocksize=0 };
@@ -195,7 +192,7 @@ INA_API(void) iarray_destroy(void);
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx);
 INA_API(void) iarray_context_free(iarray_context_t **ctx);
 
-INA_API(ina_rc_t) iarray_partition_advice(iarray_data_type_t dtype, int *max_nelem, int *min_nelem);
+INA_API(ina_rc_t) iarray_partition_advice(iarray_data_type_t dtype, const int *max_nelem, const int *min_nelem);
 
 INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
                                         uint32_t seed,
@@ -491,7 +488,7 @@ INA_API(int) iarray_iter_read_block_has_next(iarray_iter_read_block_t *itr);
 
 INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_iter_write_block_t **itr,
-                                              iarray_container_t *container,
+                                              iarray_container_t *cont,
                                               const int64_t *blockshape,
                                               iarray_iter_write_block_value_t *value);
 INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t *itr);
