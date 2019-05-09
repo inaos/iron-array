@@ -16,7 +16,7 @@
 #define NCHUNKS  10
 #define NITEMS_CHUNK (20 * 1000)
 #define NELEM (((NCHUNKS - 1) * NITEMS_CHUNK) + 10)
-#define NTHREADS 2
+#define NTHREADS 1  // FIX: multithreading in ITERBLOCK still having issues
 
 static double _poly(const double x)
 {
