@@ -213,20 +213,26 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     int dtype = a->dtshape->dtype;
 
-    uint8_t *a_block = ina_mem_alloc(a_size);
-    uint8_t *b_block = ina_mem_alloc(b_size);
+    uint8_t *a_block = NULL;
+    uint8_t *b_block = NULL;
+
     uint8_t *c_block;
+
     if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
         c_block = c->catarr->ctx->alloc(c_size);
     } else {
         c_block = ina_mem_alloc(c_size);
     }
+    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC) {
+        a_block = ina_mem_alloc(a_size);
+        b_block = ina_mem_alloc(b_size);
+    }
+    memset(c_block, 0, c_size);
 
     // Start a iterator that returns the index matrix blocks
     iarray_iter_matmul_t *iter;
     _iarray_iter_matmul_new(ctx, a, b, bshape_a, bshape_b, &iter);
 
-    memset(c_block, 0, c_size);
     for (_iarray_iter_matmul_init(iter); !_iarray_iter_matmul_finished(iter); _iarray_iter_matmul_next(iter)) {
 
         int64_t start_a[IARRAY_DIMENSION_MAX];
@@ -265,8 +271,13 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
 
         // Obtain desired blocks from iarray containers
-        INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
-        INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
+        if (!a->view && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+            INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
+            INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
+        } else {
+            INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+            INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
+        }
 
         // Make blocks multiplication
         switch (dtype) {
@@ -292,8 +303,10 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     _iarray_iter_matmul_free(iter);
-    ina_mem_free(a_block);
-    ina_mem_free(b_block);
+    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC) {
+        ina_mem_free(a_block);
+        ina_mem_free(b_block);
+    }
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
         ina_mem_free(c_block);
     }

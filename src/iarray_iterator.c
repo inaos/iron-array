@@ -296,7 +296,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
 
 INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr)
 {
-    if (!itr->contiguous | (itr->cont->view == true)) {
+    if (!itr->contiguous || (itr->cont->view == true)) {
         ina_mem_free(itr->part);
     }
 
@@ -652,7 +652,7 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
     int64_t typesize = itr->cont->catarr->ctx->cparams.typesize;
 
     // check if a block is readed totally and decompress next
-    if ((itr->nelem_block == itr->cur_block_size - 1) | (itr->nelem == 0)){
+    if ((itr->nelem_block == itr->cur_block_size - 1) || (itr->nelem == 0)){
 
         // Calculate aux variables
         int64_t aux[IARRAY_DIMENSION_MAX];
