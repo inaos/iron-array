@@ -36,7 +36,7 @@ INA_API(void) iarray_destroy()
     _blosc_inited = 0;
 }
 
-INA_API(ina_rc_t) iarray_partition_advice(iarray_data_type_t dtype, int *max_nelem, int *min_nelem)
+INA_API(ina_rc_t) iarray_partition_advice(iarray_data_type_t dtype, const int *max_nelem, const int *min_nelem)
 {
     /* Use INAC to determine L3 cache size */
     // high = L3 / 4 (2x operand, 1x temporary, 1x reserve) / dtype
@@ -55,11 +55,10 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
     (*ctx)->cfg = ina_mem_alloc(sizeof(iarray_config_t));
     INA_FAIL_IF((*ctx)->cfg == NULL);
     ina_mem_cpy((*ctx)->cfg, cfg, sizeof(iarray_config_t));
-    if (!(cfg->eval_flags & IARRAY_EXPR_EVAL_BLOCK) && !(cfg->eval_flags & IARRAY_EXPR_EVAL_CHUNK)
-        && !(cfg->eval_flags & IARRAY_EXPR_EVAL_ITERBLOCK)
-        && !(cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNKPARA)
-        &&!(cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNK)) {
-        (*ctx)->cfg->eval_flags |= IARRAY_EXPR_EVAL_BLOCK;
+    if (!(cfg->eval_flags & IARRAY_EXPR_EVAL_ITERBLOCK)
+        && !(cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNK)) {
+        // The default is iterating by blocks
+        (*ctx)->cfg->eval_flags |= IARRAY_EXPR_EVAL_ITERBLOCK;
     }
     INA_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp));
     INA_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_OP_CHUNKS, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_op));

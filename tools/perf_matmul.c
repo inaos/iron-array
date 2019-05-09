@@ -118,7 +118,6 @@ int main(int argc, char** argv)
     config.compression_codec = IARRAY_COMPRESSION_LZ4;
     config.compression_level = 5;
     config.max_num_threads = NTHREADS;
-    config.eval_flags = IARRAY_EXPR_EVAL_CHUNK;
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
 

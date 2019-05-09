@@ -221,7 +221,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     int64_t typesize = (*itr)->cont->catarr->ctx->cparams.typesize;
 
     if (blockshape == NULL) {
-        blockshape = cont->dtshape->pshape;
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     (*itr)->aux = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
@@ -325,15 +325,21 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr) {
 
     if (itr->nblock != 0) {
         if (itr->cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-            caterva_dims_t start = caterva_new_dims(itr->cur_elem_index, ndim);
+            if (itr->contiguous) {
+                int64_t dir = itr->nblock * itr->block_shape_size * typesize;
+                itr->pointer = &itr->cont->catarr->buf[dir];
 
-            int64_t stop_[IARRAY_DIMENSION_MAX];
-            for (int i = 0; i < ndim; ++i) {
-                stop_[i] = start.dims[i] + itr->cur_block_shape[i];
+            } else {
+                caterva_dims_t start = caterva_new_dims(itr->cur_elem_index, ndim);
+
+                int64_t stop_[IARRAY_DIMENSION_MAX];
+                for (int i = 0; i < ndim; ++i) {
+                    stop_[i] = start.dims[i] + itr->cur_block_shape[i];
+                }
+                caterva_dims_t stop = caterva_new_dims(stop_, ndim);
+
+                caterva_set_slice_buffer(catarr, itr->part, &start, &stop);
             }
-            caterva_dims_t stop = caterva_new_dims(stop_, ndim);
-
-            caterva_set_slice_buffer(catarr, itr->part, &start, &stop);
         } else {
 
             // check if the part should be padded with 0s
@@ -446,15 +452,17 @@ INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
         int64_t typesize = itr->cont->catarr->ctx->cparams.typesize;
         int64_t psizeb = itr->cur_block_size * typesize;
         if (itr->cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-            caterva_dims_t start = caterva_new_dims(itr->cur_elem_index, ndim);
+            if (!itr->contiguous) {
+                caterva_dims_t start = caterva_new_dims(itr->cur_elem_index, ndim);
 
-            int64_t stop_[IARRAY_DIMENSION_MAX];
-            for (int i = 0; i < ndim; ++i) {
-                stop_[i] = start.dims[i] + itr->cur_block_shape[i];
+                int64_t stop_[IARRAY_DIMENSION_MAX];
+                for (int i = 0; i < ndim; ++i) {
+                    stop_[i] = start.dims[i] + itr->cur_block_shape[i];
+                }
+                caterva_dims_t stop = caterva_new_dims(stop_, ndim);
+
+                caterva_set_slice_buffer(catarr, itr->part, &start, &stop);
             }
-            caterva_dims_t stop = caterva_new_dims(stop_, ndim);
-
-            caterva_set_slice_buffer(catarr, itr->part, &start, &stop);
         } else {
 
             // check if the part should be padded with 0s
@@ -524,35 +532,39 @@ INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
 
 INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_iter_write_block_t **itr,
-                                              iarray_container_t *container,
+                                              iarray_container_t *cont,
                                               const int64_t *blockshape,
                                               iarray_iter_write_block_value_t *value)
 {
     INA_VERIFY_NOT_NULL(ctx);
-    INA_VERIFY_NOT_NULL(container);
+    INA_VERIFY_NOT_NULL(cont);
     INA_VERIFY_NOT_NULL(itr);
     *itr = (iarray_iter_write_block_t *)ina_mem_alloc(sizeof(iarray_iter_write_block_t));
     INA_RETURN_IF_NULL(itr);
 
-    if (container->catarr->size != 1) {
+    if (cont->catarr->size != 1) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT); //TODO: Should we allow a rewrite a non-empty iarray cont
     }
 
-    if (blockshape != NULL && container->catarr->storage == CATERVA_STORAGE_BLOSC) {
-        return INA_ERROR(INA_ERR_FAILED);
-    }
-
     if (blockshape == NULL) {
-        blockshape = container->dtshape->pshape;
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
-    int64_t typesize = container->catarr->ctx->cparams.typesize;
+    if (cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
+        for (int i = 0; i < cont->dtshape->ndim; ++i) {
+            if (blockshape[i] != cont->dtshape->pshape[i]) {
+                return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            }
+        }
+    }
 
-    caterva_dims_t shape = caterva_new_dims(container->dtshape->shape, container->dtshape->ndim);
-    int err = caterva_update_shape(container->catarr, &shape);
+    int64_t typesize = cont->catarr->ctx->cparams.typesize;
 
-    if (container->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        container->catarr->buf = container->catarr->ctx->alloc((size_t) container->catarr->size * typesize);
+    caterva_dims_t shape = caterva_new_dims(cont->dtshape->shape, cont->dtshape->ndim);
+    int err = caterva_update_shape(cont->catarr, &shape);
+
+    if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        cont->catarr->buf = cont->catarr->ctx->alloc((size_t) cont->catarr->size * typesize);
     }
 
     if (err < 0) {
@@ -561,7 +573,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
     (*itr)->val = value;
     (*itr)->ctx = ctx;
-    (*itr)->cont = container;
+    (*itr)->cont = cont;
 
     (*itr)->cur_block_index = (int64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(int64_t));
     (*itr)->cur_elem_index = (int64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(int64_t));
@@ -575,17 +587,33 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     for (int i = 0; i < (*itr)->cont->dtshape->ndim; ++i) {
         (*itr)->block_shape[i] = blockshape[i];
         size *= (*itr)->block_shape[i];
-        if (container->catarr->eshape[i] % blockshape[i] == 0) {
-            (*itr)->cont_eshape[i] = (container->catarr->eshape[i] / blockshape[i]) * blockshape[i];
+        if (cont->catarr->eshape[i] % blockshape[i] == 0) {
+            (*itr)->cont_eshape[i] = (cont->catarr->eshape[i] / blockshape[i]) * blockshape[i];
         } else {
-            (*itr)->cont_eshape[i] = (container->catarr->eshape[i] / blockshape[i] + 1) * blockshape[i];
+            (*itr)->cont_eshape[i] = (cont->catarr->eshape[i] / blockshape[i] + 1) * blockshape[i];
 
         }
         (*itr)->cont_esize *= (*itr)->cont_eshape[i];
         (*itr)->block_shape_size *= (*itr)->block_shape[i];
     }
 
-    (*itr)->part = (uint8_t *) ina_mem_alloc((size_t) size * typesize);
+    // Check if the blocks are contiguous in memory
+    (*itr)->contiguous = (cont->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
+    if ((*itr)->contiguous) {
+        for (int i = 1; i < cont->dtshape->ndim; ++i) {
+            if (blockshape[i] != cont->dtshape->shape[i]) {
+                (*itr)->contiguous = false;
+                break;
+            }
+        }
+    }
+
+    if (!(*itr)->contiguous) {
+        (*itr)->part = ina_mem_alloc((size_t) size * typesize);
+    } else {
+        (*itr)->part = &cont->catarr->buf[0];
+    }
+
     (*itr)->pointer = &(*itr)->part[0];
 
     int8_t ndim = (*itr)->cont->dtshape->ndim;
@@ -629,7 +657,9 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
 INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t *itr)
 {
-    ina_mem_free(itr->part);
+    if (!itr->contiguous | (itr->cont->view == true)) {
+        ina_mem_free(itr->part);
+    }
     ina_mem_free(itr->block_shape);
     ina_mem_free(itr->cur_block_shape);
     ina_mem_free(itr->cur_block_index);
@@ -652,7 +682,7 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
     int64_t typesize = itr->cont->catarr->ctx->cparams.typesize;
 
     // check if a block is readed totally and decompress next
-    if ((itr->nelem_block == itr->cur_block_size - 1) | (itr->nelem == 0)){
+    if ((itr->nelem_block == itr->cur_block_size - 1) || (itr->nelem == 0)){
 
         // Calculate aux variables
         int64_t aux[IARRAY_DIMENSION_MAX];

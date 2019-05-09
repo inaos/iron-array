@@ -211,10 +211,9 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
     caterva_dims_t pshape_ = caterva_new_dims((int64_t *) pshape, c->catarr->ndim);
 
     INA_FAIL_IF(caterva_get_slice_buffer(buffer, c->catarr, &start__, &stop__, &pshape_) != 0);
-    
+
     size_t rows = (size_t)stop_[0] - start_[0];
     size_t cols = (size_t)stop_[1] - start_[1];
-
     if (c->transposed) {
         switch (c->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
@@ -466,14 +465,18 @@ INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c,
-    int64_t *nbytes,
-    int64_t *cbytes)
+INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, int64_t *nbytes, int64_t *cbytes)
 {
     INA_VERIFY_NOT_NULL(c);
 
-    *nbytes = (int64_t) c->catarr->sc->nbytes;
-    *cbytes = (int64_t) c->catarr->sc->cbytes;
+    if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        *nbytes = c->catarr->size * c->catarr->ctx->cparams.typesize;
+        *cbytes = *nbytes;
+    }
+    else {
+        *nbytes = c->catarr->sc->nbytes;
+        *cbytes = c->catarr->sc->cbytes;
+    }
 
     return INA_SUCCESS;
 }
