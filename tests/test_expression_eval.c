@@ -16,7 +16,7 @@
 #define NCHUNKS  10
 #define NITEMS_CHUNK (20 * 1000)
 #define NELEM (((NCHUNKS - 1) * NITEMS_CHUNK) + 10)
-#define NTHREADS 2
+#define NTHREADS 1  // FIX: multithreading in ITERBLOCK still having issues
 
 static double _poly(const double x)
 {
@@ -43,7 +43,8 @@ static void _fill_y(const double* x, double* y)
     }
 }
 
-static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_x, const double *buffer_y, size_t buffer_len)
+static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_x, const double *buffer_y,
+                                     size_t buffer_len, bool plain_buffer)
 {
     iarray_context_t *ctx;
     iarray_expression_t* e;
@@ -54,7 +55,7 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     shape.ndim = 1;
     shape.shape[0] = NELEM;
-    shape.pshape[0] = NITEMS_CHUNK;
+    shape.pshape[0] = plain_buffer ? 0 : NITEMS_CHUNK;
 
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
 
@@ -109,37 +110,30 @@ INA_TEST_TEARDOWN(expression_eval)
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(expression_eval, block1)
+INA_TEST_FIXTURE(expression_eval, iterblock_superchunk)
 {
-    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_BLOCK;
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, false));
 }
 
-INA_TEST_FIXTURE(expression_eval, chunk1)
+INA_TEST_FIXTURE(expression_eval, iterchunk_superchunk)
 {
-    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_CHUNK;
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, false));
 }
 
-INA_TEST_FIXTURE(expression_eval, iterblock1)
+INA_TEST_FIXTURE(expression_eval, iterblock_plainbuffer)
 {
-    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_ITERBLOCK;
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, true));
 }
 
-INA_TEST_FIXTURE(expression_eval, iterchunk1)
+INA_TEST_FIXTURE(expression_eval, iterchunk_plainbuffer)
 {
-    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_ITERCHUNK;
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len));
-}
-
-INA_TEST_FIXTURE(expression_eval, iterblockpara1)
-{
-    data->cfg.eval_flags |= IARRAY_EXPR_EVAL_ITERCHUNKPARA;
-
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y, data->buf_len, true));
 }

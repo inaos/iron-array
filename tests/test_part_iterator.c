@@ -141,10 +141,7 @@ INA_TEST_SETUP(part_iterator) {
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
-    cfg.eval_flags = IARRAY_EXPR_EVAL_CHUNK;
-
-    iarray_context_new(&cfg, &data->ctx);
+    INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
 }
 
 INA_TEST_TEARDOWN(part_iterator) {
@@ -174,7 +171,7 @@ INA_TEST_FIXTURE(part_iterator, 3_f) {
     int8_t ndim = 3;
     int64_t shape[] = {120, 131, 155};
     int64_t pshape[] = {23, 32, 35};
-    int64_t *blockshape = NULL;
+    int64_t *blockshape = pshape;
 
     INA_TEST_ASSERT_SUCCEED(test_part_iterator(data->ctx, dtype, type_size, ndim, shape, pshape,
                                                blockshape));
@@ -188,7 +185,7 @@ INA_TEST_FIXTURE(part_iterator, 4_d) {
     int8_t ndim = 4;
     int64_t shape[] = {30, 64, 50, 43};
     int64_t pshape[] = {11, 8, 12, 21};
-    int64_t *blockshape = NULL;
+    int64_t *blockshape = pshape;
 
     INA_TEST_ASSERT_SUCCEED(test_part_iterator(data->ctx, dtype, type_size, ndim, shape, pshape,
                                                blockshape));
@@ -227,7 +224,7 @@ INA_TEST_FIXTURE(part_iterator, 7_f) {
     int8_t ndim = 7;
     int64_t shape[] = {10, 8, 6, 7, 13, 9, 10};
     int64_t pshape[] = {2, 3, 1, 3, 2, 4, 5};
-    int64_t *blockshape = NULL;
+    int64_t *blockshape = pshape;
 
     INA_TEST_ASSERT_SUCCEED(test_part_iterator(data->ctx, dtype, type_size, ndim, shape, pshape,
                                                blockshape));
