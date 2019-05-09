@@ -22,34 +22,56 @@ int main()
 
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    
     int64_t shape[] = {2000, 2000};
     int64_t size = 2000 * 2000;
-    int64_t pshape[] = {0, 0};
-    int64_t *bshape = NULL;
+    
+    int64_t pshape_x[] = {0, 0};
+    int64_t pshape_y[] = {0, 0};
+    int64_t pshape_z[] = {0, 0};
+    
+    int64_t bshape_x[] = {2000, 2000};
+    int64_t bshape_y[] = {2000, 2000};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = 2;
     iarray_context_t *ctx;
     iarray_context_new(&cfg, &ctx);
 
-    iarray_dtshape_t dtshape;
-    dtshape.ndim = ndim;
-    dtshape.dtype = dtype;
+    iarray_dtshape_t dtshape_x;
+    dtshape_x.ndim = ndim;
+    dtshape_x.dtype = dtype;
     for (int i = 0; i < ndim; ++i) {
-        dtshape.shape[i] = shape[i];
-        dtshape.pshape[i] = pshape[i];
+        dtshape_x.shape[i] = shape[i];
+        dtshape_x.pshape[i] = pshape_x[i];
     }
     iarray_container_t *c_x;
-    iarray_linspace(ctx, &dtshape, size, 0, 1, NULL, 0, &c_x);
+    iarray_linspace(ctx, &dtshape_x, size, 0, 1, NULL, 0, &c_x);
 
+    iarray_dtshape_t dtshape_y;
+    dtshape_y.ndim = ndim;
+    dtshape_y.dtype = dtype;
+    for (int i = 0; i < ndim; ++i) {
+        dtshape_y.shape[i] = shape[i];
+        dtshape_y.pshape[i] = pshape_y[i];
+    }
+    
     iarray_container_t *c_y;
-    iarray_linspace(ctx, &dtshape, size, 0, 1, NULL, 0, &c_y);
+    iarray_linspace(ctx, &dtshape_y, size, 0, 1, NULL, 0, &c_y);
 
+    iarray_dtshape_t dtshape_z;
+    dtshape_z.ndim = ndim;
+    dtshape_z.dtype = dtype;
+    for (int i = 0; i < ndim; ++i) {
+        dtshape_z.shape[i] = shape[i];
+        dtshape_z.pshape[i] = pshape_z[i];
+    }
+    
     iarray_container_t *c_z;
-    iarray_container_new(ctx, &dtshape, NULL, 0, &c_z);
+    iarray_container_new(ctx, &dtshape_z, NULL, 0, &c_z);
 
     INA_STOPWATCH_START(w);
-    iarray_linalg_matmul(ctx, c_x, c_y ,c_z, bshape, bshape, IARRAY_OPERATOR_GENERAL);
+    INA_MUST_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y ,c_z, bshape_x, bshape_y, IARRAY_OPERATOR_GENERAL));
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
@@ -74,7 +96,8 @@ int main()
     printf("Time mkl (C): %.4f\n", elapsed_sec);
 
     for (int i = 0; i < size; ++i) {
-        if (b_res[i] != b_z[i]) {
+        if (fabs((b_res[i] - b_z[i]) / b_res[i]) > 1e-8) {
+            printf("%f - %f = %f\n", b_res[i], b_z[i], b_res[i] - b_z[i]);
             printf("Error in element %d\n", i);
             return INA_ERROR(INA_ERR_ERROR);
         }
