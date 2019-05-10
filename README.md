@@ -18,7 +18,7 @@ We use inac cmake build-system.
 #### Windows
 
 * INAC build setup
-    * Make sure that you have a configured repository.txt file in ~\.inaos
+    * Make sure that you have a configured repository.txt file in ~\.inaos\cmake
     * Also you'll need a directory under ~\INAOS (can be empty)
 
 * Create a build folder
@@ -34,7 +34,7 @@ We use inac cmake build-system.
 #### Mac
 
 * INAC build setup
-    * Make sure that you have a configured repository.txt file in ~/.inaos
+    * Make sure that you have a configured repository.txt file in ~/.inaos/cmake
     * Also you'll need a directory under ~/INAOS (can be empty)
 
 * Create a build folder
