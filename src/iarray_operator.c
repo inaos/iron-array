@@ -23,19 +23,25 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     bool a_contiguous = (a->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
     if (a_contiguous) {
-        for (int i = 1; i < a->dtshape->ndim; ++i) {
-            if (bshape_a[i] != a->dtshape->shape[i]) {
+        if (!a->transposed) {
+            if (bshape_a[0] != a->dtshape->shape[0]) {
                 a_contiguous = false;
-                break;
+            }
+        } else {
+            if (bshape_a[1] != a->dtshape->shape[1]) {
+                a_contiguous = false;
             }
         }
     }
     bool b_contiguous = (b->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
     if (b_contiguous) {
-        for (int i = 1; i < b->dtshape->ndim; ++i) {
-            if (bshape_b[i] != b->dtshape->shape[i]) {
+        if (!b->transposed) {
+            if (bshape_b[0] != b->dtshape->shape[0]) {
                 b_contiguous = false;
-                break;
+            }
+        } else {
+            if (bshape_b[1] != b->dtshape->shape[1]) {
+                b_contiguous = false;
             }
         }
     }
@@ -203,23 +209,17 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     bool a_contiguous = (a->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
     if (a_contiguous) {
-        for (int i = 1; i < a->dtshape->ndim; ++i) {
-            if (bshape_a[i] != a->dtshape->shape[i]) {
+        if (!a->transposed) {
+            if (bshape_a[0] != a->dtshape->shape[0]) {
                 a_contiguous = false;
-                break;
+            }
+        } else {
+            if (bshape_a[1] != a->dtshape->shape[1]) {
+                a_contiguous = false;
             }
         }
     }
-
     bool b_contiguous = (b->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
-    if (b_contiguous) {
-        for (int i = 1; i < b->dtshape->ndim; ++i) {
-            if (bshape_b[i] != b->dtshape->shape[i]) {
-                b_contiguous = false;
-                break;
-            }
-        }
-    }
 
     // Define parameters needed in mkl multiplication
     int64_t B0 = bshape_a[0];
@@ -562,14 +562,6 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
 
     if (a->dtshape->shape[1] != b->dtshape->shape[0]) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
-    }
-
-    if (bshape_a != NULL && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        INA_ERROR(INA_ERR_INVALID_ARGUMENT);
-    }
-
-    if (bshape_b != NULL && b->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     if (bshape_a == NULL) {
