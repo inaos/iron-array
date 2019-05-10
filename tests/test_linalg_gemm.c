@@ -551,7 +551,6 @@ INA_TEST_FIXTURE(linalg_gemm, d_trans_notrans_plain_schunk) {
                                       yshape, ypshape, ybshape, ytrans, zshape, zpshape));
 }
 
-
 INA_TEST_FIXTURE(linalg_gemm, f_trans_trans_schunk_plain) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -560,13 +559,13 @@ INA_TEST_FIXTURE(linalg_gemm, f_trans_trans_schunk_plain) {
     int64_t xshape[] = {345, 388};
     int64_t xpshape[] = {123, 233};
 
-    int64_t xbshape[] = {200, 345};
+    int64_t xbshape[] = {200, 120};
     int xtrans = 1;
 
     int64_t yshape[] = {450, 345};
     int64_t ypshape[] = {0, 0};
 
-    int64_t *ybshape = NULL;
+    int64_t ybshape[] = {120, 450};
     int ytrans = 1;
 
     int64_t zshape[] = {388, 450};
