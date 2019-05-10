@@ -12,7 +12,6 @@
 
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
-#include <unistd.h>
 
 int main()
 {
