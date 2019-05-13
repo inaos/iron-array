@@ -346,7 +346,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             }
 
 #if defined(_OPENMP)
-#pragma omp barrier
+
 #pragma omp single
             {
 #endif
