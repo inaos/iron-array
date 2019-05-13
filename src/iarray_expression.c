@@ -301,7 +301,9 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 #endif
         while (has_next) {
             int nthread_ = 0;
-
+#if defined(_OPENMP)
+            nthread_ = omp_get_thread_num();
+#endif
             iarray_iter_write_block_next(iter_out);
             printf("Chunk %lld (thread %d)\n", out_value.nblock, nthread_);
             out_items = iter_out->cur_block_size;
