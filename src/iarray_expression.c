@@ -379,7 +379,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 #if defined(_OPENMP)
         }
         double t2 = omp_get_wtime();
-        printf("Time: %f\n", t2-t1);
+        printf("OMP Time: %f\n", t2-t1);
 
 #endif
 
