@@ -297,7 +297,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         int out_items;
 
 #if defined(_OPENMP)
-        double t1 = omp_get_wtime();
         #pragma omp parallel shared(has_next)
 {
 #endif
@@ -378,8 +377,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
 #if defined(_OPENMP)
         }
-        double t2 = omp_get_wtime();
-        printf("OMP Time: %f\n", t2-t1);
 
 #endif
 
