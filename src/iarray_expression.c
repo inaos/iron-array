@@ -300,13 +300,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 {
 #endif
         while (has_next) {
-            printf("Has_next %d\n", has_next);
             int nthread_ = 0;
-#if defined(_OPENMP)
-            #pragma omp single
-            nthread_ = omp_get_thread_num();
-            {
-#endif
+
             iarray_iter_write_block_next(iter_out);
             printf("Chunk %lld (thread %d)\n", out_value.nblock, nthread_);
             out_items = iter_out->cur_block_size;
@@ -361,9 +356,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             has_next = iarray_iter_write_block_has_next(iter_out);
             printf("has_next %d\n", has_next);
 
-#if defined(_OPENMP)
-            }
-#endif
         }
 #if defined(_OPENMP)
         }
