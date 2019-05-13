@@ -309,6 +309,9 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             {
 #endif
             iarray_iter_write_block_next(iter_out);
+#if defined(_OPENMP)
+            }
+#endif
             printf("Chunk %lld (thread %d)\n", out_value.nblock, nthread_);
             out_items = iter_out->cur_block_size;
             nblocks = out_items * e->typesize / blocksize;
@@ -321,9 +324,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 #if defined(_OPENMP)
 #endif
             // Eval the expression for this chunk, split by blocks
-#if defined(_OPENMP)
-            }
-#endif
+
             int nthread__ = 0;
             for (int nblock = 0; nblock < nblocks; nblock++) {
 #if defined(_OPENMP)
