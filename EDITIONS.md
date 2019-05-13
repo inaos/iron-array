@@ -15,10 +15,10 @@
 | Feature                                  | Community     | Commercial    |
 | ---------------------------------------- | ------------- | ------------- |
 | Compressed multi-dimensional containers  | Yes           | Yes           |  
-| Efficient expression evaluation          | Yes           | Yes           |
+| Efficient expression evaluation (LLVM)   | Yes           | Yes           |
 | Support for Intel VML                    | Yes           | Yes           |
-| Persistence                              | **No**        | Yes           |
+| Persistence                              | Yes           | Yes           |
 | Random distributions                     | **No**        | Yes           |
 | Linear algebra                           | **No**        | Yes           |
-| Parallel execution                       | **No**        | Yes           |
+| Parallel execution (multi-core)          | **No**        | Yes           |
 | Support                                  | **No**        | Yes           |
