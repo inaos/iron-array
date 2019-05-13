@@ -293,6 +293,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         // Evaluate the expression for all the chunks in variables
         int8_t *outbuf = ina_mem_alloc((size_t)chunksize);
         bool has_next = iarray_iter_write_block_has_next(iter_out);
+        int nblocks;
+        int out_items;
 #if defined(_OPENMP)
 #pragma omp parallel
 {
@@ -303,8 +305,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             {
 #endif
             iarray_iter_write_block_next(iter_out);
-            int out_items = iter_out->cur_block_size;
-            int nblocks = out_items * e->typesize / blocksize;
+            out_items = iter_out->cur_block_size;
+            nblocks = out_items * e->typesize / blocksize;
 
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
