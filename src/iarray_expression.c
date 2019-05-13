@@ -300,7 +300,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 {
 #endif
         while (has_next) {
-            printf("has_next %d\n", has_next);
             int nthread_ = 0;
 #if defined(_OPENMP)
             #pragma omp single
@@ -359,6 +358,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             nitems_written += out_items;
             ina_mempool_reset(e->ctx->mp_tmp_out);
             has_next = iarray_iter_write_block_has_next(iter_out);
+            printf("has_next %d\n", has_next);
+
 #if defined(_OPENMP)
             }
 #endif
