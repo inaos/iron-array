@@ -292,18 +292,22 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
         // Evaluate the expression for all the chunks in variables
         int8_t *outbuf = ina_mem_alloc((size_t)chunksize);
+        bool has_next = iarray_iter_write_block_has_next(iter_out);
         int nblocks;
         int out_items;
 #if defined(_OPENMP)
 #pragma omp parallel
 {
 #endif
-        while (iarray_iter_write_block_has_next(iter_out)) {
+        while (has_next) {
+            int nthread_ = 0;
 #if defined(_OPENMP)
             #pragma omp single nowait
+            nthread_ = omp_get_thread_num();
             {
 #endif
             iarray_iter_write_block_next(iter_out);
+            printf("Chunk %lld (thread %d)\n", out_value.nblock, nthread_);
             out_items = iter_out->cur_block_size;
             nblocks = out_items * e->typesize / blocksize;
 
@@ -315,10 +319,13 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             }
 #endif
             // Eval the expression for this chunk, split by blocks
+            int nthread__ = 0;
 #if defined(_OPENMP)
 #pragma omp for nowait // schedule(dynamic)
+            nthread__ = omp_get_thread_num();
 #endif
             for (int nblock = 0; nblock < nblocks; nblock++) {
+                printf("- Block %d (thread %d)\n", nblock, nthread__);
                 for (int nvar = 0; nvar < nvars; nvar++) {
                     int nthread = 0;
 #if defined(_OPENMP)
@@ -351,6 +358,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             // Write the resulting chunk in output
             nitems_written += out_items;
             ina_mempool_reset(e->ctx->mp_tmp_out);
+            has_next = iarray_iter_write_block_has_next(iter_out);
 #if defined(_OPENMP)
             }
 #endif
