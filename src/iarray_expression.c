@@ -323,13 +323,13 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
             // Eval the expression for this chunk, split by blocks
 #if defined(_OPENMP)
-
+            }
 #endif
 
             int nthread = 0;
 
 #if defined(_OPENMP)
-//#pragma omp for nowait schedule(dynamic, 1)
+#pragma omp for nowait schedule(dynamic)
 #endif
             for (int nblock = 0; nblock < nblocks; nblock++) {
 #if defined(_OPENMP)
@@ -347,7 +347,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             }
 
 #if defined(_OPENMP)
-
+#pragma omp single
+{
 #endif
             // Do a possible last evaluation with the leftovers
             int leftover = out_items * e->typesize - nblocks * blocksize;
