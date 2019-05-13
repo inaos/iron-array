@@ -307,6 +307,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             out_items = iter_out->cur_block_size;
             nblocks = out_items * e->typesize / blocksize;
 
+            printf("Blocksize: %d\n", blocksize);
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
                 iarray_iter_read_block_next(iter_var[nvar]);
