@@ -302,8 +302,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         while (has_next) {
             int nthread_ = 0;
 #if defined(_OPENMP)
-#pragma omp simple
-            {
             nthread_ = omp_get_thread_num();
 #endif
             iarray_iter_write_block_next(iter_out);
@@ -361,7 +359,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             has_next = iarray_iter_write_block_has_next(iter_out);
             printf("has_next %d\n", has_next);
 #if defined(_OPENMP)
-            }
 #pragma omp barrier
 #endif
         }
