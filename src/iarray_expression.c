@@ -325,7 +325,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 #endif
             for (int nblock = 0; nblock < nblocks; nblock++) {
 #if defined(_OPENMP)
-nthread__ = omp_get_thread_num()
+nthread__ = omp_get_thread_num();
 #endif
                 printf("- Block %d (thread %d)\n", nblock, nthread__);
                 for (int nvar = 0; nvar < nvars; nvar++) {
