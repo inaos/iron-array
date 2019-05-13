@@ -329,7 +329,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             int nthread__ = 0;
 
 #if defined(_OPENMP)
-#pragma omp for
+#pragma omp for shared(dynamic, 1)
 #endif
             for (int nblock = 0; nblock < nblocks; nblock++) {
 #if defined(_OPENMP)
@@ -348,10 +348,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                 const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
                 memcpy((char *) out_value.pointer + nblock * blocksize, (uint8_t *) expr_out->data, blocksize);
             }
-
-#if defined(_OPENMP)
-//#pragma omp barrier
-#endif
 
 #if defined(_OPENMP)
 #pragma omp single
