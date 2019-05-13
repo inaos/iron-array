@@ -356,11 +356,12 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             // Write the resulting chunk in output
             nitems_written += out_items;
             ina_mempool_reset(e->ctx->mp_tmp_out);
-            has_next = iarray_iter_write_block_has_next(iter_out);
-            printf("has_next %d\n", has_next);
 #if defined(_OPENMP)
 #pragma omp barrier
 #endif
+            has_next = iarray_iter_write_block_has_next(iter_out);
+            printf("has_next %d\n", has_next);
+
         }
 #if defined(_OPENMP)
         }
