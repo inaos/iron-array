@@ -296,7 +296,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         int nblocks;
         int out_items;
 #if defined(_OPENMP)
-#pragma omp parallel shared(has_next)
+#pragma omp parallel // shared(has_next)
 {
 #endif
         while (has_next) {
@@ -361,12 +361,10 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
 #endif
 
-        printf("Finish while\n");
-
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_iter_read_block_free(iter_var[nvar]);
         }
-        printf("Finish free read iterators\n");
+
         iarray_iter_write_block_free(iter_out);
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);
@@ -383,7 +381,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         return INA_ERR_ERROR;
     }
 
-    printf("Finish eval\n");
     return INA_SUCCESS;
 }
 
