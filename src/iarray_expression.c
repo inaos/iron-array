@@ -292,14 +292,13 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
         // Evaluate the expression for all the chunks in variables
         int8_t *outbuf = ina_mem_alloc((size_t)chunksize);
-        bool has_next = iarray_iter_write_block_has_next(iter_out);
         int nblocks;
         int out_items;
 #if defined(_OPENMP)
 #pragma omp parallel
 {
 #endif
-        while (has_next) {
+        while (iarray_iter_write_block_has_next(iter_out)) {
 #if defined(_OPENMP)
             #pragma omp single nowait
             {
@@ -352,7 +351,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             // Write the resulting chunk in output
             nitems_written += out_items;
             ina_mempool_reset(e->ctx->mp_tmp_out);
-            has_next = iarray_iter_write_block_has_next(iter_out);
 #if defined(_OPENMP)
             }
 #endif
