@@ -304,9 +304,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 #if defined(_OPENMP)
             nthread_ = omp_get_thread_num();
 #endif
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
+
             iarray_iter_write_block_next(iter_out);
             printf("Chunk %lld (thread %d)\n", out_value.nblock, nthread_);
             out_items = iter_out->cur_block_size;
@@ -359,9 +357,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             // Write the resulting chunk in output
             nitems_written += out_items;
             ina_mempool_reset(e->ctx->mp_tmp_out);
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
+
             has_next = iarray_iter_write_block_has_next(iter_out);
             printf("has_next %d\n", has_next);
 #if defined(_OPENMP)
