@@ -321,10 +321,12 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             // Eval the expression for this chunk, split by blocks
             int nthread__ = 0;
 #if defined(_OPENMP)
-            nthread__ = omp_get_thread_num();
             #pragma omp for nowait // schedule(dynamic)
 #endif
             for (int nblock = 0; nblock < nblocks; nblock++) {
+#if defined(_OPENMP)
+nthread__ = omp_get_thread_num()
+#endif
                 printf("- Block %d (thread %d)\n", nblock, nthread__);
                 for (int nvar = 0; nvar < nvars; nvar++) {
                     int nthread = 0;
