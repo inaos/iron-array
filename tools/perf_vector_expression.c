@@ -13,8 +13,8 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-#define NCHUNKS  2
-#define NITEMS_CHUNK (1024)  // fits well in modern L3 caches
+#define NCHUNKS  10
+#define NITEMS_CHUNK (1024 * 1024)  // fits well in modern L3 caches
 #define NELEM (NCHUNKS * NITEMS_CHUNK)  // multiple of NITEMS_CHUNKS for now
 #define PART_SIZE NITEMS_CHUNK
 #define NTHREADS 2
