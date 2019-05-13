@@ -295,8 +295,10 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         bool has_next = iarray_iter_write_block_has_next(iter_out);
         int nblocks;
         int out_items;
+
 #if defined(_OPENMP)
-#pragma omp parallel shared(has_next)
+        double t1 = omp_get_wtime();
+        #pragma omp parallel shared(has_next)
 {
 #endif
         while (has_next) {
@@ -376,6 +378,9 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
 #if defined(_OPENMP)
         }
+        double t2 = omp_get_wtime();
+        printf("Time: %f\n", t2-t1);
+
 #endif
 
         for (int nvar = 0; nvar < nvars; nvar++) {
