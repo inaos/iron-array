@@ -299,15 +299,16 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 #pragma omp parallel
 {
 #endif
+#if defined(_OPENMP)
+        #pragma omp master
+        {
+#endif
         while (has_next) {
             int nthread_ = 0;
 #if defined(_OPENMP)
             nthread_ = omp_get_thread_num();
 #endif
-#if defined(_OPENMP)
-#pragma omp master
-            {
-#endif
+
             iarray_iter_write_block_next(iter_out);
             for (int nvar = 0; nvar < nvars; nvar++) {
                 iarray_iter_read_block_next(iter_var[nvar]);
@@ -370,10 +371,12 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             ina_mempool_reset(e->ctx->mp_tmp_out);
 
             has_next = iarray_iter_write_block_has_next(iter_out);
-#if defined(_OPENMP)
-            }
-#endif
+
         }
+#if defined(_OPENMP)
+        }
+#endif
+
 #if defined(_OPENMP)
         }
 #endif
