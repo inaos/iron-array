@@ -328,7 +328,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             int nthread = 0;
 
 #if defined(_OPENMP)
-#pragma omp for schedule(runtime)
+#pragma omp for nowait
 #endif
             for (int nblock = 0; nblock < nblocks; nblock++) {
 #if defined(_OPENMP)
@@ -346,7 +346,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             }
 
 #if defined(_OPENMP)
-//#pragma omp barrier
+#pragma omp barrier
 #pragma omp single
             {
 #endif
