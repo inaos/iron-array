@@ -387,6 +387,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         return INA_ERR_ERROR;
     }
 
+    printf("Finish eval\n");
     return INA_SUCCESS;
 }
 
