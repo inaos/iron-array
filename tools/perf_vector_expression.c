@@ -55,7 +55,7 @@ static double *y = NULL;
 int main(int argc, char** argv)
 {
     int64_t shape[] = {256, 256, 256};
-    int64_t pshape[] = {0, 0, 0};
+    int64_t pshape[] = {64, 64, 64};
     int8_t ndim = 3;
     ina_stopwatch_t *w;
     iarray_context_t *ctx = NULL;
@@ -304,6 +304,8 @@ int main(int argc, char** argv)
     iarray_expr_new(ctx, &e);
     iarray_expr_bind(e, "x", con_x);
     iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
+
+
 
     iarray_container_t *con_out;
     INA_MUST_SUCCEED(iarray_container_new(ctx, &dtshape, &mat_out, flags, &con_out));
