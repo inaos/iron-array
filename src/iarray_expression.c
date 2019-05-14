@@ -70,7 +70,7 @@ INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
 INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val)
 {
     if (val->dtshape->ndim > 2) {
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        //return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
     e->vars[e->nvars].var = strdup(var);   // yes, we want a copy here!
     e->vars[e->nvars].c = val;
@@ -212,7 +212,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
     caterva_dims_t shape = caterva_new_dims(e->vars[0].c->dtshape->shape, e->vars[0].c->dtshape->ndim);
     caterva_update_shape(ret->catarr, &shape);
     ret->catarr->size = 1;  // TODO: fix this workaround (see caterva_update_shape() call above)
-    int64_t out_pshape = e->chunksize / e->typesize;
+    int64_t *out_pshape = e->vars[0].c->dtshape->pshape;
 
     if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNK) {
 
@@ -224,13 +224,13 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, &out_pshape, &iter_value[nvar]);
+            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar]);
         }
 
         // Write iterator for output
         iarray_iter_write_block_t *iter_out;
         iarray_iter_write_block_value_t out_value;
-        ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, &out_pshape, &out_value);
+        ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value);
         if (err != INA_SUCCESS) {
             return err;
         }
@@ -279,13 +279,13 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, &out_pshape, &iter_value[nvar]);
+            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar]);
         }
 
         // Write iterator for output
         iarray_iter_write_block_t *iter_out;
         iarray_iter_write_block_value_t out_value;
-        ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, &out_pshape, &out_value);
+        ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value);
         if (err != INA_SUCCESS) {
             return err;
         }
