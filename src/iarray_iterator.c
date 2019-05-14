@@ -240,13 +240,16 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     // Check if the blocks are contiguous in memory
     (*itr)->contiguous = (cont->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
     if ((*itr)->contiguous) {
+        bool before_is_one = true;
         for (int i = 1; i < cont->dtshape->ndim; ++i) {
-            if (blockshape[i] != cont->dtshape->shape[i]) {
+            if (blockshape[i] != cont->dtshape->shape[i] && !before_is_one) {
                 (*itr)->contiguous = false;
                 break;
             }
+            before_is_one = (blockshape[i] == 1)? true: false;
         }
     }
+
     if (!(*itr)->contiguous) {
         (*itr)->part = ina_mem_alloc((size_t) block_size);
     }
@@ -296,7 +299,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
 
 INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr)
 {
-    if (!itr->contiguous | (itr->cont->view == true)) {
+    if (!itr->contiguous || (itr->cont->view == true)) {
         ina_mem_free(itr->part);
     }
 
