@@ -339,6 +339,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                 e->max_out_len = leftover / e->typesize;  // so as to prevent operating beyond the leftover
                 const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
                 e->max_out_len = 0;
+
                 memcpy((char*)out_value.pointer + nblocks * blocksize, (uint8_t*)expr_out->data, leftover);
             }
 
