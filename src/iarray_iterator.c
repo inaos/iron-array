@@ -599,6 +599,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         (*itr)->block_shape_size *= (*itr)->block_shape[i];
     }
 
+
     (*itr)->contiguous = (cont->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
     if ((*itr)->contiguous) {
         bool before_is_one = true;
@@ -660,7 +661,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
 INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t *itr)
 {
-    if (!itr->contiguous | (itr->cont->view == true)) {
+    if (!itr->contiguous || (itr->cont->view == true)) {
         ina_mem_free(itr->part);
     }
     ina_mem_free(itr->block_shape);
