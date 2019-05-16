@@ -54,9 +54,9 @@ static double *y = NULL;
 
 int main(int argc, char** argv)
 {
-    int64_t shape[] = {256, 256, 256};
-    int64_t pshape[] = {0, 0, 0};
-    int8_t ndim = 3;
+    int64_t shape[] = {256*256*256};
+    int64_t pshape[] = {64*64*64};
+    int8_t ndim = 1;
     ina_stopwatch_t *w;
     iarray_context_t *ctx = NULL;
     const char *mat_x_name = NULL;
