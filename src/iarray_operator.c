@@ -531,6 +531,8 @@ INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_containe
  *
  *  In addition, in order to perform the multiplication correctly bshape_a[1] = bshape_b[0].
  *
+ *  It is also supported the multiplication between containers with different structures
+ *
  *  This function returns an error code ina_rc_t.
  */
 
