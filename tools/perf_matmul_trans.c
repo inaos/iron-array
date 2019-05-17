@@ -54,13 +54,15 @@ int main(int argc, char** argv)
     double nbytes_mb = 0;
     double cbytes_mb = 0;
 
-    int64_t xshape[] = {4200, 4000};
-    int64_t xpshape[] = {300, 300};
-    int64_t xbshape[] = {100, 200};
+    int64_t xshape[] = {3000, 2000};
+    int64_t xpshape[] = {1000, 1000};
 
-    int64_t yshape[] = {4400, 4000};
-    int64_t ypshape[] = {400, 300};
-    int64_t ybshape [] = {200, 300};
+    int64_t xbshape[] = {500, 500};
+
+    int64_t yshape[] = {2000, 3500};
+    int64_t ypshape[] = {1000, 1000};
+
+    int64_t ybshape[] = {500, 500};
 
     int64_t oshape[] = {xshape[0], yshape[1]};
     int64_t opshape[] = {xbshape[0], ybshape[1]};
@@ -69,6 +71,9 @@ int main(int argc, char** argv)
     if (argc > 1) {
         if (strcmp(argv[1], "trans") == 0) {
             xtrans = true;
+            int64_t aux = xshape[0];
+            xshape[0] = xshape[1];
+            xshape[1] = aux;
             oshape[0] = xshape[1];
         }
     }
@@ -80,6 +85,9 @@ int main(int argc, char** argv)
     if (argc > 2) {
         if (strcmp(argv[2], "trans") == 0) {
             ytrans = true;
+            int64_t aux = yshape[0];
+            yshape[0] = yshape[1];
+            yshape[1] = aux;
             oshape[1] = yshape[0];
         }
     }
@@ -136,7 +144,7 @@ int main(int argc, char** argv)
 
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_codec = IARRAY_COMPRESSION_LZ4;
-    config.compression_level = 5;
+    config.compression_level = 0;
     config.max_num_threads = NTHREADS;
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
@@ -243,7 +251,7 @@ int main(int argc, char** argv)
     iarray_container_new(ctx, &outdtshape, &mat_out_prop, 0, &con_out);
 
     INA_STOPWATCH_START(w);
-    iarray_linalg_matmul(ctx, con_x, con_y, con_out, xbshape, ybshape, IARRAY_OPERATOR_GENERAL); /* FIXME: error handling */
+    INA_MUST_SUCCEED(iarray_linalg_matmul(ctx, con_x, con_y, con_out, xbshape, ybshape, IARRAY_OPERATOR_GENERAL)); /* FIXME: error handling */
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     printf("\n");
