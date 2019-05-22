@@ -42,7 +42,12 @@ find_path(MKL_INCLUDE_DIR
 
 if(WIN32)
     set(MKL_SEARCH_LIB mkl_core.lib)
-    set(MKL_LIBS mkl_intel_lp64.lib mkl_core.lib mkl_sequential.lib)
+    if(MKL_MULTITHREADING)
+        message("MKL Multithreading mode")
+        set(MKL_LIBS libmkl_intel_lp64.lib libmkl_core.lib libmkl_intel_thread.lib libomp.lib)
+    else()
+        message("MKL Sequential mode")
+        set(MKL_LIBS mkl_intel_lp64.lib mkl_core.lib mkl_sequential.lib)
 elseif(APPLE)
     set(MKL_SEARCH_LIB libmkl_core.a)
     if(MKL_MULTITHREADING)
@@ -54,7 +59,12 @@ elseif(APPLE)
     endif()
 else() # Linux
     set(MKL_SEARCH_LIB libmkl_core.a)
-    set(MKL_LIBS mkl_intel_lp64 mkl_sequential mkl_core)
+    if(MKL_MULTITHREADING)
+        message("MKL Multithreading mode")
+        set(MKL_LIBS libmkl_intel_lp64 libmkl_core libmkl_intel_thread libomp)
+    else()
+        message("MKL Sequential mode")
+        set(MKL_LIBS mkl_intel_lp64 mkl_sequential mkl_core)
 endif()
 
 
