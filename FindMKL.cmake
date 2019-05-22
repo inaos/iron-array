@@ -48,6 +48,7 @@ if(WIN32)
     else()
         message("MKL Sequential mode")
         set(MKL_LIBS mkl_intel_lp64.lib mkl_core.lib mkl_sequential.lib)
+    endif()
 elseif(APPLE)
     set(MKL_SEARCH_LIB libmkl_core.a)
     if(MKL_MULTITHREADING)
@@ -65,6 +66,7 @@ else() # Linux
     else()
         message("MKL Sequential mode")
         set(MKL_LIBS mkl_intel_lp64 mkl_sequential mkl_core)
+    endif()
 endif()
 
 
