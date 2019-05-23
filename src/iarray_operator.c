@@ -551,6 +551,7 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     INA_ASSERT_NOT_NULL(c);
 
     if (mkl_get_max_threads() != ctx->cfg->max_num_threads) {
+        printf("Context max threads: %d\n", ctx->cfg->max_num_threads);
         mkl_set_num_threads(ctx->cfg->max_num_threads);
     }
 
