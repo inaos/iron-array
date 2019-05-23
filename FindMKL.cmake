@@ -59,7 +59,7 @@ elseif(APPLE)
         set(MKL_LIBS libmkl_intel_lp64.a libmkl_core.a libmkl_sequential.a)
     endif()
 else() # Linux
-    set(MKL_SEARCH_LIB libmkl_core.a)
+    set(MKL_SEARCH_LIB mkl_core)
     if(MKL_MULTITHREADING)
         message("MKL Multithreading mode")
         set(MKL_LIBS mkl_intel_lp64 mkl_core mkl_intel_thread omp)
