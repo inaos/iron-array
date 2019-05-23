@@ -62,7 +62,7 @@ else() # Linux
     set(MKL_SEARCH_LIB mkl_core)
     if(MKL_MULTITHREADING)
         message("MKL Multithreading mode")
-        set(MKL_LIBS mkl_intel_lp64 mkl_core mkl_intel_thread pthreads omp)
+        set(MKL_LIBS mkl_intel_lp64 mkl_core mkl_intel_thread pthread omp)
     else()
         message("MKL Sequential mode")
         set(MKL_LIBS mkl_intel_lp64 mkl_sequential mkl_core)
