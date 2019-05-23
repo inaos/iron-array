@@ -13,12 +13,13 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-int main()
+int main(int argc, char **argv)
 {
     ina_stopwatch_t *w = NULL;
     double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
 
+    int n_threads = atoi(argv[1]);
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     
@@ -33,7 +34,7 @@ int main()
     int64_t bshape_y[] = {2000, 2000};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    cfg.max_num_threads = 2;
+    cfg.max_num_threads = n_threads;
     iarray_context_t *ctx;
     iarray_context_new(&cfg, &ctx);
 
@@ -84,7 +85,7 @@ int main()
     iarray_to_buffer(ctx, c_x, b_x, size * sizeof(double));
     iarray_to_buffer(ctx, c_y, b_y, size * sizeof(double));
     iarray_to_buffer(ctx, c_z, b_res, size * sizeof(double));
-
+    mkl_set_num_threads(n_threads);
     INA_STOPWATCH_START(w);
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) shape[0], (int) shape[1], (int) shape[1],
                 1.0, b_x, (int) shape[1], b_y, (int) shape[1], 0.0, b_z, (int) shape[1]);
