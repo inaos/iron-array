@@ -18,7 +18,9 @@ int main(int argc, char **argv)
     ina_stopwatch_t *w = NULL;
     double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
-
+    if (argc != 2) {
+        return -1;
+    }
     int n_threads = atoi(argv[1]);
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
