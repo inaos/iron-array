@@ -71,6 +71,7 @@ int main(int argc, char **argv)
     
     iarray_container_t *c_z;
     iarray_container_new(ctx, &dtshape_z, NULL, 0, &c_z);
+    mkl_set_num_threads(n_threads);
 
     INA_STOPWATCH_START(w);
     INA_MUST_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y ,c_z, bshape_x, bshape_y, IARRAY_OPERATOR_GENERAL));
@@ -88,7 +89,6 @@ int main(int argc, char **argv)
     iarray_to_buffer(ctx, c_y, b_y, size * sizeof(double));
     iarray_to_buffer(ctx, c_z, b_res, size * sizeof(double));
 
-    mkl_set_num_threads(n_threads);
 
     INA_STOPWATCH_START(w);
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) shape[0], (int) shape[1], (int) shape[1],
