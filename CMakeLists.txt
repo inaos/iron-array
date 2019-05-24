@@ -47,6 +47,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DI
 find_package(MKL)
 #configure Intel IPP
 find_package(IPP)
+#configure OMP
+find_package(OMP)
+
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${IPP_LIBRARIES})
 
 set(SRC ${CMAKE_SOURCE_DIR}/src)
