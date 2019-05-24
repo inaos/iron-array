@@ -20,45 +20,48 @@
 # 2. We only use 64bit
 #
 
-find_path(OMP_ROOT_DIR
-    lib/libiomp5.a
-    PATHS
-        $ENV{OMPROOT}
-        /opt/intel/compilers_and_libraries/linux
-        /opt/intel/compilers_and_libraries/mac
-        "C:/IntelSWTools/compilers_and_libraries/windows"
-        "C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows"
-        $ENV{HOME}/miniconda3
-        $ENV{USERPROFILE}/miniconda3/Library
-        "C:/Miniconda37-x64/Library" # Making AppVeyor happy
-        $ENV{CONDA}/Library # Azure pipeline hosted windows agent
-)
+if (MKL_MULTITHREADING)
+    find_path(OMP_ROOT_DIR
+        lib/libiomp5.a
+        PATHS
+            $ENV{OMPROOT}
+            /opt/intel/compilers_and_libraries/linux
+            /opt/intel/compilers_and_libraries/mac
+            "C:/IntelSWTools/compilers_and_libraries/windows"
+            "C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows"
+            $ENV{HOME}/miniconda3
+            $ENV{USERPROFILE}/miniconda3/Library
+            "C:/Miniconda37-x64/Library" # Making AppVeyor happy
+            $ENV{CONDA}/Library # Azure pipeline hosted windows agent
+    )
 
 
-if(APPLE)
-    set(OMP_SEARCH_LIB libiomp5.a)
-    set(OMP_LIBS libiomp5.a)
-else() # Linux
-    set(OMP_SEARCH_LIB libiomp5.a)
-    set(OMP_LIBS libiomp5.a)
-endif()
-
-
-find_path(OMP_LIB_SEARCHPATH
-    ${OMP_SEARCH_LIB}
-    PATHS
-        ${OMP_ROOT_DIR}/lib
-)
-
-foreach (LIB ${OMP_LIBS})
-    find_library(${LIB}_PATH ${LIB} PATHS ${OMP_LIB_SEARCHPATH})
-    if(${LIB}_PATH)
-        set(OMP_LIBRARIES ${OMP_LIBRARIES} ${${LIB}_PATH})
-        message(STATUS "Found OMP ${LIB} in: ${${LIB}_PATH}")
-    else()
-        message(STATUS "Could not find ${LIB}: disabling OMP")
+    if(APPLE)
+        set(OMP_SEARCH_LIB libiomp5.a)
+        set(OMP_LIBS libiomp5.a)
+    else() # Linux
+        set(OMP_SEARCH_LIB libiomp5.a)
+        set(OMP_LIBS libiomp5.a)
     endif()
-endforeach()
 
 
-set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${OMP_LIBRARIES})
+    find_path(OMP_LIB_SEARCHPATH
+        ${OMP_SEARCH_LIB}
+        PATHS
+            ${MKL_ROOT_DIR}/lib/intel64
+            ${OMP_ROOT_DIR}/lib
+    )
+
+    foreach (LIB ${OMP_LIBS})
+        find_library(${LIB}_PATH ${LIB} PATHS ${OMP_LIB_SEARCHPATH})
+        if(${LIB}_PATH)
+            set(OMP_LIBRARIES ${OMP_LIBRARIES} ${${LIB}_PATH})
+            message(STATUS "Found OMP ${LIB} in: ${${LIB}_PATH}")
+        else()
+            message(STATUS "Could not find ${LIB}: disabling OMP")
+        endif()
+    endforeach()
+
+
+    set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${OMP_LIBRARIES})
+endif()
