@@ -48,7 +48,7 @@ if (MKL_MULTITHREADING)
     find_path(OMP_LIB_SEARCHPATH
         ${OMP_SEARCH_LIB}
         PATHS
-            ${MKL_ROOT_DIR}/lib/intel64
+            ${OMP_ROOT_DIR}/lib/intel64
             ${OMP_ROOT_DIR}/lib
     )
 
