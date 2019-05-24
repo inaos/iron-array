@@ -168,11 +168,11 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
                 INA_STOPWATCH_NEW(-1, -1, &w);
                 INA_STOPWATCH_START(w);
-                cblas_dgemm(CblasRowMajor, flag_a, flag_b, (const int)B0, (const int)B2, (const int)B1,
+                cblas_dgemm(CblasRowMajor, flag_a, flag_b, (int) B0, (int) B2, (int) B1,
                             1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 1.0, (double *)c_block, ld_c);
                 INA_STOPWATCH_STOP(w);
                 INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
-                printf("Time iarray mult: %.4f\n", elapsed_sec);
+                printf("Time iarray dgemm: %.4f\n", elapsed_sec);
                 INA_STOPWATCH_FREE(&w);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
