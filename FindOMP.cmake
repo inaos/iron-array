@@ -22,7 +22,7 @@
 
 if (MKL_MULTITHREADING)
     find_path(OMP_ROOT_DIR
-        lib/libiomp5.a
+        lib/intel64/libiomp5.a
         PATHS
             $ENV{OMPROOT}
             /opt/intel/compilers_and_libraries/linux
@@ -41,9 +41,10 @@ if (MKL_MULTITHREADING)
         set(OMP_LIBS libiomp5.a)
     else() # Linux
         set(OMP_SEARCH_LIB libiomp5.a)
-        set(OMP_LIBS libiomp5.a)
+        set(OMP_LIBS libiomp5.so)
     endif()
 
+    message("OMP ROOT DIR: " ${OMP_ROOT_DIR})
 
     find_path(OMP_LIB_SEARCHPATH
         ${OMP_SEARCH_LIB}
@@ -52,6 +53,8 @@ if (MKL_MULTITHREADING)
             ${OMP_ROOT_DIR}/lib
     )
 
+    
+    message("OMP SEARCH PATH: " ${OMP_LIB_SEARCHPATH})
     foreach (LIB ${OMP_LIBS})
         find_library(${LIB}_PATH ${LIB} PATHS ${OMP_LIB_SEARCHPATH})
         if(${LIB}_PATH)
