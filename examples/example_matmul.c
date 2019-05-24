@@ -87,7 +87,9 @@ int main(int argc, char **argv)
     iarray_to_buffer(ctx, c_x, b_x, size * sizeof(double));
     iarray_to_buffer(ctx, c_y, b_y, size * sizeof(double));
     iarray_to_buffer(ctx, c_z, b_res, size * sizeof(double));
+
     mkl_set_num_threads(n_threads);
+
     INA_STOPWATCH_START(w);
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) shape[0], (int) shape[1], (int) shape[1],
                 1.0, b_x, (int) shape[1], b_y, (int) shape[1], 0.0, b_z, (int) shape[1]);

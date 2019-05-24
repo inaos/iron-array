@@ -159,7 +159,8 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
 
         // Make blocks multiplication
-        mkl_set_num_threads(ctx->cfg->max_num_threads);
+        // mkl_set_num_threads(ctx->cfg->max_num_threads);
+        printf("Num. threads: %d\n", mkl_get_max_threads());
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 cblas_dgemm(CblasRowMajor, flag_a, flag_b, (const int)B0, (const int)B2, (const int)B1,
@@ -333,7 +334,8 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
 
         // Make blocks multiplication
-        mkl_set_num_threads(ctx->cfg->max_num_threads);
+        // mkl_set_num_threads(ctx->cfg->max_num_threads);
+        printf("Num. threads: %d\n", mkl_get_max_threads());
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 cblas_dgemv(CblasRowMajor, flag_a, M, K, 1.0, (double *) a_block, ld_a, (double *) b_block, 1, 1.0, (double *) c_block, 1);
