@@ -73,12 +73,6 @@ int main(int argc, char **argv)
     iarray_container_new(ctx, &dtshape_z, NULL, 0, &c_z);
     mkl_set_num_threads(n_threads);
 
-    INA_STOPWATCH_START(w);
-    INA_MUST_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y ,c_z, bshape_x, bshape_y, IARRAY_OPERATOR_GENERAL));
-    INA_STOPWATCH_STOP(w);
-    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
-
-    printf("Time iarray: %.4f\n", elapsed_sec);
 
     double *b_x = (double *) malloc(size * sizeof(double));
     double *b_y = (double *) malloc(size * sizeof(double));
@@ -87,7 +81,6 @@ int main(int argc, char **argv)
 
     iarray_to_buffer(ctx, c_x, b_x, size * sizeof(double));
     iarray_to_buffer(ctx, c_y, b_y, size * sizeof(double));
-    iarray_to_buffer(ctx, c_z, b_res, size * sizeof(double));
 
 
     INA_STOPWATCH_START(w);
@@ -98,6 +91,15 @@ int main(int argc, char **argv)
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
     printf("Time mkl (C): %.4f\n", elapsed_sec);
+
+    INA_STOPWATCH_START(w);
+    INA_MUST_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y ,c_z, bshape_x, bshape_y, IARRAY_OPERATOR_GENERAL));
+    INA_STOPWATCH_STOP(w);
+    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+
+    printf("Time iarray: %.4f\n", elapsed_sec);
+
+    iarray_to_buffer(ctx, c_z, b_res, size * sizeof(double));
 
     for (int i = 0; i < size; ++i) {
         if (fabs((b_res[i] - b_z[i]) / b_res[i]) > 1e-8) {
