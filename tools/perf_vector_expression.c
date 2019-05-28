@@ -13,10 +13,7 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-#define NCHUNKS  10
-#define NITEMS_CHUNK (1024 * 1024)  // fits well in modern L3 caches
-#define NELEM (NCHUNKS * NITEMS_CHUNK)  // multiple of NITEMS_CHUNKS for now
-#define PART_SIZE NITEMS_CHUNK
+#define NELEM (256 * 256 * 256)  // multiple of NITEMS_CHUNKS for now
 #define NTHREADS 2
 #define XMAX 10.
 
@@ -57,6 +54,9 @@ static double *y = NULL;
 
 int main(int argc, char** argv)
 {
+    int64_t shape[] = {256*256*256};
+    int64_t pshape[] = {64*64*64};
+    int8_t ndim = 1;
     ina_stopwatch_t *w;
     iarray_context_t *ctx = NULL;
     const char *mat_x_name = NULL;
@@ -137,10 +137,12 @@ int main(int argc, char** argv)
     size_t buffer_len = sizeof(double) * NELEM;
 
     iarray_dtshape_t dtshape;
-    dtshape.ndim = 1;
+    dtshape.ndim = ndim;
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
-    dtshape.shape[0] = NELEM;
-    dtshape.pshape[0] = INA_SUCCEED(ina_opt_isset("P")) ? 0 : PART_SIZE;
+    for (int i = 0; i < ndim; ++i) {
+        dtshape.shape[i] = shape[i];
+        dtshape.pshape[i] = INA_SUCCEED(ina_opt_isset("P")) ? 0 : pshape[i];
+    }
 
     int64_t nbytes = 0;
     int64_t cbytes = 0;
@@ -302,6 +304,8 @@ int main(int argc, char** argv)
     iarray_expr_new(ctx, &e);
     iarray_expr_bind(e, "x", con_x);
     iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
+
+
 
     iarray_container_t *con_out;
     INA_MUST_SUCCEED(iarray_container_new(ctx, &dtshape, &mat_out, flags, &con_out));
