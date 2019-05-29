@@ -306,20 +306,20 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         int nblocks;
         int out_items;
 
-#if defined(_OPENMP)
-        #pragma omp parallel shared(has_next)
-
-{
-#endif
+//#if defined(_OPENMP)
+//        #pragma omp parallel shared(has_next)
+//	{
+//
+//#endif
         while (has_next) {
             int nthread_ = 0;
-#if defined(_OPENMP)
-            nthread_ = omp_get_thread_num();
-#endif
-#if defined(_OPENMP)
-#pragma omp single
-            {
-#endif
+//#if defined(_OPENMP)
+//            nthread_ = omp_get_thread_num();
+//#endif
+//#if defined(_OPENMP)
+//#pragma omp single
+//            {
+//#endif
             iarray_iter_write_block_next(iter_out);
             for (int nvar = 0; nvar < nvars; nvar++) {
                 iarray_iter_read_block_next(iter_var[nvar]);
@@ -331,21 +331,23 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             // Decompress chunks in variables into temporaries
 
             // Eval the expression for this chunk, split by blocks
-#if defined(_OPENMP)
-            }
-#endif
+//#if defined(_OPENMP)
+//	}
+//#endif
 
             int nthread = 0;
 
 #if defined(_OPENMP)
-#pragma omp for nowait schedule(dynamic)
-	    
+//printf("NUm threads: %d\n", omp_get_num_threads());
+omp_set_num_threads(e->ctx->cfg->max_num_threads);
+#pragma omp parallel for    
 #endif
             for (int nblock = 0; nblock < nblocks; nblock++) {
 #if defined(_OPENMP)
                 nthread = omp_get_thread_num();
 #endif
-                for (int nvar = 0; nvar < nvars; nvar++) {
+                //printf("Block %d (thread: %d)\n", nblock, nthread);
+		for (int nvar = 0; nvar < nvars; nvar++) {
 
                     int ntvar = nthread * e->nvars + nvar;
                     e->temp_vars[ntvar]->data = (char *) iter_value[nvar].pointer + nblock * blocksize;
@@ -355,10 +357,10 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                 memcpy((char *) out_value.pointer + nblock * blocksize, (uint8_t *) expr_out->data, blocksize);
             }
 
-#if defined(_OPENMP)
-#pragma omp single
-{
-#endif
+//#if defined(_OPENMP)
+//#pragma omp single
+//{
+//#endif
             // Do a possible last evaluation with the leftovers
             int leftover = out_items * e->typesize - nblocks * blocksize;
             if (leftover > 0) {
@@ -377,14 +379,13 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             ina_mempool_reset(e->ctx->mp_tmp_out);
 
             has_next = iarray_iter_write_block_has_next(iter_out);
-#if defined(_OPENMP)
-            }
-#endif
+//#if defined(_OPENMP)
+//          }
+//#endif
         }
-#if defined(_OPENMP)
-        }
-
-#endif
+//#if defined(_OPENMP)
+//        }
+//#endif
 
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_iter_read_block_free(iter_var[nvar]);
