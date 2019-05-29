@@ -36,7 +36,6 @@ static ina_rc_t test_zeros(iarray_context_t *ctx,
     uint8_t *buf_dest = malloc((size_t)buf_size * type_size);
 
     iarray_container_t *c_x;
-
     INA_TEST_ASSERT_SUCCEED(iarray_zeros(ctx, &xdtshape, NULL, 0, &c_x));
 
     iarray_to_buffer(ctx, c_x, buf_dest, (size_t)buf_size);
