@@ -399,3 +399,14 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
 
     return INA_SUCCESS;
 }
+
+INA_API(bool) iarray_is_empty(iarray_container_t *container) {
+    INA_VERIFY_NOT_NULL(container);
+
+    // TODO: Change this condition when an empty array would be of size 0
+    if (container->catarr->size == 1)
+    {
+        return true;
+    }
+    return false;
+}
