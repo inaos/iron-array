@@ -338,7 +338,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             int nthread = 0;
 
 #if defined(_OPENMP)
-//printf("NUm threads: %d\n", omp_get_num_threads());
 omp_set_num_threads(e->ctx->cfg->max_num_threads);
 #pragma omp parallel for    
 #endif

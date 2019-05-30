@@ -14,7 +14,7 @@
 #include <iarray_private.h>
 
 #define NELEM (256 * 256 * 256)  // multiple of NITEMS_CHUNKS for now
-#define NTHREADS 2
+#define NTHREADS 1
 #define XMAX 10.
 
 static double _poly(const double x)
