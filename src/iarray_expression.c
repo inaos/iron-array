@@ -302,55 +302,95 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
         // Evaluate the expression for all the chunks in variables
         int8_t *outbuf = ina_mem_alloc((size_t)chunksize);
-        while (iarray_iter_write_block_has_next(iter_out)) {
-            iarray_iter_write_block_next(iter_out);
-            int out_items = iter_out->cur_block_size;
-            int nblocks = out_items * e->typesize / blocksize;
+        bool has_next = iarray_iter_write_block_has_next(iter_out);
+        int nblocks;
+        int out_items;
 
-            // Decompress chunks in variables into temporaries
+//#if defined(_OPENMP)
+//        #pragma omp parallel shared(has_next)
+//	{
+//
+//#endif
+        while (has_next) {
+            int nthread_ = 0;
+//#if defined(_OPENMP)
+//            nthread_ = omp_get_thread_num();
+//#endif
+//#if defined(_OPENMP)
+//#pragma omp single
+//            {
+//#endif
+            iarray_iter_write_block_next(iter_out);
             for (int nvar = 0; nvar < nvars; nvar++) {
                 iarray_iter_read_block_next(iter_var[nvar]);
             }
 
+            out_items = iter_out->cur_block_size;
+            nblocks = out_items * e->typesize / blocksize;
+
+            // Decompress chunks in variables into temporaries
+
             // Eval the expression for this chunk, split by blocks
+//#if defined(_OPENMP)
+//	}
+//#endif
+
+            int nthread = 0;
+
 #if defined(_OPENMP)
-#pragma omp parallel for // schedule(dynamic)
+//printf("NUm threads: %d\n", omp_get_num_threads());
+omp_set_num_threads(e->ctx->cfg->max_num_threads);
+#pragma omp parallel for    
 #endif
-            for (int nblock = 0; nblock < nblocks ; nblock++) {
-                for (int nvar = 0; nvar < nvars; nvar++) {
-                    int nthread = 0;
+            for (int nblock = 0; nblock < nblocks; nblock++) {
 #if defined(_OPENMP)
-                    nthread = omp_get_thread_num();
+                nthread = omp_get_thread_num();
 #endif
+                //printf("Block %d (thread: %d)\n", nblock, nthread);
+		for (int nvar = 0; nvar < nvars; nvar++) {
+
                     int ntvar = nthread * e->nvars + nvar;
-                    e->temp_vars[ntvar]->data = (char*)iter_value[nvar].pointer + nblock * blocksize;
+                    e->temp_vars[ntvar]->data = (char *) iter_value[nvar].pointer + nblock * blocksize;
                 }
                 e->max_out_len = blocksize / e->typesize;  // so as to prevent operating beyond the limits
                 const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
-                memcpy((char*)out_value.pointer + nblock * blocksize, (uint8_t*)expr_out->data, blocksize);
+                memcpy((char *) out_value.pointer + nblock * blocksize, (uint8_t *) expr_out->data, blocksize);
             }
 
+//#if defined(_OPENMP)
+//#pragma omp single
+//{
+//#endif
             // Do a possible last evaluation with the leftovers
             int leftover = out_items * e->typesize - nblocks * blocksize;
             if (leftover > 0) {
                 for (int nvar = 0; nvar < nvars; nvar++) {
-                    e->temp_vars[nvar]->data = (char*)iter_value[nvar].pointer + nblocks * blocksize;
+                    e->temp_vars[nvar]->data = (char *) iter_value[nvar].pointer + nblocks * blocksize;
                 }
                 e->max_out_len = leftover / e->typesize;  // so as to prevent operating beyond the leftover
                 const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
                 e->max_out_len = 0;
+                memcpy((char *) out_value.pointer + nblocks * blocksize, (uint8_t *) expr_out->data, leftover);
 
-                memcpy((char*)out_value.pointer + nblocks * blocksize, (uint8_t*)expr_out->data, leftover);
             }
 
             // Write the resulting chunk in output
             nitems_written += out_items;
             ina_mempool_reset(e->ctx->mp_tmp_out);
+
+            has_next = iarray_iter_write_block_has_next(iter_out);
+//#if defined(_OPENMP)
+//          }
+//#endif
         }
+//#if defined(_OPENMP)
+//        }
+//#endif
 
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_iter_read_block_free(iter_var[nvar]);
         }
+
         iarray_iter_write_block_free(iter_out);
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);
