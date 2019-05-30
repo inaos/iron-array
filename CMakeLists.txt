@@ -48,7 +48,9 @@ find_package(MKL)
 #configure Intel IPP
 find_package(IPP)
 #configure OMP
-find_package(OMP)
+if (MKL_MULTITHREADING)
+    find_package(OMP)
+endif()
 
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${IPP_LIBRARIES})
 

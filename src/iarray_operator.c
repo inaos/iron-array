@@ -161,8 +161,8 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         double elapsed_sec = 0;
 
         // Make blocks multiplication
-        // mkl_set_num_threads(ctx->cfg->max_num_threads);
-        printf("Num. threads: %d\n", mkl_get_max_threads());
+        mkl_set_num_threads(ctx->cfg->max_num_threads);
+        //printf("Num. threads: %d\n", mkl_get_max_threads());
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
 
@@ -172,7 +172,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
                             1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 1.0, (double *)c_block, ld_c);
                 INA_STOPWATCH_STOP(w);
                 INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
-                printf("  Time iarray dgemm: %.4f\n", elapsed_sec);
+                //printf("  Time iarray dgemm: %.4f\n", elapsed_sec);
                 INA_STOPWATCH_FREE(&w);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
@@ -343,8 +343,8 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
 
         // Make blocks multiplication
-        // mkl_set_num_threads(ctx->cfg->max_num_threads);
-        printf("Num. threads: %d\n", mkl_get_max_threads());
+        mkl_set_num_threads(ctx->cfg->max_num_threads);
+        //printf("Num. threads: %d\n", mkl_get_max_threads());
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 cblas_dgemv(CblasRowMajor, flag_a, M, K, 1.0, (double *) a_block, ld_a, (double *) b_block, 1, 1.0, (double *) c_block, 1);
