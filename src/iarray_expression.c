@@ -76,7 +76,7 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
     return INA_SUCCESS;
 }
 
-//INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val)
+INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val)
 //{
 //  iarray_container_t *c = ina_mempool_dalloc(e->mp, sizeof(iarray_container_t));
 //  c->dtshape = ina_mempool_dalloc(e->mp, sizeof(iarray_dtshape_t));
@@ -86,8 +86,11 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
 //  c->scalar_value.f = val;
 //  return INA_SUCCESS;
 //}
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
 
-//INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val)
+INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val)
 //{
 //    iarray_container_t *c = ina_mempool_dalloc(e->ctx->mp, sizeof(iarray_container_t));
 //    c->dtshape = ina_mempool_dalloc(e->ctx->mp, sizeof(iarray_dtshape_t));
@@ -99,6 +102,9 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
 //    e->nvars++;
 //    return INA_SUCCESS;
 //}
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 {
