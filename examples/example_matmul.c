@@ -15,6 +15,7 @@
 
 int main(int argc, char **argv)
 {
+    iarray_init();
     ina_stopwatch_t *w = NULL;
     double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
@@ -119,6 +120,6 @@ int main(int argc, char **argv)
     iarray_context_free(&ctx);
 
     INA_STOPWATCH_FREE(&w);
-
+    iarray_destroy();
     return EXIT_SUCCESS;
 }

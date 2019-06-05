@@ -13,6 +13,8 @@
 #include <libiarray/iarray.h>
 
 #include <iarray_private.h>
+#include <sys/sysinfo.h>
+#include <sched.h>
 
 static int _ina_inited = 0;
 static int _blosc_inited = 0;
@@ -20,13 +22,22 @@ static int _blosc_inited = 0;
 INA_API(ina_rc_t) iarray_init()
 {
     if (!_ina_inited) {
-        ina_init();
+       ina_init();
         _ina_inited = 1;
     }
     if (!_blosc_inited) {
         blosc_init();
         _blosc_inited = 1;
     }
+ 
+    int nprocs = get_nprocs();
+
+    cpu_set_t  mask;
+    CPU_ZERO(&mask); 
+    for(int i = 0; i < nprocs; i++) {
+        CPU_SET(i, &mask);
+    }
+    sched_setaffinity(0, sizeof(mask), &mask);
     return INA_SUCCESS;
 }
 
