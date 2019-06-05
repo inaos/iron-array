@@ -800,3 +800,11 @@ INA_API(ina_rc_t) iarray_operator_expint1(iarray_context_t *ctx, iarray_containe
 {
     return _iarray_operator_elwise_a(ctx, a, result, vdExpInt1, vsExpInt1);
 }
+
+INA_API(ina_rc_t) iarray_operator_cumsum(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result)
+{
+    INA_UNUSED(ctx);
+    INA_UNUSED(a);
+    INA_UNUSED(result);
+    return INA_ERR_NOT_IMPLEMENTED;
+}
