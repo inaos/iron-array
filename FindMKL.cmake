@@ -67,7 +67,7 @@ else() # Linux
         set(MKL_LIBS libmkl_intel_lp64.so libmkl_core.so libmkl_intel_thread.so)
     else()
         message("MKL Sequential mode")
-        set(MKL_LIBS libmkl_intel_ilp64.a libmkl_sequential.so libmkl_core.so)
+        set(MKL_LIBS libmkl_intel_ilp64.a libmkl_core.so libmkl_sequential.so )
     endif()
 endif()
 
