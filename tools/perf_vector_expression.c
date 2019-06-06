@@ -13,8 +13,11 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-#define NELEM (256 * 256 * 256)  // multiple of NITEMS_CHUNKS for now
-#define NTHREADS 2
+//#define NELEM (256 * 256 * 256)  // multiple of NITEMS_CHUNK for now
+//#define NITEMS_CHUNK (64 * 64 * 64)
+#define NELEM (256)  // multiple of NITEMS_CHUNK for now
+#define NITEMS_CHUNK (64)
+#define NTHREADS 1
 #define XMAX 10.
 
 static double _poly(const double x)
@@ -28,7 +31,7 @@ static int _fill_x(double* x)
     double incx = XMAX / NELEM;
 
     /* Fill even values between 0 and 10 */
-    for (int i = 0; i<NELEM; i++) {
+    for (int i = 0; i < NELEM; i++) {
         x[i] = incx * i;
     }
     return 0;
@@ -37,7 +40,7 @@ static int _fill_x(double* x)
 // Compute and fill Y values in regular array
 static void _compute_y(const double* x, double* y)
 {
-    for (int i = 0; i<NELEM; i++) {
+    for (int i = 0; i < NELEM; i++) {
         y[i] = _poly(x[i]);
     }
 }
@@ -54,8 +57,8 @@ static double *y = NULL;
 
 int main(int argc, char** argv)
 {
-    int64_t shape[] = {256*256*256};
-    int64_t pshape[] = {64*64*64};
+    int64_t shape[] = {NELEM};
+    int64_t pshape[] = {NITEMS_CHUNK};
     int8_t ndim = 1;
     ina_stopwatch_t *w;
     iarray_context_t *ctx = NULL;
@@ -65,7 +68,7 @@ int main(int argc, char** argv)
     const char *eval_method = NULL;
 
     INA_OPTS(opt,
-             INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOCK = 2"),
+             INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOCK = 2, EVAL_ITERBLOSC = 3"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
              INA_OPT_INT("b", "blocksize", 0, "Use blocksize for chunks (0 means automatic)"),
@@ -123,8 +126,11 @@ int main(int argc, char** argv)
     else if (eval_flag == IARRAY_EXPR_EVAL_ITERBLOCK) {
         eval_method = "EVAL_ITERBLOCK";
     }
+    else if (eval_flag == IARRAY_EXPR_EVAL_ITERBLOSC) {
+        eval_method = "EVAL_ITERBLOSC";
+    }
     else {
-        printf("eval_flag must be 1, 2\n");
+        printf("eval_flag must be 1, 2, 3\n");
         return EXIT_FAILURE;
     }
     config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions
@@ -305,8 +311,6 @@ int main(int argc, char** argv)
     iarray_expr_bind(e, "x", con_x);
     iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
 
-
-
     iarray_container_t *con_out;
     INA_MUST_SUCCEED(iarray_container_new(ctx, &dtshape, &mat_out, flags, &con_out));
 
@@ -337,7 +341,6 @@ int main(int argc, char** argv)
     printf(" Yes!\n");
     printf("Time for checking that two iarrays are equal:  %.3g s, %.1f MB/s\n",
            elapsed_sec, (nbytes * 2) / (elapsed_sec * _IARRAY_SIZE_MB));
-
 
     iarray_container_free(ctx, &con_x);
     iarray_container_free(ctx, &con_y);
