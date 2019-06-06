@@ -343,12 +343,18 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr) {
                 caterva_set_slice_buffer(catarr, itr->part, &start, &stop);
             }
         } else {
-
             // check if the part should be padded with 0s
             if (itr->cur_block_size == catarr->psize) {
-                int err = blosc2_schunk_append_buffer(catarr->sc, itr->part, (size_t) psizeb);
-                if (err < 0) {
-                    return INA_ERROR(INA_ERR_FAILED);
+                if (itr->compressed_chunk_buffer) {
+                    int err = blosc2_schunk_append_chunk(catarr->sc, itr->part);
+                    if (err < 0) {
+                        return INA_ERROR(INA_ERR_FAILED);
+                    }
+                } else {
+                    int err = blosc2_schunk_append_buffer(catarr->sc, itr->part, (size_t) psizeb);
+                    if (err < 0) {
+                        return INA_ERROR(INA_ERR_FAILED);
+                    }
                 }
             } else {
                 uint8_t *part_aux = malloc((size_t) catarr->psize * typesize);
@@ -401,10 +407,10 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr) {
                 }
                 int err = blosc2_schunk_append_buffer(itr->cont->catarr->sc, part_aux,
                                                       (size_t) catarr->psize * typesize);
-                memset(part_aux, 0, catarr->psize * catarr->sc->typesize);
                 if (err < 0) {
                     return INA_ERROR(INA_ERR_FAILED);
                 }
+                memset(part_aux, 0, catarr->psize * catarr->sc->typesize);
 
                 free(part_aux);
             }
@@ -469,7 +475,17 @@ INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
 
             // check if the part should be padded with 0s
             if (itr->cur_block_size == catarr->psize) {
-                blosc2_schunk_append_buffer(catarr->sc, itr->part, (size_t) psizeb);
+                if (itr->compressed_chunk_buffer) {
+                    int err = blosc2_schunk_append_chunk(catarr->sc, itr->part);
+                    if (err < 0) {
+                        return INA_ERROR(INA_ERR_FAILED);
+                    }
+                } else {
+                    int err = blosc2_schunk_append_buffer(catarr->sc, itr->part, (size_t) psizeb);
+                    if (err < 0) {
+                        return INA_ERROR(INA_ERR_FAILED);
+                    }
+                }
             } else {
                 uint8_t *part_aux = malloc((size_t) catarr->psize * typesize);
                 memset(part_aux, 0, catarr->psize * typesize);
@@ -519,10 +535,12 @@ INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
                         }
                     }
                 }
-                blosc2_schunk_append_buffer(itr->cont->catarr->sc, part_aux,
-                                            (size_t) catarr->psize * typesize);
+                int err = blosc2_schunk_append_buffer(itr->cont->catarr->sc, part_aux,
+                                                      (size_t) catarr->psize * typesize);
+                if (err < 0) {
+                    return INA_ERROR(INA_ERR_FAILED);
+                }
                 memset(part_aux, 0, catarr->psize * catarr->sc->typesize);
-
 
                 free(part_aux);
             }
@@ -573,6 +591,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         return INA_ERROR(INA_ERR_FAILED);
     }
 
+    (*itr)->compressed_chunk_buffer = false;  // the default is to pass uncompressed buffers
     (*itr)->val = value;
     (*itr)->ctx = ctx;
     (*itr)->cont = cont;
