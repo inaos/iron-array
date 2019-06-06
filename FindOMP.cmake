@@ -71,7 +71,8 @@ foreach (LIB ${OMP_LIBS})
     endif()
 endforeach()
 
-
+if(UNIX)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
+endif()
 
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${OMP_LIBRARIES})
