@@ -15,8 +15,8 @@
 
 //#define NELEM (256 * 256 * 256)  // multiple of NITEMS_CHUNK for now
 //#define NITEMS_CHUNK (64 * 64 * 64)
-#define NELEM (256)  // multiple of NITEMS_CHUNK for now
-#define NITEMS_CHUNK (64)
+#define NELEM (256 * 256 * 256)  // multiple of NITEMS_CHUNK for now
+#define NITEMS_CHUNK (64 * 64 * 64)
 #define NTHREADS 1
 #define XMAX 10.
 
