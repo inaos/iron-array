@@ -204,18 +204,34 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     return INA_SUCCESS;
 }
 
-int prefilter_func(blosc2_prefilter_params *pparams) {
-    struct iarray_expression_s *e = pparams->user_data;
+// Example of computation.  TODO: To be removed...
+static double poly(const double x)
+{
+    return (x - 1.35) * (x - 4.45) * (x - 8.5);
+}
 
-    int ninputs = pparams->ninputs;
-    for (int i = 0; i < ninputs; i++) {
-        e->temp_vars[i]->data = pparams->inputs[i];
+static void compute_out(const double* x, double* y, const int nelem)
+{
+    for (int i = 0; i < nelem; i++) {
+        y[i] = poly(x[i]);
     }
+}
 
-    // Eval the expression for this chunk
-    e->max_out_len = pparams->out_size / pparams->out_typesize;  // so as to prevent operating beyond the limits
-    const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
-    memcpy(pparams->out, (uint8_t*)expr_out->data, pparams->out_size);
+int prefilter_func(blosc2_prefilter_params *pparams)
+{
+//    struct iarray_expression_s *e = pparams->user_data;
+//
+//    int ninputs = pparams->ninputs;
+//    for (int i = 0; i < ninputs; i++) {
+//        e->temp_vars[i]->data = pparams->inputs[i];
+//    }
+//
+//    // Eval the expression for this chunk
+//    e->max_out_len = pparams->out_size / pparams->out_typesize;  // so as to prevent operating beyond the limits
+//    const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
+//    memcpy(pparams->out, (uint8_t*)expr_out->data, pparams->out_size);
+
+    compute_out((double*)(pparams->inputs[0]), (double*)(pparams->out), pparams->out_size / pparams->out_typesize);
 
     return 0;
 }
@@ -295,6 +311,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         memcpy(cparams, ret->cparams, sizeof(blosc2_cparams));
         cparams->prefilter = (blosc2_prefilter_fn)prefilter_func;
         blosc2_prefilter_params pparams;
+        memset(&pparams, 0, sizeof(blosc2_prefilter_params));
         pparams.ninputs = nvars;
         pparams.user_data = (void*)e;
         pparams.user_data_size = sizeof(struct iarray_expression_s);
@@ -316,7 +333,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_write_block_t *iter_out;
         iarray_iter_write_block_value_t out_value;
         ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value);
-        iter_out->compressed_chunk_buffer = true;
+        iter_out->compressed_chunk_buffer = true;  // TODO: set this in the out_value above?
         if (err != INA_SUCCESS) {
             return err;
         }
@@ -341,7 +358,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             blosc2_context *cctx = blosc2_create_cctx(*cparams);
             int csize = blosc2_compress_ctx(cctx, out_items * e->typesize,
                                             NULL, out_value.pointer,
-                                            out_items * e->typesize);
+                                            out_items * e->typesize + BLOSC_MAX_OVERHEAD);
             if (csize <= 0) {
                 return INA_ERR_ERROR;
             }
