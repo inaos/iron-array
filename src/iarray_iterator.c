@@ -632,7 +632,9 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     }
 
     if (!(*itr)->contiguous) {
-        (*itr)->part = ina_mem_alloc((size_t) size * typesize);
+        // We may want to use the output partition for hosting a compressed buffer, so we need space for the overhead
+        // TODO: the overhead is only useful for the prefilter approach, so think if there is a better option.
+        (*itr)->part = ina_mem_alloc((size_t) size * typesize + BLOSC_MAX_OVERHEAD);
     } else {
         (*itr)->part = &cont->catarr->buf[0];
     }
