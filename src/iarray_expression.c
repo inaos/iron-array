@@ -319,7 +319,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         pparams.ninputs = nvars;
         // TODO: add the out_value structure to the user_data also?
         pparams.user_data = (void*)e;
-        pparams.user_data_size = sizeof(struct iarray_expression_s);
         cparams->pparams = &pparams;
 
         // Create and initialize an iterator per variable
