@@ -306,6 +306,11 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
     }
     else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
 
+        if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+            fprintf(stderr, "ITERBLOSC eval can't be used with a plainbuffer output container.\n");
+            return INA_ERR_ERROR;
+        }
+
         // Setup a new cparams with a prefilter
         blosc2_cparams *cparams = malloc(sizeof(blosc2_cparams));
         memcpy(cparams, ret->cparams, sizeof(blosc2_cparams));
