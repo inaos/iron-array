@@ -17,7 +17,7 @@
 //#define NITEMS_CHUNK (64 * 64 * 64)
 #define NELEM (256 * 256 * 256)  // multiple of NITEMS_CHUNK for now
 #define NITEMS_CHUNK (64 * 64 * 64)
-#define NTHREADS 1
+#define NTHREADS 2
 #define XMAX 10.
 
 static double _poly(const double x)
@@ -315,7 +315,11 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(iarray_container_new(ctx, &dtshape, &mat_out, flags, &con_out));
 
     INA_STOPWATCH_START(w);
-    iarray_eval(e, con_out);
+    ina_rc_t errcode = iarray_eval(e, con_out);
+    if (errcode != INA_SUCCESS) {
+        printf("Error during evaluation.  Giving up...\n");
+        return -1;
+    }
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     iarray_container_info(con_out, &nbytes, &cbytes);
