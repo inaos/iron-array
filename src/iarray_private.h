@@ -157,6 +157,7 @@ typedef struct iarray_iter_read_block_s {
     int64_t *cur_elem_index; // The position of the first element of the block in the container
     int64_t nblock; // The block counter
     bool contiguous; // Flag to avoid copies using plainbuffer
+    bool ext_part; // Flag to indicate if a external part is passed
 } iarray_iter_read_block_t;
 
 typedef struct iarray_iter_matmul_s {
