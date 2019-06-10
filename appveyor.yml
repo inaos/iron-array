@@ -96,14 +96,14 @@ build_script:
         mkdir cmake-build-$BUILD_CONFIGURATION
         7z e build-wrapper-linux-x86.zip -ocmake-build-$BUILD_CONFIGURATION
         cd cmake-build-$BUILD_CONFIGURATION
-        cmake -G "Unix Makefiles" ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION -DMKL_MULTITHREADING=TRUE -DINAC_COVERAGE_ENABLED=1 $snapshot
+        cmake -G "Unix Makefiles" ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION -DINAC_COVERAGE_ENABLED=1 $snapshot
         ./build-wrapper-linux-x86-64 --out-dir bw-output make
   - cmd: |
          git submodule update -q --init --recursive
          mkdir cmake-build-%BUILD_CONFIGURATION%
          7z e build-wrapper-win-x86.zip -ocmake-build-%BUILD_CONFIGURATION%
          cd cmake-build-%BUILD_CONFIGURATION%
-         cmake -G "NMake Makefiles" ../ -DCMAKE_BUILD_TYPE=%BUILD_CONFIGURATION% -DMKL_MULTITHREADING=TRUE -DINAC_TARGET_ARCH=%BUILD_ARCH% -DINAC_COVERAGE_ENABLED=1 %snapshot%
+         cmake -G "NMake Makefiles" ../ -DCMAKE_BUILD_TYPE=%BUILD_CONFIGURATION% -DINAC_TARGET_ARCH=%BUILD_ARCH% -DINAC_COVERAGE_ENABLED=1 %snapshot%
          build-wrapper-win-x86-64.exe --out-dir bw-output nmake
 after_build:
   - sh: |
