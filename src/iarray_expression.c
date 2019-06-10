@@ -364,6 +364,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             int csize = blosc2_compress_ctx(cctx, out_items * e->typesize,
                                             NULL, out_value.pointer,
                                             out_items * e->typesize + BLOSC_MAX_OVERHEAD);
+            blosc2_free_ctx(cctx);
             if (csize <= 0) {
                 return INA_ERR_ERROR;
             }
