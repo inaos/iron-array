@@ -554,7 +554,9 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_iter_write_block_t **itr,
                                               iarray_container_t *cont,
                                               const int64_t *blockshape,
-                                              iarray_iter_write_block_value_t *value)
+                                              iarray_iter_write_block_value_t *value,
+                                              void *part,
+                                              int64_t partsize)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(cont);
@@ -575,6 +577,12 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
             if (blockshape[i] != cont->dtshape->pshape[i]) {
                 return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
             }
+        }
+    }
+
+    if (part != NULL) {
+        if (partsize < cont->catarr->psize) {
+            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }
     }
 
@@ -616,9 +624,14 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         (*itr)->cont_esize *= (*itr)->cont_eshape[i];
         (*itr)->block_shape_size *= (*itr)->block_shape[i];
     }
-
+    int64_t block_size = typesize;
+    for (int i = 0; i < cont->dtshape->ndim; ++i) {
+        (*itr)->block_shape[i] = blockshape[i];
+        block_size *= (*itr)->block_shape[i];
+    }
 
     (*itr)->contiguous = (cont->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
+
     if ((*itr)->contiguous) {
         bool before_is_one = true;
         for (int i = 0; i < cont->dtshape->ndim; ++i) {
@@ -631,7 +644,13 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     }
 
     if (!(*itr)->contiguous) {
-        (*itr)->part = ina_mem_alloc((size_t) size * typesize);
+        if (part == NULL) {
+            (*itr)->ext_part = false;
+            (*itr)->part = ina_mem_alloc((size_t) block_size);
+        } else {
+            (*itr)->ext_part = true;
+            (*itr)->part = &part[0];
+        }
     } else {
         (*itr)->part = &cont->catarr->buf[0];
     }
@@ -679,7 +698,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
 INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t *itr)
 {
-    if (!itr->contiguous || (itr->cont->view == true)) {
+    if (!itr->contiguous && !itr->ext_part) {
         ina_mem_free(itr->part);
     }
     ina_mem_free(itr->block_shape);

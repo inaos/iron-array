@@ -35,7 +35,7 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     // Start Iterator
     iarray_iter_write_block_t *I;
     iarray_iter_write_block_value_t val;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, NULL, 0));
 
     while (iarray_iter_write_block_has_next(I)) {
         iarray_iter_write_block_next(I);
@@ -252,7 +252,31 @@ static ina_rc_t test_part_iterator_ext_part(iarray_context_t *ctx, iarray_data_t
     // Start Iterator
     iarray_iter_write_block_t *I;
     iarray_iter_write_block_value_t val;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val));
+
+    int64_t partsize_x = 0;
+
+    switch (c_x->dtshape->dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            partsize_x = sizeof(double);
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            partsize_x = sizeof(float);
+            break;
+        default:
+            break;
+    }
+
+    for (int i = 0; i < c_x->dtshape->ndim; ++i) {
+        if (c_x->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+            partsize_x *= c_x->dtshape->shape[i];
+        } else {
+            partsize_x *= c_x->dtshape->pshape[i];
+        }
+    }
+
+    uint8_t *part_x = (uint8_t *) malloc(partsize_x);
+
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, part_x, partsize_x));
 
     while (iarray_iter_write_block_has_next(I)) {
         iarray_iter_write_block_next(I);
@@ -311,20 +335,6 @@ static ina_rc_t test_part_iterator_ext_part(iarray_context_t *ctx, iarray_data_t
     // Start Iterator
     iarray_iter_read_block_t *I2;
     iarray_iter_read_block_value_t val2;
-
-    int64_t partsize_x = 0;
-    switch (c_x->dtshape->dtype) {
-        case IARRAY_DATA_TYPE_DOUBLE:
-            partsize_x = c_x->catarr->psize * sizeof(double);
-            break;
-        case IARRAY_DATA_TYPE_FLOAT:
-            partsize_x = c_x->catarr->psize * sizeof(float);
-            break;
-        default:
-            break;
-    }
-
-    uint8_t *part_x = (uint8_t *) malloc(partsize_x);
 
     INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I2, c_x, blockshape, &val2, part_x, partsize_x));
 

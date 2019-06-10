@@ -140,6 +140,7 @@ typedef struct iarray_iter_write_block_s {
     int64_t cont_esize; // The size of the extended shape
     int64_t nblock; // The block counter
     bool contiguous; // Flag to avoid copies using plainbuffer
+    bool ext_part; // Flag to indicate if a external part is passed
 } iarray_iter_write_block_t;
 
 typedef struct iarray_iter_read_block_s {
