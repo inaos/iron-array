@@ -15,9 +15,9 @@
 
 //#define NELEM (256 * 256 * 256)  // multiple of NITEMS_CHUNK for now
 //#define NITEMS_CHUNK (64 * 64 * 64)
-#define NELEM (256 * 256 * 256)  // multiple of NITEMS_CHUNK for now
-#define NITEMS_CHUNK (64 * 64 * 64)
-#define NTHREADS 2
+#define NELEM (20 * 1000 * 1000)  // multiple of NITEMS_CHUNK for now
+#define NITEMS_CHUNK (200 * 1000)
+#define NTHREADS 1
 #define XMAX 10.
 
 static double _poly(const double x)
