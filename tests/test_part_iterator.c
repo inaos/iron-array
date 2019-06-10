@@ -346,7 +346,7 @@ static ina_rc_t test_part_iterator_ext_part(iarray_context_t *ctx, iarray_data_t
     uint8_t *part_y = (uint8_t *) malloc(partsize_y);
     INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, part_y, partsize_y));
 
-    while (iarray_iter_read_block_has_next(I2) & iarray_iter_read_block_has_next(I3)) {
+    while (iarray_iter_read_block_has_next(I2) && iarray_iter_read_block_has_next(I3)) {
         iarray_iter_read_block_next(I2);
         iarray_iter_read_block_next(I3);
 
