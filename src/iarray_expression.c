@@ -315,9 +315,9 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         blosc2_cparams *cparams = malloc(sizeof(blosc2_cparams));
         memcpy(cparams, ret->cparams, sizeof(blosc2_cparams));
         cparams->prefilter = (blosc2_prefilter_fn)prefilter_func;
-        blosc2_prefilter_params pparams;
-        memset(&pparams, 0, sizeof(blosc2_prefilter_params));
+        blosc2_prefilter_params pparams = {0};
         pparams.ninputs = nvars;
+        // TODO: add the out_value structure to the user_data also?
         pparams.user_data = (void*)e;
         pparams.user_data_size = sizeof(struct iarray_expression_s);
         cparams->pparams = &pparams;
