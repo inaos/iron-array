@@ -208,8 +208,8 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_container_t *cont,
                                              const int64_t *blockshape,
                                              iarray_iter_read_block_value_t *value,
-                                             void *part,
-                                             int64_t partsize)
+                                             void *external_buffer,
+                                             int64_t bufsize)
 {
     INA_VERIFY_NOT_NULL(itr);
     *itr = (iarray_iter_read_block_t *) ina_mem_alloc(sizeof(iarray_iter_read_block_t));
@@ -226,8 +226,8 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
-    if (part != NULL) {
-        if (partsize < cont->catarr->psize) {
+    if (external_buffer != NULL) {
+        if (bufsize < cont->catarr->psize) {
             return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }
     }
@@ -260,12 +260,12 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     }
 
     if (!(*itr)->contiguous) {
-        if (part == NULL) {
-            (*itr)->ext_part = false;
+        if (external_buffer == NULL) {
+            (*itr)->external_buffer = false;
             (*itr)->part = ina_mem_alloc((size_t) block_size);
         } else {
-            (*itr)->ext_part = true;
-            (*itr)->part = &part[0];
+            (*itr)->external_buffer = true;
+            (*itr)->part = &((uint8_t *)external_buffer)[0];
         }
     } else {
         (*itr)->part = &cont->catarr->buf[0];
@@ -316,7 +316,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
 
 INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr)
 {
-    if (!itr->contiguous && !itr->ext_part) {
+    if (!itr->contiguous && !itr->external_buffer) {
         ina_mem_free(itr->part);
     }
 
@@ -555,8 +555,8 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_container_t *cont,
                                               const int64_t *blockshape,
                                               iarray_iter_write_block_value_t *value,
-                                              void *part,
-                                              int64_t partsize)
+                                              void *external_buffer,
+                                              int64_t bufsize)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(cont);
@@ -580,8 +580,8 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         }
     }
 
-    if (part != NULL) {
-        if (partsize < cont->catarr->psize) {
+    if (external_buffer != NULL) {
+        if (bufsize < cont->catarr->psize) {
             return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }
     }
@@ -644,12 +644,12 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     }
 
     if (!(*itr)->contiguous) {
-        if (part == NULL) {
-            (*itr)->ext_part = false;
+        if (external_buffer == NULL) {
+            (*itr)->external_buffer = false;
             (*itr)->part = ina_mem_alloc((size_t) block_size);
         } else {
-            (*itr)->ext_part = true;
-            (*itr)->part = &part[0];
+            (*itr)->external_buffer = true;
+            (*itr)->part = &((uint8_t *) external_buffer)[0];
         }
     } else {
         (*itr)->part = &cont->catarr->buf[0];
@@ -698,7 +698,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
 INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t *itr)
 {
-    if (!itr->contiguous && !itr->ext_part) {
+    if (!itr->contiguous && !itr->external_buffer) {
         ina_mem_free(itr->part);
     }
     ina_mem_free(itr->block_shape);
