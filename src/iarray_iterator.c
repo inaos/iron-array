@@ -265,7 +265,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
             (*itr)->part = ina_mem_alloc((size_t) block_size);
         } else {
             (*itr)->external_buffer = true;
-            (*itr)->part = &((uint8_t *)external_buffer)[0];
+            (*itr)->part = &((uint8_t *) *external_buffer)[0];
         }
     } else {
         (*itr)->part = &cont->catarr->buf[0];
@@ -670,7 +670,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
             (*itr)->part = ina_mem_alloc((size_t) block_size + BLOSC_MAX_OVERHEAD);
         } else {
             (*itr)->external_buffer = true;
-            (*itr)->part = &((uint8_t *) external_buffer)[0];
+            (*itr)->part = &((uint8_t *) *external_buffer)[0];
         }
     } else {
         (*itr)->part = &cont->catarr->buf[0];

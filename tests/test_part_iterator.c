@@ -253,7 +253,7 @@ static ina_rc_t test_part_iterator_ext_part(iarray_context_t *ctx, iarray_data_t
     iarray_iter_write_block_t *I;
     iarray_iter_write_block_value_t val;
 
-    int64_t partsize_x = 0;git commit
+    int64_t partsize_x = 0;
 
     switch (c_x->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
