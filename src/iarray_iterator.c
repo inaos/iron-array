@@ -207,7 +207,9 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_iter_read_block_t **itr,
                                              iarray_container_t *cont,
                                              const int64_t *blockshape,
-                                             iarray_iter_read_block_value_t *value)
+                                             iarray_iter_read_block_value_t *value,
+                                             void *external_buffer,
+                                             int64_t bufsize)
 {
     INA_VERIFY_NOT_NULL(itr);
     *itr = (iarray_iter_read_block_t *) ina_mem_alloc(sizeof(iarray_iter_read_block_t));
@@ -224,6 +226,12 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
+    if (external_buffer != NULL) {
+        if (bufsize < cont->catarr->psize) {
+            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        }
+    }
+
     (*itr)->aux = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
     (*itr)->block_shape = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
     (*itr)->cur_block_shape = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
@@ -238,6 +246,8 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     }
 
     (*itr)->contiguous = (cont->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
+    (*itr)->contiguous = !(cont->view) && (*itr)->contiguous;
+
     if ((*itr)->contiguous) {
         bool before_is_one = true;
         for (int i = 0; i < cont->dtshape->ndim; ++i) {
@@ -250,7 +260,15 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     }
 
     if (!(*itr)->contiguous) {
-        (*itr)->part = ina_mem_alloc((size_t) block_size);
+        if (external_buffer == NULL) {
+            (*itr)->external_buffer = false;
+            (*itr)->part = ina_mem_alloc((size_t) block_size);
+        } else {
+            (*itr)->external_buffer = true;
+            (*itr)->part = &((uint8_t *)external_buffer)[0];
+        }
+    } else {
+        (*itr)->part = &cont->catarr->buf[0];
     }
 
     (*itr)->val = value;
@@ -298,7 +316,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
 
 INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr)
 {
-    if (!itr->contiguous || (itr->cont->view == true)) {
+    if (!itr->contiguous && !itr->external_buffer) {
         ina_mem_free(itr->part);
     }
 
@@ -536,7 +554,9 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_iter_write_block_t **itr,
                                               iarray_container_t *cont,
                                               const int64_t *blockshape,
-                                              iarray_iter_write_block_value_t *value)
+                                              iarray_iter_write_block_value_t *value,
+                                              void *external_buffer,
+                                              int64_t bufsize)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(cont);
@@ -557,6 +577,12 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
             if (blockshape[i] != cont->dtshape->pshape[i]) {
                 return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
             }
+        }
+    }
+
+    if (external_buffer != NULL) {
+        if (bufsize < cont->catarr->psize) {
+            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }
     }
 
@@ -598,9 +624,14 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         (*itr)->cont_esize *= (*itr)->cont_eshape[i];
         (*itr)->block_shape_size *= (*itr)->block_shape[i];
     }
-
+    int64_t block_size = typesize;
+    for (int i = 0; i < cont->dtshape->ndim; ++i) {
+        (*itr)->block_shape[i] = blockshape[i];
+        block_size *= (*itr)->block_shape[i];
+    }
 
     (*itr)->contiguous = (cont->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
+
     if ((*itr)->contiguous) {
         bool before_is_one = true;
         for (int i = 0; i < cont->dtshape->ndim; ++i) {
@@ -613,7 +644,13 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     }
 
     if (!(*itr)->contiguous) {
-        (*itr)->part = ina_mem_alloc((size_t) size * typesize);
+        if (external_buffer == NULL) {
+            (*itr)->external_buffer = false;
+            (*itr)->part = ina_mem_alloc((size_t) block_size);
+        } else {
+            (*itr)->external_buffer = true;
+            (*itr)->part = &((uint8_t *) external_buffer)[0];
+        }
     } else {
         (*itr)->part = &cont->catarr->buf[0];
     }
@@ -661,7 +698,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
 INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t *itr)
 {
-    if (!itr->contiguous || (itr->cont->view == true)) {
+    if (!itr->contiguous && !itr->external_buffer) {
         ina_mem_free(itr->part);
     }
     ina_mem_free(itr->block_shape);
