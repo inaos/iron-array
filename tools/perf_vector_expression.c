@@ -13,8 +13,6 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-//#define NELEM (256 * 256 * 256)  // multiple of NITEMS_CHUNK for now
-//#define NITEMS_CHUNK (64 * 64 * 64)
 #define NELEM (20 * 1000 * 1000)  // multiple of NITEMS_CHUNK for now
 #define NITEMS_CHUNK (200 * 1000)
 #define NTHREADS 1
@@ -116,6 +114,13 @@ int main(int argc, char** argv)
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_level = clevel;
     config.compression_codec = codec;
+    if (clevel == 0) {
+      // If there is no compression, there is no point in using filters.
+      config.filter_flags = 0;
+    }
+    else {
+      config.filter_flags = IARRAY_COMP_SHUFFLE;
+    }
     config.use_dict = INA_SUCCEED(ina_opt_isset("d")) ? 1 : 0;
     config.blocksize = blocksize;
     config.max_num_threads = NTHREADS;
