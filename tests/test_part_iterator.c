@@ -253,7 +253,7 @@ static ina_rc_t test_part_iterator_ext_part(iarray_context_t *ctx, iarray_data_t
     iarray_iter_write_block_t *I;
     iarray_iter_write_block_value_t val;
 
-    int64_t partsize_x = 0;
+    int64_t partsize_x = 0;git commit
 
     switch (c_x->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
@@ -276,7 +276,7 @@ static ina_rc_t test_part_iterator_ext_part(iarray_context_t *ctx, iarray_data_t
 
     uint8_t *part_x = (uint8_t *) malloc(partsize_x);
 
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, part_x, partsize_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, (void **) &part_x, partsize_x));
 
     while (iarray_iter_write_block_has_next(I)) {
         iarray_iter_write_block_next(I);
@@ -336,7 +336,7 @@ static ina_rc_t test_part_iterator_ext_part(iarray_context_t *ctx, iarray_data_t
     iarray_iter_read_block_t *I2;
     iarray_iter_read_block_value_t val2;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I2, c_x, blockshape, &val2, part_x, partsize_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I2, c_x, blockshape, &val2, (void **) &part_x, partsize_x));
 
     iarray_iter_read_block_t *I3;
     iarray_iter_read_block_value_t val3;
@@ -354,7 +354,7 @@ static ina_rc_t test_part_iterator_ext_part(iarray_context_t *ctx, iarray_data_t
     }
 
     uint8_t *part_y = (uint8_t *) malloc(partsize_y);
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, part_y, partsize_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, (void **) &part_y, partsize_y));
 
     while (iarray_iter_read_block_has_next(I2) && iarray_iter_read_block_has_next(I3)) {
         iarray_iter_read_block_next(I2);

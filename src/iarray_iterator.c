@@ -208,7 +208,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_container_t *cont,
                                              const int64_t *blockshape,
                                              iarray_iter_read_block_value_t *value,
-                                             void *external_buffer,
+                                             void **external_buffer,
                                              int64_t bufsize)
 {
     INA_VERIFY_NOT_NULL(itr);
@@ -573,7 +573,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_container_t *cont,
                                               const int64_t *blockshape,
                                               iarray_iter_write_block_value_t *value,
-                                              void *external_buffer,
+                                              void **external_buffer,
                                               int64_t bufsize)
 {
     INA_VERIFY_NOT_NULL(ctx);
