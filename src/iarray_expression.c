@@ -13,6 +13,7 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 #include <contribs/tinyexpr/tinyexpr.h>
+
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
@@ -363,6 +364,15 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             int csize = blosc2_compress_ctx(cctx, out_items * e->typesize,
                                             NULL, out_value.pointer,
                                             out_items * e->typesize + BLOSC_MAX_OVERHEAD);
+            if (csize <= 0) {
+                // Retry with clevel == 0 (should never fail)
+                blosc2_free_ctx(cctx);
+                cparams->clevel = 0;
+                cctx = blosc2_create_cctx(*cparams);
+                csize = blosc2_compress_ctx(cctx, out_items * e->typesize,
+                                            NULL, out_value.pointer,
+                                            out_items * e->typesize + BLOSC_MAX_OVERHEAD);
+            }
             blosc2_free_ctx(cctx);
             if (csize <= 0) {
                 return INA_ERR_ERROR;

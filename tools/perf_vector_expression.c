@@ -115,11 +115,11 @@ int main(int argc, char** argv)
     config.compression_level = clevel;
     config.compression_codec = codec;
     if (clevel == 0) {
-      // If there is no compression, there is no point in using filters.
-      config.filter_flags = 0;
+        // If there is no compression, there is no point in using filters.
+        config.filter_flags = 0;
     }
     else {
-      config.filter_flags = IARRAY_COMP_SHUFFLE;
+        config.filter_flags = IARRAY_COMP_SHUFFLE;
     }
     config.use_dict = INA_SUCCEED(ina_opt_isset("d")) ? 1 : 0;
     config.blocksize = blocksize;
