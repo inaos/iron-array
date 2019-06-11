@@ -15,7 +15,6 @@
 
 #define NELEM (20 * 1000 * 1000)  // multiple of NITEMS_CHUNK for now
 #define NITEMS_CHUNK (200 * 1000)
-#define NTHREADS 1
 #define XMAX 10.
 
 static double _poly(const double x)
@@ -70,6 +69,7 @@ int main(int argc, char** argv)
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
              INA_OPT_INT("b", "blocksize", 0, "Use blocksize for chunks (0 means automatic)"),
+             INA_OPT_INT("t", "nthreads", 1, "Use number of threads for the evaluation"),
              INA_OPT_FLAG("d", "dict", "Use dictionary (only for Zstd (codec 5))"),
              INA_OPT_FLAG("P", "plainbuffer", "Use plain buffer arrays"),
              INA_OPT_FLAG("i", "iter", "Use iterator for filling values"),
@@ -91,6 +91,8 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_opt_get_int("l", &codec));
     int blocksize;
     INA_MUST_SUCCEED(ina_opt_get_int("b", &blocksize));
+    int nthreads;
+    INA_MUST_SUCCEED(ina_opt_get_int("t", &nthreads));
 
     if (INA_SUCCEED(ina_opt_isset("p"))) {
         mat_x_name = "mat_x.b2frame";
@@ -123,7 +125,7 @@ int main(int argc, char** argv)
     }
     config.use_dict = INA_SUCCEED(ina_opt_isset("d")) ? 1 : 0;
     config.blocksize = blocksize;
-    config.max_num_threads = NTHREADS;
+    config.max_num_threads = nthreads;
     config.eval_flags = eval_flag;
     if (eval_flag == IARRAY_EXPR_EVAL_ITERCHUNK) {
         eval_method = "EVAL_ITERCHUNK";
