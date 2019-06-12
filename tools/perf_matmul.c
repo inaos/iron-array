@@ -55,7 +55,9 @@ int main(int argc, char** argv)
     double cbytes_mb = 0;
 
     int64_t shape_x[] = {4056, 3230};
+
     int64_t pshape_x[] = {675, 300};
+
     int64_t bshape_x[] = {800, 400};
 
     int64_t size_x = shape_x[0] * shape_x[1];
