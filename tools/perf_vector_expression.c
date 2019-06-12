@@ -199,7 +199,7 @@ int main(int argc, char** argv)
             iarray_container_new(ctx, &dtshape, &mat_x, flags, &con_x);
             iarray_iter_write_block_t *I;
             iarray_iter_write_block_value_t val;
-            iarray_iter_write_block_new(ctx, &I, con_x, NULL, &val);
+            iarray_iter_write_block_new(ctx, &I, con_x, NULL, &val, NULL, 0);
             double incx = XMAX / NELEM;
             while (iarray_iter_write_block_has_next(I)) {
                 iarray_iter_write_block_next(I);
@@ -271,7 +271,7 @@ int main(int argc, char** argv)
             iarray_container_new(ctx, &dtshape, &mat_y, flags, &con_y);
             iarray_iter_write_block_t *I;
             iarray_iter_write_block_value_t val;
-            iarray_iter_write_block_new(ctx, &I, con_y, NULL, &val);
+            iarray_iter_write_block_new(ctx, &I, con_y, NULL, &val, NULL, 0);
             double incx = XMAX / NELEM;
             while (iarray_iter_write_block_has_next(I)) {
                 iarray_iter_write_block_next(I);

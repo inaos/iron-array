@@ -50,7 +50,7 @@ int main()
 
     iarray_iter_read_block_t *iter;
     iarray_iter_read_block_value_t val;
-    iarray_iter_read_block_new(ctx, &iter, cont, bshape, &val);
+    iarray_iter_read_block_new(ctx, &iter, cont, bshape, &val, NULL, 0);
     while (iarray_iter_read_block_has_next(iter)) {
         iarray_iter_read_block_next(iter);
         for (int i = 0; i < val.block_size; ++i) {
