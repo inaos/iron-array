@@ -382,7 +382,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
         }
     }
 
-    if ((!container->view) & (container->transposed == 1)) {
+    if ((!container->view) && (container->transposed == 1)) {
         switch (container->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 mkl_dimatcopy('R', 'T', (size_t)container->dtshape->shape[1], (size_t)container->dtshape->shape[0], 1.0,
@@ -398,4 +398,15 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
     }
 
     return INA_SUCCESS;
+}
+
+INA_API(bool) iarray_is_empty(iarray_container_t *container) {
+    INA_VERIFY_NOT_NULL(container);
+
+    // TODO: Change this condition when an empty array would be of size 0
+    if (container->catarr->empty)
+    {
+        return true;
+    }
+    return false;
 }

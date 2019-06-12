@@ -38,8 +38,8 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
                                       int flags,
                                       iarray_container_t **c)
 {
-    blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
-    blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
+    blosc2_cparams cparams = {0};
+    blosc2_dparams dparams = {0};
     caterva_ctx_t *cat_ctx = NULL;
 
     int blosc_filter_idx = 0;
