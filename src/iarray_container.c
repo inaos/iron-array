@@ -507,10 +507,10 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     iarray_context_new(&cfg, &ctx);
     iarray_iter_read_block_t *iter_a;
     iarray_iter_read_block_value_t val_a;
-    iarray_iter_read_block_new(ctx, &iter_a, a, blocksize, &val_a);
+    iarray_iter_read_block_new(ctx, &iter_a, a, blocksize, &val_a, NULL, 0);
     iarray_iter_read_block_t *iter_b;
     iarray_iter_read_block_value_t val_b;
-    iarray_iter_read_block_new(ctx, &iter_b, b, blocksize, &val_b);
+    iarray_iter_read_block_new(ctx, &iter_b, b, blocksize, &val_b, NULL, 0);
 
     while (iarray_iter_read_block_has_next(iter_a)) {
         iarray_iter_read_block_next(iter_a);
