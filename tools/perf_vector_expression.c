@@ -13,8 +13,8 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-#define NELEM (256 * 256 * 256)  // multiple of NITEMS_CHUNKS for now
-#define NTHREADS 2
+#define NELEM (20 * 1000 * 1000)  // multiple of NITEMS_CHUNK for now
+#define NITEMS_CHUNK (200 * 1000)
 #define XMAX 10.
 
 static double _poly(const double x)
@@ -28,7 +28,7 @@ static int _fill_x(double* x)
     double incx = XMAX / NELEM;
 
     /* Fill even values between 0 and 10 */
-    for (int i = 0; i<NELEM; i++) {
+    for (int i = 0; i < NELEM; i++) {
         x[i] = incx * i;
     }
     return 0;
@@ -37,7 +37,7 @@ static int _fill_x(double* x)
 // Compute and fill Y values in regular array
 static void _compute_y(const double* x, double* y)
 {
-    for (int i = 0; i<NELEM; i++) {
+    for (int i = 0; i < NELEM; i++) {
         y[i] = _poly(x[i]);
     }
 }
@@ -54,8 +54,8 @@ static double *y = NULL;
 
 int main(int argc, char** argv)
 {
-    int64_t shape[] = {256*256*256};
-    int64_t pshape[] = {64*64*64};
+    int64_t shape[] = {NELEM};
+    int64_t pshape[] = {NITEMS_CHUNK};
     int8_t ndim = 1;
     ina_stopwatch_t *w;
     iarray_context_t *ctx = NULL;
@@ -65,10 +65,11 @@ int main(int argc, char** argv)
     const char *eval_method = NULL;
 
     INA_OPTS(opt,
-             INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOCK = 2"),
+             INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOCK = 2, EVAL_ITERBLOSC = 3"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
              INA_OPT_INT("b", "blocksize", 0, "Use blocksize for chunks (0 means automatic)"),
+             INA_OPT_INT("t", "nthreads", 1, "Use number of threads for the evaluation"),
              INA_OPT_FLAG("d", "dict", "Use dictionary (only for Zstd (codec 5))"),
              INA_OPT_FLAG("P", "plainbuffer", "Use plain buffer arrays"),
              INA_OPT_FLAG("i", "iter", "Use iterator for filling values"),
@@ -90,6 +91,8 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_opt_get_int("l", &codec));
     int blocksize;
     INA_MUST_SUCCEED(ina_opt_get_int("b", &blocksize));
+    int nthreads;
+    INA_MUST_SUCCEED(ina_opt_get_int("t", &nthreads));
 
     if (INA_SUCCEED(ina_opt_isset("p"))) {
         mat_x_name = "mat_x.b2frame";
@@ -113,9 +116,16 @@ int main(int argc, char** argv)
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_level = clevel;
     config.compression_codec = codec;
+    if (clevel == 0) {
+        // If there is no compression, there is no point in using filters.
+        config.filter_flags = 0;
+    }
+    else {
+        config.filter_flags = IARRAY_COMP_SHUFFLE;
+    }
     config.use_dict = INA_SUCCEED(ina_opt_isset("d")) ? 1 : 0;
     config.blocksize = blocksize;
-    config.max_num_threads = NTHREADS;
+    config.max_num_threads = nthreads;
     config.eval_flags = eval_flag;
     if (eval_flag == IARRAY_EXPR_EVAL_ITERCHUNK) {
         eval_method = "EVAL_ITERCHUNK";
@@ -123,8 +133,11 @@ int main(int argc, char** argv)
     else if (eval_flag == IARRAY_EXPR_EVAL_ITERBLOCK) {
         eval_method = "EVAL_ITERBLOCK";
     }
+    else if (eval_flag == IARRAY_EXPR_EVAL_ITERBLOSC) {
+        eval_method = "EVAL_ITERBLOSC";
+    }
     else {
-        printf("eval_flag must be 1, 2\n");
+        printf("eval_flag must be 1, 2, 3\n");
         return EXIT_FAILURE;
     }
     config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions
@@ -305,13 +318,15 @@ int main(int argc, char** argv)
     iarray_expr_bind(e, "x", con_x);
     iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
 
-
-
     iarray_container_t *con_out;
     INA_MUST_SUCCEED(iarray_container_new(ctx, &dtshape, &mat_out, flags, &con_out));
 
     INA_STOPWATCH_START(w);
-    iarray_eval(e, con_out);
+    ina_rc_t errcode = iarray_eval(e, con_out);
+    if (errcode != INA_SUCCESS) {
+        printf("Error during evaluation.  Giving up...\n");
+        return -1;
+    }
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     iarray_container_info(con_out, &nbytes, &cbytes);
@@ -337,7 +352,6 @@ int main(int argc, char** argv)
     printf(" Yes!\n");
     printf("Time for checking that two iarrays are equal:  %.3g s, %.1f MB/s\n",
            elapsed_sec, (nbytes * 2) / (elapsed_sec * _IARRAY_SIZE_MB));
-
 
     iarray_container_free(ctx, &con_x);
     iarray_container_free(ctx, &con_y);
