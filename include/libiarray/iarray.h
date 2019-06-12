@@ -143,7 +143,7 @@ typedef struct iarray_iter_read_value_s {
 } iarray_iter_read_value_t;
 
 typedef struct iarray_iter_write_block_value_s {
-    void *pointer;
+    void **pointer;
     int64_t *block_index;
     int64_t *elem_index;
     int64_t nblock;

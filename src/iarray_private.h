@@ -127,7 +127,7 @@ typedef struct iarray_iter_write_block_s {
     iarray_context_t *ctx;
     iarray_container_t *cont;
     iarray_iter_write_block_value_t *val;
-    uint8_t *part;
+    uint8_t **part;
     void *pointer;
     int64_t total_blocks; // Total number of blocks
     int64_t *block_shape; // The desired block shape
