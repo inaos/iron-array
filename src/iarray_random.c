@@ -107,11 +107,11 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     iarray_iter_write_block_t *iter;
     iarray_iter_write_block_value_t val;
 
-    iarray_iter_write_block_new(ctx, &iter, container, container->dtshape->pshape, &val);
+    iarray_iter_write_block_new(ctx, &iter, container, container->dtshape->pshape, &val, NULL, 0);
 
     int64_t max_part_size = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {
-        max_part_size *= dtshape->pshape[i];
+        max_part_size *= container->dtshape->pshape[i];
     }
     void *buffer_mem = ina_mem_alloc(max_part_size * sizeof(double));
 

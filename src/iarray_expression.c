@@ -11,12 +11,14 @@
  */
 
 #include <libiarray/iarray.h>
+#include <iarray_private.h>
 #include <contribs/tinyexpr/tinyexpr.h>
+
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
 
-#define _IARRAY_EXPR_VAR_MAX      (128)
+#define _IARRAY_EXPR_VAR_MAX   (BLOSC2_PREFILTER_INPUTS_MAX)
 
 typedef struct _iarray_tinyexpr_var_s {
     const char *var;
@@ -69,16 +71,13 @@ INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
 
 INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val)
 {
-    if (val->dtshape->ndim > 2) {
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
-    }
     e->vars[e->nvars].var = strdup(var);   // yes, we want a copy here!
     e->vars[e->nvars].c = val;
     e->nvars++;
     return INA_SUCCESS;
 }
 
-//INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val)
+INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val)
 //{
 //  iarray_container_t *c = ina_mempool_dalloc(e->mp, sizeof(iarray_container_t));
 //  c->dtshape = ina_mempool_dalloc(e->mp, sizeof(iarray_dtshape_t));
@@ -88,8 +87,11 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
 //  c->scalar_value.f = val;
 //  return INA_SUCCESS;
 //}
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
 
-//INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val)
+INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val)
 //{
 //    iarray_container_t *c = ina_mempool_dalloc(e->ctx->mp, sizeof(iarray_container_t));
 //    c->dtshape = ina_mempool_dalloc(e->ctx->mp, sizeof(iarray_dtshape_t));
@@ -101,13 +103,16 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
 //    e->nvars++;
 //    return INA_SUCCESS;
 //}
+{
+    return INA_ERR_NOT_IMPLEMENTED;
+}
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 {
     int nthreads = 1;
 
 #if defined(_OPENMP)
-    if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERBLOCK) {
+    if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK) {
         // Set a number of threads different from one in case the compiler supports OpemMP
         // This is not the case for the clang that comes with Mac OSX, but probably the newer
         // clang that come with later LLVM releases does have support for it.
@@ -138,7 +143,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     }
     else {
         blosc2_schunk *schunk = catarr->sc;
-        if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERBLOCK) {
+        if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK) {
             uint8_t *chunk;
             bool needs_free;
             int retcode = blosc2_schunk_get_chunk(schunk, 0, &chunk, &needs_free);
@@ -154,7 +159,8 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
             e->chunksize = (int32_t) chunksize;
             e->blocksize = (int32_t) blocksize;
         }
-        else if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNK) {
+        else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERCHUNK ||
+                 e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
             e->chunksize = schunk->chunksize;
         }
         else {
@@ -173,9 +179,10 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     iarray_dtshape_t dtshape_var = {0};  // initialize to 0s
     dtshape_var.ndim = 1;
     int temp_var_dim0 = 0;
-    if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERBLOCK) {
+    if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK) {
         temp_var_dim0 = e->blocksize / e->typesize;
-    } else if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNK) {
+    } else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERCHUNK ||
+               e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
         temp_var_dim0 = e->chunksize / e->typesize;
         e->blocksize = 0;
     } else {
@@ -204,6 +211,38 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     return INA_SUCCESS;
 }
 
+// Example of computation.  TODO: To be removed...
+static double poly(const double x)
+{
+    return (x - 1.35) * (x - 4.45) * (x - 8.5);
+}
+
+static void compute_out(const double* x, double* y, const int nelem)
+{
+    for (int i = 0; i < nelem; i++) {
+        y[i] = poly(x[i]);
+    }
+}
+
+int prefilter_func(blosc2_prefilter_params *pparams)
+{
+//    struct iarray_expression_s *e = pparams->user_data;
+//
+//    int ninputs = pparams->ninputs;
+//    for (int i = 0; i < ninputs; i++) {
+//        e->temp_vars[i]->data = pparams->inputs[i];
+//    }
+//
+//    // Eval the expression for this chunk
+//    e->max_out_len = pparams->out_size / pparams->out_typesize;  // so as to prevent operating beyond the limits
+//    const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
+//    memcpy(pparams->out, (uint8_t*)expr_out->data, pparams->out_size);
+
+    compute_out((double*)(pparams->inputs[0]), (double*)(pparams->out), pparams->out_size / pparams->out_typesize);
+
+    return 0;
+}
+
 INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 {
     int64_t nitems_in_schunk = e->nbytes / e->typesize;
@@ -212,9 +251,19 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
     caterva_dims_t shape = caterva_new_dims(e->vars[0].c->dtshape->shape, e->vars[0].c->dtshape->ndim);
     caterva_update_shape(ret->catarr, &shape);
     ret->catarr->size = 1;  // TODO: fix this workaround (see caterva_update_shape() call above)
-    int64_t out_pshape = e->chunksize / e->typesize;
+    int64_t *out_pshape;
 
-    if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNK) {
+    if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        out_pshape = (int64_t *) malloc(ret->dtshape->ndim * sizeof(int64_t));
+        for (int i = 0; i < ret->dtshape->ndim - 1; ++i) {
+            out_pshape[i] = 1;
+        }
+        out_pshape[ret->dtshape->ndim - 1] = e->chunksize / e->typesize;
+    } else {
+        out_pshape = ret->dtshape->pshape;
+    }
+
+    if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERCHUNK) {
 
         // Create and initialize an iterator per variable
         iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -224,13 +273,13 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, &out_pshape, &iter_value[nvar]);
+            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], NULL, 0);
         }
 
         // Write iterator for output
         iarray_iter_write_block_t *iter_out;
         iarray_iter_write_block_value_t out_value;
-        ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, &out_pshape, &out_value);
+        ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, NULL, 0);
         if (err != INA_SUCCESS) {
             return err;
         }
@@ -262,7 +311,102 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         ina_mem_free(iter_value);
         iarray_context_free(&ctx);
     }
-    else if (e->ctx->cfg->eval_flags & IARRAY_EXPR_EVAL_ITERBLOCK) {
+    else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
+
+        if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+            fprintf(stderr, "ITERBLOSC eval can't be used with a plainbuffer output container.\n");
+            return INA_ERR_ERROR;
+        }
+
+        // Setup a new cparams with a prefilter
+        blosc2_cparams *cparams = malloc(sizeof(blosc2_cparams));
+        memcpy(cparams, ret->cparams, sizeof(blosc2_cparams));
+        cparams->prefilter = (blosc2_prefilter_fn)prefilter_func;
+        blosc2_prefilter_params pparams = {0};
+        pparams.ninputs = nvars;
+        // TODO: add the out_value structure to the user_data also?
+        pparams.user_data = (void*)e;
+        cparams->pparams = &pparams;
+
+        // Create and initialize an iterator per variable
+        iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
+        iarray_context_t *ctx = NULL;
+        iarray_context_new(&cfg, &ctx);
+        iarray_iter_read_block_t **iter_var = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_t));
+        iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
+        for (int nvar = 0; nvar < nvars; nvar++) {
+            iarray_container_t *var = e->vars[nvar].c;
+            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], NULL, 0);
+            pparams.input_typesizes[nvar] = var->catarr->sc->typesize;
+        }
+
+        // Write iterator for output
+        iarray_iter_write_block_t *iter_out;
+        iarray_iter_write_block_value_t out_value;
+        ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, NULL, 0);
+        if (err != INA_SUCCESS) {
+            return err;
+        }
+
+        // Evaluate the expression for all the chunks in variables
+        while (iarray_iter_write_block_has_next(iter_out)) {
+            iarray_iter_write_block_next(iter_out);
+            int out_items = iter_out->cur_block_size;
+
+            // Decompress chunks in variables into temporaries
+            for (int nvar = 0; nvar < nvars; nvar++) {
+                iarray_iter_read_block_next(iter_var[nvar]);
+                e->temp_vars[nvar]->data = iter_value[nvar].pointer;
+                pparams.inputs[nvar] = iter_value[nvar].pointer;
+            }
+
+            // Eval the expression for this chunk
+            blosc2_context *cctx = blosc2_create_cctx(*cparams);
+            int csize = blosc2_compress_ctx(cctx, out_items * e->typesize,
+                                            NULL, out_value.pointer,
+                                            out_items * e->typesize + BLOSC_MAX_OVERHEAD);
+            if (csize <= 0) {
+                // Retry with clevel == 0 (should never fail)
+                blosc2_free_ctx(cctx);
+                cparams->clevel = 0;
+                cctx = blosc2_create_cctx(*cparams);
+                csize = blosc2_compress_ctx(cctx, out_items * e->typesize,
+                                            NULL, out_value.pointer,
+                                            out_items * e->typesize + BLOSC_MAX_OVERHEAD);
+            }
+            blosc2_free_ctx(cctx);
+            if (csize <= 0) {
+                return INA_ERR_ERROR;
+            }
+
+            if (out_items != ret->catarr->psize) {
+                // Not a complete chunk.  Decompress and append it as a regular buffer.
+                uint8_t *temp = malloc(csize);
+                memcpy(temp, out_value.pointer, csize);
+                int nbytes = blosc_decompress(temp, out_value.pointer, out_items * e->typesize);
+                free(temp);
+                if (nbytes <= 0) {
+                    return INA_ERR_ERROR;
+                }
+                iter_out->compressed_chunk_buffer = false;
+            }
+            else {
+                iter_out->compressed_chunk_buffer = true;
+            }
+
+            nitems_written += out_items;
+            ina_mempool_reset(e->ctx->mp_tmp_out);
+        }
+
+        for (int nvar = 0; nvar < nvars; nvar++) {
+            iarray_iter_read_block_free(iter_var[nvar]);
+        }
+        iarray_iter_write_block_free(iter_out);
+        ina_mem_free(iter_var);
+        ina_mem_free(iter_value);
+        iarray_context_free(&ctx);
+    }
+    else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK) {
         // This version of the evaluation engine works by using a chunk iterator and use OpenMP
         // for performing the computations.  The OpenMP loop split the chunk into smaller *blocks* that
         // are passed the tinyexpr evaluator.
@@ -279,13 +423,13 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, &out_pshape, &iter_value[nvar]);
+            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], NULL, 0);
         }
 
         // Write iterator for output
         iarray_iter_write_block_t *iter_out;
         iarray_iter_write_block_value_t out_value;
-        ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, &out_pshape, &out_value);
+        ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, NULL, 0);
         if (err != INA_SUCCESS) {
             return err;
         }
@@ -329,6 +473,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                 e->max_out_len = leftover / e->typesize;  // so as to prevent operating beyond the leftover
                 const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
                 e->max_out_len = 0;
+
                 memcpy((char*)out_value.pointer + nblocks * blocksize, (uint8_t*)expr_out->data, leftover);
             }
 
