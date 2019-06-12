@@ -336,14 +336,14 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar]);
+            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], NULL, 0);
             pparams.input_typesizes[nvar] = var->catarr->sc->typesize;
         }
 
         // Write iterator for output
         iarray_iter_write_block_t *iter_out;
         iarray_iter_write_block_value_t out_value;
-        ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value);
+        ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, NULL, 0);
         iter_out->compressed_chunk_buffer = true;  // TODO: set this in the out_value above?
         if (err != INA_SUCCESS) {
             return err;
