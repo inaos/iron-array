@@ -90,6 +90,8 @@ inac_add_examples(iarrays)
 #endif()
 
 # dist lib
+add_definitions(-DINA_DLL)
+add_definitions(-DINA_LIB)
 add_library(iarray SHARED ${src})
 target_link_libraries(iarray ${INAC_LIBS} blosc_static caterva ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
