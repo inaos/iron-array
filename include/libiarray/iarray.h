@@ -63,8 +63,9 @@ typedef struct iarray_store_properties_s {
 } iarray_store_properties_t;
 
 typedef enum iarray_eval_flags_e {
-    IARRAY_EXPR_EVAL_ITERCHUNK = 0x1,
-    IARRAY_EXPR_EVAL_ITERBLOCK = 0x2,
+    IARRAY_EXPR_EVAL_ITERCHUNK = 1,
+    IARRAY_EXPR_EVAL_ITERBLOCK = 2,
+    IARRAY_EXPR_EVAL_ITERBLOSC = 3,
 } iarray_eval_flags_t;
 
 typedef enum iarray_filter_flags_e {
