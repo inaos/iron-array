@@ -361,10 +361,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             }
 
             // Eval the expression for this chunk
-//            e->max_out_len = out_items;  // so as to prevent operating beyond the limits
-//            const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
-//            memcpy((char*)out_value.pointer, (uint8_t*)expr_out->data, out_items * e->typesize);
-
             blosc2_context *cctx = blosc2_create_cctx(*cparams);
             int csize = blosc2_compress_ctx(cctx, out_items * e->typesize,
                                             NULL, out_value.pointer,
@@ -384,18 +380,18 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             }
 
             if (out_items != ret->catarr->psize) {
-              // Not a complete chunk.  Decompress and append it as a regular buffer.
-              uint8_t *temp = malloc(csize);
-              memcpy(temp, out_value.pointer, csize);
-              int nbytes = blosc_decompress(temp, out_value.pointer, out_items * e->typesize);
-              free(temp);
-              if (nbytes <= 0) {
-                return INA_ERR_ERROR;
-              }
-              iter_out->compressed_chunk_buffer = false;
+                // Not a complete chunk.  Decompress and append it as a regular buffer.
+                uint8_t *temp = malloc(csize);
+                memcpy(temp, out_value.pointer, csize);
+                int nbytes = blosc_decompress(temp, out_value.pointer, out_items * e->typesize);
+                free(temp);
+                if (nbytes <= 0) {
+                    return INA_ERR_ERROR;
+                }
+                iter_out->compressed_chunk_buffer = false;
             }
             else {
-              iter_out->compressed_chunk_buffer = true;
+                iter_out->compressed_chunk_buffer = true;
             }
 
             nitems_written += out_items;
