@@ -344,7 +344,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_write_block_t *iter_out;
         iarray_iter_write_block_value_t out_value;
         ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, NULL, 0);
-        iter_out->compressed_chunk_buffer = true;  // TODO: set this in the out_value above?
         if (err != INA_SUCCESS) {
             return err;
         }
@@ -382,6 +381,21 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             blosc2_free_ctx(cctx);
             if (csize <= 0) {
                 return INA_ERR_ERROR;
+            }
+
+            if (out_items != ret->catarr->psize) {
+              // Not a complete chunk.  Decompress and append it as a regular buffer.
+              uint8_t *temp = malloc(csize);
+              memcpy(temp, out_value.pointer, csize);
+              int nbytes = blosc_decompress(temp, out_value.pointer, out_items * e->typesize);
+              free(temp);
+              if (nbytes <= 0) {
+                return INA_ERR_ERROR;
+              }
+              iter_out->compressed_chunk_buffer = false;
+            }
+            else {
+              iter_out->compressed_chunk_buffer = true;
             }
 
             nitems_written += out_items;
