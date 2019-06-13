@@ -21,7 +21,7 @@ TODO: Need to profile and define it
 
 # Performance Thoughts
 
-This document lists different thoughts or tools that we may want to adopt for enhancing and monitoring the performance of IronArray.
+This section lists different thoughts or tools that we may want to adopt for enhancing and monitoring the performance of IronArray.
 
 ## AirSpeed Velocity (ASV)
 
