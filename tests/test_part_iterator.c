@@ -37,6 +37,7 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     iarray_iter_write_block_value_t val;
     INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, NULL, 0));
 
+
     while (iarray_iter_write_block_has_next(I)) {
         iarray_iter_write_block_next(I);
 
@@ -48,11 +49,11 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
         }
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             for (int64_t i = 0; i < val.block_size; ++i) {
-                ((double *)val.pointer)[i] = (double) nelem + i;
+                ((double *) *val.pointer)[i] = (double) nelem + i;
             }
         } else {
             for (int64_t i = 0; i < val.block_size; ++i) {
-                ((float *)val.pointer)[i] = (float) nelem  + i;
+                ((float *) *val.pointer)[i] = (float) nelem  + i;
             }
         }
     }
@@ -100,7 +101,7 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     iarray_iter_read_block_value_t val3;
     INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, NULL, 0));
 
-    while (iarray_iter_read_block_has_next(I2) & iarray_iter_read_block_has_next(I3)) {
+    while (iarray_iter_read_block_has_next(I2) && iarray_iter_read_block_has_next(I3)) {
         iarray_iter_read_block_next(I2);
         iarray_iter_read_block_next(I3);
 
@@ -168,9 +169,9 @@ INA_TEST_FIXTURE(part_iterator, 3_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
-    int8_t ndim = 3;
-    int64_t shape[] = {120, 131, 155};
-    int64_t pshape[] = {23, 32, 35};
+    int8_t ndim = 2;
+    int64_t shape[] = {10, 10};
+    int64_t pshape[] = {5, 6};
     int64_t *blockshape = pshape;
 
     INA_TEST_ASSERT_SUCCEED(test_part_iterator(data->ctx, dtype, type_size, ndim, shape, pshape,
@@ -289,11 +290,11 @@ static ina_rc_t test_part_iterator_ext_part(iarray_context_t *ctx, iarray_data_t
         }
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             for (int64_t i = 0; i < val.block_size; ++i) {
-                ((double *)val.pointer)[i] = (double) nelem + i;
+                ((double *)*val.pointer)[i] = (double) nelem + i;
             }
         } else {
             for (int64_t i = 0; i < val.block_size; ++i) {
-                ((float *)val.pointer)[i] = (float) nelem  + i;
+                ((float *)*val.pointer)[i] = (float) nelem  + i;
             }
         }
     }
