@@ -356,6 +356,10 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
                                    iarray_store_properties_t *store,
                                    iarray_container_t **container);
 
+INA_API(ina_rc_t) iarray_to_file(iarray_context_t *ctx,
+                                 iarray_store_properties_t *store,
+                                 iarray_container_t **container);
+
 INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
                                  iarray_container_t *container);
 
