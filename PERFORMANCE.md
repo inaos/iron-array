@@ -1,6 +1,27 @@
+# Goals
+
+Here we document the goals.
+
+## Version 1
+
+### Plain Buffers
+
+* The performance should be same as when using MKL with C directly.
+* The scaling on the same node should also be in-line with what is achievable with MKL and pure native code.
+
+### Chunked containers (without compression)
+
+This only makes sense for containers stored on disk, larger than memory. Otherwise it is advisable to use plain-buffers instead.
+
+TODO: Need to profile and define it
+
+### Compressed containers
+
+TODO: Need to profile and define it
+
 # Performance Thoughts
 
-This document lists different thoughts or tools that we may want to adopt for enhancing and monitoring the performance of IronArray.
+This section lists different thoughts or tools that we may want to adopt for enhancing and monitoring the performance of IronArray.
 
 ## AirSpeed Velocity (ASV)
 
