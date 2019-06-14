@@ -107,7 +107,25 @@ Archive format:
 
 ### Python Library
 
+* We'll use the standard 'Wheels' format to package for:
+  * Windows
+  * Linux
+  * OS X
+* We'll produce 1 single 'wheel' per platform that contains:
+  * Iron-Array C library (so, dll, dylib)
+  * OpenMP (so, dll, dylib)
+  * Python Extensions
+  * Compiled Python Code
+
 ### Java Library
+
+* We'll support Java > 8
+* We'll use 1 single JAR file that contains all the binaries for the supported platforms
+* We'll bundle:
+  * Iron-Array C library
+  * OpenMP C library
+  * Iron-Array JNI 
+  * Iron-Array compiled Java-Code
 
 ## Release
 
