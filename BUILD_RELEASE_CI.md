@@ -53,7 +53,7 @@
 * CMake
 * INAC CMake utilities
 
-## Packages / Artefacts
+## Packages / Artifacts
 
 ### C Library
 
