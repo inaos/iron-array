@@ -48,7 +48,7 @@ find_package(MKL)
 #configure Intel IPP
 find_package(IPP)
 #configure OMP
-if (MKL_MULTITHREADING)
+if (MULTITHREADING)
     find_package(OMP)
 endif()
 
