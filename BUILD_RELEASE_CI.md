@@ -69,10 +69,13 @@ Directory structure:
 - include (iarray.h)
 - lib (iarray.dll, iarray.lib, libomp5.lib, omp.dll, debug symbols)
 
-Supported Compilers:
+Supported Compilers (this requires a different package per compiler):
 - Visual Studio 2015
 - Visual Studio 2017
 - Intel Compiler
+
+Archive format:
+- ZIP file
 
 #### Linux
 
@@ -81,13 +84,11 @@ Directory structure:
 - include (iarray.h)
 - lib (libiarray.so, libomp5.so, debug symbols)
 
-Supported Compilers:
-- GCC
-- Clang / LLVM
-- Intel Compiler
-
 Supported C library:
 - We'll use Docker on Azure-DevOps to emulate an "old" version of libc
+
+Archive format:
+- TAR.GZ / (maybe TAR.XZ)
 
 #### OS X
 
@@ -98,11 +99,11 @@ Directory structure:
 - include (iarray.h)
 - lib (libiarray.dylib, libomp5.dylib, debug symbols)
 
-Supported Compilers:
-- Clang / LLVM
-
 OS Version:
 - We use whatever is provided by Azure DevOps
+
+Archive format:
+- TAR.XZ
 
 ### Python Library
 
