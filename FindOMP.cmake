@@ -44,8 +44,8 @@ find_path(OMP_ROOT_DIR
 
 
 if(APPLE)
-    set(OMP_SEARCH_LIB libiomp5.so)
-    set(OMP_LIBS libiomp5.so)
+    set(OMP_SEARCH_LIB libiomp5.dylib)
+    set(OMP_LIBS libiomp5.dylib)
 elseif(WIN32)
     set(OMP_SEARCH_LIB iomp5.dll)
     set(OMP_LIBS libiomp5.dll)
