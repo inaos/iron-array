@@ -63,8 +63,9 @@ typedef struct iarray_store_properties_s {
 } iarray_store_properties_t;
 
 typedef enum iarray_eval_flags_e {
-    IARRAY_EXPR_EVAL_ITERCHUNK = 0x1,
-    IARRAY_EXPR_EVAL_ITERBLOCK = 0x2,
+    IARRAY_EXPR_EVAL_ITERCHUNK = 1,
+    IARRAY_EXPR_EVAL_ITERBLOCK = 2,
+    IARRAY_EXPR_EVAL_ITERBLOSC = 3,
 } iarray_eval_flags_t;
 
 typedef enum iarray_filter_flags_e {
@@ -170,7 +171,7 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .compression_codec=IARRAY_COMPRESSION_LZ4,
     .compression_level=5,
     .use_dict=0,
-    .filter_flags=0,
+    .filter_flags=IARRAY_COMP_SHUFFLE,
     .eval_flags=IARRAY_EXPR_EVAL_ITERCHUNK,
     .max_num_threads=1,
     .fp_mantissa_bits=0,
@@ -355,6 +356,10 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
                                    iarray_store_properties_t *store,
                                    iarray_container_t **container);
 
+INA_API(ina_rc_t) iarray_to_file(iarray_context_t *ctx,
+                                 iarray_store_properties_t *store,
+                                 iarray_container_t **container);
+
 INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
                                  iarray_container_t *container);
 
@@ -375,6 +380,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
                                    void *buffer,
                                    size_t buffer_len);
 
+INA_API(bool) iarray_is_empty(iarray_container_t *container);
 
 INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dtshape_t *b);
 INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, int64_t *nbytes, int64_t *cbytes);
@@ -481,7 +487,10 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_iter_read_block_t **itr,
                                              iarray_container_t *cont,
                                              const int64_t *blockshape,
-                                             iarray_iter_read_block_value_t *value);
+                                             iarray_iter_read_block_value_t *value,
+                                             void *external_buffer,
+                                             int64_t bufsize);
+
 INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr);
 INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr);
 INA_API(int) iarray_iter_read_block_has_next(iarray_iter_read_block_t *itr);
@@ -490,7 +499,9 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_iter_write_block_t **itr,
                                               iarray_container_t *cont,
                                               const int64_t *blockshape,
-                                              iarray_iter_write_block_value_t *value);
+                                              iarray_iter_write_block_value_t *value,
+                                              void *external_buffer,
+                                              int64_t bufsize);
 INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t *itr);
 INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr);
 INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr);
