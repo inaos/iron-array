@@ -157,12 +157,23 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         } else {
             INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
         }
+        ina_stopwatch_t *w = NULL;
+        double elapsed_sec = 0;
 
         // Make blocks multiplication
+        mkl_set_num_threads(ctx->cfg->max_num_threads);
+        //printf("Num. threads: %d\n", mkl_get_max_threads());
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                cblas_dgemm(CblasRowMajor, flag_a, flag_b, (const int)B0, (const int)B2, (const int)B1,
+
+                INA_STOPWATCH_NEW(-1, -1, &w);
+                INA_STOPWATCH_START(w);
+                cblas_dgemm(CblasRowMajor, flag_a, flag_b, (int) B0, (int) B2, (int) B1,
                             1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 1.0, (double *)c_block, ld_c);
+                INA_STOPWATCH_STOP(w);
+                INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+                //printf("  Time iarray dgemm: %.4f\n", elapsed_sec);
+                INA_STOPWATCH_FREE(&w);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 cblas_sgemm(CblasRowMajor, flag_a, flag_b, (const int)B0, (const int)B2, (const int)B1,
@@ -332,6 +343,8 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
 
         // Make blocks multiplication
+        mkl_set_num_threads(ctx->cfg->max_num_threads);
+        //printf("Num. threads: %d\n", mkl_get_max_threads());
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 cblas_dgemv(CblasRowMajor, flag_a, M, K, 1.0, (double *) a_block, ld_a, (double *) b_block, 1, 1.0, (double *) c_block, 1);
@@ -549,10 +562,6 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     INA_ASSERT_NOT_NULL(a);
     INA_ASSERT_NOT_NULL(b);
     INA_ASSERT_NOT_NULL(c);
-
-    if (mkl_get_max_threads() != ctx->cfg->max_num_threads) {
-        mkl_set_num_threads(ctx->cfg->max_num_threads);
-    }
 
     if (a->dtshape->dtype != b->dtshape->dtype) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
