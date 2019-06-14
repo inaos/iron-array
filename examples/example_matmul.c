@@ -13,12 +13,16 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-int main()
+int main(int argc, char **argv)
 {
+    iarray_init();
     ina_stopwatch_t *w = NULL;
     double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
-
+    if (argc != 2) {
+        return -1;
+    }
+    int n_threads = atoi(argv[1]);
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     
@@ -33,7 +37,7 @@ int main()
     int64_t bshape_y[] = {2000, 2000};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    cfg.max_num_threads = 2;
+    cfg.max_num_threads = n_threads;
     iarray_context_t *ctx;
     iarray_context_new(&cfg, &ctx);
 
@@ -68,13 +72,8 @@ int main()
     
     iarray_container_t *c_z;
     iarray_container_new(ctx, &dtshape_z, NULL, 0, &c_z);
+    mkl_set_num_threads(n_threads);
 
-    INA_STOPWATCH_START(w);
-    INA_MUST_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y ,c_z, bshape_x, bshape_y, IARRAY_OPERATOR_GENERAL));
-    INA_STOPWATCH_STOP(w);
-    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
-
-    printf("Time iarray: %.4f\n", elapsed_sec);
 
     double *b_x = (double *) malloc(size * sizeof(double));
     double *b_y = (double *) malloc(size * sizeof(double));
@@ -83,7 +82,7 @@ int main()
 
     iarray_to_buffer(ctx, c_x, b_x, size * sizeof(double));
     iarray_to_buffer(ctx, c_y, b_y, size * sizeof(double));
-    iarray_to_buffer(ctx, c_z, b_res, size * sizeof(double));
+
 
     INA_STOPWATCH_START(w);
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) shape[0], (int) shape[1], (int) shape[1],
@@ -93,6 +92,15 @@ int main()
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
     printf("Time mkl (C): %.4f\n", elapsed_sec);
+
+    INA_STOPWATCH_START(w);
+    INA_MUST_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y ,c_z, bshape_x, bshape_y, IARRAY_OPERATOR_GENERAL));
+    INA_STOPWATCH_STOP(w);
+    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+
+    printf("Time iarray: %.4f\n", elapsed_sec);
+
+    iarray_to_buffer(ctx, c_z, b_res, size * sizeof(double));
 
     for (int i = 0; i < size; ++i) {
         if (fabs((b_res[i] - b_z[i]) / b_res[i]) > 1e-8) {
@@ -112,6 +120,6 @@ int main()
     iarray_context_free(&ctx);
 
     INA_STOPWATCH_FREE(&w);
-
+    iarray_destroy();
     return EXIT_SUCCESS;
 }
