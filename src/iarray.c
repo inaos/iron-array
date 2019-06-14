@@ -13,7 +13,8 @@
 #include <libiarray/iarray.h>
 
 #include <iarray_private.h>
-#ifdef LINUX
+
+#if __linux__
 #include <sys/sysinfo.h>
 #include <sched.h>
 #endif
@@ -31,9 +32,10 @@ INA_API(ina_rc_t) iarray_init()
         blosc_init();
         _blosc_inited = 1;
     }
-#ifdef LINUX
-    int nprocs = get_nprocs();
 
+#if __linux__
+    int nprocs = get_nprocs();
+    printf("Linux\n");
     cpu_set_t  mask;
     CPU_ZERO(&mask); 
     for(int i = 0; i < nprocs; i++) {
@@ -41,6 +43,7 @@ INA_API(ina_rc_t) iarray_init()
     }
     sched_setaffinity(0, sizeof(mask), &mask);
 #endif
+
     return INA_SUCCESS;
 }
 
