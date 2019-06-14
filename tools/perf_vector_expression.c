@@ -140,7 +140,7 @@ int main(int argc, char** argv)
         printf("eval_flags must be 1, 2, 3\n");
         return EXIT_FAILURE;
     }
-    config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions
+    //config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
 
