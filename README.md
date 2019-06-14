@@ -47,6 +47,12 @@ We use inac cmake build-system.
          cmake -DCMAKE_BUILD_TYPE=Debug ..
          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 
+* Use multithreaded version, we need to add next flag
+
+         cmake -DCMAKE_BUILD_TYPE=Debug -DMULTITHREADING=TRUE ..
+         cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMULTITHREADING=TRUE ..
+ 
+    
 #### Linux
 
 * INAC build setup
@@ -69,6 +75,11 @@ We use inac cmake build-system.
 
          cmake -DCMAKE_BUILD_TYPE=Debug ..
          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+         
+ * Use multithreaded version, we need to add next flag
+ 
+          cmake -DCMAKE_BUILD_TYPE=Debug -DMULTITHREADING=TRUE ..
+          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMULTITHREADING=TRUE ..
 
 ### Limitations
 
