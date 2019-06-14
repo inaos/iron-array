@@ -23,7 +23,7 @@
 if (APPLE)
     set(OMP_ROOT_LIB lib/libiomp5.a)
 elseif (WIN32)
-    set(OMP_ROOT_LIB lib/iomp5.lib)
+    set(OMP_ROOT_LIB compiler/lib/intel64/libiomp5md.lib)
 else()
     set(OMP_ROOT_LIB lib/intel64/libiomp5.a)
 endif()
@@ -42,13 +42,12 @@ find_path(OMP_ROOT_DIR
         $ENV{CONDA}/Library # Azure pipeline hosted windows agent
 )
 
-
 if(APPLE)
     set(OMP_SEARCH_LIB libiomp5.dylib)
     set(OMP_LIBS libiomp5.dylib)
 elseif(WIN32)
-    set(OMP_SEARCH_LIB iomp5.dll)
-    set(OMP_LIBS libiomp5.dll)
+    set(OMP_SEARCH_LIB libiomp5md.lib)
+    set(OMP_LIBS libiomp5md.lib)
 else()
     set(OMP_SEARCH_LIB libiomp5.so)
     set(OMP_LIBS libiomp5.so)
@@ -59,6 +58,7 @@ find_path(OMP_LIB_SEARCHPATH
     PATHS
         ${OMP_ROOT_DIR}/lib/intel64
         ${OMP_ROOT_DIR}/lib
+		${OMP_ROOT_DIR}/compiler/lib/intel64
 )
 
 foreach (LIB ${OMP_LIBS})
