@@ -59,11 +59,11 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
             }
             if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
                 for (int64_t i = 0; i < val.block_size; ++i) {
-                    ((double *) val.pointer)[i] = (double) nelem + i;
+                    ((double *) *val.pointer)[i] = (double) nelem + i;
                 }
             } else {
                 for (int64_t i = 0; i < val.block_size; ++i) {
-                    ((float *) val.pointer)[i] = (float) nelem + i;
+                    ((float *) *val.pointer)[i] = (float) nelem + i;
                 }
             }
         }
