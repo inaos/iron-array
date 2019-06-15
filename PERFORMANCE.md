@@ -7,7 +7,7 @@ Here we document the goals.
 ### Plain Buffers
 
 * The performance should be same as when using MKL with C directly.
-* The scaling on the same node should also be in-line with what is achievable with MKL and pure native code.
+* The multi-core scaling should also be in-line with what is achievable with MKL and pure native code.
 
 ### Chunked containers (without compression)
 
@@ -17,7 +17,14 @@ TODO: Need to profile and define it
 
 ### Compressed containers
 
-TODO: Need to profile and define it
+* We should reach the performance of pure native code - on a reduction (e.g. sum) - when running on 16 CPU Cores
+* All other performance goals will be defined later
+
+### Parallelism
+
+* For V1 we only support parallelism through the expression/computation-engine.
+* For constructing containers we'll automatically benefit from the blosc paralellism
+* No other functions will be parallelized for V1
 
 # Performance Thoughts
 
