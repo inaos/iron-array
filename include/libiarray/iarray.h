@@ -143,7 +143,7 @@ typedef struct iarray_iter_read_value_s {
 } iarray_iter_read_value_t;
 
 typedef struct iarray_iter_write_block_value_s {
-    void *pointer;
+    void **pointer;
     int64_t *block_index;
     int64_t *elem_index;
     int64_t nblock;
@@ -193,7 +193,16 @@ INA_API(void) iarray_destroy(void);
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx);
 INA_API(void) iarray_context_free(iarray_context_t **ctx);
 
-INA_API(ina_rc_t) iarray_partition_advice(iarray_data_type_t dtype, const int *max_nelem, const int *min_nelem);
+INA_API(ina_rc_t) iarray_advice_partition(iarray_context_t *ctx,
+                                          iarray_data_type_t dtype,
+                                          const int *max_nelem,
+                                          const int *min_nelem);
+
+INA_API(ina_rc_t) iarray_advice_matmul(iarray_context_t *ctx,
+                                       iarray_container_t *a,
+                                       iarray_container_t *b,
+                                       int64_t **bshape_a,
+                                       int64_t **bshape_b);
 
 INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
                                         uint32_t seed,
@@ -488,7 +497,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_container_t *cont,
                                              const int64_t *blockshape,
                                              iarray_iter_read_block_value_t *value,
-                                             void *external_buffer,
+                                             void **external_buffer,
                                              int64_t bufsize);
 
 INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr);
@@ -500,7 +509,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_container_t *cont,
                                               const int64_t *blockshape,
                                               iarray_iter_write_block_value_t *value,
-                                              void *external_buffer,
+                                              void **external_buffer,
                                               int64_t bufsize);
 INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t *itr);
 INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr);
