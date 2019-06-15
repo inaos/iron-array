@@ -19,6 +19,12 @@ TODO: Need to profile and define it
 
 TODO: Need to profile and define it
 
+### Parallelism
+
+* For V1 we only support parallelism through the expression/computation-engine.
+* For constructing containers we'll automatically benefit from the blosc paralellism
+* No other functions will be parallelized for V1
+
 # Performance Thoughts
 
 This section lists different thoughts or tools that we may want to adopt for enhancing and monitoring the performance of IronArray.
