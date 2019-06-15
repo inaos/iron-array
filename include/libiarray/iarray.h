@@ -193,7 +193,16 @@ INA_API(void) iarray_destroy(void);
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx);
 INA_API(void) iarray_context_free(iarray_context_t **ctx);
 
-INA_API(ina_rc_t) iarray_partition_advice(iarray_data_type_t dtype, const int *max_nelem, const int *min_nelem);
+INA_API(ina_rc_t) iarray_advice_partition(iarray_context_t *ctx,
+                                          iarray_data_type_t dtype,
+                                          const int *max_nelem,
+                                          const int *min_nelem);
+
+INA_API(ina_rc_t) iarray_advice_matmul(iarray_context_t *ctx,
+                                       iarray_container_t *a,
+                                       iarray_container_t *b,
+                                       int64_t **bshape_a,
+                                       int64_t **bshape_b);
 
 INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
                                         uint32_t seed,
