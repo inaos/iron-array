@@ -68,6 +68,23 @@ Following our guideline:
      ...
      }
 
+### Branches
+
+     if (condition) {
+         ...
+     }
+     else if (condition) {
+         ...
+     }
+     else {
+         ...
+     }
+     
+### Pointers
+
+    double *arr = (double*)arg1;
+    
+
 ### Adhere to INAC conventions wherever possible
 
 * Alwalys use ina_rc_t as return type of functions
