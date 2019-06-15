@@ -177,9 +177,9 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                 if ((method == _IARRAY_RANDOM_METHOD_BERNOUILLI) ||
                     (method == _IARRAY_RANDOM_METHOD_POISSON) ||
                     (method == _IARRAY_RANDOM_METHOD_BINOMIAL)) {
-                    ((float *) val.pointer)[i] = (float) ((int *) r)[i];
+                    ((float *) *val.pointer)[i] = (float) ((int *) r)[i];
                 } else {
-                    ((float *) val.pointer)[i] = r[i];
+                    ((float *) *val.pointer)[i] = r[i];
                 }
             }
         }
@@ -240,9 +240,9 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                 if ((method == _IARRAY_RANDOM_METHOD_BERNOUILLI) ||
                     (method == _IARRAY_RANDOM_METHOD_POISSON) ||
                     (method == _IARRAY_RANDOM_METHOD_BINOMIAL)) {
-                    ((double *) val.pointer)[i] = (double) ((int *) r)[i];
+                    ((double *) *val.pointer)[i] = (double) ((int *) r)[i];
                 } else {
-                    ((double *) val.pointer)[i] = r[i];
+                    ((double *) *val.pointer)[i] = r[i];
                 }
             }
         }
