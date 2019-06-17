@@ -35,11 +35,11 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     // Start Iterator
     iarray_iter_write_block_t *I;
     iarray_iter_write_block_value_t val;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, NULL, 0));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, false));
 
 
     while (iarray_iter_write_block_has_next(I)) {
-        iarray_iter_write_block_next(I);
+        iarray_iter_write_block_next(I, NULL, 0);
 
         int64_t nelem = 0;
         int64_t inc = 1;
@@ -49,11 +49,11 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
         }
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             for (int64_t i = 0; i < val.block_size; ++i) {
-                ((double *) *val.pointer)[i] = (double) nelem + i;
+                ((double *) val.pointer)[i] = (double) nelem + i;
             }
         } else {
             for (int64_t i = 0; i < val.block_size; ++i) {
-                ((float *) *val.pointer)[i] = (float) nelem  + i;
+                ((float *) val.pointer)[i] = (float) nelem  + i;
             }
         }
     }
@@ -277,10 +277,10 @@ static ina_rc_t test_part_iterator_ext_part(iarray_context_t *ctx, iarray_data_t
 
     uint8_t *part_x = (uint8_t *) malloc(partsize_x);
 
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, (void **) &part_x, partsize_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, true));
 
     while (iarray_iter_write_block_has_next(I)) {
-        iarray_iter_write_block_next(I);
+        iarray_iter_write_block_next(I, (void **) part_x, partsize_x);
 
         int64_t nelem = 0;
         int64_t inc = 1;
@@ -290,11 +290,11 @@ static ina_rc_t test_part_iterator_ext_part(iarray_context_t *ctx, iarray_data_t
         }
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             for (int64_t i = 0; i < val.block_size; ++i) {
-                ((double *)*val.pointer)[i] = (double) nelem + i;
+                ((double *)val.pointer)[i] = (double) nelem + i;
             }
         } else {
             for (int64_t i = 0; i < val.block_size; ++i) {
-                ((float *)*val.pointer)[i] = (float) nelem  + i;
+                ((float *)val.pointer)[i] = (float) nelem  + i;
             }
         }
     }
