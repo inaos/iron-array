@@ -42,14 +42,14 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
         // Start Iterator
         iarray_iter_write_block_t *I;
         iarray_iter_write_block_value_t val;
-        ina_rc_t err = iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, NULL, 0);
+        ina_rc_t err = iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, false);
         if (rewrite && (j == 1)) {
             if (err != 0) { // We need the iterator to return an error
                 return INA_SUCCESS;
             }
         }
         while (iarray_iter_write_block_has_next(I)) {
-            iarray_iter_write_block_next(I);
+            iarray_iter_write_block_next(I, NULL, 0);
 
             int64_t nelem = 0;
             int64_t inc = 1;
@@ -59,11 +59,11 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
             }
             if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
                 for (int64_t i = 0; i < val.block_size; ++i) {
-                    ((double *) *val.pointer)[i] = (double) nelem + i;
+                    ((double *) val.pointer)[i] = (double) nelem + i;
                 }
             } else {
                 for (int64_t i = 0; i < val.block_size; ++i) {
-                    ((float *) *val.pointer)[i] = (float) nelem + i;
+                    ((float *) val.pointer)[i] = (float) nelem + i;
                 }
             }
         }
