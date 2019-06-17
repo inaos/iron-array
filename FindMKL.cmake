@@ -40,7 +40,6 @@ find_path(MKL_INCLUDE_DIR
         ${MKL_ROOT_DIR}/include
         )
 
-message("INCLUDE DIR -> " ${MKL_INCLUDE_DIR})
 
 if(WIN32)
     set(MKL_SEARCH_LIB mkl_core.lib)
@@ -90,6 +89,6 @@ foreach (LIB ${MKL_LIBS})
 endforeach()
 
 set(MKL_INCLUDE_DIRS ${MKL_INCLUDE_DIR})
-message("MKL INCLUDE DIR: ${MKL_INCLUDE_DIRS}")
+
 include_directories(${MKL_INCLUDE_DIRS})
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${MKL_LIBRARIES})
