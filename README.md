@@ -56,7 +56,7 @@ We use inac cmake build-system.
 #### Linux
 
 * INAC build setup
-    * Make sure that you have a configured repository.txt file in ~/.inaos
+    * Make sure that you have a configured repository.txt file in ~/.inaos/cmake
     * Also you'll need a directory under ~/INAOS (can be empty)
     
 * MKL setup.  For Ubuntu machines, it is best to use Intel's Ubuntu repo:
