@@ -273,7 +273,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], NULL, 0);
+            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false);
         }
 
         // Write iterator for output
@@ -291,7 +291,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
-                iarray_iter_read_block_next(iter_var[nvar]);
+                iarray_iter_read_block_next(iter_var[nvar], NULL, 0);
                 e->temp_vars[nvar]->data = iter_value[nvar].pointer;
             }
 
@@ -336,7 +336,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], NULL, 0);
+            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false);
             pparams.input_typesizes[nvar] = var->catarr->sc->typesize;
         }
 
@@ -362,7 +362,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
-                iarray_iter_read_block_next(iter_var[nvar]);
+                iarray_iter_read_block_next(iter_var[nvar], NULL, 0);
                 e->temp_vars[nvar]->data = iter_value[nvar].pointer;
                 pparams.inputs[nvar] = iter_value[nvar].pointer;
             }
@@ -430,7 +430,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], NULL, 0);
+            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false);
         }
 
         // Write iterator for output
@@ -463,7 +463,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 //#endif
             iarray_iter_write_block_next(iter_out, NULL, 0);
             for (int nvar = 0; nvar < nvars; nvar++) {
-                iarray_iter_read_block_next(iter_var[nvar]);
+                iarray_iter_read_block_next(iter_var[nvar], NULL, 0);
             }
 
             out_items = iter_out->cur_block_size;
