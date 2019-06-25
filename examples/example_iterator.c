@@ -50,9 +50,9 @@ int main()
 
     iarray_iter_read_block_t *iter;
     iarray_iter_read_block_value_t val;
-    iarray_iter_read_block_new(ctx, &iter, cont, bshape, &val, NULL, 0);
+    iarray_iter_read_block_new(ctx, &iter, cont, bshape, &val, false);
     while (iarray_iter_read_block_has_next(iter)) {
-        iarray_iter_read_block_next(iter);
+        iarray_iter_read_block_next(iter, NULL, 0);
         for (int i = 0; i < val.block_size; ++i) {
             double value = ((double *) val.pointer)[i];
             printf("%f - ", value);
