@@ -89,12 +89,12 @@ int main(int argc, char *argv[])
     iarray_iter_read_block_value_t value_y;
     iarray_iter_read_block_value_t value_z;
 
-    iarray_iter_read_block_new(ctx, &iter_y, c_y, bshape, &value_y, NULL, 0);
-    iarray_iter_read_block_new(ctx, &iter_z, c_z, bshape, &value_z, NULL, 0);
+    iarray_iter_read_block_new(ctx, &iter_y, c_y, bshape, &value_y, false);
+    iarray_iter_read_block_new(ctx, &iter_z, c_z, bshape, &value_z, false);
 
     while (iarray_iter_read_block_has_next(iter_y)) {
-        iarray_iter_read_block_next(iter_y);
-        iarray_iter_read_block_next(iter_z);
+        iarray_iter_read_block_next(iter_y, NULL, 0);
+        iarray_iter_read_block_next(iter_z, NULL, 0);
         
         for (int64_t i = 0; i < value_y.block_size; ++i) {
             switch (dtype) {

@@ -95,15 +95,15 @@ static ina_rc_t test_part_iterator(iarray_context_t *ctx, iarray_data_type_t dty
     // Start Iterator
     iarray_iter_read_block_t *I2;
     iarray_iter_read_block_value_t val2;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I2, c_x, blockshape, &val2, NULL, 0));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I2, c_x, blockshape, &val2, false));
 
     iarray_iter_read_block_t *I3;
     iarray_iter_read_block_value_t val3;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, NULL, 0));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, false));
 
     while (iarray_iter_read_block_has_next(I2) && iarray_iter_read_block_has_next(I3)) {
-        iarray_iter_read_block_next(I2);
-        iarray_iter_read_block_next(I3);
+        iarray_iter_read_block_next(I2, NULL, 0);
+        iarray_iter_read_block_next(I3, NULL, 0);
 
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
@@ -280,7 +280,7 @@ static ina_rc_t test_part_iterator_ext_part(iarray_context_t *ctx, iarray_data_t
     INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, true));
 
     while (iarray_iter_write_block_has_next(I)) {
-        iarray_iter_write_block_next(I, (void **) part_x, partsize_x);
+        iarray_iter_write_block_next(I, (void *) part_x, partsize_x);
 
         int64_t nelem = 0;
         int64_t inc = 1;
@@ -337,7 +337,7 @@ static ina_rc_t test_part_iterator_ext_part(iarray_context_t *ctx, iarray_data_t
     iarray_iter_read_block_t *I2;
     iarray_iter_read_block_value_t val2;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I2, c_x, blockshape, &val2, (void **) &part_x, partsize_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I2, c_x, blockshape, &val2, true));
 
     iarray_iter_read_block_t *I3;
     iarray_iter_read_block_value_t val3;
@@ -355,11 +355,11 @@ static ina_rc_t test_part_iterator_ext_part(iarray_context_t *ctx, iarray_data_t
     }
 
     uint8_t *part_y = (uint8_t *) malloc(partsize_y);
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, (void **) &part_y, partsize_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, true));
 
     while (iarray_iter_read_block_has_next(I2) && iarray_iter_read_block_has_next(I3)) {
-        iarray_iter_read_block_next(I2);
-        iarray_iter_read_block_next(I3);
+        iarray_iter_read_block_next(I2, (void *) part_x, partsize_x);
+        iarray_iter_read_block_next(I3, (void *) part_y, partsize_y);
 
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:

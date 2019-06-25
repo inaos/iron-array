@@ -149,10 +149,11 @@ typedef struct iarray_iter_read_block_s {
     iarray_container_t *cont;
     iarray_iter_read_block_value_t *val;
     uint8_t *part;
-    void *pointer;
+    void **pointer;
     int64_t total_blocks; // Total number of blocks
     int64_t *aux; // Aux variable used
     int64_t *block_shape; // The blockshape to be iterated
+    int64_t block_shape_size; // The size of the blockshape
     int64_t *cur_block_shape; // The shape of the current block (can be diff to the block shape passed)
     int64_t cur_block_size; // The size of the current block
     int64_t *cur_block_index; // The position of the block in the container

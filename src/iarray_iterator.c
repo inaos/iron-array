@@ -138,8 +138,16 @@ void _iarray_iter_matmul_free(iarray_iter_matmul_t *itr)
  */
 
 
-INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr)
+INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr, void *buffer, int32_t bufsize)
 {
+    if (itr->external_buffer) {
+        if (bufsize < itr->block_shape_size + BLOSC_MAX_OVERHEAD) {
+            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        }
+        itr->part = buffer;
+        itr->pointer = (void **) &itr->part;
+    }
+
     int64_t typesize = itr->cont->catarr->ctx->cparams.typesize;
     int8_t ndim = itr->cont->dtshape->ndim;
 
@@ -182,8 +190,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr)
     //printf("IT %p\n", (void *) itr->part);
 
     // Update the structure that user can see
-    itr->pointer = &(itr->part[0]);
-    itr->val->pointer = itr->pointer;
+    itr->val->pointer = *itr->pointer;
     itr->val->block_index = itr->cur_block_index;
     itr->val->elem_index = itr->cur_elem_index;
     itr->val->nblock = itr->nblock;
@@ -208,8 +215,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_container_t *cont,
                                              const int64_t *blockshape,
                                              iarray_iter_read_block_value_t *value,
-                                             void **external_buffer,
-                                             int64_t bufsize)
+                                             bool external_buffer)
 {
     INA_VERIFY_NOT_NULL(itr);
     *itr = (iarray_iter_read_block_t *) ina_mem_alloc(sizeof(iarray_iter_read_block_t));
@@ -226,12 +232,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
-    if (external_buffer != NULL) {
-        if (bufsize < cont->catarr->psize) {
-            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
-        }
-    }
-
+    (*itr)->val = value;
     (*itr)->aux = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
     (*itr)->block_shape = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
     (*itr)->cur_block_shape = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
@@ -239,11 +240,13 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     (*itr)->cur_elem_index = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
 
     // Create a buffer where data is stored to pass it to the user
-    int64_t block_size = typesize;
+    (*itr)->block_shape_size = 1;
     for (int i = 0; i < cont->dtshape->ndim; ++i) {
         (*itr)->block_shape[i] = blockshape[i];
-        block_size *= (*itr)->block_shape[i];
+        (*itr)->block_shape_size *= (*itr)->block_shape[i];
     }
+    int64_t block_size = typesize * (*itr)->block_shape_size;
+
 
     (*itr)->contiguous = (cont->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
     (*itr)->contiguous = !(cont->view) && (*itr)->contiguous;
@@ -260,18 +263,19 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     }
 
     if (!(*itr)->contiguous) {
-        if (external_buffer == NULL) {
+        if (!external_buffer) {
             (*itr)->external_buffer = false;
-            (*itr)->part = ina_mem_alloc((size_t) block_size);
+            (*itr)->part = (uint8_t *) ina_mem_alloc((size_t) block_size + BLOSC_MAX_OVERHEAD);
+            (*itr)->pointer = (void **) &(*itr)->part;
         } else {
             (*itr)->external_buffer = true;
-            (*itr)->part = &((uint8_t *) *external_buffer)[0];
+            (*itr)->part = NULL;
         }
     } else {
-        (*itr)->part = &cont->catarr->buf[0];
+        (*itr)->external_buffer = false;
+        (*itr)->part = cont->catarr->buf;
+        (*itr)->pointer = (void **) &(*itr)->part;
     }
-
-    (*itr)->val = value;
 
     // Calculate the total number of blocks
     (*itr)->total_blocks = 1;
@@ -646,6 +650,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         (*itr)->cont_esize *= (*itr)->cont_eshape[i];
         (*itr)->block_shape_size *= (*itr)->block_shape[i];
     }
+
     int64_t block_size = typesize;
     for (int i = 0; i < cont->dtshape->ndim; ++i) {
         (*itr)->block_shape[i] = blockshape[i];
