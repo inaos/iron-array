@@ -99,10 +99,10 @@ int main(int argc, char *argv[])
         for (int64_t i = 0; i < value_y.block_size; ++i) {
             switch (dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
-                    INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_y.pointer)[i], ((double *) value_z.pointer)[i]);
+                    INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_y.block_pointer)[i], ((double *) value_z.block_pointer)[i]);
                     break;
                 case IARRAY_DATA_TYPE_FLOAT:
-                    INA_TEST_ASSERT_EQUAL_FLOATING(((float *) value_y.pointer)[i], ((float *) value_z.pointer)[i]);
+                    INA_TEST_ASSERT_EQUAL_FLOATING(((float *) value_y.block_pointer)[i], ((float *) value_z.block_pointer)[i]);
                     break;
                 default:
                     return INA_ERR_EXCEEDED;
@@ -155,10 +155,10 @@ int main(int argc, char *argv[])
 
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_mul.pointer)[0], ((double *) value_mul_view.pointer)[0]);
+                INA_TEST_ASSERT_EQUAL_FLOATING(((double *) value_mul.elem_pointer)[0], ((double *) value_mul_view.elem_pointer)[0]);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                INA_TEST_ASSERT_EQUAL_FLOATING(((float *) value_mul.pointer)[0], ((float *) value_mul_view.pointer)[0]);
+                INA_TEST_ASSERT_EQUAL_FLOATING(((float *) value_mul.elem_pointer)[0], ((float *) value_mul_view.elem_pointer)[0]);
                 break;
             default:
                 return INA_ERR_EXCEEDED;
