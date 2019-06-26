@@ -177,9 +177,9 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                 if ((method == _IARRAY_RANDOM_METHOD_BERNOUILLI) ||
                     (method == _IARRAY_RANDOM_METHOD_POISSON) ||
                     (method == _IARRAY_RANDOM_METHOD_BINOMIAL)) {
-                    ((float *) val.pointer)[i] = (float) ((int *) r)[i];
+                    ((float *) val.block_pointer)[i] = (float) ((int *) r)[i];
                 } else {
-                    ((float *) val.pointer)[i] = r[i];
+                    ((float *) val.block_pointer)[i] = r[i];
                 }
             }
         }
@@ -240,9 +240,9 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                 if ((method == _IARRAY_RANDOM_METHOD_BERNOUILLI) ||
                     (method == _IARRAY_RANDOM_METHOD_POISSON) ||
                     (method == _IARRAY_RANDOM_METHOD_BINOMIAL)) {
-                    ((double *) val.pointer)[i] = (double) ((int *) r)[i];
+                    ((double *) val.block_pointer)[i] = (double) ((int *) r)[i];
                 } else {
-                    ((double *) val.pointer)[i] = r[i];
+                    ((double *) val.block_pointer)[i] = r[i];
                 }
             }
         }
@@ -569,10 +569,10 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         double data;
         switch(c1->dtshape->dtype){
             case IARRAY_DATA_TYPE_DOUBLE:
-                data = ((double *) val.pointer)[0];
+                data = ((double *) val.elem_pointer)[0];
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                data = ((float *) val.pointer)[0];
+                data = ((float *) val.elem_pointer)[0];
                 break;
             default:
                 return INA_ERR_MISSING;
@@ -590,10 +590,10 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         double data;
         switch(c1->dtshape->dtype){
             case IARRAY_DATA_TYPE_DOUBLE:
-                data = ((double *) val.pointer)[0];
+                data = ((double *) val.elem_pointer)[0];
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                data = ((float *) val.pointer)[0];
+                data = ((float *) val.elem_pointer)[0];
                 break;
             default:
                 return INA_ERR_MISSING;
@@ -618,10 +618,10 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         double data;
         switch(c1->dtshape->dtype){
             case IARRAY_DATA_TYPE_DOUBLE:
-                data = ((double *) val.pointer)[0];
+                data = ((double *) val.elem_pointer)[0];
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                data = ((float *) val.pointer)[0];
+                data = ((float *) val.elem_pointer)[0];
                 break;
             default:
                 return INA_ERR_MISSING;
@@ -644,10 +644,10 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         double data;
         switch(c1->dtshape->dtype){
             case IARRAY_DATA_TYPE_DOUBLE:
-                data = ((double *) val.pointer)[0];
+                data = ((double *) val.elem_pointer)[0];
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                data = ((float *) val.pointer)[0];
+                data = ((float *) val.elem_pointer)[0];
                 break;
             default:
                 return INA_ERR_MISSING;
