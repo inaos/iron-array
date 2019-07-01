@@ -518,10 +518,11 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
 
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
             for (int64_t i = 0; i < val_a.block_size; ++i) {
-                double vdiff = fabs(((double *)val_a.block_pointer)[i] - ((double *)val_b.block_pointer)[i]) / ((double *)val_a.block_pointer)[i];
-                if (vdiff > tol) {
-                    printf("%f, %f\n", ((double *)val_a.block_pointer)[i], ((double *)val_b.block_pointer)[i]);
-                    printf("Values differ in nelem: %ld (diff: %f)\n", (long)(i + val_a.nblock * val_a.block_size), vdiff);
+                double adiff = fabs(((double *)val_a.pointer)[i] - ((double *)val_b.pointer)[i]);
+                double rdiff = fabs(((double *)val_a.pointer)[i] - ((double *)val_b.pointer)[i]) / ((double *)val_a.pointer)[i];
+                if (rdiff > tol) {
+                    printf("%f, %f\n", ((double *)val_a.pointer)[i], ((double *)val_b.pointer)[i]);
+                    printf("Values differ in nelem: %ld (diff: %f)\n", (long)(i + val_a.nblock * val_a.block_size), adiff);
                     retcode = INA_ERR_FAILED;
                     goto failed;
                 }
@@ -529,10 +530,11 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
         }
         else {
             for (int64_t i = 0; i < val_a.block_size; ++i) {
-                float vdiff = fabsf(((float *)val_a.block_pointer)[i] - ((float *)val_b.block_pointer)[i]) / ((float *)val_a.block_pointer)[i];
+                float adiff = fabs(((float *)val_a.pointer)[i] - ((float *)val_b.pointer)[i]);
+                float vdiff = fabsf(((float *)val_a.pointer)[i] - ((float *)val_b.pointer)[i]) / ((float *)val_a.pointer)[i];
                 if (vdiff > tol) {
-                    printf("%f, %f\n", ((float *)val_a.block_pointer)[i], ((float *)val_b.block_pointer)[i]);
-                    printf("Values differ in nelem: %ld (diff: %f)\n", (long)(i + val_a.nblock * val_a.block_size), vdiff);
+                    printf("%f, %f\n", ((float *)val_a.pointer)[i], ((float *)val_b.pointer)[i]);
+                    printf("Values differ in nelem: %ld (diff: %f)\n", (long)(i + val_a.nblock * val_a.block_size), adiff);
                     retcode = INA_ERR_FAILED;
                     goto failed;
                 }

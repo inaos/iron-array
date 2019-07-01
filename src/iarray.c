@@ -35,7 +35,6 @@ INA_API(ina_rc_t) iarray_init()
 
 #if __linux__
     int nprocs = get_nprocs();
-    printf("Linux\n");
     cpu_set_t  mask;
     CPU_ZERO(&mask); 
     for(int i = 0; i < nprocs; i++) {
