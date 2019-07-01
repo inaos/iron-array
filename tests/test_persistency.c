@@ -40,10 +40,10 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double value = (double) val.elem_flat_index;
-            memcpy(val.pointer, &value, type_size);
+            memcpy(val.elem_pointer, &value, type_size);
         } else {
             float value = (float) val.elem_flat_index;
-            memcpy(val.pointer, &value, type_size);
+            memcpy(val.elem_pointer, &value, type_size);
         }
     }
 
@@ -63,10 +63,10 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
 
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double value = (double) val2.elem_flat_index;
-            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((double *) val2.pointer)[0]);
+            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((double *) val2.elem_pointer)[0]);
         } else {
             float value = (float) val2.elem_flat_index;
-            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((float *) val2.pointer)[0]);
+            INA_TEST_ASSERT_EQUAL_FLOATING(value, ((float *) val2.elem_pointer)[0]);
         }
     }
     iarray_iter_read_free(I2);

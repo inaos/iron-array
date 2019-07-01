@@ -44,11 +44,11 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, i
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 INA_TEST_ASSERT_EQUAL_FLOATING(val.elem_flat_index * (stop - start) / (size - 1) + start,
-                                               ((double *) val.pointer)[0]);
+                                               ((double *) val.elem_pointer)[0]);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 INA_TEST_ASSERT_EQUAL_FLOATING((float) (val.elem_flat_index * (stop - start) / (size - 1) + start),
-                                               ((float *) val.pointer)[0]);
+                                               ((float *) val.elem_pointer)[0]);
                 break;
             default:
                 return INA_ERR_EXCEEDED;
