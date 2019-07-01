@@ -196,7 +196,7 @@ int main(int argc, char** argv)
             while (iarray_iter_write_has_next(I)) {
                 iarray_iter_write_next(I);
                 double value = incx * (double) val.elem_flat_index;
-                memcpy(val.pointer, &value, sizeof(double));
+                memcpy(val.elem_pointer, &value, sizeof(double));
             }
             iarray_iter_write_free(I);
             INA_STOPWATCH_STOP(w);
@@ -209,13 +209,13 @@ int main(int argc, char** argv)
             iarray_container_new(ctx, &dtshape, &mat_x, flags, &con_x);
             iarray_iter_write_block_t *I;
             iarray_iter_write_block_value_t val;
-            INA_MUST_SUCCEED(iarray_iter_write_block_new(ctx, &I, con_x, dtshape.pshape, &val, NULL, 0));
+            INA_MUST_SUCCEED(iarray_iter_write_block_new(ctx, &I, con_x, NULL, &val, false));
             double incx = XMAX / NELEM;
             while (iarray_iter_write_block_has_next(I)) {
-                iarray_iter_write_block_next(I);
+                iarray_iter_write_block_next(I, NULL, 0);
                 int64_t part_size = val.block_size;  // 1-dim vector
                 for (int64_t i = 0; i < part_size; ++i) {
-                    ((double *) *val.pointer)[i] = incx * (double) (i + val.nblock * part_size);
+                    ((double *) val.block_pointer)[i] = incx * (double) (i + val.nblock * part_size);
                 }
             }
             iarray_iter_write_block_free(I);
@@ -268,7 +268,7 @@ int main(int argc, char** argv)
             while (iarray_iter_write_has_next(I)) {
                 iarray_iter_write_next(I);
                 double value = _poly(incx * (double) val.elem_flat_index);
-                memcpy(val.pointer, &value, sizeof(double));
+                memcpy(val.elem_pointer, &value, sizeof(double));
             }
             iarray_iter_write_free(I);
             INA_STOPWATCH_STOP(w);
@@ -281,13 +281,13 @@ int main(int argc, char** argv)
             iarray_container_new(ctx, &dtshape, &mat_y, flags, &con_y);
             iarray_iter_write_block_t *I;
             iarray_iter_write_block_value_t val;
-            iarray_iter_write_block_new(ctx, &I, con_y, dtshape.pshape, &val, NULL, 0);
+            iarray_iter_write_block_new(ctx, &I, con_y, dtshape.pshape, &val, false);
             double incx = XMAX / NELEM;
             while (iarray_iter_write_block_has_next(I)) {
-                iarray_iter_write_block_next(I);
+                iarray_iter_write_block_next(I, NULL, 0);
                 int64_t part_size = val.block_size;
                 for (int64_t i = 0; i < part_size; ++i) {
-                    ((double *) *val.pointer)[i] = _poly(incx * (double) (i + val.nblock * part_size));
+                    ((double *) val.block_pointer)[i] = _poly(incx * (double) (i + val.nblock * part_size));
                 }
             }
             iarray_iter_write_block_free(I);
