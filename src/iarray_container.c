@@ -481,7 +481,8 @@ INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, int64_t *nbytes, 
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_container_t *b, double tol) {
+INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_container_t *b, double tol)
+{
     if (a->dtshape->dtype != b->dtshape->dtype){
         return INA_ERR_FAILED;
     }
