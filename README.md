@@ -33,6 +33,10 @@ We use inac cmake build-system.
 
 #### Mac
 
+**Important note**: By default, the iron-array library is compiled in OpenMP mode, so you need
+a compiler that supports OpenMP, which is **not** the case for the compiler that comes with the OS.
+It is suggested to use a recent version of clang (e.g. 8); see https://embeddedartistry.com/blog/2017/2/20/installing-clangllvm-on-osx for instructions on how to install it.
+
 * INAC build setup
     * Make sure that you have a configured repository.txt file in ~/.inaos/cmake
     * Also you'll need a directory under ~/INAOS (can be empty)
@@ -56,7 +60,7 @@ We use inac cmake build-system.
 #### Linux
 
 * INAC build setup
-    * Make sure that you have a configured repository.txt file in ~/.inaos
+    * Make sure that you have a configured repository.txt file in ~/.inaos/cmake
     * Also you'll need a directory under ~/INAOS (can be empty)
     
 * MKL setup.  For Ubuntu machines, it is best to use Intel's Ubuntu repo:
