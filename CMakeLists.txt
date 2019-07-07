@@ -11,6 +11,8 @@
 cmake_minimum_required (VERSION 3.12)
 project(iarray)
 
+option(MULTITHREADING "Use multithreaded iarray" ON)
+
 # Disable weird MSVC warnings
 if (MSVC)
 add_compile_options(/wd4204)

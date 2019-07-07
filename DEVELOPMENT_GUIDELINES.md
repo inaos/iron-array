@@ -26,6 +26,9 @@ We are using semantic versioning: https://semver.org/
 
 ## Style and code conventions
 
+**Note**: There is a repo where all the conventions below are set for CLion: https://github.com/inaos/ide-settings.
+Go there and read the README for instructions on how to use it.
+
 ### Indentation
 
 * Use 4 spaces
