@@ -29,12 +29,12 @@ struct iarray_expression_s {
     iarray_context_t *ctx;
     ina_str_t expr;
     int32_t nchunks;
-    int64_t blocksize;
+    int32_t blocksize;
     int32_t typesize;
     int32_t chunksize;
     int64_t nbytes;
     int nvars;
-    int64_t max_out_len;
+    int32_t max_out_len;
     te_expr *texpr;
     iarray_temporary_t **temp_vars;
     iarray_container_t *out;
@@ -163,7 +163,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
                 free(chunk);
             }
             e->chunksize = (int32_t) chunksize;
-            e->blocksize = (int64_t) blocksize;
+            e->blocksize = (int32_t) blocksize;
         }
         else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERCHUNK ||
                  e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
@@ -184,7 +184,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     // TODO: make this more general and accept multidimensional containers
     iarray_dtshape_t dtshape_var = {0};  // initialize to 0s
     dtshape_var.ndim = 1;
-    int64_t temp_var_dim0 = 0;
+    int32_t temp_var_dim0 = 0;
     if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK) {
         temp_var_dim0 = e->blocksize / e->typesize;
     } else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERCHUNK ||
@@ -425,7 +425,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         // are passed the tinyexpr evaluator.
         // In the future we may want to get rid of the cost of creating/destroying the thread per every chunk.
         // One possibility is to use pthreads, but this would require more complex code, so we need to discuss it more.
-        int64_t blocksize = e->blocksize;
+        int32_t blocksize = e->blocksize;
         int32_t chunksize = e->chunksize;
 
         // Create and initialize an iterator per each variable
@@ -450,8 +450,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         // Evaluate the expression for all the chunks in variables
         int8_t *outbuf = ina_mem_alloc((size_t)chunksize);
         bool has_next = iarray_iter_write_block_has_next(iter_out);
-        int64_t nblocks;
-        int64_t out_items;
+        int32_t nblocks;
+        int32_t out_items;
 
 //#if defined(_OPENMP)
 //        #pragma omp parallel shared(has_next)
@@ -464,7 +464,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                 iarray_iter_read_block_next(iter_var[nvar], NULL, 0);
             }
 
-            out_items = iter_out->cur_block_size;
+            out_items = (int32_t)(iter_out->cur_block_size);  // TODO: add a protection against cur_block_size > 2**31
             nblocks = out_items * e->typesize / blocksize;
 
             // Decompress chunks in variables into temporaries
@@ -500,7 +500,7 @@ omp_set_num_threads(e->ctx->cfg->max_num_threads);
 //{
 //#endif
             // Do a possible last evaluation with the leftovers
-            int64_t leftover = out_items * e->typesize - nblocks * blocksize;
+            int32_t leftover = out_items * e->typesize - nblocks * blocksize;
             if (leftover > 0) {
                 for (int nvar = 0; nvar < nvars; nvar++) {
                     e->temp_vars[nvar]->data = (char *) iter_value[nvar].block_pointer + nblocks * blocksize;
@@ -641,7 +641,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
 
     switch (dtshape.dtype) {
         case IARRAY_DATA_TYPE_DOUBLE: {
-            int64_t len = expr->max_out_len == 0 ? (int)(out->size / sizeof(double)) : expr->max_out_len;
+            int32_t len = expr->max_out_len == 0 ? (int32_t)(out->size / sizeof(double)) : expr->max_out_len;
             if (scalar) {
                 switch(op) {
                 case IARRAY_OPERATION_TYPE_ADD:
@@ -725,7 +725,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
         }
         break;
         case IARRAY_DATA_TYPE_FLOAT: {
-            int64_t len = expr->max_out_len == 0 ? (int)(out->size / sizeof(float)) : expr->max_out_len;
+            int32_t len = expr->max_out_len == 0 ? (int32_t)(out->size / sizeof(float)) : expr->max_out_len;
             if (scalar) {
                 switch(op) {
                 case IARRAY_OPERATION_TYPE_ADD:
