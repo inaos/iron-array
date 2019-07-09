@@ -1,5 +1,7 @@
 [![Appveyor CI](https://ci.appveyor.com/api/projects/status/bfntjr38rymsm18w/branch/master?svg=true)](https://ci.appveyor.com/project/stoni/iron-array/branch/master) [![codecov](https://codecov.io/gh/inaos/iron-array/branch/master/graph/badge.svg?token=HFqpNSEpsN)](https://codecov.io/gh/inaos/iron-array)
 
+[![Azure CI](https://inaos.visualstudio.com/iron-array/_apis/build/status/inaos.iron-array?branchName=develop)](https://inaos.visualstudio.com/iron-array/_build/latest?definitionId=6&branchName=develop)
+
 # iron-array
 
 ### Setup
