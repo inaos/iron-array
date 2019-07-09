@@ -64,5 +64,6 @@ jobs:
   - script: |
      @echo on
 
+     cd cmake-build-%BUILD_CONFIGURATION%
      tests
     displayName: Execute tests
