@@ -293,7 +293,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         // Evaluate the expression for all the chunks in variables
         while (iarray_iter_write_block_has_next(iter_out)) {
             iarray_iter_write_block_next(iter_out, NULL, 0);
-            int64_t out_items = iter_out->cur_block_size;
+            int32_t out_items = (int32_t)(iter_out->cur_block_size);
 
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
