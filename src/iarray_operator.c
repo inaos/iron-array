@@ -559,6 +559,7 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     INA_ASSERT_NOT_NULL(b);
     INA_ASSERT_NOT_NULL(c);
 
+
     if (a->dtshape->dtype != b->dtshape->dtype) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
