@@ -80,7 +80,7 @@ INA_TEST_FIXTURE(constructor_ones, 2_d)
     size_t type_size = sizeof(double);
 
     int8_t ndim = 2;
-    int64_t shape[] = {10, 10};
+    int64_t shape[] = {12, 10};
     int64_t pshape[] = {3, 4};
 
     INA_TEST_ASSERT_SUCCEED(test_ones(data->ctx, dtype, type_size, ndim, shape, pshape));
@@ -92,7 +92,7 @@ INA_TEST_FIXTURE(constructor_ones, 4_f_p)
     size_t type_size = sizeof(float);
 
     int8_t ndim = 4;
-    int64_t shape[] = {10, 10, 10, 10};
+    int64_t shape[] = {10, 21, 10, 21};
     int64_t pshape[] = {0, 0, 0, 0};
 
     INA_TEST_ASSERT_SUCCEED(test_ones(data->ctx, dtype, type_size, ndim, shape, pshape));
@@ -104,7 +104,7 @@ INA_TEST_FIXTURE(constructor_ones, 5_d)
     size_t type_size = sizeof(double);
 
     int8_t ndim = 5;
-    int64_t shape[] = {10, 10, 10, 10, 10};
+    int64_t shape[] = {10, 14, 12, 16, 10};
     int64_t pshape[] = {3, 4, 6, 3, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_ones(data->ctx, dtype, type_size, ndim, shape, pshape));
@@ -116,8 +116,8 @@ INA_TEST_FIXTURE(constructor_ones, 7_f_p)
     size_t type_size = sizeof(float);
 
     int8_t ndim = 7;
-    int64_t shape[] = {10, 10, 10, 10, 10, 10, 10};
-    int64_t pshape[] = {4, 3, 6, 2, 3, 3, 2};
+    int64_t shape[] = {8, 5, 4, 5, 7, 8, 4};
+    int64_t pshape[] = {4, 3, 2, 2, 3, 7, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_ones(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
