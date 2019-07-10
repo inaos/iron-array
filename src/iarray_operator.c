@@ -183,9 +183,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
                 return INA_ERR_EXCEEDED;
         }
 
-        if (a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER &&
-            b->catarr->storage == CATERVA_STORAGE_PLAINBUFFER &&
-            c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
             c->catarr->buf = c_block;
             break;
         }
@@ -356,9 +354,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
                 return INA_ERR_EXCEEDED;
         }
 
-        if (a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER &&
-            b->catarr->storage == CATERVA_STORAGE_PLAINBUFFER &&
-            c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
             c->catarr->buf = c_block;
             break;
         }
