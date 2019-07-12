@@ -557,20 +557,20 @@ INA_TEST_FIXTURE(linalg_gemm, f_trans_trans_schunk_plain) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int typesize = sizeof(float);
 
-    int64_t xshape[] = {4, 4};
-    int64_t xpshape[] = {2, 2};
+    int64_t xshape[] = {433, 555};
+    int64_t xpshape[] = {123, 234};
 
-    int64_t xbshape[] = {2, 2};
-    int xtrans = 0;
+    int64_t xbshape[] = {236, 111};
+    int xtrans = 1;
 
-    int64_t yshape[] = {4, 4};
+    int64_t yshape[] = {678, 433};
     int64_t ypshape[] = {0, 0};
 
-    int64_t ybshape[] = {2, 3};
-    int ytrans = 0;
+    int64_t ybshape[] = {111, 88};
+    int ytrans = 1;
 
-    int64_t zshape[] = {4, 4};
-    int64_t zpshape[] = {2, 3};
+    int64_t zshape[] = {433, 678};
+    int64_t zpshape[] = {236, 88};
 
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
                                       yshape, ypshape, ybshape, ytrans, zshape, zpshape));

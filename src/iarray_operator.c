@@ -190,7 +190,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
             }
         } else {
             // Append it to a new iarray container
-            if((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
+            if ((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
                 blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], c_size);
                 memset(c_block, 0, c_size);
             }
