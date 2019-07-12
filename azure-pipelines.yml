@@ -69,5 +69,5 @@ jobs:
      tests
     displayName: Execute tests
 
-  - publish: $(System.DefaultWorkingDirectory)/cmake-build-%BUILD_CONFIGURATION%/libiarray.dll
+  - publish: $(System.DefaultWorkingDirectory)/cmake-build-%BUILD_CONFIGURATION%/iarray.dll
     artifact: libiarray-shared-win
