@@ -515,11 +515,13 @@ INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
                 if (itr->compressed_chunk_buffer) {
                     int err = blosc2_schunk_append_chunk(catarr->sc, itr->block, false);
                     if (err < 0) {
+                        // TODO: if the next call is not zero, it can be interpreted as there are more elements
                         return INA_ERROR(INA_ERR_FAILED);
                     }
                 } else {
                     int err = blosc2_schunk_append_buffer(catarr->sc, itr->block, (size_t) psizeb);
                     if (err < 0) {
+                        // TODO: if the next call is not zero, it can be interpreted as there are more elements
                         return INA_ERROR(INA_ERR_FAILED);
                     }
                 }
@@ -575,6 +577,7 @@ INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
                 int err = blosc2_schunk_append_buffer(itr->cont->catarr->sc, part_aux,
                                                       (size_t) catarr->psize * typesize);
                 if (err < 0) {
+                    // TODO: if the next call is not zero, it can be interpreted as there are more elements
                     return INA_ERROR(INA_ERR_FAILED);
                 }
                 memset(part_aux, 0, catarr->psize * catarr->sc->typesize);

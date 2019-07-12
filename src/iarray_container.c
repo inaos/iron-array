@@ -533,7 +533,7 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
         }
         else {
             for (int64_t i = 0; i < val_a.block_size; ++i) {
-                float adiff = fabs(((float *)val_a.block_pointer)[i] - ((float *)val_b.block_pointer)[i]);
+                float adiff = fabsf(((float *)val_a.block_pointer)[i] - ((float *)val_b.block_pointer)[i]);
                 float vdiff = fabsf(((float *)val_a.block_pointer)[i] - ((float *)val_b.block_pointer)[i]) /
                     ((float *)val_a.block_pointer)[i];
                 if (vdiff > tol) {
