@@ -69,5 +69,6 @@ jobs:
      tests
     displayName: Execute tests
 
-  - publish: $(System.DefaultWorkingDirectory)/cmake-build-%BUILD_CONFIGURATION%/iarray.dll
-    artifact: libiarray-shared-win
+# Testing Azure artifacts here, but we are probably going for Artifactory for the time being
+#  - publish: $(System.DefaultWorkingDirectory)/cmake-build-%BUILD_CONFIGURATION%/iarray.dll
+#    artifact: libiarray-shared-win
