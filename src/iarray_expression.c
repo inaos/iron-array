@@ -34,7 +34,7 @@ struct iarray_expression_s {
     int32_t chunksize;
     int64_t nbytes;
     int nvars;
-    int max_out_len;
+    int32_t max_out_len;
     te_expr *texpr;
     iarray_temporary_t **temp_vars;
     iarray_container_t *out;
@@ -88,6 +88,9 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const ch
 //  return INA_SUCCESS;
 //}
 {
+    INA_UNUSED(e);
+    INA_UNUSED(var);
+    INA_UNUSED(val);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
@@ -104,6 +107,9 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
 //    return INA_SUCCESS;
 //}
 {
+    INA_UNUSED(e);
+    INA_UNUSED(var);
+    INA_UNUSED(val);
     return INA_ERR_NOT_IMPLEMENTED;
 }
 
@@ -169,7 +175,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         }
     }
 
-    e->nchunks = e->nbytes / e->chunksize;
+    e->nchunks = (int32_t)(e->nbytes / e->chunksize);
     if (e->nchunks * e->chunksize < e->nbytes) {
         e->nchunks += 1;
     }
@@ -178,7 +184,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     // TODO: make this more general and accept multidimensional containers
     iarray_dtshape_t dtshape_var = {0};  // initialize to 0s
     dtshape_var.ndim = 1;
-    int temp_var_dim0 = 0;
+    int32_t temp_var_dim0 = 0;
     if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK) {
         temp_var_dim0 = e->blocksize / e->typesize;
     } else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERCHUNK ||
@@ -287,7 +293,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         // Evaluate the expression for all the chunks in variables
         while (iarray_iter_write_block_has_next(iter_out)) {
             iarray_iter_write_block_next(iter_out, NULL, 0);
-            int out_items = iter_out->cur_block_size;
+            int32_t out_items = (int32_t)(iter_out->cur_block_size);
 
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
@@ -358,7 +364,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             iarray_iter_write_block_next(iter_out, external_buffer, external_buffer_size);
 
             // Update the external buffer with freshly allocated memory
-            int out_items = iter_out->cur_block_size;
+            int64_t out_items = iter_out->cur_block_size;
 
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
@@ -444,8 +450,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         // Evaluate the expression for all the chunks in variables
         int8_t *outbuf = ina_mem_alloc((size_t)chunksize);
         bool has_next = iarray_iter_write_block_has_next(iter_out);
-        int nblocks;
-        int out_items;
+        int32_t nblocks;
+        int32_t out_items;
 
 //#if defined(_OPENMP)
 //        #pragma omp parallel shared(has_next)
@@ -453,20 +459,12 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 //
 //#endif
         while (has_next) {
-            int nthread_ = 0;
-//#if defined(_OPENMP)
-//            nthread_ = omp_get_thread_num();
-//#endif
-//#if defined(_OPENMP)
-//#pragma omp single
-//            {
-//#endif
             iarray_iter_write_block_next(iter_out, NULL, 0);
             for (int nvar = 0; nvar < nvars; nvar++) {
                 iarray_iter_read_block_next(iter_var[nvar], NULL, 0);
             }
 
-            out_items = iter_out->cur_block_size;
+            out_items = (int32_t)(iter_out->cur_block_size);  // TODO: add a protection against cur_block_size > 2**31
             nblocks = out_items * e->typesize / blocksize;
 
             // Decompress chunks in variables into temporaries
@@ -480,7 +478,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
 #if defined(_OPENMP)
 omp_set_num_threads(e->ctx->cfg->max_num_threads);
-#pragma omp parallel for    
+#pragma omp parallel for
 #endif
             for (int nblock = 0; nblock < nblocks; nblock++) {
 #if defined(_OPENMP)
@@ -502,7 +500,7 @@ omp_set_num_threads(e->ctx->cfg->max_num_threads);
 //{
 //#endif
             // Do a possible last evaluation with the leftovers
-            int leftover = out_items * e->typesize - nblocks * blocksize;
+            int32_t leftover = out_items * e->typesize - nblocks * blocksize;
             if (leftover > 0) {
                 for (int nvar = 0; nvar < nvars; nvar++) {
                     e->temp_vars[nvar]->data = (char *) iter_value[nvar].block_pointer + nblocks * blocksize;
@@ -643,7 +641,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
 
     switch (dtshape.dtype) {
         case IARRAY_DATA_TYPE_DOUBLE: {
-            int len = expr->max_out_len == 0 ? (int)(out->size / sizeof(double)) : expr->max_out_len;
+            int32_t len = expr->max_out_len == 0 ? (int32_t)(out->size / sizeof(double)) : expr->max_out_len;
             if (scalar) {
                 switch(op) {
                 case IARRAY_OPERATION_TYPE_ADD:
@@ -727,7 +725,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
         }
         break;
         case IARRAY_DATA_TYPE_FLOAT: {
-            int len = expr->max_out_len == 0 ? (int)(out->size / sizeof(float)) : expr->max_out_len;
+            int32_t len = expr->max_out_len == 0 ? (int32_t)(out->size / sizeof(float)) : expr->max_out_len;
             if (scalar) {
                 switch(op) {
                 case IARRAY_OPERATION_TYPE_ADD:
