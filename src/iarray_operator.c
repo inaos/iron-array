@@ -117,6 +117,8 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         int64_t stop_a[IARRAY_DIMENSION_MAX];
         int64_t start_b[IARRAY_DIMENSION_MAX];
         int64_t stop_b[IARRAY_DIMENSION_MAX];
+        int64_t start_c[IARRAY_DIMENSION_MAX];
+        int64_t stop_c[IARRAY_DIMENSION_MAX];
 
 
         int64_t inc_a = 1;
@@ -148,6 +150,8 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
             } else {
                 stop_b[i] = start_b[i] + bshape_b[i];
             }
+            start_c[i] = 0;
+            stop_c[i] = c->dtshape->shape[i];
         }
 
         // Obtain desired blocks from iarray containers
@@ -156,23 +160,13 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         } else {
             INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
         }
-        //printf("a_block: ");
-        //for (int j = 0; j < a_size / typesize; ++j) {
-        //    printf("%f ", ((float *) a_block)[j]);
-        //}
-        //printf("\n");
-
 
         if (!b->view && b->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && b_contiguous) {
             INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
         } else {
             INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
         }
-        //printf("b_block: ");
-        //for (int j = 0; j < b_size / typesize; ++j) {
-        //    printf("%f ", ((float *) b_block)[j]);
-        //}
-        //printf("\n");
+
         // Make blocks multiplication
         mkl_set_num_threads(ctx->cfg->max_num_threads);
 
@@ -189,21 +183,17 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
                 return INA_ERR_EXCEEDED;
         }
 
-        //printf("c_block: ");
-        //for (int j = 0; j < c_size / typesize; ++j) {
-        //    printf("%f ", ((float *) c_block)[j]);
-        //}
-        //printf("\n");
 
         if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-            c->catarr->buf = c_block; //TODO: Update this
-            break;
-        }
-
-        // Append it to a new iarray container
-        if((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
-            blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], c_size);
-            memset(c_block, 0, c_size);
+            if((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
+                c->catarr->buf = c_block;
+            }
+        } else {
+            // Append it to a new iarray container
+            if((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
+                blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], c_size);
+                memset(c_block, 0, c_size);
+            }
         }
     }
 
@@ -217,6 +207,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
         ina_mem_free(c_block);
     }
+    c->catarr->filled = true;
 
     return INA_SUCCESS;
 }
@@ -387,6 +378,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
         ina_mem_free(c_block);
     }
+    c->catarr->filled = true;
     return INA_SUCCESS;
 }
 
@@ -571,6 +563,9 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     INA_ASSERT_NOT_NULL(b);
     INA_ASSERT_NOT_NULL(c);
 
+    if (c->catarr->filled) {
+        INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
 
     if (a->dtshape->dtype != b->dtshape->dtype) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
