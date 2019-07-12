@@ -85,7 +85,7 @@ INA_TEST_FIXTURE(constructor_fill, 2_d)
     size_t type_size = sizeof(double);
 
     int8_t ndim = 2;
-    int64_t shape[] = {10, 10};
+    int64_t shape[] = {10, 12};
     int64_t pshape[] = {3, 4};
     double value = 3.1416;
 
@@ -98,7 +98,7 @@ INA_TEST_FIXTURE(constructor_fill, 4_f_p)
     size_t type_size = sizeof(float);
 
     int8_t ndim = 4;
-    int64_t shape[] = {10, 10, 10, 10};
+    int64_t shape[] = {10, 5, 5, 10};
     int64_t pshape[] = {0, 0, 0, 0};
     float value = 0.1416f;
 
@@ -111,7 +111,7 @@ INA_TEST_FIXTURE(constructor_fill, 5_d)
     size_t type_size = sizeof(double);
 
     int8_t ndim = 5;
-    int64_t shape[] = {10, 10, 10, 10, 10};
+    int64_t shape[] = {7, 10, 12, 11, 10};
     int64_t pshape[] = {3, 4, 6, 3, 3};
     double value = 3.1416;
 
@@ -124,7 +124,7 @@ INA_TEST_FIXTURE(constructor_fill, 7_f_p)
     size_t type_size = sizeof(float);
 
     int8_t ndim = 7;
-    int64_t shape[] = {10, 10, 10, 10, 10, 10, 10};
+    int64_t shape[] = {12, 11, 6, 5, 12, 6, 8};
     int64_t pshape[] = {4, 3, 6, 2, 3, 3, 2};
     float value = -116.f;
 
