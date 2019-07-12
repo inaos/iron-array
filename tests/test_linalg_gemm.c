@@ -601,7 +601,7 @@ INA_TEST_FIXTURE(linalg_gemm, d_trans_notrans_schunk_plain) {
 }
 
 
-INA_TEST_FIXTURE_SKIP(linalg_gemm, d_notrans_notrans_schunk_plain_plain) {
+INA_TEST_FIXTURE(linalg_gemm, d_notrans_notrans_schunk_plain_plain) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int typesize = sizeof(double);
