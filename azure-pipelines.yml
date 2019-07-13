@@ -73,8 +73,7 @@ jobs:
      @echo on
 
      cd cmake-build-%BUILD_CONFIGURATION%
-     where cpack
-     cpack
+     call "C:\Program Files\CMake\bin\cpack.exe"
     displayName: Create package
 
 # Testing Azure artifacts here, but we are probably going for Artifactory for the time being
