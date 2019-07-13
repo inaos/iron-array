@@ -73,6 +73,7 @@ jobs:
      @echo on
 
      cd cmake-build-%BUILD_CONFIGURATION%
+     where cpack
      cpack
     displayName: Create package
 
