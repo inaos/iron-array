@@ -1,4 +1,5 @@
-trigger: none
+trigger:
+- develop
 
 variables:
 - group: jfrog-artifactory
@@ -67,3 +68,16 @@ jobs:
      cd cmake-build-%BUILD_CONFIGURATION%
      tests
     displayName: Execute tests
+        
+  - script: |
+     @echo on
+
+     cd cmake-build-%BUILD_CONFIGURATION%
+     call "C:\Program Files\CMake\bin\cpack.exe" -V
+    displayName: Create package
+    
+  - powershell: get-content cmake-build-%BUILD_CONFIGURATION%\_CPack_Packages\win64\ZIP\PreinstallOutput.log
+
+# Testing Azure artifacts here, but we are probably going for Artifactory for the time being
+#  - publish: $(System.DefaultWorkingDirectory)/cmake-build-%BUILD_CONFIGURATION%/iarray.dll
+#    artifact: libiarray-shared-win
