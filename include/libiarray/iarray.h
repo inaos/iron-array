@@ -197,7 +197,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx,
                                           iarray_data_type_t dtype,
                                           const int ndim,
                                           const int64_t *shape,
-                                          int32_t *pshape);
+                                          int32_t *_pshape);
 
 INA_API(ina_rc_t) iarray_advice_matmul(iarray_context_t *ctx,
                                        iarray_container_t *a,
