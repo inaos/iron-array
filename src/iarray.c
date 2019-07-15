@@ -62,6 +62,7 @@ int32_t get_nearest_power2(int64_t value)
     return power2;
 }
 
+// Given a shape, offer advice on the partition size
 INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx,
                                           iarray_data_type_t dtype,
                                           const int ndim,
@@ -72,8 +73,8 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx,
     /* Use INAC to determine L3 cache size */
     const int L3 = 4 * 1024 * 1024;
     // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
-    const int high = L3 / 4;
-    const int low = 128 * 1024;
+    const int64_t high = L3 / 4;
+    const int64_t low = 128 * 1024;
     int itemsize = 0;
     switch (dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
@@ -86,26 +87,18 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx,
             return INA_ERR_ERROR;
     }
 
-    for (int i = 0; i < ndim; i++ ) {
+    for (int i = 0; i < ndim; i++) {
         pshape[i] = get_nearest_power2(shape[i]);
     }
 
-    int psize = 0;
-    for (int j = 0; j < ndim; j++ ) {
-        psize += pshape[j] * itemsize;
-    }
-
-    if (psize < low) {
-        return INA_SUCCESS;
-    }
-
     // Shrink partition until we get its size into the (low, high] boundaries
-    while (psize > high) {
+    int64_t psize = 0;
+    do {
         for (int i = 0; i < ndim; i++) {
             // The size of the partition so far
-            psize = 0;
+            psize = itemsize;
             for (int j = 0; j < ndim; j++) {
-                psize += pshape[j] * itemsize;
+                psize *= pshape[j];
             }
             if (psize <= high) {
                 break;
@@ -116,7 +109,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx,
             }
             pshape[i] /= 2;
         }
-    }
+    } while (psize > high);
 
     return INA_SUCCESS;
 }
