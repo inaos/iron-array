@@ -23,10 +23,15 @@ int main()
 
     iarray_container_t *c_x, *c_out;
 
-    // Create x container
+    // Create c_x container
     int8_t xndim = 3;
     int64_t xshape[] = {100, 100, 100};
-    int64_t xpshape[] = {10, 10, 10};
+    int32_t xpshape[3];
+    if (iarray_partition_advice(ctx, IARRAY_DATA_TYPE_DOUBLE, xndim, xshape, xpshape) < 0) {
+        printf("Error in getting advice for pshape.  Exiting...");
+        exit(1);
+    }
+    printf("pshape: %d %d %d\n", xpshape[0], xpshape[1], xpshape[2]);
 
     iarray_dtshape_t xdtshape;
     xdtshape.ndim = xndim;
