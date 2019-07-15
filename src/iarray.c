@@ -69,6 +69,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx,
                                           const int64_t *shape,
                                           int32_t *pshape)
 {
+    int64_t _pshape[IARRAY_DIMENSION_MAX];  // initially pshape values need to be int64_t
     INA_UNUSED(ctx);  // we could use context in the future
     /* Use INAC to determine L3 cache size */
     const int L3 = 4 * 1024 * 1024;
@@ -88,7 +89,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx,
     }
 
     for (int i = 0; i < ndim; i++) {
-        pshape[i] = get_nearest_power2(shape[i]);
+        _pshape[i] = get_nearest_power2(shape[i]);
     }
 
     // Shrink partition until we get its size into the (low, high] boundaries
@@ -98,34 +99,40 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx,
             // The size of the partition so far
             psize = itemsize;
             for (int j = 0; j < ndim; j++) {
-                psize *= pshape[j];
+                psize *= _pshape[j];
             }
             if (psize <= high) {
                 break;
             }
             else if (psize < low) {
-                pshape[i] = shape[i];
+                _pshape[i] = shape[i];
                 break;
             }
-            pshape[i] /= 2;
+            _pshape[i] /= 2;
         }
     } while (psize > high);
 
     // If some pshape axis is too close to the original shape, split it again, but not too much
     if (psize > low) {
         for (int i = 0; i < ndim; i++) {
-            if (((float) (shape[i] - pshape[i]) / (float) pshape[i]) < 0.1) {
-                pshape[i] = pshape[i] / 2 + pshape[i] / 4;
+            if (((float) (shape[i] - _pshape[i]) / (float) _pshape[i]) < 0.1) {
+                _pshape[i] = _pshape[i] / 2 + _pshape[i] / 4;
             }
             psize = itemsize;
             for (int j = 0; j < ndim; j++) {
-                psize *= pshape[j];
+                psize *= _pshape[j];
             }
             if (psize < low) {
                 break;
             }
         }
     }
+
+    // Now that we are sure that all the axis in pshape are < INT32_MAX, copy to actual pshape
+    for (int i = 0; i < ndim; i++) {
+        pshape[i] = (int32_t)_pshape[i];
+    }
+
     return INA_SUCCESS;
 }
 
