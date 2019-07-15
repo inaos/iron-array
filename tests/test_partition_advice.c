@@ -76,7 +76,7 @@ INA_TEST_FIXTURE(partition_advice, 2_d)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int8_t ndim = 2;
     int64_t shape[] = {15 * 1000, 1112 * 1000};
-    int32_t pshape[] = {16 * 1024, 64 * 1024};
+    int32_t pshape[] = {32, 4 * 1024};
 
     INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, pshape));
 }
@@ -86,7 +86,7 @@ INA_TEST_FIXTURE(partition_advice, 3_d)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int8_t ndim = 3;
     int64_t shape[] = {17 * 1000, 3 * 1000, 300 * 1000};
-    int32_t pshape[] = {4 * 1024, 512, 64 * 1024};
+    int32_t pshape[] = {32, 4, 1024};
 
     INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, pshape));
 }
@@ -96,7 +96,7 @@ INA_TEST_FIXTURE(partition_advice, 4_d)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int8_t ndim = 4;
     int64_t shape[] = {17 * 1000, 3 * 1000, 30 * 1000, 10 * 1000};
-    int32_t pshape[] = {16 * 1024, 2 * 1024, 16 * 1024, 8 * 1024};
+    int32_t pshape[] = {32, 4, 32, 32};
 
     INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, pshape));
 }
