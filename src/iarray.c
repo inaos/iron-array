@@ -36,7 +36,7 @@ INA_API(ina_rc_t) iarray_init()
 #if __linux__
     int nprocs = get_nprocs();
     cpu_set_t  mask;
-    CPU_ZERO(&mask); 
+    CPU_ZERO(&mask);
     for(int i = 0; i < nprocs; i++) {
         CPU_SET(i, &mask);
     }
@@ -52,14 +52,72 @@ INA_API(void) iarray_destroy()
     _blosc_inited = 0;
 }
 
-INA_API(ina_rc_t) iarray_partition_advice(iarray_data_type_t dtype, const int *max_nelem, const int *min_nelem)
+int32_t get_nearest_power2(int64_t value)
 {
+    int64_t power2 = 2;
+    while (power2 < value && power2 < INT32_MAX) {
+        power2 *= 2;
+    }
+    power2 /= 2;
+    return power2;
+}
+
+INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx,
+                                          iarray_data_type_t dtype,
+                                          const int ndim,
+                                          const int64_t *shape,
+                                          int32_t *pshape)
+{
+    INA_UNUSED(ctx);  // we could use context in the future
     /* Use INAC to determine L3 cache size */
-    // high = L3 / 4 (2x operand, 1x temporary, 1x reserve) / dtype
-    //low = 4k (determine a better solution later)
-    INA_UNUSED(dtype);
-    INA_UNUSED(max_nelem);
-    INA_UNUSED(min_nelem);
+    const int L3 = 4 * 1024 * 1024;
+    // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
+    const int high = L3 / 4;
+    const int low = 128 * 1024;
+    int itemsize = 0;
+    switch (dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            itemsize = 8;
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            itemsize = 4;
+            break;
+        default:
+            return INA_ERR_ERROR;
+    }
+
+    for (int i = 0; i < ndim; i++ ) {
+        pshape[i] = get_nearest_power2(shape[i]);
+    }
+
+    int psize = 0;
+    for (int j = 0; j < ndim; j++ ) {
+        psize += pshape[j] * itemsize;
+    }
+
+    if (psize < low) {
+        return INA_SUCCESS;
+    }
+
+    // Shrink partition until we get its size into the (low, high] boundaries
+    while (psize > high) {
+        for (int i = 0; i < ndim; i++) {
+            // The size of the partition so far
+            psize = 0;
+            for (int j = 0; j < ndim; j++) {
+                psize += pshape[j] * itemsize;
+            }
+            if (psize <= high) {
+                break;
+            }
+            else if (psize < low) {
+                pshape[i] = shape[i];
+                break;
+            }
+            pshape[i] /= 2;
+        }
+    }
+
     return INA_SUCCESS;
 }
 
