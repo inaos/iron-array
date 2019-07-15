@@ -21,9 +21,9 @@ static ina_rc_t test_partition_advice(iarray_context_t *ctx,
     int32_t _pshape[IARRAY_DIMENSION_MAX];
     INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, dtype, ndim, shape, _pshape));
 
-    for (int i = 0; i < ndim; i++) {
-        printf("pshapes: %d, %d\n", pshape[i], _pshape[i]);
-    }
+//    for (int i = 0; i < ndim; i++) {
+//        printf("pshapes: %d, %d\n", pshape[i], _pshape[i]);
+//    }
 
     for (int i = 0; i < ndim; i++) {
         INA_TEST_ASSERT_EQUAL_INT(pshape[i], _pshape[i]);
@@ -77,6 +77,16 @@ INA_TEST_FIXTURE(partition_advice, 2_d)
     int8_t ndim = 2;
     int64_t shape[] = {15 * 1000, 1112 * 1000};
     int32_t pshape[] = {32, 4 * 1024};
+
+    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, pshape));
+}
+
+INA_TEST_FIXTURE(partition_advice, 2_d_near_bounds)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    int8_t ndim = 2;
+    int64_t shape[] = {513, 257};
+    int32_t pshape[] = {384, 192};
 
     INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, pshape));
 }
