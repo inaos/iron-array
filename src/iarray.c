@@ -111,6 +111,21 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx,
         }
     } while (psize > high);
 
+    // If some pshape axis is too close to the original shape, split it again, but not too much
+    if (psize > low) {
+        for (int i = 0; i < ndim; i++) {
+            if (((float) (shape[i] - pshape[i]) / (float) pshape[i]) < 0.1) {
+                pshape[i] = pshape[i] / 2 + pshape[i] / 4;
+            }
+            psize = itemsize;
+            for (int j = 0; j < ndim; j++) {
+                psize *= pshape[j];
+            }
+            if (psize < low) {
+                break;
+            }
+        }
+    }
     return INA_SUCCESS;
 }
 
