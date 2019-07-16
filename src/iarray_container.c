@@ -138,6 +138,40 @@ fail:
     return ina_err_get_rc();
 }
 
+
+INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
+                                   iarray_container_t *c,
+                                   const int64_t *start,
+                                   const int64_t *stop,
+                                   iarray_container_t *slice)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(start);
+    INA_VERIFY_NOT_NULL(stop);
+    INA_VERIFY_NOT_NULL(slice);
+
+    if (c->dtshape->dtype != slice->dtshape->dtype) {
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
+
+    int typesize = slice->catarr->ctx->cparams.typesize;
+    int64_t buflen = slice->catarr->size;
+
+    uint8_t *buffer;
+    if (slice->catarr->storage == CATERVA_STORAGE_BLOSC) {
+        buffer = malloc(buflen * typesize);
+        INA_MUST_SUCCEED(iarray_to_buffer(ctx, slice, buffer, buflen * typesize));
+    } else {
+        buffer = slice->catarr->buf;
+    }
+
+    INA_MUST_SUCCEED(iarray_set_slice_buffer(ctx, c, start,stop, buffer, buflen * typesize));
+
+    return INA_SUCCESS;
+}
+
+
 INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                                           iarray_container_t *c,
                                           int64_t *start,

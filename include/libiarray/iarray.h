@@ -354,6 +354,14 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    bool view,
                                    iarray_container_t **container);
 
+
+INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
+                                   iarray_container_t *c,
+                                   const int64_t *start,
+                                   const int64_t *stop,
+                                   iarray_container_t *slice);
+
+
 INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                                           iarray_container_t *c,
                                           int64_t *start,
