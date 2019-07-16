@@ -26,14 +26,12 @@ int main()
     // Create c_x container
     int8_t xndim = 3;
     int64_t xshape[] = {100, 100, 100};
-    int32_t xpshape[] = {0, 0, 0};  // we are asking for advice later on
 
     iarray_dtshape_t xdtshape;
     xdtshape.ndim = xndim;
     xdtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     for (int i = 0; i < xdtshape.ndim; ++i) {
         xdtshape.shape[i] = xshape[i];
-        xdtshape.pshape[i] = xpshape[i];
     }
 
     if (iarray_partition_advice(ctx, &xdtshape, 0, 0) < 0) {
