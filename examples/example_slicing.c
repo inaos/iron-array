@@ -34,8 +34,8 @@ int main()
         xdtshape.shape[i] = xshape[i];
     }
 
-    if (iarray_partition_advice(ctx, &xdtshape, 0, 0) < 0) {
-        printf("Error in getting advice for pshape.  Exiting...");
+    if (INA_FAILED(iarray_partition_advice(ctx, &xdtshape, 0, 0))) {
+        printf("Error in getting advice for pshape: %s\n", ina_err_strerror(ina_err_get_rc()));
         exit(1);
     }
     printf("pshape: %lld %lld %lld\n", xdtshape.pshape[0], xdtshape.pshape[1], xdtshape.pshape[2]);
