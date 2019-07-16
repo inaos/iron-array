@@ -124,9 +124,9 @@ typedef struct iarray_config_s {
 
 typedef struct iarray_dtshape_s {
     iarray_data_type_t dtype;
-    int8_t ndim;     /* IF ndim = 0 THEN it is a scalar */
+    int8_t ndim;     /* if ndim = 0 it is a scalar */
     int64_t shape[IARRAY_DIMENSION_MAX];
-    int64_t pshape[IARRAY_DIMENSION_MAX]; /* Partition-Shape, optional in the future */
+    int64_t pshape[IARRAY_DIMENSION_MAX]; /* partition shape; if NULL a plainbuffer is used */
 } iarray_dtshape_t;
 
 typedef struct iarray_iter_write_value_s {
@@ -193,11 +193,7 @@ INA_API(void) iarray_destroy(void);
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx);
 INA_API(void) iarray_context_free(iarray_context_t **ctx);
 
-INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx,
-                                          iarray_data_type_t dtype,
-                                          const int ndim,
-                                          const int64_t *shape,
-                                          int32_t *_pshape);
+INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape);
 
 INA_API(ina_rc_t) iarray_advice_matmul(iarray_context_t *ctx,
                                        iarray_container_t *a,
