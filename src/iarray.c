@@ -63,14 +63,21 @@ int32_t get_nearest_power2(int64_t value)
 }
 
 // Given a shape, offer advice on the partition size
-INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape)
+INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape,
+                                          int64_t low, int64_t high)
 {
     INA_UNUSED(ctx);  // we could use context in the future
-    /* Use INAC to determine L3 cache size */
-    const int L3 = 4 * 1024 * 1024;
-    // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
-    const int64_t high = L3 / 4;
-    const int64_t low = 128 * 1024;
+    if (high == 0) {
+        // TODO: Use INAC to determine L3 cache size
+        const int L3 = 4 * 1024 * 1024;
+        // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
+        high = L3 / 4;
+    }
+    if (low == 0) {
+        // TODO: Use INAC to determine L2 cache size
+        const int L2 = 256 * 1024;
+        low = L2 / 2;
+    }
     iarray_data_type_t dtype = dtshape->dtype;
     int ndim = dtshape->ndim;
     int64_t *shape = dtshape->shape;
@@ -125,6 +132,11 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
                 break;
             }
         }
+    }
+
+    if (psize > INT32_MAX) {
+        // The partition size can never be larger than 2 GB
+        return INA_ERR_EXCEEDED;
     }
 
     return INA_SUCCESS;

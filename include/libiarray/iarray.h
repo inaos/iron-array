@@ -193,7 +193,16 @@ INA_API(void) iarray_destroy(void);
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx);
 INA_API(void) iarray_context_free(iarray_context_t **ctx);
 
-INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape);
+/*
+ *  Provide advice for the partition shape of a `dtshape`.
+ *
+ *  If success, dtshape.pshape will contain the advice.
+ *
+ *  `low` and `high` contain low and high values for the partition size.  If `low` is 0, it defaults
+ *  to a fraction of L2 cache size.  If `high` is 0, it defaults to a fraction of L3 cache size.
+ */
+INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape,
+                                          int64_t low, int64_t high);
 
 INA_API(ina_rc_t) iarray_advice_matmul(iarray_context_t *ctx,
                                        iarray_container_t *a,
