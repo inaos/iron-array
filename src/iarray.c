@@ -91,7 +91,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
             itemsize = 4;
             break;
         default:
-            return INA_ERR_ERROR;
+            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     for (int i = 0; i < ndim; i++) {
@@ -136,7 +136,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
 
     if (psize > INT32_MAX) {
         // The partition size can never be larger than 2 GB
-        return INA_ERR_EXCEEDED;
+        return INA_ERROR(INA_ERR_EXCEEDED);
     }
 
     return INA_SUCCESS;
