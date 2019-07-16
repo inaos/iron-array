@@ -160,13 +160,17 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
 
     uint8_t *buffer;
     if (slice->catarr->storage == CATERVA_STORAGE_BLOSC) {
-        buffer = malloc(buflen * typesize);
+        buffer = ina_mem_alloc(buflen * typesize);
         INA_MUST_SUCCEED(iarray_to_buffer(ctx, slice, buffer, buflen * typesize));
     } else {
         buffer = slice->catarr->buf;
     }
 
     INA_MUST_SUCCEED(iarray_set_slice_buffer(ctx, c, start,stop, buffer, buflen * typesize));
+
+    if (slice->catarr->storage == CATERVA_STORAGE_BLOSC) {
+        ina_mem_free(buffer);
+    }
 
     return INA_SUCCESS;
 }
@@ -331,7 +335,7 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                 mkl_simatcopy('R', 'T', rows, cols, 1.0, (float *) buffer, cols, rows);
                 break;
             default:
-                return INA_ERR_EXCEEDED;
+                return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }
     }
 
@@ -350,11 +354,10 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
         }
     }
 
-
-
     caterva_dims_t start__ = caterva_new_dims(start_, c->dtshape->ndim);
     caterva_dims_t stop__ = caterva_new_dims(stop_, c->dtshape->ndim);
     int err = caterva_set_slice_buffer(c->catarr, buffer, &start__, &stop__);
+
     if (err != 0) {
         return INA_ERROR(INA_ERR_ERROR);
     }
