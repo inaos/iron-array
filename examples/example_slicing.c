@@ -26,12 +26,7 @@ int main()
     // Create c_x container
     int8_t xndim = 3;
     int64_t xshape[] = {100, 100, 100};
-    int32_t xpshape[3];
-    if (iarray_partition_advice(ctx, IARRAY_DATA_TYPE_DOUBLE, xndim, xshape, xpshape) < 0) {
-        printf("Error in getting advice for pshape.  Exiting...");
-        exit(1);
-    }
-    printf("pshape: %d %d %d\n", xpshape[0], xpshape[1], xpshape[2]);
+    int32_t xpshape[] = {0, 0, 0};  // we are asking for advice later on
 
     iarray_dtshape_t xdtshape;
     xdtshape.ndim = xndim;
@@ -40,6 +35,12 @@ int main()
         xdtshape.shape[i] = xshape[i];
         xdtshape.pshape[i] = xpshape[i];
     }
+
+    if (iarray_partition_advice(ctx, &xdtshape) < 0) {
+        printf("Error in getting advice for pshape.  Exiting...");
+        exit(1);
+    }
+    printf("pshape: %lld %lld %lld\n", xdtshape.pshape[0], xdtshape.pshape[1], xdtshape.pshape[2]);
 
     printf("Initializing c_x container...\n");
     printf("- c_x shape: ");
