@@ -126,7 +126,7 @@ typedef struct iarray_dtshape_s {
     iarray_data_type_t dtype;
     int8_t ndim;     /* if ndim = 0 it is a scalar */
     int64_t shape[IARRAY_DIMENSION_MAX];
-    int64_t pshape[IARRAY_DIMENSION_MAX]; /* partition shape; if NULL a plainbuffer is used */
+    int64_t pshape[IARRAY_DIMENSION_MAX]; /* partition shape */
 } iarray_dtshape_t;
 
 typedef struct iarray_iter_write_value_s {
