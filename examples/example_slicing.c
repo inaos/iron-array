@@ -23,18 +23,22 @@ int main()
 
     iarray_container_t *c_x, *c_out;
 
-    // Create x container
+    // Create c_x container
     int8_t xndim = 3;
     int64_t xshape[] = {100, 100, 100};
-    int64_t xpshape[] = {10, 10, 10};
 
     iarray_dtshape_t xdtshape;
     xdtshape.ndim = xndim;
     xdtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     for (int i = 0; i < xdtshape.ndim; ++i) {
         xdtshape.shape[i] = xshape[i];
-        xdtshape.pshape[i] = xpshape[i];
     }
+
+    if (INA_FAILED(iarray_partition_advice(ctx, &xdtshape, 0, 0))) {
+        printf("Error in getting advice for pshape: %s\n", ina_err_strerror(ina_err_get_rc()));
+        exit(1);
+    }
+    printf("pshape: %lld %lld %lld\n", xdtshape.pshape[0], xdtshape.pshape[1], xdtshape.pshape[2]);
 
     printf("Initializing c_x container...\n");
     printf("- c_x shape: ");
