@@ -52,10 +52,10 @@ INA_API(void) iarray_destroy()
     _blosc_inited = 0;
 }
 
-int32_t get_nearest_power2(int64_t value)
+int64_t get_nearest_power2(int64_t value)
 {
     int64_t power2 = 2;
-    while (power2 < value && power2 < INT32_MAX) {
+    while (power2 <= value && power2 < INT32_MAX) {
         power2 *= 2;
     }
     power2 /= 2;
@@ -139,6 +139,73 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         return INA_ERROR(INA_ERR_EXCEEDED);
     }
 
+    return INA_SUCCESS;
+}
+
+// Given a matmul operation (C = A * B), provide advice on the blocks for iteration A and B
+// A and B are supposed to have (M, K) and (K, N) dimensions respectively
+// The hint for the blockshapes are going to be (m, k) and (k, n) respectively
+INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
+                                       iarray_container_t *a,
+                                       iarray_container_t *b,
+                                       int64_t **bshape_a,
+                                       int64_t **bshape_b,
+                                       int64_t low,
+                                       int64_t high)
+{
+    INA_UNUSED(ctx);  // we could use context in the future
+
+    // Take the dtype of the first array (we don't support mixing data types yet)
+    iarray_data_type_t dtype = a->dtshape->dtype;
+    int itemsize = (dtype == IARRAY_DATA_TYPE_DOUBLE) ? 8 : 4;
+
+    // First, get an advice for the partition of the output
+    iarray_dtshape_t dtshape_c = {
+        .dtype = dtype,
+        .ndim = 2,
+    };
+    dtshape_c.shape[0] = a->dtshape->shape[0];
+    dtshape_c.shape[1] = b->dtshape->shape[1];
+    if (INA_FAILED(iarray_partition_advice(ctx, &dtshape_c, low, high))) {
+        return INA_ERROR(INA_ERR_ERROR);
+    }
+    int64_t m_dim = dtshape_c.pshape[0];
+    int64_t n_dim = dtshape_c.pshape[1];
+
+    // Now that we have a hint for M and K, get a guess of the N
+    int64_t k_dim_guess1 = high / (m_dim * itemsize);
+    k_dim_guess1 = get_nearest_power2(k_dim_guess1);
+    int64_t k_dim_guess2 = high / (n_dim * itemsize);
+    k_dim_guess2 = get_nearest_power2(k_dim_guess2);
+
+    // Get the mean value and nearest power of 2
+    int64_t k_dim = (k_dim_guess1 + k_dim_guess2) / 2;
+    k_dim = get_nearest_power2(k_dim);
+
+    if (k_dim > a->dtshape->shape[1]) {
+        k_dim = get_nearest_power2(a->dtshape->shape[1]);
+    }
+    if (k_dim > b->dtshape->shape[0]) {
+        k_dim = get_nearest_power2(b->dtshape->shape[0]);
+    }
+
+    // Correct the blocksize in case it is too small for one of the matrices
+    while (((m_dim * k_dim * itemsize) < low) || (((k_dim * n_dim * itemsize) < low))) {
+        k_dim *= 2;
+    }
+
+    // Correct the blocksize in case it is too large for one of the matrices
+    while (((m_dim * k_dim * itemsize) > high) || (((k_dim * n_dim * itemsize) > high))) {
+        k_dim /= 2;
+    }
+
+    // We are done.  Fill the block shapes and return.
+    *bshape_a = malloc(2 * sizeof(int64_t));
+    *bshape_b = malloc(2 * sizeof(int64_t));
+    (*bshape_a)[0] = m_dim;
+    (*bshape_a)[1] = k_dim;
+    (*bshape_b)[0] = k_dim;
+    (*bshape_b)[1] = n_dim;
     return INA_SUCCESS;
 }
 
