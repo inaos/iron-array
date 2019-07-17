@@ -36,7 +36,7 @@ INA_API(ina_rc_t) iarray_init()
 #if __linux__
     int nprocs = get_nprocs();
     cpu_set_t  mask;
-    CPU_ZERO(&mask); 
+    CPU_ZERO(&mask);
     for(int i = 0; i < nprocs; i++) {
         CPU_SET(i, &mask);
     }
@@ -52,14 +52,93 @@ INA_API(void) iarray_destroy()
     _blosc_inited = 0;
 }
 
-INA_API(ina_rc_t) iarray_partition_advice(iarray_data_type_t dtype, const int *max_nelem, const int *min_nelem)
+int32_t get_nearest_power2(int64_t value)
 {
-    /* Use INAC to determine L3 cache size */
-    // high = L3 / 4 (2x operand, 1x temporary, 1x reserve) / dtype
-    //low = 4k (determine a better solution later)
-    INA_UNUSED(dtype);
-    INA_UNUSED(max_nelem);
-    INA_UNUSED(min_nelem);
+    int64_t power2 = 2;
+    while (power2 < value && power2 < INT32_MAX) {
+        power2 *= 2;
+    }
+    power2 /= 2;
+    return power2;
+}
+
+// Given a shape, offer advice on the partition size
+INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape,
+                                          int64_t low, int64_t high)
+{
+    INA_UNUSED(ctx);  // we could use context in the future
+    if (high == 0) {
+        // TODO: Use INAC to determine L3 cache size
+        const int L3 = 4 * 1024 * 1024;
+        // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
+        high = L3 / 4;
+    }
+    if (low == 0) {
+        // TODO: Use INAC to determine L2 cache size
+        const int L2 = 256 * 1024;
+        low = L2 / 2;
+    }
+    iarray_data_type_t dtype = dtshape->dtype;
+    int ndim = dtshape->ndim;
+    int64_t *shape = dtshape->shape;
+    int64_t *pshape = dtshape->pshape;
+    int itemsize = 0;
+    switch (dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            itemsize = 8;
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            itemsize = 4;
+            break;
+        default:
+            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
+
+    for (int i = 0; i < ndim; i++) {
+        pshape[i] = get_nearest_power2(shape[i]);
+    }
+
+    // Shrink partition until we get its size into the [low, high] boundaries
+    int64_t psize = 0;
+    do {
+        for (int i = 0; i < ndim; i++) {
+            // The size of the partition so far
+            psize = itemsize;
+            for (int j = 0; j < ndim; j++) {
+                psize *= pshape[j];
+            }
+            if (psize <= high) {
+                break;
+            }
+            else if (psize < low) {
+                pshape[i] = shape[i];
+                break;
+            }
+            pshape[i] /= 2;
+        }
+    } while (psize > high);
+
+    // Lastly, if some pshape axis is too close to the original shape, split it again
+    if (psize > low) {
+        for (int i = 0; i < ndim; i++) {
+            if (((float) (shape[i] - pshape[i]) / (float) pshape[i]) < 0.1) {
+                pshape[i] = pshape[i] / 2;
+            }
+            psize = itemsize;
+            for (int j = 0; j < ndim; j++) {
+                psize *= pshape[j];
+            }
+            if (psize < low) {
+                break;
+            }
+        }
+    }
+
+    if (psize > INT32_MAX) {
+        // The partition size can never be larger than 2 GB
+        return INA_ERROR(INA_ERR_EXCEEDED);
+    }
+
     return INA_SUCCESS;
 }
 
