@@ -423,6 +423,7 @@ static ina_rc_t _iarray_operator_elwise_a(
         blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize);
     }
 
+    result->catarr->filled = true;
     ina_mempool_reset(ctx->mp_op);
 
     return INA_SUCCESS;
@@ -482,6 +483,8 @@ static ina_rc_t _iarray_operator_elwise_ab(
         }
         blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize);
     }
+
+    result->catarr->filled = true;
 
     ina_mempool_reset(ctx->mp_op);
 
