@@ -204,11 +204,10 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx);
 INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape,
                                           int64_t low, int64_t high);
 
-INA_API(ina_rc_t) iarray_advice_matmul(iarray_context_t *ctx,
-                                       iarray_container_t *a,
-                                       iarray_container_t *b,
-                                       int64_t **bshape_a,
-                                       int64_t **bshape_b);
+INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
+                                       iarray_container_t *a, iarray_container_t *b,
+                                       int64_t **bshape_a, int64_t **bshape_b,
+                                       int64_t low, int64_t high);
 
 INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
                                         uint32_t seed,
