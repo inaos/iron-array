@@ -148,6 +148,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
 INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
                                        iarray_container_t *a,
                                        iarray_container_t *b,
+                                       iarray_container_t *c,
                                        int64_t **bshape_a,
                                        int64_t **bshape_b,
                                        int64_t low,
@@ -155,22 +156,25 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
 {
     INA_UNUSED(ctx);  // we could use context in the future
 
+    if (high == 0) {
+        // TODO: Use INAC to determine L3 cache size
+        const int L3 = 4 * 1024 * 1024;
+        // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
+        high = L3 / 4;
+    }
+    if (low == 0) {
+        // TODO: Use INAC to determine L2 cache size
+        const int L2 = 256 * 1024;
+        low = L2 / 2;
+    }
+
     // Take the dtype of the first array (we don't support mixing data types yet)
     iarray_data_type_t dtype = a->dtshape->dtype;
     int itemsize = (dtype == IARRAY_DATA_TYPE_DOUBLE) ? 8 : 4;
 
-    // First, get an advice for the partition of the output
-    iarray_dtshape_t dtshape_c = {
-        .dtype = dtype,
-        .ndim = 2,
-    };
-    dtshape_c.shape[0] = a->dtshape->shape[0];
-    dtshape_c.shape[1] = b->dtshape->shape[1];
-    if (INA_FAILED(iarray_partition_advice(ctx, &dtshape_c, low, high))) {
-        return INA_ERROR(INA_ERR_ERROR);
-    }
-    int64_t m_dim = dtshape_c.pshape[0];
-    int64_t n_dim = dtshape_c.pshape[1];
+    // First, the m and n values *have* to be the same for the partition of the output
+    int64_t m_dim = c->dtshape->pshape[0];
+    int64_t n_dim = c->dtshape->pshape[1];
 
     // Now that we have a hint for M and K, get a guess of the N
     int64_t k_dim_guess1 = high / (m_dim * itemsize);
