@@ -49,18 +49,28 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     iarray_container_t *c_b;
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &dtshape_b, NULL, 0, &c_b));
 
+    // Build array C
+    iarray_dtshape_t dtshape_c;
+    dtshape_c.dtype = dtype;
+    dtshape_c.ndim = ndim;
+    dtshape_c.shape[0] = shape_a[0];
+    dtshape_c.shape[1] = shape_b[1];
+    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_c, low, high));
+    iarray_container_t *c_c;
+    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &dtshape_c, NULL, 0, &c_c));
+
     // Get the advice
     int64_t *_bshape_a;
     int64_t *_bshape_b;
-    INA_TEST_ASSERT_SUCCEED(iarray_matmul_advice(ctx, c_a, c_b, &_bshape_a, &_bshape_b, low, high));
+    INA_TEST_ASSERT_SUCCEED(iarray_matmul_advice(ctx, c_a, c_b, c_c, &_bshape_a, &_bshape_b, low, high));
 
-//    printf("pshape_a: ");
+//    printf("bshape_a: ");
 //    for (int i = 0; i < ndim; i++) {
 //        printf("(real: %lld, expected: %lld), ", _bshape_a[i], bshape_a[i]);
 //    }
 //    printf("\n");
 //
-//    printf("pshape_b: ");
+//    printf("bshape_b: ");
 //    for (int i = 0; i < ndim; i++) {
 //        printf("(real: %lld, expected: %lld), ", _bshape_b[i], bshape_b[i]);
 //    }
@@ -68,7 +78,7 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
 
     for (int i = 0; i < ndim; i++) {
         INA_TEST_ASSERT_EQUAL_INT(_bshape_a[i], bshape_a[i]);
-        INA_TEST_ASSERT_EQUAL_INT(_bshape_a[i], bshape_a[i]);
+        INA_TEST_ASSERT_EQUAL_INT(_bshape_b[i], bshape_b[i]);
     }
 
     free(_bshape_a);

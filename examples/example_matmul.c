@@ -36,9 +36,6 @@ int main(int argc, char **argv)
     int64_t pshape_x[] = {0, 0};
     int64_t pshape_y[] = {100, 200};
     int64_t pshape_z[] = {0, 0};
-    
-    int64_t bshape_x[] = {2000, 1000};
-    int64_t bshape_y[] = {1000, 1500};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = n_threads;
@@ -62,7 +59,7 @@ int main(int argc, char **argv)
         dtshape_y.shape[i] = shape_y[i];
         dtshape_y.pshape[i] = pshape_y[i];
     }
-    
+
     iarray_container_t *c_y;
     iarray_linspace(ctx, &dtshape_y, size_y, 0, 1, NULL, 0, &c_y);
 
@@ -73,7 +70,7 @@ int main(int argc, char **argv)
         dtshape_z.shape[i] = shape_z[i];
         dtshape_z.pshape[i] = pshape_z[i];
     }
-    
+
     iarray_container_t *c_z;
     iarray_container_new(ctx, &dtshape_z, NULL, 0, &c_z);
     mkl_set_num_threads(n_threads);
@@ -97,10 +94,28 @@ int main(int argc, char **argv)
 
     printf("Time mkl (C): %.4f\n", elapsed_sec);
 
+    // int64_t bshape_x[] = {2000, 1000};
+    // int64_t bshape_y[] = {1000, 1500};
+    // If using the block shapes below, the iarray_linalg_matmul() does not work well
+    int64_t *bshape_x;
+    int64_t *bshape_y;
+    if (INA_FAILED(iarray_matmul_advice(ctx, c_x, c_y, c_z, &bshape_x, &bshape_y, 0, 0))) {
+        printf("Error in getting advice for matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
+        exit(1);
+    }
+    printf("bshape_x: (%lld, %lld)\n", bshape_x[0], bshape_x[1]);
+    printf("bshape_y: (%lld, %lld)\n", bshape_y[0], bshape_y[1]);
+
     INA_STOPWATCH_START(w);
-    INA_MUST_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y ,c_z, bshape_x, bshape_y, IARRAY_OPERATOR_GENERAL));
+    if (INA_FAILED(iarray_linalg_matmul(ctx, c_x, c_y ,c_z, bshape_x, bshape_y, IARRAY_OPERATOR_GENERAL))) {
+        printf("Error in linalg_matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
+        exit(1);
+    }
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+
+    free(bshape_x);
+    free(bshape_y);
 
     printf("Time iarray: %.4f\n", elapsed_sec);
 
