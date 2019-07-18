@@ -117,9 +117,6 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         int64_t stop_a[IARRAY_DIMENSION_MAX];
         int64_t start_b[IARRAY_DIMENSION_MAX];
         int64_t stop_b[IARRAY_DIMENSION_MAX];
-        int64_t start_c[IARRAY_DIMENSION_MAX];
-        int64_t stop_c[IARRAY_DIMENSION_MAX];
-
 
         int64_t inc_a = 1;
         int64_t inc_b = 1;
@@ -150,8 +147,6 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
             } else {
                 stop_b[i] = start_b[i] + bshape_b[i];
             }
-            start_c[i] = 0;
-            stop_c[i] = c->dtshape->shape[i];
         }
 
         // Obtain desired blocks from iarray containers
@@ -592,7 +587,7 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     }
 
     if (bshape_a[1] != bshape_b[0]) {
-        printf("Error %lld - %lld\n", bshape_a[1], bshape_b[0]);
+        printf("Error %jd - %jd \n", (intmax_t)bshape_a[1], (intmax_t)bshape_b[0]);
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
