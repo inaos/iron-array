@@ -189,3 +189,14 @@ INA_TEST_FIXTURE(matmul_advice, asymm3)
 
     INA_TEST_ASSERT_SUCCEED(test_matmul_advice(data->ctx, dtype, shape_a, shape_b, bshape_a, bshape_b));
 }
+
+INA_TEST_FIXTURE(matmul_advice, matvec)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    int64_t shape_a[] = {10, 1000};
+    int64_t shape_b[] = {1000, 1};
+    int64_t bshape_a[] = {8, 1000};
+    int64_t bshape_b[] = {1000, 1};
+
+    INA_TEST_ASSERT_SUCCEED(test_matmul_advice(data->ctx, dtype, shape_a, shape_b, bshape_a, bshape_b));
+}
