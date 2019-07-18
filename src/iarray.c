@@ -144,13 +144,14 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
 
 // Given a matmul operation (C = A * B), provide advice on the blocks for iteration A and B
 // A and B are supposed to have (M, K) and (K, N) dimensions respectively
+// C is supposed to have a partition size of (m, n)
 // The hint for the blockshapes are going to be (m, k) and (k, n) respectively
 INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
                                        iarray_container_t *a,
                                        iarray_container_t *b,
                                        iarray_container_t *c,
-                                       int64_t **bshape_a,
-                                       int64_t **bshape_b,
+                                       int64_t *bshape_a,
+                                       int64_t *bshape_b,
                                        int64_t low,
                                        int64_t high)
 {
@@ -215,12 +216,10 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     }
 
     // We are done.  Fill the block shapes and return.
-    *bshape_a = malloc(2 * sizeof(int64_t));
-    *bshape_b = malloc(2 * sizeof(int64_t));
-    (*bshape_a)[0] = m_dim;
-    (*bshape_a)[1] = k_dim;
-    (*bshape_b)[0] = k_dim;
-    (*bshape_b)[1] = n_dim;
+    bshape_a[0] = m_dim;
+    bshape_a[1] = k_dim;
+    bshape_b[0] = k_dim;
+    bshape_b[1] = n_dim;
     return INA_SUCCESS;
 }
 

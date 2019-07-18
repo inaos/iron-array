@@ -66,9 +66,9 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
 //    printf("pshape_c: (%lld, %lld)\n", c_c->dtshape->pshape[0], c_c->dtshape->pshape[1]);
 
     // Get the advice for matmul itself
-    int64_t *_bshape_a;
-    int64_t *_bshape_b;
-    INA_TEST_ASSERT_SUCCEED(iarray_matmul_advice(ctx, c_a, c_b, c_c, &_bshape_a, &_bshape_b, low, high));
+    int64_t _bshape_a[2];
+    int64_t _bshape_b[2];
+    INA_TEST_ASSERT_SUCCEED(iarray_matmul_advice(ctx, c_a, c_b, c_c, _bshape_a, _bshape_b, low, high));
 
 //    printf("bshape_a: ");
 //    for (int i = 0; i < ndim; i++) {
@@ -91,9 +91,6 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
         printf("Error in linalg_matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
         exit(1);
     }
-
-    free(_bshape_a);
-    free(_bshape_b);
 
     int64_t size_c = dtshape_c.shape[0] * dtshape_c.shape[1];
     double *buffer_c = (double *) malloc(size_c * sizeof(double));

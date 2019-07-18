@@ -204,9 +204,24 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx);
 INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape,
                                           int64_t low, int64_t high);
 
+/*
+ * Provide advice for the block shapes for performing a matrix-matrix multiplication.
+ *
+ * `a` and `b` are supposed to have (M, K) and (K, N) dimensions respectively
+ * `c` is supposed to have a partition size of (m, n)
+ * The hint for the block shapes are going to be (m, k) and (k, n) respectively
+ *
+ * The hints will be stored in `bshape_a` and `bshape_b`, which needs to be provided by the user.
+ * The number of components for the block shapes is 2.
+ *
+ * Note: When performing matrix-*vector* operations, just pass the N dimension as 1.  The `k` hint
+ * will be valid for this case too.  In this case, always pass `bshape_a` and `bshape_b` with
+ * 2-components too (even if `bshape_b` only has a dimension in this case).
+ *
+ */
 INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
                                        iarray_container_t *a, iarray_container_t *b, iarray_container_t *c,
-                                       int64_t **bshape_a, int64_t **bshape_b,
+                                       int64_t *bshape_a, int64_t *bshape_b,
                                        int64_t low, int64_t high);
 
 INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
