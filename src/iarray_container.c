@@ -178,10 +178,10 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                                           iarray_container_t *c,
-                                          int64_t *start,
-                                          int64_t *stop,
+                                          const int64_t *start,
+                                          const int64_t *stop,
                                           void *buffer,
-                                          int64_t buflen)
+                                          const int64_t buflen)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(start);
@@ -277,8 +277,9 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                                           const int64_t *start,
                                           const int64_t *stop,
                                           void *buffer,
-                                          int64_t buflen)
+                                          const int64_t buflen)
 {
+    // TODO: make use of buflen so as to avoid exceeding the buffer boundaries
     INA_UNUSED(ctx);
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
