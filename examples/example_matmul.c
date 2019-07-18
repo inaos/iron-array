@@ -97,9 +97,9 @@ int main(int argc, char **argv)
     // int64_t bshape_x[] = {2000, 1000};
     // int64_t bshape_y[] = {1000, 1500};
     // If using the block shapes below, the iarray_linalg_matmul() does not work well
-    int64_t *bshape_x;
-    int64_t *bshape_y;
-    if (INA_FAILED(iarray_matmul_advice(ctx, c_x, c_y, c_z, &bshape_x, &bshape_y, 0, 0))) {
+    int64_t bshape_x[2];
+    int64_t bshape_y[2];
+    if (INA_FAILED(iarray_matmul_advice(ctx, c_x, c_y, c_z, bshape_x, bshape_y, 0, 0))) {
         printf("Error in getting advice for matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
         exit(1);
     }
@@ -113,9 +113,6 @@ int main(int argc, char **argv)
     }
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
-
-    free(bshape_x);
-    free(bshape_y);
 
     printf("Time iarray: %.4f\n", elapsed_sec);
 
