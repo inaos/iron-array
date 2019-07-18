@@ -23,7 +23,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     bool a_contiguous = (a->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
     if (a_contiguous) {
-        if (!a->transposed) {
+        if (a->transposed) {
             if (bshape_a[0] != a->dtshape->shape[0]) {
                 a_contiguous = false;
             }
@@ -35,7 +35,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
     bool b_contiguous = (b->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
     if (b_contiguous) {
-        if (!b->transposed) {
+        if (b->transposed) {
             if (bshape_b[0] != b->dtshape->shape[0]) {
                 b_contiguous = false;
             }
@@ -221,7 +221,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     bool a_contiguous = (a->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
     if (a_contiguous) {
-        if (!a->transposed) {
+        if (a->transposed) {
             if (bshape_a[0] != a->dtshape->shape[0]) {
                 a_contiguous = false;
             }
