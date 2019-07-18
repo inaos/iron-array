@@ -86,8 +86,8 @@ int main(int argc, char **argv)
 
 
     INA_STOPWATCH_START(w);
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) 2000, (int) 1500, (int) 1000,
-                1.0, b_x, (int) 1000, b_y, (int) 1500, 0.0, b_z, (int) 1500);
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) shape_x[0], (int) shape_y[1], (int) shape_x[1],
+                1.0, b_x, (int) shape_x[1], b_y, (int) shape_y[1], 0.0, b_z, (int) shape_y[1]);
     INA_STOPWATCH_STOP(w);
 
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
