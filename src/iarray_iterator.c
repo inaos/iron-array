@@ -218,6 +218,9 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_iter_read_block_value_t *value,
                                              bool external_buffer)
 {
+   if (!cont->catarr->filled) {
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
     INA_VERIFY_NOT_NULL(itr);
     *itr = (iarray_iter_read_block_t *) ina_mem_alloc(sizeof(iarray_iter_read_block_t));
     INA_RETURN_IF_NULL(itr);
@@ -587,6 +590,9 @@ INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
         }
     }
 
+    if (itr->nblock < itr->total_blocks) {
+        itr->cont->catarr->filled = true;
+    }
     return itr->nblock < itr->total_blocks;
 }
 
@@ -604,7 +610,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     *itr = (iarray_iter_write_block_t *)ina_mem_alloc(sizeof(iarray_iter_write_block_t));
     INA_RETURN_IF_NULL(itr);
 
-    if (cont->catarr->size != 1) {
+    if (!cont->catarr->empty && cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT); //TODO: Should we allow a rewrite a non-empty iarray cont
     }
 

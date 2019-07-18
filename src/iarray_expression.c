@@ -254,8 +254,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
     int64_t nitems_in_schunk = e->nbytes / e->typesize;
     int64_t nitems_written = 0;
     int nvars = e->nvars;
-    caterva_dims_t shape = caterva_new_dims(e->vars[0].c->dtshape->shape, e->vars[0].c->dtshape->ndim);
-    caterva_update_shape(ret->catarr, &shape);
+
     ret->catarr->size = 1;  // TODO: fix this workaround (see caterva_update_shape() call above)
     int64_t *out_pshape;
 
@@ -277,6 +276,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_context_new(&cfg, &ctx);
         iarray_iter_read_block_t **iter_var = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_t));
         iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
+
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
             iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false);
