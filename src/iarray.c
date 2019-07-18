@@ -203,6 +203,17 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
         k_dim /= 2;
     }
 
+    // The block shape cannot be larger than the shape
+    if (m_dim > a->dtshape->shape[0]) {
+        m_dim = a->dtshape->shape[0];
+    }
+    if (k_dim > a->dtshape->shape[1]) {
+        k_dim = a->dtshape->shape[1];
+    }
+    if (n_dim > b->dtshape->shape[1]) {
+        n_dim = b->dtshape->shape[1];
+    }
+
     // We are done.  Fill the block shapes and return.
     *bshape_a = malloc(2 * sizeof(int64_t));
     *bshape_b = malloc(2 * sizeof(int64_t));

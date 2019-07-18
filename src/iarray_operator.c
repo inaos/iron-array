@@ -84,7 +84,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
     }
 
-    // block sizes are claculated
+    // block sizes are calculated
     size_t a_size = (size_t) B0 * B1 * typesize;
     size_t b_size = (size_t) B1 * B2 * typesize;
     size_t c_size = (size_t) B0 * B2 * typesize;
