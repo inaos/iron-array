@@ -43,7 +43,7 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
         iarray_iter_write_block_t *I;
         iarray_iter_write_block_value_t val;
         ina_rc_t err = iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, false);
-        if (rewrite && (j == 1)) {
+        if (rewrite && (j == 1) && c_x->catarr->storage == CATERVA_STORAGE_BLOSC) {
             if (err != 0) { // We need the iterator to return an error
                 return INA_SUCCESS;
             }

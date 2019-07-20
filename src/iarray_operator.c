@@ -23,7 +23,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     bool a_contiguous = (a->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
     if (a_contiguous) {
-        if (!a->transposed) {
+        if (a->transposed) {
             if (bshape_a[0] != a->dtshape->shape[0]) {
                 a_contiguous = false;
             }
@@ -35,7 +35,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
     bool b_contiguous = (b->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
     if (b_contiguous) {
-        if (!b->transposed) {
+        if (b->transposed) {
             if (bshape_b[0] != b->dtshape->shape[0]) {
                 b_contiguous = false;
             }
@@ -84,7 +84,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
     }
 
-    // block sizes are claculated
+    // block sizes are calculated
     size_t a_size = (size_t) B0 * B1 * typesize;
     size_t b_size = (size_t) B1 * B2 * typesize;
     size_t c_size = (size_t) B0 * B2 * typesize;
@@ -117,9 +117,6 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         int64_t stop_a[IARRAY_DIMENSION_MAX];
         int64_t start_b[IARRAY_DIMENSION_MAX];
         int64_t stop_b[IARRAY_DIMENSION_MAX];
-        int64_t start_c[IARRAY_DIMENSION_MAX];
-        int64_t stop_c[IARRAY_DIMENSION_MAX];
-
 
         int64_t inc_a = 1;
         int64_t inc_b = 1;
@@ -150,8 +147,6 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
             } else {
                 stop_b[i] = start_b[i] + bshape_b[i];
             }
-            start_c[i] = 0;
-            stop_c[i] = c->dtshape->shape[i];
         }
 
         // Obtain desired blocks from iarray containers
@@ -221,7 +216,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     bool a_contiguous = (a->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
     if (a_contiguous) {
-        if (!a->transposed) {
+        if (a->transposed) {
             if (bshape_a[0] != a->dtshape->shape[0]) {
                 a_contiguous = false;
             }
@@ -358,13 +353,15 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
 
         if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-            c->catarr->buf = c_block;
-            break;
-        }
-        // Append it to a new iarray contianer
-        if((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
-            blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], c_size);
-            memset(c_block, 0, c_size);
+            if((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
+                c->catarr->buf = c_block;
+            }
+        } else {
+            // Append it to a new iarray container
+            if ((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
+                blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], c_size);
+                memset(c_block, 0, c_size);
+            }
         }
     }
 
@@ -421,6 +418,7 @@ static ina_rc_t _iarray_operator_elwise_a(
         blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize);
     }
 
+    result->catarr->filled = true;
     ina_mempool_reset(ctx->mp_op);
 
     return INA_SUCCESS;
@@ -480,6 +478,8 @@ static ina_rc_t _iarray_operator_elwise_ab(
         }
         blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize);
     }
+
+    result->catarr->filled = true;
 
     ina_mempool_reset(ctx->mp_op);
 
@@ -587,7 +587,7 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     }
 
     if (bshape_a[1] != bshape_b[0]) {
-        printf("Error %lld - %lld\n", bshape_a[1], bshape_b[0]);
+        printf("Error %jd - %jd \n", (intmax_t)bshape_a[1], (intmax_t)bshape_b[0]);
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
