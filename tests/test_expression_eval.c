@@ -12,6 +12,7 @@
 
 #include <libiarray/iarray.h>
 #include <tests/iarray_test.h>
+#include <src/iarray_private.h>
 
 #define NCHUNKS  10
 #define NITEMS_CHUNK (20 * 1000)
@@ -65,7 +66,6 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)"));
-
     INA_TEST_ASSERT_SUCCEED(iarray_eval(e, c_out));
 
     INA_TEST_ASSERT_SUCCEED(_iarray_test_container_dbl_buffer_cmp(ctx, c_out, buffer_y, buffer_len));

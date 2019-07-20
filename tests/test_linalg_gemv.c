@@ -116,18 +116,19 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 res = (((double *) zbuffer)[i] - ((double *) obuffer)[i]) / ((double *) zbuffer)[i];
-                if (res > 1e-14) {
-                    return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+                if (fabs(res) > 1e-14) {
+                    return INA_ERROR(INA_ERR_INVALID_PATTERN);
                 }
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 res = (((float *) zbuffer)[i] - ((float *) obuffer)[i]) / ((float *) zbuffer)[i];
-                if (res > 1e-5) {
-                    return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+                if (fabs(res) > 1e-5) {
+                    return INA_ERROR(INA_ERR_INVALID_PATTERN);
                 }
                 break;
             default:
-                return INA_ERR_EXCEEDED;
+                printf("Unhandled data type\n");
+                return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }
     }
 
@@ -209,7 +210,7 @@ INA_TEST_FIXTURE(linalg_gemv, f_notrans) {
     int64_t xshape[] = {234, 200};
     int64_t xpshape[] = {11, 33};
 
-    int64_t xbshape[] = {31, 20};
+    int64_t xbshape[] = {234, 20};
     int xtrans = 0;
 
     int64_t yshape[] = {200};
@@ -218,7 +219,7 @@ INA_TEST_FIXTURE(linalg_gemv, f_notrans) {
     int64_t ybshape[] = {20};
 
     int64_t zshape[] = {234};
-    int64_t zpshape[] = {31};
+    int64_t zpshape[] = {0};
 
     INA_TEST_ASSERT_SUCCEED(test_gemv(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
                                       yshape, ypshape, ybshape, zshape, zpshape));
