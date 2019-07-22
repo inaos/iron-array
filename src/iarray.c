@@ -67,7 +67,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
                                           int64_t low, int64_t high)
 {
     INA_UNUSED(ctx);  // we could use context in the future
-    INA_ASSERT_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(dtshape);
 
     if (high == 0) {
         // TODO: Use INAC to determine L3 cache size
@@ -164,11 +164,11 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
                                        int64_t high)
 {
     INA_UNUSED(ctx);  // we could use context in the future
-    INA_ASSERT_NOT_NULL(a);
-    INA_ASSERT_NOT_NULL(b);
-    INA_ASSERT_NOT_NULL(c);
-    INA_ASSERT_NOT_NULL(bshape_a);
-    INA_ASSERT_NOT_NULL(bshape_b);
+    INA_VERIFY_NOT_NULL(a);
+    INA_VERIFY_NOT_NULL(b);
+    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(bshape_a);
+    INA_VERIFY_NOT_NULL(bshape_b);
 
     if (high == 0) {
         // TODO: Use INAC to determine L3 cache size
