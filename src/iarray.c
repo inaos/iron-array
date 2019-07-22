@@ -67,6 +67,8 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
                                           int64_t low, int64_t high)
 {
     INA_UNUSED(ctx);  // we could use context in the future
+    INA_ASSERT_NOT_NULL(dtshape);
+
     if (high == 0) {
         // TODO: Use INAC to determine L3 cache size
         const int L3 = 4 * 1024 * 1024;
@@ -78,6 +80,12 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         const int L2 = 256 * 1024;
         low = L2 / 2;
     }
+
+    if (low > high) {
+        printf("low has to be smaller than high\n");
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
+
     iarray_data_type_t dtype = dtshape->dtype;
     int ndim = dtshape->ndim;
     int64_t *shape = dtshape->shape;
@@ -156,6 +164,11 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
                                        int64_t high)
 {
     INA_UNUSED(ctx);  // we could use context in the future
+    INA_ASSERT_NOT_NULL(a);
+    INA_ASSERT_NOT_NULL(b);
+    INA_ASSERT_NOT_NULL(c);
+    INA_ASSERT_NOT_NULL(bshape_a);
+    INA_ASSERT_NOT_NULL(bshape_b);
 
     if (high == 0) {
         // TODO: Use INAC to determine L3 cache size
@@ -167,6 +180,11 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
         // TODO: Use INAC to determine L2 cache size
         const int L2 = 256 * 1024;
         low = L2 / 2;
+    }
+
+    if (low > high) {
+        printf("low has to be smaller than high\n");
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     // Take the dtype of the first array (we don't support mixing data types yet)
@@ -220,6 +238,7 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     bshape_a[1] = k_dim;
     bshape_b[0] = k_dim;
     bshape_b[1] = n_dim;
+
     return INA_SUCCESS;
 }
 
@@ -239,6 +258,7 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
     INA_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp));
     INA_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_OP_CHUNKS, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_op));
     INA_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL_TMP, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_tmp_out));
+
     return INA_SUCCESS;
 
 fail:
