@@ -40,10 +40,10 @@ And check for successful result using `INA_SUCCEED()`
       
 .. or `INA_FAILED()` for failure. One can use `ina_err_strerror()` to 
 get formatted full error message. To get last error state use 
-`ina_err_last_rc()`.
+`ina_err_get_rc()`.
 
      if (INA_FAILED(inaws_connect("localhost", 2222))) {
-        printf("%s", ina_err_strerror(ina_err_last_rc()));
+        printf("%s", ina_err_strerror(ina_err_get_rc()));
         return EXIT_FAILURE;
      }
      
@@ -112,7 +112,7 @@ To clear the error state use `ina_err_clear()`.
 
      INA_API(ina_rc_t) inaws_try_connect(void) {
          if (INA_FAILED(inaws_connect("localhost", 2222))) {
-             return ina_err_clear(ina_err_last_rc());
+             return ina_err_clear(ina_err_get_rc());
              ...
 
 By clearing the error state will only remove the error bit on the RC. 
@@ -138,7 +138,7 @@ In case of failure the execution will jump to this mark
           ...
        fail:
            inaws_destroy();
-           return ina_err_last_rc();
+           return ina_err_get_rc();
    
    
 Checkpoint based on a condition. One need to declare a `fail` label.   
