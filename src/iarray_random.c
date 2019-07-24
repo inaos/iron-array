@@ -67,12 +67,11 @@ INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
 
 fail:
     iarray_random_ctx_free(ctx, rng_ctx);
-    return INA_ERR_ILLEGAL;
+    return INA_ERROR(INA_ERR_ILLEGAL);
 }
 
 INA_API(void) iarray_random_ctx_free(iarray_context_t *ctx, iarray_random_ctx_t **rng_ctx)
 {
-    INA_ASSERT_NOT_NULL(ctx);
     INA_VERIFY_FREE(rng_ctx);
     INA_UNUSED(ctx);
     vslDeleteStream(&((*rng_ctx)->stream));
@@ -83,7 +82,7 @@ INA_API(ina_rc_t) iarray_random_dist_set_param_float(iarray_random_ctx_t *ctx,
     iarray_random_dist_parameter_t key,
     float value)
 {
-    INA_ASSERT_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(ctx);
     ctx->fparams[key] = value;
     return INA_SUCCESS;
 }
@@ -92,7 +91,7 @@ INA_API(ina_rc_t) iarray_random_dist_set_param_double(iarray_random_ctx_t *ctx,
     iarray_random_dist_parameter_t key,
     double value)
 {
-    INA_ASSERT_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(ctx);
     ctx->dparams[key] = value;
     return INA_SUCCESS;
 }
@@ -103,11 +102,17 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     iarray_container_t *container,
     _iarray_random_method_t method)
 {
+    
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(random_ctx);
+    INA_VERIFY_NOT_NULL(container);
+    
     int status = VSL_ERROR_OK;
     iarray_iter_write_block_t *iter;
     iarray_iter_write_block_value_t val;
 
-    iarray_iter_write_block_new(ctx, &iter, container, container->dtshape->pshape, &val, false);
+    INA_SUCCEED(iarray_iter_write_block_new(ctx, &iter, container, container->dtshape->pshape, &val, false));
 
     int64_t max_part_size = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {
@@ -116,7 +121,7 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     void *buffer_mem = ina_mem_alloc(max_part_size * sizeof(double));
 
     while (iarray_iter_write_block_has_next(iter)) {
-        iarray_iter_write_block_next(iter, NULL, 0);
+        INA_SUCCEED(iarray_iter_write_block_next(iter, NULL, 0));
 
         int64_t block_size = val.block_size;
 
@@ -252,7 +257,7 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     return INA_SUCCESS;
 
 fail:
-    return INA_ERR_ILLEGAL;
+    return INA_ERROR(INA_ERR_FAILED);
 }
 
 INA_API(ina_rc_t) iarray_random_rand(iarray_context_t *ctx,
@@ -277,7 +282,7 @@ INA_API(ina_rc_t) iarray_random_rand(iarray_context_t *ctx,
         iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_B, 1.0);
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_SUCCEED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_UNIFORM);
 }
@@ -303,7 +308,7 @@ INA_API(ina_rc_t) iarray_random_randn(iarray_context_t *ctx,
         iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 1.0);
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_SUCCEED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_GAUSSIAN);
 }
@@ -330,7 +335,7 @@ INA_API(ina_rc_t) iarray_random_beta(iarray_context_t *ctx,
         INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0);
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_SUCCEED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_BETA);
 fail:
@@ -357,7 +362,7 @@ INA_API(ina_rc_t) iarray_random_lognormal(iarray_context_t *ctx,
         INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0);
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_SUCCEED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_LOGNORMAL);
 
@@ -385,7 +390,7 @@ INA_API(ina_rc_t) iarray_random_exponential(iarray_context_t *ctx,
         INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0);
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_SUCCEED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_EXPONENTIAL);
 
@@ -413,7 +418,7 @@ INA_API(ina_rc_t) iarray_random_uniform(iarray_context_t *ctx,
         INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_A] >= random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_B]);
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_SUCCEED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_UNIFORM);
 
@@ -441,7 +446,7 @@ INA_API(ina_rc_t) iarray_random_normal(iarray_context_t *ctx,
         INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0);
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_SUCCEED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_GAUSSIAN);
 
@@ -472,7 +477,7 @@ INA_API(ina_rc_t) iarray_random_bernoulli(iarray_context_t *ctx,
         INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_P] > 1);
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_SUCCEED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_BERNOUILLI);
 
@@ -505,7 +510,7 @@ INA_API(ina_rc_t) iarray_random_binomial(iarray_context_t *ctx,
         INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_M] <= 0);
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_SUCCEED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_BINOMIAL);
 
@@ -534,7 +539,7 @@ INA_API(ina_rc_t) iarray_random_poisson(iarray_context_t *ctx,
 
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_SUCCEED(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_POISSON);
 
