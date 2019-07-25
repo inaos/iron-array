@@ -29,13 +29,6 @@ pool:
 steps:
 - powershell: gci env:* | sort-object name
 
-#- powershell: |
-#    mkdir -p $HOME/.inaos/cmake
-#    $inac_home = Join-Path -Path [Environment]::UserProfile -ChildPath "INAOS"
-#    mkdir -p $inac_home
-#    $repos = "INAC_REPOSITORY_LOCAL=$inac_home`nINAC_REPOSITORY_REMOTE=https://inaos.jfrog.io/inaos/libs-release-local/inaos`nINAC_REPOSITORY_USRPWD=licensed:AKCp5bBraH7CasbsYCURsjzkbjXwVwdYcT7u39EiuL6GjnK1VKfKQWCd1E2E64mHokU5YUHku"
-#    Set-Content $HOME/.inaos/cmake/repository.txt $repos
-
 - bash: |
     mkdir -p $HOME/.inaos/cmake
     mkdir -p $HOME/INAOS
@@ -47,8 +40,6 @@ steps:
   displayName: Add conda to PATH
 
 - script: |
-#choco source add -n "inaos" -s "https://inaos.jfrog.io/inaos/api/nuget/nuget-release-local/" -u %jfrog_artifactory_uid% -p %jfrog_artifactory_pwd%
-#choco install inaos-dev-quality-tools -y --force
     conda install -y -c intel mkl-include=2019.3
     conda install -y -c intel mkl-static=2019.3
   env:
@@ -76,9 +67,3 @@ steps:
    cd cmake-build-%BUILD_CONFIGURATION%
    call "C:\Program Files\CMake\bin\cpack.exe" -V
   displayName: Create package
-
-- powershell: get-content cmake-build-%BUILD_CONFIGURATION%\_CPack_Packages\win64\ZIP\PreinstallOutput.log
-
-# Testing Azure artifacts here, but we are probably going for Artifactory for the time being
-#  - publish: $(System.DefaultWorkingDirectory)/cmake-build-%BUILD_CONFIGURATION%/iarray.dll
-#    artifact: libiarray-shared-win
