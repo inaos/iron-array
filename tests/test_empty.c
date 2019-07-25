@@ -27,11 +27,6 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
         xdtshape.pshape[i] = pshape[i];
     }
 
-    int64_t buf_size = 1;
-    for (int j = 0; j < ndim; ++j) {
-        buf_size *= shape[j];
-    }
-
     // Empty array
     iarray_container_t *c_x;
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x));
@@ -80,7 +75,6 @@ INA_TEST_FIXTURE(constructor_empty, 1_d)
     INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, pshape));
 }
 
-// TODO: this will be solved after https://github.com/inaos/iron-array/issues/139 would be fixed.
 INA_TEST_FIXTURE(constructor_empty, 1_d_1)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
@@ -95,7 +89,7 @@ INA_TEST_FIXTURE(constructor_empty, 2_d)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int8_t ndim = 2;
-    int64_t shape[] = {10, 10};
+    int64_t shape[] = {15, 1112};
     int64_t pshape[] = {3, 4};
 
     INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, pshape));
@@ -105,7 +99,7 @@ INA_TEST_FIXTURE(constructor_empty, 4_f_p)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int8_t ndim = 4;
-    int64_t shape[] = {10, 10, 10, 10};
+    int64_t shape[] = {10, 5, 6, 10};
     int64_t pshape[] = {0, 0, 0, 0};
 
     INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, pshape));
@@ -115,7 +109,7 @@ INA_TEST_FIXTURE(constructor_empty, 5_d)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int8_t ndim = 5;
-    int64_t shape[] = {10, 10, 10, 10, 10};
+    int64_t shape[] = {11, 12, 8, 5, 3};
     int64_t pshape[] = {3, 4, 6, 3, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, pshape));
@@ -125,7 +119,7 @@ INA_TEST_FIXTURE(constructor_empty, 7_f_p)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int8_t ndim = 7;
-    int64_t shape[] = {10, 10, 10, 10, 10, 10, 10};
+    int64_t shape[] = {10, 6, 6, 4, 12, 7, 10};
     int64_t pshape[] = {4, 3, 6, 2, 3, 3, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, pshape));

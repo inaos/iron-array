@@ -71,10 +71,10 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
 
         if (dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double value = i * step + start;
-            memcpy(val.pointer, &value, sizeof(double));
+            memcpy(val.elem_pointer, &value, sizeof(double));
         } else {
             float value = (float) (i * step + start);
-            memcpy(val.pointer, &value, sizeof(float));
+            memcpy(val.elem_pointer, &value, sizeof(float));
         }
     }
     iarray_iter_write_free(I);
@@ -124,10 +124,10 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
 
         if (dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double value = i * (stop - start) / (contsize - 1) + start;
-            memcpy(val.pointer, &value, sizeof(double));
+            memcpy(val.elem_pointer, &value, sizeof(double));
         } else {
             float value = (float) (i * (stop - start) / (contsize - 1) + start);
-            memcpy(val.pointer, &value, sizeof(float));
+            memcpy(val.elem_pointer, &value, sizeof(float));
         }
     }
     iarray_iter_write_free(I);

@@ -16,6 +16,7 @@
 #include <libinac/lib.h>
 #include <stdbool.h>
 
+
 #define IARRAY_DIMENSION_MAX 8 /* A fixed size simplifies the code and should be enough for most IronArray cases */
 
 typedef struct iarray_context_s iarray_context_t;
@@ -124,26 +125,26 @@ typedef struct iarray_config_s {
 
 typedef struct iarray_dtshape_s {
     iarray_data_type_t dtype;
-    int8_t ndim;     /* IF ndim = 0 THEN it is a scalar */
+    int8_t ndim;     /* if ndim = 0 it is a scalar */
     int64_t shape[IARRAY_DIMENSION_MAX];
-    int64_t pshape[IARRAY_DIMENSION_MAX]; /* Partition-Shape, optional in the future */
+    int64_t pshape[IARRAY_DIMENSION_MAX]; /* partition shape */
 } iarray_dtshape_t;
 
 typedef struct iarray_iter_write_value_s {
-    void *pointer;
+    void *elem_pointer;
     int64_t *elem_index;
     int64_t elem_flat_index;
 } iarray_iter_write_value_t;
 
 
 typedef struct iarray_iter_read_value_s {
-    void *pointer;
+    void *elem_pointer;
     int64_t *elem_index;
     int64_t elem_flat_index;
 } iarray_iter_read_value_t;
 
 typedef struct iarray_iter_write_block_value_s {
-    void *pointer;
+    void *block_pointer;
     int64_t *block_index;
     int64_t *elem_index;
     int64_t nblock;
@@ -152,7 +153,7 @@ typedef struct iarray_iter_write_block_value_s {
 } iarray_iter_write_block_value_t;
 
 typedef struct iarray_iter_read_block_value_s {
-    void *pointer;
+    void *block_pointer;
     int64_t *block_index;
     int64_t *elem_index;
     int64_t nblock;
@@ -193,7 +194,36 @@ INA_API(void) iarray_destroy(void);
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx);
 INA_API(void) iarray_context_free(iarray_context_t **ctx);
 
-INA_API(ina_rc_t) iarray_partition_advice(iarray_data_type_t dtype, const int *max_nelem, const int *min_nelem);
+/*
+ *  Provide advice for the partition shape of a `dtshape`.
+ *
+ *  If success, dtshape.pshape will contain the advice.
+ *
+ *  `low` and `high` contain low and high values for the partition size.  If `low` is 0, it defaults
+ *  to a fraction of L2 cache size.  If `high` is 0, it defaults to a fraction of L3 cache size.
+ */
+INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape,
+                                          int64_t low, int64_t high);
+
+/*
+ * Provide advice for the block shapes for performing a matrix-matrix multiplication.
+ *
+ * `a` and `b` are supposed to have (M, K) and (K, N) dimensions respectively
+ * `c` is supposed to have a partition size of (m, n)
+ * The hint for the block shapes are going to be (m, k) and (k, n) respectively
+ *
+ * The hints will be stored in `bshape_a` and `bshape_b`, which needs to be provided by the user.
+ * The number of components for the block shapes is 2.
+ *
+ * Note: When performing matrix-*vector* operations, just pass the N dimension as 1.  The `k` hint
+ * will be valid for this case too.  In this case, always pass `bshape_a` and `bshape_b` with
+ * 2-components too (even if `bshape_b` only has a dimension in this case).
+ *
+ */
+INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
+                                       iarray_container_t *a, iarray_container_t *b, iarray_container_t *c,
+                                       int64_t *bshape_a, int64_t *bshape_b,
+                                       int64_t low, int64_t high);
 
 INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
                                         uint32_t seed,
@@ -345,12 +375,27 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    bool view,
                                    iarray_container_t **container);
 
+
+INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
+                                   iarray_container_t *c,
+                                   const int64_t *start,
+                                   const int64_t *stop,
+                                   iarray_container_t *slice);
+
+
 INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                                           iarray_container_t *c,
-                                          int64_t *start,
-                                          int64_t *stop,
+                                          const int64_t *start,
+                                          const int64_t *stop,
                                           void *buffer,
-                                          int64_t buflen);
+                                          const int64_t buflen);
+
+INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
+                                          iarray_container_t *c,
+                                          const int64_t *start,
+                                          const int64_t *stop,
+                                          void *buffer,
+                                          const int64_t buflen);
 
 INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
                                    iarray_store_properties_t *store,
@@ -488,11 +533,10 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_container_t *cont,
                                              const int64_t *blockshape,
                                              iarray_iter_read_block_value_t *value,
-                                             void *external_buffer,
-                                             int64_t bufsize);
+                                             bool external_buffer);
 
 INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr);
-INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr);
+INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr, void *buffer, int32_t bufsize);
 INA_API(int) iarray_iter_read_block_has_next(iarray_iter_read_block_t *itr);
 
 INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
@@ -500,10 +544,10 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_container_t *cont,
                                               const int64_t *blockshape,
                                               iarray_iter_write_block_value_t *value,
-                                              void *external_buffer,
-                                              int64_t bufsize);
+                                              bool external_buffer);
+
 INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t *itr);
-INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr);
+INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr, void *buffer, int32_t bufsize);
 INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr);
 
 /* Expressions */

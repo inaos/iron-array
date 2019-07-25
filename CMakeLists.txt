@@ -9,7 +9,9 @@
 # Information and shall use it only in accordance with the terms of the license agreement.
 #
 cmake_minimum_required (VERSION 3.12)
-project(iarray)
+project(iarray VERSION 0.1.0)
+
+option(MULTITHREADING "Use multithreaded iarray" ON)
 
 # Disable weird MSVC warnings
 if (MSVC)
@@ -99,6 +101,10 @@ add_definitions(-DINA_DLL)
 add_definitions(-DINA_LIB)
 add_library(iarray SHARED ${src})
 target_link_libraries(iarray ${INAC_LIBS} blosc_static caterva ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+
+install(TARGETS iarray
+        DESTINATION lib
+        COMPONENT libraries)
 
 inac_package()
 

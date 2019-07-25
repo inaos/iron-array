@@ -127,11 +127,11 @@ typedef struct iarray_iter_write_block_s {
     iarray_context_t *ctx;
     iarray_container_t *cont;
     iarray_iter_write_block_value_t *val;
-    uint8_t *part;
-    void *pointer;
+    uint8_t *block; // Pointer to a buffer of data
+    void **block_pointer; // Pointer to a buffer pointer
     int64_t total_blocks; // Total number of blocks
     int64_t *block_shape; // The desired block shape
-    int64_t block_shape_size; //The block shape size
+    int64_t block_shape_size; //The block shape size (number of elements)
     int64_t *cur_block_shape; // The shape of the current block (can be diff to the block shape passed)
     int64_t cur_block_size; // The size of the current block
     int64_t *cur_block_index; // The position of the block in the container
@@ -148,11 +148,12 @@ typedef struct iarray_iter_read_block_s {
     iarray_context_t *ctx;
     iarray_container_t *cont;
     iarray_iter_read_block_value_t *val;
-    uint8_t *part;
-    void *pointer;
+    uint8_t *block; // Pointer to a buffer of data
+    void **block_pointer; // Pointer to a buffer pointer
     int64_t total_blocks; // Total number of blocks
     int64_t *aux; // Aux variable used
     int64_t *block_shape; // The blockshape to be iterated
+    int64_t block_shape_size; // The size of the blockshape (number of elements)
     int64_t *cur_block_shape; // The shape of the current block (can be diff to the block shape passed)
     int64_t cur_block_size; // The size of the current block
     int64_t *cur_block_index; // The position of the block in the container

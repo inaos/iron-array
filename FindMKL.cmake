@@ -31,7 +31,9 @@ find_path(MKL_ROOT_DIR
         $ENV{HOME}/miniconda3
         $ENV{USERPROFILE}/miniconda3/Library
         "C:/Miniconda37-x64/Library" # Making AppVeyor happy
-        $ENV{CONDA}/Library # Azure pipeline hosted windows agent
+        $ENV{CONDA}/envs/iArrayEnv # Azure pipelines
+        /Users/vsts/.conda/envs/iArrayEnv # Azure pipelines
+        C:/Miniconda/envs/iArrayEnv/Library # Azure pipelines
 )
 
 find_path(MKL_INCLUDE_DIR
@@ -40,7 +42,6 @@ find_path(MKL_INCLUDE_DIR
         ${MKL_ROOT_DIR}/include
         )
 
-message("INCLUDE DIR -> " ${MKL_INCLUDE_DIR})
 
 if(WIN32)
     set(MKL_SEARCH_LIB mkl_core.lib)
@@ -90,6 +91,6 @@ foreach (LIB ${MKL_LIBS})
 endforeach()
 
 set(MKL_INCLUDE_DIRS ${MKL_INCLUDE_DIR})
-message("MKL INCLUDE DIR: ${MKL_INCLUDE_DIRS}")
+
 include_directories(${MKL_INCLUDE_DIRS})
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${MKL_LIBRARIES})
