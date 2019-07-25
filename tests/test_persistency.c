@@ -18,6 +18,8 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
                                  const int64_t *shape, const int64_t *pshape, iarray_store_properties_t *store)
 {
 
+    printf("before persistency\n");
+
     // Create dtshape
     iarray_dtshape_t xdtshape;
     xdtshape.dtype = dtype;
@@ -92,12 +94,14 @@ INA_TEST_SETUP(persistency) {
 #else
     data->store.id = "test_persistency.b2frame";
 #endif
+    printf("before checking: %s\n", data->store.id);
     if (_iarray_file_exists(data->store.id)) {
         remove(data->store.id);
     }
 }
 
 INA_TEST_TEARDOWN(persistency) {
+    printf("teardown\n");
     if (_iarray_file_exists(data->store.id)) {
         remove(data->store.id);
     }
