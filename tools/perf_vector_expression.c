@@ -37,6 +37,9 @@ static int _fill_x(double* x)
 // Compute and fill Y values in regular array
 static void _compute_y(const double* x, double* y)
 {
+// If compiled with OpenMP executes, it prevents the pthreads in Blosc (e.g. EVAL_ITERBLOSC) to run in parallel (!)
+// See #176
+// #pragma omp parallel for
     for (int i = 0; i < NELEM; i++) {
         y[i] = _poly(x[i]);
     }
@@ -70,6 +73,7 @@ int main(int argc, char** argv)
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
              INA_OPT_INT("b", "blocksize", 0, "Use blocksize for chunks (0 means automatic)"),
              INA_OPT_INT("t", "nthreads", 1, "Use number of threads for the evaluation"),
+             INA_OPT_INT("m", "mantissa-bits", 0, "The number of significant bits in mantissa (0 means no truncation"),
              INA_OPT_FLAG("d", "dict", "Use dictionary (only for Zstd (codec 5))"),
              INA_OPT_FLAG("P", "plainbuffer", "Use plain buffer arrays"),
              INA_OPT_FLAG("i", "iter", "Use iterator for filling values"),
@@ -93,6 +97,8 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_opt_get_int("b", &blocksize));
     int nthreads;
     INA_MUST_SUCCEED(ina_opt_get_int("t", &nthreads));
+    int mantissa_bits;
+    INA_MUST_SUCCEED(ina_opt_get_int("m", &mantissa_bits));
 
     if (INA_SUCCEED(ina_opt_isset("p"))) {
         mat_x_name = "mat_x.b2frame";
@@ -122,6 +128,10 @@ int main(int argc, char** argv)
     }
     else {
         config.filter_flags = IARRAY_COMP_SHUFFLE;
+        if (mantissa_bits > 0) {
+            config.filter_flags |= IARRAY_COMP_TRUNC_PREC;
+            config.fp_mantissa_bits = mantissa_bits;
+        }
     }
     config.use_dict = INA_SUCCEED(ina_opt_isset("d")) ? 1 : 0;
     config.blocksize = blocksize;
@@ -186,7 +196,7 @@ int main(int argc, char** argv)
             while (iarray_iter_write_has_next(I)) {
                 iarray_iter_write_next(I);
                 double value = incx * (double) val.elem_flat_index;
-                memcpy(val.pointer, &value, sizeof(double));
+                memcpy(val.elem_pointer, &value, sizeof(double));
             }
             iarray_iter_write_free(I);
             INA_STOPWATCH_STOP(w);
@@ -199,13 +209,13 @@ int main(int argc, char** argv)
             iarray_container_new(ctx, &dtshape, &mat_x, flags, &con_x);
             iarray_iter_write_block_t *I;
             iarray_iter_write_block_value_t val;
-            iarray_iter_write_block_new(ctx, &I, con_x, NULL, &val, NULL, 0);
+            INA_MUST_SUCCEED(iarray_iter_write_block_new(ctx, &I, con_x, NULL, &val, false));
             double incx = XMAX / NELEM;
             while (iarray_iter_write_block_has_next(I)) {
-                iarray_iter_write_block_next(I);
+                iarray_iter_write_block_next(I, NULL, 0);
                 int64_t part_size = val.block_size;  // 1-dim vector
                 for (int64_t i = 0; i < part_size; ++i) {
-                    ((double *)val.pointer)[i] = incx * (double) (i + val.nblock * part_size);
+                    ((double *) val.block_pointer)[i] = incx * (double) (i + val.nblock * part_size);
                 }
             }
             iarray_iter_write_block_free(I);
@@ -258,7 +268,7 @@ int main(int argc, char** argv)
             while (iarray_iter_write_has_next(I)) {
                 iarray_iter_write_next(I);
                 double value = _poly(incx * (double) val.elem_flat_index);
-                memcpy(val.pointer, &value, sizeof(double));
+                memcpy(val.elem_pointer, &value, sizeof(double));
             }
             iarray_iter_write_free(I);
             INA_STOPWATCH_STOP(w);
@@ -271,20 +281,20 @@ int main(int argc, char** argv)
             iarray_container_new(ctx, &dtshape, &mat_y, flags, &con_y);
             iarray_iter_write_block_t *I;
             iarray_iter_write_block_value_t val;
-            iarray_iter_write_block_new(ctx, &I, con_y, NULL, &val, NULL, 0);
+            iarray_iter_write_block_new(ctx, &I, con_y, dtshape.pshape, &val, false);
             double incx = XMAX / NELEM;
             while (iarray_iter_write_block_has_next(I)) {
-                iarray_iter_write_block_next(I);
+                iarray_iter_write_block_next(I, NULL, 0);
                 int64_t part_size = val.block_size;
                 for (int64_t i = 0; i < part_size; ++i) {
-                    ((double *) val.pointer)[i] = _poly(incx * (double) (i + val.nblock * part_size));
+                    ((double *) val.block_pointer)[i] = _poly(incx * (double) (i + val.nblock * part_size));
                 }
             }
             iarray_iter_write_block_free(I);
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf(
-                "Time for computing and filling Y values via partition iterator: %.3g s, %.1f MB/s\n",
+                "Time for computing and filling Y values via block iterator: %.3g s, %.1f MB/s\n",
                 elapsed_sec, buffer_len / (elapsed_sec * _IARRAY_SIZE_MB));
         }
         else {
@@ -342,14 +352,17 @@ int main(int argc, char** argv)
 
     printf("Checking that the outcome of the expression is correct...");
     fflush(stdout);
+    bool not_equal = false;
     INA_STOPWATCH_START(w);
     if (iarray_container_almost_equal(con_y, con_out, 1e-06) == INA_ERR_FAILED) {
         printf(" No!\n");
-        return 1;
+        not_equal = true;
+    }
+    else {
+      printf(" Yes!\n");
     }
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
-    printf(" Yes!\n");
     printf("Time for checking that two iarrays are equal:  %.3g s, %.1f MB/s\n",
            elapsed_sec, (nbytes * 2) / (elapsed_sec * _IARRAY_SIZE_MB));
 
@@ -364,5 +377,10 @@ int main(int argc, char** argv)
 
     INA_STOPWATCH_FREE(&w);
 
-    return 0;
+    if (not_equal) {
+      return 1;
+    }
+    else {
+      return 0;
+    }
 }

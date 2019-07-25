@@ -1,54 +1,169 @@
-trigger: none
+trigger:
+- develop
 
 variables:
 - group: jfrog-artifactory
 
-jobs:
-- job: BuildWindows
-  
-  strategy:
-    matrix:
-      windows:
-        imageName: 'vs2017-win2016'
-        BUILD_CONFIGURATION: Debug
-        BUILD_ARCH: x86_64
-        VSINSTALL: "Microsoft Visual Studio\\2017\\Enterprise\\VC\\Auxiliary\\Build"
-        MSVC_PLATFORM: amd64
+strategy:
+  matrix:
+    linux-debug:
+      imageName: 'ubuntu-16.04'
+      BUILD_CONFIGURATION: Debug
+      MULTITHREADING: False
+    linux-release:
+      imageName: 'ubuntu-16.04'
+      BUILD_CONFIGURATION: RelWithDebInfo
+      MULTITHREADING: False
+    mac-debug:
+      imageName: 'macos-10.13'
+      BUILD_CONFIGURATION: Debug
+      MULTITHREADING: False
+    mac-release:
+      imageName: 'macos-10.13'
+      BUILD_CONFIGURATION: RelWithDebInfo
+      MULTITHREADING: False
+    windows-debug:
+      imageName: 'vs2017-win2016'
+      BUILD_CONFIGURATION: Debug
+      MULTITHREADING: False
+      BUILD_ARCH: x86_64
+      VSINSTALL: "Microsoft Visual Studio\\2017\\Enterprise\\VC\\Auxiliary\\Build"
+      MSVC_PLATFORM: amd64
+    windows-release:
+      imageName: 'vs2017-win2016'
+      BUILD_CONFIGURATION: RelWithDebInfo
+      MULTITHREADING: False
+      BUILD_ARCH: x86_64
+      VSINSTALL: "Microsoft Visual Studio\\2017\\Enterprise\\VC\\Auxiliary\\Build"
+      MSVC_PLATFORM: amd64
 
-  pool:
-    vmImage: $(imageName)
+pool:
+  vmImage: $(imageName)
+
+
+steps:
+- powershell: gci env:* | sort-object name
+
+- bash: |
+    mkdir -p $HOME/.inaos/cmake
+    mkdir -p $HOME/INAOS
+    echo "INAC_REPOSITORY_LOCAL=$HOME/INAOS" > $HOME/.inaos/cmake/repository.txt 
+    echo "INAC_REPOSITORY_REMOTE=https://inaos.jfrog.io/inaos/libs-release-local/inaos" >> $HOME/.inaos/cmake/repository.txt
+    echo "INAC_REPOSITORY_USRPWD=licensed:AKCp5bBraH7CasbsYCURsjzkbjXwVwdYcT7u39EiuL6GjnK1VKfKQWCd1E2E64mHokU5YUHku" >> $HOME/.inaos/cmake/repository.txt
+    git submodule update --init --recursive
+  displayName: Clone repos
+
+- bash: |
+    if [ "$AGENT_OS" == "Darwin" ]
+      then
+        echo "##vso[task.prependpath]$CONDA/bin"
+    fi
+    if [ "$AGENT_OS" == "Windows_NT" ]
+      then
+        echo "##vso[task.prependpath]$CONDA/Scripts"
+    fi
+  displayName: Add conda to PATH
+
+- bash: |
+    conda create --yes --quiet --name iArrayEnv
+    source activate iArrayEnv
+    conda install -y --name iArrayEnv -c intel mkl-include=2019.2
+    conda install -y --name iArrayEnv -c intel mkl-static=2019.2
+  displayName: Download dependencies
+  env:
+    jfrog_artifactory_uid: $(jfrog_artifactory_uid)
+    jfrog_artifactory_pwd: $(jfrog_artifactory_pwd)
+    
+- bash: |
+    if [ "$AGENT_OS" != "Windows_NT" ]
+      then
+        mkdir cmake-build-$BUILD_CONFIGURATION
+        cd cmake-build-$BUILD_CONFIGURATION
+        cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING
+        make -j
+    fi
+  displayName: Compile
+  env:
+    BUILD_CONFIGURATION: $(BUILD_CONFIGURATION)
+    MULTITHREADING: $(MULTITHREADING)
+    
+- script: |
+    call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
+    mkdir cmake-build-%BUILD_CONFIGURATION%
+    cd cmake-build-%BUILD_CONFIGURATION%
+    cmake -G "NMake Makefiles" ../ -DCMAKE_BUILD_TYPE=%BUILD_CONFIGURATION%  -DMULTITHREADING=%MULTITHREADING% -DINAC_TARGET_ARCH=%BUILD_ARCH%
+    nmake
+  displayName: Compile
+  env:
+    BUILD_CONFIGURATION: $(BUILD_CONFIGURATION)
+    BUILD_ARCH: $(BUILD_ARCH)
+    MULTITHREADING: $(MULTITHREADING)
+  condition:
+    eq( variables['Agent.OS'], 'Windows_NT' )
+
+- bash: |
+    cd cmake-build-$BUILD_CONFIGURATION
+    if [ "$AGENT_OS" == "Darwin" ] && [ "$BUILD_CONFIGURATION" == "Debug" ]
+      then
+        echo "Tests for Darwin in Debug mode currently not executed"
+    else
+        ./tests
+    fi
+  displayName: Execute tests
+
+- bash: |
+   cd cmake-build-$BUILD_CONFIGURATION
+   if [ "$AGENT_OS" != "Windows_NT" ]
+     then
+       cpack
+       zip -d iarray*.zip */bin/perf*
+       zip -d iarray*.zip */doc/*
+       zip -d iarray*.zip */include/caterva.h
+       zip -d iarray*.zip */lib/*caterva*
+       cp iarray*.zip $IA_ARTIFACT_TARGET
+   fi
+  displayName: Create package
+  env:
+    IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
+
+- script: |
+    call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
+    cd cmake-build-%BUILD_CONFIGURATION%
+    call "C:\Program Files\CMake\bin\cpack.exe"
+    FOR %%f IN (iarray*.zip) DO (
+      7z d %%f */bin/perf*
+      7z d %%f */doc/* -r
+      7z d %%f */include/caterva.h
+      7z d %%f */lib/*caterva*
+      copy %%f %IA_ARTIFACT_TARGET%
+    )
+  displayName: Create package
+  env:
+    IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
+  condition:
+    eq( variables['Agent.OS'], 'Windows_NT' )  
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: iarray-$(imageName)
+    
+- bash: |
+    cd cmake-build-$BUILD_CONFIGURATION
+    src=`ls iarray*.zip`
+    artifact_name=`basename $src`
+    if [ "$AGENT_OS" == "Darwin" ]
+      then
+        artifact_version=`echo $artifact_name | grep -Eo '\d+\.\d+\.\d+'`
+    else
+        artifact_version=`echo $artifact_name | grep -Po '\d+\.\d+\.\d+'`
+    fi
+    target=inaos/iarray/$artifact_version/$artifact_name
+    url=$jfrog_repository_url/$target
+    curl "-u$jfrog_artifactory_uid:$jfrog_artifactory_pwd" "-T" $src $url
+  displayName: Upload to artifactory
+  env:
+    jfrog_artifactory_uid: $(jfrog_artifactory_uid)
+    jfrog_artifactory_pwd: $(jfrog_artifactory_pwd)
+    jfrog_repository_url: $(jfrog_repository_url)
   
-  timeoutInMinutes: 0
-  
-  steps:
-  - powershell: gci env:* | sort-object name
-  - powershell: |
-      mkdir -p $HOME/.inaos/cmake
-      $inac_home = Join-Path -Path $env:USERPROFILE -ChildPath "INAOS"
-      mkdir -p $inac_home
-      $repos = "INAC_REPOSITORY_LOCAL=$inac_home`nINAC_REPOSITORY_REMOTE=https://inaos.jfrog.io/inaos/libs-release-local/inaos`nINAC_REPOSITORY_USRPWD=licensed:AKCp5bBraH7CasbsYCURsjzkbjXwVwdYcT7u39EiuL6GjnK1VKfKQWCd1E2E64mHokU5YUHku"
-      Set-Content $HOME/.inaos/cmake/repository.txt $repos
-  - bash: |
-      git submodule update --init --recursive
-  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
-    displayName: Add conda to PATH
-  - script: |
-      #choco source add -n "inaos" -s "https://inaos.jfrog.io/inaos/api/nuget/nuget-release-local/" -u %jfrog_artifactory_uid% -p %jfrog_artifactory_pwd%
-      #choco install inaos-dev-quality-tools -y --force
-      conda install -y -c intel mkl-include
-      conda install -y -c intel mkl-static
-    env:
-      VSINSTALL: $(VSINSTALL)
-      MSVC_PLATFORM: $(MSVC_PLATFORM)
-      jfrog_artifactory_uid: $(jfrog_artifactory_uid)
-      jfrog_artifactory_pwd: $(jfrog_artifactory_pwd)
-  - script: |
-      call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
-      mkdir cmake-build-%BUILD_CONFIGURATION%
-      cd cmake-build-%BUILD_CONFIGURATION%
-      cmake -G "NMake Makefiles" ../ -DCMAKE_BUILD_TYPE=%BUILD_CONFIGURATION% -DINAC_TARGET_ARCH=%BUILD_ARCH%
-      nmake
-    env:
-      BUILD_CONFIGURATION: $(BUILD_CONFIGURATION)
-      BUILD_ARCH: $(BUILD_ARCH)
-      

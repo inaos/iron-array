@@ -1,4 +1,7 @@
-[![Appveyor CI](https://ci.appveyor.com/api/projects/status/bfntjr38rymsm18w/branch/master?svg=true)](https://ci.appveyor.com/project/stoni/iron-array/branch/master) [![codecov](https://codecov.io/gh/inaos/iron-array/branch/master/graph/badge.svg?token=HFqpNSEpsN)](https://codecov.io/gh/inaos/iron-array)
+[![Appveyor CI](https://ci.appveyor.com/api/projects/status/bfntjr38rymsm18w/branch/develop?svg=true)](https://ci.appveyor.com/project/stoni/iron-array/branch/develop) [![codecov](https://codecov.io/gh/inaos/iron-array/branch/master/graph/badge.svg?token=HFqpNSEpsN)](https://codecov.io/gh/inaos/iron-array)
+
+
+[![Azure CI](https://inaos.visualstudio.com/iron-array/_apis/build/status/inaos.iron-array?branchName=develop)](https://inaos.visualstudio.com/iron-array/_build/latest?definitionId=6&branchName=develop)
 
 # iron-array
 
@@ -33,6 +36,10 @@ We use inac cmake build-system.
 
 #### Mac
 
+**Important note**: By default, the iron-array library is compiled in OpenMP mode, so you need
+a compiler that supports OpenMP, which is **not** the case for the compiler that comes with the OS.
+It is suggested to use a recent version of clang (e.g. 8); see https://embeddedartistry.com/blog/2017/2/20/installing-clangllvm-on-osx for instructions on how to install it.
+
 * INAC build setup
     * Make sure that you have a configured repository.txt file in ~/.inaos/cmake
     * Also you'll need a directory under ~/INAOS (can be empty)
@@ -56,7 +63,7 @@ We use inac cmake build-system.
 #### Linux
 
 * INAC build setup
-    * Make sure that you have a configured repository.txt file in ~/.inaos
+    * Make sure that you have a configured repository.txt file in ~/.inaos/cmake
     * Also you'll need a directory under ~/INAOS (can be empty)
     
 * MKL setup.  For Ubuntu machines, it is best to use Intel's Ubuntu repo:

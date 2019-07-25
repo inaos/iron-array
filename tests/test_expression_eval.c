@@ -12,6 +12,7 @@
 
 #include <libiarray/iarray.h>
 #include <tests/iarray_test.h>
+#include <src/iarray_private.h>
 
 #define NCHUNKS  10
 #define NITEMS_CHUNK (20 * 1000)
@@ -109,6 +110,7 @@ INA_TEST_TEARDOWN(expression_eval)
 
     iarray_destroy();
 }
+
 
 INA_TEST_FIXTURE(expression_eval, iterblock_superchunk)
 {
