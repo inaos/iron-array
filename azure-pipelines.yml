@@ -110,11 +110,13 @@ steps:
     call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
     cd cmake-build-%BUILD_CONFIGURATION%
     call "C:\Program Files\CMake\bin\cpack.exe"
-    7z d iarray*.zip */bin/perf*
-    7z d iarray*.zip */doc/* -r
-    7z d iarray*.zip */include/caterva.h
-    7z d iarray*.zip */lib/*caterva*
-    copy iarray*.zip %IA_ARTIFACT_TARGET%
+    FOR %f IN (iarray*.zip) DO (
+      7z d %f */bin/perf*
+      7z d %f */doc/* -r
+      7z d %f */include/caterva.h
+      7z d %f */lib/*caterva*
+      copy %f %IA_ARTIFACT_TARGET%
+    )
   displayName: Create package
   env:
     IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
