@@ -43,23 +43,19 @@ steps:
     echo $repos > $HOME/.inaos/cmake/repository.txt 
     git submodule update --init --recursive
 
-#- powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
-#  displayName: Add conda to PATH
+- powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+  displayName: Add conda to PATH
 
 - script: |
-    @echo on
-    :: choco source add -n "inaos" -s "https://inaos.jfrog.io/inaos/api/nuget/nuget-release-local/" -u %jfrog_artifactory_uid% -p %jfrog_artifactory_pwd%
-    :: choco install inaos-dev-quality-tools -y --force
+#choco source add -n "inaos" -s "https://inaos.jfrog.io/inaos/api/nuget/nuget-release-local/" -u %jfrog_artifactory_uid% -p %jfrog_artifactory_pwd%
+#choco install inaos-dev-quality-tools -y --force
     conda install -y -c intel mkl-include=2019.3
     conda install -y -c intel mkl-static=2019.3
   env:
-    VSINSTALL: $(VSINSTALL)
-    MSVC_PLATFORM: $(MSVC_PLATFORM)
     jfrog_artifactory_uid: $(jfrog_artifactory_uid)
     jfrog_artifactory_pwd: $(jfrog_artifactory_pwd)
     
 - script: |
-    @echo on
     call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
     mkdir cmake-build-%BUILD_CONFIGURATION%
     cd cmake-build-%BUILD_CONFIGURATION%
