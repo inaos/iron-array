@@ -39,11 +39,11 @@ steps:
 - bash: |
     if [ "$AGENT_OS" == "Darwin" ]
       then
-        export PATH=$PATH:$CONDA/bin
+        echo "##vso[task.prependpath]$CONDA/bin"
     fi
     if [ "$AGENT_OS" == "Windows_NT" ]
       then
-        export PATH=$PATH:$CONDA/Scripts
+        echo "##vso[task.prependpath]$CONDA/Scripts"
     fi
   displayName: Add conda to PATH
 
