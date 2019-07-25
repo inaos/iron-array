@@ -324,22 +324,24 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
-INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr)
+INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t **itr)
 {
-    if (!itr->contiguous && !itr->external_buffer) {
-        ina_mem_free(itr->block);
+    INA_VERIFY_FREE(itr);
+
+    if (!(*itr)->contiguous && !(*itr)->external_buffer) {
+        ina_mem_free((*itr)->block);
     }
 
-    itr->cont->catarr->part_cache.data = NULL;  // reset to NULL here (the memory pool will be reset later)
-    itr->cont->catarr->part_cache.nchunk = -1;  // means no valid cache yet
+    (*itr)->cont->catarr->part_cache.data = NULL;  // reset to NULL here (the memory pool will be reset later)
+    (*itr)->cont->catarr->part_cache.nchunk = -1;  // means no valid cache yet
 
-    ina_mem_free(itr->aux);
-    ina_mem_free(itr->block_shape);
-    ina_mem_free(itr->cur_block_shape);
-    ina_mem_free(itr->cur_block_index);
-    ina_mem_free(itr->cur_elem_index);
+    ina_mem_free((*itr)->aux);
+    ina_mem_free((*itr)->block_shape);
+    ina_mem_free((*itr)->cur_block_shape);
+    ina_mem_free((*itr)->cur_block_index);
+    ina_mem_free((*itr)->cur_elem_index);
 
-    ina_mem_free(itr);
+    INA_MEM_FREE_SAFE((*itr));
 }
 
 
@@ -740,18 +742,20 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 }
 
 
-INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t *itr)
+INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t **itr)
 {
-    if (!itr->contiguous && !itr->external_buffer) {
-        ina_mem_free(itr->block);
-    }
-    ina_mem_free(itr->block_shape);
-    ina_mem_free(itr->cur_block_shape);
-    ina_mem_free(itr->cur_block_index);
-    ina_mem_free(itr->cur_elem_index);
-    ina_mem_free(itr->cont_eshape);
+    INA_VERIFY_FREE(itr);
 
-    ina_mem_free(itr);
+    if (!(*itr)->contiguous && !(*itr)->external_buffer) {
+        ina_mem_free((*itr)->block);
+    }
+    ina_mem_free((*itr)->block_shape);
+    ina_mem_free((*itr)->cur_block_shape);
+    ina_mem_free((*itr)->cur_block_index);
+    ina_mem_free((*itr)->cur_elem_index);
+    ina_mem_free((*itr)->cont_eshape);
+
+    INA_MEM_FREE_SAFE(*itr);
 }
 
 

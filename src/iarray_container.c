@@ -712,16 +712,16 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
         }
     }
     iarray_context_free(&ctx);
-    iarray_iter_read_block_free(iter_a);
-    iarray_iter_read_block_free(iter_b);
+    iarray_iter_read_block_free(&iter_a);
+    iarray_iter_read_block_free(&iter_b);
     free(blocksize);
 
     return INA_SUCCESS;
 
 fails:
     iarray_context_free(&ctx);
-    iarray_iter_read_block_free(iter_a);
-    iarray_iter_read_block_free(iter_b);
+    iarray_iter_read_block_free(&iter_a);
+    iarray_iter_read_block_free(&iter_b);
     free(blocksize);
 
     return INA_ERROR(INA_ERR_FAILED);

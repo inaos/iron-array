@@ -58,7 +58,7 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
         }
     }
 
-    iarray_iter_write_block_free(I);
+    iarray_iter_write_block_free(&I);
 
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));
@@ -123,8 +123,8 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
         }
     }
 
-    iarray_iter_read_block_free(I2);
-    iarray_iter_read_block_free(I3);
+    iarray_iter_read_block_free(&I2);
+    iarray_iter_read_block_free(&I3);
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
@@ -301,7 +301,7 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
         }
     }
 
-    iarray_iter_write_block_free(I);
+    iarray_iter_write_block_free(&I);
 
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));
@@ -383,8 +383,8 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
         }
     }
 
-    iarray_iter_read_block_free(I2);
-    iarray_iter_read_block_free(I3);
+    iarray_iter_read_block_free(&I2);
+    iarray_iter_read_block_free(&I3);
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
@@ -540,7 +540,7 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
         }
     }
 
-    iarray_iter_write_block_free(I);
+    iarray_iter_write_block_free(&I);
 
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));
@@ -605,8 +605,8 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
         }
     }
 
-    iarray_iter_read_block_free(I2);
-    iarray_iter_read_block_free(I3);
+    iarray_iter_read_block_free(&I2);
+    iarray_iter_read_block_free(&I3);
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);

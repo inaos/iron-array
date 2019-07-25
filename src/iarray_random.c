@@ -252,7 +252,7 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
             }
         }
     }
-    iarray_iter_write_block_free(iter);
+    iarray_iter_write_block_free(&iter);
 
     return INA_SUCCESS;
 

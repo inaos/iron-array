@@ -142,7 +142,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 #endif
 
     e->expr = ina_str_new_fromcstr(expr);
-    e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t*));
+    e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t*)); //TODO: This should be freed?
     te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(te_variable));
     caterva_array_t *catarr = e->vars[0].c->catarr;
 
@@ -289,22 +289,30 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            INA_SUCCEED(iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false));
+            if (INA_FAILED(iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false))) {
+                goto fail_iterchunk;
+            }
         }
 
         // Write iterator for output
         iarray_iter_write_block_t *iter_out;
         iarray_iter_write_block_value_t out_value;
-        INA_SUCCEED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, false));
+        if (INA_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, false))) {
+            goto fail_iterchunk;
+        }
 
         // Evaluate the expression for all the chunks in variables
         while (iarray_iter_write_block_has_next(iter_out)) {
-            INA_SUCCEED(iarray_iter_write_block_next(iter_out, NULL, 0));
+            if (INA_FAILED(iarray_iter_write_block_next(iter_out, NULL, 0))) {
+                goto fail_iterchunk;
+            }
             int32_t out_items = (int32_t)(iter_out->cur_block_size);
 
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
-                INA_SUCCEED(iarray_iter_read_block_next(iter_var[nvar], NULL, 0));
+                if INA_FAILED(iarray_iter_read_block_next(iter_var[nvar], NULL, 0)) {
+                    goto fail_iterchunk;
+                }
                 e->temp_vars[nvar]->data = iter_value[nvar].block_pointer;
             }
 
@@ -317,18 +325,31 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
 
         for (int nvar = 0; nvar < nvars; nvar++) {
-            iarray_iter_read_block_free(iter_var[nvar]);
+            iarray_iter_read_block_free(&(iter_var[nvar]));
         }
-        iarray_iter_write_block_free(iter_out);
+        iarray_iter_write_block_free(&iter_out);
+        INA_MEM_FREE_SAFE(iter_var);
+        ina_mem_free(iter_value);
+        iarray_context_free(&ctx);
+        return INA_SUCCESS;
+
+    fail_iterchunk:
+        for (int nvar = 0; nvar < nvars; nvar++) {
+            iarray_iter_read_block_free(&(iter_var[nvar]));
+        }
+        iarray_iter_write_block_free(&iter_out);
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);
         iarray_context_free(&ctx);
+
+        return ina_err_get_rc();
     }
+
     else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
 
         if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
             fprintf(stderr, "ITERBLOSC eval can't be used with a plainbuffer output container.\n");
-            return INA_ERR_ERROR;
+            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }
 
         // Setup a new cparams with a prefilter
@@ -416,9 +437,9 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
 
         for (int nvar = 0; nvar < nvars; nvar++) {
-            iarray_iter_read_block_free(iter_var[nvar]);
+            iarray_iter_read_block_free(&iter_var[nvar]);
         }
-        iarray_iter_write_block_free(iter_out);
+        iarray_iter_write_block_free(&iter_out);
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);
         iarray_context_free(&ctx);
@@ -526,10 +547,10 @@ omp_set_num_threads(e->ctx->cfg->max_num_threads);
 //#endif
 
         for (int nvar = 0; nvar < nvars; nvar++) {
-            iarray_iter_read_block_free(iter_var[nvar]);
+            iarray_iter_read_block_free(&iter_var[nvar]);
         }
 
-        iarray_iter_write_block_free(iter_out);
+        iarray_iter_write_block_free(&iter_out);
         ina_mem_free(iter_var);
         ina_mem_free(iter_value);
         ina_mem_free(outbuf);
