@@ -33,7 +33,7 @@ find_path(MKL_ROOT_DIR
         "C:/Miniconda37-x64/Library" # Making AppVeyor happy
         $ENV{CONDA}/envs/iArrayEnv # Azure pipelines
         /Users/vsts/.conda/envs/iArrayEnv # Azure pipelines
-        C:/Miniconda/envs/iArrayEnv # Azure pipelines
+        C:/Miniconda/envs/iArrayEnv/Library # Azure pipelines
 )
 
 find_path(MKL_INCLUDE_DIR
