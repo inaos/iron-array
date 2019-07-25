@@ -45,11 +45,13 @@ steps:
       then
         echo "##vso[task.prependpath]$CONDA/Scripts"
     fi
-  displayName: Add conda to PATH
+    conda create --yes --quiet --name iArrayEnv
+  displayName: Handle conda PATH and env
 
-- script: |
-    conda install -y -c intel mkl-include=2019.3
-    conda install -y -c intel mkl-static=2019.3
+- bash: |
+    source activate iArrayEnv
+    conda install -y --name iArrayEnv -c intel mkl-include=2019.3
+    conda install -y --name iArrayEnv -c intel mkl-static=2019.3
   env:
     jfrog_artifactory_uid: $(jfrog_artifactory_uid)
     jfrog_artifactory_pwd: $(jfrog_artifactory_pwd)
