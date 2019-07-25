@@ -84,13 +84,8 @@ steps:
 
 - bash: |
    cd cmake-build-$BUILD_CONFIGURATION
-   if [ "$AGENT_OS" != "Windows_NT" ]
-      then
-        make coverage
-   else
-        nmake coverage
-   fi
-  displayName: Execute tests and coverage
+   ./tests
+  displayName: Execute tests
 
 - bash: |
    cd cmake-build-$BUILD_CONFIGURATION
