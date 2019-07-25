@@ -87,7 +87,11 @@ INA_TEST_SETUP(persistency) {
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
 
+#if defined(INA_OS_OSX)
+    data->store.id = "/tmp/test_persistency.b2frame";
+#else
     data->store.id = "test_persistency.b2frame";
+#endif
     if (_iarray_file_exists(data->store.id)) {
         remove(data->store.id);
     }
