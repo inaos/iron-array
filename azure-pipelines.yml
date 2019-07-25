@@ -91,7 +91,7 @@ steps:
    cd cmake-build-$BUILD_CONFIGURATION
    if [ "$AGENT_OS" == "Windows_NT" ]
      then
-       /c/Program\ Files/CMake/bin/cpack.exe
+       /c/Program\ Files/CMake/bin/cpack.exe --verbose
    else
        cpack
    fi
