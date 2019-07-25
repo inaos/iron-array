@@ -91,8 +91,17 @@ steps:
    cd cmake-build-$BUILD_CONFIGURATION
    if [ "$AGENT_OS" == "Windows_NT" ]
      then
-       C:\Program Files\CMake\bin\cpack.exe
+       /c/Program\ Files/CMake/bin/cpack.exe
+       cp iarray*.zip $IA_ARTIFACT_TARGET
    else
        cpack
+       cp iarray*.gz $IA_ARTIFACT_TARGET
    fi
   displayName: Create package
+  env:
+    IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: iarray-$(imageName)
