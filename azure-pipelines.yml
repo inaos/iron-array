@@ -82,14 +82,17 @@ steps:
   condition:
     eq( variables['Agent.OS'], 'Windows_NT' )
 
-- script: |
-   @echo on
-   cd cmake-build-%BUILD_CONFIGURATION%
-   tests
-  displayName: Execute tests
+- bash: |
+   cd cmake-build-$BUILD_CONFIGURATION
+   if [ "$AGENT_OS" != "Windows_NT" ]
+      then
+        make coverage
+   else
+        nmake coverage
+   fi
+  displayName: Execute tests and coverage
 
-- script: |
-   @echo on
-   cd cmake-build-%BUILD_CONFIGURATION%
-   call "C:\Program Files\CMake\bin\cpack.exe" -V
+- bash: |
+   cd cmake-build-$BUILD_CONFIGURATION
+   cpack
   displayName: Create package
