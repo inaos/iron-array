@@ -64,17 +64,23 @@ steps:
         cd cmake-build-$BUILD_CONFIGURATION
         cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING
         make -j
-    else
-        source "C:/Program Files (x86)/$(VSINSTALL)/vcvarsall.bat" $MSVC_PLATFORM
-        mkdir cmake-build-$BUILD_CONFIGURATION
-        cd cmake-build-$BUILD_CONFIGURATION
-        cmake -G "NMake Makefiles" ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING -DINAC_TARGET_ARCH=$BUILD_ARCH
-        nmake
     fi
+  env:
+    BUILD_CONFIGURATION: $(BUILD_CONFIGURATION)
+    MULTITHREADING: $(MULTITHREADING)
+    
+- script: |
+    call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
+    mkdir cmake-build-%BUILD_CONFIGURATION%
+    cd cmake-build-%BUILD_CONFIGURATION%
+    cmake -G "NMake Makefiles" ../ -DCMAKE_BUILD_TYPE=%BUILD_CONFIGURATION%  -DMULTITHREADING=%MULTITHREADING% -DINAC_TARGET_ARCH=%BUILD_ARCH%
+    nmake
   env:
     BUILD_CONFIGURATION: $(BUILD_CONFIGURATION)
     BUILD_ARCH: $(BUILD_ARCH)
     MULTITHREADING: $(MULTITHREADING)
+  condition:
+    eq( variables['Agent.OS'], 'Windows_NT' )
 
 - script: |
    @echo on
