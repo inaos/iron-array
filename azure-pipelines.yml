@@ -44,19 +44,18 @@ steps:
 
 - script: |
     @echo on
-
     :: choco source add -n "inaos" -s "https://inaos.jfrog.io/inaos/api/nuget/nuget-release-local/" -u %jfrog_artifactory_uid% -p %jfrog_artifactory_pwd%
     :: choco install inaos-dev-quality-tools -y --force
-    conda install -y -c intel mkl-include
-    conda install -y -c intel mkl-static
+    conda install -y -c intel mkl-include==2019.3
+    conda install -y -c intel mkl-static==2019.3
   env:
     VSINSTALL: $(VSINSTALL)
     MSVC_PLATFORM: $(MSVC_PLATFORM)
     jfrog_artifactory_uid: $(jfrog_artifactory_uid)
     jfrog_artifactory_pwd: $(jfrog_artifactory_pwd)
+    
 - script: |
     @echo on
-
     call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
     mkdir cmake-build-%BUILD_CONFIGURATION%
     cd cmake-build-%BUILD_CONFIGURATION%
@@ -68,14 +67,12 @@ steps:
 
 - script: |
    @echo on
-
    cd cmake-build-%BUILD_CONFIGURATION%
    tests
   displayName: Execute tests
 
 - script: |
    @echo on
-
    cd cmake-build-%BUILD_CONFIGURATION%
    call "C:\Program Files\CMake\bin\cpack.exe" -V
   displayName: Create package
