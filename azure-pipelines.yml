@@ -96,10 +96,10 @@ steps:
    if [ "$AGENT_OS" != "Windows_NT" ]
      then
        cpack
-       zip -d iarray*.zip bin/perf*
-       zip -d iarray*.zip doc/* -r
-       zip -d iarray*.zip include/caterva.h
-       zip -d iarray*.zip lib/*caterva*
+       zip -d iarray*.zip */bin/perf*
+       zip -d iarray*.zip */doc/*
+       zip -d iarray*.zip */include/caterva.h
+       zip -d iarray*.zip */lib/*caterva*
        cp iarray*.zip $IA_ARTIFACT_TARGET
    fi
   displayName: Create package
@@ -110,10 +110,10 @@ steps:
     call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
     cd cmake-build-%BUILD_CONFIGURATION%
     call "C:\Program Files\CMake\bin\cpack.exe"
-    7z d iarray*.zip bin/perf*
-    7z d iarray*.zip doc/* -r
-    7z d iarray*.zip include/caterva.h
-    7z d iarray*.zip lib/*caterva*
+    7z d iarray*.zip */bin/perf*
+    7z d iarray*.zip */doc/* -r
+    7z d iarray*.zip */include/caterva.h
+    7z d iarray*.zip */lib/*caterva*
     copy iarray*.zip %IA_ARTIFACT_TARGET%
   displayName: Create package
   env:
