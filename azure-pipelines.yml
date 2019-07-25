@@ -12,14 +12,13 @@ strategy:
       MULTITHREADING: False
     mac:
       imageName: 'macos-10.13'
-      BUILD_CONFIGURATION: Debug
+      BUILD_CONFIGURATION: RelWithDebInfo
       MULTITHREADING: False
     windows:
       imageName: 'vs2017-win2016'
       BUILD_CONFIGURATION: Debug
       MULTITHREADING: False
       BUILD_ARCH: x86_64
-      VSINSTALL: "Microsoft Visual Studio\\2017\\Enterprise\\VC\\Auxiliary\\Build"
       MSVC_PLATFORM: amd64
 
 pool:
@@ -89,5 +88,10 @@ steps:
 
 - bash: |
    cd cmake-build-$BUILD_CONFIGURATION
-   cpack
+   if [ "$AGENT_OS" == "Windows_NT" ]
+     then
+       C:\Program Files\CMake\bin\cpack.exe
+   else
+       cpack
+   fi
   displayName: Create package
