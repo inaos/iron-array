@@ -19,6 +19,7 @@ strategy:
       BUILD_CONFIGURATION: Debug
       MULTITHREADING: False
       BUILD_ARCH: x86_64
+      VSINSTALL: "Microsoft Visual Studio\\2017\\Enterprise\\VC\\Auxiliary\\Build"
       MSVC_PLATFORM: amd64
 
 pool:
