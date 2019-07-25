@@ -29,14 +29,17 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
         xdtshape.pshape[i] = pshape[i];
     }
 
+    printf("persistency 1\n");
     iarray_container_t *c_x;
     iarray_container_new(ctx, &xdtshape, store, IARRAY_CONTAINER_PERSIST, &c_x);
 
+    printf("persistency 2\n");
     // Start iterator
     iarray_iter_write_t *I;
     iarray_iter_write_value_t val;
     iarray_iter_write_new(ctx, &I, c_x, &val);
 
+    printf("persistency 3\n");
     while (iarray_iter_write_has_next(I)) {
         iarray_iter_write_next(I);
 
@@ -49,14 +52,17 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
         }
     }
 
+    printf("persistency 4\n");
     iarray_iter_write_free(I);
 
+    printf("persistency 5\n");
     // Close the container and re-open it from disk
     iarray_container_free(ctx, &c_x);
     INA_TEST_ASSERT(_iarray_file_exists(store->id));
     INA_MUST_SUCCEED(iarray_from_file(ctx, store, &c_x));
 
     // Check values
+    printf("persistency 6\n");
     iarray_iter_read_t *I2;
     iarray_iter_read_value_t val2;
     iarray_iter_read_new(ctx, &I2, c_x, &val2);
@@ -71,10 +77,13 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
             INA_TEST_ASSERT_EQUAL_FLOATING(value, ((float *) val2.elem_pointer)[0]);
         }
     }
+    printf("persistency 7\n");
     iarray_iter_read_free(I2);
 
+    printf("persistency 8\n");
     iarray_container_free(ctx, &c_x);
 
+    printf("persistency 9\n");
     return INA_SUCCESS;
 }
 
