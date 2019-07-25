@@ -133,7 +133,7 @@ steps:
     src=`ls iarray*.zip`
     artifact_name=`basename $src`
     artifact_version=`echo $artifact_name | grep -Eo '\d+\.\d+\.\d+'`
-    target=inaos/inac/$artifact_version/$artifact_name
+    target=inaos/iarray/$artifact_version/$artifact_name
     url=$jfrog_repository_url/$target
     curl "-u$jfrog_artifactory_uid:$jfrog_artifactory_pwd" "-T" $src $url
   displayName: Upload to artifactory
