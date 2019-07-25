@@ -127,7 +127,16 @@ Archive format:
   * Iron-Array JNI 
   * Iron-Array compiled Java-Code
 
-## Release
+## Release Procedure
+
+* Make sure that the new release is correctly written in main CMakeLists.txt.
+* Merge `develop` branch into `master` via a PR that should be approved at least by 2 people.
+* Change into the `master` branch and tag the release using the next convention:
+
+  $ git tag vX.Y.Z -m"Tagging vX.Y.Z release"
+
+* Manually trigger the release pipeline in Azure web interface.
+* Check that the new release artifacts appear in the repository (see below).
 
 ### Repository
 
