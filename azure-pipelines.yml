@@ -29,18 +29,22 @@ pool:
 steps:
 - powershell: gci env:* | sort-object name
 
-- powershell: |
-    mkdir -p $HOME/.inaos/cmake
-    $inac_home = Join-Path -Path [Environment]::UserProfile -ChildPath "INAOS"
-    mkdir -p $inac_home
-    $repos = "INAC_REPOSITORY_LOCAL=$inac_home`nINAC_REPOSITORY_REMOTE=https://inaos.jfrog.io/inaos/libs-release-local/inaos`nINAC_REPOSITORY_USRPWD=licensed:AKCp5bBraH7CasbsYCURsjzkbjXwVwdYcT7u39EiuL6GjnK1VKfKQWCd1E2E64mHokU5YUHku"
-    Set-Content $HOME/.inaos/cmake/repository.txt $repos
+#- powershell: |
+#    mkdir -p $HOME/.inaos/cmake
+#    $inac_home = Join-Path -Path [Environment]::UserProfile -ChildPath "INAOS"
+#    mkdir -p $inac_home
+#    $repos = "INAC_REPOSITORY_LOCAL=$inac_home`nINAC_REPOSITORY_REMOTE=https://inaos.jfrog.io/inaos/libs-release-local/inaos`nINAC_REPOSITORY_USRPWD=licensed:AKCp5bBraH7CasbsYCURsjzkbjXwVwdYcT7u39EiuL6GjnK1VKfKQWCd1E2E64mHokU5YUHku"
+#    Set-Content $HOME/.inaos/cmake/repository.txt $repos
 
 - bash: |
+    mkdir -p $HOME/.inaos/cmake
+    mkdir -p $HOME/INAOS
+    repos = "INAC_REPOSITORY_LOCAL=$HOME/INAOS\nINAC_REPOSITORY_REMOTE=https://inaos.jfrog.io/inaos/libs-release-local/inaos\nINAC_REPOSITORY_USRPWD=licensed:AKCp5bBraH7CasbsYCURsjzkbjXwVwdYcT7u39EiuL6GjnK1VKfKQWCd1E2E64mHokU5YUHku"
+    echo $repos > $HOME/.inaos/cmake/repository.txt 
     git submodule update --init --recursive
 
-- powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
-  displayName: Add conda to PATH
+#- powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+#  displayName: Add conda to PATH
 
 - script: |
     @echo on
