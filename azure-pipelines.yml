@@ -36,6 +36,7 @@ steps:
     echo "INAC_REPOSITORY_REMOTE=https://inaos.jfrog.io/inaos/libs-release-local/inaos" >> $HOME/.inaos/cmake/repository.txt
     echo "INAC_REPOSITORY_USRPWD=licensed:AKCp5bBraH7CasbsYCURsjzkbjXwVwdYcT7u39EiuL6GjnK1VKfKQWCd1E2E64mHokU5YUHku" >> $HOME/.inaos/cmake/repository.txt
     git submodule update --init --recursive
+  displayName: Clone repos
 
 - bash: |
     if [ "$AGENT_OS" == "Darwin" ]
@@ -53,6 +54,7 @@ steps:
     source activate iArrayEnv
     conda install -y --name iArrayEnv -c intel mkl-include=2019.2
     conda install -y --name iArrayEnv -c intel mkl-static=2019.2
+  displayName: Download dependencies
   env:
     jfrog_artifactory_uid: $(jfrog_artifactory_uid)
     jfrog_artifactory_pwd: $(jfrog_artifactory_pwd)
@@ -65,6 +67,7 @@ steps:
         cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING
         make -j
     fi
+  displayName: Compile
   env:
     BUILD_CONFIGURATION: $(BUILD_CONFIGURATION)
     MULTITHREADING: $(MULTITHREADING)
@@ -75,6 +78,7 @@ steps:
     cd cmake-build-%BUILD_CONFIGURATION%
     cmake -G "NMake Makefiles" ../ -DCMAKE_BUILD_TYPE=%BUILD_CONFIGURATION%  -DMULTITHREADING=%MULTITHREADING% -DINAC_TARGET_ARCH=%BUILD_ARCH%
     nmake
+  displayName: Compile
   env:
     BUILD_CONFIGURATION: $(BUILD_CONFIGURATION)
     BUILD_ARCH: $(BUILD_ARCH)
@@ -89,16 +93,33 @@ steps:
 
 - bash: |
    cd cmake-build-$BUILD_CONFIGURATION
-   if [ "$AGENT_OS" == "Windows_NT" ]
+   if [ "$AGENT_OS" != "Windows_NT" ]
      then
-       /c/Program\ Files/CMake/bin/cpack.exe
-   else
        cpack
+       zip -d iarray*.zip bin/perf*
+       zip -d iarray*.zip doc/* -r
+       zip -d iarray*.zip include/caterva.h
+       zip -d iarray*.zip lib/*caterva*
+       cp iarray*.zip $IA_ARTIFACT_TARGET
    fi
-   cp iarray*.zip $IA_ARTIFACT_TARGET
   displayName: Create package
   env:
     IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
+
+- script: |
+    call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
+    cd cmake-build-%BUILD_CONFIGURATION%
+    call "C:\Program Files\CMake\bin\cpack.exe"
+    7z d iarray*.zip bin/perf*
+    7z d iarray*.zip doc/* -r
+    7z d iarray*.zip include/caterva.h
+    7z d iarray*.zip lib/*caterva*
+    copy iarray*.zip %IA_ARTIFACT_TARGET%
+  displayName: Create package
+  env:
+    IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
+  condition:
+    eq( variables['Agent.OS'], 'Windows_NT' )  
 
 - task: PublishBuildArtifacts@1
   inputs:
