@@ -97,7 +97,12 @@ steps:
      then
        cpack
    fi
-  displayName: Execute CPack
+   zip -d iarray*.zip bin/perf*
+   zip -d iarray*.zip doc/* -r
+   zip -d iarray*.zip include/caterva.h
+   zip -d iarray*.zip lib/*caterva*
+   cp iarray*.zip $IA_ARTIFACT_TARGET
+  displayName: Create package
   env:
     IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
 
@@ -105,13 +110,16 @@ steps:
     call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
     cd cmake-build-%BUILD_CONFIGURATION%
     call "C:\Program Files\CMake\bin\cpack.exe"
-  displayName: Execute CPack
+    7z d iarray*.zip bin/perf*
+    7z d iarray*.zip doc/* -r
+    7z d iarray*.zip include/caterva.h
+    7z d iarray*.zip lib/*caterva*
+    copy iarray*.zip %IA_ARTIFACT_TARGET%
+  displayName: Create package
+  env:
+    IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
   condition:
     eq( variables['Agent.OS'], 'Windows_NT' )  
-
-- bash: |
-    cp iarray*.zip $IA_ARTIFACT_TARGET
-  displayName: Create package
 
 - task: PublishBuildArtifacts@1
   inputs:
