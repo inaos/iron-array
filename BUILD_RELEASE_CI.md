@@ -138,6 +138,15 @@ Archive format:
 * Manually trigger the release pipeline in Azure web interface.
 * Check that the new release artifacts appear in the repository (see below).
 
+## Post-release Procedure
+
+* Go to the `develop` branch again and increment the release version info from
+  X.Y.Z -> X.Y.Z+1.
+  
+* Commit with:
+
+  $ git commit -a -m"Post vX.Y.Z release actions done"
+
 ### Repository
 
 #### Development
