@@ -39,7 +39,7 @@ steps:
 - bash: |
     mkdir -p $HOME/.inaos/cmake
     mkdir -p $HOME/INAOS
-    repos = "INAC_REPOSITORY_LOCAL=$HOME/INAOS\nINAC_REPOSITORY_REMOTE=https://inaos.jfrog.io/inaos/libs-release-local/inaos\nINAC_REPOSITORY_USRPWD=licensed:AKCp5bBraH7CasbsYCURsjzkbjXwVwdYcT7u39EiuL6GjnK1VKfKQWCd1E2E64mHokU5YUHku"
+    repos="INAC_REPOSITORY_LOCAL=$HOME/INAOS\nINAC_REPOSITORY_REMOTE=https://inaos.jfrog.io/inaos/libs-release-local/inaos\nINAC_REPOSITORY_USRPWD=licensed:AKCp5bBraH7CasbsYCURsjzkbjXwVwdYcT7u39EiuL6GjnK1VKfKQWCd1E2E64mHokU5YUHku"
     echo $repos > $HOME/.inaos/cmake/repository.txt 
     git submodule update --init --recursive
 
