@@ -32,6 +32,7 @@ find_path(MKL_ROOT_DIR
         $ENV{USERPROFILE}/miniconda3/Library
         "C:/Miniconda37-x64/Library" # Making AppVeyor happy
         $ENV{CONDA}/Library # Azure pipeline hosted windows agent
+        $ENV{CONDA} # Azure pipeline hosted linux/darwin agent
 )
 
 find_path(MKL_INCLUDE_DIR
