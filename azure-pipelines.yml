@@ -67,8 +67,8 @@ steps:
 - bash: |
     conda create --yes --quiet --name iArrayEnv
     source activate iArrayEnv
-    conda install -y --name iArrayEnv -c intel mkl-include=2019.2
-    conda install -y --name iArrayEnv -c intel mkl-static=2019.2
+    conda install -y --name iArrayEnv -c intel mkl-include
+    conda install -y --name iArrayEnv -c intel mkl-static
   displayName: Download dependencies
   env:
     jfrog_artifactory_uid: $(jfrog_artifactory_uid)
