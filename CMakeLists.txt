@@ -102,6 +102,10 @@ add_definitions(-DINA_LIB)
 add_library(iarray SHARED ${src})
 target_link_libraries(iarray ${INAC_LIBS} blosc_static caterva ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
+install(TARGETS iarray
+        DESTINATION lib
+        COMPONENT libraries)
+
 inac_package()
 
 # Copy test files
