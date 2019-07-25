@@ -4,8 +4,6 @@ trigger:
 variables:
 - group: jfrog-artifactory
 
-timeoutInMinutes: 0
-
 strategy:
   matrix:
     linux:
