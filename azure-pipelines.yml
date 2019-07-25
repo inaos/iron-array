@@ -36,7 +36,13 @@ steps:
     echo $repos > $HOME/.inaos/cmake/repository.txt 
     git submodule update --init --recursive
 
-- powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+- powershell: |
+    if ($IsMacOS) {
+      Write-Host "##vso[task.prependpath]$CONDA/bin"
+    }
+    if ($IsWindows) {
+      Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    }
   displayName: Add conda to PATH
 
 - script: |
