@@ -96,12 +96,12 @@ steps:
    if [ "$AGENT_OS" != "Windows_NT" ]
      then
        cpack
+       zip -d iarray*.zip bin/perf*
+       zip -d iarray*.zip doc/* -r
+       zip -d iarray*.zip include/caterva.h
+       zip -d iarray*.zip lib/*caterva*
+       cp iarray*.zip $IA_ARTIFACT_TARGET
    fi
-   zip -d iarray*.zip bin/perf*
-   zip -d iarray*.zip doc/* -r
-   zip -d iarray*.zip include/caterva.h
-   zip -d iarray*.zip lib/*caterva*
-   cp iarray*.zip $IA_ARTIFACT_TARGET
   displayName: Create package
   env:
     IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
