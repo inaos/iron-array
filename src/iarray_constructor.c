@@ -90,12 +90,12 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
             memcpy(val.elem_pointer, &value, sizeof(float));
         }
     }
-    iarray_iter_write_free(I);
+    iarray_iter_write_free(&I);
 
     return INA_SUCCESS;
 
 fail:
-    iarray_iter_write_free(I);
+    iarray_iter_write_free(&I);
     iarray_container_free(ctx, container);
     return ina_err_get_rc();
 }
@@ -149,12 +149,12 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
             memcpy(val.elem_pointer, &value, sizeof(float));
         }
     }
-    iarray_iter_write_free(I);
+    iarray_iter_write_free(&I);
 
     return INA_SUCCESS;
 
 fail:
-    iarray_iter_write_free(I);
+    iarray_iter_write_free(&I);
     iarray_container_free(ctx, container);
     return ina_err_get_rc();
 }

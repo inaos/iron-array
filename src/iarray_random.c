@@ -586,7 +586,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         max = (data > max) ? data : max;
         min = (data < min) ? data : min;
     }
-    iarray_iter_read_free(iter);
+    iarray_iter_read_free(&iter);
 
     iarray_iter_read_new(ctx, &iter, c2, &val);
     while (iarray_iter_read_has_next(iter)) {
@@ -607,7 +607,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         max = (data > max) ? data : max;
         min = (data < min) ? data : min;
     }
-    iarray_iter_read_free(iter);
+    iarray_iter_read_free(&iter);
 
     for (int i = 0; i < nbins; ++i) {
         bins[i] = min + (max-min)/nbins * (i+1);
@@ -639,7 +639,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
             }
         }
     }
-    iarray_iter_read_free(iter);
+    iarray_iter_read_free(&iter);
 
     iarray_iter_read_new(ctx, &iter, c2, &val);
 
@@ -664,7 +664,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
             }
         }
     }
-    iarray_iter_read_free(iter);
+    iarray_iter_read_free(&iter);
 
     for (int i = 1; i < nbins; ++i) {
         hist1[i] += hist1[i-1];

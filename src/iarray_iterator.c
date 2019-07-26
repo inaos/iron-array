@@ -916,16 +916,19 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
  * Function: iarray_iter_read_free
  */
 
-INA_API(void) iarray_iter_read_free(iarray_iter_read_t *itr)
+INA_API(void) iarray_iter_read_free(iarray_iter_read_t **itr)
 {
-    ina_mem_free(itr->elem_index);
-    if (itr->cont->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-        ina_mem_free(itr->part);
+    INA_VERIFY_FREE(itr);
+
+    ina_mem_free((*itr)->elem_index);
+    if ((*itr)->cont->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
+        ina_mem_free((*itr)->part);
     }
-    ina_mem_free(itr->block_shape);
-    ina_mem_free(itr->cur_block_shape);
-    ina_mem_free(itr->cur_block_index);
-    ina_mem_free(itr);
+    ina_mem_free((*itr)->block_shape);
+    ina_mem_free((*itr)->cur_block_shape);
+    ina_mem_free((*itr)->cur_block_index);
+
+    INA_MEM_FREE_SAFE(*itr);
 }
 
 
@@ -1065,13 +1068,17 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
 }
 
 
-INA_API(void) iarray_iter_write_free(iarray_iter_write_t *itr)
+INA_API(void) iarray_iter_write_free(iarray_iter_write_t **itr)
 {
-    ina_mem_free(itr->elem_index);
-    if (itr->container->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-        ina_mem_free(itr->part);
+    INA_VERIFY_FREE(itr);
+
+    ina_mem_free((*itr)->elem_index);
+    if ((*itr)->container->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
+        ina_mem_free((*itr)->part);
     }
-    ina_mem_free(itr->cur_block_index);
-    ina_mem_free(itr->cur_block_shape);
-    ina_mem_free(itr);
+
+    ina_mem_free((*itr)->cur_block_index);
+    ina_mem_free((*itr)->cur_block_shape);
+
+    INA_MEM_FREE_SAFE(*itr);
 }

@@ -47,7 +47,7 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
         }
     }
 
-    iarray_iter_write_free(I);
+    iarray_iter_write_free(&I);
 
     // Close the container and re-open it from disk
     iarray_container_free(ctx, &c_x);
@@ -69,7 +69,7 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
             INA_TEST_ASSERT_EQUAL_FLOATING(value, ((float *) val2.elem_pointer)[0]);
         }
     }
-    iarray_iter_read_free(I2);
+    iarray_iter_read_free(&I2);
 
     iarray_container_free(ctx, &c_x);
 
