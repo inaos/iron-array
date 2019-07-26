@@ -126,9 +126,11 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
     return INA_SUCCESS;
 }
 
-void _iarray_iter_matmul_free(iarray_iter_matmul_t *itr)
+void _iarray_iter_matmul_free(iarray_iter_matmul_t **itr)
 {
-    ina_mem_free(itr);
+    INA_VERIFY_FREE(itr);
+
+    INA_MEM_FREE_SAFE(*itr);
 }
 
 
@@ -329,17 +331,17 @@ INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t **itr)
     INA_VERIFY_FREE(itr);
 
     if (!(*itr)->contiguous && !(*itr)->external_buffer) {
-        ina_mem_free((*itr)->block);
+        INA_MEM_FREE_SAFE((*itr)->block);
     }
 
     (*itr)->cont->catarr->part_cache.data = NULL;  // reset to NULL here (the memory pool will be reset later)
     (*itr)->cont->catarr->part_cache.nchunk = -1;  // means no valid cache yet
 
-    ina_mem_free((*itr)->aux);
-    ina_mem_free((*itr)->block_shape);
-    ina_mem_free((*itr)->cur_block_shape);
-    ina_mem_free((*itr)->cur_block_index);
-    ina_mem_free((*itr)->cur_elem_index);
+    INA_MEM_FREE_SAFE((*itr)->aux);
+    INA_MEM_FREE_SAFE((*itr)->block_shape);
+    INA_MEM_FREE_SAFE((*itr)->cur_block_shape);
+    INA_MEM_FREE_SAFE((*itr)->cur_block_index);
+    INA_MEM_FREE_SAFE((*itr)->cur_elem_index);
 
     INA_MEM_FREE_SAFE((*itr));
 }
@@ -747,13 +749,13 @@ INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t **itr)
     INA_VERIFY_FREE(itr);
 
     if (!(*itr)->contiguous && !(*itr)->external_buffer) {
-        ina_mem_free((*itr)->block);
+        INA_MEM_FREE_SAFE((*itr)->block);
     }
-    ina_mem_free((*itr)->block_shape);
-    ina_mem_free((*itr)->cur_block_shape);
-    ina_mem_free((*itr)->cur_block_index);
-    ina_mem_free((*itr)->cur_elem_index);
-    ina_mem_free((*itr)->cont_eshape);
+    INA_MEM_FREE_SAFE((*itr)->block_shape);
+    INA_MEM_FREE_SAFE((*itr)->cur_block_shape);
+    INA_MEM_FREE_SAFE((*itr)->cur_block_index);
+    INA_MEM_FREE_SAFE((*itr)->cur_elem_index);
+    INA_MEM_FREE_SAFE((*itr)->cont_eshape);
 
     INA_MEM_FREE_SAFE(*itr);
 }
@@ -920,13 +922,13 @@ INA_API(void) iarray_iter_read_free(iarray_iter_read_t **itr)
 {
     INA_VERIFY_FREE(itr);
 
-    ina_mem_free((*itr)->elem_index);
+    INA_MEM_FREE_SAFE((*itr)->elem_index);
     if ((*itr)->cont->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-        ina_mem_free((*itr)->part);
+        INA_MEM_FREE_SAFE((*itr)->part);
     }
-    ina_mem_free((*itr)->block_shape);
-    ina_mem_free((*itr)->cur_block_shape);
-    ina_mem_free((*itr)->cur_block_index);
+    INA_MEM_FREE_SAFE((*itr)->block_shape);
+    INA_MEM_FREE_SAFE((*itr)->cur_block_shape);
+    INA_MEM_FREE_SAFE((*itr)->cur_block_index);
 
     INA_MEM_FREE_SAFE(*itr);
 }
@@ -1072,13 +1074,13 @@ INA_API(void) iarray_iter_write_free(iarray_iter_write_t **itr)
 {
     INA_VERIFY_FREE(itr);
 
-    ina_mem_free((*itr)->elem_index);
+    INA_MEM_FREE_SAFE((*itr)->elem_index);
     if ((*itr)->container->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-        ina_mem_free((*itr)->part);
+        INA_MEM_FREE_SAFE((*itr)->part);
     }
 
-    ina_mem_free((*itr)->cur_block_index);
-    ina_mem_free((*itr)->cur_block_shape);
+    INA_MEM_FREE_SAFE((*itr)->cur_block_index);
+    INA_MEM_FREE_SAFE((*itr)->cur_block_shape);
 
     INA_MEM_FREE_SAFE(*itr);
 }

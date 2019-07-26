@@ -197,7 +197,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
     }
 
-    _iarray_iter_matmul_free(iter);
+    _iarray_iter_matmul_free(&iter);
     if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
         ina_mem_free(a_block);
     }
@@ -370,7 +370,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
     }
 
-    _iarray_iter_matmul_free(iter);
+    _iarray_iter_matmul_free(&iter);
     if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
         ina_mem_free(a_block);
     }
