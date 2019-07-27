@@ -215,6 +215,9 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
  * The hints will be stored in `bshape_a` and `bshape_b`, which needs to be provided by the user.
  * The number of components for the block shapes is 2.
  *
+ *  `low` and `high` contain low and high values for the partition size.  If `low` is 0, it defaults
+ *  to a fraction of L2 cache size.  If `high` is 0, it defaults to a fraction of L3 cache size.
+ *
  * Note: When performing matrix-*vector* operations, just pass the N dimension as 1.  The `k` hint
  * will be valid for this case too.  In this case, always pass `bshape_a` and `bshape_b` with
  * 2-components too (even if `bshape_b` only has a dimension in this case).
