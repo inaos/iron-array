@@ -68,14 +68,14 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
 {
     INA_UNUSED(ctx);  // we could use context in the future
     if (high == 0) {
-        // TODO: Use INAC to determine L3 cache size
-        const int L3 = 4 * 1024 * 1024;
+        size_t L3;
+        ina_cpu_get_l3_cache_size(&L3);
         // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
         high = L3 / 4;
     }
     if (low == 0) {
-        // TODO: Use INAC to determine L2 cache size
-        const int L2 = 256 * 1024;
+        size_t L2;
+        ina_cpu_get_l2_cache_size(&L2);
         low = L2 / 2;
     }
     iarray_data_type_t dtype = dtshape->dtype;
@@ -158,14 +158,14 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     INA_UNUSED(ctx);  // we could use context in the future
 
     if (high == 0) {
-        // TODO: Use INAC to determine L3 cache size
-        const int L3 = 4 * 1024 * 1024;
+        size_t L3;
+        ina_cpu_get_l3_cache_size(&L3);
         // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
         high = L3 / 4;
     }
     if (low == 0) {
-        // TODO: Use INAC to determine L2 cache size
-        const int L2 = 256 * 1024;
+        size_t L2;
+        ina_cpu_get_l2_cache_size(&L2);
         low = L2 / 2;
     }
 
