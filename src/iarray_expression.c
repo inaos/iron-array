@@ -648,14 +648,14 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 
 static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs, iarray_optype_t op)
 {
-    if (expr != NULL) {
+    if (expr == NULL) {
         return NULL;
     }
-    if (lhs != NULL) {
+    if (lhs == NULL) {
         return NULL;
     }
 
-    if (rhs != NULL) {
+    if (rhs == NULL) {
         return NULL;
     }
 

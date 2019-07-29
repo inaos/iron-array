@@ -183,13 +183,13 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr, voi
 
     // Get the desired block
     if (itr->contiguous && (itr->cont->view == false)) {
-        INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(itr->ctx, itr->cont, (int64_t *) start_,
-                                                          (int64_t *) stop_, (void **) &itr->block,
-                                                          actual_block_size * typesize));
+        INA_RETURN_IF_FAILED(_iarray_get_slice_buffer_no_copy(itr->ctx, itr->cont, (int64_t *) start_,
+                                                              (int64_t *) stop_, (void **) &itr->block,
+                                                               actual_block_size * typesize));
     } else {
-        INA_MUST_SUCCEED(iarray_get_slice_buffer(itr->ctx, itr->cont, (int64_t *) start_,
-                                                 (int64_t *) stop_, itr->block,
-                                                 actual_block_size * typesize));
+        INA_RETURN_IF_FAILED(iarray_get_slice_buffer(itr->ctx, itr->cont, (int64_t *) start_,
+                                                     (int64_t *) stop_, itr->block,
+                                                     actual_block_size * typesize));
     }
 
     // Update the structure that user can see
@@ -220,23 +220,27 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_iter_read_block_value_t *value,
                                              bool external_buffer)
 {
-   if (!cont->catarr->filled) {
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
-    }
-    INA_VERIFY_NOT_NULL(itr);
-    *itr = (iarray_iter_read_block_t *) ina_mem_alloc(sizeof(iarray_iter_read_block_t));
-    INA_RETURN_IF_NULL(itr);
 
     INA_VERIFY_NOT_NULL(ctx);
-    (*itr)->ctx = ctx;
-
     INA_VERIFY_NOT_NULL(cont);
-    (*itr)->cont = cont;
-    int64_t typesize = (*itr)->cont->catarr->ctx->cparams.typesize;
+    INA_VERIFY_NOT_NULL(value);
+
+    if (!cont->catarr->filled) {
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
 
     if (blockshape == NULL) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
+
+    INA_VERIFY_NOT_NULL(itr);
+    *itr = (iarray_iter_read_block_t *) ina_mem_alloc(sizeof(iarray_iter_read_block_t));
+    INA_RETURN_IF_NULL(itr);
+
+    (*itr)->ctx = ctx;
+
+    (*itr)->cont = cont;
+    int64_t typesize = (*itr)->cont->catarr->ctx->cparams.typesize;
 
     (*itr)->val = value;
     (*itr)->aux = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
@@ -326,6 +330,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
+
 INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t **itr)
 {
     INA_VERIFY_FREE(itr);
@@ -374,7 +379,10 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                 }
                 caterva_dims_t stop = caterva_new_dims(stop_, ndim);
 
-                caterva_set_slice_buffer(catarr, itr->block, &start, &stop);
+                if (caterva_set_slice_buffer(catarr, itr->block, &start, &stop) != 0) {
+                    INA_ERROR(INA_ERR_FAILED);
+                    return ina_err_get_rc();
+                }
             }
         } else {
             // check if the part should be padded with 0s
@@ -382,13 +390,13 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                 if (itr->compressed_chunk_buffer) {
                     int err = blosc2_schunk_append_chunk(catarr->sc, itr->block, false);
                     if (err < 0) {
-                        return INA_ERROR(INA_ERR_FAILED);
-                    }
+                        INA_ERROR(INA_ERR_FAILED);
+                        return ina_err_get_rc();                    }
                 } else {
                     int err = blosc2_schunk_append_buffer(catarr->sc, itr->block, (size_t) psizeb);
                     if (err < 0) {
-                        return INA_ERROR(INA_ERR_FAILED);
-                    }
+                        INA_ERROR(INA_ERR_FAILED);
+                        return ina_err_get_rc();                    }
                 }
             } else {
                 uint8_t *part_aux = malloc((size_t) catarr->psize * typesize);
@@ -583,13 +591,14 @@ INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
                 }
                 int err = blosc2_schunk_append_buffer(itr->cont->catarr->sc, part_aux,
                                                       (size_t) catarr->psize * typesize);
+                free(part_aux);
+
                 if (err < 0) {
                     // TODO: if the next call is not zero, it can be interpreted as there are more elements
                     return INA_ERROR(INA_ERR_FAILED);
                 }
-                memset(part_aux, 0, catarr->psize * catarr->sc->typesize);
+               // memset(part_aux, 0, catarr->psize * catarr->sc->typesize);
 
-                free(part_aux);
             }
         }
     }
@@ -610,9 +619,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(cont);
-    INA_VERIFY_NOT_NULL(itr);
-    *itr = (iarray_iter_write_block_t *)ina_mem_alloc(sizeof(iarray_iter_write_block_t));
-    INA_RETURN_IF_NULL(itr);
+    INA_VERIFY_NOT_NULL(value);
 
     if (!cont->catarr->empty && cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT); //TODO: Should we allow a rewrite a non-empty iarray cont
@@ -629,6 +636,11 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
             }
         }
     }
+
+    INA_VERIFY_NOT_NULL(itr);
+    *itr = (iarray_iter_write_block_t *)ina_mem_alloc(sizeof(iarray_iter_write_block_t));
+    INA_RETURN_IF_NULL(itr);
+
 
     int64_t typesize = cont->catarr->ctx->cparams.typesize;
 
@@ -813,13 +825,19 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
 
         // Decompress the next block
         if (itr->cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && itr->cont->view == false) {
-            INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(itr->ctx, itr->cont, (int64_t *) start_,
-                                                              (int64_t *) stop_, (void **) &itr->part,
-                                                              buflen * typesize));
+            INA_RETURN_IF_FAILED(_iarray_get_slice_buffer_no_copy(itr->ctx,
+                                                                  itr->cont,
+                                                                  (int64_t *) start_,
+                                                                  (int64_t *) stop_,
+                                                                  (void **) &itr->part,
+                                                                  buflen * typesize));
         } else {
-            INA_MUST_SUCCEED(iarray_get_slice_buffer(itr->ctx, itr->cont, (int64_t *) start_,
-                                                     (int64_t *) stop_, itr->part,
-                                                     buflen * typesize));
+            INA_RETURN_IF_FAILED(iarray_get_slice_buffer(itr->ctx,
+                                                         itr->cont,
+                                                         (int64_t *) start_,
+                                                         (int64_t *) stop_,
+                                                         itr->part,
+                                                         buflen * typesize));
         }
 
         itr->nelem_block = 0;
@@ -872,6 +890,8 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(cont);
     INA_VERIFY_NOT_NULL(itr);
+    INA_VERIFY_NOT_NULL(val);
+
 
     *itr = (iarray_iter_read_t*)ina_mem_alloc(sizeof(iarray_iter_read_t));
     INA_RETURN_IF_NULL(itr);
@@ -1027,6 +1047,8 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(cont);
     INA_VERIFY_NOT_NULL(itr);
+    INA_VERIFY_NOT_NULL(val);
+
 
     *itr = (iarray_iter_write_t*)ina_mem_alloc(sizeof(iarray_iter_write_t));
     INA_RETURN_IF_NULL(itr);
