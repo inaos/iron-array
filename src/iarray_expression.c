@@ -648,14 +648,21 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 
 static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs, iarray_optype_t op)
 {
-    INA_VERIFY_NOT_NULL(expr);
-    INA_VERIFY_NOT_NULL(lhs);
-    INA_VERIFY_NOT_NULL(rhs);
-    INA_VERIFY_NOT_NULL(op);
+    if (expr != NULL) {
+        return NULL;
+    }
+    if (lhs != NULL) {
+        return NULL;
+    }
+
+    if (rhs != NULL) {
+        return NULL;
+    }
 
     bool scalar = false;
     bool scalar_vector = false;
     bool vector_vector = false;
+
     iarray_dtshape_t dtshape = {0};  // initialize to 0s
     iarray_temporary_t *scalar_tmp = NULL;
     iarray_temporary_t *scalar_lhs = NULL;
@@ -696,10 +703,14 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
 
     // Creating the temporary means interacting with the INA memory allocator, which is not thread-safe.
     // We should investigate on how to overcome this syncronization point (if possible at all).
+
+    ina_rc_t err;
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
-    INA_SUCCEED(iarray_temporary_new(expr, NULL, &dtshape, &out));
+
+    err = iarray_temporary_new(expr, NULL, &dtshape, &out);
+    INA_FAIL_IF_ERROR(err);
 
     switch (dtshape.dtype) {
         case IARRAY_DATA_TYPE_DOUBLE: {
@@ -720,7 +731,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     break;
                 default:
                     printf("Operation not supported yet");
-                    return NULL;
+                    goto fail;
                 }
             }
             else if (scalar_vector) {
@@ -750,7 +761,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     break;
                 default:
                     printf("Operation not supported yet");
-                    return NULL;
+                    goto fail;
                 }
             }
             else if (vector_vector) {
@@ -777,12 +788,12 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     break;
                 default:
                     printf("Operation not supported yet");
-                    return NULL;
+                    goto fail;
                 }
             }
             else {
                 printf("DTshape combination not supported yet\n");
-                return NULL;
+                goto fail;
             }
         }
         break;
@@ -804,7 +815,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     break;
                 default:
                     printf("Operation not supported yet");
-                    return NULL;
+                    goto fail;
                 }
             }
             else if (scalar_vector) {
@@ -834,7 +845,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     break;
                 default:
                     printf("Operation not supported yet");
-                    return NULL;
+                    goto fail;
                 }
             }
             else if (vector_vector) {
@@ -861,21 +872,25 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     break;
                 default:
                     printf("Operation not supported yet");
-                    return NULL;
+                    goto fail;
                 }
             }
             else {
                 printf("DTshape combination not supported yet\n");
-                return NULL;
+                goto fail;
             }
         }
         break;
         default:  // switch (dtshape.dtype)
             printf("data type not supported yet\n");
-            return NULL;
+            goto fail;
     }
 
     return out;
+
+    fail:
+        // TODO: Free temporary
+        return NULL;
 }
 
 iarray_temporary_t* _iarray_op_add(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs)

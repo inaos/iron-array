@@ -126,6 +126,8 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
                     return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
                 }
                 break;
+            default:
+                return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }
     }
 
