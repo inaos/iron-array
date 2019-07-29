@@ -329,7 +329,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
         iarray_iter_write_block_free(&iter_out);
         INA_MEM_FREE_SAFE(iter_var);
-        ina_mem_free(iter_value);
+        INA_MEM_FREE_SAFE(iter_value);
         iarray_context_free(&ctx);
 
         goto success;
@@ -339,8 +339,10 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             iarray_iter_read_block_free(&(iter_var[nvar]));
         }
         iarray_iter_write_block_free(&iter_out);
-        ina_mem_free(iter_var);
-        ina_mem_free(iter_value);
+
+        INA_MEM_FREE_SAFE(iter_var);
+        INA_MEM_FREE_SAFE(iter_value);
+
         iarray_context_free(&ctx);
 
         return ina_err_get_rc();
@@ -350,7 +352,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
         if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
             fprintf(stderr, "ITERBLOSC eval can't be used with a plainbuffer output container.\n");
-            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            goto fail_iterblosc;
         }
 
         // Setup a new cparams with a prefilter
@@ -450,8 +453,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             iarray_iter_read_block_free(&iter_var[nvar]);
         }
         iarray_iter_write_block_free(&iter_out);
-        ina_mem_free(iter_var);
-        ina_mem_free(iter_value);
+        INA_MEM_FREE_SAFE(iter_var);
+        INA_MEM_FREE_SAFE(iter_value);
         iarray_context_free(&ctx);
 
         goto success;
@@ -461,8 +464,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             iarray_iter_read_block_free(&iter_var[nvar]);
         }
         iarray_iter_write_block_free(&iter_out);
-        ina_mem_free(iter_var);
-        ina_mem_free(iter_value);
+        INA_MEM_FREE_SAFE(iter_var);
+        INA_MEM_FREE_SAFE(iter_value);
         iarray_context_free(&ctx);
         return ina_err_get_rc();
     }
@@ -561,9 +564,9 @@ omp_set_num_threads(e->ctx->cfg->max_num_threads);
         }
 
         iarray_iter_write_block_free(&iter_out);
-        ina_mem_free(iter_var);
-        ina_mem_free(iter_value);
-        ina_mem_free(outbuf);
+        INA_MEM_FREE_SAFE(iter_var);
+        INA_MEM_FREE_SAFE(iter_value);
+        INA_MEM_FREE_SAFE(outbuf);
         iarray_context_free(&ctx);
         goto success;
 
@@ -573,9 +576,9 @@ omp_set_num_threads(e->ctx->cfg->max_num_threads);
         }
 
         iarray_iter_write_block_free(&iter_out);
-        ina_mem_free(iter_var);
-        ina_mem_free(iter_value);
-        ina_mem_free(outbuf);
+        INA_MEM_FREE_SAFE(iter_var);
+        INA_MEM_FREE_SAFE(iter_value);
+        INA_MEM_FREE_SAFE(outbuf);
         iarray_context_free(&ctx);
         goto success;
 

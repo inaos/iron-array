@@ -199,13 +199,13 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     _iarray_iter_matmul_free(&iter);
     if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
-        ina_mem_free(a_block);
+        INA_MEM_FREE_SAFE(a_block);
     }
     if (b->view || b->catarr->storage == CATERVA_STORAGE_BLOSC || !b_contiguous) {
-        ina_mem_free(b_block);
+        INA_MEM_FREE_SAFE(b_block);
     }
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-        ina_mem_free(c_block);
+        INA_MEM_FREE_SAFE(c_block);
     }
     c->catarr->filled = true;
 
@@ -372,13 +372,13 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     _iarray_iter_matmul_free(&iter);
     if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
-        ina_mem_free(a_block);
+        INA_MEM_FREE_SAFE(a_block);
     }
     if (b->view || b->catarr->storage == CATERVA_STORAGE_BLOSC || !b_contiguous) {
-        ina_mem_free(b_block);
+        INA_MEM_FREE_SAFE(b_block);
     }
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-        ina_mem_free(c_block);
+        INA_MEM_FREE_SAFE(c_block);
     }
     c->catarr->filled = true;
     return INA_SUCCESS;

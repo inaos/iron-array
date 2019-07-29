@@ -184,7 +184,7 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
     INA_SUCCEED(iarray_set_slice_buffer(ctx, c, start,stop, buffer, buflen * typesize));
 
     if (slice->catarr->storage == CATERVA_STORAGE_BLOSC) {
-        ina_mem_free(buffer);
+        INA_MEM_FREE_SAFE(buffer);
     }
 
     return INA_SUCCESS;
