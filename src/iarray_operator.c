@@ -17,6 +17,13 @@
 static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c,
                              int64_t *bshape_a, int64_t *bshape_b) {
 
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(a);
+    INA_VERIFY_NOT_NULL(b);
+    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(bshape_a);
+    INA_VERIFY_NOT_NULL(bshape_b);
+
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     caterva_update_shape(c->catarr, &shape);
     int64_t typesize = a->catarr->ctx->cparams.typesize;
@@ -156,15 +163,15 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
         // Obtain desired blocks from iarray containers
         if (!a->view && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && a_contiguous) {
-            INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
+            INA_RETURN_IF_FAILED(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
         } else {
-            INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+            INA_RETURN_IF_FAILED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
         }
 
         if (!b->view && b->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && b_contiguous) {
-            INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
+            INA_RETURN_IF_FAILED(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
         } else {
-            INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
+            INA_RETURN_IF_FAILED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
         }
 
         // Make blocks multiplication
@@ -180,7 +187,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
                             1.0, (float *)a_block, ld_a, (float *)b_block, ld_b, 1.0, (float *)c_block, ld_c);
                 break;
             default:
-                return INA_ERR_EXCEEDED;
+                return INA_ERROR(INA_ERR_FAILED);
         }
 
 
@@ -214,6 +221,13 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
 static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c,
                              int64_t *bshape_a, int64_t *bshape_b) {
+
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(a);
+    INA_VERIFY_NOT_NULL(b);
+    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(bshape_a);
+    INA_VERIFY_NOT_NULL(bshape_b);
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     caterva_update_shape(c->catarr, &shape);
@@ -333,14 +347,14 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
         // Obtain desired blocks from iarray containers
         if (!a->view && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && a_contiguous) {
-            INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
+            INA_RETURN_IF_FAILED(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
         } else {
-            INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+            INA_RETURN_IF_FAILED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
         }
         if (!b->view && b->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && b_contiguous) {
-            INA_MUST_SUCCEED(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
+            INA_RETURN_IF_FAILED(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
         } else {
-            INA_MUST_SUCCEED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
+            INA_RETURN_IF_FAILED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
         }
 
         // Make blocks multiplication
@@ -354,7 +368,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
                 cblas_sgemv(CblasRowMajor, flag_a, M, K, 1.0, (float *) a_block, ld_a, (float *) b_block, 1, 1.0, (float *) c_block, 1);
                 break;
             default:
-                return INA_ERR_EXCEEDED;
+                return INA_ERROR(INA_ERR_FAILED);
         }
 
         if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
@@ -391,11 +405,11 @@ static ina_rc_t _iarray_operator_elwise_a(
     _iarray_vml_fun_d_a mkl_fun_d,
     _iarray_vml_fun_s_a mkl_fun_s)
 {
-    INA_ASSERT_NOT_NULL(ctx);
-    INA_ASSERT_NOT_NULL(a);
-    INA_ASSERT_NOT_NULL(result);
-    INA_ASSERT_NOT_NULL(mkl_fun_d);
-    INA_ASSERT_NOT_NULL(mkl_fun_s);
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(a);
+    INA_VERIFY_NOT_NULL(result);
+    INA_VERIFY_NOT_NULL(mkl_fun_d);
+    INA_VERIFY_NOT_NULL(mkl_fun_s);
 
     caterva_dims_t shape = caterva_new_dims(result->dtshape->shape, result->dtshape->ndim);
     caterva_update_shape(result->catarr, &shape);
@@ -418,9 +432,9 @@ static ina_rc_t _iarray_operator_elwise_a(
             mkl_fun_s((const int)psize / sizeof(float), (const float*)a_chunk, (float*)c_chunk);
             break;
         default:
-            return INA_ERR_EXCEEDED;
+            goto fail;
         }
-        blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize);
+        INA_FAIL_IF(blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize) < 0);
     }
 
     result->catarr->filled = true;
@@ -431,7 +445,7 @@ static ina_rc_t _iarray_operator_elwise_a(
 fail:
     ina_mempool_reset(ctx->mp_op);
     /* FIXME: error handling */
-    return INA_ERR_ILLEGAL;
+    return INA_ERROR(INA_ERR_FAILED);
 }
 
 static ina_rc_t _iarray_operator_elwise_ab(
@@ -442,24 +456,22 @@ static ina_rc_t _iarray_operator_elwise_ab(
         _iarray_vml_fun_d_ab mkl_fun_d,
         _iarray_vml_fun_s_ab mkl_fun_s)
 {
-    INA_ASSERT_NOT_NULL(ctx);
-    INA_ASSERT_NOT_NULL(a);
-    INA_ASSERT_NOT_NULL(b);
-    INA_ASSERT_NOT_NULL(result);
-    INA_ASSERT_NOT_NULL(mkl_fun_d);
-    INA_ASSERT_NOT_NULL(mkl_fun_s);
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(a);
+    INA_VERIFY_NOT_NULL(b);
+    INA_VERIFY_NOT_NULL(result);
+    INA_VERIFY_NOT_NULL(mkl_fun_d);
+    INA_VERIFY_NOT_NULL(mkl_fun_s);
 
-    if (!INA_SUCCEED(iarray_container_dtshape_equal(a->dtshape, b->dtshape))) {
-        return INA_ERR_INVALID_ARGUMENT;
-    }
+    INA_RETURN_IF_FAILED(iarray_container_dtshape_equal(a->dtshape, b->dtshape));
 
     caterva_dims_t shape = caterva_new_dims(result->dtshape->shape, result->dtshape->ndim);
-    caterva_update_shape(result->catarr, &shape);
+    INA_FAIL_IF(caterva_update_shape(result->catarr, &shape) < 0);
 
     size_t psize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {
         if (a->catarr->pshape[i] != b->catarr->pshape[i]) {
-            return INA_ERR_ILLEGAL;
+            return INA_ERROR(INA_ERR_ILLEGAL);
         }
         psize *= a->catarr->pshape[i];
     }
@@ -479,7 +491,7 @@ static ina_rc_t _iarray_operator_elwise_ab(
                 mkl_fun_s((const int)psize/sizeof(float), (const float*)a_chunk, (const float*)b_chunk, (float*)c_chunk);
                 break;
             default:
-                return INA_ERR_EXCEEDED;
+                return INA_ERROR(INA_ERR_FAILED);
         }
         blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize);
     }
@@ -493,8 +505,9 @@ static ina_rc_t _iarray_operator_elwise_ab(
 fail:
     ina_mempool_reset(ctx->mp_op);
     /* FIXME: error handling */
-    return INA_ERR_ILLEGAL;
+    return INA_ERROR(INA_ERR_ILLEGAL);
 }
+
 
 INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a)
 {
@@ -563,10 +576,10 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
                                        iarray_operator_hint_t hint)
 {
     INA_UNUSED(hint);
-    INA_ASSERT_NOT_NULL(ctx);
-    INA_ASSERT_NOT_NULL(a);
-    INA_ASSERT_NOT_NULL(b);
-    INA_ASSERT_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(a);
+    INA_VERIFY_NOT_NULL(b);
+    INA_VERIFY_NOT_NULL(c);
 
     if (c->catarr->filled) {
         INA_ERROR(INA_ERR_INVALID_ARGUMENT);
