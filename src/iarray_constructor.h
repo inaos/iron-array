@@ -114,6 +114,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
             break;
         default:
             printf("Unknown type; cannot never happen.\n");
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
             break;
     }
     cparams.compcode = ctx->cfg->compression_codec;
@@ -178,14 +179,20 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
                                         const int64_t *offset,
                                         iarray_container_t **c)
 {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(pred);
+    INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(offset);
+    INA_VERIFY_NOT_NULL(c);
+
     /* validation */
     if (dtshape->ndim > CATERVA_MAXDIM) {
-        return INA_ERROR(INA_ERR_EXCEEDED);
+        return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
     }
 
     for (int i = 0; i < dtshape->ndim; ++i) {
         if (dtshape->shape[i] < dtshape->pshape[i]) {
-            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            return INA_ERROR(IARRAY_ERR_INVALID_SHAPE);
         }
     }
 

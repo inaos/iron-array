@@ -584,8 +584,8 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
     INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, false));
 
     while (iarray_iter_read_block_has_next(I2) && iarray_iter_read_block_has_next(I3)) {
-        iarray_iter_read_block_next(I2, NULL, 0);
-        iarray_iter_read_block_next(I3, NULL, 0);
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(I2, NULL, 0));
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(I3, NULL, 0));
 
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:

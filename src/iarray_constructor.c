@@ -22,8 +22,9 @@ static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     if (caterva_fill(c->catarr, &shape, &value) != 0) {
         printf("Error in caterva_fill\n");
-        return INA_ERROR(INA_ERR_FAILED);
+        return INA_ERROR(IARRAY_ERR_CATERVA_FAILED);
     }
+
     return INA_SUCCESS;
 }
 
@@ -35,7 +36,7 @@ static ina_rc_t _iarray_container_fill_double(iarray_container_t *c, double valu
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     if (caterva_fill(c->catarr, &shape, &value) != 0) {
         printf("Error in caterva_fill\n");
-        return INA_ERROR(INA_ERR_FAILED);
+        return INA_ERROR(IARRAY_ERR_CATERVA_FAILED);
     }
     return INA_SUCCESS;
 }
@@ -62,7 +63,7 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
 
     double constant = (stop - start) / contsize;
     if (constant != step) {
-        return INA_ERROR(INA_ERR_FAILED);
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     INA_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, store, flags, container));
@@ -121,7 +122,7 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
     }
 
     if (contsize != nelem) {
-        return INA_ERROR(INA_ERR_FAILED);
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     INA_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, store, flags, container));
@@ -179,8 +180,7 @@ INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
             INA_FAIL_IF_ERROR(_iarray_container_fill_float(*container, 0.0f));
             break;
         default:
-            INA_ERROR(INA_ERR_INVALID_ARGUMENT);
-            goto fail;
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
     return INA_SUCCESS;
 
@@ -209,13 +209,14 @@ INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
         INA_FAIL_IF_ERROR(_iarray_container_fill_float(*container, 1.0f));
         break;
     default:
-        return INA_ERR_EXCEEDED;
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
     return INA_SUCCESS;
 fail:
     iarray_container_free(ctx, container);
     return ina_err_get_rc();
 }
+
 
 INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx,
     iarray_dtshape_t *dtshape,
@@ -228,7 +229,7 @@ INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(container);
 
-    INA_SUCCEED(iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, store, flags, container));
 
     INA_FAIL_IF_ERROR(_iarray_container_fill_float(*container, value));
 
@@ -280,8 +281,7 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
     // TODO: would it be interesting to add a `buffer_len` parameter to `caterva_from_buffer()`?
     caterva_dims_t shape = caterva_new_dims((*container)->dtshape->shape, (*container)->dtshape->ndim);
     if (caterva_from_buffer((*container)->catarr, &shape, buffer) != 0) {
-        INA_ERROR(INA_ERR_FAILED);
-        goto fail;
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
 
     return INA_SUCCESS;
@@ -305,7 +305,7 @@ static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data
     pmeta += 1;
     assert(pmeta - smeta == smeta_len);
     if (*dtype >= IARRAY_DATA_TYPE_MAX) {
-        return INA_ERROR(INA_ERR_FAILED);
+        return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
 
     return INA_SUCCESS;
@@ -322,21 +322,19 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
 
     caterva_array_t *catarr = caterva_from_file(cat_ctx, store->id);
     if (catarr == NULL) {
-        INA_ERROR(INA_ERR_FAILED);
-        goto fail;
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
 
     uint8_t *smeta;
     uint32_t smeta_len;
     if (blosc2_frame_get_metalayer(catarr->sc->frame, "iarray", &smeta, &smeta_len) != 0) {
         printf("Error in get_metalayer\n");
-        INA_ERROR(INA_ERR_FAILED);
-        goto fail;
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
     }
     iarray_data_type_t dtype;
     if (deserialize_meta(smeta, smeta_len, &dtype) != 0) {
         printf("Error in deserialize_meta\n");
-        INA_ERROR(INA_ERR_FAILED);
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
         goto fail;
     }
 
@@ -417,7 +415,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
         INA_RETURN_IF_FAILED(iarray_get_slice_buffer(ctx, container, start, stop, buffer, buffer_len));
     } else {
         if (caterva_to_buffer(container->catarr, buffer) != 0) {
-            return INA_ERROR(INA_ERR_FAILED);
+            return INA_ERROR(IARRAY_ERR_CATERVA_FAILED);
         }
     }
 
@@ -432,7 +430,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
                               (float *) buffer, (size_t)container->dtshape->shape[0], (size_t)container->dtshape->shape[1]);
                 break;
             default:
-                return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
         }
     }
 

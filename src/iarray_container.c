@@ -19,20 +19,21 @@ INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dts
 {
     if (a->dtype != b->dtype) {
         printf("Dtypes are not equals\n");
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
     if (a->ndim != b->ndim) {
         printf("Dims are not equals\n");
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
     }
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         if (a->shape[i] != b->shape[i]) {
             printf("Shapes are not equals\n");
-            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            return INA_ERROR(IARRAY_ERR_INVALID_SHAPE);
         }
     }
     return INA_SUCCESS;
 }
+
 
 INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
     iarray_dtshape_t *dtshape,
@@ -58,6 +59,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(c);
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
     INA_VERIFY_NOT_NULL(container);
@@ -87,7 +89,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         }
         if (pshape[i] > stop_[i] - start_[i]){
             printf("pshape is bigger than shape\n");
-            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            return INA_ERROR(IARRAY_ERR_INVALID_PSHAPE);
         }
     }
 
@@ -136,7 +138,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
             }
         }
 
-        INA_SUCCEED(iarray_container_new(ctx, &dtshape, store, flags, container));
+        INA_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape, store, flags, container));
 
         if (c->transposed) {
             (*container)->transposed = true;
@@ -145,12 +147,12 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         caterva_dims_t start__ = caterva_new_dims((int64_t *) start_, c->dtshape->ndim);
         caterva_dims_t stop__ = caterva_new_dims((int64_t *) stop_, c->dtshape->ndim);
 
-        INA_FAIL_IF(caterva_get_slice((*container)->catarr, c->catarr, &start__, &stop__) != 0);
+        if (caterva_get_slice((*container)->catarr, c->catarr, &start__, &stop__) != 0) {
+            return INA_ERROR(IARRAY_ERR_CATERVA_FAILED);
+        }
     }
-    return INA_SUCCESS;
 
-fail:
-    return INA_ERROR(INA_ERR_FAILED);
+    return INA_SUCCESS;
 }
 
 
@@ -167,7 +169,10 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(slice);
 
     if (c->dtshape->dtype != slice->dtshape->dtype) {
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+    }
+    if (c->dtshape->ndim != slice->dtshape->ndim) {
+        return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
     }
 
     int typesize = slice->catarr->ctx->cparams.typesize;
@@ -176,18 +181,23 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
     uint8_t *buffer;
     if (slice->catarr->storage == CATERVA_STORAGE_BLOSC) {
         buffer = ina_mem_alloc(buflen * typesize);
-        INA_SUCCEED(iarray_to_buffer(ctx, slice, buffer, buflen * typesize));
+        INA_FAIL_IF_ERROR(iarray_to_buffer(ctx, slice, buffer, buflen * typesize));
     } else {
         buffer = slice->catarr->buf;
     }
 
-    INA_SUCCEED(iarray_set_slice_buffer(ctx, c, start,stop, buffer, buflen * typesize));
+    INA_FAIL_IF_ERROR(iarray_set_slice_buffer(ctx, c, start,stop, buffer, buflen * typesize));
 
     if (slice->catarr->storage == CATERVA_STORAGE_BLOSC) {
         INA_MEM_FREE_SAFE(buffer);
     }
 
     return INA_SUCCESS;
+fail:
+    if (slice->catarr->storage == CATERVA_STORAGE_BLOSC) {
+        INA_MEM_FREE_SAFE(buffer);
+    }
+    return ina_err_get_rc();
 }
 
 
@@ -261,12 +271,12 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
     if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
         if (psize * (int64_t)sizeof(double) > buflen) {
             printf("The buffer size is not enough\n");
-            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
         }
     } else {
         if (psize * (int64_t)sizeof(float) > buflen) {
             printf("The buffer size is not enough\n");
-            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
         }
     }
 
@@ -274,7 +284,9 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
     caterva_dims_t stop__ = caterva_new_dims((int64_t *) stop_, c->catarr->ndim);
     caterva_dims_t pshape_ = caterva_new_dims((int64_t *) pshape, c->catarr->ndim);
 
-    INA_FAIL_IF(caterva_get_slice_buffer(buffer, c->catarr, &start__, &stop__, &pshape_) != 0);
+    if (caterva_get_slice_buffer(buffer, c->catarr, &start__, &stop__, &pshape_) != 0) {
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+    }
 
     size_t rows = (size_t)stop_[0] - start_[0];
     size_t cols = (size_t)stop_[1] - start_[1];
@@ -287,14 +299,14 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                 mkl_simatcopy('R', 'T', rows, cols, 1.0, (float *) buffer, cols, rows);
                 break;
             default:
-                return INA_ERR_EXCEEDED;
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
     }
 
     return INA_SUCCESS;
 
-    fail:
-    return INA_ERR_FAILED;
+fail:
+    return ina_err_get_rc();
 }
 
 
@@ -306,11 +318,14 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                                           int64_t buflen)
 {
     INA_UNUSED(ctx);
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(c);
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
+    INA_VERIFY_NOT_NULL(buffer);
 
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
 
     int8_t ndim = c->dtshape->ndim;
@@ -361,7 +376,7 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                 mkl_simatcopy('R', 'T', rows, cols, 1.0, (float *) buffer, cols, rows);
                 break;
             default:
-                return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
         }
     }
 
@@ -385,7 +400,7 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
     int err = caterva_set_slice_buffer(c->catarr, buffer, &start__, &stop__);
 
     if (err != 0) {
-        return INA_ERROR(INA_ERR_ERROR);
+        return INA_ERROR(IARRAY_ERR_CATERVA_FAILED);
     }
     return INA_SUCCESS;
 }

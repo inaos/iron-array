@@ -82,7 +82,6 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     }
 
     if (low > high) {
-        printf("low has to be smaller than high\n");
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
@@ -99,7 +98,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
             itemsize = 4;
             break;
         default:
-            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
 
     for (int i = 0; i < ndim; i++) {
@@ -144,7 +143,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
 
     if (psize > INT32_MAX) {
         // The partition size can never be larger than 2 GB
-        return INA_ERROR(INA_ERR_EXCEEDED);
+        return INA_ERROR(IARRAY_ERR_INVALID_PSHAPE);
     }
 
     return INA_SUCCESS;
@@ -183,14 +182,22 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     }
 
     if (low > high) {
-        printf("low has to be smaller than high\n");
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     // Take the dtype of the first array (we don't support mixing data types yet)
     iarray_data_type_t dtype = a->dtshape->dtype;
-    int itemsize = (dtype == IARRAY_DATA_TYPE_DOUBLE) ? 8 : 4;
-
+    int itemsize = 0;
+    switch (dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            itemsize = 8;
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            itemsize = 4;
+            break;
+        default:
+            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+    }
     // First, the m and n values *have* to be the same for the partition of the output
     int64_t m_dim = c->dtshape->pshape[0];
     int64_t n_dim = c->dtshape->pshape[1];
