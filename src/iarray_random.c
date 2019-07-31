@@ -55,7 +55,7 @@ INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
             mkl_rng = VSL_BRNG_SOBOL;
             break;
         default:
-            INA_FAIL_IF(1);
+            INA_FAIL_IF_ERROR(IARRAY_ERR_INVALID_RNG_METHOD);
     }
 
     vslNewStream(&(*rng_ctx)->stream, mkl_rng, seed);
@@ -67,7 +67,7 @@ INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
 
 fail:
     iarray_random_ctx_free(ctx, rng_ctx);
-    return INA_ERROR(INA_ERR_ILLEGAL);
+    return ina_err_get_rc();
 }
 
 INA_API(void) iarray_random_ctx_free(iarray_context_t *ctx, iarray_random_ctx_t **rng_ctx)
@@ -112,16 +112,16 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     iarray_iter_write_block_t *iter;
     iarray_iter_write_block_value_t val;
 
-    INA_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter, container, container->dtshape->pshape, &val, false));
-
     int64_t max_part_size = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {
         max_part_size *= container->dtshape->pshape[i];
     }
     void *buffer_mem = ina_mem_alloc(max_part_size * sizeof(double));
 
+    INA_FAIL_IF_ERROR(iarray_iter_write_block_new(ctx, &iter, container, container->dtshape->pshape, &val, false));
+
     while (iarray_iter_write_block_has_next(iter)) {
-        INA_RETURN_IF_FAILED(iarray_iter_write_block_next(iter, NULL, 0));
+        INA_FAIL_IF_ERROR(iarray_iter_write_block_next(iter, NULL, 0));
 
         int64_t block_size = val.block_size;
 
@@ -175,8 +175,12 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     status = viRngPoisson(VSL_RNG_METHOD_POISSON_PTPE, random_ctx->stream, (int) block_size, (int *) r, lambda);
                     break;
                 }
+                default:
+                    INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_METHOD));
             }
-            INA_FAIL_IF(status != VSL_ERROR_OK);
+            if (status != VSL_ERROR_OK) {
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_RAND_METHOD_FAILED));
+            }
 
             for (int64_t i = 0; i < block_size; ++i) {
                 if ((method == _IARRAY_RANDOM_METHOD_BERNOUILLI) ||
@@ -238,8 +242,12 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
                     status = viRngPoisson(VSL_RNG_METHOD_POISSON_PTPE, random_ctx->stream, (int) block_size, (int *) r, lambda);
                     break;
                 }
+                default:
+                    INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_METHOD));
             }
-            INA_FAIL_IF(status != VSL_ERROR_OK);
+            if (status != VSL_ERROR_OK) {
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_RAND_METHOD_FAILED));
+            }
 
             for (int64_t i = 0; i < block_size; ++i) {
                 if ((method == _IARRAY_RANDOM_METHOD_BERNOUILLI) ||
@@ -253,11 +261,13 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
         }
     }
     iarray_iter_write_block_free(&iter);
-
+    INA_MEM_FREE_SAFE(buffer_mem);
     return INA_SUCCESS;
 
 fail:
-    return INA_ERROR(INA_ERR_FAILED);
+    INA_MEM_FREE_SAFE(buffer_mem);
+    iarray_iter_write_block_free(&iter);
+    return ina_err_get_rc();
 }
 
 INA_API(ina_rc_t) iarray_random_rand(iarray_context_t *ctx,

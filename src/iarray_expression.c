@@ -94,7 +94,7 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const ch
     INA_UNUSED(e);
     INA_UNUSED(var);
     INA_UNUSED(val);
-    return INA_ERR_NOT_IMPLEMENTED;
+    return INA_ERROR(INA_ERR_NOT_IMPLEMENTED);
 }
 
 INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val)
@@ -113,7 +113,7 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
     INA_UNUSED(e);
     INA_UNUSED(var);
     INA_UNUSED(val);
-    return INA_ERR_NOT_IMPLEMENTED;
+    return INA_ERROR(INA_ERR_NOT_IMPLEMENTED);
 }
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
@@ -161,7 +161,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
             int retcode = blosc2_schunk_get_chunk(schunk, 0, &chunk, &needs_free);
             if (retcode < 0) {
                 printf("Cannot retrieve the chunk in position %d\n", 0);
-                return INA_ERROR(INA_ERR_FAILED);
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
             }
 
             size_t chunksize, cbytes, blocksize;
@@ -178,7 +178,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         }
         else {
             fprintf(stderr, "Flag %d is not supported\n", e->ctx->cfg->eval_flags);
-            return INA_ERROR(INA_ERR_NOT_SUPPORTED);
+            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
         }
     }
 
@@ -200,7 +200,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         e->blocksize = 0;
     } else {
         fprintf(stderr, "Flag %d is not supported\n", e->ctx->cfg->eval_flags);
-        return INA_ERROR(INA_ERR_NOT_SUPPORTED);
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
     }
     dtshape_var.shape[0] = temp_var_dim0;
     dtshape_var.dtype = e->vars[0].c->dtshape->dtype;
@@ -212,17 +212,22 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         // Allocate different buffers for each thread too
         for (int nthread = 0; nthread < nthreads; nthread++) {
             int ntvar = nthread * e->nvars + nvar;
-            INA_SUCCEED(iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[ntvar]));
+            INA_FAIL_IF_ERROR(iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[ntvar]));
             te_vars[nvar].address[nthread] = *(e->temp_vars + ntvar);
         }
     }
     int err = 0;
     e->texpr = te_compile(e, ina_str_cstr(e->expr), te_vars, e->nvars, &err);
     if (e->texpr == 0) {
-        return INA_ERROR(INA_ERR_NOT_COMPILED);
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_COMPILED));
     }
     return INA_SUCCESS;
+
+fail:
+    INA_MEM_FREE_SAFE(e->temp_vars);
+    return ina_err_get_rc();
 }
+
 
 // Example of computation.  TODO: To be removed...
 static double poly(const double x)
@@ -352,7 +357,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
         if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
             fprintf(stderr, "ITERBLOSC eval can't be used with a plainbuffer output container.\n");
-            INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
             goto fail_iterblosc;
         }
 
@@ -425,7 +430,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             }
             blosc2_free_ctx(cctx);
             if (csize <= 0) {
-                INA_ERROR(INA_ERR_ERROR);
+                INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
                 goto fail_iterblosc;
             }
 
@@ -436,7 +441,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                 int nbytes = blosc_decompress(temp, out_value.block_pointer, out_items * e->typesize);
                 free(temp);
                 if (nbytes <= 0) {
-                    INA_ERROR(INA_ERR_ERROR);
+                    INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
                     goto fail_iterblosc;
                 }
                 iter_out->compressed_chunk_buffer = false;
@@ -591,7 +596,7 @@ omp_set_num_threads(e->ctx->cfg->max_num_threads);
 
         if (nitems_written != nitems_in_schunk) {
             printf("nitems written is different from items in final container\n");
-            return INA_ERROR(INA_ERR_ERROR);
+            return INA_ERROR(INA_ERR_NOT_COMPLETE);
         }
 
         return INA_SUCCESS;
@@ -611,7 +616,7 @@ ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)
             type_size = sizeof(float);
             break;
         default:
-            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
     for (int i = 0; i < dtshape->ndim; ++i) {
         *size += dtshape->shape[i] * type_size;

@@ -464,14 +464,17 @@ INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
         psize *= pshape[i];
     }
 
-    if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        if (psize * (int64_t)sizeof(double) > buflen) {
-            return INA_ERR_ERROR;
-        }
-    } else {
-        if (psize * (int64_t)sizeof(float) > buflen) {
-            return INA_ERR_ERROR;
-        }
+    switch (c->dtshape->dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            if (psize * (int64_t)sizeof(double) > buflen)
+                return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            if (psize * (int64_t)sizeof(float) > buflen)
+                return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
+            break;
+        default:
+            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
 
     caterva_dims_t start__ = caterva_new_dims((int64_t *) start_, c->catarr->ndim);
@@ -480,12 +483,10 @@ INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
 
     INA_FAIL_IF(caterva_get_slice_buffer_no_copy(buffer, c->catarr, &start__, &stop__, &pshape_) != 0);
 
-    //printf("GS %p\n", buffer);
-
     return INA_SUCCESS;
 
     fail:
-    return INA_ERROR(INA_ERR_FAILED);
+    return ina_err_get_rc();
 }
 
 ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
@@ -556,14 +557,14 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
     switch (c->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
             if (psize * (int64_t)sizeof(double) > buflen)
-                return INA_ERR_ERROR;
+                return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
             break;
         case IARRAY_DATA_TYPE_FLOAT:
             if (psize * (int64_t)sizeof(float) > buflen)
-                return INA_ERR_ERROR;
+                return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
             break;
         default:
-            return INA_ERR_EXCEEDED;
+            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
 
     caterva_dims_t start__ = caterva_new_dims((int64_t *) start_, c->catarr->ndim);
@@ -572,12 +573,14 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
 
     memset(buffer, 0, buflen);
 
-    INA_FAIL_IF(caterva_get_slice_buffer(buffer, c->catarr, &start__, &stop__, &pshape__) != 0);
+    if (caterva_get_slice_buffer(buffer, c->catarr, &start__, &stop__, &pshape__) != 0) {
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+    }
 
     return INA_SUCCESS;
 
 fail:
-    return INA_ERROR(INA_ERR_FAILED);
+    return ina_err_get_rc();
 }
 
 INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
@@ -589,7 +592,9 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
     uint8_t inc = 0;
 
     if (!container->view) {
-        INA_FAIL_IF(caterva_squeeze(container->catarr) != 0);
+        if (caterva_squeeze(container->catarr) != 0) {
+            return INA_ERROR(IARRAY_ERR_CATERVA_FAILED);
+        }
 
         if (container->dtshape->ndim != container->catarr->ndim) {
             container->dtshape->ndim = (uint8_t) container->catarr->ndim;
@@ -619,9 +624,6 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
     }
 
     return INA_SUCCESS;
-
-fail:
-    return INA_ERROR(INA_ERR_FAILED);
 }
 
 INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
@@ -663,16 +665,16 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
 {
     if (a->dtshape->dtype != b->dtshape->dtype){
         printf("Dtypes are not equals\n");
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
     if (a->dtshape->ndim != b->dtshape->ndim) {
         printf("Dims are not equals\n");
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
     }
     for (int i = 0; i < a->dtshape->ndim; ++i) {
         if (a->dtshape->shape[i] != b->dtshape->shape[i]) {
             printf("Shapes are not equals");
-            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            return INA_ERROR(IARRAY_ERR_INVALID_SHAPE);
         }
     }
 
@@ -708,7 +710,7 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
                     printf("%f, %f\n", ((double *)val_a.block_pointer)[i], ((double *)val_b.block_pointer)[i]);
                     printf("Values differ in nelem: %ld (diff: %f)\n",
                            (long)(i + val_a.nblock * val_a.block_size), adiff);
-                    goto fails;
+                    goto fail;
                 }
             }
         }
@@ -721,11 +723,13 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
                     printf("%f, %f\n", ((float *)val_a.block_pointer)[i], ((float *)val_b.block_pointer)[i]);
                     printf("Values differ in nelem: %ld (diff: %f)\n",
                            (long)(i + val_a.nblock * val_a.block_size), adiff);
-                    goto fails;
+                    INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
+                    goto fail;
                 }
             }
         }
     }
+
     iarray_context_free(&ctx);
     iarray_iter_read_block_free(&iter_a);
     iarray_iter_read_block_free(&iter_b);
@@ -733,14 +737,15 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
 
     return INA_SUCCESS;
 
-fails:
+fail:
     iarray_context_free(&ctx);
     iarray_iter_read_block_free(&iter_a);
     iarray_iter_read_block_free(&iter_b);
     free(blocksize);
 
-    return INA_ERROR(INA_ERR_FAILED);
+    return ina_err_get_rc();
 }
+
 
 INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container)
 {
