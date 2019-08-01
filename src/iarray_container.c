@@ -19,19 +19,21 @@ INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dts
 {
     if (a->dtype != b->dtype) {
         printf("Dtypes are not equals\n");
-        return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
     if (a->ndim != b->ndim) {
         printf("Dims are not equals\n");
-        return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
     }
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         if (a->shape[i] != b->shape[i]) {
             printf("Shapes are not equals\n");
-            return INA_ERROR(IARRAY_ERR_INVALID_SHAPE);
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_SHAPE));
         }
     }
     return INA_SUCCESS;
+    fail:
+    return ina_err_get_rc();
 }
 
 
@@ -85,11 +87,11 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
     for (int i = 0; i < c->dtshape->ndim; ++i) {
         if (start_[i] >= stop_[i]) {
             printf("Start is bigger than stop\n");
-            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
         }
         if (pshape[i] > stop_[i] - start_[i]){
             printf("pshape is bigger than shape\n");
-            return INA_ERROR(IARRAY_ERR_INVALID_PSHAPE);
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_PSHAPE));
         }
     }
 
@@ -104,7 +106,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
             dtshape.pshape[i] = pshape[i];
         }
 
-        INA_SUCCEED(_iarray_view_new(ctx, c, &dtshape, start_, container));
+        INA_FAIL_IF_ERROR(_iarray_view_new(ctx, c, &dtshape, start_, container));
 
         (*container)->view = 1;
         if (c->transposed == 1) {
@@ -138,7 +140,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
             }
         }
 
-        INA_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape, store, flags, container));
+        INA_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape, store, flags, container));
 
         if (c->transposed) {
             (*container)->transposed = true;
@@ -148,14 +150,18 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         caterva_dims_t stop__ = caterva_new_dims((int64_t *) stop_, c->dtshape->ndim);
 
         if (caterva_get_slice((*container)->catarr, c->catarr, &start__, &stop__) != 0) {
-            return INA_ERROR(IARRAY_ERR_CATERVA_FAILED);
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
         }
     }
 
     return INA_SUCCESS;
+
+    fail:
+    iarray_container_free(ctx, container);
+    return ina_err_get_rc();
 }
 
-
+//TODO
 INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
                                    iarray_container_t *c,
                                    const int64_t *start,
