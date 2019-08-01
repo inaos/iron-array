@@ -182,7 +182,7 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     }
 
     if (low > high) {
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
     }
 
     // Take the dtype of the first array (we don't support mixing data types yet)
@@ -196,7 +196,7 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
             itemsize = 4;
             break;
         default:
-            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
     // First, the m and n values *have* to be the same for the partition of the output
     int64_t m_dim = c->dtshape->pshape[0];
@@ -247,17 +247,18 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     bshape_b[1] = n_dim;
 
     return INA_SUCCESS;
+
+    fail:
+    return ina_err_get_rc();
 }
 
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx)
 {
     INA_VERIFY_NOT_NULL(ctx);
     *ctx = ina_mem_alloc(sizeof(iarray_context_t));
-    INA_RETURN_IF_NULL(ctx);  //TODO: Set error?
 
     INA_VERIFY_NOT_NULL(cfg);
     (*ctx)->cfg = ina_mem_alloc(sizeof(iarray_config_t)); //
-    INA_FAIL_IF((*ctx)->cfg == NULL); //TODO: Set error?
 
     ina_mem_cpy((*ctx)->cfg, cfg, sizeof(iarray_config_t));
 
