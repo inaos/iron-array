@@ -55,7 +55,7 @@ INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
             mkl_rng = VSL_BRNG_SOBOL;
             break;
         default:
-            INA_FAIL_IF_ERROR(IARRAY_ERR_INVALID_RNG_METHOD);
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RNG_METHOD));
     }
 
     vslNewStream(&(*rng_ctx)->stream, mkl_rng, seed);
@@ -284,17 +284,20 @@ INA_API(ina_rc_t) iarray_random_rand(iarray_context_t *ctx,
 
     /* validate distribution parameters */
     if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        iarray_random_dist_set_param_float(random_ctx, IARRAY_RANDOM_DIST_PARAM_A, 0.0f);
-        iarray_random_dist_set_param_float(random_ctx, IARRAY_RANDOM_DIST_PARAM_B, 1.0f);
+        INA_FAIL_IF_ERROR(iarray_random_dist_set_param_float(random_ctx, IARRAY_RANDOM_DIST_PARAM_A, 0.0f));
+        INA_FAIL_IF_ERROR(iarray_random_dist_set_param_float(random_ctx, IARRAY_RANDOM_DIST_PARAM_B, 1.0f));
     }
     else {
-        iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_A, 0.0);
-        iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_B, 1.0);
+        INA_FAIL_IF_ERROR(iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_A, 0.0));
+        INA_FAIL_IF_ERROR(iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_B, 1.0));
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_FAIL_IF_ERROR(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_UNIFORM);
+
+    fail:
+    return ina_err_get_rc();
 }
 
 INA_API(ina_rc_t) iarray_random_randn(iarray_context_t *ctx,
@@ -310,18 +313,22 @@ INA_API(ina_rc_t) iarray_random_randn(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(container);
 
     if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        iarray_random_dist_set_param_float(random_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 0.0f);
-        iarray_random_dist_set_param_float(random_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 1.0f);
+        INA_FAIL_IF_ERROR(iarray_random_dist_set_param_float(random_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 0.0f));
+        INA_FAIL_IF_ERROR(iarray_random_dist_set_param_float(random_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 1.0f));
     }
     else {
-        iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 0.0);
-        iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 1.0);
+        INA_FAIL_IF_ERROR(iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 0.0));
+        INA_FAIL_IF_ERROR(iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 1.0));
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_FAIL_IF_ERROR(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_GAUSSIAN);
+
+    fail:
+    return ina_err_get_rc();
 }
+
 
 INA_API(ina_rc_t) iarray_random_beta(iarray_context_t *ctx,
     iarray_dtshape_t *dtshape,
@@ -337,19 +344,23 @@ INA_API(ina_rc_t) iarray_random_beta(iarray_context_t *ctx,
 
     /* validate distribution parameters */
     if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        INA_FAIL_IF(random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_ALPHA] <= 0);
-        INA_FAIL_IF(random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0);
+        if (random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_ALPHA] <= 0 ||
+            random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
     else {
-        INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_ALPHA] <= 0);
-        INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0);
+        if (random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_ALPHA] <= 0 ||
+            random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_FAIL_IF_ERROR(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_BETA);
 fail:
-    return INA_ERROR(INA_ERR_FAILED);
+    return ina_err_get_rc();
 }
 
 INA_API(ina_rc_t) iarray_random_lognormal(iarray_context_t *ctx,
@@ -366,18 +377,22 @@ INA_API(ina_rc_t) iarray_random_lognormal(iarray_context_t *ctx,
 
     /* validate distribution parameters */
     if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        INA_FAIL_IF(random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0);
+        if (random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
     else {
-        INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0);
+        if (random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_FAIL_IF_ERROR(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_LOGNORMAL);
 
     fail:
-    return INA_ERROR(INA_ERR_FAILED);
+    return ina_err_get_rc();
 }
 
 INA_API(ina_rc_t) iarray_random_exponential(iarray_context_t *ctx,
@@ -394,18 +409,22 @@ INA_API(ina_rc_t) iarray_random_exponential(iarray_context_t *ctx,
 
     /* validate distribution parameters */
     if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        INA_FAIL_IF(random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0);
+        if (random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
     else {
-        INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0);
+        if (random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_FAIL_IF_ERROR(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_EXPONENTIAL);
 
     fail:
-    return INA_ERROR(INA_ERR_FAILED);
+    return ina_err_get_rc();
 }
 
 INA_API(ina_rc_t) iarray_random_uniform(iarray_context_t *ctx,
@@ -422,18 +441,22 @@ INA_API(ina_rc_t) iarray_random_uniform(iarray_context_t *ctx,
 
     /* validate distribution parameters */
     if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        INA_FAIL_IF(random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_A] >= random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_B]);
+        if (random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_A] >= random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_B]) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
     else {
-        INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_A] >= random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_B]);
+        if (random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_A] >= random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_B]) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_FAIL_IF_ERROR(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_UNIFORM);
 
     fail:
-    return INA_ERROR(INA_ERR_FAILED);
+    return ina_err_get_rc();
 }
 
 INA_API(ina_rc_t) iarray_random_normal(iarray_context_t *ctx,
@@ -450,18 +473,22 @@ INA_API(ina_rc_t) iarray_random_normal(iarray_context_t *ctx,
 
     /* validate distribution parameters */
     if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        INA_FAIL_IF(random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0);
+        if (random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
     else {
-        INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0);
+        if (random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_FAIL_IF_ERROR(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_GAUSSIAN);
 
     fail:
-    return INA_ERROR(INA_ERR_FAILED);
+    return ina_err_get_rc();
 }
 
 INA_API(ina_rc_t) iarray_random_bernoulli(iarray_context_t *ctx,
@@ -478,21 +505,24 @@ INA_API(ina_rc_t) iarray_random_bernoulli(iarray_context_t *ctx,
 
     /* validate distribution parameters */
     if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        INA_FAIL_IF(random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_P] < 0);
-        INA_FAIL_IF(random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_P] > 1);
-
+        if (random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_P] < 0 ||
+            random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_P] > 1) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
     else {
-        INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_P] < 0);
-        INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_P] > 1);
+        if (random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_P] < 0 ||
+            random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_P] > 1) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_FAIL_IF_ERROR(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_BERNOUILLI);
 
     fail:
-    return INA_ERROR(INA_ERR_FAILED);
+    return ina_err_get_rc();
 }
 
 
@@ -510,22 +540,26 @@ INA_API(ina_rc_t) iarray_random_binomial(iarray_context_t *ctx,
 
     /* validate distribution parameters */
     if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        INA_FAIL_IF(random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_P] < 0);
-        INA_FAIL_IF(random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_P] > 1);
-        INA_FAIL_IF(random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_M] <= 0);
+        if (random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_P] < 0 ||
+            random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_P] > 1 ||
+            random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_M] <= 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
     else {
-        INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_P] < 0);
-        INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_P] > 1);
-        INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_M] <= 0);
+        if (random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_P] < 0 ||
+            random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_P] > 1 ||
+            random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_M] <= 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_FAIL_IF_ERROR(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_BINOMIAL);
 
     fail:
-    return INA_ERROR(INA_ERR_FAILED);
+    return ina_err_get_rc();
 }
 
 INA_API(ina_rc_t) iarray_random_poisson(iarray_context_t *ctx,
@@ -542,20 +576,24 @@ INA_API(ina_rc_t) iarray_random_poisson(iarray_context_t *ctx,
 
     /* validate distribution parameters */
     if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        INA_FAIL_IF(random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_LAMBDA] <= 0);
+        if (random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_LAMBDA] <= 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
     else {
-        INA_FAIL_IF(random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_LAMBDA] <= 0);
-
+        if (random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_LAMBDA] <= 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
+        }
     }
 
-    INA_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, store, flags, container));
+    INA_FAIL_IF_ERROR(_iarray_container_new(ctx, dtshape, store, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_POISSON);
 
     fail:
-    return INA_ERROR(INA_ERR_FAILED);
+    return ina_err_get_rc();
 }
+
 
 INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
                                        iarray_container_t *c1,
@@ -563,7 +601,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
                                        bool *res)
 {
 
-    INA_ASSERT_SUCCEED(c1->catarr->size != c2->catarr->size);
+    INA_FAIL_IF(c1->catarr->size != c2->catarr->size);
     int64_t size = c1->catarr->size;
 
     int nbins = 100;
@@ -576,10 +614,10 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
 
     iarray_iter_read_t *iter;
     iarray_iter_read_value_t val;
-    iarray_iter_read_new(ctx, &iter, c1, &val);
+    INA_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, c1, &val));
 
     while (iarray_iter_read_has_next(iter)) {
-        iarray_iter_read_next(iter);
+        INA_FAIL_IF_ERROR(iarray_iter_read_next(iter));
 
         double data;
         switch(c1->dtshape->dtype){
@@ -590,7 +628,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
                 data = ((float *) val.elem_pointer)[0];
                 break;
             default:
-                return INA_ERROR(INA_ERR_FAILED);
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
 
         max = (data > max) ? data : max;
@@ -598,9 +636,9 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
     }
     iarray_iter_read_free(&iter);
 
-    iarray_iter_read_new(ctx, &iter, c2, &val);
+    INA_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, c2, &val));
     while (iarray_iter_read_has_next(iter)) {
-        iarray_iter_read_next(iter);
+        INA_FAIL_IF_ERROR(iarray_iter_read_next(iter));
 
         double data;
         switch(c1->dtshape->dtype){
@@ -611,7 +649,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
                 data = ((float *) val.elem_pointer)[0];
                 break;
             default:
-                return INA_ERROR(INA_ERR_FAILED);
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
 
         max = (data > max) ? data : max;
@@ -625,10 +663,10 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         hist2[i] = 0;
     }
 
-    iarray_iter_read_new(ctx, &iter, c1, &val);
+    INA_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, c1, &val));
 
     while (iarray_iter_read_has_next(iter)) {
-        iarray_iter_read_next(iter);
+        INA_FAIL_IF_ERROR(iarray_iter_read_next(iter));
 
         double data;
         switch(c1->dtshape->dtype){
@@ -639,7 +677,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
                 data = ((float *) val.elem_pointer)[0];
                 break;
             default:
-                return INA_ERROR(INA_ERR_FAILED);
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
 
         for (int i = 0; i < nbins; ++i) {
@@ -651,10 +689,10 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
     }
     iarray_iter_read_free(&iter);
 
-    iarray_iter_read_new(ctx, &iter, c2, &val);
+    INA_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, c2, &val));
 
     while (iarray_iter_read_has_next(iter)) {
-        iarray_iter_read_next(iter);
+        INA_FAIL_IF_ERROR(iarray_iter_read_next(iter));
 
         double data;
         switch(c1->dtshape->dtype){
@@ -665,7 +703,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
                 data = ((float *) val.elem_pointer)[0];
                 break;
             default:
-                return INA_ERROR(INA_ERR_FAILED);
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
         for (int i = 0; i < nbins; ++i) {
             if (data <= bins[i]) {
@@ -691,4 +729,9 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
 
     *res = (max_dif < threshold);
     return INA_SUCCESS;
+
+    fail:
+    iarray_iter_read_free(&iter);
+    return ina_err_get_rc();
+
 }

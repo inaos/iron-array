@@ -412,7 +412,9 @@ static ina_rc_t _iarray_operator_elwise_a(
     INA_VERIFY_NOT_NULL(mkl_fun_s);
 
     caterva_dims_t shape = caterva_new_dims(result->dtshape->shape, result->dtshape->ndim);
-    caterva_update_shape(result->catarr, &shape);
+    if (caterva_update_shape(result->catarr, &shape) != 0) {
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+    }
 
     size_t psize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {
@@ -423,7 +425,10 @@ static ina_rc_t _iarray_operator_elwise_a(
     int8_t *c_chunk = (int8_t*)ina_mempool_dalloc(ctx->mp_op, psize);
 
     for (int i = 0; i < a->catarr->sc->nchunks; ++i) {
-        INA_FAIL_IF(blosc2_schunk_decompress_chunk(a->catarr->sc, i, a_chunk, psize) < 0);
+        if (blosc2_schunk_decompress_chunk(a->catarr->sc, i, a_chunk, psize) < 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+        }
+
         switch (a->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
             mkl_fun_d((const int)(psize / sizeof(double)), (const double*)a_chunk, (double*)c_chunk);
@@ -432,9 +437,11 @@ static ina_rc_t _iarray_operator_elwise_a(
             mkl_fun_s((const int)psize / sizeof(float), (const float*)a_chunk, (float*)c_chunk);
             break;
         default:
-            goto fail;
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
-        INA_FAIL_IF(blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize) < 0);
+        if (blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize) < 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+        }
     }
 
     result->catarr->filled = true;
@@ -445,7 +452,7 @@ static ina_rc_t _iarray_operator_elwise_a(
 fail:
     ina_mempool_reset(ctx->mp_op);
     /* FIXME: error handling */
-    return INA_ERROR(INA_ERR_FAILED);
+    return ina_err_get_rc();
 }
 
 static ina_rc_t _iarray_operator_elwise_ab(
@@ -463,15 +470,17 @@ static ina_rc_t _iarray_operator_elwise_ab(
     INA_VERIFY_NOT_NULL(mkl_fun_d);
     INA_VERIFY_NOT_NULL(mkl_fun_s);
 
-    INA_RETURN_IF_FAILED(iarray_container_dtshape_equal(a->dtshape, b->dtshape));
+    INA_FAIL_IF_ERROR(iarray_container_dtshape_equal(a->dtshape, b->dtshape));
 
     caterva_dims_t shape = caterva_new_dims(result->dtshape->shape, result->dtshape->ndim);
-    INA_FAIL_IF(caterva_update_shape(result->catarr, &shape) < 0);
+    if (caterva_update_shape(result->catarr, &shape) < 0) {
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+    }
 
     size_t psize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {
         if (a->catarr->pshape[i] != b->catarr->pshape[i]) {
-            return INA_ERROR(INA_ERR_ILLEGAL);
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_PSHAPE));
         }
         psize *= a->catarr->pshape[i];
     }
@@ -481,19 +490,25 @@ static ina_rc_t _iarray_operator_elwise_ab(
     int8_t *c_chunk = (int8_t*)ina_mempool_dalloc(ctx->mp_op, psize);
 
     for (int i = 0; i < a->catarr->sc->nchunks; ++i) {
-        INA_FAIL_IF(blosc2_schunk_decompress_chunk(a->catarr->sc, i, a_chunk, psize) < 0);
-        INA_FAIL_IF(blosc2_schunk_decompress_chunk(b->catarr->sc, i, b_chunk, psize) < 0);
+        if (blosc2_schunk_decompress_chunk(a->catarr->sc, i, a_chunk, psize) < 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+        }
+        if (blosc2_schunk_decompress_chunk(b->catarr->sc, i, b_chunk, psize) < 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+        }
         switch (a->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                mkl_fun_d((const int)(psize/sizeof(double)), (const double*)a_chunk, (const double*)b_chunk, (double*)c_chunk);
+                mkl_fun_d((const int) (psize/sizeof(double)), (const double*) a_chunk, (const double*) b_chunk, (double*) c_chunk);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                mkl_fun_s((const int)psize/sizeof(float), (const float*)a_chunk, (const float*)b_chunk, (float*)c_chunk);
+                mkl_fun_s((const int) (psize / sizeof(float)), (const float*) a_chunk, (const float*) b_chunk, (float*) c_chunk);
                 break;
             default:
-                return INA_ERROR(INA_ERR_FAILED);
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
-        blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize);
+        if (blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize) < 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+        }
     }
 
     result->catarr->filled = true;
@@ -505,7 +520,7 @@ static ina_rc_t _iarray_operator_elwise_ab(
 fail:
     ina_mempool_reset(ctx->mp_op);
     /* FIXME: error handling */
-    return INA_ERROR(INA_ERR_ILLEGAL);
+    return ina_err_get_rc();
 }
 
 
@@ -513,7 +528,7 @@ INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_containe
 {
     INA_VERIFY_NOT_NULL(ctx);
     if (a->dtshape->ndim != 2) {
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
     }
 
     if (a->transposed == 0) {
@@ -582,19 +597,19 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(c);
 
     if (c->catarr->filled) {
-        INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        INA_ERROR(IARRAY_ERR_FULL_CONTAINER);
     }
 
     if (a->dtshape->dtype != b->dtshape->dtype) {
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
 
     if (a->dtshape->ndim != 2) {
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
     }
 
     if (a->dtshape->shape[1] != b->dtshape->shape[0]) {
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        return INA_ERROR(IARRAY_ERR_INVALID_SHAPE);
     }
 
     if (bshape_a == NULL) {
@@ -606,11 +621,11 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
 
     if (bshape_a[1] != bshape_b[0]) {
         printf("Error %lld - %lld\n", bshape_a[1], bshape_b[0]);
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        return INA_ERROR(IARRAY_ERR_INVALID_BSHAPE);
     }
 
     if (bshape_a[0] != c->dtshape->pshape[0]){
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        return INA_ERROR(IARRAY_ERR_INVALID_BSHAPE);
     }
 
     if (b->dtshape->ndim == 1) {
@@ -618,14 +633,15 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     }
     else if (b->dtshape->ndim == 2) {
         if (bshape_b[1] != c->dtshape->pshape[1]) {
-            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            return INA_ERROR(IARRAY_ERR_INVALID_BSHAPE);
         }
         return _iarray_gemm(ctx, a, b, c, bshape_a, bshape_b);
     }
     else {
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        return INA_ERROR(INA_ERR_NOT_IMPLEMENTED);
     }
 }
+
 
 INA_API(ina_rc_t) iarray_operator_and(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
 {
