@@ -161,6 +161,9 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
             int retcode = blosc2_schunk_get_chunk(schunk, 0, &chunk, &needs_free);
             if (retcode < 0) {
                 printf("Cannot retrieve the chunk in position %d\n", 0);
+                if (chunk != NULL) {
+                    free(chunk);
+                }
                 INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
             }
 
@@ -616,12 +619,14 @@ ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)
             type_size = sizeof(float);
             break;
         default:
-            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
     for (int i = 0; i < dtshape->ndim; ++i) {
         *size += dtshape->shape[i] * type_size;
     }
     return INA_SUCCESS;
+    fail:
+    return ina_err_get_rc();
 }
 
 ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, iarray_dtshape_t *dtshape,
@@ -654,14 +659,14 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs, iarray_optype_t op)
 {
     if (expr == NULL) {
-        return NULL;
+        goto fail;
     }
     if (lhs == NULL) {
-        return NULL;
+        goto fail;
     }
 
     if (rhs == NULL) {
-        return NULL;
+        goto fail;
     }
 
     bool scalar = false;
