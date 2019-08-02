@@ -94,7 +94,10 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
     }
 
     *itr = (iarray_iter_matmul_t*)ina_mem_alloc(sizeof(iarray_iter_matmul_t));
-    INA_RETURN_IF_NULL(itr);
+    if (itr == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
+
     (*itr)->ctx = ctx;
     (*itr)->container1 = c1;
     (*itr)->container2 = c2;
@@ -126,6 +129,7 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
     return INA_SUCCESS;
 
     fail:
+    _iarray_iter_matmul_free(itr);
     return ina_err_get_rc();
 }
 
@@ -150,7 +154,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr, voi
     // Check if a external buffer is passed
     if (itr->external_buffer) {
         if (bufsize < itr->block_shape_size * typesize + BLOSC_MAX_OVERHEAD) {
-            return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
         }
         itr->block = buffer;
         itr->block_pointer = (void **) &itr->block;
@@ -241,7 +245,9 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
 
     INA_VERIFY_NOT_NULL(itr);
     *itr = (iarray_iter_read_block_t *) ina_mem_alloc(sizeof(iarray_iter_read_block_t));
-    INA_RETURN_IF_NULL(itr);
+    if (*itr == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
 
     (*itr)->ctx = ctx;
 
@@ -330,11 +336,13 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                 cont->catarr->part_cache.data =
                     ina_mempool_dalloc(ctx->mp, (size_t) cont->catarr->psize * sizeof(float));
                 break;
-            default:break;
+            default:
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
     }
     return INA_SUCCESS;
     fail:
+    iarray_iter_read_block_free(itr);
     return ina_err_get_rc();
 }
 
@@ -638,7 +646,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     }
 
     if (blockshape == NULL) {
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
     }
 
     if (cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
@@ -651,7 +659,9 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
     INA_VERIFY_NOT_NULL(itr);
     *itr = (iarray_iter_write_block_t *)ina_mem_alloc(sizeof(iarray_iter_write_block_t));
-    INA_RETURN_IF_NULL(itr);
+    if (*itr == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
 
 
     int64_t typesize = cont->catarr->ctx->cparams.typesize;
@@ -767,6 +777,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     return INA_SUCCESS;
 
     fail:
+    iarray_iter_write_block_free(itr);
     return ina_err_get_rc();
 }
 
@@ -912,7 +923,9 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
 
 
     *itr = (iarray_iter_read_t*)ina_mem_alloc(sizeof(iarray_iter_read_t));
-    INA_RETURN_IF_NULL(itr);
+    if (*itr == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
 
     (*itr)->ctx = ctx;
     (*itr)->cont = cont;
@@ -950,6 +963,9 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
     }
 
     return INA_SUCCESS;
+    fail:
+    iarray_iter_read_free(itr);
+    return ina_err_get_rc();
 }
 
 /*
@@ -1069,9 +1085,10 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(itr);
     INA_VERIFY_NOT_NULL(val);
 
-
     *itr = (iarray_iter_write_t*)ina_mem_alloc(sizeof(iarray_iter_write_t));
-    INA_RETURN_IF_NULL(itr);
+    if (itr == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
     caterva_dims_t shape = caterva_new_dims(cont->dtshape->shape, cont->dtshape->ndim);
     int err = caterva_update_shape(cont->catarr, &shape);
     if (err < 0) {
@@ -1110,6 +1127,7 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
 
     return INA_SUCCESS;
     fail:
+    iarray_iter_write_free(itr);
     return ina_err_get_rc();
 }
 
