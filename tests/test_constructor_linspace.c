@@ -55,7 +55,7 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, i
         }
     }
 
-    iarray_iter_read_free(I2);
+    iarray_iter_read_free(&I2);
 
     iarray_container_free(ctx, &c_x);
     return INA_SUCCESS;
