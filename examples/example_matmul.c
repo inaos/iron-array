@@ -13,7 +13,7 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-int main(int argc, char **argv)
+int main()
 {
     iarray_init();
     ina_stopwatch_t *w = NULL;
@@ -102,8 +102,8 @@ int main(int argc, char **argv)
         printf("Error in getting advice for matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
         exit(1);
     }
-    printf("bshape_x: (%lld, %lld)\n", bshape_x[0], bshape_x[1]);
-    printf("bshape_y: (%lld, %lld)\n", bshape_y[0], bshape_y[1]);
+    printf("bshape_x: (%d, %d)\n", (int)bshape_x[0], (int)bshape_x[1]);
+    printf("bshape_y: (%d, %d)\n", (int)bshape_y[0], (int)bshape_y[1]);
 
     INA_STOPWATCH_START(w);
     if (INA_FAILED(iarray_linalg_matmul(ctx, c_x, c_y ,c_z, bshape_x, bshape_y, IARRAY_OPERATOR_GENERAL))) {

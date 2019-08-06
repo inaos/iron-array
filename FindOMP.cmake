@@ -39,7 +39,9 @@ find_path(OMP_ROOT_DIR
         $ENV{HOME}/miniconda3
         $ENV{USERPROFILE}/miniconda3/Library
         "C:/Miniconda37-x64/Library" # Making AppVeyor happy
-        $ENV{CONDA}/Library # Azure pipeline hosted windows agent
+        $ENV{CONDA}/envs/iArrayEnv # Azure pipelines
+        /Users/vsts/.conda/envs/iArrayEnv # Azure pipelines
+        C:/Miniconda/envs/iArrayEnv # Azure pipelines
 )
 
 if(APPLE)

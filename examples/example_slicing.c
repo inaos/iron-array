@@ -38,7 +38,7 @@ int main()
         printf("Error in getting advice for pshape: %s\n", ina_err_strerror(ina_err_get_rc()));
         exit(1);
     }
-    printf("pshape: %lld %lld %lld\n", xdtshape.pshape[0], xdtshape.pshape[1], xdtshape.pshape[2]);
+    printf("pshape: %d %d %d\n", (int)xdtshape.pshape[0], (int)xdtshape.pshape[1], (int)xdtshape.pshape[2]);
 
     printf("Initializing c_x container...\n");
     printf("- c_x shape: ");
@@ -86,7 +86,7 @@ int main()
 
     printf("- c_out shape: ");
     for (int i = 0; i < out_dtshape.ndim; ++i) {
-        printf("%d ", (int) out_dtshape.shape[i]);
+        printf("%d ", (int)out_dtshape.shape[i]);
     }
     printf("\n");
 
