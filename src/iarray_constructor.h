@@ -46,22 +46,26 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
     /* validation */
     if (dtshape->ndim > CATERVA_MAXDIM) {
-        return INA_ERROR(INA_ERR_EXCEEDED);
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_EXCEEDED));
     }
     if (flags & IARRAY_CONTAINER_PERSIST && store == NULL) {
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
     }
     for (int i = 0; i < dtshape->ndim; ++i) {
         if (dtshape->shape[i] < dtshape->pshape[i]) {
-            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
         }
     }
 
     *c = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
-    INA_RETURN_IF_NULL(c);
+    if ((*c) == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
 
     (*c)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
-    INA_FAIL_IF((*c)->dtshape == NULL);
+    if ((*c)->dtshape == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
 
 
@@ -70,13 +74,19 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         fname = (char*)store->id;
     }
     (*c)->frame = blosc2_new_frame(fname);
-    INA_FAIL_IF((*c)->frame == NULL);
+    if ((*c)->frame == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
 
     (*c)->cparams = (blosc2_cparams*)ina_mem_alloc(sizeof(blosc2_cparams));
-    INA_FAIL_IF((*c)->cparams == NULL);
+    if ((*c)->cparams == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
 
     (*c)->dparams = (blosc2_dparams*)ina_mem_alloc(sizeof(blosc2_dparams));
-    INA_FAIL_IF((*c)->dparams == NULL);
+    if ((*c)->dparams == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
 
     iarray_auxshape_t auxshape;
     for (int i = 0; i < dtshape->ndim; ++i) {
@@ -86,7 +96,9 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         auxshape.index[i] = (uint8_t) i;
     }
     (*c)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
-    INA_FAIL_IF((*c)->auxshape == NULL);
+    if ((*c)->auxshape == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
 
     (*c)->transposed = false;
@@ -94,14 +106,20 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
     if (flags & IARRAY_CONTAINER_PERSIST) {
         (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
-        INA_FAIL_IF((*c)->store == NULL);
+        if ((*c)->store == NULL) {
+            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+        }
         (*c)->store->id = ina_str_new_fromcstr(store->id);
         uint8_t *smeta;
         int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
-        INA_FAIL_IF(smeta_len < 0);
+        if (smeta_len < 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+        }
         // And store it in iarray metalayer
         int retcode = blosc2_frame_add_metalayer((*c)->frame, "iarray", smeta, (uint32_t)smeta_len);
-        INA_FAIL_IF(retcode < 0);
+        if (retcode < 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+        }
         free(smeta);
     }
 
@@ -114,6 +132,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
             break;
         default:
             printf("Unknown type; cannot never happen.\n");
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
             break;
     }
     cparams.compcode = ctx->cfg->compression_codec;
@@ -162,7 +181,9 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     }
 
     if (cat_ctx != NULL) caterva_free_ctx(cat_ctx);
-    INA_FAIL_IF((*c)->catarr == NULL);
+    if ((*c)->catarr == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+    }
 
     return INA_SUCCESS;
 
@@ -178,22 +199,32 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
                                         const int64_t *offset,
                                         iarray_container_t **c)
 {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(pred);
+    INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(offset);
+    INA_VERIFY_NOT_NULL(c);
+
     /* validation */
     if (dtshape->ndim > CATERVA_MAXDIM) {
-        return INA_ERROR(INA_ERR_EXCEEDED);
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
     }
 
     for (int i = 0; i < dtshape->ndim; ++i) {
         if (dtshape->shape[i] < dtshape->pshape[i]) {
-            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_SHAPE));
         }
     }
 
     *c = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
-    INA_RETURN_IF_NULL(c);
+    if (*c == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
 
     (*c)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
-    INA_FAIL_IF((*c)->dtshape == NULL);
+    if ((*c)->dtshape == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
 
     iarray_auxshape_t auxshape;
@@ -204,7 +235,9 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
         auxshape.index[i] = (uint8_t) i;
     }
     (*c)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
-    INA_FAIL_IF((*c)->auxshape == NULL);
+    if ((*c)->auxshape == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
 
     (*c)->frame = pred->frame;
