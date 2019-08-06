@@ -9,7 +9,7 @@
 # Information and shall use it only in accordance with the terms of the license agreement.
 #
 cmake_minimum_required (VERSION 3.12)
-project(iarray VERSION 0.1.1)
+project(iarray VERSION 0.1.2)
 
 option(MULTITHREADING "Use multithreaded iarray" ON)
 
