@@ -17,8 +17,8 @@
 
 static ina_rc_t test_set_slice(iarray_context_t *ctx,
                                iarray_container_t *c_x,
-                               const int64_t *start,
-                               const int64_t *stop,
+                               int64_t *start,
+                               int64_t *stop,
                                iarray_container_t *slice,
                                void *buffer,
                                int64_t buflen)
@@ -37,8 +37,8 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx,
                                           const int64_t *shape,
                                           const int64_t *pshape,
                                           const int64_t *pshape_slice,
-                                          const int64_t *start,
-                                          const int64_t *stop,
+                                          int64_t *start,
+                                          int64_t *stop,
                                           int transposed) {
     void *buffer_x;
     size_t buffer_x_len;

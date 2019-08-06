@@ -58,7 +58,7 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
         }
     }
 
-    iarray_iter_write_block_free(I);
+    iarray_iter_write_block_free(&I);
 
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));
@@ -123,8 +123,8 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
         }
     }
 
-    iarray_iter_read_block_free(I2);
-    iarray_iter_read_block_free(I3);
+    iarray_iter_read_block_free(&I2);
+    iarray_iter_read_block_free(&I3);
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
@@ -301,7 +301,7 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
         }
     }
 
-    iarray_iter_write_block_free(I);
+    iarray_iter_write_block_free(&I);
 
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));
@@ -383,8 +383,8 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
         }
     }
 
-    iarray_iter_read_block_free(I2);
-    iarray_iter_read_block_free(I3);
+    iarray_iter_read_block_free(&I2);
+    iarray_iter_read_block_free(&I3);
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
@@ -540,7 +540,7 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
         }
     }
 
-    iarray_iter_write_block_free(I);
+    iarray_iter_write_block_free(&I);
 
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));
@@ -584,8 +584,8 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
     INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, false));
 
     while (iarray_iter_read_block_has_next(I2) && iarray_iter_read_block_has_next(I3)) {
-        iarray_iter_read_block_next(I2, NULL, 0);
-        iarray_iter_read_block_next(I3, NULL, 0);
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(I2, NULL, 0));
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(I3, NULL, 0));
 
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
@@ -605,8 +605,8 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
         }
     }
 
-    iarray_iter_read_block_free(I2);
-    iarray_iter_read_block_free(I3);
+    iarray_iter_read_block_free(&I2);
+    iarray_iter_read_block_free(&I3);
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);

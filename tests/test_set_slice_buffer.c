@@ -17,8 +17,8 @@
 
 static ina_rc_t test_set_slice_buffer(iarray_context_t *ctx,
                                       iarray_container_t *c_x,
-                                      const int64_t *start,
-                                      const int64_t *stop,
+                                      int64_t *start,
+                                      int64_t *stop,
                                       void *buffer,
                                       int64_t buflen)
 {
