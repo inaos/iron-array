@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     while (iarray_iter_read_block_has_next(iter_y)) {
         iarray_iter_read_block_next(iter_y, NULL, 0);
         iarray_iter_read_block_next(iter_z, NULL, 0);
-        
+
         for (int64_t i = 0; i < value_y.block_size; ++i) {
             switch (dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
@@ -110,8 +110,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    iarray_iter_read_block_free(iter_y);
-    iarray_iter_read_block_free(iter_z);
+    iarray_iter_read_block_free(&iter_y);
+    iarray_iter_read_block_free(&iter_z);
 
     iarray_dtshape_t dtshape_mul;
 
@@ -165,8 +165,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    iarray_iter_read_free(iter_mul);
-    iarray_iter_read_free(iter_mul_view);
+    iarray_iter_read_free(&iter_mul);
+    iarray_iter_read_free(&iter_mul_view);
 
     uint64_t size = 1;
     for (int i = 0; i < c_y->dtshape->ndim; ++i) {

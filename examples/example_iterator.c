@@ -45,7 +45,7 @@ int main()
         iarray_iter_write_next(iter_w);
         ((double *) val_w.elem_pointer)[0] = (double) val_w.elem_flat_index;
     }
-    iarray_iter_write_free(iter_w);
+    iarray_iter_write_free(&iter_w);
 
 
     iarray_iter_read_block_t *iter;
@@ -53,13 +53,13 @@ int main()
     iarray_iter_read_block_new(ctx, &iter, cont, bshape, &val, false);
     while (iarray_iter_read_block_has_next(iter)) {
         iarray_iter_read_block_next(iter, NULL, 0);
-        for (int i = 0; i < val.block_size; ++i) {
+        for (int64_t i = 0; i < val.block_size; ++i) {
             double value = ((double *) val.block_pointer)[i];
             printf("%f - ", value);
         }
         printf("\n");
     }
-    iarray_iter_read_block_free(iter);
+    iarray_iter_read_block_free(&iter);
 
     return EXIT_SUCCESS;
 }
