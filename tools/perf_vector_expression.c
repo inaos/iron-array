@@ -198,7 +198,7 @@ int main(int argc, char** argv)
                 double value = incx * (double) val.elem_flat_index;
                 memcpy(val.elem_pointer, &value, sizeof(double));
             }
-            iarray_iter_write_free(I);
+            iarray_iter_write_free(&I);
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf("Time for computing and filling X values via iterator: %.3g s, %.1f MB/s\n",
@@ -218,7 +218,7 @@ int main(int argc, char** argv)
                     ((double *) val.block_pointer)[i] = incx * (double) (i + val.nblock * part_size);
                 }
             }
-            iarray_iter_write_block_free(I);
+            iarray_iter_write_block_free(&I);
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf("Time for computing and filling X values via partition iterator: %.3g s, %.1f MB/s\n",
@@ -270,7 +270,7 @@ int main(int argc, char** argv)
                 double value = _poly(incx * (double) val.elem_flat_index);
                 memcpy(val.elem_pointer, &value, sizeof(double));
             }
-            iarray_iter_write_free(I);
+            iarray_iter_write_free(&I);
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf("Time for computing and filling Y values via iterator: %.3g s, %.1f MB/s\n",
@@ -290,7 +290,7 @@ int main(int argc, char** argv)
                     ((double *) val.block_pointer)[i] = _poly(incx * (double) (i + val.nblock * part_size));
                 }
             }
-            iarray_iter_write_block_free(I);
+            iarray_iter_write_block_free(&I);
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf(
