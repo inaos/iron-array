@@ -381,13 +381,13 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
 
     // Populate compression parameters
     blosc2_cparams *cparams;
-    blosc2_get_cparams(catarr->sc, &cparams);
+    blosc2_schunk_get_cparams(catarr->sc, &cparams);
     blosc2_cparams *cparams2 = (blosc2_cparams*)ina_mem_alloc(sizeof(blosc2_cparams));
     memcpy(cparams2, cparams, sizeof(blosc2_cparams));
     free(cparams);
     (*container)->cparams = cparams2;  // we need an INA-allocated struct (to match INA_MEM_FREE_SAFE)
     blosc2_dparams *dparams;
-    blosc2_get_dparams(catarr->sc, &dparams);
+    blosc2_schunk_get_dparams(catarr->sc, &dparams);
     blosc2_dparams *dparams2 = (blosc2_dparams*)ina_mem_alloc(sizeof(blosc2_dparams));
     memcpy(dparams2, dparams, sizeof(blosc2_dparams));
     free(dparams);
