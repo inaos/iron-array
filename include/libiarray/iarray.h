@@ -19,6 +19,48 @@
 
 #define IARRAY_DIMENSION_MAX 8 /* A fixed size simplifies the code and should be enough for most IronArray cases */
 
+#define IARRAY_ES_CONTAINER (INA_ES_USER_DEFINED + 1)
+#define IARRAY_ES_DTSHAPE (INA_ES_USER_DEFINED + 2)
+#define IARRAY_ES_SHAPE (INA_ES_USER_DEFINED + 3)
+#define IARRAY_ES_PSHAPE (INA_ES_USER_DEFINED + 4)
+#define IARRAY_ES_NDIM (INA_ES_USER_DEFINED + 5)
+#define IARRAY_ES_DTYPE (INA_ES_USER_DEFINED + 6)
+#define IARRAY_ES_STORAGE (INA_ES_USER_DEFINED + 7)
+#define IARRAY_ES_PERSISTENCY (INA_ES_USER_DEFINED + 8)
+#define IARRAY_ES_BUFFER (INA_ES_USER_DEFINED + 9)
+#define IARRAY_ES_CATERVA (INA_ES_USER_DEFINED + 10)
+#define IARRAY_ES_BLOSC (INA_ES_USER_DEFINED + 11)
+#define IARRAY_ES_ASSERTION (INA_ES_USER_DEFINED + 12)
+#define IARRAY_ES_BSHAPE (INA_ES_USER_DEFINED + 13)
+#define IARRAY_ES_RNG_METHOD (INA_ES_USER_DEFINED + 14)
+#define IARRAY_ES_RAND_METHOD (INA_ES_USER_DEFINED + 15)
+#define IARRAY_ES_RAND_PARAM (INA_ES_USER_DEFINED + 16)
+
+
+#define IARRAY_ERR_EMPTY_CONTAINER (INA_ERR_EMPTY | IARRAY_ES_CONTAINER)
+#define IARRAY_ERR_FULL_CONTAINER (INA_ERR_FULL | IARRAY_ES_CONTAINER)
+
+#define IARRAY_ERR_INVALID_DTSHAPE (INA_ERR_INVALID | IARRAY_ES_DTSHAPE)
+
+#define IARRAY_ERR_INVALID_DTYPE (INA_ERR_INVALID | IARRAY_ES_DTYPE)
+#define IARRAY_ERR_INVALID_SHAPE (INA_ERR_INVALID | IARRAY_ES_SHAPE)
+#define IARRAY_ERR_INVALID_PSHAPE (INA_ERR_INVALID | IARRAY_ES_PSHAPE)
+#define IARRAY_ERR_INVALID_BSHAPE (INA_ERR_INVALID | IARRAY_ES_BSHAPE)
+#define IARRAY_ERR_INVALID_NDIM (INA_ERR_INVALID | IARRAY_ES_NDIM)
+
+#define IARRAY_ERR_INVALID_RNG_METHOD (IARRAY_ES_RNG_METHOD | INA_ERR_INVALID)
+#define IARRAY_ERR_INVALID_RAND_METHOD (IARRAY_ES_RAND_METHOD | INA_ERR_INVALID)
+#define IARRAY_ERR_INVALID_RAND_PARAM (IARRAY_ES_RAND_PARAM | INA_ERR_INVALID)
+
+#define IARRAY_ERR_INVALID_STORAGE (INA_ERR_INVALID | IARRAY_ES_STORAGE)
+#define IARRAY_ERR_TOO_SMALL_BUFFER (INA_ERR_TOO_SMALL | IARRAY_ES_BUFFER)
+
+#define IARRAY_ERR_CATERVA_FAILED (INA_ERR_FAILED | IARRAY_ES_CATERVA)
+#define IARRAY_ERR_BLOSC_FAILED (INA_ERR_FAILED | IARRAY_ES_BLOSC)
+#define IARRAY_ERR_RAND_METHOD_FAILED (IARRAY_ES_RAND_METHOD | INA_ERR_FAILED)
+#define IARRAY_ERR_ASSERTION_FAILED (IARRAY_ES_ASSERTION | INA_ERR_FAILED)
+
+
 typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;
 
@@ -518,7 +560,7 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
                                         iarray_iter_write_t **itr,
                                         iarray_container_t *cont,
                                         iarray_iter_write_value_t *val);
-INA_API(void) iarray_iter_write_free(iarray_iter_write_t *itr);
+INA_API(void) iarray_iter_write_free(iarray_iter_write_t **itr);
 INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr);
 INA_API(int) iarray_iter_write_has_next(iarray_iter_write_t *itr);
 
@@ -527,7 +569,7 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
                                        iarray_iter_read_t **itr,
                                        iarray_container_t *cont,
                                        iarray_iter_read_value_t *val);
-INA_API(void) iarray_iter_read_free(iarray_iter_read_t *itr);
+INA_API(void) iarray_iter_read_free(iarray_iter_read_t **itr);
 INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr);
 INA_API(int) iarray_iter_read_has_next(iarray_iter_read_t *itr);
 
@@ -538,7 +580,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_iter_read_block_value_t *value,
                                              bool external_buffer);
 
-INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr);
+INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t **itr);
 INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr, void *buffer, int32_t bufsize);
 INA_API(int) iarray_iter_read_block_has_next(iarray_iter_read_block_t *itr);
 
@@ -549,7 +591,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_iter_write_block_value_t *value,
                                               bool external_buffer);
 
-INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t *itr);
+INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t **itr);
 INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr, void *buffer, int32_t bufsize);
 INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr);
 

@@ -56,7 +56,6 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e
 
 INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
 {
-    INA_ASSERT_NOT_NULL(ctx);
     INA_VERIFY_FREE(e);
     for (int nvar=0; nvar < (*e)->nvars; nvar++) {
         free((void*)((*e)->vars[nvar].var));
@@ -71,6 +70,10 @@ INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
 
 INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val)
 {
+    INA_VERIFY_NOT_NULL(e);
+    INA_VERIFY_NOT_NULL(var);
+    INA_VERIFY_NOT_NULL(val);
+
     e->vars[e->nvars].var = strdup(var);   // yes, we want a copy here!
     e->vars[e->nvars].c = val;
     e->nvars++;
@@ -91,7 +94,7 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const ch
     INA_UNUSED(e);
     INA_UNUSED(var);
     INA_UNUSED(val);
-    return INA_ERR_NOT_IMPLEMENTED;
+    return INA_ERROR(INA_ERR_NOT_IMPLEMENTED);
 }
 
 INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val)
@@ -110,11 +113,14 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
     INA_UNUSED(e);
     INA_UNUSED(var);
     INA_UNUSED(val);
-    return INA_ERR_NOT_IMPLEMENTED;
+    return INA_ERROR(INA_ERR_NOT_IMPLEMENTED);
 }
 
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 {
+    INA_VERIFY_NOT_NULL(e);
+    INA_VERIFY_NOT_NULL(expr);
+
     int nthreads = 1;
 
 #if defined(_OPENMP)
@@ -136,7 +142,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 #endif
 
     e->expr = ina_str_new_fromcstr(expr);
-    e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t*));
+    e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t*)); //TODO: This should be freed?
     te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(te_variable));
     caterva_array_t *catarr = e->vars[0].c->catarr;
 
@@ -155,8 +161,12 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
             int retcode = blosc2_schunk_get_chunk(schunk, 0, &chunk, &needs_free);
             if (retcode < 0) {
                 printf("Cannot retrieve the chunk in position %d\n", 0);
-                return INA_ERR_FAILED;
+                if (chunk != NULL) {
+                    free(chunk);
+                }
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
             }
+
             size_t chunksize, cbytes, blocksize;
             blosc_cbuffer_sizes(chunk, &chunksize, &cbytes, &blocksize);
             if (needs_free) {
@@ -171,7 +181,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         }
         else {
             fprintf(stderr, "Flag %d is not supported\n", e->ctx->cfg->eval_flags);
-            return INA_ERR_NOT_SUPPORTED;
+            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
         }
     }
 
@@ -193,7 +203,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         e->blocksize = 0;
     } else {
         fprintf(stderr, "Flag %d is not supported\n", e->ctx->cfg->eval_flags);
-        return INA_ERR_NOT_SUPPORTED;
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
     }
     dtshape_var.shape[0] = temp_var_dim0;
     dtshape_var.dtype = e->vars[0].c->dtshape->dtype;
@@ -205,17 +215,22 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         // Allocate different buffers for each thread too
         for (int nthread = 0; nthread < nthreads; nthread++) {
             int ntvar = nthread * e->nvars + nvar;
-            iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[ntvar]);
+            INA_FAIL_IF_ERROR(iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[ntvar]));
             te_vars[nvar].address[nthread] = *(e->temp_vars + ntvar);
         }
     }
     int err = 0;
     e->texpr = te_compile(e, ina_str_cstr(e->expr), te_vars, e->nvars, &err);
     if (e->texpr == 0) {
-        return INA_ERROR(INA_ERR_NOT_COMPILED);
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_COMPILED));
     }
     return INA_SUCCESS;
+
+fail:
+    INA_MEM_FREE_SAFE(e->temp_vars);
+    return ina_err_get_rc();
 }
+
 
 // Example of computation.  TODO: To be removed...
 static double poly(const double x)
@@ -251,6 +266,9 @@ int prefilter_func(blosc2_prefilter_params *pparams)
 
 INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 {
+    INA_VERIFY_NOT_NULL(e);
+    INA_VERIFY_NOT_NULL(ret);
+
     int64_t nitems_in_schunk = e->nbytes / e->typesize;
     int64_t nitems_written = 0;
     int nvars = e->nvars;
@@ -279,25 +297,30 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false);
+            if (INA_FAILED(iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false))) {
+                goto fail_iterchunk;
+            }
         }
 
         // Write iterator for output
         iarray_iter_write_block_t *iter_out;
         iarray_iter_write_block_value_t out_value;
-        ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, false);
-        if (err != INA_SUCCESS) {
-            return err;
+        if (INA_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, false))) {
+            goto fail_iterchunk;
         }
 
         // Evaluate the expression for all the chunks in variables
         while (iarray_iter_write_block_has_next(iter_out)) {
-            iarray_iter_write_block_next(iter_out, NULL, 0);
+            if (INA_FAILED(iarray_iter_write_block_next(iter_out, NULL, 0))) {
+                goto fail_iterchunk;
+            }
             int32_t out_items = (int32_t)(iter_out->cur_block_size);
 
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
-                iarray_iter_read_block_next(iter_var[nvar], NULL, 0);
+                if INA_FAILED(iarray_iter_read_block_next(iter_var[nvar], NULL, 0)) {
+                    goto fail_iterchunk;
+                }
                 e->temp_vars[nvar]->data = iter_value[nvar].block_pointer;
             }
 
@@ -310,18 +333,35 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
 
         for (int nvar = 0; nvar < nvars; nvar++) {
-            iarray_iter_read_block_free(iter_var[nvar]);
+            iarray_iter_read_block_free(&(iter_var[nvar]));
         }
-        iarray_iter_write_block_free(iter_out);
-        ina_mem_free(iter_var);
-        ina_mem_free(iter_value);
+        iarray_iter_write_block_free(&iter_out);
+        INA_MEM_FREE_SAFE(iter_var);
+        INA_MEM_FREE_SAFE(iter_value);
         iarray_context_free(&ctx);
+
+        goto success;
+
+    fail_iterchunk:
+        for (int nvar = 0; nvar < nvars; nvar++) {
+            iarray_iter_read_block_free(&(iter_var[nvar]));
+        }
+        iarray_iter_write_block_free(&iter_out);
+
+        INA_MEM_FREE_SAFE(iter_var);
+        INA_MEM_FREE_SAFE(iter_value);
+
+        iarray_context_free(&ctx);
+
+        return ina_err_get_rc();
     }
+
     else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
 
         if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
             fprintf(stderr, "ITERBLOSC eval can't be used with a plainbuffer output container.\n");
-            return INA_ERR_ERROR;
+            INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+            goto fail_iterblosc;
         }
 
         // Setup a new cparams with a prefilter
@@ -342,7 +382,9 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false);
+            if (INA_FAILED(iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false))) {
+                goto fail_iterblosc;
+            }
             pparams.input_typesizes[nvar] = var->catarr->sc->typesize;
         }
 
@@ -351,24 +393,26 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_write_block_value_t out_value;
         int32_t external_buffer_size = ret->catarr->psize * ret->catarr->ctx->cparams.typesize + BLOSC_MAX_OVERHEAD;
         void *external_buffer;  // to inform the iterator that we are passing an external buffer
-        ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value,
-                                                   true);
-        if (err != INA_SUCCESS) {
-            return err;
+        if (INA_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, true))) {
+            goto fail_iterblosc;
         }
 
         // Evaluate the expression for all the chunks in variables
         while (iarray_iter_write_block_has_next(iter_out)) {
             external_buffer = malloc(external_buffer_size);
 
-            iarray_iter_write_block_next(iter_out, external_buffer, external_buffer_size);
+            if (INA_FAILED(iarray_iter_write_block_next(iter_out, external_buffer, external_buffer_size))) {
+                goto fail_iterblosc;
+            }
 
             // Update the external buffer with freshly allocated memory
             int64_t out_items = iter_out->cur_block_size;
 
             // Decompress chunks in variables into temporaries
             for (int nvar = 0; nvar < nvars; nvar++) {
-                iarray_iter_read_block_next(iter_var[nvar], NULL, 0);
+                if (INA_FAILED(iarray_iter_read_block_next(iter_var[nvar], NULL, 0))) {
+                    goto fail_iterblosc;
+                }
                 e->temp_vars[nvar]->data = iter_value[nvar].block_pointer;
                 pparams.inputs[nvar] = iter_value[nvar].block_pointer;
             }
@@ -389,7 +433,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             }
             blosc2_free_ctx(cctx);
             if (csize <= 0) {
-                return INA_ERR_ERROR;
+                INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+                goto fail_iterblosc;
             }
 
             if (out_items != ret->catarr->psize) {
@@ -399,7 +444,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
                 int nbytes = blosc_decompress(temp, out_value.block_pointer, out_items * e->typesize);
                 free(temp);
                 if (nbytes <= 0) {
-                    return INA_ERR_ERROR;
+                    INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+                    goto fail_iterblosc;
                 }
                 iter_out->compressed_chunk_buffer = false;
             }
@@ -412,13 +458,26 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
 
         for (int nvar = 0; nvar < nvars; nvar++) {
-            iarray_iter_read_block_free(iter_var[nvar]);
+            iarray_iter_read_block_free(&iter_var[nvar]);
         }
-        iarray_iter_write_block_free(iter_out);
-        ina_mem_free(iter_var);
-        ina_mem_free(iter_value);
+        iarray_iter_write_block_free(&iter_out);
+        INA_MEM_FREE_SAFE(iter_var);
+        INA_MEM_FREE_SAFE(iter_value);
         iarray_context_free(&ctx);
+
+        goto success;
+
+    fail_iterblosc:
+        for (int nvar = 0; nvar < nvars; nvar++) {
+            iarray_iter_read_block_free(&iter_var[nvar]);
+        }
+        iarray_iter_write_block_free(&iter_out);
+        INA_MEM_FREE_SAFE(iter_var);
+        INA_MEM_FREE_SAFE(iter_value);
+        iarray_context_free(&ctx);
+        return ina_err_get_rc();
     }
+
     else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK) {
         // This version of the evaluation engine works by using a chunk iterator and use OpenMP
         // for performing the computations.  The OpenMP loop split the chunk into smaller *blocks* that
@@ -436,15 +495,16 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_container_t *var = e->vars[nvar].c;
-            iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false);
+            if (INA_FAILED(iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false))) {
+                goto fail_iterblock;
+            }
         }
 
         // Write iterator for output
         iarray_iter_write_block_t *iter_out;
         iarray_iter_write_block_value_t out_value;
-        ina_rc_t err = iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, false);
-        if (err != INA_SUCCESS) {
-            return err;
+        if (INA_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, false))) {
+            goto fail_iterblock;
         }
 
         // Evaluate the expression for all the chunks in variables
@@ -453,26 +513,19 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         int32_t nblocks;
         int32_t out_items;
 
-//#if defined(_OPENMP)
-//        #pragma omp parallel shared(has_next)
-//	{
-//
-//#endif
         while (has_next) {
-            iarray_iter_write_block_next(iter_out, NULL, 0);
+            if (INA_FAILED(iarray_iter_write_block_next(iter_out, NULL, 0))) {
+                goto fail_iterblock;
+            }
+
             for (int nvar = 0; nvar < nvars; nvar++) {
-                iarray_iter_read_block_next(iter_var[nvar], NULL, 0);
+                if (INA_FAILED(iarray_iter_read_block_next(iter_var[nvar], NULL, 0))) {
+                    goto fail_iterblock;
+                }
             }
 
             out_items = (int32_t)(iter_out->cur_block_size);  // TODO: add a protection against cur_block_size > 2**31
             nblocks = out_items * e->typesize / blocksize;
-
-            // Decompress chunks in variables into temporaries
-
-            // Eval the expression for this chunk, split by blocks
-//#if defined(_OPENMP)
-//	}
-//#endif
 
             int nthread = 0;
 
@@ -484,7 +537,6 @@ omp_set_num_threads(e->ctx->cfg->max_num_threads);
 #if defined(_OPENMP)
                 nthread = omp_get_thread_num();
 #endif
-                //printf("Block %d (thread: %d)\n", nblock, nthread);
 		for (int nvar = 0; nvar < nvars; nvar++) {
 
                     int ntvar = nthread * e->nvars + nvar;
@@ -495,10 +547,6 @@ omp_set_num_threads(e->ctx->cfg->max_num_threads);
                 memcpy((char*)out_value.block_pointer + nblock * blocksize, (uint8_t*)expr_out->data, blocksize);
             }
 
-//#if defined(_OPENMP)
-//#pragma omp single
-//{
-//#endif
             // Do a possible last evaluation with the leftovers
             int32_t leftover = out_items * e->typesize - nblocks * blocksize;
             if (leftover > 0) {
@@ -516,39 +564,52 @@ omp_set_num_threads(e->ctx->cfg->max_num_threads);
             ina_mempool_reset(e->ctx->mp_tmp_out);
 
             has_next = iarray_iter_write_block_has_next(iter_out);
-//#if defined(_OPENMP)
-//          }
-//#endif
+
         }
-//#if defined(_OPENMP)
-//        }
-//#endif
 
         for (int nvar = 0; nvar < nvars; nvar++) {
-            iarray_iter_read_block_free(iter_var[nvar]);
+            iarray_iter_read_block_free(&iter_var[nvar]);
         }
 
-        iarray_iter_write_block_free(iter_out);
-        ina_mem_free(iter_var);
-        ina_mem_free(iter_value);
-        ina_mem_free(outbuf);
+        iarray_iter_write_block_free(&iter_out);
+        INA_MEM_FREE_SAFE(iter_var);
+        INA_MEM_FREE_SAFE(iter_value);
+        INA_MEM_FREE_SAFE(outbuf);
         iarray_context_free(&ctx);
+        goto success;
+
+    fail_iterblock:
+        for (int nvar = 0; nvar < nvars; nvar++) {
+            iarray_iter_read_block_free(&iter_var[nvar]);
+        }
+
+        iarray_iter_write_block_free(&iter_out);
+        INA_MEM_FREE_SAFE(iter_var);
+        INA_MEM_FREE_SAFE(iter_value);
+        INA_MEM_FREE_SAFE(outbuf);
+        iarray_context_free(&ctx);
+        goto success;
+
     }
 
-    ina_mempool_reset(e->ctx->mp);
-    ina_mempool_reset(e->ctx->mp_op);
-    ina_mempool_reset(e->ctx->mp_tmp_out);
+    success:
+        ina_mempool_reset(e->ctx->mp);
+        ina_mempool_reset(e->ctx->mp_op);
+        ina_mempool_reset(e->ctx->mp_tmp_out);
 
-    if (nitems_written != nitems_in_schunk) {
-        printf("nitems written is different from items in final container\n");
-        return INA_ERR_ERROR;
-    }
+        if (nitems_written != nitems_in_schunk) {
+            printf("nitems written is different from items in final container\n");
+            return INA_ERROR(INA_ERR_NOT_COMPLETE);
+        }
 
-    return INA_SUCCESS;
+        return INA_SUCCESS;
 }
 
 ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)
 {
+    INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(size);
+
     size_t type_size = 0;
     switch (dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
@@ -558,17 +619,23 @@ ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)
             type_size = sizeof(float);
             break;
         default:
-            return INA_ERR_EXCEEDED;
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
     for (int i = 0; i < dtshape->ndim; ++i) {
         *size += dtshape->shape[i] * type_size;
     }
     return INA_SUCCESS;
+    fail:
+    return ina_err_get_rc();
 }
 
 ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, iarray_dtshape_t *dtshape,
         iarray_temporary_t **temp)
 {
+    INA_VERIFY_NOT_NULL(expr);
+    INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(temp);
+
     // When c == NULL means a temporary for output, which should go to its own memory pool for being
     // able to reset it during each block/chunk evaluation
     ina_mempool_t *mempool = (c != NULL) ? expr->ctx->mp : expr->ctx->mp_tmp_out;
@@ -591,9 +658,21 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 
 static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs, iarray_optype_t op)
 {
+    if (expr == NULL) {
+        goto fail;
+    }
+    if (lhs == NULL) {
+        goto fail;
+    }
+
+    if (rhs == NULL) {
+        goto fail;
+    }
+
     bool scalar = false;
     bool scalar_vector = false;
     bool vector_vector = false;
+
     iarray_dtshape_t dtshape = {0};  // initialize to 0s
     iarray_temporary_t *scalar_tmp = NULL;
     iarray_temporary_t *scalar_lhs = NULL;
@@ -634,10 +713,14 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
 
     // Creating the temporary means interacting with the INA memory allocator, which is not thread-safe.
     // We should investigate on how to overcome this syncronization point (if possible at all).
+
+    ina_rc_t err;
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
-    iarray_temporary_new(expr, NULL, &dtshape, &out);
+
+    err = iarray_temporary_new(expr, NULL, &dtshape, &out);
+    INA_FAIL_IF_ERROR(err);
 
     switch (dtshape.dtype) {
         case IARRAY_DATA_TYPE_DOUBLE: {
@@ -658,7 +741,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     break;
                 default:
                     printf("Operation not supported yet");
-                    return NULL;
+                    goto fail;
                 }
             }
             else if (scalar_vector) {
@@ -688,7 +771,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     break;
                 default:
                     printf("Operation not supported yet");
-                    return NULL;
+                    goto fail;
                 }
             }
             else if (vector_vector) {
@@ -715,12 +798,12 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     break;
                 default:
                     printf("Operation not supported yet");
-                    return NULL;
+                    goto fail;
                 }
             }
             else {
                 printf("DTshape combination not supported yet\n");
-                return NULL;
+                goto fail;
             }
         }
         break;
@@ -742,7 +825,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     break;
                 default:
                     printf("Operation not supported yet");
-                    return NULL;
+                    goto fail;
                 }
             }
             else if (scalar_vector) {
@@ -772,7 +855,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     break;
                 default:
                     printf("Operation not supported yet");
-                    return NULL;
+                    goto fail;
                 }
             }
             else if (vector_vector) {
@@ -799,21 +882,25 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     break;
                 default:
                     printf("Operation not supported yet");
-                    return NULL;
+                    goto fail;
                 }
             }
             else {
                 printf("DTshape combination not supported yet\n");
-                return NULL;
+                goto fail;
             }
         }
         break;
         default:  // switch (dtshape.dtype)
             printf("data type not supported yet\n");
-            return NULL;
+            goto fail;
     }
 
     return out;
+
+    fail:
+        // TODO: Free temporary
+        return NULL;
 }
 
 iarray_temporary_t* _iarray_op_add(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs)
@@ -838,12 +925,16 @@ iarray_temporary_t* _iarray_op_divide(iarray_expression_t *expr, iarray_temporar
 
 INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp)
 {
+    INA_VERIFY_NOT_NULL(e);
+    INA_VERIFY_NOT_NULL(mp);
     *mp = e->ctx->mp;
     return INA_SUCCESS;
 }
 
 INA_API(ina_rc_t) iarray_expr_get_nthreads(iarray_expression_t *e, int *nthreads)
 {
+    INA_VERIFY_NOT_NULL(e);
+    INA_VERIFY_NOT_NULL(nthreads);
     *nthreads = e->ctx->cfg->max_num_threads;
     return INA_SUCCESS;
 }

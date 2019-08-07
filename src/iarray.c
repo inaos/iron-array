@@ -67,6 +67,8 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
                                           int64_t low, int64_t high)
 {
     INA_UNUSED(ctx);  // we could use context in the future
+    INA_VERIFY_NOT_NULL(dtshape);
+
     if (high == 0) {
         size_t L3;
         ina_cpu_get_l3_cache_size(&L3);
@@ -78,6 +80,11 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         ina_cpu_get_l2_cache_size(&L2);
         low = L2 / 2;
     }
+
+    if (low > high) {
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
+
     iarray_data_type_t dtype = dtshape->dtype;
     int ndim = dtshape->ndim;
     int64_t *shape = dtshape->shape;
@@ -91,7 +98,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
             itemsize = 4;
             break;
         default:
-            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
 
     for (int i = 0; i < ndim; i++) {
@@ -136,7 +143,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
 
     if (psize > INT32_MAX) {
         // The partition size can never be larger than 2 GB
-        return INA_ERROR(INA_ERR_EXCEEDED);
+        return INA_ERROR(IARRAY_ERR_INVALID_PSHAPE);
     }
 
     return INA_SUCCESS;
@@ -156,6 +163,11 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
                                        int64_t high)
 {
     INA_UNUSED(ctx);  // we could use context in the future
+    INA_VERIFY_NOT_NULL(a);
+    INA_VERIFY_NOT_NULL(b);
+    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(bshape_a);
+    INA_VERIFY_NOT_NULL(bshape_b);
 
     if (high == 0) {
         size_t L3;
@@ -169,10 +181,23 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
         low = L2 / 2;
     }
 
+    if (low > high) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
+    }
+
     // Take the dtype of the first array (we don't support mixing data types yet)
     iarray_data_type_t dtype = a->dtshape->dtype;
-    int itemsize = (dtype == IARRAY_DATA_TYPE_DOUBLE) ? 8 : 4;
-
+    int itemsize = 0;
+    switch (dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            itemsize = 8;
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            itemsize = 4;
+            break;
+        default:
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+    }
     // First, the m and n values *have* to be the same for the partition of the output
     int64_t m_dim = c->dtshape->pshape[0];
     int64_t n_dim = c->dtshape->pshape[1];
@@ -220,31 +245,40 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     bshape_a[1] = k_dim;
     bshape_b[0] = k_dim;
     bshape_b[1] = n_dim;
+
     return INA_SUCCESS;
+
+    fail:
+    return ina_err_get_rc();
 }
 
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx)
 {
     INA_VERIFY_NOT_NULL(ctx);
     *ctx = ina_mem_alloc(sizeof(iarray_context_t));
-    INA_RETURN_IF_NULL(ctx);
-    (*ctx)->cfg = ina_mem_alloc(sizeof(iarray_config_t));
-    INA_FAIL_IF((*ctx)->cfg == NULL);
+
+    INA_VERIFY_NOT_NULL(cfg);
+    (*ctx)->cfg = ina_mem_alloc(sizeof(iarray_config_t)); //
+
     ina_mem_cpy((*ctx)->cfg, cfg, sizeof(iarray_config_t));
+
     if (!(cfg->eval_flags & IARRAY_EXPR_EVAL_ITERBLOCK)
         && !(cfg->eval_flags & IARRAY_EXPR_EVAL_ITERCHUNK)) {
         // The default is iterating by blocks
         (*ctx)->cfg->eval_flags |= IARRAY_EXPR_EVAL_ITERBLOCK;
     }
+
     INA_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp));
     INA_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_OP_CHUNKS, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_op));
     INA_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL_TMP, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_tmp_out));
+
     return INA_SUCCESS;
 
 fail:
     iarray_context_free(ctx);
     return ina_err_get_rc();
 }
+
 
 INA_API(void) iarray_context_free(iarray_context_t **ctx)
 {
