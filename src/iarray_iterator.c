@@ -954,6 +954,7 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
     (*itr)->nelem = 0;
     (*itr)->nblock = 0;
     (*itr)->nelem_block = 0;
+    (*itr)->cur_block_size = 0;
 
     // Initialize block_ params
 
