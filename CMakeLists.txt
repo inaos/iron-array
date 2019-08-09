@@ -40,7 +40,7 @@ inac_add_contrib_lib(tinyexpr)
 
 add_subdirectory(contribs/c-blosc2)
 include_directories(contribs/c-blosc2/blosc)
-set(BLOSC_LIB blosc_static) # required for caterva tests
+set(BLOSC_LIB blosc2_static) # required for caterva tests
 add_subdirectory(contribs/caterva)
 include_directories(contribs/caterva/caterva)
 
@@ -67,11 +67,11 @@ set_target_properties(
 include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac"
         "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
 
-inac_merge_static_libs(iarrays iarray_c blosc_static caterva ${INAC_LIBS})
+inac_merge_static_libs(iarrays iarray_c blosc2_static caterva ${INAC_LIBS})
 
 if (UNIX)
 set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
-set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc_static ${IPP_LIBRARIES})
+set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc2_static ${IPP_LIBRARIES})
 endif()
 
 inac_add_tests(iarrays)
@@ -100,7 +100,7 @@ inac_add_examples(iarrays)
 add_definitions(-DINA_DLL)
 add_definitions(-DINA_LIB)
 add_library(iarray SHARED ${src})
-target_link_libraries(iarray ${INAC_LIBS} blosc_static caterva ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+target_link_libraries(iarray ${INAC_LIBS} blosc2_static caterva ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 install(TARGETS iarray
         DESTINATION lib
