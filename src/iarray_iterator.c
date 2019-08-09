@@ -473,7 +473,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
         }
     }
 
-    // Ceck if a external buffer is needed
+    // Check if a external buffer is needed
     if (itr->external_buffer) {
         if (bufsize < itr->block_shape_size * typesize + BLOSC_MAX_OVERHEAD) {
             INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
@@ -482,7 +482,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
         itr->block_pointer = (void **) &itr->block;
     }
 
-    //update_index
+    // Update index
     itr->cur_block_index[ndim - 1] = itr->nblock % (itr->cont_eshape[ndim - 1] / itr->block_shape[ndim - 1]);
     itr->cur_elem_index[ndim - 1] = itr->cur_block_index[ndim - 1] * itr->block_shape[ndim - 1];
 
@@ -494,7 +494,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
         inc *= itr->cont_eshape[i] / itr->block_shape[i];
     }
 
-    //calculate the buffer size
+    // calculate the buffer size
     itr->cur_block_size = 1;
     for (int i = 0; i < ndim; ++i) {
         if ((itr->cur_block_index[i] + 1) * itr->block_shape[i] > catarr->shape[i]) {
@@ -523,7 +523,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
 
 INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
 {
-    if ( itr->nblock == (itr->cont_esize / itr->block_shape_size)) {
+    if ( itr->nblock == (itr->cont_esize / itr->block_shape_size)) {  // TODO: cannot it be itr->total_blocks ?
         caterva_array_t *catarr = itr->cont->catarr;
         int8_t ndim = catarr->ndim;
         int64_t typesize = itr->cont->catarr->ctx->cparams.typesize;
@@ -541,7 +541,6 @@ INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
                 caterva_set_slice_buffer(catarr, itr->block, &start, &stop);
             }
         } else {
-
             // check if the part should be padded with 0s
             if (itr->cur_block_size == catarr->psize) {
                 if (itr->compressed_chunk_buffer) {
@@ -571,7 +570,7 @@ INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
                     }
                 }
 
-                //copy buffer data to an aux buffer padded with 0's
+                // copy buffer data to an aux buffer padded with 0's
                 int64_t ii[CATERVA_MAXDIM];
                 for (ii[0] = 0; ii[0] < shaper[0]; ++ii[0]) {
                     for (ii[1] = 0; ii[1] < shaper[1]; ++ii[1]) {
@@ -620,7 +619,7 @@ INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
         }
     }
 
-    if (itr->nblock < itr->total_blocks) {
+    if (itr->nblock == itr->total_blocks) {
         itr->cont->catarr->filled = true;
     }
     return itr->nblock < itr->total_blocks;
@@ -954,6 +953,7 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
     (*itr)->nelem = 0;
     (*itr)->nblock = 0;
     (*itr)->nelem_block = 0;
+    (*itr)->cur_block_size = 0;
 
     // Initialize block_ params
 
@@ -1025,7 +1025,6 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
             }
             memset(itr->part, 0, catarr->psize * typesize);
             itr->nelem_block = 0;
-
         }
     } else if (itr->nelem != 0) {
         itr->nelem_block += 1;
