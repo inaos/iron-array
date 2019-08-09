@@ -248,6 +248,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     if (*itr == NULL) {
         INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
+    memcpy(*itr, &IARRAY_ITER_READ_BLOCK_EMPTY, sizeof(iarray_iter_read_block_t));
 
     (*itr)->ctx = ctx;
 
@@ -324,7 +325,6 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
         (*itr)->cur_elem_index[i] = 0;
         (*itr)->cur_block_index[i] = 0;
     }
-    (*itr)->nblock = 0;
 
     if (cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
         switch (cont->dtshape->dtype) {
@@ -663,6 +663,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
 
+    memcpy(*itr, &IARRAY_ITER_WRITE_BLOCK_EMPTY, sizeof(iarray_iter_write_block_t));
 
     int64_t typesize = cont->catarr->ctx->cparams.typesize;
 
@@ -926,6 +927,7 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
     if (*itr == NULL) {
         INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
+    memcpy(*itr, &IARRAY_ITER_READ_EMPTY, sizeof(iarray_iter_read_t));
 
     (*itr)->ctx = ctx;
     (*itr)->cont = cont;
@@ -949,12 +951,6 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
     for (int i = 0; i <IARRAY_DIMENSION_MAX; ++i) {
         (*itr)->cur_block_index[i] = 0;
     }
-
-    // Initialize counters
-    (*itr)->nelem = 0;
-    (*itr)->nblock = 0;
-    (*itr)->nelem_block = 0;
-    (*itr)->cur_block_size = 0;
 
     // Initialize block_ params
 
@@ -1086,10 +1082,12 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(itr);
     INA_VERIFY_NOT_NULL(val);
 
-    *itr = (iarray_iter_write_t*)ina_mem_alloc(sizeof(iarray_iter_write_t));
+    *itr = (iarray_iter_write_t*) ina_mem_alloc(sizeof(iarray_iter_write_t));
     if (itr == NULL) {
         INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
+    memcpy(*itr, &IARRAY_ITER_WRITE_EMPTY, sizeof(iarray_iter_write_t));
+
     caterva_dims_t shape = caterva_new_dims(cont->dtshape->shape, cont->dtshape->ndim);
     int err = caterva_update_shape(cont->catarr, &shape);
     if (err < 0) {
@@ -1110,11 +1108,6 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
     (*itr)->cur_block_shape = (int64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(int64_t));
 
     (*itr)->val = val;
-
-    (*itr)->nelem = 0;
-    (*itr)->nblock = 0;
-    (*itr)->nelem_block = 0;
-    (*itr)->elem_flat_index = 0;
 
     (*itr)->cur_block_size = (*itr)->container->catarr->psize;
 
