@@ -22,7 +22,7 @@ We use inac cmake build-system.
 
 * INAC build setup
     * Make sure that you have a configured repository.txt file in ~\.inaos\cmake
-    * Also you'll need a directory under ~\INAOS (can be empty)
+    * Also you'll need a directory ~\INAOS (can be empty)
 
 * Create a build folder
 
@@ -42,7 +42,7 @@ It is suggested to use a recent version of clang (e.g. 8); see https://embeddeda
 
 * INAC build setup
     * Make sure that you have a configured repository.txt file in ~/.inaos/cmake
-    * Also you'll need a directory under ~/INAOS (can be empty)
+    * Also you'll need a directory ~/INAOS (can be empty)
 
 * Create a build folder
 
@@ -64,7 +64,7 @@ It is suggested to use a recent version of clang (e.g. 8); see https://embeddeda
 
 * INAC build setup
     * Make sure that you have a configured repository.txt file in ~/.inaos/cmake
-    * Also you'll need a directory under ~/INAOS (can be empty)
+    * Also you'll need a directory ~/INAOS (can be empty)
     
 * MKL setup.  For Ubuntu machines, it is best to use Intel's Ubuntu repo:
 
