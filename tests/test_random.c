@@ -17,10 +17,8 @@ static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx,
                           iarray_data_type_t dtype, int8_t ndim, const int64_t *shape,
                           const int64_t *pshape, iarray_store_properties_t store_y,
                           ina_rc_t (*random_fun)(iarray_context_t*, iarray_dtshape_t*,
-                              iarray_random_ctx_t*, iarray_store_properties_t*, int, iarray_container_t**))
+                          iarray_random_ctx_t*, iarray_store_properties_t*, int, iarray_container_t**))
 {
-
-    // Create dtshape
     iarray_dtshape_t xdtshape;
 
     xdtshape.dtype = dtype;
