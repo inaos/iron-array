@@ -101,7 +101,7 @@ typedef struct iarray_iter_write_s {
 
 } iarray_iter_write_t;
 
-static const iarray_iter_write_t IARRAY_ITER_WRITE_EMPTY = {};
+static const iarray_iter_write_t IARRAY_ITER_WRITE_EMPTY = {0};
 
 typedef struct iarray_iter_read_s {
     iarray_context_t *ctx;
@@ -126,7 +126,7 @@ typedef struct iarray_iter_read_s {
 } iarray_iter_read_t;
 
 
-static const iarray_iter_read_t IARRAY_ITER_READ_EMPTY = {};
+static const iarray_iter_read_t IARRAY_ITER_READ_EMPTY = {0};
 
 typedef struct iarray_iter_write_block_s {
     iarray_context_t *ctx;
@@ -149,7 +149,7 @@ typedef struct iarray_iter_write_block_s {
     bool external_buffer; // Flag to indicate if a external part is passed
 } iarray_iter_write_block_t;
 
-static const iarray_iter_write_block_t IARRAY_ITER_WRITE_BLOCK_EMPTY = {};
+static const iarray_iter_write_block_t IARRAY_ITER_WRITE_BLOCK_EMPTY = {0};
 
 typedef struct iarray_iter_read_block_s {
     iarray_context_t *ctx;
@@ -170,7 +170,7 @@ typedef struct iarray_iter_read_block_s {
     bool external_buffer; // Flag to indicate if a external part is passed
 } iarray_iter_read_block_t;
 
-static const iarray_iter_read_block_t IARRAY_ITER_READ_BLOCK_EMPTY = {};
+static const iarray_iter_read_block_t IARRAY_ITER_READ_BLOCK_EMPTY = {0};
 
 typedef struct iarray_iter_matmul_s {
     iarray_context_t *ctx;
