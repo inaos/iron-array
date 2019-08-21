@@ -28,6 +28,7 @@ static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
         ((float *) part)[i] = value;
     }
     int err;
+    printf("%llu - %llu\n", partsize , (int64_t) c->catarr->psize * c->catarr->ctx->cparams.typesize);
     while (!c->catarr->filled) {
         if ((err = caterva_append(c->catarr, part, partsize)) != 0) {
             printf("Error %d in caterva_fill\n", err);
