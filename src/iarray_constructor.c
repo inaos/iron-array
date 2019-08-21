@@ -20,10 +20,22 @@ static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
     INA_VERIFY_NOT_NULL(c);
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    if (caterva_fill(c->catarr, &shape, &value) != 0) {
-        printf("Error in caterva_fill\n");
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+    caterva_update_shape(c->catarr, &shape);
+    int64_t partsize = c->catarr->psize * sizeof(float);
+    uint8_t *part = ina_mem_alloc(partsize);
+
+    for (int i = 0; i < c->catarr->psize; ++i) {
+        ((float *) part)[i] = value;
     }
+
+    while (!c->catarr->filled) {
+        if (caterva_append(c->catarr, part, partsize) != 0) {
+            printf("Error in caterva_fill\n");
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+        }
+    }
+
+    ina_mem_free(part);
 
     return INA_SUCCESS;
 
@@ -37,10 +49,23 @@ static ina_rc_t _iarray_container_fill_double(iarray_container_t *c, double valu
     INA_VERIFY_NOT_NULL(c);
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    if (caterva_fill(c->catarr, &shape, &value) != 0) {
-        printf("Error in caterva_fill\n");
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+    caterva_update_shape(c->catarr, &shape);
+    int64_t partsize = c->catarr->psize * sizeof(double);
+    uint8_t *part = ina_mem_alloc(partsize);
+
+    for (int i = 0; i < c->catarr->psize; ++i) {
+        ((double *) part)[i] = value;
     }
+
+    while (!c->catarr->filled) {
+        if (caterva_append(c->catarr, part, partsize) != 0) {
+            printf("Error in caterva_fill\n");
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+        }
+    }
+
+    ina_mem_free(part);
+
     return INA_SUCCESS;
     fail:
     return ina_err_get_rc();
