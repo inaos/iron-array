@@ -27,10 +27,10 @@ static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
     for (int i = 0; i < c->catarr->psize; ++i) {
         ((float *) part)[i] = value;
     }
-
+    int err;
     while (!c->catarr->filled) {
-        if (caterva_append(c->catarr, part, partsize) != 0) {
-            printf("Error in caterva_fill\n");
+        if ((err = caterva_append(c->catarr, part, partsize)) != 0) {
+            printf("Error %d in caterva_fill\n", err);
             INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
         }
     }
