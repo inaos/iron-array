@@ -22,7 +22,6 @@ static ina_rc_t _iarray_container_fill_float(iarray_context_t *ctx, iarray_conta
 
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    caterva_update_shape(c->catarr, &shape);
 
     iarray_iter_write_t *I;
     iarray_iter_write_value_t val;
@@ -46,7 +45,6 @@ static ina_rc_t _iarray_container_fill_double(iarray_context_t *ctx, iarray_cont
     INA_VERIFY_NOT_NULL(c);
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    caterva_update_shape(c->catarr, &shape);
 
     iarray_iter_write_t *I;
     iarray_iter_write_value_t val;
