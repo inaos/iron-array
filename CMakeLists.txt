@@ -21,7 +21,7 @@ endif()
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
     if (NOT EXISTS "${CMAKE_SOURCE_DIR}/inac.cmake")
         message(STATUS "Downloading inac.cmake from https://github.com/inaos/inac-cmake")
-        file(DOWNLOAD "https://raw.githubusercontent.com/inaos/inac-cmake/0.1/inac.cmake"
+        file(DOWNLOAD "https://raw.githubusercontent.com/inaos/inac-cmake/0.3/inac.cmake"
                 "${CMAKE_BINARY_DIR}/inac.cmake" STATUS DS)
         if(NOT "${DS}"  MATCHES "0;")
             file(REMOVE "${CMAKE_BINARY_DIR}/inac.cmake")
@@ -34,7 +34,7 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
 endif()
 include("${CMAKE_BINARY_DIR}/inac.cmake")
 
-inac_add_dependency(inac "1.0.4")
+inac_add_dependency(inac "1.0.6")
 
 inac_add_contrib_lib(tinyexpr)
 
