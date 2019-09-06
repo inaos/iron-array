@@ -15,14 +15,22 @@
 #include <iarray_private.h>
 
 
-static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
+
+static ina_rc_t _iarray_container_fill_float(iarray_context_t *ctx, iarray_container_t *c, float value)
 {
     INA_VERIFY_NOT_NULL(c);
 
+
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    if (caterva_fill(c->catarr, &shape, &value) != 0) {
-        printf("Error in caterva_fill\n");
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+
+    iarray_iter_write_t *I;
+    iarray_iter_write_value_t val;
+
+    INA_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &I, c, &val));
+
+    while (iarray_iter_write_has_next(I)) {
+        INA_FAIL_IF_ERROR(iarray_iter_write_next(I));
+        memcpy(val.elem_pointer, &value, sizeof(float));
     }
 
     return INA_SUCCESS;
@@ -32,15 +40,22 @@ static ina_rc_t _iarray_container_fill_float(iarray_container_t *c, float value)
 }
 
 
-static ina_rc_t _iarray_container_fill_double(iarray_container_t *c, double value)
+static ina_rc_t _iarray_container_fill_double(iarray_context_t *ctx, iarray_container_t *c, double value)
 {
     INA_VERIFY_NOT_NULL(c);
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    if (caterva_fill(c->catarr, &shape, &value) != 0) {
-        printf("Error in caterva_fill\n");
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+
+    iarray_iter_write_t *I;
+    iarray_iter_write_value_t val;
+
+    INA_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &I, c, &val));
+
+    while (iarray_iter_write_has_next(I)) {
+        INA_FAIL_IF_ERROR(iarray_iter_write_next(I));
+        memcpy(val.elem_pointer, &value, sizeof(double));
     }
+
     return INA_SUCCESS;
     fail:
     return ina_err_get_rc();
@@ -180,10 +195,10 @@ INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
 
     switch (dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            INA_FAIL_IF_ERROR(_iarray_container_fill_double(*container, 0.0));
+            INA_FAIL_IF_ERROR(_iarray_container_fill_double(ctx, *container, 0.0));
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            INA_FAIL_IF_ERROR(_iarray_container_fill_float(*container, 0.0f));
+            INA_FAIL_IF_ERROR(_iarray_container_fill_float(ctx, *container, 0.0f));
             break;
         default:
             INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
@@ -210,10 +225,10 @@ INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
 
     switch (dtshape->dtype) {
     case IARRAY_DATA_TYPE_DOUBLE:
-        INA_FAIL_IF_ERROR(_iarray_container_fill_double(*container, 1.0));
+        INA_FAIL_IF_ERROR(_iarray_container_fill_double(ctx, *container, 1.0));
         break;
     case IARRAY_DATA_TYPE_FLOAT:
-        INA_FAIL_IF_ERROR(_iarray_container_fill_float(*container, 1.0f));
+        INA_FAIL_IF_ERROR(_iarray_container_fill_float(ctx, *container, 1.0f));
         break;
     default:
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
@@ -239,7 +254,7 @@ INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx,
 
     INA_FAIL_IF_ERROR(iarray_container_new(ctx, dtshape, store, flags, container));
 
-    INA_FAIL_IF_ERROR(_iarray_container_fill_float(*container, value));
+    INA_FAIL_IF_ERROR(_iarray_container_fill_float(ctx, *container, value));
 
     return INA_SUCCESS;
 
@@ -262,7 +277,7 @@ INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
 
     INA_FAIL_IF_ERROR(iarray_container_new(ctx, dtshape, store, flags, container));
 
-    INA_FAIL_IF_ERROR(_iarray_container_fill_double(*container, value));
+    INA_FAIL_IF_ERROR(_iarray_container_fill_double(ctx, *container, value));
 
     return INA_SUCCESS;
 

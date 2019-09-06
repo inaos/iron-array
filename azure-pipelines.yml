@@ -166,4 +166,6 @@ steps:
     jfrog_artifactory_uid: $(jfrog_artifactory_uid)
     jfrog_artifactory_pwd: $(jfrog_artifactory_pwd)
     jfrog_repository_url: $(jfrog_repository_url)
-  
+  condition:
+    eq( variables['upload_artifactory'], 'yes' )
+
