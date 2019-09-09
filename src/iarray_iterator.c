@@ -921,6 +921,9 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(itr);
     INA_VERIFY_NOT_NULL(val);
 
+    if (cont->catarr->filled != true) {
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_EMPTY_CONTAINER));
+    }
 
     *itr = (iarray_iter_read_t*)ina_mem_alloc(sizeof(iarray_iter_read_t));
     if (*itr == NULL) {
@@ -1067,6 +1070,11 @@ INA_API(int) iarray_iter_write_has_next(iarray_iter_write_t *itr)
                                         (size_t) itr->container->catarr->psize * typesize);
         }
     }
+
+    if (itr->nelem == itr->container->catarr->size) {
+        itr->container->catarr->filled = true;
+    }
+
     return itr->nelem < itr->container->catarr->size;
 }
 

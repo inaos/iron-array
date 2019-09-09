@@ -93,15 +93,19 @@ int main()
 
     printf("Time mkl (C): %.4f\n", elapsed_sec);
 
-    // int64_t bshape_x[] = {2000, 1000};
-    // int64_t bshape_y[] = {1000, 1500};
-    // If using the block shapes below, the iarray_linalg_matmul() does not work well
-    int64_t bshape_x[2];
-    int64_t bshape_y[2];
-    if (INA_FAILED(iarray_matmul_advice(ctx, c_x, c_y, c_z, bshape_x, bshape_y, 0, 0))) {
-        printf("Error in getting advice for matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
-        exit(1);
-    }
+    int64_t bshape_x[] = {2000, 1000};
+    int64_t bshape_y[] = {1000, 1500};
+
+    //TODO: If using the block shapes below, the iarray_linalg_matmul() does not work well
+
+    // int64_t bshape_x[2];
+    // int64_t bshape_y[2];
+
+    // if (INA_FAILED(iarray_matmul_advice(ctx, c_x, c_y, c_z, bshape_x, bshape_y, 0, 0))) {
+    //     printf("Error in getting advice for matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
+    //     exit(1);
+    // }
+
     printf("bshape_x: (%d, %d)\n", (int)bshape_x[0], (int)bshape_x[1]);
     printf("bshape_y: (%d, %d)\n", (int)bshape_y[0], (int)bshape_y[1]);
 
