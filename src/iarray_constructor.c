@@ -387,13 +387,6 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
         auxshape->pshape_wos[i] = catarr->pshape[i];
     }
 
-    // Populate the frame
-    (*container)->frame = blosc2_new_frame(NULL);
-    if ((*container)->frame == NULL) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-    }
-    ina_mem_cpy((*container)->frame, catarr->sc->frame, sizeof(blosc2_frame));
-
     // Populate compression parameters
     blosc2_cparams *cparams;
     blosc2_schunk_get_cparams(catarr->sc, &cparams);
@@ -456,7 +449,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
                               (double *) buffer, (size_t)container->dtshape->shape[0], (size_t)container->dtshape->shape[1]);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                mkl_simatcopy('R', 'T', (size_t)container->dtshape->shape[1], (size_t)container->dtshape->shape[0], 1.0,
+                mkl_simatcopy('R', 'T', (size_t)container->dtshape->shape[1], (size_t)container->dtshape->shape[0], 1.0f,
                               (float *) buffer, (size_t)container->dtshape->shape[0], (size_t)container->dtshape->shape[1]);
                 break;
             default:

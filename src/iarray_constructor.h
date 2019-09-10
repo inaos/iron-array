@@ -73,8 +73,8 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     if (flags & IARRAY_CONTAINER_PERSIST) {
         fname = (char*)store->id;
     }
-    (*c)->frame = blosc2_new_frame(fname);
-    if ((*c)->frame == NULL) {
+    blosc2_frame *frame = blosc2_new_frame(fname);
+    if (frame == NULL) {
         INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
 
@@ -149,7 +149,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
 
     if (flags & IARRAY_CONTAINER_PERSIST) {
-        (*c)->catarr = caterva_empty_array(cat_ctx, (*c)->frame, &pshape);
+        (*c)->catarr = caterva_empty_array(cat_ctx, frame, &pshape);
     }
     else if (pshape.dims[0] != 0) {
         (*c)->catarr = caterva_empty_array(cat_ctx, NULL, &pshape);
@@ -240,7 +240,6 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     }
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
 
-    (*c)->frame = pred->frame;
     (*c)->cparams = pred->cparams;
     (*c)->dparams = pred->dparams;
     (*c)->transposed = pred->transposed;
