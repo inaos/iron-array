@@ -104,25 +104,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     (*c)->transposed = false;
     (*c)->view = false;
 
-    if (flags & IARRAY_CONTAINER_PERSIST) {
-        (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
-        if ((*c)->store == NULL) {
-            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
-        }
-        (*c)->store->id = ina_str_new_fromcstr(store->id);
-        uint8_t *smeta;
-        int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
-        if (smeta_len < 0) {
-            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
-        }
-        // And store it in iarray metalayer
-        int retcode = blosc2_add_metalayer((*c)->catarr->sc, "iarray", smeta, (uint32_t)smeta_len);
-        if (retcode < 0) {
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-        }
-        free(smeta);
-    }
-
     switch (dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
             cparams.typesize = sizeof(double);
@@ -183,6 +164,25 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     if (cat_ctx != NULL) caterva_free_ctx(cat_ctx);
     if ((*c)->catarr == NULL) {
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+    }
+
+    if (flags & IARRAY_CONTAINER_PERSIST) {
+        (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
+        if ((*c)->store == NULL) {
+            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+        }
+        (*c)->store->id = ina_str_new_fromcstr(store->id);
+        uint8_t *smeta;
+        int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
+        if (smeta_len < 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+        }
+        // And store it in iarray metalayer
+        int retcode = blosc2_add_metalayer((*c)->catarr->sc, "iarray", smeta, (uint32_t)smeta_len);
+        if (retcode < 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+        }
+        free(smeta);
     }
 
     return INA_SUCCESS;

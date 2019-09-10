@@ -354,7 +354,7 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
 
     uint8_t *smeta;
     uint32_t smeta_len;
-    if (blosc2_get_metalayer(catarr->sc, "iarray", &smeta, &smeta_len) != 0) {
+    if (blosc2_get_metalayer(catarr->sc, "iarray", &smeta, &smeta_len) < 0) {
         printf("Error in get_metalayer\n");
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
     }
