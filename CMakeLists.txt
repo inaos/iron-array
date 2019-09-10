@@ -100,7 +100,7 @@ inac_add_examples(iarrays)
 add_definitions(-DINA_DLL)
 add_definitions(-DINA_LIB)
 add_library(iarray SHARED ${src})
-target_link_libraries(iarray ${INAC_LIBS} blosc2_static caterva ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+target_link_libraries(iarray ${INAC_LIBS} blosc2_static caterva_static ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 install(TARGETS iarray
         DESTINATION lib
