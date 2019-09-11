@@ -117,7 +117,11 @@ steps:
       then
         echo "Examples for Darwin in Debug mode currently not executed"
     else
+      if [ "$AGENT_OS" == "Windows_NT" ]
+        for EX in $(ls example_*.exe); do ./$EX; done
+      else
         for EX in $(ls example_*); do ./$EX; done
+      fi
     fi
   displayName: Execute examples
 
