@@ -96,7 +96,7 @@ int main()
     int64_t bshape_x[] = {2000, 1000};
     int64_t bshape_y[] = {1000, 1500};
 
-    //TODO: If using the block shapes below, the iarray_linalg_matmul() does not work well
+    //TODO: When the matmul advice is used, the iarray_linalg_matmul() does not work well (issue #205)
 
     // int64_t bshape_x[2];
     // int64_t bshape_y[2];
