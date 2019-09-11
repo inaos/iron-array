@@ -112,6 +112,11 @@ steps:
   displayName: Execute tests
 
 - bash: |
+    for EX in $(ls example_*); do ./$EX; done
+  displayName: Execute examples
+
+
+- bash: |
    cd cmake-build-$BUILD_CONFIGURATION
    if [ "$AGENT_OS" != "Windows_NT" ]
      then
