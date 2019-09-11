@@ -345,7 +345,7 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(container);
 
-    caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, BLOSC_CPARAMS_DEFAULTS, BLOSC_DPARAMS_DEFAULTS);
+    caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, BLOSC2_CPARAMS_DEFAULTS, BLOSC2_DPARAMS_DEFAULTS);
 
     caterva_array_t *catarr = caterva_from_file(cat_ctx, store->id);
     if (catarr == NULL) {
@@ -354,7 +354,7 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
 
     uint8_t *smeta;
     uint32_t smeta_len;
-    if (blosc2_frame_get_metalayer(catarr->sc->frame, "iarray", &smeta, &smeta_len) != 0) {
+    if (blosc2_get_metalayer(catarr->sc, "iarray", &smeta, &smeta_len) < 0) {
         printf("Error in get_metalayer\n");
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
     }
@@ -386,13 +386,6 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
         auxshape->shape_wos[i] = catarr->shape[i];
         auxshape->pshape_wos[i] = catarr->pshape[i];
     }
-
-    // Populate the frame
-    (*container)->frame = blosc2_new_frame(NULL);
-    if ((*container)->frame == NULL) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-    }
-    ina_mem_cpy((*container)->frame, catarr->sc->frame, sizeof(blosc2_frame));
 
     // Populate compression parameters
     blosc2_cparams *cparams;
@@ -456,7 +449,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
                               (double *) buffer, (size_t)container->dtshape->shape[0], (size_t)container->dtshape->shape[1]);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                mkl_simatcopy('R', 'T', (size_t)container->dtshape->shape[1], (size_t)container->dtshape->shape[0], 1.0,
+                mkl_simatcopy('R', 'T', (size_t)container->dtshape->shape[1], (size_t)container->dtshape->shape[0], 1.0f,
                               (float *) buffer, (size_t)container->dtshape->shape[0], (size_t)container->dtshape->shape[1]);
                 break;
             default:

@@ -73,8 +73,8 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     if (flags & IARRAY_CONTAINER_PERSIST) {
         fname = (char*)store->id;
     }
-    (*c)->frame = blosc2_new_frame(fname);
-    if ((*c)->frame == NULL) {
+    blosc2_frame *frame = blosc2_new_frame(fname);
+    if (frame == NULL) {
         INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
 
@@ -103,25 +103,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
     (*c)->transposed = false;
     (*c)->view = false;
-
-    if (flags & IARRAY_CONTAINER_PERSIST) {
-        (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
-        if ((*c)->store == NULL) {
-            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
-        }
-        (*c)->store->id = ina_str_new_fromcstr(store->id);
-        uint8_t *smeta;
-        int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
-        if (smeta_len < 0) {
-            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
-        }
-        // And store it in iarray metalayer
-        int retcode = blosc2_frame_add_metalayer((*c)->frame, "iarray", smeta, (uint32_t)smeta_len);
-        if (retcode < 0) {
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-        }
-        free(smeta);
-    }
 
     switch (dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
@@ -168,7 +149,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
 
     if (flags & IARRAY_CONTAINER_PERSIST) {
-        (*c)->catarr = caterva_empty_array(cat_ctx, (*c)->frame, &pshape);
+        (*c)->catarr = caterva_empty_array(cat_ctx, frame, &pshape);
     }
     else if (pshape.dims[0] != 0) {
         (*c)->catarr = caterva_empty_array(cat_ctx, NULL, &pshape);
@@ -183,6 +164,25 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     if (cat_ctx != NULL) caterva_free_ctx(cat_ctx);
     if ((*c)->catarr == NULL) {
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+    }
+
+    if (flags & IARRAY_CONTAINER_PERSIST) {
+        (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
+        if ((*c)->store == NULL) {
+            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+        }
+        (*c)->store->id = ina_str_new_fromcstr(store->id);
+        uint8_t *smeta;
+        int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
+        if (smeta_len < 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+        }
+        // And store it in iarray metalayer
+        int retcode = blosc2_add_metalayer((*c)->catarr->sc, "iarray", smeta, (uint32_t)smeta_len);
+        if (retcode < 0) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+        }
+        free(smeta);
     }
 
     return INA_SUCCESS;
@@ -240,7 +240,6 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     }
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
 
-    (*c)->frame = pred->frame;
     (*c)->cparams = pred->cparams;
     (*c)->dparams = pred->dparams;
     (*c)->transposed = pred->transposed;

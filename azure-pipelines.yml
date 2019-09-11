@@ -112,6 +112,22 @@ steps:
   displayName: Execute tests
 
 - bash: |
+    cd cmake-build-$BUILD_CONFIGURATION
+    if [ "$AGENT_OS" == "Darwin" ] && [ "$BUILD_CONFIGURATION" == "Debug" ]
+      then
+        echo "Examples for Darwin in Debug mode currently not executed"
+    else
+      if [ "$AGENT_OS" == "Windows_NT" ]
+        then
+          for EX in $(ls example_*.exe); do ./$EX; done
+      else
+        for EX in $(ls example_*); do ./$EX; done
+      fi
+    fi
+  displayName: Execute examples
+
+
+- bash: |
    cd cmake-build-$BUILD_CONFIGURATION
    if [ "$AGENT_OS" != "Windows_NT" ]
      then
