@@ -112,7 +112,13 @@ steps:
   displayName: Execute tests
 
 - bash: |
-    for EX in $(ls example_*); do ./$EX; done
+    cd cmake-build-$BUILD_CONFIGURATION
+    if [ "$AGENT_OS" == "Darwin" ] && [ "$BUILD_CONFIGURATION" == "Debug" ]
+      then
+        echo "Examples for Darwin in Debug mode currently not executed"
+    else
+        for EX in $(ls example_*); do ./$EX; done
+    fi
   displayName: Execute examples
 
 
