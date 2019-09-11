@@ -70,7 +70,6 @@ struct iarray_container_s {
     iarray_auxshape_t *auxshape;
     blosc2_cparams *cparams;
     blosc2_dparams *dparams;
-    blosc2_frame *frame;
     caterva_array_t *catarr;
     _iarray_container_store_t *store;
     bool transposed;
