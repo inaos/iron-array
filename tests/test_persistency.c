@@ -55,7 +55,7 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
     // Close the container and re-open it from disk
     iarray_container_free(ctx, &c_x);
     INA_TEST_ASSERT(_iarray_file_exists(store->id));
-    INA_MUST_SUCCEED(iarray_from_file(ctx, store, &c_x));
+    INA_MUST_SUCCEED(iarray_from_file(ctx, store, &c_x, false));
 
     // Check values
     iarray_iter_read_t *I2;

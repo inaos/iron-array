@@ -179,7 +179,7 @@ int main(int argc, char** argv)
 
     if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_x.id)) {
         INA_STOPWATCH_START(w);
-        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_x, &con_x));
+        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_x, &con_x, false));
         INA_STOPWATCH_STOP(w);
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
         printf("Time for *opening* X values: %.3g s, %.1f GB/s\n",
@@ -251,7 +251,7 @@ int main(int argc, char** argv)
 
     if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_y.id)) {
         INA_STOPWATCH_START(w);
-        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_y, &con_y));
+        INA_MUST_SUCCEED(iarray_from_file(ctx, &mat_y, &con_y, false));
         INA_STOPWATCH_STOP(w);
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
         printf("Time for *opening* Y values: %.3g s, %.1f GB/s\n",
