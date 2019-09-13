@@ -128,13 +128,14 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
             case IARRAY_DATA_TYPE_DOUBLE:
                 res = (((double *) zbuffer)[i] - ((double *) obuffer)[i]) / ((double *) zbuffer)[i];
                 if (fabs(res) > 1e-14) {
+                    printf("%lu - %.15f ", i, fabs(res));
                     return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
                 }
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 res = (((float *) zbuffer)[i] - ((float *) obuffer)[i]) / ((float *) zbuffer)[i];
                 if (fabs(res) > 1e-5) {
-                    printf("%lu - %f\n", i, res);
+                    printf("%lu - %.6f ", i, fabs(res));
                     return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
                 }
                 break;
