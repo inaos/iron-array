@@ -1,6 +1,6 @@
 # Error propagation in matrix multiplication
 
-An error propagation in matrix-matrix multiplication is found. It ocurrs when two linspaces of 100x100 (in general, squared matrix) elements between -1 and 1 (in general, from $-x$ to $x$) are multiplied. In the iron array multiplication, blocks of 10x10 elements are used.
+An error propagation in matrix-matrix multiplication is found. It ocurrs when two linspaces of 100x100 (in general, squared matrix) elements between -1 and 1 (in general, from -x to x) are multiplied. In the iron array multiplication, blocks of 10x10 elements are used.
 To reproduce it, the three algorithms created to perform the multiplications are in the next section.
 
 ## Matrix-matrix multiplication Algorithms
@@ -58,4 +58,4 @@ Error percentage (C - iarray): 0.3882
 Error percentage (MKL - iarray): 0.3805
 ```
 
-This problem is not found with any other data.
+We believe that the problem is in the order of operations. Due to the blocking nature of our matmul implementation, it is not possible to change this order. Therefore, we must be prepared to see strong differences in some data distributions, such as the one shown here. For now, this has not been seen in other data distributions.
