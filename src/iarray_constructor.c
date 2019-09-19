@@ -290,7 +290,7 @@ fail:
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
                                      void *buffer,
-                                     size_t buffer_len,
+                                     size_t buflen,
                                      iarray_store_properties_t *store,
                                      int flags,
                                      iarray_container_t **container)
@@ -305,11 +305,11 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
     switch ((*container)->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            if ((* container)->catarr->size * (int64_t)sizeof(double) > buffer_len)
+            if ((* container)->catarr->size * (int64_t)sizeof(double) > buflen)
                 INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            if ((* container)->catarr->size * (int64_t)sizeof(float) > buffer_len)
+            if ((* container)->catarr->size * (int64_t)sizeof(float) > buflen)
                 INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             break;
         default:
@@ -435,7 +435,7 @@ fail:
 INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
     iarray_container_t *container,
     void *buffer,
-    size_t buffer_len)
+    size_t buflen)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(buffer);
@@ -448,11 +448,11 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
 
     switch (container->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            if (size * (int64_t)sizeof(double) > buffer_len)
+            if (size * (int64_t)sizeof(double) > buflen)
                 INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            if (size * (int64_t)sizeof(float) > buffer_len)
+            if (size * (int64_t)sizeof(float) > buflen)
                 INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             break;
         default:
@@ -466,7 +466,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
             start[i] = 0;
             stop[i] = container->dtshape->shape[i];
         }
-        INA_FAIL_IF_ERROR(iarray_get_slice_buffer(ctx, container, start, stop, buffer, buffer_len));
+        INA_FAIL_IF_ERROR(iarray_get_slice_buffer(ctx, container, start, stop, buffer, buflen));
     } else {
         if (caterva_to_buffer(container->catarr, buffer) != 0) {
             INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
