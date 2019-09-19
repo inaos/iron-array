@@ -17,6 +17,13 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
                            const int64_t *shape, const int64_t *pshape, double start,
                            double stop)
 {
+    int typesize;
+    if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
+        typesize = sizeof(double);
+    } else {
+        typesize = sizeof(float);
+    }
+
     // Create dtshape
     iarray_dtshape_t xdtshape;
 
@@ -33,10 +40,6 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
     iarray_container_t *c_x;
 
     iarray_arange(ctx, &xdtshape, start, stop, step, NULL, 0, &c_x);
-
-    double *buffer = (double *) malloc(size * sizeof(double));
-
-    iarray_to_buffer(ctx, c_x, buffer, size * sizeof(buffer));
 
     // Assert iterator reading it
 

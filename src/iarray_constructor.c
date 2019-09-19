@@ -295,13 +295,26 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      int flags,
                                      iarray_container_t **container)
 {
-    INA_UNUSED(buffer_len);
+
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(buffer);
     INA_VERIFY_NOT_NULL(container);
 
     INA_FAIL_IF_ERROR(iarray_container_new(ctx, dtshape, store, flags, container));
+
+    switch ((*container)->dtshape->dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            if ((* container)->catarr->size * (int64_t)sizeof(double) > buffer_len)
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            if ((* container)->catarr->size * (int64_t)sizeof(float) > buffer_len)
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            break;
+        default:
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+    }
 
     // TODO: would it be interesting to add a `buffer_len` parameter to `caterva_from_buffer()`?
     caterva_dims_t shape = caterva_new_dims((*container)->dtshape->shape, (*container)->dtshape->ndim);
@@ -427,6 +440,24 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(buffer);
     INA_VERIFY_NOT_NULL(container);
+
+    int64_t size = 1;
+    for (int i = 0; i < container->dtshape->ndim; ++i) {
+        size *= container->dtshape->shape[i];
+    }
+
+    switch (container->dtshape->dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            if (size * (int64_t)sizeof(double) > buffer_len)
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            if (size * (int64_t)sizeof(float) > buffer_len)
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            break;
+        default:
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+    }
 
     if (container->view) {
         int64_t start[IARRAY_DIMENSION_MAX];
