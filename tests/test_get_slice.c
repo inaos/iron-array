@@ -74,13 +74,13 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
         bufdes = ina_mem_alloc(bufdes_size * sizeof(double));
-        iarray_to_buffer(ctx, c_out, bufdes, bufdes_size * sizeof(double));
+        INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_out, bufdes, bufdes_size * sizeof(double)));
         for (int64_t l = 0; l < bufdes_size; ++l) {
             INA_TEST_ASSERT_EQUAL_FLOATING(((double *) bufdes)[l], ((double *) result)[l]);
         }
     } else {
         bufdes = ina_mem_alloc(bufdes_size * sizeof(float));
-        iarray_to_buffer(ctx, c_out, bufdes, bufdes_size * sizeof(float));
+        INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_out, bufdes, bufdes_size * sizeof(float)));
         for (int64_t l = 0; l < bufdes_size; ++l) {
             INA_TEST_ASSERT_EQUAL_FLOATING(((float *) bufdes)[l], ((float *) result)[l]);
         }
