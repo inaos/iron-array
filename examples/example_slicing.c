@@ -47,7 +47,7 @@ int main()
     }
     printf("\n");
 
-    iarray_fill_double(ctx, &xdtshape, 3.14, NULL, 0, &c_x);
+    INA_FAIL_IF_ERROR(iarray_fill_double(ctx, &xdtshape, 3.14, NULL, 0, &c_x));
 
     // Create out container (empty)
     int8_t outndim = 3;
@@ -69,9 +69,9 @@ int main()
 
     // Slicing c_x into c_out
     printf("Slicing c_x into c_out container...\n");
-    iarray_get_slice(ctx, c_x, start, stop, outpshape, NULL, 0, false, &c_out);
+    INA_FAIL_IF_ERROR(iarray_get_slice(ctx, c_x, start, stop, outpshape, NULL, 0, false, &c_out));
     iarray_dtshape_t out_dtshape;
-    iarray_get_dtshape(ctx, c_out, &out_dtshape);
+    INA_FAIL_IF_ERROR(iarray_get_dtshape(ctx, c_out, &out_dtshape));
 
     printf("- c_out shape: ");
     for (int i = 0; i < out_dtshape.ndim; ++i) {
@@ -81,17 +81,28 @@ int main()
 
     //Squeezing c_out
     printf("Squeezing c_out...\n");
-    iarray_squeeze(ctx, c_out);
-    iarray_get_dtshape(ctx, c_out, &out_dtshape);
+    INA_FAIL_IF_ERROR(iarray_squeeze(ctx, c_out));
+    INA_FAIL_IF_ERROR(iarray_get_dtshape(ctx, c_out, &out_dtshape));
 
     printf("- c_out shape: ");
     for (int i = 0; i < out_dtshape.ndim; ++i) {
         printf("%d ", (int)out_dtshape.shape[i]);
     }
     printf("\n");
+    iarray_container_free(ctx, &c_x);
+    iarray_container_free(ctx, &c_out);
+    iarray_context_free(&ctx);
 
     printf("Destroying iarray...\n");
     iarray_destroy();
 
-    return 0;
+    return INA_SUCCESS;
+
+    fail:
+    iarray_container_free(ctx, &c_x);
+    iarray_container_free(ctx, &c_out);
+    iarray_context_free(&ctx);
+
+    printf("Destroying iarray...\n");
+    iarray_destroy();
 }

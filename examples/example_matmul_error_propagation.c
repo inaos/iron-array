@@ -81,7 +81,7 @@ int main()
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = n_threads;
     iarray_context_t *ctx;
-    iarray_context_new(&cfg, &ctx);
+    INA_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
 
     iarray_dtshape_t dtshape_x;
     dtshape_x.ndim = ndim;
@@ -91,7 +91,7 @@ int main()
         dtshape_x.pshape[i] = pshape_a[i];
     }
     iarray_container_t *cont_a;
-    iarray_linspace(ctx, &dtshape_x, size_a, -100, 100, NULL, 0, &cont_a);
+    INA_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_a, -100, 100, NULL, 0, &cont_a));
 
     iarray_dtshape_t dtshape_y;
     dtshape_y.ndim = ndim;
@@ -102,7 +102,7 @@ int main()
     }
 
     iarray_container_t *cont_b;
-    iarray_linspace(ctx, &dtshape_y, size_b, -100, 100, NULL, 0, &cont_b);
+    INA_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_b, -100, 100, NULL, 0, &cont_b));
 
     iarray_dtshape_t dtshape_z;
     dtshape_z.ndim = ndim;
@@ -113,7 +113,7 @@ int main()
     }
 
     iarray_container_t *cont_c;
-    iarray_container_new(ctx, &dtshape_z, NULL, 0, &cont_c);
+    INA_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, NULL, 0, &cont_c));
 
 
     double *a = (double *) malloc(size_a * sizeof(double));
@@ -122,8 +122,8 @@ int main()
     double *c_mkl = (double *) malloc(size_c * sizeof(double));
     double *c_iarray = (double *) malloc(size_c * sizeof(double));
 
-    iarray_to_buffer(ctx, cont_a, a, size_a * sizeof(double));
-    iarray_to_buffer(ctx, cont_b, b, size_b * sizeof(double));
+    INA_FAIL_IF_ERROR(iarray_to_buffer(ctx, cont_a, a, size_a * sizeof(double)));
+    INA_FAIL_IF_ERROR(iarray_to_buffer(ctx, cont_b, b, size_b * sizeof(double)));
 
     mult_c(a, b, c_c, I, J, K);
 
@@ -135,9 +135,7 @@ int main()
 
    mult_iarray(ctx, cont_a, bshape_a, cont_b, bshape_b, cont_c);
 
-   iarray_to_buffer(ctx, cont_c, c_iarray, size_c * sizeof(double));
-
-
+   INA_FAIL_IF_ERROR(iarray_to_buffer(ctx, cont_c, c_iarray, size_c * sizeof(double)));
 
     printf("Error percentage (C - MKL): %.4f\n", error_percent(c_c, c_mkl, size_c));
     printf("Error percentage (C - iarray): %.4f\n", error_percent(c_c, c_iarray, size_c));
@@ -154,5 +152,17 @@ int main()
     iarray_context_free(&ctx);
 
     iarray_destroy();
-    return EXIT_SUCCESS;
+    return INA_SUCCESS;
+
+    fail:
+        iarray_container_free(ctx, &cont_a);
+        iarray_container_free(ctx, &cont_b);
+        iarray_container_free(ctx, &cont_c);
+        free(a);
+        free(b);
+        free(c_c);
+        free(c_mkl);
+        free(c_iarray);
+        iarray_context_free(&ctx);
+        return ina_err_get_rc();
 }

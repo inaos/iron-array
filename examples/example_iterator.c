@@ -51,7 +51,7 @@ int main()
     iarray_iter_read_block_t *iter;
     iarray_iter_read_block_value_t val;
     INA_FAIL_IF(iarray_iter_read_block_new(ctx, &iter, cont, bshape, &val, false));
-    while ((iarray_iter_read_block_has_next(iter))) {
+    while (INA_SUCCEED(iarray_iter_read_block_has_next(iter))) {
         INA_FAIL_IF(iarray_iter_read_block_next(iter, NULL, 0));
         for (int64_t i = 0; i < val.block_size; ++i) {
             double value = ((double *) val.block_pointer)[i];
@@ -69,5 +69,6 @@ int main()
     iarray_iter_read_block_free(&iter);
     iarray_container_free(ctx, &cont);
     iarray_context_free(&ctx);
+    return ina_err_get_rc();
 
 }
