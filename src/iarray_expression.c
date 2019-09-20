@@ -310,7 +310,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
 
         // Evaluate the expression for all the chunks in variables
-        while (iarray_iter_write_block_has_next(iter_out)) {
+        while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_out))) {
             if (INA_FAILED(iarray_iter_write_block_next(iter_out, NULL, 0))) {
                 goto fail_iterchunk;
             }
@@ -336,6 +336,10 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             iarray_iter_read_block_free(&(iter_var[nvar]));
         }
         iarray_iter_write_block_free(&iter_out);
+        if (ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0)) {
+            goto fail_iterchunk;
+        }
+
         INA_MEM_FREE_SAFE(iter_var);
         INA_MEM_FREE_SAFE(iter_value);
         iarray_context_free(&ctx);
@@ -398,7 +402,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         }
 
         // Evaluate the expression for all the chunks in variables
-        while (iarray_iter_write_block_has_next(iter_out)) {
+        while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_out))) {
             external_buffer = malloc(external_buffer_size);
 
             if (INA_FAILED(iarray_iter_write_block_next(iter_out, external_buffer, external_buffer_size))) {
@@ -461,6 +465,11 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             iarray_iter_read_block_free(&iter_var[nvar]);
         }
         iarray_iter_write_block_free(&iter_out);
+
+        if (ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0)) {
+            goto fail_iterblosc;
+        }
+
         INA_MEM_FREE_SAFE(iter_var);
         INA_MEM_FREE_SAFE(iter_value);
         iarray_context_free(&ctx);
@@ -509,11 +518,11 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
         // Evaluate the expression for all the chunks in variables
         int8_t *outbuf = ina_mem_alloc((size_t)chunksize);
-        bool has_next = iarray_iter_write_block_has_next(iter_out);
+
         int32_t nblocks;
         int32_t out_items;
 
-        while (has_next) {
+        while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_out))) {
             if (INA_FAILED(iarray_iter_write_block_next(iter_out, NULL, 0))) {
                 goto fail_iterblock;
             }
@@ -562,9 +571,6 @@ omp_set_num_threads(e->ctx->cfg->max_num_threads);
             // Write the resulting chunk in output
             nitems_written += out_items;
             ina_mempool_reset(e->ctx->mp_tmp_out);
-
-            has_next = iarray_iter_write_block_has_next(iter_out);
-
         }
 
         for (int nvar = 0; nvar < nvars; nvar++) {
@@ -572,6 +578,11 @@ omp_set_num_threads(e->ctx->cfg->max_num_threads);
         }
 
         iarray_iter_write_block_free(&iter_out);
+
+        if (ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0)) {
+            goto fail_iterblock;
+        }
+
         INA_MEM_FREE_SAFE(iter_var);
         INA_MEM_FREE_SAFE(iter_value);
         INA_MEM_FREE_SAFE(outbuf);
