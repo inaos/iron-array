@@ -402,6 +402,24 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
         }
     }
 
+    int64_t psize = 1;
+    for (int i = 0; i < c->catarr->ndim; ++i) {
+        psize *= stop_[i] - start_[i];
+    }
+
+    switch (c->dtshape->dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            if (psize * (int64_t)sizeof(double) > buflen)
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            if (psize * (int64_t)sizeof(float) > buflen)
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            break;
+        default:
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+    }
+
     caterva_dims_t start__ = caterva_new_dims(start_, c->dtshape->ndim);
     caterva_dims_t stop__ = caterva_new_dims(stop_, c->dtshape->ndim);
     int err = caterva_set_slice_buffer(c->catarr, buffer, &start__, &stop__);
@@ -480,7 +498,7 @@ INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
             break;
         case IARRAY_DATA_TYPE_FLOAT:
             if (psize * (int64_t)sizeof(float) > buflen)
-                INA_FAIL_IF(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             break;
         default:
             INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
@@ -568,7 +586,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
     switch (c->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
             if (psize * (int64_t)sizeof(double) > buflen)
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             break;
         case IARRAY_DATA_TYPE_FLOAT:
             if (psize * (int64_t)sizeof(float) > buflen)

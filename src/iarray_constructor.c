@@ -290,18 +290,31 @@ fail:
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
                                      void *buffer,
-                                     size_t buffer_len,
+                                     size_t buflen,
                                      iarray_store_properties_t *store,
                                      int flags,
                                      iarray_container_t **container)
 {
-    INA_UNUSED(buffer_len);
+
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(buffer);
     INA_VERIFY_NOT_NULL(container);
 
     INA_FAIL_IF_ERROR(iarray_container_new(ctx, dtshape, store, flags, container));
+
+    switch ((*container)->dtshape->dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            if ((* container)->catarr->size * (int64_t)sizeof(double) > buflen)
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            if ((* container)->catarr->size * (int64_t)sizeof(float) > buflen)
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            break;
+        default:
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+    }
 
     // TODO: would it be interesting to add a `buffer_len` parameter to `caterva_from_buffer()`?
     caterva_dims_t shape = caterva_new_dims((*container)->dtshape->shape, (*container)->dtshape->ndim);
@@ -422,11 +435,29 @@ fail:
 INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
     iarray_container_t *container,
     void *buffer,
-    size_t buffer_len)
+    size_t buflen)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(buffer);
     INA_VERIFY_NOT_NULL(container);
+
+    int64_t size = 1;
+    for (int i = 0; i < container->dtshape->ndim; ++i) {
+        size *= container->dtshape->shape[i];
+    }
+
+    switch (container->dtshape->dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            if (size * (int64_t)sizeof(double) > buflen)
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            if (size * (int64_t)sizeof(float) > buflen)
+                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            break;
+        default:
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+    }
 
     if (container->view) {
         int64_t start[IARRAY_DIMENSION_MAX];
@@ -435,7 +466,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
             start[i] = 0;
             stop[i] = container->dtshape->shape[i];
         }
-        INA_FAIL_IF_ERROR(iarray_get_slice_buffer(ctx, container, start, stop, buffer, buffer_len));
+        INA_FAIL_IF_ERROR(iarray_get_slice_buffer(ctx, container, start, stop, buffer, buflen));
     } else {
         if (caterva_to_buffer(container->catarr, buffer) != 0) {
             INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
