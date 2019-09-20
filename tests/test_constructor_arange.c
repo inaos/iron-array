@@ -39,16 +39,16 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
     double step = (stop - start) / size;
     iarray_container_t *c_x;
 
-    iarray_arange(ctx, &xdtshape, start, stop, step, NULL, 0, &c_x);
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, NULL, 0, &c_x));
 
     // Assert iterator reading it
 
     iarray_iter_read_t *I2;
     iarray_iter_read_value_t val;
-    iarray_iter_read_new(ctx, &I2, c_x, &val);
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_new(ctx, &I2, c_x, &val));
 
-    while (iarray_iter_read_has_next(I2)) {
-        iarray_iter_read_next(I2);
+    while (INA_SUCCEED(iarray_iter_read_has_next(I2))) {
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_next(I2));
 
         switch(dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
@@ -63,6 +63,7 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
     }
 
     iarray_iter_read_free(&I2);
+    INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     iarray_container_free(ctx, &c_x);
     return INA_SUCCESS;

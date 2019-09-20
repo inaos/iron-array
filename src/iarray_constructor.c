@@ -28,14 +28,17 @@ static ina_rc_t _iarray_container_fill_float(iarray_context_t *ctx, iarray_conta
 
     INA_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &I, c, &val));
 
-    while (iarray_iter_write_has_next(I)) {
+    while (INA_SUCCEED(iarray_iter_write_has_next(I))) {
         INA_FAIL_IF_ERROR(iarray_iter_write_next(I));
         memcpy(val.elem_pointer, &value, sizeof(float));
     }
+    iarray_iter_write_free(&I);
+    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     return INA_SUCCESS;
 
     fail:
+    iarray_iter_write_free(&I);
     return ina_err_get_rc();
 }
 
@@ -51,13 +54,17 @@ static ina_rc_t _iarray_container_fill_double(iarray_context_t *ctx, iarray_cont
 
     INA_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &I, c, &val));
 
-    while (iarray_iter_write_has_next(I)) {
+    while (INA_SUCCEED(iarray_iter_write_has_next(I))) {
         INA_FAIL_IF_ERROR(iarray_iter_write_next(I));
         memcpy(val.elem_pointer, &value, sizeof(double));
     }
+    iarray_iter_write_free(&I);
+    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     return INA_SUCCESS;
+
     fail:
+    iarray_iter_write_free(&I);
     return ina_err_get_rc();
 }
 
@@ -93,7 +100,7 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
 
     INA_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &I, *container, &val));
 
-    while (iarray_iter_write_has_next(I)) {
+    while (INA_SUCCEED(iarray_iter_write_has_next(I))) {
         INA_FAIL_IF_ERROR(iarray_iter_write_next(I));
 
         int64_t i = 0;
@@ -112,6 +119,8 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
         }
     }
     iarray_iter_write_free(&I);
+
+    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     return INA_SUCCESS;
 
@@ -152,7 +161,7 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
 
     INA_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &I, *container, &val));
 
-    while (iarray_iter_write_has_next(I)) {
+    while (INA_SUCCEED(iarray_iter_write_has_next(I))) {
         INA_FAIL_IF_ERROR(iarray_iter_write_next(I));
 
         int64_t i = 0;
@@ -171,6 +180,7 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
         }
     }
     iarray_iter_write_free(&I);
+    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     return INA_SUCCESS;
 

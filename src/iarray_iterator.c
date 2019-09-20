@@ -217,9 +217,12 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr, voi
 }
 
 
-INA_API(int) iarray_iter_read_block_has_next(iarray_iter_read_block_t *itr)
+INA_API(ina_rc_t) iarray_iter_read_block_has_next(iarray_iter_read_block_t *itr)
 {
-    return itr->nblock < itr->total_blocks;
+    if (itr->nblock < itr->total_blocks) {
+        return INA_SUCCESS;
+    }
+    return INA_ERROR(IARRAY_ERR_END_ITER);
 }
 
 
@@ -521,7 +524,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
 }
 
 
-INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
+INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
 {
     if ( itr->nblock == (itr->cont_esize / itr->block_shape_size)) {  // TODO: cannot it be itr->total_blocks ?
         caterva_array_t *catarr = itr->cont->catarr;
@@ -622,7 +625,10 @@ INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
     if (itr->nblock == itr->total_blocks) {
         itr->cont->catarr->filled = true;
     }
-    return itr->nblock < itr->total_blocks;
+    if(itr->nblock < itr->total_blocks) {
+        return INA_SUCCESS;
+    }
+    return INA_ERROR(IARRAY_ERR_END_ITER);
 
     fail:
     return ina_err_get_rc();
@@ -905,9 +911,12 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
  * Function: iarray_iter_read_finished
  */
 
-INA_API(int) iarray_iter_read_has_next(iarray_iter_read_t *itr)
+INA_API(ina_rc_t) iarray_iter_read_has_next(iarray_iter_read_t *itr)
 {
-    return itr->nelem < itr->cont_size;
+    if (itr->nelem < itr->cont_size) {
+        return INA_SUCCESS;
+    }
+    return INA_ERROR(IARRAY_ERR_END_ITER);
 }
 
 
@@ -1061,7 +1070,7 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
     return ina_err_get_rc();
 }
 
-INA_API(int) iarray_iter_write_has_next(iarray_iter_write_t *itr)
+INA_API(ina_rc_t) iarray_iter_write_has_next(iarray_iter_write_t *itr)
 {
     int64_t typesize = itr->container->catarr->ctx->cparams.typesize;
     if (itr->nelem == itr->container->catarr->size) {
@@ -1075,8 +1084,12 @@ INA_API(int) iarray_iter_write_has_next(iarray_iter_write_t *itr)
         itr->container->catarr->filled = true;
     }
 
-    return itr->nelem < itr->container->catarr->size;
+    if (itr->nelem < itr->container->catarr->size) {
+        return INA_SUCCESS;
+    }
+    return INA_ERROR(IARRAY_ERR_END_ITER);
 }
+
 
 INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
                                         iarray_iter_write_t **itr,
