@@ -15,6 +15,7 @@
 
 int main()
 {
+    bool success;
     iarray_init();
     ina_stopwatch_t *w = NULL;
     double elapsed_sec = 0;
@@ -88,7 +89,6 @@ int main()
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) shape_x[0], (int) shape_y[1], (int) shape_x[1],
                 1.0, b_x, (int) shape_x[1], b_y, (int) shape_y[1], 0.0, b_z, (int) shape_y[1]);
     INA_STOPWATCH_STOP(w);
-
     INA_FAIL_IF_ERROR(ina_stopwatch_duration(w, &elapsed_sec));
 
     printf("Time mkl (C): %.4f\n", elapsed_sec);
@@ -129,20 +129,11 @@ int main()
         }
     }
 
-    iarray_container_free(ctx, &c_x);
-    iarray_container_free(ctx, &c_y);
-    iarray_container_free(ctx, &c_z);
-    free(b_x);
-    free(b_y);
-    free(b_z);
-    free(b_res);
-    iarray_context_free(&ctx);
-
-    INA_STOPWATCH_FREE(&w);
-    iarray_destroy();
-    return INA_SUCCESS;
-
+    success = true;
+    goto cleanup;
     fail:
+    success = false;
+    cleanup:
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_z);
@@ -154,5 +145,10 @@ int main()
 
     INA_STOPWATCH_FREE(&w);
     iarray_destroy();
-    return ina_err_get_rc();
+
+    if (success) {
+        return INA_SUCCESS;
+    } else {
+        return ina_err_get_rc();
+    }
 }
