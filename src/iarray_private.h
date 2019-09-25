@@ -32,6 +32,33 @@
 #define _IARRAY_MEMPOOL_EVAL (1024*1024)
 #define _IARRAY_MEMPOOL_EVAL_TMP (1024*1024)
 
+typedef enum iarray_functype_e {
+    IARRAY_FUNC_ABS,
+    IARRAY_FUNC_ACOS,
+    IARRAY_FUNC_ASIN,
+    IARRAY_FUNC_ATAN,
+    IARRAY_FUNC_ATAN2,
+    IARRAY_FUNC_CEIL,
+    IARRAY_FUNC_COS,
+    IARRAY_FUNC_COSH,
+    IARRAY_FUNC_E,
+    IARRAY_FUNC_EXP,
+    IARRAY_FUNC_FAC,
+    IARRAY_FUNC_FLOOR,
+    IARRAY_FUNC_LN,
+    IARRAY_FUNC_LOG,
+    IARRAY_FUNC_LOG10,
+    IARRAY_FUNC_NCR,
+    IARRAY_FUNC_NPR,
+    IARRAY_FUNC_PI,
+    IARRAY_FUNC_POW,
+    IARRAY_FUNC_SIN,
+    IARRAY_FUNC_SINH,
+    IARRAY_FUNC_SQRT,
+    IARRAY_FUNC_TAN,
+    IARRAY_FUNC_TANH,
+} iarray_functype_t;
+
 typedef enum iarray_optype_e {
     IARRAY_OPERATION_TYPE_ADD,
     IARRAY_OPERATION_TYPE_SUB,
@@ -215,6 +242,10 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size);
 
 /* FIXME: since we want to keep the changes to tinyexpr as little as possible we deviate from our usual function decls */
+// iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *operand, iarray_functype_t func);
+iarray_temporary_t* _iarray_func_cos(iarray_expression_t *expr, iarray_temporary_t *operand);
+iarray_temporary_t* _iarray_func_sin(iarray_expression_t *expr, iarray_temporary_t *operand);
+
 //static iarray_temporary_t* _iarray_op(iarray_temporary_t *lhs, iarray_temporary_t *rhs, iarray_optype_t op);
 iarray_temporary_t* _iarray_op_add(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs);
 iarray_temporary_t* _iarray_op_sub(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs);
