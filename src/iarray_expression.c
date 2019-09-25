@@ -703,8 +703,14 @@ static iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_tempor
                 case IARRAY_FUNC_COS:
                     vdCos(len, operand_pointer, out_pointer);
                     break;
+                case IARRAY_FUNC_COSH:
+                    vdCosh(len, operand_pointer, out_pointer);
+                    break;
                 case IARRAY_FUNC_SIN:
                     vdSin(len, operand_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_TAN:
+                    vdTan(len, operand_pointer, out_pointer);
                     break;
                 default:
                     printf("Operation not supported yet");
@@ -728,8 +734,14 @@ static iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_tempor
                 case IARRAY_FUNC_COS:
                     vsCos(len, operand_pointer, out_pointer);
                     break;
+                case IARRAY_FUNC_COSH:
+                    vsCosh(len, operand_pointer, out_pointer);
+                    break;
                 case IARRAY_FUNC_SIN:
                     vsSin(len, operand_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_TAN:
+                    vsTan(len, operand_pointer, out_pointer);
                     break;
                 default:
                     printf("Operation not supported yet");
