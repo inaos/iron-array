@@ -121,6 +121,8 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     INA_VERIFY_NOT_NULL(e);
     INA_VERIFY_NOT_NULL(expr);
 
+    ina_rc_t rc;
+
     int nthreads = 1;
 
 #if defined(_OPENMP)
@@ -224,11 +226,13 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     if (e->texpr == 0) {
         INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_COMPILED));
     }
-    return INA_SUCCESS;
-
-fail:
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
     INA_MEM_FREE_SAFE(e->temp_vars);
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 
@@ -268,6 +272,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 {
     INA_VERIFY_NOT_NULL(e);
     INA_VERIFY_NOT_NULL(ret);
+
+    ina_rc_t rc;
 
     int64_t nitems_in_schunk = e->nbytes / e->typesize;
     int64_t nitems_written = 0;
@@ -332,21 +338,16 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             ina_mempool_reset(e->ctx->mp_tmp_out);
         }
 
-        for (int nvar = 0; nvar < nvars; nvar++) {
-            iarray_iter_read_block_free(&(iter_var[nvar]));
-        }
-        iarray_iter_write_block_free(&iter_out);
         if (ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0)) {
             goto fail_iterchunk;
         }
 
-        INA_MEM_FREE_SAFE(iter_var);
-        INA_MEM_FREE_SAFE(iter_value);
-        iarray_context_free(&ctx);
-
-        goto success;
+        rc = INA_SUCCESS;
+        goto cleanup_iterchunk;
 
     fail_iterchunk:
+        rc = ina_err_get_rc();
+    cleanup_iterchunk:
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_iter_read_block_free(&(iter_var[nvar]));
         }
@@ -357,7 +358,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 
         iarray_context_free(&ctx);
 
-        return ina_err_get_rc();
+        goto cleanup;
     }
 
     else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
@@ -461,22 +462,16 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             ina_mempool_reset(e->ctx->mp_tmp_out);
         }
 
-        for (int nvar = 0; nvar < nvars; nvar++) {
-            iarray_iter_read_block_free(&iter_var[nvar]);
-        }
-        iarray_iter_write_block_free(&iter_out);
-
         if (ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0)) {
             goto fail_iterblosc;
         }
 
-        INA_MEM_FREE_SAFE(iter_var);
-        INA_MEM_FREE_SAFE(iter_value);
-        iarray_context_free(&ctx);
-
-        goto success;
+        rc = INA_SUCCESS;
+        goto cleanup_iterblosc;
 
     fail_iterblosc:
+        rc = ina_err_get_rc();
+    cleanup_iterblosc:
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_iter_read_block_free(&iter_var[nvar]);
         }
@@ -484,7 +479,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
         INA_MEM_FREE_SAFE(iter_var);
         INA_MEM_FREE_SAFE(iter_value);
         iarray_context_free(&ctx);
-        return ina_err_get_rc();
+        goto cleanup;
     }
 
     else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK) {
@@ -573,23 +568,16 @@ omp_set_num_threads(e->ctx->cfg->max_num_threads);
             ina_mempool_reset(e->ctx->mp_tmp_out);
         }
 
-        for (int nvar = 0; nvar < nvars; nvar++) {
-            iarray_iter_read_block_free(&iter_var[nvar]);
-        }
-
-        iarray_iter_write_block_free(&iter_out);
-
         if (ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0)) {
             goto fail_iterblock;
         }
 
-        INA_MEM_FREE_SAFE(iter_var);
-        INA_MEM_FREE_SAFE(iter_value);
-        INA_MEM_FREE_SAFE(outbuf);
-        iarray_context_free(&ctx);
-        goto success;
+        rc = INA_SUCCESS;
+        goto cleanup_iterblock;
 
     fail_iterblock:
+        rc = ina_err_get_rc();
+    cleanup_iterblock:
         for (int nvar = 0; nvar < nvars; nvar++) {
             iarray_iter_read_block_free(&iter_var[nvar]);
         }
@@ -599,11 +587,12 @@ omp_set_num_threads(e->ctx->cfg->max_num_threads);
         INA_MEM_FREE_SAFE(iter_value);
         INA_MEM_FREE_SAFE(outbuf);
         iarray_context_free(&ctx);
-        goto success;
+        goto cleanup;
 
     }
+    rc = INA_SUCCESS;
 
-    success:
+    cleanup:
         ina_mempool_reset(e->ctx->mp);
         ina_mempool_reset(e->ctx->mp_op);
         ina_mempool_reset(e->ctx->mp_tmp_out);
@@ -613,7 +602,7 @@ omp_set_num_threads(e->ctx->cfg->max_num_threads);
             return INA_ERROR(INA_ERR_NOT_COMPLETE);
         }
 
-        return INA_SUCCESS;
+        return rc;
 }
 
 ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)

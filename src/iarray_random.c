@@ -107,7 +107,9 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(random_ctx);
     INA_VERIFY_NOT_NULL(container);
-    
+
+    ina_rc_t rc;
+
     int status = VSL_ERROR_OK;
     iarray_iter_write_block_t *iter;
     iarray_iter_write_block_value_t val;
@@ -260,17 +262,16 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
             }
         }
     }
-    iarray_iter_write_block_free(&iter);
-
     INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
-    INA_MEM_FREE_SAFE(buffer_mem);
-    return INA_SUCCESS;
-
+    rc = INA_SUCCESS;
+    goto cleanup;
 fail:
+    rc = ina_err_get_rc();
+cleanup:
     INA_MEM_FREE_SAFE(buffer_mem);
     iarray_iter_write_block_free(&iter);
-    return ina_err_get_rc();
+    return rc;
 }
 
 INA_API(ina_rc_t) iarray_random_rand(iarray_context_t *ctx,
