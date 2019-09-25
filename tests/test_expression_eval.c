@@ -13,15 +13,17 @@
 #include <libiarray/iarray.h>
 #include <tests/iarray_test.h>
 #include <src/iarray_private.h>
+#include <math.h>
 
 #define NCHUNKS  10
 #define NITEMS_CHUNK (20 * 1000)
 #define NELEM (((NCHUNKS - 1) * NITEMS_CHUNK) + 10)
 #define NTHREADS 1  // FIX: multithreading in ITERBLOCK still having issues
 
-static double _poly(const double x)
+
+static double _expr(const double x)
 {
-    return (x - 1.35)*(x - 4.45)*(x - 8.5);
+    return (cos(x) - 1.35) * (x - 4.45) * sin(x - 8.5);
 }
 
 /* Compute and fill X values in a buffer */
@@ -40,7 +42,7 @@ static int _fill_x(double* x)
 static void _fill_y(const double* x, double* y)
 {
     for (int i = 0; i < NELEM; i++) {
-        y[i] = _poly(x[i]);
+        y[i] = _expr(x[i]);
     }
 }
 
@@ -65,10 +67,11 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
 
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
-    INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)"));
+    INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, "(cos(x) - 1.35) * (x - 4.45) * sin(x - 8.5)"));
     INA_TEST_ASSERT_SUCCEED(iarray_eval(e, c_out));
 
-    INA_TEST_ASSERT_SUCCEED(_iarray_test_container_dbl_buffer_cmp(ctx, c_out, buffer_y, buffer_len));
+    // We use a quite low tolerance as MKL functions always differ from those in OS math libraries
+    INA_TEST_ASSERT_SUCCEED(_iarray_test_container_dbl_buffer_cmp(ctx, c_out, buffer_y, buffer_len, 5e-13));
 
     iarray_expr_free(ctx, &e);
     iarray_container_free(ctx, &c_out);
