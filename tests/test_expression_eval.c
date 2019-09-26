@@ -144,11 +144,16 @@ INA_TEST_FIXTURE(expression_eval, iterblosc_superchunk)
       data->buf_len, false, data->func, data->expr_str));
 }
 
+static double expr3(const double x)
+{
+    return asin(x) + (acos(x) - 1.35) - (atan(x + .2));
+}
+
 INA_TEST_FIXTURE(expression_eval, iterchunk_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
-    data->func = expr1;
-    data->expr_str = "(cos(x) - 1.35) * tan(x) * sin(x - 8.5)";
+    data->func = expr3;
+    data->expr_str = "asin(x) + (acos(x) - 1.35) - (atan(x + .2))";
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
         data->buf_len, false, data->func, data->expr_str));
