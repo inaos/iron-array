@@ -657,23 +657,30 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
     return INA_SUCCESS;
 }
 
-iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *operand, iarray_functype_t func)
+iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *operand1,
+                                 iarray_temporary_t *operand2, iarray_functype_t func)
 {
     if (expr == NULL) {
         goto fail;
     }
-    if (operand == NULL) {
+    if (operand1 == NULL) {
+        goto fail;
+    }
+    if (operand2 != NULL && (
+        (operand1->dtshape->ndim != operand2->dtshape->ndim) ||
+        (operand1->size != operand2->size))) {
+        printf("The 2 operands do not match dims or sizes");
         goto fail;
     }
 
     iarray_dtshape_t dtshape = {0};  // initialize to 0s
     iarray_temporary_t *out;
     bool scalar = true;
-    if (operand->dtshape->ndim > 0) {
+    if (operand1->dtshape->ndim > 0) {
         scalar = false;
-        dtshape.dtype = operand->dtshape->dtype;
-        dtshape.ndim = operand->dtshape->ndim;
-        memcpy(dtshape.shape, operand->dtshape->shape, sizeof(int) * dtshape.ndim);
+        dtshape.dtype = operand1->dtshape->dtype;
+        dtshape.ndim = operand1->dtshape->ndim;
+        memcpy(dtshape.shape, operand1->dtshape->shape, sizeof(int) * dtshape.ndim);
     }
 
     // Creating the temporary means interacting with the INA memory allocator, which is not thread-safe.
@@ -688,61 +695,66 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
 
     switch (dtshape.dtype) {
         case IARRAY_DATA_TYPE_DOUBLE: {
-            double *operand_pointer;
+            double *operand1_pointer;
+            double *operand2_pointer;
             double *out_pointer;
             int32_t len;
             if (scalar) {
                 len = 1;
-                operand_pointer = &operand->scalar_value.d;
+                operand1_pointer = &operand1->scalar_value.d;
                 out_pointer = &out->scalar_value.d;
             }
             else {
                 len = expr->max_out_len == 0 ? (int32_t)(out->size / sizeof(double)) : expr->max_out_len;
-                operand_pointer = operand->data;
+                operand1_pointer = operand1->data;
+                if (operand2 != NULL) operand2_pointer = operand2->data;
                 out_pointer = out->data;
             }
             switch (func) {
                 case IARRAY_FUNC_ACOS:
-                    vdAcos(len, operand_pointer, out_pointer);
+                    vdAcos(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_ASIN:
-                    vdAsin(len, operand_pointer, out_pointer);
+                    vdAsin(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_ATAN:
-                    vdAtan(len, operand_pointer, out_pointer);
+                    vdAtan(len, operand1_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_ATAN2:
+                    vdAtan2(len, operand1_pointer, operand2_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_COS:
-                    vdCos(len, operand_pointer, out_pointer);
+                    vdCos(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_COSH:
-                    vdCosh(len, operand_pointer, out_pointer);
+                    vdCosh(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_EXP:
-                    vdExp(len, operand_pointer, out_pointer);
+                    vdExp(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_LN:
-                    vdLn(len, operand_pointer, out_pointer);
+                    vdLn(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_LOG10:
-                    vdLog10(len, operand_pointer, out_pointer);
+                    vdLog10(len, operand1_pointer, out_pointer);
                     break;
-//                case IARRAY_FUNC_POW:
-//                    vdPow(len, operand_pointer, out_pointer);
-//                    break;
+                case IARRAY_FUNC_POW:
+                    vdPow(len, operand1_pointer, operand2_pointer, out_pointer);
+                    break;
                 case IARRAY_FUNC_SIN:
-                    vdSin(len, operand_pointer, out_pointer);
+                    vdSin(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_SINH:
-                    vdSinh(len, operand_pointer, out_pointer);
+                    vdSinh(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_SQRT:
-                    vdSqrt(len, operand_pointer, out_pointer);
+                    vdSqrt(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_TAN:
-                    vdTan(len, operand_pointer, out_pointer);
+                    vdTan(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_TANH:
-                    vdTanh(len, operand_pointer, out_pointer);
+                    vdTanh(len, operand1_pointer, out_pointer);
                     break;
                 default:
                     printf("Operation not supported yet");
@@ -752,60 +764,65 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
         break;
         case IARRAY_DATA_TYPE_FLOAT: {
             int32_t len;
-            float *operand_pointer;
+            float *operand1_pointer;
+            float *operand2_pointer;
             float *out_pointer;
             if (scalar) {
                 len = 1;
-                operand_pointer = &operand->scalar_value.f;
+                operand1_pointer = &operand1->scalar_value.f;
                 out_pointer = &out->scalar_value.f;
             }
             else {
                 len = expr->max_out_len == 0 ? (int32_t)(out->size / sizeof(float)) : expr->max_out_len;
-                operand_pointer = operand->data;
+                operand1_pointer = operand1->data;
+                if (operand2 != NULL) operand2_pointer = operand2->data;
                 out_pointer = out->data;
             }
             switch (func) {
                 case IARRAY_FUNC_ACOS:
-                    vsAcos(len, operand_pointer, out_pointer);
+                    vsAcos(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_ASIN:
-                    vsAsin(len, operand_pointer, out_pointer);
+                    vsAsin(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_ATAN:
-                    vsAtan(len, operand_pointer, out_pointer);
+                    vsAtan(len, operand1_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_ATAN2:
+                    vsAtan2(len, operand1_pointer, operand2_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_COS:
-                    vsCos(len, operand_pointer, out_pointer);
+                    vsCos(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_COSH:
-                    vsCosh(len, operand_pointer, out_pointer);
+                    vsCosh(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_EXP:
-                    vsExp(len, operand_pointer, out_pointer);
+                    vsExp(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_LN:
-                    vsLn(len, operand_pointer, out_pointer);
+                    vsLn(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_LOG10:
-                    vsLog10(len, operand_pointer, out_pointer);
+                    vsLog10(len, operand1_pointer, out_pointer);
                     break;
-//                case IARRAY_FUNC_POW:
-//                    vsPow(len, operand_pointer1, operand_pointer2, out_pointer);
-//                    break;
+                case IARRAY_FUNC_POW:
+                    vsPow(len, operand1_pointer, operand2_pointer, out_pointer);
+                    break;
                 case IARRAY_FUNC_SIN:
-                    vsSin(len, operand_pointer, out_pointer);
+                    vsSin(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_SINH:
-                    vsSinh(len, operand_pointer, out_pointer);
+                    vsSinh(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_SQRT:
-                    vsSqrt(len, operand_pointer, out_pointer);
+                    vsSqrt(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_TAN:
-                    vsTan(len, operand_pointer, out_pointer);
+                    vsTan(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_TANH:
-                    vsTanh(len, operand_pointer, out_pointer);
+                    vsTanh(len, operand1_pointer, out_pointer);
                     break;
                 default:
                     printf("Operation not supported yet");
