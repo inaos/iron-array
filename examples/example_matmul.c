@@ -111,7 +111,7 @@ int main()
 
     INA_STOPWATCH_START(w);
     if (INA_FAILED(iarray_linalg_matmul(ctx, c_x, c_y ,c_z, bshape_x, bshape_y, IARRAY_OPERATOR_GENERAL))) {
-        printf("Error in linalg_matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
+        fprintf(stderr, "Error in linalg_matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
         goto fail;
     }
     INA_STOPWATCH_STOP(w);
@@ -123,8 +123,8 @@ int main()
 
     for (int64_t i = 0; i < size_z; ++i) {
         if (fabs((b_res[i] - b_z[i]) / b_res[i]) > 1e-8) {
-            printf("%f - %f = %f\n", b_res[i], b_z[i], b_res[i] - b_z[i]);
-            printf("Error in element %llu\n", i);
+            fprintf(stderr, "%f - %f = %f\n", b_res[i], b_z[i], b_res[i] - b_z[i]);
+            fprintf(stderr, "Error in element %llu\n", i);
             return INA_ERROR(INA_ERR_ERROR);
         }
     }
