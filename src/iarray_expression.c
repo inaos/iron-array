@@ -726,11 +726,17 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
                 case IARRAY_FUNC_LOG10:
                     vdLog10(len, operand_pointer, out_pointer);
                     break;
+//                case IARRAY_FUNC_POW:
+//                    vdPow(len, operand_pointer, out_pointer);
+//                    break;
                 case IARRAY_FUNC_SIN:
                     vdSin(len, operand_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_SINH:
                     vdSinh(len, operand_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_SQRT:
+                    vdSqrt(len, operand_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_TAN:
                     vdTan(len, operand_pointer, out_pointer);
@@ -783,11 +789,23 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
                 case IARRAY_FUNC_LOG10:
                     vsLog10(len, operand_pointer, out_pointer);
                     break;
+//                case IARRAY_FUNC_POW:
+//                    vsPow(len, operand_pointer1, operand_pointer2, out_pointer);
+//                    break;
                 case IARRAY_FUNC_SIN:
                     vsSin(len, operand_pointer, out_pointer);
                     break;
+                case IARRAY_FUNC_SINH:
+                    vsSinh(len, operand_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_SQRT:
+                    vsSqrt(len, operand_pointer, out_pointer);
+                    break;
                 case IARRAY_FUNC_TAN:
                     vsTan(len, operand_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_TANH:
+                    vsTanh(len, operand_pointer, out_pointer);
                     break;
                 default:
                     printf("Operation not supported yet");
