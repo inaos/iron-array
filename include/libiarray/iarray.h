@@ -35,6 +35,7 @@
 #define IARRAY_ES_RNG_METHOD (INA_ES_USER_DEFINED + 14)
 #define IARRAY_ES_RAND_METHOD (INA_ES_USER_DEFINED + 15)
 #define IARRAY_ES_RAND_PARAM (INA_ES_USER_DEFINED + 16)
+#define IARRAY_ES_ITER (INA_ES_USER_DEFINED + 16)
 
 
 #define IARRAY_ERR_EMPTY_CONTAINER (INA_ERR_EMPTY | IARRAY_ES_CONTAINER)
@@ -59,6 +60,8 @@
 #define IARRAY_ERR_BLOSC_FAILED (INA_ERR_FAILED | IARRAY_ES_BLOSC)
 #define IARRAY_ERR_RAND_METHOD_FAILED (IARRAY_ES_RAND_METHOD | INA_ERR_FAILED)
 #define IARRAY_ERR_ASSERTION_FAILED (IARRAY_ES_ASSERTION | INA_ERR_FAILED)
+
+#define IARRAY_ERR_END_ITER (IARRAY_ES_ITER | INA_ERR_COMPLETE)
 
 
 typedef struct iarray_context_s iarray_context_t;
@@ -563,7 +566,7 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
                                         iarray_iter_write_value_t *val);
 INA_API(void) iarray_iter_write_free(iarray_iter_write_t **itr);
 INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr);
-INA_API(int) iarray_iter_write_has_next(iarray_iter_write_t *itr);
+INA_API(ina_rc_t) iarray_iter_write_has_next(iarray_iter_write_t *itr);
 
 
 INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
@@ -572,7 +575,7 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
                                        iarray_iter_read_value_t *val);
 INA_API(void) iarray_iter_read_free(iarray_iter_read_t **itr);
 INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr);
-INA_API(int) iarray_iter_read_has_next(iarray_iter_read_t *itr);
+INA_API(ina_rc_t) iarray_iter_read_has_next(iarray_iter_read_t *itr);
 
 INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_iter_read_block_t **itr,
@@ -583,7 +586,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
 
 INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t **itr);
 INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr, void *buffer, int32_t bufsize);
-INA_API(int) iarray_iter_read_block_has_next(iarray_iter_read_block_t *itr);
+INA_API(ina_rc_t) iarray_iter_read_block_has_next(iarray_iter_read_block_t *itr);
 
 INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_iter_write_block_t **itr,
@@ -594,7 +597,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
 INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t **itr);
 INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr, void *buffer, int32_t bufsize);
-INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr);
+INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr);
 
 /* Expressions */
 INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e);

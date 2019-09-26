@@ -20,6 +20,7 @@ static ina_rc_t _iarray_container_fill_float(iarray_context_t *ctx, iarray_conta
 {
     INA_VERIFY_NOT_NULL(c);
 
+    ina_rc_t rc;
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
 
@@ -28,15 +29,22 @@ static ina_rc_t _iarray_container_fill_float(iarray_context_t *ctx, iarray_conta
 
     INA_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &I, c, &val));
 
-    while (iarray_iter_write_has_next(I)) {
+    while (INA_SUCCEED(iarray_iter_write_has_next(I))) {
         INA_FAIL_IF_ERROR(iarray_iter_write_next(I));
         memcpy(val.elem_pointer, &value, sizeof(float));
     }
+    iarray_iter_write_free(&I);
+    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
-    return INA_SUCCESS;
+
+    rc = INA_SUCCESS;
+    goto cleanup;
 
     fail:
-    return ina_err_get_rc();
+        rc = ina_err_get_rc();
+    cleanup:
+        iarray_iter_write_free(&I);
+        return rc;
 }
 
 
@@ -44,6 +52,8 @@ static ina_rc_t _iarray_container_fill_double(iarray_context_t *ctx, iarray_cont
 {
     INA_VERIFY_NOT_NULL(c);
 
+    ina_rc_t rc;
+
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
 
     iarray_iter_write_t *I;
@@ -51,14 +61,21 @@ static ina_rc_t _iarray_container_fill_double(iarray_context_t *ctx, iarray_cont
 
     INA_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &I, c, &val));
 
-    while (iarray_iter_write_has_next(I)) {
+    while (INA_SUCCEED(iarray_iter_write_has_next(I))) {
         INA_FAIL_IF_ERROR(iarray_iter_write_next(I));
         memcpy(val.elem_pointer, &value, sizeof(double));
     }
+    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+    iarray_iter_write_free(&I);
 
-    return INA_SUCCESS;
+    rc = INA_SUCCESS;
+    goto cleanup;
+
     fail:
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    iarray_iter_write_free(&I);
+    return rc;
 }
 
 
@@ -75,6 +92,8 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(container);
+
+    ina_rc_t rc;
 
     double contsize = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {
@@ -93,7 +112,7 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
 
     INA_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &I, *container, &val));
 
-    while (iarray_iter_write_has_next(I)) {
+    while (INA_SUCCEED(iarray_iter_write_has_next(I))) {
         INA_FAIL_IF_ERROR(iarray_iter_write_next(I));
 
         int64_t i = 0;
@@ -111,14 +130,18 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
             memcpy(val.elem_pointer, &value, sizeof(float));
         }
     }
+
+    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
     iarray_iter_write_free(&I);
 
-    return INA_SUCCESS;
-
-fail:
-    iarray_iter_write_free(&I);
-    iarray_container_free(ctx, container);
-    return ina_err_get_rc();
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
+        iarray_container_free(ctx, container);
+        rc = ina_err_get_rc();
+    cleanup:
+        iarray_iter_write_free(&I);
+        return rc;
 }
 
 
@@ -136,6 +159,8 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(container);
 
+    ina_rc_t rc;
+
     double contsize = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {
         contsize *= dtshape->shape[i];
@@ -152,7 +177,7 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
 
     INA_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &I, *container, &val));
 
-    while (iarray_iter_write_has_next(I)) {
+    while (INA_SUCCEED(iarray_iter_write_has_next(I))) {
         INA_FAIL_IF_ERROR(iarray_iter_write_next(I));
 
         int64_t i = 0;
@@ -171,13 +196,16 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
         }
     }
     iarray_iter_write_free(&I);
+    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
-    return INA_SUCCESS;
-
-fail:
-    iarray_iter_write_free(&I);
-    iarray_container_free(ctx, container);
-    return ina_err_get_rc();
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
+        iarray_container_free(ctx, container);
+        rc = ina_err_get_rc();
+    cleanup:
+        iarray_iter_write_free(&I);
+        return rc;
 }
 
 
@@ -191,6 +219,8 @@ INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(container);
 
+    ina_rc_t rc;
+
     INA_FAIL_IF_ERROR(iarray_container_new(ctx, dtshape, store, flags, container));
 
     switch (dtshape->dtype) {
@@ -203,11 +233,13 @@ INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
         default:
             INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
-    return INA_SUCCESS;
-
-fail:
-    iarray_container_free(ctx, container);
-    return ina_err_get_rc();
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
+        iarray_container_free(ctx, container);
+        rc = ina_err_get_rc();
+    cleanup:
+        return rc;
 }
 
 
@@ -221,6 +253,8 @@ INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(container);
 
+    ina_rc_t rc;
+
     INA_FAIL_IF_ERROR(iarray_container_new(ctx, dtshape, store, flags, container));
 
     switch (dtshape->dtype) {
@@ -233,11 +267,14 @@ INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
     default:
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
-    return INA_SUCCESS;
 
-fail:
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
     iarray_container_free(ctx, container);
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 
@@ -252,15 +289,19 @@ INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(container);
 
+    ina_rc_t rc;
+
     INA_FAIL_IF_ERROR(iarray_container_new(ctx, dtshape, store, flags, container));
 
     INA_FAIL_IF_ERROR(_iarray_container_fill_float(ctx, *container, value));
 
-    return INA_SUCCESS;
-
-fail:
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
     iarray_container_free(ctx, container);
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 
@@ -275,15 +316,19 @@ INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(container);
 
+    ina_rc_t rc;
+
     INA_FAIL_IF_ERROR(iarray_container_new(ctx, dtshape, store, flags, container));
 
     INA_FAIL_IF_ERROR(_iarray_container_fill_double(ctx, *container, value));
 
-    return INA_SUCCESS;
-
-fail:
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
     iarray_container_free(ctx, container);
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 
@@ -301,6 +346,7 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(buffer);
     INA_VERIFY_NOT_NULL(container);
 
+    ina_rc_t rc;
     INA_FAIL_IF_ERROR(iarray_container_new(ctx, dtshape, store, flags, container));
 
     switch ((*container)->dtshape->dtype) {
@@ -322,19 +368,22 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
 
-    return INA_SUCCESS;
-
-fail:
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
     iarray_container_free(ctx, container);
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 
-static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype)
-{
+static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype) {
     INA_UNUSED(smeta_len);
     INA_VERIFY_NOT_NULL(smeta);
     INA_VERIFY_NOT_NULL(dtype);
+
+    ina_rc_t rc;
 
     uint8_t *pmeta = smeta;
 
@@ -346,11 +395,13 @@ static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
 
-    return INA_SUCCESS;
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
-
 
 INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_properties_t *store,
                                    iarray_container_t **container, bool load_in_mem)
@@ -358,6 +409,7 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(container);
 
+    ina_rc_t rc;
     caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, BLOSC2_CPARAMS_DEFAULTS, BLOSC2_DPARAMS_DEFAULTS);
 
     caterva_array_t *catarr = caterva_from_file(cat_ctx, store->id, load_in_mem);
@@ -423,12 +475,14 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
     }
     (*container)->store->id = ina_str_new_fromcstr(store->id);
 
-    return INA_SUCCESS;
-
-fail:
-    caterva_free_ctx(cat_ctx);
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
     iarray_container_free(ctx, container);
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    caterva_free_ctx(cat_ctx);
+    return rc;
 }
 
 
@@ -440,6 +494,8 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(buffer);
     INA_VERIFY_NOT_NULL(container);
+
+    ina_rc_t rc;
 
     int64_t size = 1;
     for (int i = 0; i < container->dtshape->ndim; ++i) {
@@ -488,9 +544,12 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
         }
     }
 
-    return INA_SUCCESS;
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 

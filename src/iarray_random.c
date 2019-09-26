@@ -107,7 +107,9 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(random_ctx);
     INA_VERIFY_NOT_NULL(container);
-    
+
+    ina_rc_t rc;
+
     int status = VSL_ERROR_OK;
     iarray_iter_write_block_t *iter;
     iarray_iter_write_block_value_t val;
@@ -120,7 +122,7 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
 
     INA_FAIL_IF_ERROR(iarray_iter_write_block_new(ctx, &iter, container, container->dtshape->pshape, &val, false));
 
-    while (iarray_iter_write_block_has_next(iter)) {
+    while (INA_SUCCEED(iarray_iter_write_block_has_next(iter))) {
         INA_FAIL_IF_ERROR(iarray_iter_write_block_next(iter, NULL, 0));
 
         int64_t block_size = val.block_size;
@@ -260,14 +262,16 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
             }
         }
     }
-    iarray_iter_write_block_free(&iter);
-    INA_MEM_FREE_SAFE(buffer_mem);
-    return INA_SUCCESS;
+    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
+    rc = INA_SUCCESS;
+    goto cleanup;
 fail:
+    rc = ina_err_get_rc();
+cleanup:
     INA_MEM_FREE_SAFE(buffer_mem);
     iarray_iter_write_block_free(&iter);
-    return ina_err_get_rc();
+    return rc;
 }
 
 INA_API(ina_rc_t) iarray_random_rand(iarray_context_t *ctx,
@@ -616,7 +620,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
     iarray_iter_read_value_t val;
     INA_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, c1, &val));
 
-    while (iarray_iter_read_has_next(iter)) {
+    while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
         INA_FAIL_IF_ERROR(iarray_iter_read_next(iter));
 
         double data;
@@ -634,10 +638,12 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         max = (data > max) ? data : max;
         min = (data < min) ? data : min;
     }
+    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+
     iarray_iter_read_free(&iter);
 
     INA_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, c2, &val));
-    while (iarray_iter_read_has_next(iter)) {
+    while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
         INA_FAIL_IF_ERROR(iarray_iter_read_next(iter));
 
         double data;
@@ -656,6 +662,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         min = (data < min) ? data : min;
     }
     iarray_iter_read_free(&iter);
+    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     for (int i = 0; i < nbins; ++i) {
         bins[i] = min + (max-min)/nbins * (i+1);
@@ -665,7 +672,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
 
     INA_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, c1, &val));
 
-    while (iarray_iter_read_has_next(iter)) {
+    while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
         INA_FAIL_IF_ERROR(iarray_iter_read_next(iter));
 
         double data;
@@ -688,10 +695,11 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         }
     }
     iarray_iter_read_free(&iter);
+    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     INA_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, c2, &val));
 
-    while (iarray_iter_read_has_next(iter)) {
+    while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
         INA_FAIL_IF_ERROR(iarray_iter_read_next(iter));
 
         double data;
@@ -713,6 +721,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         }
     }
     iarray_iter_read_free(&iter);
+    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     for (int i = 1; i < nbins; ++i) {
         hist1[i] += hist1[i-1];
