@@ -15,9 +15,10 @@
 #include <src/iarray_private.h>
 #include <math.h>
 
-#define NCHUNKS  10
+#define NCHUNKS  1  // per construction, must be a minimum of 2
 #define NITEMS_CHUNK (20 * 1000)
-#define NELEM (((NCHUNKS - 1) * NITEMS_CHUNK) + 10)
+// #define NELEM (((NCHUNKS - 1) * NITEMS_CHUNK) + 10)
+#define NELEM (NCHUNKS * NITEMS_CHUNK + 1)
 #define NTHREADS 1  // FIX: multithreading in ITERBLOCK still having issues
 
 
@@ -114,14 +115,15 @@ INA_TEST_TEARDOWN(expression_eval)
 
 static double expr1(const double x)
 {
-    return (cos(x) - 1.35) * (x - 4.45) * sin(x - 8.5);
+    return (cos(x) - 1.35) * tan(x) * sin(x - 8.5);
+    //return (x - 1.35) + sin(.45);  // TODO: fix evaluation of func(constant)
 }
 
 INA_TEST_FIXTURE(expression_eval, iterblock_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
     data->func = expr1;
-    data->expr_str = "(cos(x) - 1.35) * (x - 4.45) * sin(x - 8.5)";
+    data->expr_str = "(cos(x) - 1.35) * tan(x) * sin(x - 8.5)";
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
         data->buf_len, false, data->func, data->expr_str));
@@ -129,14 +131,14 @@ INA_TEST_FIXTURE(expression_eval, iterblock_superchunk)
 
 static double expr2(const double x)
 {
-    return tan(x) + (cosh(x) - 1.35);
+    return sinh(x) + (cosh(x) - 1.35) - (tanh(x + .2));
 }
 
 INA_TEST_FIXTURE(expression_eval, iterblosc_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC;
     data->func = expr2;
-    data->expr_str = "tan(x) + (cosh(x) - 1.35)";
+    data->expr_str = "sinh(x) + (cosh(x) - 1.35) - (tanh(x + .2))";
 
   INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
       data->buf_len, false, data->func, data->expr_str));
@@ -146,7 +148,7 @@ INA_TEST_FIXTURE(expression_eval, iterchunk_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
     data->func = expr1;
-    data->expr_str = "(cos(x) - 1.35) * (x - 4.45) * sin(x - 8.5)";
+    data->expr_str = "(cos(x) - 1.35) * tan(x) * sin(x - 8.5)";
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
         data->buf_len, false, data->func, data->expr_str));
@@ -156,7 +158,7 @@ INA_TEST_FIXTURE(expression_eval, iterblock_plainbuffer)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
     data->func = expr1;
-    data->expr_str = "(cos(x) - 1.35) * (x - 4.45) * sin(x - 8.5)";
+    data->expr_str = "(cos(x) - 1.35) * tan(x) * sin(x - 8.5)";
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
         data->buf_len, true, data->func, data->expr_str));
@@ -166,7 +168,7 @@ INA_TEST_FIXTURE(expression_eval, iterchunk_plainbuffer)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
     data->func = expr1;
-    data->expr_str = "(cos(x) - 1.35) * (x - 4.45) * sin(x - 8.5)";
+    data->expr_str = "(cos(x) - 1.35) * tan(x) * sin(x - 8.5)";
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
         data->buf_len, true, data->func, data->expr_str));

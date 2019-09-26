@@ -183,6 +183,16 @@ iarray_temporary_t* func_cosh(iarray_expression_t *expr, iarray_temporary_t *ope
     return _iarray_func(expr, operand, IARRAY_FUNC_COSH);
 }
 
+iarray_temporary_t* func_sinh(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, IARRAY_FUNC_SINH);
+}
+
+iarray_temporary_t* func_tanh(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, IARRAY_FUNC_TANH);
+}
+
 
 INA_DISABLE_WARNING_MSVC(4152);
 static const te_variable functions[] = {
@@ -211,10 +221,10 @@ static const te_variable functions[] = {
     {"pi", NULL, pi,        TE_FUNCTION0 | TE_FLAG_PURE, 0},
     {"pow", NULL, NULL,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"sin", NULL, func_sin,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"sinh", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"sinh", NULL, func_sinh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"sqrt", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"tan", NULL, func_tan,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"tanh", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"tanh", NULL, func_tanh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {0, 0, 0, 0, 0}
 };
 INA_ENABLE_WARNING_MSVC(4152);
