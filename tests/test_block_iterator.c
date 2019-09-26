@@ -36,8 +36,8 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     iarray_iter_write_block_value_t val;
     INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, false));
 
-    while (iarray_iter_write_block_has_next(I)) {
-        iarray_iter_write_block_next(I, NULL, 0);
+    while (INA_SUCCEED(iarray_iter_write_block_has_next(I))) {
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(I, NULL, 0));
 
         int64_t nelem = 0;
         int64_t inc = 1;
@@ -57,6 +57,8 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     }
 
     iarray_iter_write_block_free(&I);
+    
+    INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));
@@ -68,7 +70,7 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
                               (double *) buf, (size_t)c_x->dtshape->shape[1], (size_t)c_x->dtshape->shape[0]);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                mkl_simatcopy('R', 'T', (size_t)c_x->dtshape->shape[0], (size_t)c_x->dtshape->shape[1], 1.0,
+                mkl_simatcopy('R', 'T', (size_t)c_x->dtshape->shape[0], (size_t)c_x->dtshape->shape[1], 1.0f,
                               (float *) buf, (size_t)c_x->dtshape->shape[1], (size_t)c_x->dtshape->shape[0]);
                 break;
             default:
@@ -96,9 +98,9 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     iarray_iter_read_block_value_t val3;
     INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, false));
 
-    while (iarray_iter_read_block_has_next(I2) && iarray_iter_read_block_has_next(I3)) {
-        iarray_iter_read_block_next(I2, NULL, 0);
-        iarray_iter_read_block_next(I3, NULL, 0);
+    while (INA_SUCCEED(iarray_iter_read_block_has_next(I2)) && INA_SUCCEED(iarray_iter_read_block_has_next(I3))) {
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(I2, NULL, 0));
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(I3, NULL, 0));
 
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
@@ -120,6 +122,9 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
 
     iarray_iter_read_block_free(&I2);
     iarray_iter_read_block_free(&I3);
+
+    INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
@@ -275,7 +280,7 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
 
     INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, true));
 
-    while (iarray_iter_write_block_has_next(I)) {
+    while (INA_SUCCEED(iarray_iter_write_block_has_next(I))) {
         INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(I, (void *) part_x, partsize_x));
 
         int64_t nelem = 0;
@@ -296,6 +301,8 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
     }
 
     iarray_iter_write_block_free(&I);
+    INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+
 
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));
@@ -355,9 +362,9 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
     uint8_t *part_y = (uint8_t *) malloc(partsize_y);
     INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, true));
 
-    while (iarray_iter_read_block_has_next(I2) && iarray_iter_read_block_has_next(I3)) {
-        iarray_iter_read_block_next(I2, (void *) part_x, partsize_x);
-        iarray_iter_read_block_next(I3, (void *) part_y, partsize_y);
+    while (INA_SUCCEED(iarray_iter_read_block_has_next(I2)) && INA_SUCCEED(iarray_iter_read_block_has_next(I3))) {
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(I2, (void *) part_x, partsize_x));
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(I3, (void *) part_y, partsize_y));
 
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
@@ -379,6 +386,8 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
 
     iarray_iter_read_block_free(&I2);
     iarray_iter_read_block_free(&I3);
+    INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
@@ -508,8 +517,8 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
     iarray_iter_write_block_value_t val;
     INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, false));
 
-    while (iarray_iter_write_block_has_next(I)) {
-        iarray_iter_write_block_next(I, NULL, 0);
+    while (INA_SUCCEED(iarray_iter_write_block_has_next(I))) {
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(I, NULL, 0));
 
         int64_t nelem = 0;
         int64_t inc = 1;
@@ -529,6 +538,8 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
     }
 
     iarray_iter_write_block_free(&I);
+    INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+
 
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));
@@ -568,7 +579,7 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
     iarray_iter_read_block_value_t val3;
     INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, false));
 
-    while (iarray_iter_read_block_has_next(I2) && iarray_iter_read_block_has_next(I3)) {
+    while (INA_SUCCEED(iarray_iter_read_block_has_next(I2)) && INA_SUCCEED(iarray_iter_read_block_has_next(I3))) {
         INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(I2, NULL, 0));
         INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(I3, NULL, 0));
 
@@ -592,6 +603,8 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
 
     iarray_iter_read_block_free(&I2);
     iarray_iter_read_block_free(&I3);
+    INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);

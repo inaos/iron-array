@@ -94,7 +94,7 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
 
     int64_t size_c = dtshape_c.shape[0] * dtshape_c.shape[1];
     double *buffer_c = (double *) malloc(size_c * sizeof(double));
-    iarray_to_buffer(ctx, c_c, buffer_c, size_c * sizeof(double));
+    INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_c, buffer_c, size_c * sizeof(double)));
 
     double mult_value = dtshape_a.shape[1];
     for (int i = 0; i < size_c; ++i) {

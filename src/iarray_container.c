@@ -17,6 +17,7 @@
 
 INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dtshape_t *b)
 {
+    ina_rc_t rc;
     if (a->dtype != b->dtype) {
         printf("Dtypes are not equals\n");
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
@@ -31,9 +32,12 @@ INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dts
             INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_SHAPE));
         }
     }
-    return INA_SUCCESS;
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 
@@ -65,6 +69,8 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
     INA_VERIFY_NOT_NULL(container);
+
+    ina_rc_t rc;
 
     int64_t start_[IARRAY_DIMENSION_MAX];
     int64_t stop_[IARRAY_DIMENSION_MAX];
@@ -154,11 +160,13 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         }
     }
 
-    return INA_SUCCESS;
-
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
     iarray_container_free(ctx, container);
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
@@ -172,6 +180,8 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
     INA_VERIFY_NOT_NULL(slice);
+
+    ina_rc_t rc;
 
     if (c->dtshape->dtype != slice->dtshape->dtype) {
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
@@ -197,13 +207,15 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
         INA_MEM_FREE_SAFE(buffer);
     }
 
-    return INA_SUCCESS;
-
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
     if (slice->catarr->storage == CATERVA_STORAGE_BLOSC) {
         INA_MEM_FREE_SAFE(buffer);
     }
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 
@@ -218,6 +230,8 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
     INA_VERIFY_NOT_NULL(buffer);
+
+    ina_rc_t rc;
 
     int8_t ndim = c->dtshape->ndim;
     int64_t *offset = c->auxshape->offset;
@@ -302,17 +316,19 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                 mkl_dimatcopy('R', 'T', rows, cols, 1.0, (double *) buffer, cols, rows);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                mkl_simatcopy('R', 'T', rows, cols, 1.0, (float *) buffer, cols, rows);
+                mkl_simatcopy('R', 'T', rows, cols, 1.0f, (float *) buffer, cols, rows);
                 break;
             default:
                 INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
     }
 
-    return INA_SUCCESS;
-
-fail:
-    return ina_err_get_rc();
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 
@@ -330,6 +346,8 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
     INA_VERIFY_NOT_NULL(buffer);
+
+    ina_rc_t rc;
 
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_STORAGE));
@@ -427,9 +445,12 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
     if (err != 0) {
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
-    return INA_SUCCESS;
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 
@@ -443,6 +464,8 @@ INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
+
+    ina_rc_t rc;
 
     int8_t ndim = c->dtshape->ndim;
     int64_t *offset = c->auxshape->offset;
@@ -512,10 +535,12 @@ INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
 
-    return INA_SUCCESS;
-
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
@@ -531,6 +556,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(stop);
     INA_VERIFY_NOT_NULL(pshape);
 
+    ina_rc_t rc;
 
     int8_t ndim = c->dtshape->ndim;
     int64_t *offset = c->auxshape->offset;
@@ -606,10 +632,12 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
 
-    return INA_SUCCESS;
-
-fail:
-    return ina_err_get_rc();
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
@@ -694,6 +722,8 @@ INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, int64_t *nbytes, 
 
 INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_container_t *b, double tol)
 {
+    ina_rc_t rc;
+
     if (a->dtshape->dtype != b->dtshape->dtype){
         printf("Dtypes are not equals\n");
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
@@ -760,20 +790,16 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
         }
     }
 
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
+    rc = ina_err_get_rc();
+    cleanup:
     iarray_context_free(&ctx);
     iarray_iter_read_block_free(&iter_a);
     iarray_iter_read_block_free(&iter_b);
     free(blocksize);
-
-    return INA_SUCCESS;
-
-fail:
-    iarray_context_free(&ctx);
-    iarray_iter_read_block_free(&iter_a);
-    iarray_iter_read_block_free(&iter_b);
-    free(blocksize);
-
-    return ina_err_get_rc();
+    return rc;
 }
 
 
