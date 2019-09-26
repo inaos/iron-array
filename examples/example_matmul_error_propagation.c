@@ -115,7 +115,6 @@ int main()
     iarray_container_t *cont_c;
     INA_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, NULL, 0, &cont_c));
 
-
     double *a = (double *) malloc(size_a * sizeof(double));
     double *b = (double *) malloc(size_b * sizeof(double));
     double *c_c = (double *) malloc(size_c * sizeof(double));
@@ -128,7 +127,6 @@ int main()
     mult_c(a, b, c_c, I, J, K);
 
     mult_mkl(a, b, c_mkl, I, J, K);
-
 
    int64_t bshape_a[] = {10, 10};
    int64_t bshape_b[] = {10, 10};
