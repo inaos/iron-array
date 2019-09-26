@@ -203,6 +203,11 @@ iarray_temporary_t* func_log10(iarray_expression_t *expr, iarray_temporary_t *op
     return _iarray_func(expr, operand, IARRAY_FUNC_LOG10);
 }
 
+iarray_temporary_t* func_pow(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, IARRAY_FUNC_POW);
+}
+
 iarray_temporary_t* func_sin(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
     return _iarray_func(expr, operand, IARRAY_FUNC_SIN);
@@ -216,6 +221,11 @@ iarray_temporary_t* func_tan(iarray_expression_t *expr, iarray_temporary_t *oper
 iarray_temporary_t* func_sinh(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
     return _iarray_func(expr, operand, IARRAY_FUNC_SINH);
+}
+
+iarray_temporary_t* func_sqrt(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, IARRAY_FUNC_SQRT);
 }
 
 iarray_temporary_t* func_tanh(iarray_expression_t *expr, iarray_temporary_t *operand)
@@ -252,7 +262,7 @@ static const te_variable functions[] = {
     {"pow", NULL, NULL,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"sin", NULL, func_sin,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"sinh", NULL, func_sinh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"sqrt", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"sqrt", NULL, func_sqrt,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"tan", NULL, func_tan,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"tanh", NULL, func_tanh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {0, 0, 0, 0, 0}
