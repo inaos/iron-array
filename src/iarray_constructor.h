@@ -42,6 +42,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     blosc2_dparams dparams = {0};
     caterva_ctx_t *cat_ctx = NULL;
 
+    ina_rc_t rc;
     int blosc_filter_idx = 0;
 
     /* validation */
@@ -185,11 +186,13 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         free(smeta);
     }
 
-    return INA_SUCCESS;
-
-fail:
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
     iarray_container_free(ctx, c);
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 // TODO: clang complains about unused function.  provide a test using this.
@@ -204,6 +207,8 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(offset);
     INA_VERIFY_NOT_NULL(c);
+
+    ina_rc_t rc;
 
     /* validation */
     if (dtshape->ndim > CATERVA_MAXDIM) {
@@ -247,11 +252,13 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     (*c)->store = pred->store;
     (*c)->catarr = pred->catarr;
 
-    return INA_SUCCESS;
-
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
     iarray_container_free(ctx, c);
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 #endif

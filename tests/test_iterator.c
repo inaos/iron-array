@@ -33,10 +33,10 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
     // Start Iterator
     iarray_iter_write_t *I;
     iarray_iter_write_value_t val;
-    iarray_iter_write_new(ctx, &I, c_x, &val);
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_new(ctx, &I, c_x, &val));
 
-    while (iarray_iter_write_has_next(I)) {
-        iarray_iter_write_next(I);
+    while (INA_SUCCEED(iarray_iter_write_has_next(I))) {
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_write_next(I));
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double value = (double) val.elem_flat_index;
@@ -48,15 +48,16 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
     }
 
     iarray_iter_write_free(&I);
+    INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
 
     // Assert iterator reading it
     iarray_iter_read_t *I2;
     iarray_iter_read_value_t val2;
-    iarray_iter_read_new(ctx, &I2, c_x, &val2);
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_new(ctx, &I2, c_x, &val2));
 
-    while (iarray_iter_read_has_next(I2)) {
-        iarray_iter_read_next(I2);
+    while (INA_SUCCEED(iarray_iter_read_has_next(I2))) {
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_next(I2));
 
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double value = (double) val2.elem_flat_index;
@@ -68,6 +69,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
     }
 
     iarray_iter_read_free(&I2);
+    INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     iarray_container_free(ctx, &c_x);
     return INA_SUCCESS;

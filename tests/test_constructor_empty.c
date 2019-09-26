@@ -32,7 +32,7 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x));
 
     if (!iarray_is_empty(c_x)) {
-        return INA_ERR_ERROR;
+        return INA_ERROR(INA_ERR_ERROR);
     }
 
     // Non-empty array
@@ -40,7 +40,7 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
     INA_TEST_ASSERT_SUCCEED(iarray_zeros(ctx, &xdtshape, NULL, 0, &z_x));
 
     if (iarray_is_empty(z_x)) {
-        return INA_ERR_ERROR;
+        return INA_ERROR(INA_ERR_ERROR);
     }
 
     return INA_SUCCESS;

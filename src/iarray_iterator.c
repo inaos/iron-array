@@ -81,6 +81,8 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
     INA_VERIFY_NOT_NULL(bshape_b);
     INA_VERIFY_NOT_NULL(itr);
 
+    ina_rc_t rc;
+
     // Verify that block shape is < than container shapes
     for (int i = 0; i < c1->dtshape->ndim; ++i) {
         if (c1->dtshape->shape[i] < bshape_a[i]) {
@@ -126,12 +128,15 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
         }
     }
 
-    return INA_SUCCESS;
-
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
     _iarray_iter_matmul_free(itr);
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
+
 
 void _iarray_iter_matmul_free(iarray_iter_matmul_t **itr)
 {
@@ -217,9 +222,12 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr, voi
 }
 
 
-INA_API(int) iarray_iter_read_block_has_next(iarray_iter_read_block_t *itr)
+INA_API(ina_rc_t) iarray_iter_read_block_has_next(iarray_iter_read_block_t *itr)
 {
-    return itr->nblock < itr->total_blocks;
+    if (itr->nblock < itr->total_blocks) {
+        return INA_SUCCESS;
+    }
+    return INA_ERROR(IARRAY_ERR_END_ITER);
 }
 
 
@@ -234,6 +242,8 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(cont);
     INA_VERIFY_NOT_NULL(value);
+
+    ina_rc_t rc;
 
     if (!cont->catarr->filled) {
         INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
@@ -340,10 +350,13 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                 INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
     }
-    return INA_SUCCESS;
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
     iarray_iter_read_block_free(itr);
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 
@@ -521,7 +534,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
 }
 
 
-INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
+INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
 {
     if ( itr->nblock == (itr->cont_esize / itr->block_shape_size)) {  // TODO: cannot it be itr->total_blocks ?
         caterva_array_t *catarr = itr->cont->catarr;
@@ -622,7 +635,10 @@ INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr)
     if (itr->nblock == itr->total_blocks) {
         itr->cont->catarr->filled = true;
     }
-    return itr->nblock < itr->total_blocks;
+    if(itr->nblock < itr->total_blocks) {
+        return INA_SUCCESS;
+    }
+    return INA_ERROR(IARRAY_ERR_END_ITER);
 
     fail:
     return ina_err_get_rc();
@@ -639,6 +655,8 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(cont);
     INA_VERIFY_NOT_NULL(value);
+
+    ina_rc_t rc;
 
     if (!cont->catarr->empty && cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_FULL_CONTAINER)); //TODO: Should we allow a rewrite a non-empty iarray cont
@@ -774,11 +792,13 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
     (*itr)->total_blocks = (*itr)->cont_esize / (*itr)->block_shape_size; // Total number of blocks
 
-    return INA_SUCCESS;
-
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
     iarray_iter_write_block_free(itr);
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 
@@ -905,9 +925,12 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
  * Function: iarray_iter_read_finished
  */
 
-INA_API(int) iarray_iter_read_has_next(iarray_iter_read_t *itr)
+INA_API(ina_rc_t) iarray_iter_read_has_next(iarray_iter_read_t *itr)
 {
-    return itr->nelem < itr->cont_size;
+    if (itr->nelem < itr->cont_size) {
+        return INA_SUCCESS;
+    }
+    return INA_ERROR(IARRAY_ERR_END_ITER);
 }
 
 
@@ -920,6 +943,8 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(cont);
     INA_VERIFY_NOT_NULL(itr);
     INA_VERIFY_NOT_NULL(val);
+
+    ina_rc_t rc;
 
     if (cont->catarr->filled != true) {
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_EMPTY_CONTAINER));
@@ -961,10 +986,13 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
         (*itr)->cont_size *= (*itr)->cont->dtshape->shape[i];
     }
 
-    return INA_SUCCESS;
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
     iarray_iter_read_free(itr);
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 /*
@@ -1061,7 +1089,7 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
     return ina_err_get_rc();
 }
 
-INA_API(int) iarray_iter_write_has_next(iarray_iter_write_t *itr)
+INA_API(ina_rc_t) iarray_iter_write_has_next(iarray_iter_write_t *itr)
 {
     int64_t typesize = itr->container->catarr->ctx->cparams.typesize;
     if (itr->nelem == itr->container->catarr->size) {
@@ -1075,8 +1103,12 @@ INA_API(int) iarray_iter_write_has_next(iarray_iter_write_t *itr)
         itr->container->catarr->filled = true;
     }
 
-    return itr->nelem < itr->container->catarr->size;
+    if (itr->nelem < itr->container->catarr->size) {
+        return INA_SUCCESS;
+    }
+    return INA_ERROR(IARRAY_ERR_END_ITER);
 }
+
 
 INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
                                         iarray_iter_write_t **itr,
@@ -1087,6 +1119,8 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(cont);
     INA_VERIFY_NOT_NULL(itr);
     INA_VERIFY_NOT_NULL(val);
+
+    ina_rc_t rc;
 
     *itr = (iarray_iter_write_t*) ina_mem_alloc(sizeof(iarray_iter_write_t));
     if (itr == NULL) {
@@ -1125,10 +1159,13 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
 
     memset((*itr)->part, 0, cont->catarr->psize * cont->catarr->ctx->cparams.typesize);
 
-    return INA_SUCCESS;
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
     iarray_iter_write_free(itr);
-    return ina_err_get_rc();
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
 }
 
 
