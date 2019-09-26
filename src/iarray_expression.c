@@ -717,6 +717,15 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
                 case IARRAY_FUNC_COSH:
                     vdCosh(len, operand_pointer, out_pointer);
                     break;
+                case IARRAY_FUNC_EXP:
+                    vdExp(len, operand_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_LN:
+                    vdLn(len, operand_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_LOG10:
+                    vdLog10(len, operand_pointer, out_pointer);
+                    break;
                 case IARRAY_FUNC_SIN:
                     vdSin(len, operand_pointer, out_pointer);
                     break;
@@ -764,6 +773,15 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
                     break;
                 case IARRAY_FUNC_COSH:
                     vsCosh(len, operand_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_EXP:
+                    vsExp(len, operand_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_LN:
+                    vsLn(len, operand_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_LOG10:
+                    vsLog10(len, operand_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_SIN:
                     vsSin(len, operand_pointer, out_pointer);

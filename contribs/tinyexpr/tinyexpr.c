@@ -32,7 +32,7 @@ For a^b^c = a^(b^c) and -a^b = -(a^b) uncomment the next line.*/
 /* Logarithms
 For log = base 10 log do nothing
 For log = natural log uncomment the next line. */
-/* #define TE_NAT_LOG */
+#define TE_NAT_LOG
 
 #include <libiarray/iarray.h>
 #include "tinyexpr.h"
@@ -183,6 +183,26 @@ iarray_temporary_t* func_cos(iarray_expression_t *expr, iarray_temporary_t *oper
     return _iarray_func(expr, operand, IARRAY_FUNC_COS);
 }
 
+iarray_temporary_t* func_cosh(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, IARRAY_FUNC_COSH);
+}
+
+iarray_temporary_t* func_exp(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, IARRAY_FUNC_EXP);
+}
+
+iarray_temporary_t* func_ln(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, IARRAY_FUNC_LN);
+}
+
+iarray_temporary_t* func_log10(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, IARRAY_FUNC_LOG10);
+}
+
 iarray_temporary_t* func_sin(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
     return _iarray_func(expr, operand, IARRAY_FUNC_SIN);
@@ -191,11 +211,6 @@ iarray_temporary_t* func_sin(iarray_expression_t *expr, iarray_temporary_t *oper
 iarray_temporary_t* func_tan(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
     return _iarray_func(expr, operand, IARRAY_FUNC_TAN);
-}
-
-iarray_temporary_t* func_cosh(iarray_expression_t *expr, iarray_temporary_t *operand)
-{
-    return _iarray_func(expr, operand, IARRAY_FUNC_COSH);
 }
 
 iarray_temporary_t* func_sinh(iarray_expression_t *expr, iarray_temporary_t *operand)
@@ -221,16 +236,16 @@ static const te_variable functions[] = {
     {"cos", NULL, func_cos,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"cosh", NULL, func_cosh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"e", NULL, e,          TE_FUNCTION0 | TE_FLAG_PURE, 0},
-    {"exp", NULL, NULL,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"exp", NULL, func_exp,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"fac", NULL, fac,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
 //    {"floor", floor,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"ln", NULL, NULL,       TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"ln", NULL, func_ln,       TE_FUNCTION1 | TE_FLAG_PURE, 0},
 #ifdef TE_NAT_LOG
-    {"log", NULL, NULL,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"log", NULL, func_ln,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
 #else
-    {"log", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"log", NULL, func_log10,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
 #endif
-    {"log10", NULL, log10,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"log10", NULL, func_log10,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"ncr", NULL, ncr,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"npr", NULL, npr,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"pi", NULL, pi,        TE_FUNCTION0 | TE_FLAG_PURE, 0},
