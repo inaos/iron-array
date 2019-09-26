@@ -688,14 +688,16 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
 
     switch (dtshape.dtype) {
         case IARRAY_DATA_TYPE_DOUBLE: {
-            int32_t len = expr->max_out_len == 0 ? (int32_t)(out->size / sizeof(double)) : expr->max_out_len;
             double *operand_pointer;
             double *out_pointer;
+            int32_t len;
             if (scalar) {
+                len = 1;
                 operand_pointer = &operand->scalar_value.d;
                 out_pointer = &out->scalar_value.d;
             }
             else {
+                len = expr->max_out_len == 0 ? (int32_t)(out->size / sizeof(double)) : expr->max_out_len;
                 operand_pointer = operand->data;
                 out_pointer = out->data;
             }
@@ -709,8 +711,14 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
                 case IARRAY_FUNC_SIN:
                     vdSin(len, operand_pointer, out_pointer);
                     break;
+                case IARRAY_FUNC_SINH:
+                    vdSinh(len, operand_pointer, out_pointer);
+                    break;
                 case IARRAY_FUNC_TAN:
                     vdTan(len, operand_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_TANH:
+                    vdTanh(len, operand_pointer, out_pointer);
                     break;
                 default:
                     printf("Operation not supported yet");
@@ -719,14 +727,16 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
         }
         break;
         case IARRAY_DATA_TYPE_FLOAT: {
-            int32_t len = expr->max_out_len == 0 ? (int32_t)(out->size / sizeof(float)) : expr->max_out_len;
+            int32_t len;
             float *operand_pointer;
             float *out_pointer;
             if (scalar) {
+                len = 1;
                 operand_pointer = &operand->scalar_value.f;
                 out_pointer = &out->scalar_value.f;
             }
             else {
+                len = expr->max_out_len == 0 ? (int32_t)(out->size / sizeof(float)) : expr->max_out_len;
                 operand_pointer = operand->data;
                 out_pointer = out->data;
             }
