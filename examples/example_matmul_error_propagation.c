@@ -56,7 +56,7 @@ double error_percent(const double *a, const double *b, uint64_t size) {
 int main()
 {
     iarray_init();
-
+    ina_rc_t rc;
     int n_threads = 1;
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
@@ -141,20 +141,11 @@ int main()
     printf("Error percentage (C - iarray): %.4f\n", error_percent(c_c, c_iarray, size_c));
     printf("Error percentage (MKL - iarray): %.4f\n", error_percent(c_mkl, c_iarray, size_c));
 
-    iarray_container_free(ctx, &cont_a);
-    iarray_container_free(ctx, &cont_b);
-    iarray_container_free(ctx, &cont_c);
-    free(a);
-    free(b);
-    free(c_c);
-    free(c_mkl);
-    free(c_iarray);
-    iarray_context_free(&ctx);
-
-    iarray_destroy();
-    return INA_SUCCESS;
-
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
+        rc = ina_err_get_rc();
+    cleanup:
         iarray_container_free(ctx, &cont_a);
         iarray_container_free(ctx, &cont_b);
         iarray_container_free(ctx, &cont_c);
@@ -164,5 +155,7 @@ int main()
         free(c_mkl);
         free(c_iarray);
         iarray_context_free(&ctx);
-        return ina_err_get_rc();
+        iarray_destroy();
+
+    return rc;
 }

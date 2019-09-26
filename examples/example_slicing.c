@@ -14,6 +14,8 @@
 
 int main()
 {
+    ina_rc_t rc;
+
     printf("Starting iarray...\n");
     iarray_init();
 
@@ -89,20 +91,17 @@ int main()
         printf("%d ", (int)out_dtshape.shape[i]);
     }
     printf("\n");
-    iarray_container_free(ctx, &c_x);
-    iarray_container_free(ctx, &c_out);
-    iarray_context_free(&ctx);
 
-    printf("Destroying iarray...\n");
-    iarray_destroy();
-
-    return INA_SUCCESS;
-
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
+    rc = ina_err_get_rc();
+    cleanup:
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_out);
     iarray_context_free(&ctx);
 
     printf("Destroying iarray...\n");
     iarray_destroy();
+    return rc;
 }
