@@ -242,9 +242,7 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size);
 
 /* FIXME: since we want to keep the changes to tinyexpr as little as possible we deviate from our usual function decls */
-// iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *operand, iarray_functype_t func);
-iarray_temporary_t* _iarray_func_cos(iarray_expression_t *expr, iarray_temporary_t *operand);
-iarray_temporary_t* _iarray_func_sin(iarray_expression_t *expr, iarray_temporary_t *operand);
+iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *operand, iarray_functype_t func);
 
 //static iarray_temporary_t* _iarray_op(iarray_temporary_t *lhs, iarray_temporary_t *rhs, iarray_optype_t op);
 iarray_temporary_t* _iarray_op_add(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs);
