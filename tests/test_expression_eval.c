@@ -176,14 +176,14 @@ INA_TEST_FIXTURE(expression_eval, iterblock_plainbuffer)
 
 static double expr5(const double x)
 {
-    return sqrt(x) + .2;
+    return sqrt(x) + atan2(x, x) + pow(x, x);
 }
 
 INA_TEST_FIXTURE(expression_eval, iterchunk_plainbuffer)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
     data->func = expr5;
-    data->expr_str = "sqrt(x) + .2";
+    data->expr_str = "sqrt(x) + atan2(x, x) + pow(x, x)";
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
         data->buf_len, true, data->func, data->expr_str));

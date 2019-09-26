@@ -165,72 +165,77 @@ static double npr(double n, double r) {return ncr(n, r) * fac(r);}
 
 iarray_temporary_t* func_acos(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
-    return _iarray_func(expr, operand, IARRAY_FUNC_ACOS);
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_ACOS);
 }
 
 iarray_temporary_t* func_asin(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
-    return _iarray_func(expr, operand, IARRAY_FUNC_ASIN);
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_ASIN);
 }
 
 iarray_temporary_t* func_atan(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
-    return _iarray_func(expr, operand, IARRAY_FUNC_ATAN);
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_ATAN);
+}
+
+iarray_temporary_t* func_atan2(iarray_expression_t *expr, iarray_temporary_t *operand1, iarray_temporary_t *operand2)
+{
+    return _iarray_func(expr, operand1, operand2, IARRAY_FUNC_ATAN2);
 }
 
 iarray_temporary_t* func_cos(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
-    return _iarray_func(expr, operand, IARRAY_FUNC_COS);
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_COS);
 }
 
 iarray_temporary_t* func_cosh(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
-    return _iarray_func(expr, operand, IARRAY_FUNC_COSH);
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_COSH);
 }
 
 iarray_temporary_t* func_exp(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
-    return _iarray_func(expr, operand, IARRAY_FUNC_EXP);
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_EXP);
 }
 
 iarray_temporary_t* func_ln(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
-    return _iarray_func(expr, operand, IARRAY_FUNC_LN);
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_LN);
 }
 
 iarray_temporary_t* func_log10(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
-    return _iarray_func(expr, operand, IARRAY_FUNC_LOG10);
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_LOG10);
 }
 
-iarray_temporary_t* func_pow(iarray_expression_t *expr, iarray_temporary_t *operand)
+iarray_temporary_t* func_pow(iarray_expression_t *expr, iarray_temporary_t *operand1, iarray_temporary_t *operand2)
 {
-    return _iarray_func(expr, operand, IARRAY_FUNC_POW);
+    return _iarray_func(expr, operand1, operand2, IARRAY_FUNC_POW);
 }
 
 iarray_temporary_t* func_sin(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
-    return _iarray_func(expr, operand, IARRAY_FUNC_SIN);
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_SIN);
 }
 
 iarray_temporary_t* func_tan(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
-    return _iarray_func(expr, operand, IARRAY_FUNC_TAN);
+    return _iarray_func(expr, operand,  NULL,IARRAY_FUNC_TAN);
 }
 
 iarray_temporary_t* func_sinh(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
-    return _iarray_func(expr, operand, IARRAY_FUNC_SINH);
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_SINH);
 }
 
 iarray_temporary_t* func_sqrt(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
-    return _iarray_func(expr, operand, IARRAY_FUNC_SQRT);
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_SQRT);
 }
 
 iarray_temporary_t* func_tanh(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
-    return _iarray_func(expr, operand, IARRAY_FUNC_TANH);
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_TANH);
 }
 
 
@@ -241,7 +246,7 @@ static const te_variable functions[] = {
     {"acos", NULL, func_acos,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"asin", NULL, func_asin,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"atan", NULL, func_atan,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"atan2", NULL, NULL,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"atan2", NULL, func_atan2,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
 //    {"ceil", NULL, ceil,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"cos", NULL, func_cos,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"cosh", NULL, func_cosh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
@@ -259,7 +264,7 @@ static const te_variable functions[] = {
     {"ncr", NULL, ncr,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"npr", NULL, npr,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"pi", NULL, pi,        TE_FUNCTION0 | TE_FLAG_PURE, 0},
-    {"pow", NULL, NULL,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"pow", NULL, func_pow,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"sin", NULL, func_sin,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"sinh", NULL, func_sinh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"sqrt", NULL, func_sqrt,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
