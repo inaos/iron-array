@@ -702,6 +702,15 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
                 out_pointer = out->data;
             }
             switch (func) {
+                case IARRAY_FUNC_ACOS:
+                    vdAcos(len, operand_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_ASIN:
+                    vdAsin(len, operand_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_ATAN:
+                    vdAtan(len, operand_pointer, out_pointer);
+                    break;
                 case IARRAY_FUNC_COS:
                     vdCos(len, operand_pointer, out_pointer);
                     break;
@@ -741,6 +750,15 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
                 out_pointer = out->data;
             }
             switch (func) {
+                case IARRAY_FUNC_ACOS:
+                    vsAcos(len, operand_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_ASIN:
+                    vsAsin(len, operand_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_ATAN:
+                    vsAtan(len, operand_pointer, out_pointer);
+                    break;
                 case IARRAY_FUNC_COS:
                     vsCos(len, operand_pointer, out_pointer);
                     break;

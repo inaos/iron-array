@@ -163,6 +163,21 @@ static double npr(double n, double r) {return ncr(n, r) * fac(r);}
 
 /* Functions */
 
+iarray_temporary_t* func_acos(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, IARRAY_FUNC_ACOS);
+}
+
+iarray_temporary_t* func_asin(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, IARRAY_FUNC_ASIN);
+}
+
+iarray_temporary_t* func_atan(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, IARRAY_FUNC_ATAN);
+}
+
 iarray_temporary_t* func_cos(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
     return _iarray_func(expr, operand, IARRAY_FUNC_COS);
@@ -198,16 +213,16 @@ INA_DISABLE_WARNING_MSVC(4152);
 static const te_variable functions[] = {
     /* must be in alphabetical order */
     {"abs", NULL, NULL,     TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"acos", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"asin", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"atan", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"acos", NULL, func_acos,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"asin", NULL, func_asin,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"atan", NULL, func_atan,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"atan2", NULL, NULL,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
 //    {"ceil", NULL, ceil,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"cos", NULL, func_cos,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"cosh", NULL, func_cosh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"e", NULL, e,          TE_FUNCTION0 | TE_FLAG_PURE, 0},
     {"exp", NULL, NULL,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"fac", NULL, NULL,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"fac", NULL, fac,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
 //    {"floor", floor,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"ln", NULL, NULL,       TE_FUNCTION1 | TE_FLAG_PURE, 0},
 #ifdef TE_NAT_LOG
@@ -216,8 +231,8 @@ static const te_variable functions[] = {
     {"log", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
 #endif
     {"log10", NULL, log10,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"ncr", NULL, NULL,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
-    {"npr", NULL, NULL,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"ncr", NULL, ncr,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"npr", NULL, npr,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"pi", NULL, pi,        TE_FUNCTION0 | TE_FLAG_PURE, 0},
     {"pow", NULL, NULL,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"sin", NULL, func_sin,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
