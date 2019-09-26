@@ -657,7 +657,7 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
     return INA_SUCCESS;
 }
 
-static iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *operand, iarray_functype_t func)
+iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *operand, iarray_functype_t func)
 {
     if (expr == NULL) {
         goto fail;
@@ -759,16 +759,6 @@ static iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_tempor
     fail:
     // TODO: Free temporary
     return NULL;
-}
-
-iarray_temporary_t* _iarray_func_cos(iarray_expression_t *expr, iarray_temporary_t *operand)
-{
-    return _iarray_func(expr, operand, IARRAY_FUNC_COS);
-}
-
-iarray_temporary_t* _iarray_func_sin(iarray_expression_t *expr, iarray_temporary_t *operand)
-{
-    return _iarray_func(expr, operand, IARRAY_FUNC_SIN);
 }
 
 static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs, iarray_optype_t op)

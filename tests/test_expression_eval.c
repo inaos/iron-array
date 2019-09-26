@@ -24,10 +24,10 @@
 /* Compute and fill X values in a buffer */
 static int _fill_x(double* x)
 {
-    /* Fill even values between 1 and 2 */
+    /* Fill even values between 0. and 1. */
     double incx = 1. / NELEM;
     for (int i = 0; i < NELEM; i++) {
-        x[i] = incx * i + 1.;
+        x[i] = incx * i;
     }
     return 0;
 }
@@ -129,14 +129,14 @@ INA_TEST_FIXTURE(expression_eval, iterblock_superchunk)
 
 static double expr2(const double x)
 {
-    return sin(x) - 1.35;
+    return tan(x) + (cosh(x) - 1.35);
 }
 
 INA_TEST_FIXTURE(expression_eval, iterblosc_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC;
     data->func = expr2;
-    data->expr_str = "sin(x) - 1.35";
+    data->expr_str = "tan(x) + (cosh(x) - 1.35)";
 
   INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
       data->buf_len, false, data->func, data->expr_str));

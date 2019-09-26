@@ -41,6 +41,10 @@ For log = natural log uncomment the next line. */
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
+
 
 #ifndef NAN
 #define NAN (0.0/0.0)
@@ -157,37 +161,60 @@ static double ncr(double n, double r) {
 }
 static double npr(double n, double r) {return ncr(n, r) * fac(r);}
 
+/* Functions */
+
+iarray_temporary_t* func_cos(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, IARRAY_FUNC_COS);
+}
+
+iarray_temporary_t* func_sin(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, IARRAY_FUNC_SIN);
+}
+
+iarray_temporary_t* func_tan(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, IARRAY_FUNC_TAN);
+}
+
+iarray_temporary_t* func_cosh(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, IARRAY_FUNC_COSH);
+}
+
+
 INA_DISABLE_WARNING_MSVC(4152);
 static const te_variable functions[] = {
     /* must be in alphabetical order */
-    {"abs", NULL, fabs,     TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"acos", NULL, acos,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"asin", NULL, asin,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"atan", NULL, atan,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"atan2", NULL, atan2,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"abs", NULL, NULL,     TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"acos", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"asin", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"atan", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"atan2", NULL, NULL,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
 //    {"ceil", NULL, ceil,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"cos", NULL, _iarray_func_cos,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"cosh", NULL, cosh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"cos", NULL, func_cos,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"cosh", NULL, func_cosh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"e", NULL, e,          TE_FUNCTION0 | TE_FLAG_PURE, 0},
-    {"exp", NULL, exp,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"fac", NULL, fac,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"exp", NULL, NULL,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"fac", NULL, NULL,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
 //    {"floor", floor,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"ln", NULL, log,       TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"ln", NULL, NULL,       TE_FUNCTION1 | TE_FLAG_PURE, 0},
 #ifdef TE_NAT_LOG
-    {"log", NULL, log,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"log", NULL, NULL,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
 #else
-    {"log", NULL, log10,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"log", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
 #endif
     {"log10", NULL, log10,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"ncr", NULL, ncr,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
-    {"npr", NULL, npr,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"ncr", NULL, NULL,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"npr", NULL, NULL,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"pi", NULL, pi,        TE_FUNCTION0 | TE_FLAG_PURE, 0},
-    {"pow", NULL, pow,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
-    {"sin", NULL, _iarray_func_sin,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"sinh", NULL, sinh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"sqrt", NULL, sqrt,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"tan", NULL, tan,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"tanh", NULL, tanh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"pow", NULL, NULL,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"sin", NULL, func_sin,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"sinh", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"sqrt", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"tan", NULL, func_tan,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"tanh", NULL, NULL,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {0, 0, 0, 0, 0}
 };
 INA_ENABLE_WARNING_MSVC(4152);
@@ -281,6 +308,9 @@ void next_token(state *s) {
                         case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:     /* Falls through. */
                             s->type = var->type;
                             s->function = var->function;
+                            if (s->function == NULL) {
+                                printf("Undefined function: '%s'\n", var->name);
+                            }
                             break;
                         default:
                             printf("Unknown type; cannot never happen.  If you see this, inform about it.\n");
