@@ -131,14 +131,14 @@ INA_TEST_FIXTURE(expression_eval, iterblock_superchunk)
 
 static double expr2(const double x)
 {
-    return sinh(x) + (cosh(x) - 1.35) - (tanh(x + .2));
+    return sinh(x) + (cosh(x) - 1.35) - tanh(x + .2);
 }
 
 INA_TEST_FIXTURE(expression_eval, iterblosc_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC;
     data->func = expr2;
-    data->expr_str = "sinh(x) + (cosh(x) - 1.35) - (tanh(x + .2))";
+    data->expr_str = "sinh(x) + (cosh(x) - 1.35) - tanh(x + .2)";
 
   INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
       data->buf_len, false, data->func, data->expr_str));
@@ -146,24 +146,29 @@ INA_TEST_FIXTURE(expression_eval, iterblosc_superchunk)
 
 static double expr3(const double x)
 {
-    return asin(x) + (acos(x) - 1.35) - (atan(x + .2));
+    return asin(x) + (acos(x) - 1.35) - atan(x + .2);
 }
 
 INA_TEST_FIXTURE(expression_eval, iterchunk_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
     data->func = expr3;
-    data->expr_str = "asin(x) + (acos(x) - 1.35) - (atan(x + .2))";
+    data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
         data->buf_len, false, data->func, data->expr_str));
 }
 
+static double expr4(const double x)
+{
+    return exp(x) + (log(x) - 1.35) - log10(x + .2);
+}
+
 INA_TEST_FIXTURE(expression_eval, iterblock_plainbuffer)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
-    data->func = expr1;
-    data->expr_str = "(cos(x) - 1.35) * tan(x) * sin(x - 8.5)";
+    data->func = expr4;
+    data->expr_str = "exp(x) + (log(x) - 1.35) - log10(x + .2)";
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
         data->buf_len, true, data->func, data->expr_str));
