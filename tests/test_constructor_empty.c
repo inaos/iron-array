@@ -43,6 +43,11 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
         return INA_ERROR(INA_ERR_ERROR);
     }
 
+    int64_t nbytes;
+    int64_t cbytes;
+    INA_TEST_ASSERT_SUCCEED(iarray_container_info(z_x, &nbytes, &cbytes));
+    INA_TEST_ASSERT_SUCCEED(cbytes <= nbytes);
+
     return INA_SUCCESS;
 
 }
