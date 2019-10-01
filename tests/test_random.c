@@ -271,3 +271,28 @@ INA_TEST_FIXTURE(random_mt, poisson_f) {
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y, &iarray_random_poisson));
 }
+
+INA_TEST_FIXTURE(random_mt, bernouilli) {
+
+    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.7f);
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_bernoulli_d_07.iarray";
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y, &iarray_random_bernoulli));
+}
+
+
+INA_TEST_FIXTURE(random_mt, bernoulli_f) {
+
+    iarray_random_ctx_free(data->ctx, &data->rnd_ctx);
+
+    INA_TEST_ASSERT_SUCCEED(iarray_random_ctx_new(
+        data->ctx, 777, IARRAY_RANDOM_RNG_SOBOL, &data->rnd_ctx));
+    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.01f);
+
+    iarray_store_properties_t store_y;
+    store_y.id = "test_bernoulli_f_001.iarray";
+
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y, &iarray_random_bernoulli));
+}
