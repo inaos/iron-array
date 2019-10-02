@@ -825,8 +825,7 @@ INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t **itr)
 
 INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
 {
-    caterva_array_t *catarr = itr->cont->catarr;
-    int ndim = catarr->ndim;
+    int ndim = itr->cont->dtshape->ndim;
 
     int64_t typesize = itr->cont->catarr->ctx->cparams.typesize;
 
@@ -958,8 +957,8 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
 
     (*itr)->ctx = ctx;
     (*itr)->cont = cont;
-    if (cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
-        (*itr)->part = (uint8_t *) ina_mem_alloc((size_t) cont->catarr->psize * cont->catarr->sc->typesize);
+    if (cont->catarr->storage == CATERVA_STORAGE_BLOSC || cont->view) {
+        (*itr)->part = (uint8_t *) ina_mem_alloc((size_t) cont->catarr->psize * cont->catarr->ctx->cparams.typesize);
     }
     (*itr)->elem_index = (int64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(int64_t));
 
@@ -1004,7 +1003,7 @@ INA_API(void) iarray_iter_read_free(iarray_iter_read_t **itr)
     INA_VERIFY_FREE(itr);
 
     INA_MEM_FREE_SAFE((*itr)->elem_index);
-    if ((*itr)->cont->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
+    if ((*itr)->cont->catarr->storage != CATERVA_STORAGE_PLAINBUFFER || (*itr)->cont->view) {
         INA_MEM_FREE_SAFE((*itr)->part);
     }
     INA_MEM_FREE_SAFE((*itr)->block_shape);
