@@ -160,6 +160,21 @@ INA_TEST_FIXTURE(set_slice_buffer, 2_d_t) {
                                                       start, stop, transposed));
 }
 
+INA_TEST_FIXTURE(set_slice_buffer, 2_f_t) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    int32_t type_size = sizeof(float);
+
+    const int8_t ndim = 2;
+    int64_t shape[] = {20, 14};
+    int64_t pshape[] = {0, 0};
+    int64_t start[] = {3, 1};
+    int64_t stop[] = {-2, 5};
+    bool transposed = true;
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, pshape,
+                                                      start, stop, transposed));
+}
+
 INA_TEST_FIXTURE(set_slice_buffer, 3_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
