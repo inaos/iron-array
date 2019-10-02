@@ -245,6 +245,13 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     }
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
 
+    if ((*c)->dtshape->pshape[0] == 0) {
+        for (int i = 0; i < dtshape->ndim; ++i) {
+            (*c)->dtshape->pshape[i] = dtshape->shape[i];
+            (*c)->auxshape->pshape_wos[i] = dtshape->shape[i];
+        }
+    }
+
     (*c)->cparams = pred->cparams;
     (*c)->dparams = pred->dparams;
     (*c)->transposed = pred->transposed;
