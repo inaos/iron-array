@@ -113,13 +113,28 @@ INA_TEST_TEARDOWN(expression_eval_float)
     iarray_destroy();
 }
 
-static float expr1(const float x)
+static float expr0(const float x)
 {
-    return (cos(x) - 1.35) * tan(x) * sin(x - 8.5);
-    //return (x - 1.35) + sin(.45);  // TODO: fix evaluation of func(constant)
+    return (fabsf(-x) - 1.35f) * ceilf(x) * floorf(x - 8.5f);
 }
 
 INA_TEST_FIXTURE(expression_eval_float, iterblock_superchunk)
+{
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
+    data->func = expr0;
+    data->expr_str = "(abs(-x) - 1.35) * ceil(x) * floor(x - 8.5)";
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
+                                                 data->buf_len, false, data->func, data->expr_str));
+}
+
+static float expr1(const float x)
+{
+    return (cosf(x) - 1.35f) * tanf(x) * sinf(x - 8.5f);
+    //return (x - 1.35) + sin(.45);  // TODO: fix evaluation of func(constant)
+}
+
+INA_TEST_FIXTURE(expression_eval_float, iterblock_superchunk2)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
     data->func = expr1;
@@ -131,7 +146,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblock_superchunk)
 
 static float expr2(const float x)
 {
-    return sinh(x) + (cosh(x) - 1.35) - tanh(x + .2);
+    return sinhf(x) + (coshf(x) - 1.35f) - tanhf(x + .2f);
 }
 
 INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
@@ -146,7 +161,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
 
 static float expr3(const float x)
 {
-    return asin(x) + (acos(x) - 1.35) - atan(x + .2);
+    return asinf(x) + (acosf(x) - 1.35f) - atanf(x + .2f);
 }
 
 INA_TEST_FIXTURE(expression_eval_float, iterchunk_superchunk)
@@ -161,7 +176,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterchunk_superchunk)
 
 static float expr4(const float x)
 {
-    return exp(x) + (log(x) - 1.35) - log10(x + .2);
+    return expf(x) + (logf(x) - 1.35f) - log10f(x + .2f);
 }
 
 INA_TEST_FIXTURE(expression_eval_float, iterblock_plainbuffer)
@@ -176,7 +191,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblock_plainbuffer)
 
 static float expr5(const float x)
 {
-    return sqrt(x) + atan2(x, x) + pow(x, x);
+    return sqrtf(x) + atan2f(x, x) + powf(x, x);
 }
 
 INA_TEST_FIXTURE(expression_eval_float, iterchunk_plainbuffer)
