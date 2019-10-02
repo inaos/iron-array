@@ -467,7 +467,7 @@ static ina_rc_t _iarray_operator_elwise_a(
             mkl_fun_d((const int)(psize / sizeof(double)), (const double*)a_chunk, (double*)c_chunk);
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            mkl_fun_s((const int)psize / sizeof(float), (const float*)a_chunk, (float*)c_chunk);
+            mkl_fun_s((const int)(psize / sizeof(float)), (const float*)a_chunk, (float*)c_chunk);
             break;
         default:
             INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
