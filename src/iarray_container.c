@@ -758,7 +758,7 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     iarray_iter_read_block_value_t val_b;
     INA_FAIL_IF_ERROR(iarray_iter_read_block_new(ctx, &iter_b, b, blocksize, &val_b, false));
 
-    while (iarray_iter_read_block_has_next(iter_a)) {
+    while (INA_SUCCEED(iarray_iter_read_block_has_next(iter_a))) {
         INA_FAIL_IF_ERROR(iarray_iter_read_block_next(iter_a, NULL, 0));
         INA_FAIL_IF_ERROR(iarray_iter_read_block_next(iter_b, NULL, 0));
 
@@ -789,6 +789,8 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
             }
         }
     }
+
+    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     rc = INA_SUCCESS;
     goto cleanup;

@@ -345,6 +345,26 @@ INA_TEST_FIXTURE(get_slice_trans, 2_f_p) {
 
     const int8_t ndim = 2;
     int64_t shape[] = {10, 10};
+    int64_t pshape[] = {3, 2};
+    int64_t start[] = {2, 1};
+    int64_t stop[] = {7, 3};
+    int64_t pshape_dest[] = {0, 0};
+
+    bool view = false;
+
+    float result[] = {12, 22, 13, 23, 14, 24, 15, 25, 16, 26};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
+                                                  start, stop, result, true, view));
+}
+
+
+INA_TEST_FIXTURE(get_slice_trans, 2_f_p_v) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    int32_t type_size = sizeof(float);
+
+    const int8_t ndim = 2;
+    int64_t shape[] = {10, 10};
     int64_t pshape[] = {0, 0};
     int64_t start[] = {3, 1};
     int64_t stop[] = {5, 8};
