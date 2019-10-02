@@ -163,6 +163,11 @@ static double npr(double n, double r) {return ncr(n, r) * fac(r);}
 
 /* Functions */
 
+iarray_temporary_t* func_abs(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_ABS);
+}
+
 iarray_temporary_t* func_acos(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
     return _iarray_func(expr, operand, NULL, IARRAY_FUNC_ACOS);
@@ -183,6 +188,11 @@ iarray_temporary_t* func_atan2(iarray_expression_t *expr, iarray_temporary_t *op
     return _iarray_func(expr, operand1, operand2, IARRAY_FUNC_ATAN2);
 }
 
+iarray_temporary_t* func_ceil(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_CEIL);
+}
+
 iarray_temporary_t* func_cos(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
     return _iarray_func(expr, operand, NULL, IARRAY_FUNC_COS);
@@ -198,6 +208,11 @@ iarray_temporary_t* func_exp(iarray_expression_t *expr, iarray_temporary_t *oper
     return _iarray_func(expr, operand, NULL, IARRAY_FUNC_EXP);
 }
 
+iarray_temporary_t* func_floor(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_FLOOR);
+}
+
 iarray_temporary_t* func_ln(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
     return _iarray_func(expr, operand, NULL, IARRAY_FUNC_LN);
@@ -206,6 +221,11 @@ iarray_temporary_t* func_ln(iarray_expression_t *expr, iarray_temporary_t *opera
 iarray_temporary_t* func_log10(iarray_expression_t *expr, iarray_temporary_t *operand)
 {
     return _iarray_func(expr, operand, NULL, IARRAY_FUNC_LOG10);
+}
+
+iarray_temporary_t* func_negate(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_NEGATE);
 }
 
 iarray_temporary_t* func_pow(iarray_expression_t *expr, iarray_temporary_t *operand1, iarray_temporary_t *operand2)
@@ -242,18 +262,18 @@ iarray_temporary_t* func_tanh(iarray_expression_t *expr, iarray_temporary_t *ope
 INA_DISABLE_WARNING_MSVC(4152);
 static const te_variable functions[] = {
     /* must be in alphabetical order */
-    {"abs", NULL, NULL,     TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"abs", NULL, func_abs,     TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"acos", NULL, func_acos,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"asin", NULL, func_asin,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"atan", NULL, func_atan,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"atan2", NULL, func_atan2,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
-//    {"ceil", NULL, ceil,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"ceil", NULL, func_ceil,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"cos", NULL, func_cos,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"cosh", NULL, func_cosh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"e", NULL, e,          TE_FUNCTION0 | TE_FLAG_PURE, 0},
     {"exp", NULL, func_exp,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"fac", NULL, fac,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-//    {"floor", floor,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"floor", NULL, func_floor,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"ln", NULL, func_ln,       TE_FUNCTION1 | TE_FLAG_PURE, 0},
 #ifdef TE_NAT_LOG
     {"log", NULL, func_ln,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
@@ -309,15 +329,16 @@ static const te_variable *find_lookup(const state *s, const char *name, size_t l
 }
 
 
-#define add _iarray_op_add
-#define sub _iarray_op_sub
-#define mul _iarray_op_mul
-#define divide _iarray_op_divide
 //static double add(double a, double b) {return a + b;}
 //static double sub(double a, double b) {return a - b;}
 //static double mul(double a, double b) {return a * b;}
 //static double divide(double a, double b) {return a / b;}
-static double negate(double a) {return -a;}
+#define add _iarray_op_add
+#define sub _iarray_op_sub
+#define mul _iarray_op_mul
+#define divide _iarray_op_divide
+//static double negate(double a) {return -a;}
+#define negate func_negate
 static double comma(double a, double b) {(void)a; return b;}
 
 

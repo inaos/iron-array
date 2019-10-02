@@ -49,6 +49,7 @@ typedef enum iarray_functype_e {
     IARRAY_FUNC_LOG,
     IARRAY_FUNC_LOG10,
     IARRAY_FUNC_NCR,
+    IARRAY_FUNC_NEGATE,
     IARRAY_FUNC_NPR,
     IARRAY_FUNC_PI,
     IARRAY_FUNC_POW,

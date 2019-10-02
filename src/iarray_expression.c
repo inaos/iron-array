@@ -680,7 +680,7 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
         scalar = false;
         dtshape.dtype = operand1->dtshape->dtype;
         dtshape.ndim = operand1->dtshape->ndim;
-        memcpy(dtshape.shape, operand1->dtshape->shape, sizeof(int) * dtshape.ndim);
+        memcpy(dtshape.shape, operand1->dtshape->shape, sizeof(int64_t) * dtshape.ndim);
     }
 
     // Creating the temporary means interacting with the INA memory allocator, which is not thread-safe.
@@ -696,7 +696,7 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
     switch (dtshape.dtype) {
         case IARRAY_DATA_TYPE_DOUBLE: {
             double *operand1_pointer;
-            double *operand2_pointer;
+            double *operand2_pointer = NULL;
             double *out_pointer;
             int32_t len;
             if (scalar) {
@@ -711,6 +711,9 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
                 out_pointer = out->data;
             }
             switch (func) {
+                case IARRAY_FUNC_ABS:
+                    vdAbs(len, operand1_pointer, out_pointer);
+                    break;
                 case IARRAY_FUNC_ACOS:
                     vdAcos(len, operand1_pointer, out_pointer);
                     break;
@@ -723,6 +726,9 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
                 case IARRAY_FUNC_ATAN2:
                     vdAtan2(len, operand1_pointer, operand2_pointer, out_pointer);
                     break;
+                case IARRAY_FUNC_CEIL:
+                    vdCeil(len, operand1_pointer, out_pointer);
+                    break;
                 case IARRAY_FUNC_COS:
                     vdCos(len, operand1_pointer, out_pointer);
                     break;
@@ -732,11 +738,19 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
                 case IARRAY_FUNC_EXP:
                     vdExp(len, operand1_pointer, out_pointer);
                     break;
+                case IARRAY_FUNC_FLOOR:
+                    vdFloor(len, operand1_pointer, out_pointer);
+                    break;
                 case IARRAY_FUNC_LN:
                     vdLn(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_LOG10:
                     vdLog10(len, operand1_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_NEGATE:
+                    for (int i = 0; i < len; i++) {
+                        out_pointer[i] = -operand1_pointer[i];
+                    }
                     break;
                 case IARRAY_FUNC_POW:
                     vdPow(len, operand1_pointer, operand2_pointer, out_pointer);
@@ -765,7 +779,7 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
         case IARRAY_DATA_TYPE_FLOAT: {
             int32_t len;
             float *operand1_pointer;
-            float *operand2_pointer;
+            float *operand2_pointer = NULL;
             float *out_pointer;
             if (scalar) {
                 len = 1;
@@ -779,6 +793,9 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
                 out_pointer = out->data;
             }
             switch (func) {
+                case IARRAY_FUNC_ABS:
+                    vsAbs(len, operand1_pointer, out_pointer);
+                    break;
                 case IARRAY_FUNC_ACOS:
                     vsAcos(len, operand1_pointer, out_pointer);
                     break;
@@ -791,6 +808,9 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
                 case IARRAY_FUNC_ATAN2:
                     vsAtan2(len, operand1_pointer, operand2_pointer, out_pointer);
                     break;
+                case IARRAY_FUNC_CEIL:
+                    vsCeil(len, operand1_pointer, out_pointer);
+                    break;
                 case IARRAY_FUNC_COS:
                     vsCos(len, operand1_pointer, out_pointer);
                     break;
@@ -800,11 +820,19 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
                 case IARRAY_FUNC_EXP:
                     vsExp(len, operand1_pointer, out_pointer);
                     break;
+                case IARRAY_FUNC_FLOOR:
+                    vsFloor(len, operand1_pointer, out_pointer);
+                    break;
                 case IARRAY_FUNC_LN:
                     vsLn(len, operand1_pointer, out_pointer);
                     break;
                 case IARRAY_FUNC_LOG10:
                     vsLog10(len, operand1_pointer, out_pointer);
+                    break;
+                case IARRAY_FUNC_NEGATE:
+                    for (int i = 0; i < len; i++) {
+                        out_pointer[i] = -operand1_pointer[i];
+                    }
                     break;
                 case IARRAY_FUNC_POW:
                     vsPow(len, operand1_pointer, operand2_pointer, out_pointer);
@@ -867,21 +895,21 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
     if (lhs->dtshape->ndim == 0 && rhs->dtshape->ndim == 0) {   /* scalar-scalar */
         dtshape.dtype = rhs->dtshape->dtype;
         dtshape.ndim = rhs->dtshape->ndim;
-        memcpy(dtshape.shape, rhs->dtshape->shape, sizeof(int) * dtshape.ndim);
+        memcpy(dtshape.shape, rhs->dtshape->shape, sizeof(int64_t) * dtshape.ndim);
         scalar = true;
     }
     else if (lhs->dtshape->ndim == 0 || rhs->dtshape->ndim == 0) {   /* scalar-vector */
         if (lhs->dtshape->ndim == 0) {
             dtshape.dtype = rhs->dtshape->dtype;
             dtshape.ndim = rhs->dtshape->ndim;
-            ina_mem_cpy(dtshape.shape, rhs->dtshape->shape, sizeof(int) * dtshape.ndim);
+            ina_mem_cpy(dtshape.shape, rhs->dtshape->shape, sizeof(int64_t) * dtshape.ndim);
             scalar_tmp = lhs;
             scalar_lhs = rhs;
         }
         else {
             dtshape.dtype = lhs->dtshape->dtype;
             dtshape.ndim = lhs->dtshape->ndim;
-            ina_mem_cpy(dtshape.shape, lhs->dtshape->shape, sizeof(int) * dtshape.ndim);
+            ina_mem_cpy(dtshape.shape, lhs->dtshape->shape, sizeof(int64_t) * dtshape.ndim);
             scalar_tmp = rhs;
             scalar_lhs = lhs;
         }
@@ -890,7 +918,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
     else if (lhs->dtshape->ndim == 1 && rhs->dtshape->ndim == 1) { /* vector-vector */
         dtshape.dtype = lhs->dtshape->dtype;
         dtshape.ndim = lhs->dtshape->ndim;
-        ina_mem_cpy(dtshape.shape, lhs->dtshape->shape, sizeof(int)*lhs->dtshape->ndim);
+        ina_mem_cpy(dtshape.shape, lhs->dtshape->shape, sizeof(int64_t) * lhs->dtshape->ndim);
         vector_vector = true;
     }
     else {
