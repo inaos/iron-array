@@ -210,7 +210,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr, voi
     itr->val->elem_index = itr->cur_elem_index;
     itr->val->nblock = itr->nblock;
     itr->val->block_shape = itr->cur_block_shape;
-    itr->val->block_size = actual_block_size;
+    itr->val->block_size = itr->cur_block_size;
 
     // Increment the block counter
     itr->nblock += 1;
