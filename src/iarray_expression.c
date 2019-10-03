@@ -144,7 +144,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 #endif
 
     e->expr = ina_str_new_fromcstr(expr);
-    e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t*)); //TODO: This should be freed?
+    e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t*)); // TODO: This should be freed?
     te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(te_variable));
     caterva_array_t *catarr = e->vars[0].c->catarr;
 
@@ -192,8 +192,9 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         e->nchunks += 1;
     }
 
-    // Create temporaries for initial variables
-    // TODO: make this more general and accept multidimensional containers
+    // Create temporaries for initial variables.
+    // We don't need the temporaries to be conformant with pshape; only the buffer
+    // size needs to the same.
     iarray_dtshape_t dtshape_var = {0};  // initialize to 0s
     dtshape_var.ndim = 1;
     int32_t temp_var_dim0 = 0;
@@ -280,7 +281,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
     int64_t nitems_written = 0;
     int nvars = e->nvars;
 
-    ret->catarr->size = 1;  // TODO: fix this workaround (see caterva_update_shape() call above)
     int64_t *out_pshape;
 
     if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
