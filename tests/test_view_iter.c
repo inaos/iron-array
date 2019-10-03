@@ -325,7 +325,7 @@ INA_TEST_FIXTURE(view_trans_iter, 2_f_p_v) {
 
     const int8_t ndim = 2;
     int64_t shape[] = {10, 10};
-    int64_t pshape[] = {0, 0};
+    int64_t pshape[] = {2, 3};
     int64_t start[] = {2, 1};
     int64_t stop[] = {7, 3};
     int64_t pshape_dest[] = {0, 0};
