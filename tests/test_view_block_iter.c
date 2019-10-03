@@ -62,10 +62,10 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, pshape_dest, NULL, 0, &c_out));
 
-    int64_t blockshape[] = {2, 2, 2, 2, 2, 2, 2, 2};
+    int64_t blockshape[IARRAY_DIMENSION_MAX] = {2, 2, 2, 2, 2, 2, 2, 2};
     iarray_iter_read_block_t *iter;
     iarray_iter_read_block_value_t val;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &iter, c_out, blockshape, &val, NULL));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &iter, c_out, blockshape, &val, false));
 
     while (INA_SUCCEED(iarray_iter_read_block_has_next(iter))) {
         INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(iter, NULL, 0));
