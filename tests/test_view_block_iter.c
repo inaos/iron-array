@@ -70,7 +70,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     while (INA_SUCCEED(iarray_iter_read_block_has_next(iter))) {
         INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(iter, NULL, 0));
         uint8_t *block_buffer = malloc(val.block_size * type_size);
-        int64_t block_stop[c_out->dtshape->ndim];
+        int64_t block_stop[IARRAY_DIMENSION_MAX];
         for (int i = 0; i < c_out->dtshape->ndim; ++i) {
             block_stop[i] = val.elem_index[i] + val.block_shape[i];
         }
