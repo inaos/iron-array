@@ -957,18 +957,20 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
 
     (*itr)->ctx = ctx;
     (*itr)->cont = cont;
-    if (cont->catarr->storage == CATERVA_STORAGE_BLOSC || cont->view) {
-        (*itr)->part = (uint8_t *) ina_mem_alloc((size_t) cont->catarr->psize * cont->catarr->ctx->cparams.typesize);
-    }
+
     (*itr)->elem_index = (int64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(int64_t));
-
     (*itr)->block_shape = (int64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(int64_t));
-
     (*itr)->cur_block_shape = (int64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(int64_t));
     (*itr)->cur_block_index = (int64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(int64_t));
 
+    int64_t block_size = 1;
     for (int i = 0; i < cont->dtshape->ndim; ++i) {
         (*itr)->block_shape[i] = cont->dtshape->pshape[i];
+        block_size *= (*itr)->block_shape[i];
+    }
+
+    if (cont->catarr->storage == CATERVA_STORAGE_BLOSC || cont->view) {
+        (*itr)->part = (uint8_t *) ina_mem_alloc((size_t) block_size * cont->catarr->ctx->cparams.typesize);
     }
 
     (*itr)->val = val;
