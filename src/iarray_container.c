@@ -703,22 +703,25 @@ INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
 }
 
 INA_API(ina_rc_t) iarray_get_sframe(iarray_container_t *container,
-                                    uint8_t **sframe,
+                                    char **sframe,
                                     int64_t *len,
-                                    bool *shared)
+                                    int *shared)
 {
     INA_VERIFY_NOT_NULL(container);
+    if (container->catarr->filled != true) {
+        return INA_ERROR(IARRAY_ERR_CATERVA_FAILED);
+    }
     if (container->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
 
-    *shared = true;  // safest default
+    *shared = 1;  // safest default
     if (container->catarr->sc->frame != NULL) {
         char *fname = container->catarr->sc->frame->fname;
         if (fname == NULL) {
-            *sframe = container->catarr->sc->frame->sdata;
+            *sframe = (char*)(container->catarr->sc->frame->sdata);
             *len = container->catarr->sc->frame->len;
-            *shared = true;  // no copies made, so it is shared
+            *shared = 1;  // no copies made, so it is shared
             return INA_SUCCESS;
         }
         else {
@@ -737,7 +740,7 @@ INA_API(ina_rc_t) iarray_get_sframe(iarray_container_t *container,
                 return INA_ERROR(IARRAY_ERR_MALLOC_FAILED);
             }
             fclose (f);
-            *shared = false;
+            *shared = 0;
             return INA_SUCCESS;
         }
     }
@@ -750,10 +753,10 @@ INA_API(ina_rc_t) iarray_get_sframe(iarray_container_t *container,
     if (*len < 0) {
         return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
     }
-    *sframe = frame->sdata;  // grab the serial data for the frame
+    *sframe = (char*)(frame->sdata);  // grab the serial data for the frame
     frame->sdata = NULL;  // detach the serial data so that we can free the frame
     blosc2_free_frame(frame);
-    *shared = false;
+    *shared = 0;
 
     return INA_SUCCESS;
 }

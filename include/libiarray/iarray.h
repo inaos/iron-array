@@ -464,9 +464,9 @@ INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape);
 
 INA_API(ina_rc_t) iarray_get_sframe(iarray_container_t *container,
-                                    uint8_t **sframe,
+                                    char **sframe,
                                     int64_t *len,
-                                    bool *shared);
+                                    int *shared);
 
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,

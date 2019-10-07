@@ -33,16 +33,16 @@ static ina_rc_t test_cont_sframe(iarray_context_t *ctx, iarray_data_type_t dtype
     iarray_container_t *c_x;
     INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &xdtshape, size, 0, 1, NULL, 0, &c_x));
 
-    uint8_t* sframe;
+    char* sframe;
     int64_t len;
-    bool shared;
+    int shared;
     if (c_x->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
         INA_TEST_ASSERT_FAILED(iarray_get_sframe(c_x, &sframe, &len, &shared));
         return INA_SUCCESS;
     }
     INA_TEST_ASSERT_SUCCEED(iarray_get_sframe(c_x, &sframe, &len, &shared));
 
-    INA_TEST_ASSERT(shared == false);
+    INA_TEST_ASSERT(shared == 0);
     INA_TEST_ASSERT(len < size * type_size);
 
     return INA_SUCCESS;
