@@ -36,7 +36,7 @@
 #define IARRAY_ES_RAND_METHOD (INA_ES_USER_DEFINED + 15)
 #define IARRAY_ES_RAND_PARAM (INA_ES_USER_DEFINED + 16)
 #define IARRAY_ES_ITER (INA_ES_USER_DEFINED + 16)
-
+#define IARRAY_ES_MALLOC (INA_ES_USER_DEFINED + 17)
 
 #define IARRAY_ERR_EMPTY_CONTAINER (INA_ERR_EMPTY | IARRAY_ES_CONTAINER)
 #define IARRAY_ERR_FULL_CONTAINER (INA_ERR_FULL | IARRAY_ES_CONTAINER)
@@ -54,12 +54,14 @@
 #define IARRAY_ERR_INVALID_RAND_PARAM (IARRAY_ES_RAND_PARAM | INA_ERR_INVALID)
 
 #define IARRAY_ERR_INVALID_STORAGE (INA_ERR_INVALID | IARRAY_ES_STORAGE)
+#define IARRAY_ERR_INVALID_PERSISTENCY (INA_ERR_INVALID | IARRAY_ES_PERSISTENCY)
 #define IARRAY_ERR_TOO_SMALL_BUFFER (INA_ERR_TOO_SMALL | IARRAY_ES_BUFFER)
 
 #define IARRAY_ERR_CATERVA_FAILED (INA_ERR_FAILED | IARRAY_ES_CATERVA)
 #define IARRAY_ERR_BLOSC_FAILED (INA_ERR_FAILED | IARRAY_ES_BLOSC)
 #define IARRAY_ERR_RAND_METHOD_FAILED (IARRAY_ES_RAND_METHOD | INA_ERR_FAILED)
 #define IARRAY_ERR_ASSERTION_FAILED (IARRAY_ES_ASSERTION | INA_ERR_FAILED)
+#define IARRAY_ERR_MALLOC_FAILED (INA_ERR_FAILED | IARRAY_ES_MALLOC)
 
 #define IARRAY_ERR_END_ITER (IARRAY_ES_ITER | INA_ERR_COMPLETE)
 
@@ -460,6 +462,11 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
 INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
                                      iarray_container_t *c,
                                      iarray_dtshape_t *dtshape);
+
+INA_API(ina_rc_t) iarray_get_sframe(iarray_container_t *container,
+                                    uint8_t **sframe,
+                                    int64_t *len,
+                                    bool *shared);
 
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,

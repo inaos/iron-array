@@ -74,24 +74,24 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
     return INA_SUCCESS;
 }
 
-INA_TEST_DATA(rewrite_cont) {
+INA_TEST_DATA(container_rewrite) {
     iarray_context_t *ctx;
 };
 
-INA_TEST_SETUP(rewrite_cont) {
+INA_TEST_SETUP(container_rewrite) {
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_new(&cfg, &data->ctx);
 }
 
-INA_TEST_TEARDOWN(rewrite_cont) {
+INA_TEST_TEARDOWN(container_rewrite) {
     iarray_context_free(&data->ctx);
     iarray_destroy();
 }
 
 
-INA_TEST_FIXTURE(rewrite_cont, 2_d_p) {
+INA_TEST_FIXTURE(container_rewrite, 2_d_p) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
@@ -105,7 +105,7 @@ INA_TEST_FIXTURE(rewrite_cont, 2_d_p) {
 }
 
 
-INA_TEST_FIXTURE(rewrite_cont, 3_f) {
+INA_TEST_FIXTURE(container_rewrite, 3_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
@@ -119,7 +119,7 @@ INA_TEST_FIXTURE(rewrite_cont, 3_f) {
 }
 
 
-INA_TEST_FIXTURE(rewrite_cont, 4_d) {
+INA_TEST_FIXTURE(container_rewrite, 4_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
@@ -132,7 +132,7 @@ INA_TEST_FIXTURE(rewrite_cont, 4_d) {
                                               blockshape, false));
 }
 
-INA_TEST_FIXTURE(rewrite_cont, 5_f_p) {
+INA_TEST_FIXTURE(container_rewrite, 5_f_p) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
@@ -145,7 +145,7 @@ INA_TEST_FIXTURE(rewrite_cont, 5_f_p) {
                                               blockshape, true));
 }
 
-INA_TEST_FIXTURE(rewrite_cont, 6_d_p) {
+INA_TEST_FIXTURE(container_rewrite, 6_d_p) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
@@ -158,7 +158,7 @@ INA_TEST_FIXTURE(rewrite_cont, 6_d_p) {
                                               blockshape, false));
 }
 
-INA_TEST_FIXTURE(rewrite_cont, 7_f) {
+INA_TEST_FIXTURE(container_rewrite, 7_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 

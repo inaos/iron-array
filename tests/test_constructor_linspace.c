@@ -29,11 +29,9 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, i
     }
 
     iarray_container_t *c_x;
-
     INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &xdtshape, size, start, stop, NULL, 0, &c_x));
 
     // Assert iterator reading it
-
     iarray_iter_read_t *I2;
     iarray_iter_read_value_t val;
     INA_TEST_ASSERT_SUCCEED(iarray_iter_read_new(ctx, &I2, c_x, &val));

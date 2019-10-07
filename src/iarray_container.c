@@ -702,6 +702,62 @@ INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
+INA_API(ina_rc_t) iarray_get_sframe(iarray_container_t *container,
+                                    uint8_t **sframe,
+                                    int64_t *len,
+                                    bool *shared)
+{
+    INA_VERIFY_NOT_NULL(container);
+    if (container->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+    }
+
+    *shared = true;  // safest default
+    if (container->catarr->sc->frame != NULL) {
+        char *fname = container->catarr->sc->frame->fname;
+        if (fname == NULL) {
+            *sframe = container->catarr->sc->frame->sdata;
+            *len = container->catarr->sc->frame->len;
+            *shared = true;  // no copies made, so it is shared
+            return INA_SUCCESS;
+        }
+        else {
+            FILE *f = fopen(fname, "r");
+            if (f == NULL) {
+                return INA_ERROR(IARRAY_ERR_INVALID_PERSISTENCY);
+            }
+            fseek(f, 0, SEEK_END);
+            *len = ftell(f);
+            fseek (f, 0, SEEK_SET);
+            *sframe = malloc(*len);
+            if (*sframe) {
+                fread(*sframe, 1, *len, f);
+            }
+            else {
+                return INA_ERROR(IARRAY_ERR_MALLOC_FAILED);
+            }
+            fclose (f);
+            *shared = false;
+            return INA_SUCCESS;
+        }
+    }
+    // Container is not backed by a frame, so create a new one and fill it
+    blosc2_frame *frame = blosc2_new_frame(NULL);
+    if (frame == NULL) {
+        return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+    }
+    *len = blosc2_schunk_to_frame(container->catarr->sc, frame);
+    if (*len < 0) {
+        return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+    }
+    *sframe = frame->sdata;  // grab the serial data for the frame
+    frame->sdata = NULL;  // detach the serial data so that we can free the frame
+    blosc2_free_frame(frame);
+    *shared = false;
+
+    return INA_SUCCESS;
+}
+
 INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, int64_t *nbytes, int64_t *cbytes)
 {
     INA_VERIFY_NOT_NULL(c);
