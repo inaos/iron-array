@@ -594,16 +594,16 @@ omp_set_num_threads(e->ctx->cfg->max_num_threads);
     rc = INA_SUCCESS;
 
     cleanup:
-        ina_mempool_reset(e->ctx->mp);
-        ina_mempool_reset(e->ctx->mp_op);
-        ina_mempool_reset(e->ctx->mp_tmp_out);
+    ina_mempool_reset(e->ctx->mp);
+    ina_mempool_reset(e->ctx->mp_op);
+    ina_mempool_reset(e->ctx->mp_tmp_out);
 
-        if (nitems_written != nitems_in_schunk) {
-            printf("nitems written is different from items in final container\n");
-            return INA_ERROR(INA_ERR_NOT_COMPLETE);
-        }
+    if (nitems_written != nitems_in_schunk) {
+        printf("nitems written is different from items in final container\n");
+        return INA_ERROR(INA_ERR_NOT_COMPLETE);
+    }
 
-        return rc;
+    return rc;
 }
 
 ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)
