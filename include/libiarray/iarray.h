@@ -16,6 +16,7 @@
 #include <libinac/lib.h>
 #include <stdbool.h>
 
+#define IARRAY_METALAYER_VERSION 0
 
 #define IARRAY_DIMENSION_MAX 8 /* A fixed size simplifies the code and should be enough for most IronArray cases */
 

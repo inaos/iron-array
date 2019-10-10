@@ -733,7 +733,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         max_dif = (fabs(hist1[i] - hist2[i]) / size > max_dif) ? fabs(hist1[i] - hist2[i]) / size : max_dif;
     }
 
-    double a = 0.005;
+    double a = 0.001;
     double threshold = sqrt(- log(a) / 2) * sqrt(2 * ((double) size) / (size * size));
 
     *res = (max_dif < threshold);
