@@ -23,11 +23,17 @@ static int32_t serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
     if (dtype > IARRAY_DATA_TYPE_MAX) {
         return -1;
     }
-    int32_t smeta_len = 1;  // the dtype should take less than 7-bit, so 1 byte is enough to store it
+    int32_t smeta_len = 3;  // the dtype should take less than 7-bit, so 1 byte is enough to store it
     *smeta = malloc((size_t)smeta_len);
 
+    // version
+    **smeta = 0;
+
     // dtype entry
-    **smeta = (uint8_t)dtype;  // positive fixnum (7-bit positive integer)
+    *(*smeta + 1) = (uint8_t)dtype;  // positive fixnum (7-bit positive integer)
+
+    // flags (initialising all the entries to 0)
+    *(*smeta + 2) = 0;  // positive fixnum (7-bit for flags)
 
     return smeta_len;
 }

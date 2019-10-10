@@ -566,9 +566,18 @@ INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_containe
 
     if (a->transposed == 0) {
         a->transposed = 1;
+
     }
     else {
         a->transposed = 0;
+    }
+
+    if (a->catarr->storage == CATERVA_STORAGE_BLOSC && blosc2_has_metalayer(a->catarr->sc, "iarray") > 0) {
+        uint8_t *content;
+        uint32_t content_len;
+        blosc2_get_metalayer(a->catarr->sc, "iarray", &content, &content_len);
+        *(content + 2) = *(content + 2) ^ 64ULL;
+        blosc2_update_metalayer(a->catarr->sc, "iarray", content, content_len);
     }
 
     int64_t aux[IARRAY_DIMENSION_MAX];
