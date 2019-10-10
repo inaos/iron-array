@@ -123,6 +123,23 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
     return INA_ERROR(INA_ERR_NOT_IMPLEMENTED);
 }
 
+INA_API(ina_rc_t) iarray_expr_compile_udf(iarray_expression_t *e, int llvm_bc_len, const char *llvm_bc)
+{
+    INA_VERIFY_NOT_NULL(e);
+    INA_VERIFY_NOT_NULL(llvm_bc);
+
+    uint64_t udf_address;
+
+    INA_FAIL_IF_ERROR(jug_udf_compile(e->jug_expr, llvm_bc_len, llvm_bc, &udf_address));
+
+    e->jug_expr_func = udf_address;
+
+    return INA_SUCCESS;
+
+fail:
+    return ina_err_get_rc();
+}
+
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 {
     INA_VERIFY_NOT_NULL(e);
