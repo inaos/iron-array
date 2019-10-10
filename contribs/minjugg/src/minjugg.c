@@ -5,6 +5,7 @@
 #include <llvm-c/Target.h>
 #include <llvm-c/Analysis.h>
 #include <llvm-c/BitWriter.h>
+#include <llvm-c/IRReader.h>
 
 #include <llvm-c/Transforms/PassManagerBuilder.h>
 
@@ -643,6 +644,33 @@ INA_API(void) jug_expression_free(jug_expression_t **expr)
         LLVMDisposeModule((*expr)->mod);
     }*/
     INA_MEM_FREE_SAFE(*expr);
+}
+
+INA_API(ina_rc_t) jug_udf_compile(jug_expression_t *e, int llvm_bc_len, const char *llvm_bc, uint64_t *function_addr)
+{
+    char *message = NULL;
+
+    // Read the IR file into a buffer
+    LLVMMemoryBufferRef buf = LLVMCreateMemoryBufferWithMemoryRange(llvm_bc, llvm_bc_len, "udf", 0);
+
+    // now create our module
+    LLVMModuleRef mod;
+    LLVMContextRef context = LLVMContextCreate();
+    if (LLVMParseIRInContext(context, buf, &mod, &message) != 0) {
+#ifdef _JUG_DEBUG_WRITE_ERROR_TO_STDERR
+        fprintf(stderr, "Invalid IR detected! message: '%s'\n", message);
+#endif
+        LLVMDisposeMemoryBuffer(buf);
+        free(message);
+        return INA_ERR_FAILED;
+    }
+
+    // somehow we need to merge the UDF module with 
+    // the LLVM IR used to read and write the prefilter input / output
+
+    LLVMDisposeMemoryBuffer(buf);
+
+    return INA_SUCCESS;
 }
 
 INA_API(ina_rc_t) jug_expression_compile(
