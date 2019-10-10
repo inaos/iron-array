@@ -378,19 +378,31 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 }
 
 
-static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype) {
+static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype, bool *transposed) {
     INA_UNUSED(smeta_len);
     INA_VERIFY_NOT_NULL(smeta);
     INA_VERIFY_NOT_NULL(dtype);
-
+    INA_VERIFY_NOT_NULL(transposed);
     ina_rc_t rc;
 
     uint8_t *pmeta = smeta;
 
+    //version
+    uint8_t version = *pmeta;
+    pmeta +=1;
+
     // We only have an entry with the datatype (enumerated < 128)
     *dtype = *pmeta;
     pmeta += 1;
+
+    *transposed = false;
+    if ((*pmeta & 64ULL) != 0) {
+        *transposed = true;
+    }
+    pmeta += 1;
+
     assert(pmeta - smeta == smeta_len);
+
     if (*dtype >= IARRAY_DATA_TYPE_MAX) {
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
@@ -424,7 +436,8 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
     }
     iarray_data_type_t dtype;
-    if (deserialize_meta(smeta, smeta_len, &dtype) != 0) {
+    bool transposed;
+    if (deserialize_meta(smeta, smeta_len, &dtype, &transposed) != 0) {
         printf("Error in deserialize_meta\n");
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
     }
@@ -466,7 +479,22 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
     free(dparams);
     (*container)->dparams = dparams2;  // we need an INA-allocated struct (to match INA_MEM_FREE_SAFE)
 
-    (*container)->transposed = false;  // TODO: complete this
+    (*container)->transposed = transposed;  // TODO: complete this
+    if (transposed) {
+        int64_t aux[IARRAY_DIMENSION_MAX];
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            aux[i] = (*container)->dtshape->shape[i];
+        }
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            (*container)->dtshape->shape[i] = aux[(*container)->dtshape->ndim - 1 - i];
+        }
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            aux[i] = (*container)->dtshape->pshape[i];
+        }
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            (*container)->dtshape->pshape[i] = aux[(*container)->dtshape->ndim - 1 - i];
+        }
+    }
     (*container)->view = false;
 
     (*container)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
