@@ -313,7 +313,7 @@ static void* _jug_function_map[] = {
     _jug_build_atan2_f64,
     _jug_build_ceil_f64,
     _jug_build_cos_f64,
-    _jug_build_cosh_f64, 
+    _jug_build_cosh_f64,
     NULL,//"EXPR_TYPE_E",
     _jug_build_exp_f64,
     NULL,// EXPR_TYPE_FAC,
@@ -418,9 +418,9 @@ static LLVMValueRef _jug_expr_compile_function(LLVMModuleRef module, const char 
     params_struct_types[4] = LLVMPointerType(LLVMInt8Type(), 0); /* out */
     params_struct_types[5] = LLVMInt32Type();
     params_struct_types[6] = LLVMInt32Type();
-    
+
     LLVMStructSetBody(params_struct, params_struct_types, 7, 0);
-    
+
     LLVMTypeRef param_types[1] = {
         LLVMPointerType(params_struct, 0)
     };
@@ -444,7 +444,7 @@ static LLVMValueRef _jug_expr_compile_function(LLVMModuleRef module, const char 
         LLVMValueRef out_size_ptr = LLVMBuildStructGEP(builder, param_ptr, 5, "out_size_ptr");
         LLVMValueRef out_size = LLVMBuildLoad(builder, out_size_ptr, "out_size");
         LLVMValueRef out_size_val = LLVMBuildPtrToInt(builder, out_size, LLVMInt32Type(), "out_size_val");
-        
+
         LLVMValueRef out_typesize_ptr = LLVMBuildStructGEP(builder, param_ptr, 6, "out_typesize_ptr");
         LLVMValueRef out_typesize = LLVMBuildLoad(builder, out_typesize_ptr, "out_typesize");
         LLVMValueRef out_typesize_val = LLVMBuildPtrToInt(builder, out_typesize, LLVMInt32Type(), "out_size_val");
@@ -484,7 +484,7 @@ static LLVMValueRef _jug_expr_compile_function(LLVMModuleRef module, const char 
         LLVMValueRef md_node_vec = LLVMMDNode(md_values_vec, 2);*/
 
         LLVMValueRef index = LLVMBuildLoad(builder, index_addr, "[index]");
-        
+
         LLVMValueRef ninputs = LLVMBuildStructGEP(builder, param_ptr, 0, "ninputs");
         INA_UNUSED(ninputs); // TODO: compare arg_count with ninputs, return error (constant_one) if different
 
@@ -493,7 +493,7 @@ static LLVMValueRef _jug_expr_compile_function(LLVMModuleRef module, const char 
         for (int i = 0; i < var_len; ++i) {
             /* Load array of inputs */
             LLVMValueRef in_addr = LLVMBuildExtractValue(builder, inputs, i, "inputs[index]");
-            
+
             /* Cast to value type */
             LLVMTypeRef type_cast = LLVMPointerType(LLVMPointerType(LLVMDoubleType(), 0), 0);
             LLVMValueRef cast_in = LLVMBuildCast(builder, LLVMBitCast, in_addr, type_cast, "cast[double*]");
@@ -531,7 +531,7 @@ static LLVMValueRef _jug_expr_compile_function(LLVMModuleRef module, const char 
         LLVMBuildBr(builder, condition);
     }
     LLVMPositionBuilderAtEnd(builder, end);
-    
+
     LLVMBuildRet(builder, constant_zero);
 
     ina_hashtable_free(&param_values);
@@ -539,11 +539,11 @@ static LLVMValueRef _jug_expr_compile_function(LLVMModuleRef module, const char 
     return f;
 }
 
-static void _jug_apply_optimisation_passes(LLVMModuleRef mod) 
+static void _jug_apply_optimisation_passes(LLVMModuleRef mod)
 {
     LLVMPassManagerBuilderRef pass_manager_builder = LLVMPassManagerBuilderCreate();
     LLVMPassManagerBuilderSetOptLevel(pass_manager_builder, 3);
-    
+
     LLVMPassManagerRef pass_manager = LLVMCreatePassManager();
 
     LLVMPassManagerBuilderPopulateModulePassManager(pass_manager_builder, pass_manager);
@@ -665,7 +665,7 @@ INA_API(ina_rc_t) jug_udf_compile(jug_expression_t *e, int llvm_bc_len, const ch
         return INA_ERR_FAILED;
     }
 
-    // somehow we need to merge the UDF module with 
+    // somehow we need to merge the UDF module with
     // the LLVM IR used to read and write the prefilter input / output
 
     LLVMDisposeMemoryBuffer(buf);
@@ -674,10 +674,10 @@ INA_API(ina_rc_t) jug_udf_compile(jug_expression_t *e, int llvm_bc_len, const ch
 }
 
 INA_API(ina_rc_t) jug_expression_compile(
-    jug_expression_t *e, 
-    const char *expr_str, 
-    int num_vars, 
-    void *vars, 
+    jug_expression_t *e,
+    const char *expr_str,
+    int num_vars,
+    void *vars,
     uint64_t *function_addr)
 {
     int parse_error = 0;
@@ -686,7 +686,7 @@ INA_API(ina_rc_t) jug_expression_compile(
     if (parse_error) {
         return INA_ERR_INVALID_ARGUMENT;
     }
-    
+
     _jug_expr_compile_function(e->mod, "expr_func", expression, num_vars, te_vars);
 
     jug_te_free(expression);
@@ -704,23 +704,23 @@ INA_API(ina_rc_t) jug_expression_compile(
     }
 #endif
 
-    // FIXME: currently hangs on windows
-#ifndef INA_OS_WINDOWS
-    _jug_apply_optimisation_passes(e->mod);
-
-#ifdef _JUG_DEBUG_WRITE_BC_TO_FILE
-    if (LLVMWriteBitcodeToFile(e->mod, "expression_opt.bc") != 0) {
-        fprintf(stderr, "error writing bitcode to file, skipping\n");
-    }
-#endif
-#endif
+    // FIXME: currently hangs on windows and UNIX too
+//#ifndef INA_OS_WINDOWS
+//    _jug_apply_optimisation_passes(e->mod);
+//
+//#ifdef _JUG_DEBUG_WRITE_BC_TO_FILE
+//    if (LLVMWriteBitcodeToFile(e->mod, "expression_opt.bc") != 0) {
+//        fprintf(stderr, "error writing bitcode to file, skipping\n");
+//    }
+//#endif
+//#endif
 
     error = NULL;
     if (LLVMCreateExecutionEngineForModule(&e->engine, e->mod, &error) != 0) {
         fprintf(stderr, "failed to create execution engine\n");
         LLVMDisposeMessage(error);
         return INA_ERR_FATAL;
-        
+
     }
     if (error) {
         fprintf(stderr, "error: %s\n", error);
@@ -737,7 +737,7 @@ INA_API(ina_rc_t) jug_expression_compile(
 {
 
 
-    
+
 
     int argc_eval = argc - 2;
     char **argv_eval = argv + 2;
@@ -756,7 +756,7 @@ INA_API(ina_rc_t) jug_expression_compile(
     memset(vars, 0, sizeof(te_variable)*argc_eval);
 
     double *out = malloc(10 * sizeof(double));
-    // Fill the parameters of the prefilter 
+    // Fill the parameters of the prefilter
     for (int i = 0; i < argc_eval; ++i) {
         vars[i].name = strtok(argv_eval[i], "=");
         double val = strtod(strtok(NULL, "="), NULL);
@@ -770,13 +770,13 @@ INA_API(ina_rc_t) jug_expression_compile(
     params.out = (uint8_t*)out;
 
     //_jug_expr_t *expression = _jug_expr_parse_expression(&argv[1]);
-    
+
 
     typedef int(*fun_t)(blosc2_prefilter_params *params);
     uint64_t fun_addr = 0;
     fun_t fun = (fun_t)fun_addr;
-    
-    // invoke jitted code 
+
+    // invoke jitted code
 
     fun(&params);
 
@@ -784,9 +784,9 @@ INA_API(ina_rc_t) jug_expression_compile(
     for (int i = 0; i < 10; ++i) {
         printf("Result: %f\n", test[i]);
     }
-    
-    
-    
+
+
+
     return 0;
 }
 */
