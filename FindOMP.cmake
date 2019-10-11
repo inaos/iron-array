@@ -25,21 +25,21 @@ if (APPLE)
 elseif (WIN32)
     set(OMP_ROOT_LIB compiler/lib/intel64/libiomp5md.lib)
 else()
-    set(OMP_ROOT_LIB lib/intel64/libiomp5.a)
+    set(OMP_ROOT_LIB libiomp5.so)
 endif()
 
 find_path(OMP_ROOT_DIR
     ${OMP_ROOT_LIB}
     PATHS
         $ENV{OMPROOT}
-        /opt/intel/compilers_and_libraries/linux
+        /opt/intel/compilers_and_libraries/linux/lib/intel64
         /opt/intel/compilers_and_libraries/mac
         "C:/IntelSWTools/compilers_and_libraries/windows"
         "C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows"
-        $ENV{HOME}/miniconda3
+        $ENV{HOME}/miniconda3/lib
         $ENV{USERPROFILE}/miniconda3/Library
         "C:/Miniconda37-x64/Library" # Making AppVeyor happy
-        $ENV{CONDA}/envs/iArrayEnv # Azure pipelines
+        $ENV{CONDA}/envs/iArrayEnv/lib/intel64 # Azure pipelines
         /Users/vsts/.conda/envs/iArrayEnv # Azure pipelines
         C:/Miniconda/envs/iArrayEnv # Azure pipelines
 )
@@ -60,7 +60,8 @@ find_path(OMP_LIB_SEARCHPATH
     PATHS
         ${OMP_ROOT_DIR}/lib/intel64
         ${OMP_ROOT_DIR}/lib
-		${OMP_ROOT_DIR}/compiler/lib/intel64
+        ${OMP_ROOT_DIR}
+        ${OMP_ROOT_DIR}/compiler/lib/intel64
 )
 
 foreach (LIB ${OMP_LIBS})
