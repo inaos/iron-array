@@ -793,9 +793,11 @@ INA_API(ina_rc_t) iarray_from_sview(iarray_context_t *ctx, uint8_t *sview, int64
     (*c)->catarr = (caterva_array_t *) address;
     pview += sizeof(uint64_t);
 
-    // transposed
+    // transposeD
     if ((*pview & 64ULL) != 0) {
         (*c)->transposed = true;
+    } else {
+        (*c)->transposed = false;
     }
     pview += 1;
 
