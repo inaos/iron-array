@@ -92,7 +92,7 @@ endif()
 
 if (UNIX)
 set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
-set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc2_static ${IPP_LIBRARIES})
+set(INAC_DEPENDENCY_LIBS minjugg ${INAC_DEPENDENCY_LIBS} blosc2_static ${IPP_LIBRARIES})
 endif()
 
 inac_add_tests(iarrays)
