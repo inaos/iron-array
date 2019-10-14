@@ -591,3 +591,252 @@ INA_API(bool) iarray_is_empty(iarray_container_t *container) {
     }
     return false;
 }
+
+static void swap_store(void *dest, const void *pa, int size) {
+    uint8_t* pa_ = (uint8_t*)pa;
+    uint8_t* pa2_ = malloc((size_t)size);
+    int i = 1;                    /* for big/little endian detection */
+    char* p = (char*)&i;
+
+    if (p[0] == 1) {
+        /* little endian */
+        switch (size) {
+            case 8:
+                pa2_[0] = pa_[7];
+                pa2_[1] = pa_[6];
+                pa2_[2] = pa_[5];
+                pa2_[3] = pa_[4];
+                pa2_[4] = pa_[3];
+                pa2_[5] = pa_[2];
+                pa2_[6] = pa_[1];
+                pa2_[7] = pa_[0];
+                break;
+            case 4:
+                pa2_[0] = pa_[3];
+                pa2_[1] = pa_[2];
+                pa2_[2] = pa_[1];
+                pa2_[3] = pa_[0];
+                break;
+            case 2:
+                pa2_[0] = pa_[1];
+                pa2_[1] = pa_[0];
+                break;
+            case 1:
+                pa2_[0] = pa_[0];
+                break;
+            default:
+                fprintf(stderr, "Unhandled size: %d\n", size);
+        }
+    }
+    memcpy(dest, pa2_, size);
+    free(pa2_);
+}
+
+INA_API(ina_rc_t) iarray_to_sview(iarray_context_t *ctx, iarray_container_t *c, uint8_t **sview, int64_t *sview_len) {
+
+    ina_rc_t rc;
+
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(sview);
+    INA_VERIFY_NOT_NULL(sview_len);
+
+    if (!c->view) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
+    }
+    *sview_len = 451;
+    *sview = malloc(*sview_len);
+
+    uint8_t *pview = *sview;
+
+    // dtype
+    *pview = (uint8_t) c->dtshape->dtype;
+    pview += 1;
+
+    // ndim
+    *pview = 0xd0;
+    pview += 1;
+    *pview = (int8_t) c->dtshape->ndim;
+    pview += 1;
+
+    // shape
+    *pview = 0x98;
+    pview += 1;
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        *pview = 0xd3;
+        pview += 1;
+        swap_store(pview, &c->dtshape->shape[i], sizeof(int64_t));
+        pview += sizeof(int64_t);
+    }
+
+    // pshape
+    *pview = 0x98;
+    pview += 1;
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        *pview = 0xd3;
+        pview += 1;
+        swap_store(pview, &c->dtshape->pshape[i], sizeof(int64_t));
+        pview += sizeof(int64_t);
+    }
+
+    // offset
+    *pview = 0x98;
+    pview += 1;
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        *pview = 0xd3;
+        pview += 1;
+        swap_store(pview, &c->auxshape->offset[i], sizeof(int64_t));
+        pview += sizeof(int64_t);
+    }
+
+    // shape_wos
+    *pview = 0x98;
+    pview += 1;
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        *pview = 0xd3;
+        pview += 1;
+        swap_store(pview, &c->auxshape->shape_wos[i], sizeof(int64_t));
+        pview += sizeof(int64_t);
+    }
+
+    // pshape_wos
+    *pview = 0x98;
+    pview += 1;
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        *pview = 0xd3;
+        pview += 1;
+        swap_store(pview, &c->auxshape->pshape_wos[i], sizeof(int64_t));
+        pview += sizeof(int64_t);
+    }
+
+    // index
+    *pview = 0x98;
+    pview += 1;
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        *pview = 0xd3;
+        pview += 1;
+        swap_store(pview, &c->auxshape->index[i], sizeof(int64_t));
+        pview += sizeof(int64_t);
+    }
+
+    // catarr
+    *pview = 0xcf;
+    pview += 1;
+    uint64_t address = (uint64_t) c->catarr;
+    swap_store(pview, &address, sizeof(uint64_t));
+    pview += sizeof(uint64_t);
+
+    // transposed
+    *pview = 0;
+    if (c->transposed) {
+        *pview = *pview | 64ULL;
+    }
+    pview += 1;
+
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
+}
+
+INA_API(ina_rc_t) iarray_from_sview(iarray_context_t *ctx, uint8_t *sview, int64_t sview_len, iarray_container_t **c) {
+
+    ina_rc_t rc;
+
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(sview);
+    INA_VERIFY_NOT_NULL(c);
+
+    *c = (iarray_container_t *) malloc(sizeof(iarray_container_t));
+    (*c)->dtshape = (iarray_dtshape_t *) malloc(sizeof(iarray_dtshape_t));
+    (*c)->auxshape = (iarray_auxshape_t *) malloc(sizeof(iarray_auxshape_t));
+    (*c)->cparams = (blosc2_cparams *) malloc(sizeof(blosc2_cparams));
+    (*c)->dparams = (blosc2_dparams *) malloc(sizeof(blosc2_dparams));
+
+    //dtype
+    uint8_t *pview = sview;
+    (*c)->dtshape->dtype = (uint8_t) *pview;
+    pview += 1;
+
+    // ndim
+    pview += 1;
+    (*c)->dtshape->ndim = (int8_t) *pview;
+    pview += 1;
+
+    // shape
+    pview += 1;
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        pview += 1;
+        swap_store(&(*c)->dtshape->shape[i], pview, sizeof(int64_t));
+        pview += sizeof(int64_t);
+    }
+
+    // pshape
+    pview += 1;
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        pview += 1;
+        swap_store(&(*c)->dtshape->pshape[i], pview, sizeof(int64_t));
+        pview += sizeof(int64_t);
+    }
+
+    // offset
+    pview += 1;
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        pview += 1;
+        swap_store(&(*c)->auxshape->offset[i], pview, sizeof(int64_t));
+        pview += sizeof(int64_t);
+    }
+
+    // shape_wos
+    pview += 1;
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        pview += 1;
+        swap_store(&(*c)->auxshape->shape_wos[i], pview, sizeof(int64_t));
+        pview += sizeof(int64_t);
+
+    }
+
+    // pshape_wos
+    pview += 1;
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        pview += 1;
+        swap_store(&(*c)->auxshape->pshape_wos[i], pview, sizeof(int64_t));
+        pview += sizeof(int64_t);
+    }
+
+    // index
+    pview += 1;
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        pview += 1;
+        swap_store(&(*c)->auxshape->index[i], pview, sizeof(int64_t));
+        pview += sizeof(int64_t);
+    }
+
+    //catarr
+    pview += 1;
+    uint64_t address;
+    swap_store(&address, pview, sizeof(int64_t));
+    (*c)->catarr = (caterva_array_t *) address;
+    pview += sizeof(uint64_t);
+
+    // transposeD
+    if ((*pview & 64ULL) != 0) {
+        (*c)->transposed = true;
+    } else {
+        (*c)->transposed = false;
+    }
+    pview += 1;
+
+    (*c)->view = true;
+    memcpy((*c)->cparams, &(*c)->catarr->ctx->cparams, sizeof(blosc2_cparams));
+    memcpy((*c)->dparams, &(*c)->catarr->ctx->dparams, sizeof(blosc2_dparams));
+
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
+}
