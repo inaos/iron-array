@@ -810,9 +810,7 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
     INA_UNUSED(ctx);
     INA_VERIFY_FREE(container);
 
-    if ((*container)->view) {
-        INA_MEM_FREE_SAFE((*container)->dtshape);
-    } else {
+    if (!(*container)->view) {
         if ((*container)->catarr != NULL) {
             caterva_free_array((*container)->catarr);
         }
