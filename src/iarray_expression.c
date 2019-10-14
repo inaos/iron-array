@@ -149,7 +149,12 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     caterva_array_t *catarr = e->vars[0].c->catarr;
 
     e->typesize = catarr->ctx->cparams.typesize;
-    e->nbytes = catarr->size * e->typesize;
+    int64_t size = 1;
+    for (int i = 0; i < e->vars[0].c->dtshape->ndim; ++i) {
+        size *= e->vars[0].c->dtshape->shape[i];
+    }
+
+    e->nbytes = size * e->typesize;
     if (catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
         // Somewhat arbitrary values follows
         e->blocksize = 1024 * e->typesize;
