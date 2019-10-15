@@ -77,6 +77,7 @@ typedef enum iarray_blas_type_e {
 struct iarray_context_s {
     iarray_config_t *cfg;
     ina_mempool_t *mp;
+    ina_mempool_t *mp_part_cache;
     ina_mempool_t *mp_op;
     ina_mempool_t *mp_tmp_out;
     /* FIXME: track expressions -> list */
