@@ -340,11 +340,11 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
         switch (cont->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 cont->catarr->part_cache.data =
-                    ina_mempool_dalloc(ctx->mp, (size_t) cont->catarr->psize * sizeof(double));
+                    ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->psize * sizeof(double));
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 cont->catarr->part_cache.data =
-                    ina_mempool_dalloc(ctx->mp, (size_t) cont->catarr->psize * sizeof(float));
+                    ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->psize * sizeof(float));
                 break;
             default:
                 INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
@@ -368,8 +368,10 @@ INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t **itr)
         INA_MEM_FREE_SAFE((*itr)->block);
     }
 
-    (*itr)->cont->catarr->part_cache.data = NULL;  // reset to NULL here (the memory pool will be reset later)
-    (*itr)->cont->catarr->part_cache.nchunk = -1;  // means no valid cache yet
+    // Invalidate caches and get rid of memory pool
+    (*itr)->cont->catarr->part_cache.data = NULL;
+    (*itr)->cont->catarr->part_cache.nchunk = -1;
+    ina_mempool_reset((*itr)->ctx->mp_part_cache);
 
     INA_MEM_FREE_SAFE((*itr)->aux);
     INA_MEM_FREE_SAFE((*itr)->block_shape);
