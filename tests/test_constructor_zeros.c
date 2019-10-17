@@ -80,7 +80,7 @@ INA_TEST_FIXTURE(constructor_zeros, 2_d)
 
     int8_t ndim = 2;
     int64_t shape[] = {10, 10};
-    int64_t pshape[] = {3, 4};
+    int64_t pshape[] = {10, 10};
 
     INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
@@ -104,7 +104,7 @@ INA_TEST_FIXTURE(constructor_zeros, 5_d)
 
     int8_t ndim = 5;
     int64_t shape[] = {10, 4, 12, 13, 12};
-    int64_t pshape[] = {3, 4, 6, 3, 3};
+    int64_t pshape[] = {3, 4, 50, 3, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
@@ -116,7 +116,7 @@ INA_TEST_FIXTURE(constructor_zeros, 7_f_p)
 
     int8_t ndim = 7;
     int64_t shape[] = {10, 6, 8, 6, 4, 4, 2};
-    int64_t pshape[] = {4, 3, 6, 2, 3, 3, 2};
+    int64_t pshape[] = {4, 3, 10, 10, 3, 3, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
