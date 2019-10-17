@@ -749,11 +749,11 @@ INA_API(ina_rc_t) iarray_from_sview(iarray_context_t *ctx, uint8_t *sview, int64
     INA_VERIFY_NOT_NULL(sview);
     INA_VERIFY_NOT_NULL(c);
 
-    *c = (iarray_container_t *) malloc(sizeof(iarray_container_t));
-    (*c)->dtshape = (iarray_dtshape_t *) malloc(sizeof(iarray_dtshape_t));
-    (*c)->auxshape = (iarray_auxshape_t *) malloc(sizeof(iarray_auxshape_t));
-    (*c)->cparams = (blosc2_cparams *) malloc(sizeof(blosc2_cparams));
-    (*c)->dparams = (blosc2_dparams *) malloc(sizeof(blosc2_dparams));
+    *c = (iarray_container_t *) ina_mem_alloc(sizeof(iarray_container_t));
+    (*c)->dtshape = (iarray_dtshape_t *) ina_mem_alloc(sizeof(iarray_dtshape_t));
+    (*c)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
+    (*c)->cparams = (blosc2_cparams *) ina_mem_alloc(sizeof(blosc2_cparams));
+    (*c)->dparams = (blosc2_dparams *) ina_mem_alloc(sizeof(blosc2_dparams));
 
     //dtype
     uint8_t *pview = sview;
