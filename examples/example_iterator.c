@@ -21,6 +21,7 @@ int main()
     int64_t shape[] = {10, 10};
     int64_t pshape[] = {2, 2};
     int64_t bshape[] = {2, 10};
+    ina_rc_t rc;
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_t *ctx;
@@ -62,13 +63,15 @@ int main()
     iarray_iter_read_block_free(&iter);
     INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
-    return INA_SUCCESS;
-
+    rc = INA_SUCCESS;
+    goto cleanup;
     fail:
+    rc = ina_err_get_rc();
+    cleanup:
     iarray_iter_write_free(&iter_w);
     iarray_iter_read_block_free(&iter);
     iarray_container_free(ctx, &cont);
     iarray_context_free(&ctx);
-    return ina_err_get_rc();
 
+    return rc;
 }
