@@ -86,7 +86,7 @@ INA_TEST_FIXTURE(constructor_fill, 2_d)
 
     int8_t ndim = 2;
     int64_t shape[] = {10, 12};
-    int64_t pshape[] = {3, 4};
+    int64_t pshape[] = {3, 24};
     double value = 3.1416;
 
     INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, pshape, &value));
@@ -125,7 +125,7 @@ INA_TEST_FIXTURE(constructor_fill, 7_f_p)
 
     int8_t ndim = 7;
     int64_t shape[] = {12, 11, 6, 5, 12, 6, 8};
-    int64_t pshape[] = {20, 3, 10, 3, 3, 10};
+    int64_t pshape[] = {13, 3, 10, 3, 3, 10};
     float value = -116.f;
 
     INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, pshape, &value));
