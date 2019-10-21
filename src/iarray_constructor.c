@@ -840,3 +840,60 @@ INA_API(ina_rc_t) iarray_from_sview(iarray_context_t *ctx, uint8_t *sview, int64
     cleanup:
     return rc;
 }
+
+INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
+                              iarray_container_t *cont,
+                              bool view,
+                              iarray_store_properties_t *store,
+                              int flags,
+                              iarray_container_t **c) {
+
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(cont);
+    INA_VERIFY_NOT_NULL(c);
+    ina_rc_t rc;
+
+    char* fname = NULL;
+    if (flags & IARRAY_CONTAINER_PERSIST) {
+        fname = (char*)store->id;
+    }
+    blosc2_frame *frame = blosc2_new_frame(fname);
+    if (frame == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
+    (*c) = (iarray_container_t *) ina_mem_alloc(sizeof(iarray_container_t));
+    (*c)->dtshape = (iarray_dtshape_t *) ina_mem_alloc(sizeof(iarray_dtshape_t));
+    ina_mem_cpy((*c)->dtshape, cont->dtshape, sizeof(iarray_dtshape_t));
+    (*c)->view = view;
+    (*c)->transposed = cont->transposed;
+    (*c)->cparams = (blosc2_cparams *) ina_mem_alloc(sizeof(blosc2_cparams));
+    ina_mem_cpy((*c)->cparams, cont->cparams, sizeof(blosc2_cparams));
+    (*c)->dparams = (blosc2_dparams *) ina_mem_alloc(sizeof(blosc2_dparams));
+    ina_mem_cpy((*c)->dparams, cont->dparams, sizeof(blosc2_dparams));
+
+    if (view) {
+        (*c)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
+        ina_mem_cpy((*c)->auxshape, cont->auxshape, sizeof(iarray_dtshape_t));
+        (*c)->catarr = cont->catarr;
+    } else {
+        (*c)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
+        for (int i = 0; i < (*c)->dtshape->ndim; ++i) {
+            (*c)->auxshape->shape_wos[i] = (*c)->dtshape->shape[i];
+            (*c)->auxshape->pshape_wos[i] = (*c)->dtshape->pshape[i];
+            (*c)->auxshape->index[i] = i;
+            (*c)->auxshape->offset[i] = 0;
+            caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, *(*c)->cparams, *(*c)->dparams);
+            caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
+            (*c)->catarr = caterva_empty_array(cat_ctx, frame, &pshape);
+            caterva_copy((*c)->catarr, cont->catarr);
+        }
+    }
+
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
+    iarray_container_free(ctx, c);
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
+}
