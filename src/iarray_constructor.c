@@ -871,20 +871,43 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     (*c)->dparams = (blosc2_dparams *) ina_mem_alloc(sizeof(blosc2_dparams));
     ina_mem_cpy((*c)->dparams, cont->dparams, sizeof(blosc2_dparams));
 
-    if (view) {
-        (*c)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
-        ina_mem_cpy((*c)->auxshape, cont->auxshape, sizeof(iarray_dtshape_t));
-        (*c)->catarr = cont->catarr;
-    } else {
+    if (cont->view && !view) {
         (*c)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
         for (int i = 0; i < (*c)->dtshape->ndim; ++i) {
-            (*c)->auxshape->shape_wos[i] = (*c)->dtshape->shape[i];
-            (*c)->auxshape->pshape_wos[i] = (*c)->dtshape->pshape[i];
-            (*c)->auxshape->index[i] = i;
             (*c)->auxshape->offset[i] = 0;
-            caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, *(*c)->cparams, *(*c)->dparams);
-            caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
+            (*c)->auxshape->index[i] = i;
+            (*c)->auxshape->shape_wos[i] = cont->dtshape->shape[i];
+            (*c)->auxshape->pshape_wos[i] = cont->dtshape->pshape[i];
+        }
+    } else {
+        (*c)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
+        ina_mem_cpy((*c)->auxshape, cont->auxshape, sizeof(iarray_auxshape_t));
+    }
+
+    if (view) {
+        (*c)->catarr = cont->catarr;
+    } else {
+        caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, *(*c)->cparams, *(*c)->dparams);
+        if (cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
+            int64_t pshape_[IARRAY_DIMENSION_MAX];
+            for (int i = 0; i < cont->catarr->ndim; ++i) {
+                pshape_[i] = (int64_t) cont->catarr->pshape[i];
+            }
+            caterva_dims_t pshape = caterva_new_dims(pshape_, cont->catarr->ndim);
             (*c)->catarr = caterva_empty_array(cat_ctx, frame, &pshape);
+        } else {
+            (*c)->catarr = caterva_empty_array(cat_ctx, NULL, NULL);
+        }
+        if (cont->view) {
+            caterva_dims_t start = caterva_new_dims(cont->auxshape->offset, cont->catarr->ndim);
+            int64_t stop_[IARRAY_DIMENSION_MAX];
+            for (int i = 0; i < cont->catarr->ndim; ++i) {
+                stop_[i] = cont->auxshape->offset[i] + cont->auxshape->shape_wos[i];
+            }
+            caterva_dims_t stop = caterva_new_dims(stop_, cont->catarr->ndim);
+            caterva_get_slice((*c)->catarr, cont->catarr, &start, &stop);
+            caterva_squeeze((*c)->catarr);
+        } else {
             caterva_copy((*c)->catarr, cont->catarr);
         }
     }
