@@ -333,11 +333,11 @@ INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx,
                                     iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
-                              iarray_container_t *cont,
+                              iarray_container_t *src,
                               bool view,
                               iarray_store_properties_t *store,
                               int flags,
-                              iarray_container_t **c);
+                              iarray_container_t **dest);
                               
     INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
