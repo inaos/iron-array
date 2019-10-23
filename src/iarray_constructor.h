@@ -60,7 +60,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     }
     for (int i = 0; i < dtshape->ndim; ++i) {
         if (dtshape->shape[i] < dtshape->pshape[i]) {
-            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
+            //INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
         }
     }
 

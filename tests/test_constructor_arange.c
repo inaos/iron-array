@@ -102,7 +102,7 @@ INA_TEST_FIXTURE(constructor_arange, 2_f) {
 
     int8_t ndim = 2;
     int64_t shape[] = {445, 321};
-    int64_t pshape[] = {21, 17};
+    int64_t pshape[] = {21, 431};
     double start = 3123;
     double stop = 45654;
 
@@ -114,7 +114,7 @@ INA_TEST_FIXTURE(constructor_arange, 5_d) {
 
     int8_t ndim = 5;
     int64_t shape[] = {20, 18, 17, 13, 21};
-    int64_t pshape[] = {12, 12, 2, 3, 13};
+    int64_t pshape[] = {30, 12, 22, 3, 26};
     double start = 0.1;
     double stop = 0.2;
 
