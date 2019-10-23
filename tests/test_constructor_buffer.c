@@ -118,7 +118,7 @@ INA_TEST_FIXTURE(constructor_buffer, 5_d)
 
     int8_t ndim = 5;
     int64_t shape[] = {10, 11, 10, 6, 7};
-    int64_t pshape[] = {3, 4, 6, 3, 3};
+    int64_t pshape[] = {3, 4, 100, 3, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_buffer(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
