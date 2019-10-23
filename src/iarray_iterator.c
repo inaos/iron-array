@@ -1152,12 +1152,17 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
 
     (*itr)->val = val;
 
-    (*itr)->cur_block_size = (*itr)->container->catarr->psize;
+    (*itr)->cur_block_size = 1;
 
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         (*itr)->elem_index[i] = 0;
         (*itr)->cur_block_index[i] = 0;
-        (*itr)->cur_block_shape[i] = (*itr)->container->catarr->pshape[i];
+        if ((*itr)->container->catarr->pshape[i] > (*itr)->container->catarr->shape[i]) {
+            (*itr)->cur_block_shape[i] = (*itr)->container->catarr->shape[i];
+        } else {
+            (*itr)->cur_block_shape[i] = (*itr)->container->catarr->pshape[i];
+        }
+        (*itr)->cur_block_size *= (*itr)->cur_block_shape[i];
     }
 
     memset((*itr)->part, 0, cont->catarr->psize * cont->catarr->ctx->cparams.typesize);
