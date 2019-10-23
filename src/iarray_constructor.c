@@ -840,3 +840,83 @@ INA_API(ina_rc_t) iarray_from_sview(iarray_context_t *ctx, uint8_t *sview, int64
     cleanup:
     return rc;
 }
+
+INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
+                              iarray_container_t *src,
+                              bool view,
+                              iarray_store_properties_t *store,
+                              int flags,
+                              iarray_container_t **dest) {
+
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(src);
+    INA_VERIFY_NOT_NULL(dest);
+    ina_rc_t rc;
+
+    char* fname = NULL;
+    if (flags & IARRAY_CONTAINER_PERSIST) {
+        fname = (char*)store->id;
+    }
+    blosc2_frame *frame = blosc2_new_frame(fname);
+    if (frame == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
+    (*dest) = (iarray_container_t *) ina_mem_alloc(sizeof(iarray_container_t));
+    (*dest)->dtshape = (iarray_dtshape_t *) ina_mem_alloc(sizeof(iarray_dtshape_t));
+    ina_mem_cpy((*dest)->dtshape, src->dtshape, sizeof(iarray_dtshape_t));
+    (*dest)->view = view;
+    (*dest)->transposed = src->transposed;
+    (*dest)->cparams = (blosc2_cparams *) ina_mem_alloc(sizeof(blosc2_cparams));
+    ina_mem_cpy((*dest)->cparams, src->cparams, sizeof(blosc2_cparams));
+    (*dest)->dparams = (blosc2_dparams *) ina_mem_alloc(sizeof(blosc2_dparams));
+    ina_mem_cpy((*dest)->dparams, src->dparams, sizeof(blosc2_dparams));
+
+    if (src->view && !view) {
+        (*dest)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
+        for (int i = 0; i < (*dest)->dtshape->ndim; ++i) {
+            (*dest)->auxshape->offset[i] = 0;
+            (*dest)->auxshape->index[i] = i;
+            (*dest)->auxshape->shape_wos[i] = src->dtshape->shape[i];
+            (*dest)->auxshape->pshape_wos[i] = src->dtshape->pshape[i];
+        }
+    } else {
+        (*dest)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
+        ina_mem_cpy((*dest)->auxshape, src->auxshape, sizeof(iarray_auxshape_t));
+    }
+
+    if (view) {
+        (*dest)->catarr = src->catarr;
+    } else {
+        caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, *(*dest)->cparams, *(*dest)->dparams);
+        if (src->catarr->storage == CATERVA_STORAGE_BLOSC) {
+            int64_t pshape_[IARRAY_DIMENSION_MAX];
+            for (int i = 0; i < src->catarr->ndim; ++i) {
+                pshape_[i] = (int64_t) src->catarr->pshape[i];
+            }
+            caterva_dims_t pshape = caterva_new_dims(pshape_, src->catarr->ndim);
+            (*dest)->catarr = caterva_empty_array(cat_ctx, frame, &pshape);
+        } else {
+            (*dest)->catarr = caterva_empty_array(cat_ctx, NULL, NULL);
+        }
+        if (src->view) {
+            caterva_dims_t start = caterva_new_dims(src->auxshape->offset, src->catarr->ndim);
+            int64_t stop_[IARRAY_DIMENSION_MAX];
+            for (int i = 0; i < src->catarr->ndim; ++i) {
+                stop_[i] = src->auxshape->offset[i] + src->auxshape->shape_wos[i];
+            }
+            caterva_dims_t stop = caterva_new_dims(stop_, src->catarr->ndim);
+            caterva_get_slice((*dest)->catarr, src->catarr, &start, &stop);
+            caterva_squeeze((*dest)->catarr);
+        } else {
+            caterva_copy((*dest)->catarr, src->catarr);
+        }
+    }
+
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
+    iarray_container_free(ctx, dest);
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
+}
