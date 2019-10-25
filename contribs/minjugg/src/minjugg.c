@@ -539,18 +539,34 @@ static LLVMValueRef _jug_expr_compile_function(LLVMModuleRef module, const char 
     return f;
 }
 
-static void _jug_apply_optimisation_passes(LLVMModuleRef mod)
+static void _jug_apply_optimisation_passes(jug_expression_t *e)
 {
-    LLVMPassManagerBuilderRef pass_manager_builder = LLVMPassManagerBuilderCreate();
-    LLVMPassManagerBuilderSetOptLevel(pass_manager_builder, 3);
+    /*
+     * XXX With OptLevel > 0 or LLVMAddInstructionCombiningPass the call to
+     * LLVMRunPassManager gets stuck.
+     * Other passes, such as LLVMAddScalarReplAggregatesPassSSA, make the code
+     * fail with "SCEVAddExpr operand types don't match!"
+     */
 
-    LLVMPassManagerRef pass_manager = LLVMCreatePassManager();
+    LLVMPassManagerBuilderRef pmb = LLVMPassManagerBuilderCreate();
+    LLVMPassManagerBuilderSetOptLevel(pmb, 0); // Opt level 0-3
 
-    LLVMPassManagerBuilderPopulateModulePassManager(pass_manager_builder, pass_manager);
+    // Module pass manager
+    LLVMPassManagerRef pm = LLVMCreatePassManager();
+    LLVMPassManagerBuilderPopulateModulePassManager(pmb, pm);
 
-    LLVMRunPassManager(pass_manager, mod);
+    // Passes
+    LLVMAddGlobalOptimizerPass(pm); // -globalopt
+    //LLVMAddInstructionCombiningPass(pm); // -instcombine
+    LLVMAddCFGSimplificationPass(pm); // -simplifycfg
+    //LLVMAddScalarReplAggregatesPassSSA(pm); // -sroa
 
-    LLVMDisposePassManager(pass_manager);
+    // Run
+    LLVMRunPassManager(pm, e->mod);
+
+    // Dispose
+    LLVMDisposePassManager(pm);
+    LLVMPassManagerBuilderDispose(pmb);
 }
 
 static void _jug_declare_printf(LLVMModuleRef mod)
@@ -565,8 +581,9 @@ INA_API(ina_rc_t) jug_init()
 {
     char *error = NULL;
 
-    LLVMInitializeNativeTarget();
-    LLVMInitializeNativeAsmPrinter();
+    LLVMBool llvm_error;
+    llvm_error = LLVMInitializeNativeTarget();
+    llvm_error = LLVMInitializeNativeAsmPrinter();
     LLVMLinkInMCJIT();
 
     _jug_def_triple = LLVMGetDefaultTargetTriple();
@@ -705,15 +722,15 @@ INA_API(ina_rc_t) jug_expression_compile(
 #endif
 
     // FIXME: currently hangs on windows and UNIX too
-//#ifndef INA_OS_WINDOWS
-//    _jug_apply_optimisation_passes(e->mod);
-//
-//#ifdef _JUG_DEBUG_WRITE_BC_TO_FILE
-//    if (LLVMWriteBitcodeToFile(e->mod, "expression_opt.bc") != 0) {
-//        fprintf(stderr, "error writing bitcode to file, skipping\n");
-//    }
-//#endif
-//#endif
+#ifndef INA_OS_WINDOWS
+    _jug_apply_optimisation_passes(e);
+
+#ifdef _JUG_DEBUG_WRITE_BC_TO_FILE
+    if (LLVMWriteBitcodeToFile(e->mod, "expression_opt.bc") != 0) {
+        fprintf(stderr, "error writing bitcode to file, skipping\n");
+    }
+#endif
+#endif
 
     error = NULL;
     if (LLVMCreateExecutionEngineForModule(&e->engine, e->mod, &error) != 0) {
