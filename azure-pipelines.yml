@@ -66,8 +66,9 @@ steps:
 
 - bash: |
     if [ "$AGENT_OS" == "Darwin" ]
-          then
-        fi
+      then
+        sudo chown -R $USER $CONDA
+      fi
   displayName: Take ownership of conda installation
 
 - bash: |
