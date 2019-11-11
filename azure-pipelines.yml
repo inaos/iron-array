@@ -62,19 +62,17 @@ steps:
       then
         echo "##vso[task.prependpath]$CONDA/Scripts"
     fi
-
   displayName: Add conda to PATH
 
 - bash: |
-    conda create --yes --quiet --name iArrayEnv
-    echo "environment created"
     if [ "$AGENT_OS" == "Darwin" ]
-      then
-        sudo chown 501:20 $HOME/.conda/envs/.conda_envs_dir_test
-    fi
-    echo "Source activate"
+          then
+        fi
+  displayName: Take ownership of conda installation
+
+- bash: |
+    conda create --yes --quiet --name iArrayEnv
     source activate iArrayEnv
-    echo "conda install"
     conda install -y --name iArrayEnv -c intel mkl-include
     conda install -y --name iArrayEnv -c intel mkl-static
   displayName: Download dependencies
