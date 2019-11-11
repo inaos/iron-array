@@ -66,10 +66,10 @@ steps:
   displayName: Add conda to PATH
 
 - bash: |
-  if [ "$AGENT_OS" == "Darwin" ]
-    then
-      sudo chown 501:20 $HOME/.conda/envs/.conda_envs_dir_test
-  fi
+    if [ "$AGENT_OS" == "Darwin" ]
+      then
+        sudo chown 501:20 $HOME/.conda/envs/.conda_envs_dir_test
+    fi
     conda create --yes --quiet --name iArrayEnv
     source activate iArrayEnv
     conda install -y --name iArrayEnv -c intel mkl-include
