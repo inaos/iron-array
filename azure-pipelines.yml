@@ -6,18 +6,18 @@ variables:
 
 strategy:
   matrix:
-#    linux-debug:
-#      imageName: 'ubuntu-16.04'
-#      BUILD_CONFIGURATION: Debug
-#      MULTITHREADING: False
-#    linux-release:
-#      imageName: 'ubuntu-16.04'
-#      BUILD_CONFIGURATION: RelWithDebInfo
-#      MULTITHREADING: False
-    mac-debug:
-      imageName: 'macos-10.13'
+    linux-debug:
+      imageName: 'ubuntu-16.04'
       BUILD_CONFIGURATION: Debug
       MULTITHREADING: False
+    linux-release:
+      imageName: 'ubuntu-16.04'
+      BUILD_CONFIGURATION: RelWithDebInfo
+      MULTITHREADING: False
+#    mac-debug:
+#      imageName: 'macos-10.13'
+#      BUILD_CONFIGURATION: Debug
+#      MULTITHREADING: False
 #    mac-release:
 #      imageName: 'macos-10.13'
 #      BUILD_CONFIGURATION: RelWithDebInfo
