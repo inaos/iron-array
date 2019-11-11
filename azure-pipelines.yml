@@ -56,6 +56,7 @@ steps:
 - bash: |
     if [ "$AGENT_OS" == "Darwin" ]
       then
+        echo "Is passing"
         echo "##vso[task.prependpath]$CONDA/bin"
     fi
     if [ "$AGENT_OS" == "Windows_NT" ]
