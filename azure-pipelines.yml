@@ -56,19 +56,20 @@ steps:
 - bash: |
     if [ "$AGENT_OS" == "Darwin" ]
       then
-        echo "Is passing"
         echo "##vso[task.prependpath]$CONDA/bin"
     fi
     if [ "$AGENT_OS" == "Windows_NT" ]
       then
         echo "##vso[task.prependpath]$CONDA/Scripts"
     fi
-    echo "Adding conda to path"
-    echo "$AGENT_OS"
 
   displayName: Add conda to PATH
 
 - bash: |
+  if [ "$AGENT_OS" == "Darwin" ]
+    then
+      sudo chown 501:20 $HOME/.conda/envs/.conda_envs_dir_test
+  fi
     conda create --yes --quiet --name iArrayEnv
     source activate iArrayEnv
     conda install -y --name iArrayEnv -c intel mkl-include
