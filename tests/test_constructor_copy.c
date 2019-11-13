@@ -102,7 +102,7 @@ INA_TEST_TEARDOWN(constructor_copy) {
 }
 
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 1_f_p_n_n) {
+INA_TEST_FIXTURE(constructor_copy, 1_f_p_n_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 1;
@@ -115,7 +115,7 @@ INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 1_f_p_n_n) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, false, false));
 }
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 2_f_p_v_n) {
+INA_TEST_FIXTURE(constructor_copy, 2_f_p_v_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 2;
@@ -128,7 +128,7 @@ INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 2_f_p_v_n) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, true, false));
 }
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 3_f_p_n_v) {
+INA_TEST_FIXTURE(constructor_copy, 3_f_p_n_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 3;
@@ -141,7 +141,7 @@ INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 3_f_p_n_v) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, false, true));
 }
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 4_f_p_v_v) {
+INA_TEST_FIXTURE(constructor_copy, 4_f_p_v_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 4;
@@ -155,7 +155,7 @@ INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 4_f_p_v_v) {
 }
 
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 5_d_p_n_n) {
+INA_TEST_FIXTURE(constructor_copy, 5_d_p_n_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 5;
@@ -168,7 +168,7 @@ INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 5_d_p_n_n) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, false, false));
 }
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 6_d_p_v_n) {
+INA_TEST_FIXTURE(constructor_copy, 6_d_p_v_n) {
 iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
 int8_t ndim = 2;
@@ -182,7 +182,7 @@ double stop = 2000;
 INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, true, false));
 }
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 7_d_p_n_v) {
+INA_TEST_FIXTURE(constructor_copy, 7_d_p_n_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
@@ -196,7 +196,7 @@ INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 7_d_p_n_v) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, false, true));
 }
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 8_d_p_v_v) {
+INA_TEST_FIXTURE(constructor_copy, 8_d_p_v_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 8;
@@ -211,7 +211,7 @@ INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 8_d_p_v_v) {
 
 
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 8_f_n_n) {
+INA_TEST_FIXTURE(constructor_copy, 8_f_n_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 8;
@@ -225,7 +225,7 @@ INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 8_f_n_n) {
 }
 
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 7_f_v_n) {
+INA_TEST_FIXTURE(constructor_copy, 7_f_v_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 7;
@@ -239,7 +239,7 @@ INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 7_f_v_n) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, true, false));
 }
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 6_f_n_v) {
+INA_TEST_FIXTURE(constructor_copy, 6_f_n_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 6;
@@ -252,7 +252,7 @@ INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 6_f_n_v) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, false, true));
 }
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 5_f_v_v) {
+INA_TEST_FIXTURE(constructor_copy, 5_f_v_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 5;
@@ -266,7 +266,7 @@ INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 5_f_v_v) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, true, true));
 }
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 4_d_n_n) {
+INA_TEST_FIXTURE(constructor_copy, 4_d_n_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 4;
@@ -280,7 +280,7 @@ INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 4_d_n_n) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, false, false));
 }
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 3_d_v_n) {
+INA_TEST_FIXTURE(constructor_copy, 3_d_v_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 3;
@@ -294,7 +294,7 @@ INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 3_d_v_n) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, true, false));
 }
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 2_d_n_v) {
+INA_TEST_FIXTURE(constructor_copy, 2_d_n_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
@@ -308,7 +308,7 @@ INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 2_d_n_v) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, false, true));
 }
 
-INA_TEST_FIXTURE_SKIP_OSX(constructor_copy, 1_d_v_v) {
+INA_TEST_FIXTURE(constructor_copy, 1_d_v_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 1;
