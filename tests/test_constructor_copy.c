@@ -41,22 +41,31 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
     iarray_container_t *c_x;
     iarray_container_t *c_aux;
 
+    printf("Start procedure\n");
     if (src_view) {
+        printf("Src is view\n");
         INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, NULL, 0, &c_aux));
+        printf("Arange done\n");
         int64_t start_view[IARRAY_DIMENSION_MAX];
         for (int i = 0; i < ndim; ++i) {
             start_view[i] = 0;
         }
+        printf("Start get slice\n");
         INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_aux, start_view, stop_view, stop_view, NULL, 0, true, &c_x));
+        printf("Start squeeze\n");
         INA_TEST_ASSERT_SUCCEED(iarray_squeeze(ctx, c_x));
     } else {
+        printf("Src is not view\n");
         INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, NULL, 0, &c_x));
+        printf("Finish arange\n");
     }
 
     iarray_container_t *c_y;
+    printf("Start copy\n");
     INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_x, dest_view, NULL, 0, &c_y));
 
     // Assert iterator reading it
+    printf("Start assertion\n");
     double tol;
     if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
         tol = 1e-14;
@@ -65,6 +74,7 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
     }
     iarray_container_almost_equal(c_x, c_y, tol);
 
+    printf("Stat free\n");
     if (src_view) {
         iarray_container_free(ctx, &c_aux);
     }
