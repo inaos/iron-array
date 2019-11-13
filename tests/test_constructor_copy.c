@@ -39,9 +39,9 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
     double step = (stop - start) / size;
 
     iarray_container_t *c_x;
+    iarray_container_t *c_aux;
 
     if (src_view) {
-        iarray_container_t *c_aux;
         INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, NULL, 0, &c_aux));
         int64_t start_view[IARRAY_DIMENSION_MAX];
         for (int i = 0; i < ndim; ++i) {
@@ -65,6 +65,9 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
     }
     iarray_container_almost_equal(c_x, c_y, tol);
 
+    if (src_view) {
+        iarray_container_free(ctx, &c_aux);
+    }
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_x);
 
