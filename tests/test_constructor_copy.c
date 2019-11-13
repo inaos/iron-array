@@ -92,6 +92,7 @@ INA_TEST_SETUP(constructor_copy) {
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
+    cfg.compression_codec = IARRAY_COMPRESSION_BLOSCLZ;
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
 }
 
