@@ -90,7 +90,7 @@ INA_TEST_TEARDOWN(constructor_copy) {
     iarray_destroy();
 }
 
-
+/*
 INA_TEST_FIXTURE(constructor_copy, 1_f_p_n_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
@@ -198,7 +198,7 @@ INA_TEST_FIXTURE(constructor_copy, 8_d_p_v_v) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, true, true));
 }
 
-
+*/
 
 INA_TEST_FIXTURE(constructor_copy, 8_f_n_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -213,6 +213,7 @@ INA_TEST_FIXTURE(constructor_copy, 8_f_n_n) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, false, false));
 }
 
+/*
 INA_TEST_FIXTURE(constructor_copy, 7_f_v_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
@@ -308,3 +309,4 @@ INA_TEST_FIXTURE(constructor_copy, 1_d_v_v) {
 
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, true, true));
 }
+*/
