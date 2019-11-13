@@ -864,15 +864,18 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     }
     printf("Create dest container params");
     (*dest) = (iarray_container_t *) ina_mem_alloc(sizeof(iarray_container_t));
+    printf("Create dtshape\n");
     (*dest)->dtshape = (iarray_dtshape_t *) ina_mem_alloc(sizeof(iarray_dtshape_t));
     ina_mem_cpy((*dest)->dtshape, src->dtshape, sizeof(iarray_dtshape_t));
     (*dest)->view = view;
     (*dest)->transposed = src->transposed;
+    printf("Create cparams - dparams\n");
     (*dest)->cparams = (blosc2_cparams *) ina_mem_alloc(sizeof(blosc2_cparams));
     ina_mem_cpy((*dest)->cparams, src->cparams, sizeof(blosc2_cparams));
     (*dest)->dparams = (blosc2_dparams *) ina_mem_alloc(sizeof(blosc2_dparams));
     ina_mem_cpy((*dest)->dparams, src->dparams, sizeof(blosc2_dparams));
 
+    printf("Create auxshape\n");
     if (src->view && !view) {
         (*dest)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
         for (int i = 0; i < (*dest)->dtshape->ndim; ++i) {
@@ -885,7 +888,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
         (*dest)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
         ina_mem_cpy((*dest)->auxshape, src->auxshape, sizeof(iarray_auxshape_t));
     }
-
+    printf("Start copy\n");
     if (view) {
         (*dest)->catarr = src->catarr;
     } else {
