@@ -853,7 +853,6 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(dest);
     ina_rc_t rc;
 
-    printf("Create blosc frame\n");
     char* fname = NULL;
     if (flags & IARRAY_CONTAINER_PERSIST) {
         fname = (char*)store->id;
@@ -862,20 +861,16 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     if (frame == NULL) {
         INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
-    printf("Create dest container params");
     (*dest) = (iarray_container_t *) ina_mem_alloc(sizeof(iarray_container_t));
-    printf("Create dtshape\n");
     (*dest)->dtshape = (iarray_dtshape_t *) ina_mem_alloc(sizeof(iarray_dtshape_t));
     ina_mem_cpy((*dest)->dtshape, src->dtshape, sizeof(iarray_dtshape_t));
     (*dest)->view = view;
     (*dest)->transposed = src->transposed;
-    printf("Create cparams - dparams\n");
     (*dest)->cparams = (blosc2_cparams *) ina_mem_alloc(sizeof(blosc2_cparams));
     ina_mem_cpy((*dest)->cparams, src->cparams, sizeof(blosc2_cparams));
     (*dest)->dparams = (blosc2_dparams *) ina_mem_alloc(sizeof(blosc2_dparams));
     ina_mem_cpy((*dest)->dparams, src->dparams, sizeof(blosc2_dparams));
 
-    printf("Create auxshape\n");
     if (src->view && !view) {
         (*dest)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
         for (int i = 0; i < (*dest)->dtshape->ndim; ++i) {
@@ -888,11 +883,9 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
         (*dest)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
         ina_mem_cpy((*dest)->auxshape, src->auxshape, sizeof(iarray_auxshape_t));
     }
-    printf("Start copy\n");
     if (view) {
         (*dest)->catarr = src->catarr;
     } else {
-        printf("Create caterva ctx\n");
         caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, *(*dest)->cparams, *(*dest)->dparams);
         if (src->catarr->storage == CATERVA_STORAGE_BLOSC) {
             int64_t pshape_[IARRAY_DIMENSION_MAX];
@@ -900,10 +893,8 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
                 pshape_[i] = (int64_t) src->catarr->pshape[i];
             }
             caterva_dims_t pshape = caterva_new_dims(pshape_, src->catarr->ndim);
-            printf("Create caterva empty array\n");
             (*dest)->catarr = caterva_empty_array(cat_ctx, frame, &pshape);
         } else {
-            printf("Create caterva empty array\n");
             (*dest)->catarr = caterva_empty_array(cat_ctx, NULL, NULL);
         }
         if (src->view) {
@@ -916,7 +907,6 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
             caterva_get_slice((*dest)->catarr, src->catarr, &start, &stop);
             caterva_squeeze((*dest)->catarr);
         } else {
-            printf("Start caterva copy\n");
             caterva_copy((*dest)->catarr, src->catarr);
         }
     }
