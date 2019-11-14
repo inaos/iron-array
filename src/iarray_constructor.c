@@ -883,7 +883,6 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
         (*dest)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
         ina_mem_cpy((*dest)->auxshape, src->auxshape, sizeof(iarray_auxshape_t));
     }
-
     if (view) {
         (*dest)->catarr = src->catarr;
     } else {
