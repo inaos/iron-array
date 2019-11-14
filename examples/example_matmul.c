@@ -21,7 +21,7 @@ int main()
     double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
 
-    int n_threads = 2;
+    int n_threads = 1;
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 

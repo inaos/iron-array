@@ -743,7 +743,7 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     int ndim = a->dtshape->ndim;
 
     // For the blocksize, choose the maximum of the partition shapes
-    int64_t *blocksize = malloc(ndim * sizeof(int64_t));
+    int64_t blocksize[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ndim; ++i) {
         blocksize[i] = INA_MAX(a->dtshape->pshape[i], b->dtshape->pshape[i]);
     }
@@ -797,10 +797,9 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     fail:
     rc = ina_err_get_rc();
     cleanup:
-    iarray_context_free(&ctx);
     iarray_iter_read_block_free(&iter_a);
     iarray_iter_read_block_free(&iter_b);
-    free(blocksize);
+    iarray_context_free(&ctx);
     return rc;
 }
 
