@@ -6,29 +6,29 @@ variables:
 
 strategy:
   matrix:
-#    linux-debug:
-#      imageName: 'ubuntu-16.04'
-#      BUILD_CONFIGURATION: Debug
-#      MULTITHREADING: False
+    linux-debug:
+      imageName: 'ubuntu-16.04'
+      BUILD_CONFIGURATION: Debug
+      MULTITHREADING: False
     linux-release:
       imageName: 'ubuntu-16.04'
       BUILD_CONFIGURATION: RelWithDebInfo
       MULTITHREADING: False
-#    mac-debug:
-#      imageName: 'macos-10.13'
-#      BUILD_CONFIGURATION: Debug
-#      MULTITHREADING: False
-#    mac-release:
-#      imageName: 'macos-10.13'
-#      BUILD_CONFIGURATION: RelWithDebInfo
-#      MULTITHREADING: False
-#    windows-debug:
-#      imageName: 'vs2017-win2016'
-#      BUILD_CONFIGURATION: Debug
-#      MULTITHREADING: False
-#      BUILD_ARCH: x86_64
-#      VSINSTALL: "Microsoft Visual Studio\\2017\\Enterprise\\VC\\Auxiliary\\Build"
-#      MSVC_PLATFORM: amd64
+    mac-debug:
+      imageName: 'macos-10.13'
+      BUILD_CONFIGURATION: Debug
+      MULTITHREADING: False
+    mac-release:
+      imageName: 'macos-10.13'
+      BUILD_CONFIGURATION: RelWithDebInfo
+      MULTITHREADING: False
+    windows-debug:
+      imageName: 'vs2017-win2016'
+      BUILD_CONFIGURATION: Debug
+      MULTITHREADING: False
+      BUILD_ARCH: x86_64
+      VSINSTALL: "Microsoft Visual Studio\\2017\\Enterprise\\VC\\Auxiliary\\Build"
+      MSVC_PLATFORM: amd64
     windows-release:
       imageName: 'vs2017-win2016'
       BUILD_CONFIGURATION: RelWithDebInfo
@@ -76,7 +76,6 @@ steps:
     source activate iArrayEnv
     conda install -y --name iArrayEnv -c intel mkl-include
     conda install -y --name iArrayEnv -c intel mkl-static
-    conda install -y --name iArrayEnv -c conda-forge gcovr
   displayName: Download dependencies
   env:
     jfrog_artifactory_uid: $(jfrog_artifactory_uid)
@@ -87,8 +86,8 @@ steps:
       then
         mkdir cmake-build-$BUILD_CONFIGURATION
         cd cmake-build-$BUILD_CONFIGURATION
-        cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING -DDO_COVERAGE=TRUE
-        cmake --build .
+        cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING
+        make -j
     fi
   displayName: Compile
   env:
@@ -115,7 +114,7 @@ steps:
       then
         echo "Tests for Darwin in Debug mode currently not executed"
     else
-        ctest -L iarray
+        ./tests
     fi
   displayName: Execute tests
 
