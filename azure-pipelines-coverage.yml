@@ -58,7 +58,7 @@ steps:
     ctest -L iarray
     ctest -L iarray -D ExperimentalCoverage
     ls -lR
-    mv CMakeFiles/iarray_c.dir/src/*.gc* src/
+    mv CMakeFiles/iarray_c.dir/src/*.gc* ../src/
   displayName: Execute tests
 
 - bash: |
