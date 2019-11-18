@@ -57,4 +57,33 @@ steps:
     cd cmake-build-$BUILD_CONFIGURATION
     ctest -L iarray
     ctest -L iarray -D ExperimentalCoverage
+    ls -lR
+    mv CMakeFiles/iarrays.dir/iarray/*.gc* iarray/
   displayName: Execute tests
+
+- bash: |
+    mv iarray/iarray.c.gcno iarray/iarray.gcno
+    mv iarray/iarray_constructor.c.gcno iarray/iarray_constructor.gcno
+    mv iarray/iarray_container.c.gcno iarray/iarray_container.gcno
+    mv iarray/iarray_expression.c.gcno iarray/iarray_expression.gcno
+    mv iarray/iarray_iterator.c.gcno iarray/iarray_iterator.gcno
+    mv iarray/iarray_operator.c.gcno iarray/iarray_operator.gcno
+    mv iarray/iarray_random.c.gcno iarray/iarray_random.gcno
+    mv iarray/iarray_utils.c.gcno iarray/iarray_utils.gcno
+    
+    mv iarray/iarray.c.gcda iarray/iarray.gcda
+    mv iarray/iarray_constructor.c.gcda iarray/iarray_constructor.gcda
+    mv iarray/iarray_container.c.gcda iarray/iarray_container.gcda
+    mv iarray/iarray_expression.c.gcda iarray/iarray_expression.gcda
+    mv iarray/iarray_iterator.c.gcda iarray/iarray_iterator.gcda
+    mv iarray/iarray_operator.c.gcda iarray/iarray_operator.gcda
+    mv iarray/iarray_random.c.gcda iarray/iarray_random.gcda
+    mv iarray/iarray_utils.c.gcda iarray/iarray_utils.gcda
+    gcovr -v -r caterva/ --xml -o coverage.xml
+  displayName: Create coverage report
+
+- task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage.xml'
+
