@@ -30,6 +30,7 @@ steps:
 - bash: |
     echo "##vso[task.prependpath]$CONDA/bin"echo "
     ##vso[task.prependpath]$CONDA/envs/iArrayEnv/bin"
+    ls -l $CONDA/envs/iArrayEnv/bin
   displayName: Add conda to PATH
 
 - bash: |
