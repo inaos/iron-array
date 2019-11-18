@@ -44,6 +44,7 @@ steps:
     
 - bash: |
     mkdir cmake-build-$BUILD_CONFIGURATION
+    cd cmake-build-$BUILD_CONFIGURATION
     cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING
     make -j
   displayName: Compile
