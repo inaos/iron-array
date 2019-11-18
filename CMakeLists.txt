@@ -72,7 +72,7 @@ if (DO_COVERAGE)
     target_link_libraries(iarray_c  -lgcov -fprofile-arcs)
 endif()
 
-inac_merge_static_libs(iarrays iarray_c blosc2_static caterva_static ${INAC_LIBS})
+inac_merge_static_libs(iarrays iarray_c blosc2_static caterva_static ${INAC_LIBS} gcov)
 
 if (UNIX)
 set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
