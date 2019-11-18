@@ -46,7 +46,7 @@ steps:
     mkdir cmake-build-$BUILD_CONFIGURATION
     cd cmake-build-$BUILD_CONFIGURATION
     cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING -DDO_COVERAGE=TRUE
-    make -j
+    cmake --build .
   displayName: Compile
   env:
     BUILD_CONFIGURATION: $(BUILD_CONFIGURATION)
@@ -55,5 +55,6 @@ steps:
 
 - bash: |
     cd cmake-build-$BUILD_CONFIGURATION
-    ./tests
+    ctest -L iarray
+    ctest -L iarray -D ExperimentalCoverage
   displayName: Execute tests
