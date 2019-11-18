@@ -71,7 +71,7 @@ include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMA
 if (DO_COVERAGE)
     target_compile_options(iarray_c PRIVATE -fprofile-arcs -ftest-coverage)
     target_link_libraries(iarray_c -fprofile-arcs)
-    inac_merge_static_libs(iarrays iarray_c blosc2_static caterva_static ${INAC_LIBS})
+    inac_merge_static_libs(iarrays iarray_c blosc2_static caterva_static ${INAC_LIBS} -gcov)
 else()
     inac_merge_static_libs(iarrays iarray_c blosc2_static caterva_static ${INAC_LIBS})
 endif()
