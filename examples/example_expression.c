@@ -12,11 +12,6 @@
 
 #include <libiarray/iarray.h>
 
-#define NCHUNKS  10
-#define NITEMS_CHUNK (20 * 1000)
-#define NELEM (NCHUNKS * NITEMS_CHUNK + 1)
-#define NTHREADS 2
-
 
 int main()
 {
@@ -28,12 +23,13 @@ int main()
 
     iarray_dtshape_t shape;
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
-    shape.ndim = 1;
-    shape.shape[0] = NELEM;
-    shape.pshape[0] = NITEMS_CHUNK;
+    shape.ndim = 2;
+    shape.shape[0] = 10000; shape.shape[1] = 2000;
+    shape.pshape[0] = 1000; shape.pshape[1] = 200;
+    int nelem = shape.shape[0] * shape.shape[1];
 
     iarray_container_t* c_x;
-    iarray_linspace(ctx, &shape, NELEM, 0., 1., NULL, 0, &c_x);
+    iarray_linspace(ctx, &shape, nelem, 0., 10., NULL, 0, &c_x);
     iarray_container_t* c_out;
     iarray_container_new(ctx, &shape, NULL, 0, &c_out);
 
@@ -44,7 +40,7 @@ int main()
     iarray_eval(e, c_out);
 
     // Print some values of the outcome
-    size_t buf_len = sizeof(double) * NELEM;
+    size_t buf_len = sizeof(double) * nelem;
     double *buff_out = malloc(buf_len);
     iarray_to_buffer(ctx, c_out, buff_out, buf_len);
 
