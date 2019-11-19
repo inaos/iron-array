@@ -79,7 +79,7 @@ steps:
     mv src/iarray_operator.c.gcda src/iarray_operator.gcda
     mv src/iarray_random.c.gcda src/iarray_random.gcda
     mv src/iarray_utils.c.gcda src/iarray_utils.gcda
-    gcovr -v -r caterva/ --xml -o coverage.xml
+    gcovr -v -r src/ --xml -o coverage.xml
   displayName: Create coverage report
 
 - task: PublishCodeCoverageResults@1
