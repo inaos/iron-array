@@ -67,7 +67,14 @@ set_target_properties(
 include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac"
         "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
 
-inac_merge_static_libs(iarrays iarray_c blosc2_static caterva_static ${INAC_LIBS})
+
+if (DO_COVERAGE)
+    target_compile_options(iarray_c PRIVATE -fprofile-arcs -ftest-coverage)
+    inac_merge_static_libs(iarrays iarray_c blosc2_static caterva_static ${INAC_LIBS})
+    target_link_libraries(iarrays -fprofile-arcs)
+else()
+    inac_merge_static_libs(iarrays iarray_c blosc2_static caterva_static ${INAC_LIBS})
+endif()
 
 if (UNIX)
 set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
@@ -75,6 +82,13 @@ set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc2_static ${IPP_LIBRARIES})
 endif()
 
 inac_add_tests(iarrays)
+
+if (DO_COVERAGE)
+    include(CTest)
+    enable_testing()
+    add_test(NAME iarray_tests COMMAND tests)
+    set_tests_properties(iarray_tests PROPERTIES LABELS "iarray")
+endif()
 #inac_add_benchmarks(iarrays)
 inac_add_tools(iarrays)
 inac_add_examples(iarrays)
