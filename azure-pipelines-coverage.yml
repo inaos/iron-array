@@ -62,23 +62,7 @@ steps:
   displayName: Execute tests
 
 - bash: |
-    mv src/iarray.c.gcno src/iarray.gcno
-    mv src/iarray_constructor.c.gcno src/iarray_constructor.gcno
-    mv src/iarray_container.c.gcno src/iarray_container.gcno
-    mv src/iarray_expression.c.gcno src/iarray_expression.gcno
-    mv src/iarray_iterator.c.gcno src/iarray_iterator.gcno
-    mv src/iarray_operator.c.gcno src/iarray_operator.gcno
-    mv src/iarray_random.c.gcno src/iarray_random.gcno
-    mv src/iarray_utils.c.gcno src/iarray_utils.gcno
-    
-    mv src/iarray.c.gcda src/iarray.gcda
-    mv src/iarray_constructor.c.gcda src/iarray_constructor.gcda
-    mv src/iarray_container.c.gcda src/iarray_container.gcda
-    mv src/iarray_expression.c.gcda src/iarray_expression.gcda
-    mv src/iarray_iterator.c.gcda src/iarray_iterator.gcda
-    mv src/iarray_operator.c.gcda src/iarray_operator.gcda
-    mv src/iarray_random.c.gcda src/iarray_random.gcda
-    mv src/iarray_utils.c.gcda src/iarray_utils.gcda
+    rename 's/\.c\./\./' src/*
     gcovr -v -r src/ --xml -o coverage.xml
   displayName: Create coverage report
 
