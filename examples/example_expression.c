@@ -17,16 +17,6 @@
 #define NELEM (NCHUNKS * NITEMS_CHUNK + 1)
 #define NTHREADS 2
 
-/* Compute and fill X values in a buffer */
-static int fill_x(double* x)
-{
-    /* Fill even values between 0. and 1. */
-    double incx = 1. / NELEM;
-    for (int i = 0; i < NELEM; i++) {
-        x[i] = incx * i;
-    }
-    return 0;
-}
 
 int main()
 {
@@ -36,10 +26,6 @@ int main()
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_new(&cfg, &ctx);
 
-    size_t buf_len = sizeof(double) * NELEM;
-    double *buff_x = malloc(buf_len);
-    fill_x(buff_x);
-
     iarray_dtshape_t shape;
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     shape.ndim = 1;
@@ -47,7 +33,7 @@ int main()
     shape.pshape[0] = NITEMS_CHUNK;
 
     iarray_container_t* c_x;
-    iarray_from_buffer(ctx, &shape, (void*)buff_x, buf_len, NULL, 0, &c_x);
+    iarray_linspace(ctx, &shape, NELEM, 0., 1., NULL, 0, &c_x);
     iarray_container_t* c_out;
     iarray_container_new(ctx, &shape, NULL, 0, &c_out);
 
@@ -58,6 +44,7 @@ int main()
     iarray_eval(e, c_out);
 
     // Print some values of the outcome
+    size_t buf_len = sizeof(double) * NELEM;
     double *buff_out = malloc(buf_len);
     iarray_to_buffer(ctx, c_out, buff_out, buf_len);
 
@@ -70,7 +57,6 @@ int main()
     iarray_container_free(ctx, &c_out);
     iarray_container_free(ctx, &c_x);
     iarray_context_free(&ctx);
-    free(buff_x);
     free(buff_out);
 
     return 0;
