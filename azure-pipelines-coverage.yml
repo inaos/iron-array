@@ -1,0 +1,73 @@
+trigger:
+- develop
+
+variables:
+- group: jfrog-artifactory
+
+strategy:
+  matrix:
+    linux-release:
+      imageName: 'ubuntu-16.04'
+      BUILD_CONFIGURATION: RelWithDebInfo
+      MULTITHREADING: False
+
+pool:
+  vmImage: $(imageName)
+
+
+steps:
+- powershell: gci env:* | sort-object name
+
+- bash: |
+    mkdir -p $HOME/.inaos/cmake
+    mkdir -p $HOME/INAOS
+    echo "INAC_REPOSITORY_LOCAL=$HOME/INAOS" > $HOME/.inaos/cmake/repository.txt 
+    echo "INAC_REPOSITORY_REMOTE=https://inaos.jfrog.io/inaos/libs-release-local/inaos" >> $HOME/.inaos/cmake/repository.txt
+    echo "INAC_REPOSITORY_USRPWD=licensed:AKCp5bBraH7CasbsYCURsjzkbjXwVwdYcT7u39EiuL6GjnK1VKfKQWCd1E2E64mHokU5YUHku" >> $HOME/.inaos/cmake/repository.txt
+    git submodule update --init --recursive
+  displayName: Clone repos
+
+- bash: |
+    echo "##vso[task.prependpath]$CONDA/bin"
+  displayName: Add conda to PATH
+
+- bash: |
+    conda create --yes --quiet --name iArrayEnv
+    conda install -y --name iArrayEnv -c intel mkl-include
+    conda install -y --name iArrayEnv -c intel mkl-static
+    conda install -y -c conda-forge gcovr
+    ls -l $CONDA/bin
+  displayName: Download dependencies
+  env:
+    jfrog_artifactory_uid: $(jfrog_artifactory_uid)
+    jfrog_artifactory_pwd: $(jfrog_artifactory_pwd)
+    
+- bash: |
+    mkdir cmake-build-$BUILD_CONFIGURATION
+    cd cmake-build-$BUILD_CONFIGURATION
+    cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING -DDO_COVERAGE=TRUE
+    cmake --build .
+  displayName: Compile
+  env:
+    BUILD_CONFIGURATION: $(BUILD_CONFIGURATION)
+    MULTITHREADING: $(MULTITHREADING)
+    
+
+- bash: |
+    cd cmake-build-$BUILD_CONFIGURATION
+    ctest -L iarray
+    ctest -L iarray -D ExperimentalCoverage
+    ls -lR
+    mv CMakeFiles/iarray_c.dir/src/*.gc* ../src/
+  displayName: Execute tests
+
+- bash: |
+    rename 's/\.c\./\./' src/*
+    gcovr -v -r src/ --xml -o coverage.xml
+  displayName: Create coverage report
+
+- task: PublishCodeCoverageResults@1
+  inputs:
+    codeCoverageTool: Cobertura
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage.xml'
+

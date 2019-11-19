@@ -18,10 +18,10 @@ strategy:
 #      imageName: 'macos-10.13'
 #      BUILD_CONFIGURATION: Debug
 #      MULTITHREADING: False
-    mac-release:
-      imageName: 'macos-10.13'
-      BUILD_CONFIGURATION: RelWithDebInfo
-      MULTITHREADING: False
+#    mac-release:
+#      imageName: 'macos-10.13'
+#      BUILD_CONFIGURATION: RelWithDebInfo
+#      MULTITHREADING: False
 #    windows-debug:
 #      imageName: 'vs2017-win2016'
 #      BUILD_CONFIGURATION: Debug
