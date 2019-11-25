@@ -18,7 +18,7 @@
 
 #define IARRAY_METALAYER_VERSION 0
 
-#define IARRAY_DIMENSION_MAX 8 /* A fixed size simplifies the code and should be enough for most IronArray cases */
+#define IARRAY_DIMENSION_MAX 8  /* A fixed size simplifies the code and should be enough for most IronArray cases */
 
 #define IARRAY_ES_CONTAINER (INA_ES_USER_DEFINED + 1)
 #define IARRAY_ES_DTSHAPE (INA_ES_USER_DEFINED + 2)
@@ -36,7 +36,8 @@
 #define IARRAY_ES_RNG_METHOD (INA_ES_USER_DEFINED + 14)
 #define IARRAY_ES_RAND_METHOD (INA_ES_USER_DEFINED + 15)
 #define IARRAY_ES_RAND_PARAM (INA_ES_USER_DEFINED + 16)
-#define IARRAY_ES_ITER (INA_ES_USER_DEFINED + 16)
+#define IARRAY_ES_ITER (INA_ES_USER_DEFINED + 17)
+#define IARRAY_ES_EVAL_METHOD (INA_ES_USER_DEFINED + 18)
 
 
 #define IARRAY_ERR_EMPTY_CONTAINER (INA_ERR_EMPTY | IARRAY_ES_CONTAINER)
@@ -50,9 +51,11 @@
 #define IARRAY_ERR_INVALID_BSHAPE (INA_ERR_INVALID | IARRAY_ES_BSHAPE)
 #define IARRAY_ERR_INVALID_NDIM (INA_ERR_INVALID | IARRAY_ES_NDIM)
 
-#define IARRAY_ERR_INVALID_RNG_METHOD (IARRAY_ES_RNG_METHOD | INA_ERR_INVALID)
-#define IARRAY_ERR_INVALID_RAND_METHOD (IARRAY_ES_RAND_METHOD | INA_ERR_INVALID)
-#define IARRAY_ERR_INVALID_RAND_PARAM (IARRAY_ES_RAND_PARAM | INA_ERR_INVALID)
+#define IARRAY_ERR_INVALID_RNG_METHOD (INA_ERR_INVALID | IARRAY_ES_RNG_METHOD)
+#define IARRAY_ERR_INVALID_RAND_METHOD (INA_ERR_INVALID | IARRAY_ES_RAND_METHOD)
+#define IARRAY_ERR_INVALID_RAND_PARAM (INA_ERR_INVALID | IARRAY_ES_RAND_PARAM)
+
+#define IARRAY_ERR_INVALID_EVAL_METHOD (INA_ERR_INVALID | IARRAY_ES_EVAL_METHOD)
 
 #define IARRAY_ERR_INVALID_STORAGE (INA_ERR_INVALID | IARRAY_ES_STORAGE)
 #define IARRAY_ERR_TOO_SMALL_BUFFER (INA_ERR_TOO_SMALL | IARRAY_ES_BUFFER)
@@ -338,7 +341,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
                               iarray_store_properties_t *store,
                               int flags,
                               iarray_container_t **dest);
-                              
+
     INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
                                      double value,
