@@ -15,11 +15,10 @@
 #include <src/iarray_private.h>
 #include <math.h>
 
-#define NCHUNKS  1  // per construction, must be a minimum of 2
+#define NCHUNKS  2  // per construction, must be a minimum of 2
 #define NITEMS_CHUNK (20 * 1000)
-// #define NELEM (((NCHUNKS - 1) * NITEMS_CHUNK) + 10)
-#define NELEM (NCHUNKS * NITEMS_CHUNK + 1)
-#define NTHREADS 1  // FIX: multithreading in ITERBLOCK still having issues
+#define NELEM (((NCHUNKS - 1) * NITEMS_CHUNK) + 10)
+#define NTHREADS 2
 
 
 /* Compute and fill X values in a buffer */
@@ -28,7 +27,7 @@ static int _fill_x(float* x)
     /* Fill even values between 0. and 1. */
     float incx = 1.f / NELEM;
     for (int i = 0; i < NELEM; i++) {
-        x[i] = incx * i;
+        x[i] = incx * (float)i;
     }
     return 0;
 }
