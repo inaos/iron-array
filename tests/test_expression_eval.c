@@ -20,7 +20,6 @@
 #define NCOLS 3000
 #define NROWS_CHUNK 20
 #define NCOLS_CHUNK 1000
-#define NITEMS_CHUNK (NROWS_CHUNK * NCOLS_CHUNK)
 #define NELEM (NROWS * NCOLS)
 #define NTHREADS 2  // excercise multithreading in ITERBLOCK
 
