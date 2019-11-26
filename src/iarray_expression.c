@@ -601,12 +601,13 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
     int64_t *out_pshape;
     if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
         // Compute a decent pshape for a plainbuffer output
-        // TODO: use a clever way to guess for the pshape
         out_pshape = (int64_t *) malloc(ret->dtshape->ndim * sizeof(int64_t));
-        for (int i = 0; i < ret->dtshape->ndim - 1; ++i) {
-            out_pshape[i] = 1;
+        int32_t nelems = e->chunksize / e->typesize;
+        for (int i = ret->dtshape->ndim - 1; i >= 0; i--) {
+            int32_t pshapei = nelems < ret->dtshape->shape[i] ? nelems : ret->dtshape->shape[i];
+            out_pshape[i] = pshapei;
+            nelems = nelems / pshapei;
         }
-        out_pshape[ret->dtshape->ndim - 1] = e->chunksize / e->typesize;
     } else {
         out_pshape = ret->dtshape->pshape;
     }
