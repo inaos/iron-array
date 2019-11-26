@@ -15,11 +15,14 @@
 #include <src/iarray_private.h>
 #include <math.h>
 
-#define NCHUNKS  1  // per construction, must be a minimum of 2
-#define NITEMS_CHUNK (20 * 1000)
-// #define NELEM (((NCHUNKS - 1) * NITEMS_CHUNK) + 10)
-#define NELEM (NCHUNKS * NITEMS_CHUNK + 1)
-#define NTHREADS 1  // FIX: multithreading in ITERBLOCK still having issues
+// Use 2-dim arrays here
+#define NROWS 50
+#define NCOLS 3000
+#define NROWS_CHUNK 20
+#define NCOLS_CHUNK 1000
+#define NITEMS_CHUNK (NROWS_CHUNK * NCOLS_CHUNK)
+#define NELEM (NROWS * NCOLS)
+#define NTHREADS 2  // excercise multithreading in ITERBLOCK
 
 
 /* Compute and fill X values in a buffer */
@@ -52,9 +55,11 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
 
     iarray_dtshape_t shape;
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
-    shape.ndim = 1;
-    shape.shape[0] = NELEM;
-    shape.pshape[0] = plain_buffer ? 0 : NITEMS_CHUNK;
+    shape.ndim = 2;
+    shape.shape[0] = NROWS;
+    shape.shape[1] = NCOLS;
+    shape.pshape[0] = plain_buffer ? 0 : NROWS_CHUNK;
+    shape.pshape[1] = plain_buffer ? 0 : NCOLS_CHUNK;
 
     _fill_y(buffer_x, buffer_y, func);
 
