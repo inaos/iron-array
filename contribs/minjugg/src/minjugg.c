@@ -8,6 +8,8 @@
 #include <llvm-c/IRReader.h>
 
 #include <llvm-c/Transforms/PassManagerBuilder.h>
+#include <llvm-c/Transforms/IPO.h> // LLVMAddGlobalOptimizerPass
+#include <llvm-c/Transforms/Scalar.h> // LLVMAddCFGSimplificationPass
 
 #include <blosc2.h>
 
@@ -17,6 +19,7 @@
 #define _JUG_DEBUG_WRITE_ERROR_TO_STDERR
 
 struct jug_expression_s {
+    LLVMContextRef context;
     LLVMModuleRef mod;
     LLVMExecutionEngineRef engine;
 };
@@ -389,7 +392,12 @@ static void debug_print(LLVMBuilderRef builder, LLVMModuleRef module, const char
     LLVMBuildCall(builder, printf_function, printf_args, 2, "printf");
 }
 
-static LLVMValueRef _jug_expr_compile_function(LLVMModuleRef module, const char *name, jug_te_expr *expression, int var_len, jug_te_variable *vars)
+static LLVMValueRef _jug_expr_compile_function(
+    jug_expression_t *e,
+    const char *name,
+    jug_te_expr *expression,
+    int var_len,
+    jug_te_variable *vars)
 {
     ina_hashtable_t *param_values = NULL;
 
@@ -406,10 +414,10 @@ static LLVMValueRef _jug_expr_compile_function(LLVMModuleRef module, const char 
     LLVMValueRef constant_zero = LLVMConstInt(int32Type, 0, 1);
     LLVMValueRef constant_one = LLVMConstInt(int32Type, 1, 1);
 
-    LLVMContextRef context = LLVMContextCreate();
+    e->context = LLVMContextCreate();
 
     /* define the parameter structure for prefilter */
-    LLVMTypeRef params_struct = LLVMStructCreateNamed(context, "struct.blosc2_prefilter_params");
+    LLVMTypeRef params_struct = LLVMStructCreateNamed(e->context, "struct.blosc2_prefilter_params");
     LLVMTypeRef *params_struct_types = ina_mem_alloc(sizeof(LLVMTypeRef) * 7);
     params_struct_types[0] = LLVMInt32Type();
     params_struct_types[1] = LLVMArrayType(LLVMPointerType(LLVMInt8Type(), 0), BLOSC2_PREFILTER_INPUTS_MAX);
@@ -425,7 +433,7 @@ static LLVMValueRef _jug_expr_compile_function(LLVMModuleRef module, const char 
         LLVMPointerType(params_struct, 0)
     };
     LLVMTypeRef prototype = LLVMFunctionType(LLVMInt32Type(), param_types, 1, 0);
-    LLVMValueRef f = LLVMAddFunction(module, name, prototype);
+    LLVMValueRef f = LLVMAddFunction(e->mod, name, prototype);
 
     LLVMBasicBlockRef loop_len = LLVMAppendBasicBlock(f, "loop_len");
     LLVMBasicBlockRef entry = LLVMAppendBasicBlock(f, "entry");
@@ -542,7 +550,7 @@ static LLVMValueRef _jug_expr_compile_function(LLVMModuleRef module, const char 
 static void _jug_apply_optimisation_passes(jug_expression_t *e)
 {
     /*
-     * XXX With OptLevel > 0 or LLVMAddInstructionCombiningPass the call to
+     * FIXME With OptLevel > 0 or LLVMAddInstructionCombiningPass the call to
      * LLVMRunPassManager gets stuck.
      * Other passes, such as LLVMAddScalarReplAggregatesPassSSA, make the code
      * fail with "SCEVAddExpr operand types don't match!"
@@ -576,6 +584,56 @@ static void _jug_declare_printf(LLVMModuleRef mod)
         LLVMFunctionType(LLVMInt64Type(), printf_args_ty_list, 0, 1);
     LLVMAddFunction(mod, "printf", printf_ty);
 }
+
+/*
+ * Code common to jug_expression_compile and jug_udf_compile functions:
+ * verifies module, optimizes, creates execution engine
+ */
+static LLVMBool _jug_prepare_module(jug_expression_t *e)
+{
+    LLVMBool error;
+    char *message = NULL;
+
+    // Verify the module
+    error = LLVMVerifyModule(e->mod, LLVMAbortProcessAction, &message);
+    if (error)
+    {
+        fprintf(stderr, "LLVM module verification error: '%s'\n", message);
+        goto exit;
+    }
+
+    LLVMSetModuleDataLayout(e->mod, _jug_data_ref);
+    LLVMSetTarget(e->mod, _jug_def_triple);
+
+    // Debug: write bitcode before otimization
+#ifdef _JUG_DEBUG_WRITE_BC_TO_FILE
+    if (LLVMWriteBitcodeToFile(e->mod, "expression.bc") != 0) {
+        fprintf(stderr, "error writing bitcode to file, skipping\n");
+    }
+#endif
+
+    // Optimze
+#ifndef INA_OS_WINDOWS
+    _jug_apply_optimisation_passes(e);
+#ifdef _JUG_DEBUG_WRITE_BC_TO_FILE
+    if (LLVMWriteBitcodeToFile(e->mod, "expression_opt.bc") != 0) {
+        fprintf(stderr, "error writing bitcode to file, skipping\n");
+    }
+#endif
+#endif
+
+    // Create execution engine
+    error = LLVMCreateExecutionEngineForModule(&e->engine, e->mod, &message);
+    if (error) {
+        fprintf(stderr, "LLVM execution engine creation error: '%s'\n", message);
+        goto exit;
+    }
+
+exit:
+    LLVMDisposeMessage(message);
+    return error;
+}
+
 
 INA_API(ina_rc_t) jug_init()
 {
@@ -663,31 +721,44 @@ INA_API(void) jug_expression_free(jug_expression_t **expr)
     INA_MEM_FREE_SAFE(*expr);
 }
 
-INA_API(ina_rc_t) jug_udf_compile(jug_expression_t *e, int llvm_bc_len, const char *llvm_bc, uint64_t *function_addr)
+INA_API(ina_rc_t) jug_udf_compile(
+    jug_expression_t *e,
+    int llvm_bc_len,
+    const char *llvm_bc,
+    uint64_t *function_addr)
 {
     char *message = NULL;
+    LLVMMemoryBufferRef buffer;
+    LLVMBool error;
+    ina_rc_t rc = INA_SUCCESS;
 
     // Read the IR file into a buffer
-    LLVMMemoryBufferRef buf = LLVMCreateMemoryBufferWithMemoryRange(llvm_bc, llvm_bc_len, "udf", 0);
+    buffer = LLVMCreateMemoryBufferWithMemoryRange(llvm_bc, llvm_bc_len, "udf", 0);
+    //buffer = LLVMCreateMemoryBufferWithMemoryRangeCopy(llvm_bc, llvm_bc_len, "udf");
 
     // now create our module
-    LLVMModuleRef mod;
-    LLVMContextRef context = LLVMContextCreate();
-    if (LLVMParseIRInContext(context, buf, &mod, &message) != 0) {
+    e->context = LLVMContextCreate();
+    error = LLVMParseIRInContext(e->context, buffer, &e->mod, &message);
+    if (error) {
 #ifdef _JUG_DEBUG_WRITE_ERROR_TO_STDERR
         fprintf(stderr, "Invalid IR detected! message: '%s'\n", message);
 #endif
-        LLVMDisposeMemoryBuffer(buf);
-        free(message);
-        return INA_ERR_FAILED;
+        rc = INA_ERR_FAILED;
+        goto exit;
     }
 
-    // somehow we need to merge the UDF module with
-    // the LLVM IR used to read and write the prefilter input / output
+    if (_jug_prepare_module(e)) {
+        rc = INA_ERR_FAILED;
+        goto exit;
+    }
 
-    LLVMDisposeMemoryBuffer(buf);
+    *function_addr = LLVMGetFunctionAddress(e->engine, "expr_func");
 
-    return INA_SUCCESS;
+exit:
+    LLVMDisposeMessage(message);
+    // for some strange reason, this does a "pointer being freed was not allocated"
+    //LLVMDisposeMemoryBuffer(memoryBuffer);
+    return rc;
 }
 
 INA_API(ina_rc_t) jug_expression_compile(
@@ -703,46 +774,11 @@ INA_API(ina_rc_t) jug_expression_compile(
     if (parse_error) {
         return INA_ERR_INVALID_ARGUMENT;
     }
-
-    _jug_expr_compile_function(e->mod, "expr_func", expression, num_vars, te_vars);
-
+    _jug_expr_compile_function(e, "expr_func", expression, num_vars, te_vars);
     jug_te_free(expression);
 
-    char *error = NULL;
-    LLVMVerifyModule(e->mod, LLVMAbortProcessAction, &error);
-    LLVMDisposeMessage(error);
-
-    LLVMSetModuleDataLayout(e->mod, _jug_data_ref);
-    LLVMSetTarget(e->mod, _jug_def_triple);
-
-#ifdef _JUG_DEBUG_WRITE_BC_TO_FILE
-    if (LLVMWriteBitcodeToFile(e->mod, "expression.bc") != 0) {
-        fprintf(stderr, "error writing bitcode to file, skipping\n");
-    }
-#endif
-
-    // FIXME: currently hangs on windows and UNIX too
-#ifndef INA_OS_WINDOWS
-    _jug_apply_optimisation_passes(e);
-
-#ifdef _JUG_DEBUG_WRITE_BC_TO_FILE
-    if (LLVMWriteBitcodeToFile(e->mod, "expression_opt.bc") != 0) {
-        fprintf(stderr, "error writing bitcode to file, skipping\n");
-    }
-#endif
-#endif
-
-    error = NULL;
-    if (LLVMCreateExecutionEngineForModule(&e->engine, e->mod, &error) != 0) {
-        fprintf(stderr, "failed to create execution engine\n");
-        LLVMDisposeMessage(error);
-        return INA_ERR_FATAL;
-
-    }
-    if (error) {
-        fprintf(stderr, "error: %s\n", error);
-        LLVMDisposeMessage(error);
-        return INA_ERR_FATAL;
+    if (_jug_prepare_module(e)) {
+        return INA_ERR_FAILED;
     }
 
     *function_addr = LLVMGetFunctionAddress(e->engine, "expr_func");
