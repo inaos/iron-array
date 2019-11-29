@@ -123,28 +123,9 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
     return INA_ERROR(INA_ERR_NOT_IMPLEMENTED);
 }
 
-INA_API(ina_rc_t) iarray_expr_compile_udf(iarray_expression_t *e, int llvm_bc_len, const char *llvm_bc)
+
+static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
 {
-    INA_VERIFY_NOT_NULL(e);
-    INA_VERIFY_NOT_NULL(llvm_bc);
-
-    uint64_t udf_address;
-
-    INA_FAIL_IF_ERROR(jug_udf_compile(e->jug_expr, llvm_bc_len, llvm_bc, &udf_address));
-
-    e->jug_expr_func = udf_address;
-
-    return INA_SUCCESS;
-
-fail:
-    return ina_err_get_rc();
-}
-
-INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
-{
-    INA_VERIFY_NOT_NULL(e);
-    INA_VERIFY_NOT_NULL(expr);
-
     ina_rc_t rc;
 
     int nthreads = 1;
@@ -167,11 +148,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     }
 #endif
 
-    e->expr = ina_str_new_fromcstr(expr);
     e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t*)); // TODO: This should be freed?
-    te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(te_variable));
-    jug_te_variable *jug_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(jug_te_variable));
-    memset(jug_vars, 0, e->nvars * sizeof(jug_te_variable));
     caterva_array_t *catarr = e->vars[0].c->catarr;
 
     e->typesize = catarr->ctx->cparams.typesize;
@@ -223,6 +200,49 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         e->nchunks += 1;
     }
 
+    *nthreads_out = nthreads;
+    return INA_SUCCESS;
+
+fail:
+    INA_MEM_FREE_SAFE(e->temp_vars);
+    return ina_err_get_rc();
+}
+
+
+INA_API(ina_rc_t) iarray_expr_compile_udf(iarray_expression_t *e, int llvm_bc_len, const char *llvm_bc)
+{
+    INA_VERIFY_NOT_NULL(e);
+    INA_VERIFY_NOT_NULL(llvm_bc);
+
+    int nthreads;
+    ina_rc_t rc = _iarray_expr_prepare(e, &nthreads);
+    if (rc != INA_SUCCESS) {
+        return rc;
+    }
+
+    INA_FAIL_IF_ERROR(
+        jug_udf_compile(e->jug_expr, llvm_bc_len, llvm_bc, &e->jug_expr_func)
+    );
+
+    return INA_SUCCESS;
+
+fail:
+    return ina_err_get_rc();
+}
+
+INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
+{
+    INA_VERIFY_NOT_NULL(e);
+    INA_VERIFY_NOT_NULL(expr);
+
+    e->expr = ina_str_new_fromcstr(expr);
+
+    int nthreads;
+    ina_rc_t rc = _iarray_expr_prepare(e, &nthreads);
+    if (rc != INA_SUCCESS) {
+        return rc;
+    }
+
     // Create temporaries for initial variables.
     // We don't need the temporaries to be conformant with pshape; only the buffer
     // size needs to the same.
@@ -241,6 +261,10 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     }
     dtshape_var.shape[0] = temp_var_dim0;
     dtshape_var.dtype = e->vars[0].c->dtshape->dtype;
+
+    te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(te_variable));
+    jug_te_variable *jug_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(jug_te_variable));
+    memset(jug_vars, 0, e->nvars * sizeof(jug_te_variable));
     for (int nvar = 0; nvar < e->nvars; nvar++) {
         te_vars[nvar].name = e->vars[nvar].var;
         te_vars[nvar].type = TE_VARIABLE;
@@ -254,19 +278,20 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
             te_vars[nvar].address[nthread] = *(e->temp_vars + ntvar);
         }
     }
+
     int err = 0;
     e->texpr = te_compile(e, ina_str_cstr(e->expr), te_vars, e->nvars, &err);
     if (e->texpr == 0) {
         INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_COMPILED));
     }
-    INA_FAIL_IF_ERROR(jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars, jug_vars, &e->jug_expr_func));
-    rc = INA_SUCCESS;
-    goto cleanup;
-    fail:
+    INA_FAIL_IF_ERROR(
+        jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars, jug_vars, &e->jug_expr_func)
+    );
+    return INA_SUCCESS;
+
+fail:
     INA_MEM_FREE_SAFE(e->temp_vars);
-    rc = ina_err_get_rc();
-    cleanup:
-    return rc;
+    return ina_err_get_rc();
 }
 
 int prefilter_func(blosc2_prefilter_params *pparams)
