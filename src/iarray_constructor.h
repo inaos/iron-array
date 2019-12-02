@@ -152,7 +152,9 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     ina_mem_cpy((*c)->dparams, &dparams, sizeof(blosc2_dparams));
 
     cat_ctx = caterva_new_ctx(NULL, NULL, cparams, dparams);
-
+    if (cat_ctx == NULL) {
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+    }
     caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
 
     if (flags & IARRAY_CONTAINER_PERSIST) {
@@ -167,7 +169,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         }
         (*c)->catarr = caterva_empty_array(cat_ctx, NULL, NULL);
     }
-
     if (cat_ctx != NULL) caterva_free_ctx(cat_ctx);
     if ((*c)->catarr == NULL) {
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));

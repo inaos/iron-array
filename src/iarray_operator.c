@@ -41,10 +41,8 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     ina_rc_t rc;
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    int caterva_rc = caterva_update_shape(c->catarr, &shape);
-    if (caterva_rc != 0) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
-    }
+    IARRAY_ERR_CATERVA(caterva_update_shape(c->catarr, &shape));
+
     int64_t typesize = a->catarr->ctx->cparams.typesize;
 
     bool a_contiguous = (a->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
@@ -255,10 +253,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     ina_rc_t rc;
 
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    int caterva_rc = caterva_update_shape(c->catarr, &shape);
-    if (caterva_rc != 0) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
-    }
+    IARRAY_ERR_CATERVA(caterva_update_shape(c->catarr, &shape));
     int64_t typesize = a->catarr->ctx->cparams.typesize;
 
     bool a_contiguous = (a->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
@@ -445,9 +440,7 @@ static ina_rc_t _iarray_operator_elwise_a(
     INA_VERIFY_NOT_NULL(mkl_fun_s);
 
     caterva_dims_t shape = caterva_new_dims(result->dtshape->shape, result->dtshape->ndim);
-    if (caterva_update_shape(result->catarr, &shape) != 0) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
-    }
+    IARRAY_ERR_CATERVA(caterva_update_shape(result->catarr, &shape));
 
     size_t psize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {
@@ -506,9 +499,7 @@ static ina_rc_t _iarray_operator_elwise_ab(
     INA_FAIL_IF_ERROR(iarray_container_dtshape_equal(a->dtshape, b->dtshape));
 
     caterva_dims_t shape = caterva_new_dims(result->dtshape->shape, result->dtshape->ndim);
-    if (caterva_update_shape(result->catarr, &shape) < 0) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
-    }
+    IARRAY_ERR_CATERVA(caterva_update_shape(result->catarr, &shape));
 
     size_t psize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {

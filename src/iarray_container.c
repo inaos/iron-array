@@ -155,9 +155,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         caterva_dims_t start__ = caterva_new_dims((int64_t *) start_, c->dtshape->ndim);
         caterva_dims_t stop__ = caterva_new_dims((int64_t *) stop_, c->dtshape->ndim);
 
-        if (caterva_get_slice((*container)->catarr, c->catarr, &start__, &stop__) != 0) {
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
-        }
+        IARRAY_ERR_CATERVA(caterva_get_slice((*container)->catarr, c->catarr, &start__, &stop__));
     }
 
     rc = INA_SUCCESS;
@@ -304,9 +302,7 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
     caterva_dims_t stop__ = caterva_new_dims((int64_t *) stop_, c->catarr->ndim);
     caterva_dims_t pshape_ = caterva_new_dims((int64_t *) pshape, c->catarr->ndim);
 
-    if (caterva_get_slice_buffer(buffer, c->catarr, &start__, &stop__, &pshape_) != 0) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
-    }
+    IARRAY_ERR_CATERVA(caterva_get_slice_buffer(buffer, c->catarr, &start__, &stop__, &pshape_));
 
     size_t rows = (size_t)stop_[0] - start_[0];
     size_t cols = (size_t)stop_[1] - start_[1];
@@ -440,11 +436,8 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
 
     caterva_dims_t start__ = caterva_new_dims(start_, c->dtshape->ndim);
     caterva_dims_t stop__ = caterva_new_dims(stop_, c->dtshape->ndim);
-    int err = caterva_set_slice_buffer(c->catarr, buffer, &start__, &stop__);
+    IARRAY_ERR_CATERVA(caterva_set_slice_buffer(c->catarr, buffer, &start__, &stop__));
 
-    if (err != 0) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
-    }
     rc = INA_SUCCESS;
     goto cleanup;
     fail:
@@ -531,9 +524,7 @@ INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
     caterva_dims_t stop__ = caterva_new_dims((int64_t *) stop_, c->catarr->ndim);
     caterva_dims_t pshape_ = caterva_new_dims((int64_t *) pshape, c->catarr->ndim);
 
-    if (caterva_get_slice_buffer_no_copy(buffer, c->catarr, &start__, &stop__, &pshape_) != 0) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
-    }
+    IARRAY_ERR_CATERVA(caterva_get_slice_buffer_no_copy(buffer, c->catarr, &start__, &stop__, &pshape_));
 
     rc = INA_SUCCESS;
     goto cleanup;
@@ -628,9 +619,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
 
     memset(buffer, 0, buflen);
 
-    if (caterva_get_slice_buffer(buffer, c->catarr, &start__, &stop__, &pshape__) != 0) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
-    }
+    IARRAY_ERR_CATERVA(caterva_get_slice_buffer(buffer, c->catarr, &start__, &stop__, &pshape__));
 
     rc = INA_SUCCESS;
     goto cleanup;
@@ -649,9 +638,7 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
     uint8_t inc = 0;
 
     if (!container->view) {
-        if (caterva_squeeze(container->catarr) != 0) {
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
-        }
+        IARRAY_ERR_CATERVA(caterva_squeeze(container->catarr));
 
         if (container->dtshape->ndim != container->catarr->ndim) {
             container->dtshape->ndim = (uint8_t) container->catarr->ndim;
