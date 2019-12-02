@@ -914,7 +914,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
                 stop_[i] = src->auxshape->offset[i] + src->auxshape->shape_wos[i];
             }
             caterva_dims_t stop = caterva_new_dims(stop_, src->catarr->ndim);
-            IARRAY_ERR_CATERVA(caterva_get_slice((*dest)->catarr, src->catarr, &start, &stop) != CATERVA_SUCCEED);
+            IARRAY_ERR_CATERVA(caterva_get_slice((*dest)->catarr, src->catarr, &start, &stop));
             IARRAY_ERR_CATERVA(caterva_squeeze((*dest)->catarr));
         } else {
             IARRAY_ERR_CATERVA(caterva_copy((*dest)->catarr, src->catarr));
