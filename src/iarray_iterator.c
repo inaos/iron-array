@@ -410,9 +410,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                 }
                 caterva_dims_t stop = caterva_new_dims(stop_, ndim);
 
-                if (caterva_set_slice_buffer(catarr, itr->block, &start, &stop) != 0) {
-                    INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
-                }
+                IARRAY_ERR_CATERVA(caterva_set_slice_buffer(catarr, itr->block, &start, &stop));
             }
         } else {
             // check if the part should be padded with 0s
@@ -553,7 +551,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                 }
                 caterva_dims_t stop = caterva_new_dims(stop_, ndim);
 
-                caterva_set_slice_buffer(catarr, itr->block, &start, &stop);
+                IARRAY_ERR_CATERVA(caterva_set_slice_buffer(catarr, itr->block, &start, &stop));
             }
         } else {
             // check if the part should be padded with 0s
@@ -687,14 +685,13 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     int64_t typesize = cont->catarr->ctx->cparams.typesize;
 
     caterva_dims_t shape = caterva_new_dims(cont->dtshape->shape, cont->dtshape->ndim);
-    int err = caterva_update_shape(cont->catarr, &shape);
+    CATERVA_ERROR(caterva_update_shape(cont->catarr, &shape));
 
     if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
         cont->catarr->buf = cont->catarr->ctx->alloc((size_t) cont->catarr->size * typesize);
-    }
-
-    if (err < 0) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+        if (cont->catarr->buf == NULL) {
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+        }
     }
 
     (*itr)->compressed_chunk_buffer = false;  // the default is to pass uncompressed buffers
@@ -1132,10 +1129,8 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
     memcpy(*itr, &IARRAY_ITER_WRITE_EMPTY, sizeof(iarray_iter_write_t));
 
     caterva_dims_t shape = caterva_new_dims(cont->dtshape->shape, cont->dtshape->ndim);
-    int err = caterva_update_shape(cont->catarr, &shape);
-    if (err < 0) {
-        INA_FAIL_IF_ERROR(INA_ERROR(CATERVA_STORAGE_PLAINBUFFER));
-    }
+    IARRAY_ERR_CATERVA(caterva_update_shape(cont->catarr, &shape));
+
     (*itr)->ctx = ctx;
     (*itr)->container = cont;
     if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
