@@ -200,6 +200,33 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
         e->nchunks += 1;
     }
 
+    // Create temporaries for initial variables.
+    // We don't need the temporaries to be conformant with pshape; only the buffer
+    // size needs to the same.
+    iarray_dtshape_t dtshape_var = {0};  // initialize to 0s
+    dtshape_var.ndim = 1;
+    int32_t temp_var_dim0 = 0;
+    if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK) {
+        temp_var_dim0 = e->blocksize / e->typesize;
+    } else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERCHUNK ||
+               e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
+        temp_var_dim0 = e->chunksize / e->typesize;
+        e->blocksize = 0;
+    } else {
+        fprintf(stderr, "Flag %d is not supported\n", e->ctx->cfg->eval_flags);
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
+    }
+    dtshape_var.shape[0] = temp_var_dim0;
+    dtshape_var.dtype = e->vars[0].c->dtshape->dtype;
+
+    for (int nvar = 0; nvar < e->nvars; nvar++) {
+        // Allocate different buffers for each thread too
+        for (int nthread = 0; nthread < nthreads; nthread++) {
+            int ntvar = nthread * e->nvars + nvar;
+            INA_FAIL_IF_ERROR(iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[ntvar]));
+        }
+    }
+
     *nthreads_out = nthreads;
     return INA_SUCCESS;
 
@@ -243,25 +270,6 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         return rc;
     }
 
-    // Create temporaries for initial variables.
-    // We don't need the temporaries to be conformant with pshape; only the buffer
-    // size needs to the same.
-    iarray_dtshape_t dtshape_var = {0};  // initialize to 0s
-    dtshape_var.ndim = 1;
-    int32_t temp_var_dim0 = 0;
-    if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK) {
-        temp_var_dim0 = e->blocksize / e->typesize;
-    } else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERCHUNK ||
-               e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
-        temp_var_dim0 = e->chunksize / e->typesize;
-        e->blocksize = 0;
-    } else {
-        fprintf(stderr, "Flag %d is not supported\n", e->ctx->cfg->eval_flags);
-        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
-    }
-    dtshape_var.shape[0] = temp_var_dim0;
-    dtshape_var.dtype = e->vars[0].c->dtshape->dtype;
-
     te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(te_variable));
     jug_te_variable *jug_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(jug_te_variable));
     memset(jug_vars, 0, e->nvars * sizeof(jug_te_variable));
@@ -274,7 +282,6 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         // Allocate different buffers for each thread too
         for (int nthread = 0; nthread < nthreads; nthread++) {
             int ntvar = nthread * e->nvars + nvar;
-            INA_FAIL_IF_ERROR(iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[ntvar]));
             te_vars[nvar].address[nthread] = *(e->temp_vars + ntvar);
         }
     }
