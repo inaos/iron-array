@@ -18,11 +18,10 @@
 
 static ina_rc_t _iarray_container_fill_float(iarray_context_t *ctx, iarray_container_t *c, float value)
 {
+    INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(c);
 
     ina_rc_t rc;
-
-    caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
 
     iarray_iter_write_t *I;
     iarray_iter_write_value_t val;
@@ -33,9 +32,8 @@ static ina_rc_t _iarray_container_fill_float(iarray_context_t *ctx, iarray_conta
         INA_FAIL_IF_ERROR(iarray_iter_write_next(I));
         memcpy(val.elem_pointer, &value, sizeof(float));
     }
-    iarray_iter_write_free(&I);
     INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
-
+    iarray_iter_write_free(&I);
 
     rc = INA_SUCCESS;
     goto cleanup;
@@ -50,6 +48,7 @@ static ina_rc_t _iarray_container_fill_float(iarray_context_t *ctx, iarray_conta
 
 static ina_rc_t _iarray_container_fill_double(iarray_context_t *ctx, iarray_container_t *c, double value)
 {
+    INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(c);
 
     ina_rc_t rc;
@@ -130,7 +129,6 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
             memcpy(val.elem_pointer, &value, sizeof(float));
         }
     }
-
     INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
     iarray_iter_write_free(&I);
 
@@ -364,9 +362,7 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
     // TODO: would it be interesting to add a `buffer_len` parameter to `caterva_from_buffer()`?
     caterva_dims_t shape = caterva_new_dims((*container)->dtshape->shape, (*container)->dtshape->ndim);
-    if (caterva_from_buffer((*container)->catarr, &shape, buffer) != CATERVA_SUCCEED) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
-    }
+    IARRAY_ERR_CATERVA(caterva_from_buffer((*container)->catarr, &shape, buffer));
 
     rc = INA_SUCCESS;
     goto cleanup;
@@ -446,7 +442,6 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
     }
 
     *container = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
-    INA_VERIFY_NOT_NULL(*container);
     (*container)->catarr = catarr;
 
     // Build the dtshape
@@ -471,13 +466,17 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
 
     // Populate compression parameters
     blosc2_cparams *cparams;
-    blosc2_schunk_get_cparams(catarr->sc, &cparams);
+    if (blosc2_schunk_get_cparams(catarr->sc, &cparams) < 0) {
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+    }
     blosc2_cparams *cparams2 = (blosc2_cparams*)ina_mem_alloc(sizeof(blosc2_cparams));
     memcpy(cparams2, cparams, sizeof(blosc2_cparams));
     free(cparams);
     (*container)->cparams = cparams2;  // we need an INA-allocated struct (to match INA_MEM_FREE_SAFE)
     blosc2_dparams *dparams;
-    blosc2_schunk_get_dparams(catarr->sc, &dparams);
+    if (blosc2_schunk_get_dparams(catarr->sc, &dparams) < 0) {
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+    }
     blosc2_dparams *dparams2 = (blosc2_dparams*)ina_mem_alloc(sizeof(blosc2_dparams));
     memcpy(dparams2, dparams, sizeof(blosc2_dparams));
     free(dparams);
@@ -585,14 +584,12 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
 
 INA_API(bool) iarray_is_empty(iarray_container_t *container) {
     INA_VERIFY_NOT_NULL(container);
-
-    // TODO: Change this condition when an empty array would be of size 0
-    if (container->catarr->empty)
-    {
+    if (container->catarr->empty) {
         return true;
     }
     return false;
 }
+
 
 static void swap_store(void *dest, const void *pa, int size) {
     uint8_t* pa_ = (uint8_t*)pa;
