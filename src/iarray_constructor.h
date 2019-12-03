@@ -20,6 +20,7 @@
 
 static int32_t serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
 {
+    INA_VERIFY_NOT_NULL(smeta);
     if (dtype > IARRAY_DATA_TYPE_MAX) {
         return -1;
     }
@@ -44,6 +45,10 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
                                       int flags,
                                       iarray_container_t **c)
 {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(c);
+
     blosc2_cparams cparams = {0};
     blosc2_dparams dparams = {0};
     caterva_ctx_t *cat_ctx = NULL;
@@ -53,7 +58,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
     /* validation */
     if (dtshape->ndim > CATERVA_MAXDIM) {
-        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_EXCEEDED));
+        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
     }
     if (flags & IARRAY_CONTAINER_PERSIST && store == NULL) {
         INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
@@ -119,7 +124,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
             cparams.typesize = sizeof(float);
             break;
         default:
-            printf("Unknown type; cannot never happen.\n");
+            fprintf(stderr, "Unknown type; cannot never happen.\n");
             INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
             break;
     }
@@ -186,8 +191,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
             INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
         }
         // And store it in iarray metalayer
-        int retcode = blosc2_add_metalayer((*c)->catarr->sc, "iarray", smeta, (uint32_t)smeta_len);
-        if (retcode < 0) {
+        if(blosc2_add_metalayer((*c)->catarr->sc, "iarray", smeta, (uint32_t)smeta_len) < 0) {
             INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
         }
         free(smeta);
