@@ -67,7 +67,10 @@
 
 #define IARRAY_ERR_END_ITER (IARRAY_ES_ITER | INA_ERR_COMPLETE)
 
-#define IARRAY_ERR_CATERVA(rc) do {if (rc != CATERVA_SUCCEED) {INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));}} while(0)
+#define IARRAY_ERR_CATERVA(rc) do {if (rc != CATERVA_SUCCEED) {IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));}} while(0)
+
+#define IARRAY_FAIL_IF(cond) do { if ((cond)) {INA_TRACE("Same as the %s macro", "INA_TRACE"); goto fail;}} while(0)
+#define IARRAY_FAIL_IF_ERROR(rc) IARRAY_FAIL_IF(INA_FAILED((rc)))
 
 typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;

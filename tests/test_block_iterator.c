@@ -508,7 +508,7 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
         size *= shape[i];
     }
 
-    iarray_container_t *c_x;
+    iarray_container_t *c_x = NULL;
 
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, size, 1, NULL, 0, &c_x));
 

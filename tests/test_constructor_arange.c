@@ -24,6 +24,8 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
         typesize = sizeof(float);
     }
 
+    INA_TRACE1("Start test", "Start test");
+
     // Create dtshape
     iarray_dtshape_t xdtshape;
 

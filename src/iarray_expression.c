@@ -171,7 +171,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
                 if (chunk != NULL) {
                     free(chunk);
                 }
-                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
             }
 
             size_t chunksize, cbytes, blocksize;
@@ -188,7 +188,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         }
         else {
             fprintf(stderr, "Flag %d is not supported\n", e->ctx->cfg->eval_flags);
-            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
         }
     }
 
@@ -211,7 +211,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         e->blocksize = 0;
     } else {
         fprintf(stderr, "Flag %d is not supported\n", e->ctx->cfg->eval_flags);
-        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
     }
     dtshape_var.shape[0] = temp_var_dim0;
     dtshape_var.dtype = e->vars[0].c->dtshape->dtype;
@@ -223,14 +223,14 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         // Allocate different buffers for each thread too
         for (int nthread = 0; nthread < nthreads; nthread++) {
             int ntvar = nthread * e->nvars + nvar;
-            INA_FAIL_IF_ERROR(iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[ntvar]));
+            IARRAY_FAIL_IF_ERROR(iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[ntvar]));
             te_vars[nvar].address[nthread] = *(e->temp_vars + ntvar);
         }
     }
     int err = 0;
     e->texpr = te_compile(e, ina_str_cstr(e->expr), te_vars, e->nvars, &err);
     if (e->texpr == 0) {
-        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_COMPILED));
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_COMPILED));
     }
     rc = INA_SUCCESS;
     goto cleanup;
@@ -639,7 +639,7 @@ ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)
             type_size = sizeof(float);
             break;
         default:
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
     for (int i = 0; i < dtshape->ndim; ++i) {
         *size += dtshape->shape[i] * type_size;
@@ -710,7 +710,7 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
 #endif
 
     err = iarray_temporary_new(expr, NULL, &dtshape, &out);
-    INA_FAIL_IF_ERROR(err);
+    IARRAY_FAIL_IF_ERROR(err);
 
     switch (dtshape.dtype) {
         case IARRAY_DATA_TYPE_DOUBLE: {
@@ -953,7 +953,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
 #endif
 
     err = iarray_temporary_new(expr, NULL, &dtshape, &out);
-    INA_FAIL_IF_ERROR(err);
+    IARRAY_FAIL_IF_ERROR(err);
 
     switch (dtshape.dtype) {
         case IARRAY_DATA_TYPE_DOUBLE: {

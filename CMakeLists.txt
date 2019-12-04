@@ -93,6 +93,8 @@ endif()
 inac_add_tools(iarrays)
 inac_add_examples(iarrays)
 
+inac_enable_trace(${CMAKE_BUILD_TYPE} 1)
+
 # Playing with OpenMP (available mainly on GCC)
 #if (UNIX AND NOT CMAKE_C_COMPILER_ID STREQUAL Clang)
 #    set_property(
