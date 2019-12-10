@@ -273,6 +273,9 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
     IARRAY_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_OP_CHUNKS, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_op));
     IARRAY_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL_TMP, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_tmp_out));
 
+    IARRAY_TRACE1(iarray.error, "invalid dtype");
+    IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+
     rc = INA_SUCCESS;
     goto cleanup;
 

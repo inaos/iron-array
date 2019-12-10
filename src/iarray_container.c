@@ -19,16 +19,16 @@ INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dts
 {
     ina_rc_t rc;
     if (a->dtype != b->dtype) {
-        fprintf(stderr, "Dtypes are not equals\n");
+        INA_TRACE(1, "Error: dtypes are not equals");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
     if (a->ndim != b->ndim) {
-        fprintf(stderr, "Dims are not equals\n");
+        INA_TRACE(1, "Error: dims are not equals");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
     }
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         if (a->shape[i] != b->shape[i]) {
-            fprintf(stderr, "Shapes are not equals\n");
+            INA_TRACE(1, "Error: shapes are not equals\n");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_SHAPE));
         }
     }
@@ -92,11 +92,11 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
 
     for (int i = 0; i < c->dtshape->ndim; ++i) {
         if (start_[i] >= stop_[i]) {
-            fprintf(stderr, "Start is bigger than stop\n");
+            INA_TRACE1(iarray.error, "Start is bigger than stop");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
         }
         if (pshape[i] > stop_[i] - start_[i]){
-            fprintf(stderr, "pshape is bigger than shape\n");
+            INA_TRACE1(iarray.error, "Pshape is bigger than shape");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_PSHAPE));
         }
     }
