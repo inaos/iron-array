@@ -100,6 +100,7 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
 
     double constant = (stop - start) / contsize;
     if (constant != step) {
+        IARRAY_TRACE1(iarray.error, "The step parameter is invalid");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
     }
 
@@ -164,6 +165,7 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
     }
 
     if (contsize != nelem) {
+        IARRAY_TRACE1(iarray.error, "The nelem param is invalid");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
     }
 
@@ -228,6 +230,7 @@ INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
             IARRAY_FAIL_IF_ERROR(_iarray_container_fill_float(ctx, *container, 0.0f));
             break;
         default:
+            IARRAY_TRACE1(iarray.error, "The dtype is invalid");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
     rc = INA_SUCCESS;
@@ -255,14 +258,15 @@ INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
     IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, dtshape, store, flags, container));
 
     switch (dtshape->dtype) {
-    case IARRAY_DATA_TYPE_DOUBLE:
-        IARRAY_FAIL_IF_ERROR(_iarray_container_fill_double(ctx, *container, 1.0));
-        break;
-    case IARRAY_DATA_TYPE_FLOAT:
-        IARRAY_FAIL_IF_ERROR(_iarray_container_fill_float(ctx, *container, 1.0f));
-        break;
-    default:
-        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+        case IARRAY_DATA_TYPE_DOUBLE:
+            IARRAY_FAIL_IF_ERROR(_iarray_container_fill_double(ctx, *container, 1.0));
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            IARRAY_FAIL_IF_ERROR(_iarray_container_fill_float(ctx, *container, 1.0f));
+            break;
+        default:
+            IARRAY_TRACE1(iarray.error, "The dtype is invalid");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
 
     rc = INA_SUCCESS;
@@ -348,14 +352,19 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
     switch ((*container)->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            if ((* container)->catarr->size * (int64_t)sizeof(double) > buflen)
+            if ((* container)->catarr->size * (int64_t)sizeof(double) > buflen) {
+                IARRAY_TRACE1(iarray.error, "The size of the buffer is too small");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            }
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            if ((* container)->catarr->size * (int64_t)sizeof(float) > buflen)
+            if ((* container)->catarr->size * (int64_t)sizeof(float) > buflen) {
+                IARRAY_TRACE1(iarray.error, "The size of the buffer is too small");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            }
             break;
         default:
+            IARRAY_TRACE1(iarray.error, "The dtype is invalid");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
 
@@ -399,6 +408,7 @@ static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data
     assert(pmeta - smeta == smeta_len);
 
     if (*dtype >= IARRAY_DATA_TYPE_MAX) {
+        IARRAY_TRACE1(iarray.error, "The dtype is invalid");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
 
@@ -419,24 +429,26 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
     ina_rc_t rc;
     caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, BLOSC2_CPARAMS_DEFAULTS, BLOSC2_DPARAMS_DEFAULTS);
     if (cat_ctx == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error allocating a caterva context");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
 
     caterva_array_t *catarr = caterva_from_file(cat_ctx, store->id, load_in_mem);
     if (catarr == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error creating a caterva array from file");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
 
     uint8_t *smeta;
     uint32_t smeta_len;
     if (blosc2_get_metalayer(catarr->sc, "iarray", &smeta, &smeta_len) < 0) {
-        fprintf(stderr, "Error in get_metalayer\n");
+        IARRAY_TRACE1(iarray.error, "Error getting blosc metalayers");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
     }
     iarray_data_type_t dtype;
     bool transposed;
     if (deserialize_meta(smeta, smeta_len, &dtype, &transposed) != 0) {
-        fprintf(stderr, "Error in deserialize_meta\n");
+        IARRAY_TRACE1(iarray.error, "Error deserialize sframe");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
     }
 
@@ -466,6 +478,7 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
     // Populate compression parameters
     blosc2_cparams *cparams;
     if (blosc2_schunk_get_cparams(catarr->sc, &cparams) < 0) {
+        IARRAY_TRACE1(iarray.error, "Error getting cparams from blosc2 schunk");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
     }
     blosc2_cparams *cparams2 = (blosc2_cparams*)ina_mem_alloc(sizeof(blosc2_cparams));
@@ -474,6 +487,7 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
     (*container)->cparams = cparams2;  // we need an INA-allocated struct (to match INA_MEM_FREE_SAFE)
     blosc2_dparams *dparams;
     if (blosc2_schunk_get_dparams(catarr->sc, &dparams) < 0) {
+        IARRAY_TRACE1(iarray.error, "Error getting dparams from blosc2 schunk");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
     }
     blosc2_dparams *dparams2 = (blosc2_dparams*)ina_mem_alloc(sizeof(blosc2_dparams));
@@ -501,6 +515,7 @@ INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx, iarray_store_propertie
 
     (*container)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
     if ((*container)->store == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error allocating store param from a container");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
     (*container)->store->id = ina_str_new_fromcstr(store->id);
@@ -534,14 +549,19 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
 
     switch (container->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            if (size * (int64_t)sizeof(double) > buflen)
+            if (size * (int64_t)sizeof(double) > buflen) {
+                IARRAY_TRACE1(iarray.error, "The buffer size is too small");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            }
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            if (size * (int64_t)sizeof(float) > buflen)
+            if (size * (int64_t)sizeof(float) > buflen) {
+                IARRAY_TRACE1(iarray.error, "The buffer size is too small");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            }
             break;
         default:
+            IARRAY_TRACE1(iarray.error, "The dtype is invalid");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
 
@@ -568,6 +588,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
                               (float *) buffer, (size_t)container->dtshape->shape[0], (size_t)container->dtshape->shape[1]);
                 break;
             default:
+                IARRAY_TRACE1(iarray.error, "The dtype is invalid");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
     }
@@ -640,6 +661,7 @@ INA_API(ina_rc_t) iarray_to_sview(iarray_context_t *ctx, iarray_container_t *c, 
     INA_VERIFY_NOT_NULL(sview_len);
 
     if (!c->view) {
+        IARRAY_TRACE1(iarray.error, "The container is not a view");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
     }
     *sview_len = 451;
@@ -857,6 +879,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     }
     blosc2_frame *frame = blosc2_new_frame(fname);
     if (frame == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error creating new blosc2 frame");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
     }
     (*dest) = (iarray_container_t *) ina_mem_alloc(sizeof(iarray_container_t));
@@ -886,6 +909,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     } else {
         caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, *(*dest)->cparams, *(*dest)->dparams);
         if (cat_ctx == NULL) {
+            IARRAY_TRACE1(iarray.error, "Error allocating a caterva context");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
         }
 
@@ -900,6 +924,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
             (*dest)->catarr = caterva_empty_array(cat_ctx, NULL, NULL);
         }
         if ((*dest)->catarr == NULL) {
+            IARRAY_TRACE1(iarray.error, "Error creating a caterva container");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
         }
 
