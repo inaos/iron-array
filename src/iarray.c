@@ -82,6 +82,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     }
 
     if (low > high) {
+        INA_TRACE1(iarray.error, "Low limit is grater than high limit");
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
@@ -98,6 +99,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
             itemsize = 4;
             break;
         default:
+            INA_TRACE1(iarray.error, "The dtype is invalid");
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
 
@@ -142,7 +144,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     }
 
     if (psize > INT32_MAX) {
-        // The partition size can never be larger than 2 GB
+        INA_TRACE1(iarray.error, "The partition size can never be larger than 2 GB");
         return INA_ERROR(IARRAY_ERR_INVALID_PSHAPE);
     }
 
@@ -183,6 +185,7 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     }
 
     if (low > high) {
+        INA_TRACE1(iarray.error, "Low limit is grater than high limit");
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
@@ -197,6 +200,7 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
             itemsize = 4;
             break;
         default:
+            INA_TRACE1(iarray.error, "The dtype is invalid");
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
     // First, the m and n values *have* to be the same for the partition of the output
@@ -273,9 +277,6 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
     IARRAY_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_OP_CHUNKS, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_op));
     IARRAY_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL_TMP, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_tmp_out));
 
-    //IARRAY_TRACE1(iarray.error, "invalid dtype");
-    //IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
-
     rc = INA_SUCCESS;
     goto cleanup;
 
@@ -285,7 +286,6 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
     cleanup:
         return rc;
 }
-
 
 INA_API(void) iarray_context_free(iarray_context_t **ctx)
 {

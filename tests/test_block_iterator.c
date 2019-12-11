@@ -142,7 +142,7 @@ INA_TEST_SETUP(block_iterator) {
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
+    iarray_context_new(&cfg, &data->ctx);
 }
 
 INA_TEST_TEARDOWN(block_iterator) {
