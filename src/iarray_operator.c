@@ -647,7 +647,7 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     }
 
     if (a->dtshape->dtype != b->dtshape->dtype) {
-        IARRAY_TRACE1(iarray.error, "The data types must be equals");
+        IARRAY_TRACE1(iarray.error, "The data types must be equal");
         return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
 
@@ -657,8 +657,8 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     }
 
     if (a->dtshape->shape[1] != b->dtshape->shape[0]) {
-        IARRAY_TRACE1(iarray.error, "The second dimension length of the first container shape must be"
-                                    "equal to the first dimension length of the second container shape");
+        IARRAY_TRACE1(iarray.error, "The second dimension of the first container shape must be"
+                                    "equal to the first dimension of the second container shape");
         return INA_ERROR(IARRAY_ERR_INVALID_SHAPE);
     }
 
@@ -670,13 +670,13 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     }
 
     if (bshape_a[1] != bshape_b[0]) {
-        IARRAY_TRACE1(iarray.error, "The second dimension length of the first bshape must be"
-                                    "equal to the first dimension length of the second bshape");
+        IARRAY_TRACE1(iarray.error, "The second dimension of the first bshape must be"
+                                    "equal to the first dimension of the second bshape");
         return INA_ERROR(IARRAY_ERR_INVALID_BSHAPE);
     }
 
     if (bshape_a[0] != c->dtshape->pshape[0]){
-        IARRAY_TRACE1(iarray.error, "The first dimension length of the first bshape must be"
+        IARRAY_TRACE1(iarray.error, "The first dimension of the first bshape must be"
                                     "equal to the first dimension of the output container pshape");
         return INA_ERROR(IARRAY_ERR_INVALID_BSHAPE);
     }
@@ -686,7 +686,7 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
     }
     else if (b->dtshape->ndim == 2) {
         if (bshape_b[1] != c->dtshape->pshape[1]) {
-            IARRAY_TRACE1(iarray.error, "The second dimension length of the second bshape must be"
+            IARRAY_TRACE1(iarray.error, "The second dimension of the second bshape must be"
                                         "equal to the second dimension of the output container pshape");
             return INA_ERROR(IARRAY_ERR_INVALID_BSHAPE);
         }
