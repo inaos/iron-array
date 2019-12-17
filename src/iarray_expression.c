@@ -662,8 +662,8 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
     *temp = ina_mempool_dalloc(mempool, sizeof(iarray_temporary_t));
     (*temp)->dtshape = ina_mempool_dalloc(mempool, sizeof(iarray_dtshape_t));
     ina_mem_cpy((*temp)->dtshape, dtshape, sizeof(iarray_dtshape_t));
-    size_t size = 0;
-    iarray_shape_size(dtshape, &size);
+    size_t typesize = dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ? 8 : 4;
+    size_t size = expr->max_out_len * typesize;
     (*temp)->size = size;
     if (c != NULL) {
         // FIXME: support float values too
