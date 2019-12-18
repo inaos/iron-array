@@ -19,16 +19,16 @@ INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dts
 {
     ina_rc_t rc;
     if (a->dtype != b->dtype) {
-        IARRAY_TRACE1(iarray.error, "Error: dtypes are not equals");
+        IARRAY_TRACE1(iarray.error, "The data types are not equal");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
     if (a->ndim != b->ndim) {
-        IARRAY_TRACE1(iarray.error, "Error: dims are not equals");
+        IARRAY_TRACE1(iarray.error, "The dimensions are not equal");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
     }
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         if (a->shape[i] != b->shape[i]) {
-            IARRAY_TRACE1(iarray.error, "Error: shapes are not equals\n");
+            IARRAY_TRACE1(iarray.error, "The shapes are not equal\n");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_SHAPE));
         }
     }
@@ -96,7 +96,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
             IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
         }
         if (pshape[i] > stop_[i] - start_[i]){
-            IARRAY_TRACE1(iarray.error, "Pshape is bigger than shape");
+            IARRAY_TRACE1(iarray.error, "The pshape is bigger than shape");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_PSHAPE));
         }
     }
@@ -181,11 +181,11 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
     ina_rc_t rc;
 
     if (c->dtshape->dtype != slice->dtshape->dtype) {
-        IARRAY_TRACE1(iarray.error, "dtypes are different");
+        IARRAY_TRACE1(iarray.error, "The data types are different");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
     if (c->dtshape->ndim != slice->dtshape->ndim) {
-        IARRAY_TRACE1(iarray.error, "dimensions are different");
+        IARRAY_TRACE1(iarray.error, "The dimensions are different");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
     }
 
@@ -316,7 +316,7 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                 mkl_simatcopy('R', 'T', rows, cols, 1.0f, (float *) buffer, cols, rows);
                 break;
             default:
-                IARRAY_TRACE1(iarray.error, "Dtype is invalid");
+                IARRAY_TRACE1(iarray.error, "The data type is invalid");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
     }
@@ -348,7 +348,7 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
     ina_rc_t rc;
 
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-        IARRAY_TRACE1(iarray.error, "Container is not backed by a plainbuffer");
+        IARRAY_TRACE1(iarray.error, "The container is not backed by a plainbuffer");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_STORAGE));
     }
 
@@ -403,7 +403,7 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                 mkl_simatcopy('R', 'T', rows, cols, 1.0f, (float *) buffer, cols, rows);
                 break;
             default:
-                IARRAY_TRACE1(iarray.error, "Dtype is invalid");
+                IARRAY_TRACE1(iarray.error, "The data type is invalid");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
     }
@@ -442,7 +442,7 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
             }
             break;
         default:
-            IARRAY_TRACE1(iarray.error, "Dtype is invalid");
+            IARRAY_TRACE1(iarray.error, "The data type is invalid");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
 
@@ -534,7 +534,7 @@ INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
             }
             break;
         default:
-            IARRAY_TRACE1(iarray.error, "Dtype is invalid");
+            IARRAY_TRACE1(iarray.error, "the data type is invalid");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
 
@@ -632,7 +632,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
             }
             break;
         default:
-            IARRAY_TRACE1(iarray.error, "Dtype is invalid");
+            IARRAY_TRACE1(iarray.error, "The data type is invalid");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
 
@@ -735,16 +735,16 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     ina_rc_t rc;
 
     if (a->dtshape->dtype != b->dtshape->dtype){
-        IARRAY_TRACE1(iarray.error, "Dtypes are not equals");
+        IARRAY_TRACE1(iarray.error, "The data types are not equals");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
     if (a->dtshape->ndim != b->dtshape->ndim) {
-        IARRAY_TRACE1(iarray.error, "Dims are not equals");
+        IARRAY_TRACE1(iarray.error, "The dimensions are not equals");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
     }
     for (int i = 0; i < a->dtshape->ndim; ++i) {
         if (a->dtshape->shape[i] != b->dtshape->shape[i]) {
-            IARRAY_TRACE1(iarray.error, "Shapes are not equals");
+            IARRAY_TRACE1(iarray.error, "The shapes are not equals");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_SHAPE));
         }
     }

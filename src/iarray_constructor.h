@@ -58,7 +58,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
     /* validation */
     if (dtshape->ndim > CATERVA_MAXDIM) {
-        IARRAY_TRACE1(iarray.error, "dimensions parameter is larger than caterva maximum dimensions");
+        IARRAY_TRACE1(iarray.error, "The container dimension is larger than caterva maximum dimension");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
     }
     if (flags & IARRAY_CONTAINER_PERSIST && store == NULL) {
@@ -73,13 +73,13 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
     *c = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
     if ((*c) == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error allocating iarray container");
+        IARRAY_TRACE1(iarray.error, "Error allocating the iarray container");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
 
     (*c)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
     if ((*c)->dtshape == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error allocating iarray dtshape");
+        IARRAY_TRACE1(iarray.error, "Error allocating the iarray dtshape");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
@@ -97,13 +97,13 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
     (*c)->cparams = (blosc2_cparams*)ina_mem_alloc(sizeof(blosc2_cparams));
     if ((*c)->cparams == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error allocating blosc cparams");
+        IARRAY_TRACE1(iarray.error, "Error allocating the blosc cparams");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
 
     (*c)->dparams = (blosc2_dparams*)ina_mem_alloc(sizeof(blosc2_dparams));
     if ((*c)->dparams == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error allocating blosc dparams");
+        IARRAY_TRACE1(iarray.error, "Error allocating the blosc dparams");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
 
@@ -116,7 +116,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     }
     (*c)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
     if ((*c)->auxshape == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error allocating iarray auxshape");
+        IARRAY_TRACE1(iarray.error, "Error allocating the iarray auxshape");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
@@ -132,7 +132,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
             cparams.typesize = sizeof(float);
             break;
         default:
-            IARRAY_TRACE1(iarray.error, "Invalid data type");
+            IARRAY_TRACE1(iarray.error, "The data type is invalid");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
             break;
     }
@@ -166,7 +166,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
     cat_ctx = caterva_new_ctx(NULL, NULL, cparams, dparams);
     if (cat_ctx == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error cateting caterva context");
+        IARRAY_TRACE1(iarray.error, "Error creating the caterva context");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
     caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
@@ -185,21 +185,21 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     }
     if (cat_ctx != NULL) caterva_free_ctx(cat_ctx);
     if ((*c)->catarr == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error creating caterva container");
+        IARRAY_TRACE1(iarray.error, "Error creating the caterva container");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
 
     if (flags & IARRAY_CONTAINER_PERSIST) {
         (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
         if ((*c)->store == NULL) {
-            IARRAY_TRACE1(iarray.error, "Error allocating store parameters");
+            IARRAY_TRACE1(iarray.error, "Error allocating the store parameters");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
         }
         (*c)->store->id = ina_str_new_fromcstr(store->id);
         uint8_t *smeta;
         int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
         if (smeta_len < 0) {
-            IARRAY_TRACE1(iarray.error, "Error serializing metainformation");
+            IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
         }
         // And store it in iarray metalayer
@@ -236,7 +236,7 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
 
     /* validation */
     if (dtshape->ndim > CATERVA_MAXDIM) {
-        IARRAY_TRACE1(iarray.error, "Dimensions parameter is larger than the caterva maximum dimensions");
+        IARRAY_TRACE1(iarray.error, "The container dimension is larger than the caterva maximum dimension");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
     }
 
@@ -248,13 +248,13 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
 
     *c = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
     if (*c == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error allocating iarray container");
+        IARRAY_TRACE1(iarray.error, "Error allocating the iarray container");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
 
     (*c)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
     if ((*c)->dtshape == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error allocating iarray dtshape");
+        IARRAY_TRACE1(iarray.error, "Error allocating the iarray dtshape");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
@@ -268,7 +268,7 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     }
     (*c)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
     if ((*c)->auxshape == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error allocating iarray auxdtshape");
+        IARRAY_TRACE1(iarray.error, "Error allocating the iarray auxdtshape");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));

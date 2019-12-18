@@ -82,7 +82,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     }
 
     if (low > high) {
-        INA_TRACE1(iarray.error, "Low limit is grater than high limit");
+        INA_TRACE1(iarray.error, "The low limit is greater than the high limit");
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
@@ -99,7 +99,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
             itemsize = 4;
             break;
         default:
-            INA_TRACE1(iarray.error, "The dtype is invalid");
+            INA_TRACE1(iarray.error, "The data type is invalid");
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
 
@@ -144,7 +144,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     }
 
     if (psize > INT32_MAX) {
-        INA_TRACE1(iarray.error, "The partition size can never be larger than 2 GB");
+        INA_TRACE1(iarray.error, "The partition size can not be larger than 2 GB");
         return INA_ERROR(IARRAY_ERR_INVALID_PSHAPE);
     }
 
@@ -185,7 +185,7 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     }
 
     if (low > high) {
-        INA_TRACE1(iarray.error, "Low limit is grater than high limit");
+        INA_TRACE1(iarray.error, "The low limit is grater than the high limit");
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
@@ -200,7 +200,7 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
             itemsize = 4;
             break;
         default:
-            INA_TRACE1(iarray.error, "The dtype is invalid");
+            INA_TRACE1(iarray.error, "The data type is invalid");
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
     // First, the m and n values *have* to be the same for the partition of the output
