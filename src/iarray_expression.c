@@ -230,7 +230,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     int err = 0;
     e->texpr = te_compile(e, ina_str_cstr(e->expr), te_vars, e->nvars, &err);
     if (e->texpr == 0) {
-        IARRAY_TRACE1(iarray.error, "Error compiling the expression")
+        IARRAY_TRACE1(iarray.error, "Error compiling the expression");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_COMPILED));
     }
     rc = INA_SUCCESS;

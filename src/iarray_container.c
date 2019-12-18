@@ -779,8 +779,7 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
                     ((double *)val_a.block_pointer)[i];
                 if (rdiff > tol) {
                     //printf("%f, %f\n", ((double *)val_a.block_pointer)[i], ((double *)val_b.block_pointer)[i]);
-                    IARRAY_TRACE1(iarray.error, "Values differ in nelem: %ld (diff: %f)",
-                           (long)(i + val_a.nblock * val_a.block_size), adiff);
+                    IARRAY_TRACE1(iarray.error, "Values are different");
                     IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_ASSERTION_FAILED));
                 }
             }
@@ -792,8 +791,7 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
                     ((float *)val_a.block_pointer)[i];
                 if (vdiff > tol) {
                     //printf("%f, %f\n", ((float *)val_a.block_pointer)[i], ((float *)val_b.block_pointer)[i]);
-                    IARRAY_TRACE1(iarray.error, "Values differ in nelem: %ld (diff: %f)\n",
-                           (long)(i + val_a.nblock * val_a.block_size), adiff);
+                    IARRAY_TRACE1(iarray.error, "Values are different");
                     IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_ASSERTION_FAILED));
                 }
             }
