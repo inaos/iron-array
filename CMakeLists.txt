@@ -9,7 +9,7 @@
 # Information and shall use it only in accordance with the terms of the license agreement.
 #
 cmake_minimum_required (VERSION 3.12)
-project(iarray VERSION 0.1.1)
+project(iarray VERSION 0.1.2)
 
 option(MULTITHREADING "Use multithreaded iarray" ON)
 
@@ -21,7 +21,7 @@ endif()
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
     if (NOT EXISTS "${CMAKE_SOURCE_DIR}/inac.cmake")
         message(STATUS "Downloading inac.cmake from https://github.com/inaos/inac-cmake")
-        file(DOWNLOAD "https://raw.githubusercontent.com/inaos/inac-cmake/0.1/inac.cmake"
+        file(DOWNLOAD "https://raw.githubusercontent.com/inaos/inac-cmake/0.3/inac.cmake"
                 "${CMAKE_BINARY_DIR}/inac.cmake" STATUS DS)
         if(NOT "${DS}"  MATCHES "0;")
             file(REMOVE "${CMAKE_BINARY_DIR}/inac.cmake")
@@ -34,13 +34,13 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
 endif()
 include("${CMAKE_BINARY_DIR}/inac.cmake")
 
-inac_add_dependency(inac "1.0.4")
+inac_add_dependency(inac "1.0.6")
 
 inac_add_contrib_lib(tinyexpr)
 
 add_subdirectory(contribs/c-blosc2)
 include_directories(contribs/c-blosc2/blosc)
-set(BLOSC_LIB blosc_static) # required for caterva tests
+set(BLOSC_LIB blosc2_static) # required for caterva tests
 add_subdirectory(contribs/caterva)
 include_directories(contribs/caterva/caterva)
 
@@ -67,14 +67,28 @@ set_target_properties(
 include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac"
         "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
 
-inac_merge_static_libs(iarrays iarray_c blosc_static caterva ${INAC_LIBS})
+
+if (DO_COVERAGE)
+    target_compile_options(iarray_c PRIVATE -fprofile-arcs -ftest-coverage)
+    inac_merge_static_libs(iarrays iarray_c blosc2_static caterva_static ${INAC_LIBS})
+    target_link_libraries(iarrays -fprofile-arcs)
+else()
+    inac_merge_static_libs(iarrays iarray_c blosc2_static caterva_static ${INAC_LIBS})
+endif()
 
 if (UNIX)
 set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
-set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc_static ${IPP_LIBRARIES})
+set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc2_static ${IPP_LIBRARIES})
 endif()
 
 inac_add_tests(iarrays)
+
+if (DO_COVERAGE)
+    include(CTest)
+    enable_testing()
+    add_test(NAME iarray_tests COMMAND tests)
+    set_tests_properties(iarray_tests PROPERTIES LABELS "iarray")
+endif()
 #inac_add_benchmarks(iarrays)
 inac_add_tools(iarrays)
 inac_add_examples(iarrays)
@@ -100,7 +114,7 @@ inac_add_examples(iarrays)
 add_definitions(-DINA_DLL)
 add_definitions(-DINA_LIB)
 add_library(iarray SHARED ${src})
-target_link_libraries(iarray ${INAC_LIBS} blosc_static caterva ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+target_link_libraries(iarray ${INAC_LIBS} blosc2_static caterva_static ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 install(TARGETS iarray
         DESTINATION lib

@@ -21,6 +21,8 @@
  */
 bool _iarray_file_exists(const char * filename)
 {
+    INA_VERIFY_NOT_NULL(filename);
+
     /* try to open file to read */
     FILE *file;
     if ((file = fopen(filename, "r")) != NULL) {

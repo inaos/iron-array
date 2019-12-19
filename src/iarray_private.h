@@ -16,7 +16,7 @@
 #include <libiarray/iarray.h>
 
 /* Dependencies */
-#include <blosc.h>
+#include <blosc2.h>
 #include <caterva.h>
 #include <mkl.h>
 
@@ -31,6 +31,34 @@
 #define _IARRAY_MEMPOOL_OP_CHUNKS (1024*1024)
 #define _IARRAY_MEMPOOL_EVAL (1024*1024)
 #define _IARRAY_MEMPOOL_EVAL_TMP (1024*1024)
+
+typedef enum iarray_functype_e {
+    IARRAY_FUNC_ABS,
+    IARRAY_FUNC_ACOS,
+    IARRAY_FUNC_ASIN,
+    IARRAY_FUNC_ATAN,
+    IARRAY_FUNC_ATAN2,
+    IARRAY_FUNC_CEIL,
+    IARRAY_FUNC_COS,
+    IARRAY_FUNC_COSH,
+    IARRAY_FUNC_E,
+    IARRAY_FUNC_EXP,
+    IARRAY_FUNC_FAC,
+    IARRAY_FUNC_FLOOR,
+    IARRAY_FUNC_LN,
+    IARRAY_FUNC_LOG,
+    IARRAY_FUNC_LOG10,
+    IARRAY_FUNC_NCR,
+    IARRAY_FUNC_NEGATE,
+    IARRAY_FUNC_NPR,
+    IARRAY_FUNC_PI,
+    IARRAY_FUNC_POW,
+    IARRAY_FUNC_SIN,
+    IARRAY_FUNC_SINH,
+    IARRAY_FUNC_SQRT,
+    IARRAY_FUNC_TAN,
+    IARRAY_FUNC_TANH,
+} iarray_functype_t;
 
 typedef enum iarray_optype_e {
     IARRAY_OPERATION_TYPE_ADD,
@@ -49,6 +77,7 @@ typedef enum iarray_blas_type_e {
 struct iarray_context_s {
     iarray_config_t *cfg;
     ina_mempool_t *mp;
+    ina_mempool_t *mp_part_cache;
     ina_mempool_t *mp_op;
     ina_mempool_t *mp_tmp_out;
     /* FIXME: track expressions -> list */
@@ -70,7 +99,6 @@ struct iarray_container_s {
     iarray_auxshape_t *auxshape;
     blosc2_cparams *cparams;
     blosc2_dparams *dparams;
-    blosc2_frame *frame;
     caterva_array_t *catarr;
     _iarray_container_store_t *store;
     bool transposed;
@@ -101,6 +129,8 @@ typedef struct iarray_iter_write_s {
 
 } iarray_iter_write_t;
 
+static const iarray_iter_write_t IARRAY_ITER_WRITE_EMPTY = {0};
+
 typedef struct iarray_iter_read_s {
     iarray_context_t *ctx;
     iarray_container_t *cont;
@@ -123,6 +153,9 @@ typedef struct iarray_iter_read_s {
     int64_t elem_flat_index; // The elem index if the container will be flatten
 } iarray_iter_read_t;
 
+
+static const iarray_iter_read_t IARRAY_ITER_READ_EMPTY = {0};
+
 typedef struct iarray_iter_write_block_s {
     iarray_context_t *ctx;
     iarray_container_t *cont;
@@ -144,6 +177,8 @@ typedef struct iarray_iter_write_block_s {
     bool external_buffer; // Flag to indicate if a external part is passed
 } iarray_iter_write_block_t;
 
+static const iarray_iter_write_block_t IARRAY_ITER_WRITE_BLOCK_EMPTY = {0};
+
 typedef struct iarray_iter_read_block_s {
     iarray_context_t *ctx;
     iarray_container_t *cont;
@@ -162,6 +197,8 @@ typedef struct iarray_iter_read_block_s {
     bool contiguous; // Flag to avoid copies using plainbuffer
     bool external_buffer; // Flag to indicate if a external part is passed
 } iarray_iter_read_block_t;
+
+static const iarray_iter_read_block_t IARRAY_ITER_READ_BLOCK_EMPTY = {0};
 
 typedef struct iarray_iter_matmul_s {
     iarray_context_t *ctx;
@@ -207,6 +244,9 @@ ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, 
 ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size);
 
 /* FIXME: since we want to keep the changes to tinyexpr as little as possible we deviate from our usual function decls */
+iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *operand1,
+                                 iarray_temporary_t *operand2, iarray_functype_t func);
+
 //static iarray_temporary_t* _iarray_op(iarray_temporary_t *lhs, iarray_temporary_t *rhs, iarray_optype_t op);
 iarray_temporary_t* _iarray_op_add(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs);
 iarray_temporary_t* _iarray_op_sub(iarray_expression_t *expr, iarray_temporary_t *lhs, iarray_temporary_t *rhs);
@@ -218,7 +258,7 @@ iarray_temporary_t* _iarray_op_divide(iarray_expression_t *expr, iarray_temporar
 ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *container1,
                                  iarray_container_t *container2, int64_t *bshape_a,
                                  int64_t *bshape_b, iarray_iter_matmul_t **itr);
-void _iarray_iter_matmul_free(iarray_iter_matmul_t *itr);
+void _iarray_iter_matmul_free(iarray_iter_matmul_t **itr);
 void _iarray_iter_matmul_init(iarray_iter_matmul_t *itr);
 void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr);
 int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr);

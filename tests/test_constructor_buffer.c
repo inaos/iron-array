@@ -52,7 +52,7 @@ static ina_rc_t test_buffer(iarray_context_t *ctx,
 
     uint8_t *buf_dest = malloc((size_t)buf_size * type_size);
 
-    iarray_to_buffer(ctx, c_x, buf_dest, (size_t)buf_size);
+    INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf_dest, (size_t)buf_size * type_size));
 
     if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
         double *buff = (double *) buf_dest;
@@ -118,7 +118,7 @@ INA_TEST_FIXTURE(constructor_buffer, 5_d)
 
     int8_t ndim = 5;
     int64_t shape[] = {10, 11, 10, 6, 7};
-    int64_t pshape[] = {3, 4, 6, 3, 3};
+    int64_t pshape[] = {3, 4, 100, 3, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_buffer(data->ctx, dtype, type_size, ndim, shape, pshape));
 }

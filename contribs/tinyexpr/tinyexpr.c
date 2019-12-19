@@ -32,7 +32,7 @@ For a^b^c = a^(b^c) and -a^b = -(a^b) uncomment the next line.*/
 /* Logarithms
 For log = base 10 log do nothing
 For log = natural log uncomment the next line. */
-/* #define TE_NAT_LOG */
+#define TE_NAT_LOG
 
 #include <libiarray/iarray.h>
 #include "tinyexpr.h"
@@ -41,6 +41,10 @@ For log = natural log uncomment the next line. */
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
+
 
 #ifndef NAN
 #define NAN (0.0/0.0)
@@ -157,37 +161,136 @@ static double ncr(double n, double r) {
 }
 static double npr(double n, double r) {return ncr(n, r) * fac(r);}
 
+/* Functions */
+
+iarray_temporary_t* func_abs(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_ABS);
+}
+
+iarray_temporary_t* func_acos(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_ACOS);
+}
+
+iarray_temporary_t* func_asin(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_ASIN);
+}
+
+iarray_temporary_t* func_atan(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_ATAN);
+}
+
+iarray_temporary_t* func_atan2(iarray_expression_t *expr, iarray_temporary_t *operand1, iarray_temporary_t *operand2)
+{
+    return _iarray_func(expr, operand1, operand2, IARRAY_FUNC_ATAN2);
+}
+
+iarray_temporary_t* func_ceil(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_CEIL);
+}
+
+iarray_temporary_t* func_cos(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_COS);
+}
+
+iarray_temporary_t* func_cosh(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_COSH);
+}
+
+iarray_temporary_t* func_exp(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_EXP);
+}
+
+iarray_temporary_t* func_floor(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_FLOOR);
+}
+
+iarray_temporary_t* func_ln(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_LN);
+}
+
+iarray_temporary_t* func_log10(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_LOG10);
+}
+
+iarray_temporary_t* func_negate(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_NEGATE);
+}
+
+iarray_temporary_t* func_pow(iarray_expression_t *expr, iarray_temporary_t *operand1, iarray_temporary_t *operand2)
+{
+    return _iarray_func(expr, operand1, operand2, IARRAY_FUNC_POW);
+}
+
+iarray_temporary_t* func_sin(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_SIN);
+}
+
+iarray_temporary_t* func_tan(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand,  NULL,IARRAY_FUNC_TAN);
+}
+
+iarray_temporary_t* func_sinh(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_SINH);
+}
+
+iarray_temporary_t* func_sqrt(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_SQRT);
+}
+
+iarray_temporary_t* func_tanh(iarray_expression_t *expr, iarray_temporary_t *operand)
+{
+    return _iarray_func(expr, operand, NULL, IARRAY_FUNC_TANH);
+}
+
+
 INA_DISABLE_WARNING_MSVC(4152);
 static const te_variable functions[] = {
     /* must be in alphabetical order */
-    {"abs", NULL, fabs,     TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"acos", NULL, acos,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"asin", NULL, asin,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"atan", NULL, atan,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"atan2", NULL, atan2,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
-//    {"ceil", NULL, ceil,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"cos", NULL, cos,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"cosh", NULL, cosh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"abs", NULL, func_abs,     TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"acos", NULL, func_acos,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"asin", NULL, func_asin,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"atan", NULL, func_atan,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"atan2", NULL, func_atan2,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"ceil", NULL, func_ceil,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"cos", NULL, func_cos,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"cosh", NULL, func_cosh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"e", NULL, e,          TE_FUNCTION0 | TE_FLAG_PURE, 0},
-    {"exp", NULL, exp,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"exp", NULL, func_exp,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"fac", NULL, fac,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-//    {"floor", floor,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"ln", NULL, log,       TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"floor", NULL, func_floor,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"ln", NULL, func_ln,       TE_FUNCTION1 | TE_FLAG_PURE, 0},
 #ifdef TE_NAT_LOG
-    {"log", NULL, log,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"log", NULL, func_ln,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
 #else
-    {"log", NULL, log10,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"log", NULL, func_log10,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
 #endif
-    {"log10", NULL, log10,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"log10", NULL, func_log10,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"ncr", NULL, ncr,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"negate", NULL, func_negate,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"npr", NULL, npr,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"pi", NULL, pi,        TE_FUNCTION0 | TE_FLAG_PURE, 0},
-    {"pow", NULL, pow,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
-    {"sin", NULL, sin,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"sinh", NULL, sinh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"sqrt", NULL, sqrt,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"tan", NULL, tan,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"tanh", NULL, tanh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"pow", NULL, func_pow,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"sin", NULL, func_sin,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"sinh", NULL, func_sinh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"sqrt", NULL, func_sqrt,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"tan", NULL, func_tan,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"tanh", NULL, func_tanh,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {0, 0, 0, 0, 0}
 };
 INA_ENABLE_WARNING_MSVC(4152);
@@ -227,15 +330,16 @@ static const te_variable *find_lookup(const state *s, const char *name, size_t l
 }
 
 
-#define add _iarray_op_add
-#define sub _iarray_op_sub
-#define mul _iarray_op_mul
-#define divide _iarray_op_divide
 //static double add(double a, double b) {return a + b;}
 //static double sub(double a, double b) {return a - b;}
 //static double mul(double a, double b) {return a * b;}
 //static double divide(double a, double b) {return a / b;}
-static double negate(double a) {return -a;}
+#define add _iarray_op_add
+#define sub _iarray_op_sub
+#define mul _iarray_op_mul
+#define divide _iarray_op_divide
+//static double negate(double a) {return -a;}
+#define negate func_negate
 static double comma(double a, double b) {(void)a; return b;}
 
 
@@ -281,6 +385,9 @@ void next_token(state *s) {
                         case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:     /* Falls through. */
                             s->type = var->type;
                             s->function = var->function;
+                            if (s->function == NULL) {
+                                printf("Undefined function: '%s'\n", var->name);
+                            }
                             break;
                         default:
                             printf("Unknown type; cannot never happen.  If you see this, inform about it.\n");

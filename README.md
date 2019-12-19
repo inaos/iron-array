@@ -1,6 +1,3 @@
-[![Appveyor CI](https://ci.appveyor.com/api/projects/status/bfntjr38rymsm18w/branch/develop?svg=true)](https://ci.appveyor.com/project/stoni/iron-array/branch/develop) [![codecov](https://codecov.io/gh/inaos/iron-array/branch/master/graph/badge.svg?token=HFqpNSEpsN)](https://codecov.io/gh/inaos/iron-array)
-
-
 [![Azure CI](https://inaos.visualstudio.com/iron-array/_apis/build/status/inaos.iron-array?branchName=develop)](https://inaos.visualstudio.com/iron-array/_build/latest?definitionId=6&branchName=develop)
 
 # iron-array
@@ -22,7 +19,7 @@ We use inac cmake build-system.
 
 * INAC build setup
     * Make sure that you have a configured repository.txt file in ~\.inaos\cmake
-    * Also you'll need a directory under ~\INAOS (can be empty)
+    * Also you'll need a directory ~\INAOS (can be empty)
 
 * Create a build folder
 
@@ -42,7 +39,7 @@ It is suggested to use a recent version of clang (e.g. 8); see https://embeddeda
 
 * INAC build setup
     * Make sure that you have a configured repository.txt file in ~/.inaos/cmake
-    * Also you'll need a directory under ~/INAOS (can be empty)
+    * Also you'll need a directory ~/INAOS (can be empty)
 
 * Create a build folder
 
@@ -64,7 +61,7 @@ It is suggested to use a recent version of clang (e.g. 8); see https://embeddeda
 
 * INAC build setup
     * Make sure that you have a configured repository.txt file in ~/.inaos/cmake
-    * Also you'll need a directory under ~/INAOS (can be empty)
+    * Also you'll need a directory ~/INAOS (can be empty)
     
 * MKL setup.  For Ubuntu machines, it is best to use Intel's Ubuntu repo:
 

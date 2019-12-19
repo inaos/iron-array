@@ -16,8 +16,58 @@
 #include <libinac/lib.h>
 #include <stdbool.h>
 
+#define IARRAY_METALAYER_VERSION 0
 
-#define IARRAY_DIMENSION_MAX 8 /* A fixed size simplifies the code and should be enough for most IronArray cases */
+#define IARRAY_DIMENSION_MAX 8  /* A fixed size simplifies the code and should be enough for most IronArray cases */
+
+#define IARRAY_ES_CONTAINER (INA_ES_USER_DEFINED + 1)
+#define IARRAY_ES_DTSHAPE (INA_ES_USER_DEFINED + 2)
+#define IARRAY_ES_SHAPE (INA_ES_USER_DEFINED + 3)
+#define IARRAY_ES_PSHAPE (INA_ES_USER_DEFINED + 4)
+#define IARRAY_ES_NDIM (INA_ES_USER_DEFINED + 5)
+#define IARRAY_ES_DTYPE (INA_ES_USER_DEFINED + 6)
+#define IARRAY_ES_STORAGE (INA_ES_USER_DEFINED + 7)
+#define IARRAY_ES_PERSISTENCY (INA_ES_USER_DEFINED + 8)
+#define IARRAY_ES_BUFFER (INA_ES_USER_DEFINED + 9)
+#define IARRAY_ES_CATERVA (INA_ES_USER_DEFINED + 10)
+#define IARRAY_ES_BLOSC (INA_ES_USER_DEFINED + 11)
+#define IARRAY_ES_ASSERTION (INA_ES_USER_DEFINED + 12)
+#define IARRAY_ES_BSHAPE (INA_ES_USER_DEFINED + 13)
+#define IARRAY_ES_RNG_METHOD (INA_ES_USER_DEFINED + 14)
+#define IARRAY_ES_RAND_METHOD (INA_ES_USER_DEFINED + 15)
+#define IARRAY_ES_RAND_PARAM (INA_ES_USER_DEFINED + 16)
+#define IARRAY_ES_ITER (INA_ES_USER_DEFINED + 17)
+#define IARRAY_ES_EVAL_METHOD (INA_ES_USER_DEFINED + 18)
+
+
+#define IARRAY_ERR_EMPTY_CONTAINER (INA_ERR_EMPTY | IARRAY_ES_CONTAINER)
+#define IARRAY_ERR_FULL_CONTAINER (INA_ERR_FULL | IARRAY_ES_CONTAINER)
+
+#define IARRAY_ERR_INVALID_DTSHAPE (INA_ERR_INVALID | IARRAY_ES_DTSHAPE)
+
+#define IARRAY_ERR_INVALID_DTYPE (INA_ERR_INVALID | IARRAY_ES_DTYPE)
+#define IARRAY_ERR_INVALID_SHAPE (INA_ERR_INVALID | IARRAY_ES_SHAPE)
+#define IARRAY_ERR_INVALID_PSHAPE (INA_ERR_INVALID | IARRAY_ES_PSHAPE)
+#define IARRAY_ERR_INVALID_BSHAPE (INA_ERR_INVALID | IARRAY_ES_BSHAPE)
+#define IARRAY_ERR_INVALID_NDIM (INA_ERR_INVALID | IARRAY_ES_NDIM)
+
+#define IARRAY_ERR_INVALID_RNG_METHOD (INA_ERR_INVALID | IARRAY_ES_RNG_METHOD)
+#define IARRAY_ERR_INVALID_RAND_METHOD (INA_ERR_INVALID | IARRAY_ES_RAND_METHOD)
+#define IARRAY_ERR_INVALID_RAND_PARAM (INA_ERR_INVALID | IARRAY_ES_RAND_PARAM)
+
+#define IARRAY_ERR_INVALID_EVAL_METHOD (INA_ERR_INVALID | IARRAY_ES_EVAL_METHOD)
+
+#define IARRAY_ERR_INVALID_STORAGE (INA_ERR_INVALID | IARRAY_ES_STORAGE)
+#define IARRAY_ERR_TOO_SMALL_BUFFER (INA_ERR_TOO_SMALL | IARRAY_ES_BUFFER)
+
+#define IARRAY_ERR_CATERVA_FAILED (INA_ERR_FAILED | IARRAY_ES_CATERVA)
+#define IARRAY_ERR_BLOSC_FAILED (INA_ERR_FAILED | IARRAY_ES_BLOSC)
+#define IARRAY_ERR_RAND_METHOD_FAILED (IARRAY_ES_RAND_METHOD | INA_ERR_FAILED)
+#define IARRAY_ERR_ASSERTION_FAILED (IARRAY_ES_ASSERTION | INA_ERR_FAILED)
+
+#define IARRAY_ERR_END_ITER (IARRAY_ES_ITER | INA_ERR_COMPLETE)
+
+#define IARRAY_ERR_CATERVA(rc) do {if (rc != CATERVA_SUCCEED) {INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));}} while(0)
 
 typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;
@@ -215,6 +265,9 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
  * The hints will be stored in `bshape_a` and `bshape_b`, which needs to be provided by the user.
  * The number of components for the block shapes is 2.
  *
+ *  `low` and `high` contain low and high values for the partition size.  If `low` is 0, it defaults
+ *  to a fraction of L2 cache size.  If `high` is 0, it defaults to a fraction of L3 cache size.
+ *
  * Note: When performing matrix-*vector* operations, just pass the N dimension as 1.  The `k` hint
  * will be valid for this case too.  In this case, always pass `bshape_a` and `bshape_b` with
  * 2-components too (even if `bshape_b` only has a dimension in this case).
@@ -283,7 +336,14 @@ INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx,
                                     int flags,
                                     iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
+INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
+                              iarray_container_t *src,
+                              bool view,
+                              iarray_store_properties_t *store,
+                              int flags,
+                              iarray_container_t **dest);
+
+    INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
                                      double value,
                                      iarray_store_properties_t *store,
@@ -388,18 +448,19 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                                           const int64_t *start,
                                           const int64_t *stop,
                                           void *buffer,
-                                          const int64_t buflen);
+                                          int64_t buflen);
 
 INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                                           iarray_container_t *c,
                                           const int64_t *start,
                                           const int64_t *stop,
                                           void *buffer,
-                                          const int64_t buflen);
+                                          int64_t buflen);
 
 INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
                                    iarray_store_properties_t *store,
-                                   iarray_container_t **container);
+                                   iarray_container_t **container,
+                                   bool load_in_mem);
 
 INA_API(ina_rc_t) iarray_to_file(iarray_context_t *ctx,
                                  iarray_store_properties_t *store,
@@ -415,7 +476,7 @@ INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
                                      void *buffer,
-                                     size_t buffer_len,
+                                     size_t buflen,
                                      iarray_store_properties_t *store,
                                      int flags,
                                      iarray_container_t **container);
@@ -423,9 +484,12 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
                                    iarray_container_t *container,
                                    void *buffer,
-                                   size_t buffer_len);
+                                   size_t buflen);
 
 INA_API(bool) iarray_is_empty(iarray_container_t *container);
+
+INA_API(ina_rc_t) iarray_to_sview(iarray_context_t *ctx, iarray_container_t *c, uint8_t **sview, int64_t *sview_len);
+INA_API(ina_rc_t) iarray_from_sview(iarray_context_t *ctx, uint8_t *sview, int64_t sview_len, iarray_container_t **c);
 
 INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dtshape_t *b);
 INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, int64_t *nbytes, int64_t *cbytes);
@@ -515,18 +579,18 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
                                         iarray_iter_write_t **itr,
                                         iarray_container_t *cont,
                                         iarray_iter_write_value_t *val);
-INA_API(void) iarray_iter_write_free(iarray_iter_write_t *itr);
+INA_API(void) iarray_iter_write_free(iarray_iter_write_t **itr);
 INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr);
-INA_API(int) iarray_iter_write_has_next(iarray_iter_write_t *itr);
+INA_API(ina_rc_t) iarray_iter_write_has_next(iarray_iter_write_t *itr);
 
 
 INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
                                        iarray_iter_read_t **itr,
                                        iarray_container_t *cont,
                                        iarray_iter_read_value_t *val);
-INA_API(void) iarray_iter_read_free(iarray_iter_read_t *itr);
+INA_API(void) iarray_iter_read_free(iarray_iter_read_t **itr);
 INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr);
-INA_API(int) iarray_iter_read_has_next(iarray_iter_read_t *itr);
+INA_API(ina_rc_t) iarray_iter_read_has_next(iarray_iter_read_t *itr);
 
 INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_iter_read_block_t **itr,
@@ -535,9 +599,9 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_iter_read_block_value_t *value,
                                              bool external_buffer);
 
-INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t *itr);
+INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t **itr);
 INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr, void *buffer, int32_t bufsize);
-INA_API(int) iarray_iter_read_block_has_next(iarray_iter_read_block_t *itr);
+INA_API(ina_rc_t) iarray_iter_read_block_has_next(iarray_iter_read_block_t *itr);
 
 INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_iter_write_block_t **itr,
@@ -546,9 +610,9 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_iter_write_block_value_t *value,
                                               bool external_buffer);
 
-INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t *itr);
+INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t **itr);
 INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr, void *buffer, int32_t bufsize);
-INA_API(int) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr);
+INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr);
 
 /* Expressions */
 INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e);

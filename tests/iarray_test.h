@@ -35,7 +35,7 @@ inline static void dfill_buf(double *x, size_t nitems)
 }
 
 inline static ina_rc_t _iarray_test_container_dbl_buffer_cmp(
-    iarray_context_t *ctx, iarray_container_t *c, const double *buffer, size_t buffer_len)
+    iarray_context_t *ctx, iarray_container_t *c, const double *buffer, size_t buffer_len, double atol)
 {
     double *bufcmp = ina_mem_alloc(buffer_len);
 
@@ -46,17 +46,42 @@ inline static ina_rc_t _iarray_test_container_dbl_buffer_cmp(
         double a = buffer[i];
         double b = bufcmp[i];
         double vdiff = fabs(a - b);
-        if (vdiff > 1e-15) {
-            INA_TEST_MSG("Values differ in (%d nelem) (diff: %f)\n", i, vdiff);
-            INA_FAIL_IF(1);
+        if (vdiff > atol) {
+            INA_TEST_MSG("Values differ in (%d nelem) (diff: %g)\n", i, vdiff);
+            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FALSE));
         }
     }
     ina_mem_free(bufcmp);
-    return 1;
+    return INA_SUCCESS;
 
 fail:
     ina_mem_free(bufcmp);
-    return 0;
+    return ina_err_get_rc();
+}
+
+inline static ina_rc_t _iarray_test_container_flt_buffer_cmp(
+    iarray_context_t *ctx, iarray_container_t *c, const float *buffer, size_t buffer_len, double atol)
+{
+    float *bufcmp = ina_mem_alloc(buffer_len);
+
+    INA_RETURN_IF_FAILED(iarray_to_buffer(ctx, c, bufcmp, buffer_len));
+
+    size_t len = buffer_len / sizeof(float);
+    for (size_t i = 0; i < len; ++i) {
+        double a = buffer[i];
+        double b = bufcmp[i];
+        double vdiff = fabs(a - b);
+        if (vdiff > atol) {
+            INA_TEST_MSG("Values differ in (%d nelem) (diff: %g)\n", i, vdiff);
+            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FALSE));
+        }
+    }
+    ina_mem_free(bufcmp);
+    return INA_SUCCESS;
+
+    fail:
+    ina_mem_free(bufcmp);
+    return ina_err_get_rc();
 }
 
 #endif

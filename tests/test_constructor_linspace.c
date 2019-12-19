@@ -30,16 +30,16 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, i
 
     iarray_container_t *c_x;
 
-    iarray_linspace(ctx, &xdtshape, size, start, stop, NULL, 0, &c_x);
+    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &xdtshape, size, start, stop, NULL, 0, &c_x));
 
     // Assert iterator reading it
 
     iarray_iter_read_t *I2;
     iarray_iter_read_value_t val;
-    iarray_iter_read_new(ctx, &I2, c_x, &val);
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_new(ctx, &I2, c_x, &val));
 
-    while (iarray_iter_read_has_next(I2)) {
-        iarray_iter_read_next(I2);
+    while (INA_SUCCEED(iarray_iter_read_has_next(I2))) {
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_next(I2));
 
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
@@ -55,7 +55,8 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, i
         }
     }
 
-    iarray_iter_read_free(I2);
+    iarray_iter_read_free(&I2);
+    INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     iarray_container_free(ctx, &c_x);
     return INA_SUCCESS;
@@ -82,7 +83,7 @@ INA_TEST_FIXTURE(constructor_linspace, 2_d) {
 
     int8_t ndim = 2;
     int64_t shape[] = {223, 456};
-    int64_t pshape[] = {31, 43};
+    int64_t pshape[] = {31, 500};
     double start = - 0.1;
     double stop = - 0.25;
 
@@ -118,7 +119,7 @@ INA_TEST_FIXTURE(constructor_linspace, 7_f) {
 
     int8_t ndim = 7;
     int64_t shape[] = {5, 7, 8, 9, 6, 5, 7};
-    int64_t pshape[] = {2, 5, 3, 4, 3, 2, 3};
+    int64_t pshape[] = {7, 5, 10, 10, 3, 2, 10};
     double start = 10;
     double stop = 0;
 
