@@ -19,9 +19,8 @@ int main()
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int64_t shape[] = {10, 10};
-    int64_t pshape[] = {2, 2};
+    int64_t pshape[] = {2, 3};
     int64_t bshape[] = {2, 10};
-    ina_rc_t rc;
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_t *ctx;
@@ -37,7 +36,6 @@ int main()
     iarray_container_t *cont;
     INA_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape, NULL, 0, &cont));
 
-
     iarray_iter_write_t *iter_w;
     iarray_iter_write_value_t val_w;
     INA_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &iter_w, cont, &val_w));
@@ -49,29 +47,34 @@ int main()
     iarray_iter_write_free(&iter_w);
     INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
-    iarray_iter_read_block_t *iter;
-    iarray_iter_read_block_value_t val;
-    INA_FAIL_IF(iarray_iter_read_block_new(ctx, &iter, cont, bshape, &val, false));
-    while (INA_SUCCEED(iarray_iter_read_block_has_next(iter))) {
-        INA_FAIL_IF(iarray_iter_read_block_next(iter, NULL, 0));
-        for (int64_t i = 0; i < val.block_size; ++i) {
-            double value = ((double *) val.block_pointer)[i];
-            printf("%f - ", value);
-        }
-        printf("\n");
+    int64_t start[] = {2, 3};
+    int64_t stop[] = {9, 7};
+
+    iarray_container_t *cout;
+    iarray_get_slice(ctx, cont, start, stop, pshape, NULL, 0, true, &cout);
+    
+    int64_t cout_size = 1;
+    for (int i = 0; i < cout->dtshape->ndim; ++i) {
+        cout_size *= cout->dtshape->shape[i];
     }
-    iarray_iter_read_block_free(&iter);
+    
+    iarray_iter_read_t *iter;
+    iarray_iter_read_value_t val;
+    INA_FAIL_IF(iarray_iter_read_new(ctx, &iter, cout, &val));
+    while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
+        INA_FAIL_IF(iarray_iter_read_next(iter));
+        printf("%f\n", ((double *) val.elem_pointer)[0]);
+    }
+    iarray_iter_read_free(&iter);
     INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
-    rc = INA_SUCCESS;
-    goto cleanup;
+    return INA_SUCCESS;
+
     fail:
-    rc = ina_err_get_rc();
-    cleanup:
     iarray_iter_write_free(&iter_w);
-    iarray_iter_read_block_free(&iter);
+    iarray_iter_read_free(&iter);
     iarray_container_free(ctx, &cont);
     iarray_context_free(&ctx);
+    return ina_err_get_rc();
 
-    return rc;
 }

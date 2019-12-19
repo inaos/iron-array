@@ -32,7 +32,7 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x));
 
     if (!iarray_is_empty(c_x)) {
-        return INA_ERR_ERROR;
+        return INA_ERROR(INA_ERR_ERROR);
     }
 
     // Non-empty array
@@ -40,8 +40,13 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
     INA_TEST_ASSERT_SUCCEED(iarray_zeros(ctx, &xdtshape, NULL, 0, &z_x));
 
     if (iarray_is_empty(z_x)) {
-        return INA_ERR_ERROR;
+        return INA_ERROR(INA_ERR_ERROR);
     }
+
+    int64_t nbytes;
+    int64_t cbytes;
+    INA_TEST_ASSERT_SUCCEED(iarray_container_info(z_x, &nbytes, &cbytes));
+    INA_TEST_ASSERT_SUCCEED(cbytes <= nbytes);
 
     return INA_SUCCESS;
 
@@ -110,7 +115,7 @@ INA_TEST_FIXTURE(constructor_empty, 5_d)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int8_t ndim = 5;
     int64_t shape[] = {11, 12, 8, 5, 3};
-    int64_t pshape[] = {3, 4, 6, 3, 3};
+    int64_t pshape[] = {3, 4, 20, 13, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, pshape));
 }

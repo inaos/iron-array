@@ -17,6 +17,13 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
                            const int64_t *shape, const int64_t *pshape, double start,
                            double stop)
 {
+    int typesize;
+    if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
+        typesize = sizeof(double);
+    } else {
+        typesize = sizeof(float);
+    }
+
     // Create dtshape
     iarray_dtshape_t xdtshape;
 
@@ -32,20 +39,16 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
     double step = (stop - start) / size;
     iarray_container_t *c_x;
 
-    iarray_arange(ctx, &xdtshape, start, stop, step, NULL, 0, &c_x);
-
-    double *buffer = (double *) malloc(size * sizeof(double));
-
-    iarray_to_buffer(ctx, c_x, buffer, size * sizeof(buffer));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, NULL, 0, &c_x));
 
     // Assert iterator reading it
 
     iarray_iter_read_t *I2;
     iarray_iter_read_value_t val;
-    iarray_iter_read_new(ctx, &I2, c_x, &val);
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_new(ctx, &I2, c_x, &val));
 
-    while (iarray_iter_read_has_next(I2)) {
-        iarray_iter_read_next(I2);
+    while (INA_SUCCEED(iarray_iter_read_has_next(I2))) {
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_next(I2));
 
         switch(dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
@@ -59,7 +62,8 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
         }
     }
 
-    iarray_iter_read_free(I2);
+    iarray_iter_read_free(&I2);
+    INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     iarray_container_free(ctx, &c_x);
     return INA_SUCCESS;
@@ -98,7 +102,7 @@ INA_TEST_FIXTURE(constructor_arange, 2_f) {
 
     int8_t ndim = 2;
     int64_t shape[] = {445, 321};
-    int64_t pshape[] = {21, 17};
+    int64_t pshape[] = {21, 431};
     double start = 3123;
     double stop = 45654;
 
@@ -110,7 +114,7 @@ INA_TEST_FIXTURE(constructor_arange, 5_d) {
 
     int8_t ndim = 5;
     int64_t shape[] = {20, 18, 17, 13, 21};
-    int64_t pshape[] = {12, 12, 2, 3, 13};
+    int64_t pshape[] = {30, 12, 22, 3, 26};
     double start = 0.1;
     double stop = 0.2;
 

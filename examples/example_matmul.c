@@ -15,12 +15,13 @@
 
 int main()
 {
+    bool success;
     iarray_init();
     ina_stopwatch_t *w = NULL;
     double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
 
-    int n_threads = 2;
+    int n_threads = 1;
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
@@ -40,7 +41,7 @@ int main()
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = n_threads;
     iarray_context_t *ctx;
-    iarray_context_new(&cfg, &ctx);
+    INA_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
 
     iarray_dtshape_t dtshape_x;
     dtshape_x.ndim = ndim;
@@ -50,7 +51,7 @@ int main()
         dtshape_x.pshape[i] = pshape_x[i];
     }
     iarray_container_t *c_x;
-    iarray_linspace(ctx, &dtshape_x, size_x, 0, 1, NULL, 0, &c_x);
+    INA_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_x, 0, 1, NULL, 0, &c_x));
 
     iarray_dtshape_t dtshape_y;
     dtshape_y.ndim = ndim;
@@ -61,7 +62,7 @@ int main()
     }
 
     iarray_container_t *c_y;
-    iarray_linspace(ctx, &dtshape_y, size_y, 0, 1, NULL, 0, &c_y);
+    INA_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_y, 0, 1, NULL, 0, &c_y));
 
     iarray_dtshape_t dtshape_z;
     dtshape_z.ndim = ndim;
@@ -72,7 +73,7 @@ int main()
     }
 
     iarray_container_t *c_z;
-    iarray_container_new(ctx, &dtshape_z, NULL, 0, &c_z);
+    INA_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, NULL, 0, &c_z));
     mkl_set_num_threads(n_threads);
 
 
@@ -81,51 +82,58 @@ int main()
     double *b_z = (double *) malloc(size_z * sizeof(double));
     double *b_res = (double *) malloc(size_z * sizeof(double));
 
-    iarray_to_buffer(ctx, c_x, b_x, size_x * sizeof(double));
-    iarray_to_buffer(ctx, c_y, b_y, size_y * sizeof(double));
-
+    INA_FAIL_IF_ERROR(iarray_to_buffer(ctx, c_x, b_x, size_x * sizeof(double)));
+    INA_FAIL_IF_ERROR(iarray_to_buffer(ctx, c_y, b_y, size_y * sizeof(double)));
 
     INA_STOPWATCH_START(w);
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) shape_x[0], (int) shape_y[1], (int) shape_x[1],
                 1.0, b_x, (int) shape_x[1], b_y, (int) shape_y[1], 0.0, b_z, (int) shape_y[1]);
     INA_STOPWATCH_STOP(w);
-
-    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+    INA_FAIL_IF_ERROR(ina_stopwatch_duration(w, &elapsed_sec));
 
     printf("Time mkl (C): %.4f\n", elapsed_sec);
 
-    // int64_t bshape_x[] = {2000, 1000};
-    // int64_t bshape_y[] = {1000, 1500};
-    // If using the block shapes below, the iarray_linalg_matmul() does not work well
-    int64_t bshape_x[2];
-    int64_t bshape_y[2];
-    if (INA_FAILED(iarray_matmul_advice(ctx, c_x, c_y, c_z, bshape_x, bshape_y, 0, 0))) {
-        printf("Error in getting advice for matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
-        exit(1);
-    }
+    int64_t bshape_x[] = {2000, 1000};
+    int64_t bshape_y[] = {1000, 1500};
+
+    //TODO: When the matmul advice is used, the iarray_linalg_matmul() does not work well (issue #205)
+
+    // int64_t bshape_x[2];
+    // int64_t bshape_y[2];
+
+    // if (INA_FAILED(iarray_matmul_advice(ctx, c_x, c_y, c_z, bshape_x, bshape_y, 0, 0))) {
+    //     printf("Error in getting advice for matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
+    //     exit(1);
+    // }
+
     printf("bshape_x: (%d, %d)\n", (int)bshape_x[0], (int)bshape_x[1]);
     printf("bshape_y: (%d, %d)\n", (int)bshape_y[0], (int)bshape_y[1]);
 
     INA_STOPWATCH_START(w);
     if (INA_FAILED(iarray_linalg_matmul(ctx, c_x, c_y ,c_z, bshape_x, bshape_y, IARRAY_OPERATOR_GENERAL))) {
-        printf("Error in linalg_matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
-        exit(1);
+        fprintf(stderr, "Error in linalg_matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
+        goto fail;
     }
     INA_STOPWATCH_STOP(w);
-    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+    INA_FAIL_IF_ERROR(ina_stopwatch_duration(w, &elapsed_sec));
 
     printf("Time iarray: %.4f\n", elapsed_sec);
 
-    iarray_to_buffer(ctx, c_z, b_res, size_z * sizeof(double));
+    INA_FAIL_IF_ERROR(iarray_to_buffer(ctx, c_z, b_res, size_z * sizeof(double)));
 
-    for (int i = 0; i < size_z; ++i) {
+    for (int64_t i = 0; i < size_z; ++i) {
         if (fabs((b_res[i] - b_z[i]) / b_res[i]) > 1e-8) {
-            printf("%f - %f = %f\n", b_res[i], b_z[i], b_res[i] - b_z[i]);
-            printf("Error in element %d\n", i);
+            fprintf(stderr, "%f - %f = %f\n", b_res[i], b_z[i], b_res[i] - b_z[i]);
+            fprintf(stderr, "Error in element %llu\n", i);
             return INA_ERROR(INA_ERR_ERROR);
         }
     }
 
+    success = true;
+    goto cleanup;
+    fail:
+    success = false;
+    cleanup:
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_z);
@@ -137,5 +145,10 @@ int main()
 
     INA_STOPWATCH_FREE(&w);
     iarray_destroy();
-    return EXIT_SUCCESS;
+
+    if (success) {
+        return INA_SUCCESS;
+    } else {
+        return ina_err_get_rc();
+    }
 }

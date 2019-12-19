@@ -15,36 +15,33 @@
 #include <src/iarray_private.h>
 #include <math.h>
 
-// Use 2-dim arrays here
-#define NROWS 50
-#define NCOLS 3000
-#define NROWS_CHUNK 20
-#define NCOLS_CHUNK 1000
-#define NELEM (NROWS * NCOLS)
-#define NTHREADS 2  // excercise multithreading in ITERBLOCK
+#define NCHUNKS  2  // per construction, must be a minimum of 2
+#define NITEMS_CHUNK (20 * 1000)
+#define NELEM (((NCHUNKS - 1) * NITEMS_CHUNK) + 10)
+#define NTHREADS 2
 
 
 /* Compute and fill X values in a buffer */
-static int _fill_x(double* x)
+static int _fill_x(float* x)
 {
     /* Fill even values between 0. and 1. */
-    double incx = 1. / NELEM;
+    float incx = 1.f / NELEM;
     for (int i = 0; i < NELEM; i++) {
-        x[i] = incx * i;
+        x[i] = incx * (float)i;
     }
     return 0;
 }
 
 /* Compute and fill Y values in a buffer */
-static void _fill_y(const double* x, double* y, double (func)(double))
+static void _fill_y(const float* x, float* y, float (func)(float))
 {
     for (int i = 0; i < NELEM; i++) {
         y[i] = func(x[i]);
     }
 }
 
-static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_x, double *buffer_y,
-                                     size_t buffer_len, bool plain_buffer, double (func)(double),
+static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const float *buffer_x, float *buffer_y,
+                                     size_t buffer_len, bool plain_buffer, float (func)(float),
                                      char* expr_str)
 {
     iarray_context_t *ctx;
@@ -53,12 +50,10 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
     iarray_container_t* c_out;
 
     iarray_dtshape_t shape;
-    shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
-    shape.ndim = 2;
-    shape.shape[0] = NROWS;
-    shape.shape[1] = NCOLS;
-    shape.pshape[0] = plain_buffer ? 0 : NROWS_CHUNK;
-    shape.pshape[1] = plain_buffer ? 0 : NCOLS_CHUNK;
+    shape.dtype = IARRAY_DATA_TYPE_FLOAT;
+    shape.ndim = 1;
+    shape.shape[0] = NELEM;
+    shape.pshape[0] = plain_buffer ? 0 : NITEMS_CHUNK;
 
     _fill_y(buffer_x, buffer_y, func);
 
@@ -73,7 +68,7 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
     INA_TEST_ASSERT_SUCCEED(iarray_eval(e, c_out));
 
     // We use a quite low tolerance as MKL functions always differ from those in OS math libraries
-    INA_TEST_ASSERT_SUCCEED(_iarray_test_container_dbl_buffer_cmp(ctx, c_out, buffer_y, buffer_len, 5e-13));
+    INA_TEST_ASSERT_SUCCEED(_iarray_test_container_flt_buffer_cmp(ctx, c_out, buffer_y, buffer_len, 5e-6));
 
     iarray_expr_free(ctx, &e);
     iarray_container_free(ctx, &c_out);
@@ -83,17 +78,17 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
     return INA_SUCCESS;
 }
 
-INA_TEST_DATA(expression_eval)
+INA_TEST_DATA(expression_eval_float)
 {
     size_t buf_len;
-    double *buffer_x;
-    double *buffer_y;
+    float *buffer_x;
+    float *buffer_y;
     iarray_config_t cfg;
-    double (*func)(double);
+    float (*func)(float);
     char *expr_str;
 };
 
-INA_TEST_SETUP(expression_eval)
+INA_TEST_SETUP(expression_eval_float)
 {
     iarray_init();
 
@@ -102,14 +97,14 @@ INA_TEST_SETUP(expression_eval)
     data->cfg.compression_level = 9;
     data->cfg.max_num_threads = NTHREADS;
 
-    data->buf_len = sizeof(double)*NELEM;
+    data->buf_len = sizeof(float)*NELEM;
     data->buffer_x = ina_mem_alloc(data->buf_len);
     data->buffer_y = ina_mem_alloc(data->buf_len);
 
     _fill_x(data->buffer_x);
 }
 
-INA_TEST_TEARDOWN(expression_eval)
+INA_TEST_TEARDOWN(expression_eval_float)
 {
     ina_mem_free(data->buffer_x);
     ina_mem_free(data->buffer_y);
@@ -117,12 +112,12 @@ INA_TEST_TEARDOWN(expression_eval)
     iarray_destroy();
 }
 
-static double expr0(const double x)
+static float expr0(const float x)
 {
-    return (fabs(-x) - 1.35) * ceil(x) * floor(x - 8.5);
+    return (fabsf(-x) - 1.35f) * ceilf(x) * floorf(x - 8.5f);
 }
 
-INA_TEST_FIXTURE(expression_eval, iterblock_superchunk)
+INA_TEST_FIXTURE(expression_eval_float, iterblock_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
     data->func = expr0;
@@ -132,28 +127,28 @@ INA_TEST_FIXTURE(expression_eval, iterblock_superchunk)
                                                  data->buf_len, false, data->func, data->expr_str));
 }
 
-static double expr1(const double x)
+static float expr1(const float x)
 {
-    return (cos(x) - 1.35) * tan(x) * sin(x - 8.5);
+    return (cosf(x) - 1.35f) * tanf(x) * sinf(x - 8.5f);
     //return (x - 1.35) + sin(.45);  // TODO: fix evaluation of func(constant)
 }
 
-INA_TEST_FIXTURE(expression_eval, iterblock_superchunk2)
+INA_TEST_FIXTURE(expression_eval_float, iterblock_superchunk2)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
     data->func = expr1;
     data->expr_str = "(cos(x) - 1.35) * tan(x) * sin(x - 8.5)";
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
-                                                 data->buf_len, false, data->func, data->expr_str));
+        data->buf_len, false, data->func, data->expr_str));
 }
 
-static double expr2(const double x)
+static float expr2(const float x)
 {
-    return sinh(x) + (cosh(x) - 1.35) - tanh(x + .2);
+    return sinhf(x) + (coshf(x) - 1.35f) - tanhf(x + .2f);
 }
 
-INA_TEST_FIXTURE(expression_eval, iterblosc_superchunk)
+INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC;
     data->func = expr2;
@@ -163,12 +158,12 @@ INA_TEST_FIXTURE(expression_eval, iterblosc_superchunk)
       data->buf_len, false, data->func, data->expr_str));
 }
 
-static double expr3(const double x)
+static float expr3(const float x)
 {
-    return asin(x) + (acos(x) - 1.35) - atan(x + .2);
+    return asinf(x) + (acosf(x) - 1.35f) - atanf(x + .2f);
 }
 
-INA_TEST_FIXTURE(expression_eval, iterchunk_superchunk)
+INA_TEST_FIXTURE(expression_eval_float, iterchunk_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
     data->func = expr3;
@@ -178,12 +173,12 @@ INA_TEST_FIXTURE(expression_eval, iterchunk_superchunk)
         data->buf_len, false, data->func, data->expr_str));
 }
 
-static double expr4(const double x)
+static float expr4(const float x)
 {
-    return exp(x) + (log(x) - 1.35) - log10(x + .2);
+    return expf(x) + (logf(x) - 1.35f) - log10f(x + .2f);
 }
 
-INA_TEST_FIXTURE(expression_eval, iterblock_plainbuffer)
+INA_TEST_FIXTURE(expression_eval_float, iterblock_plainbuffer)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
     data->func = expr4;
@@ -193,12 +188,12 @@ INA_TEST_FIXTURE(expression_eval, iterblock_plainbuffer)
         data->buf_len, true, data->func, data->expr_str));
 }
 
-static double expr5(const double x)
+static float expr5(const float x)
 {
-    return sqrt(x) + atan2(x, x) + pow(x, x);
+    return sqrtf(x) + atan2f(x, x) + powf(x, x);
 }
 
-INA_TEST_FIXTURE(expression_eval, iterchunk_plainbuffer)
+INA_TEST_FIXTURE(expression_eval_float, iterchunk_plainbuffer)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
     data->func = expr5;
