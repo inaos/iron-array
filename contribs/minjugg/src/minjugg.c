@@ -563,14 +563,6 @@ static void _jug_apply_optimisation_passes(jug_expression_t *e)
     LLVMPassManagerRef pm = LLVMCreatePassManager();
     LLVMPassManagerBuilderPopulateModulePassManager(pmb, pm);
 
-/*
-    // Passes
-    LLVMAddGlobalOptimizerPass(pm); // -globalopt
-    //LLVMAddInstructionCombiningPass(pm); // -instcombine
-    LLVMAddCFGSimplificationPass(pm); // -simplifycfg
-    //LLVMAddScalarReplAggregatesPassSSA(pm); // -sroa
-*/
-
     // Run
     LLVMRunPassManager(pm, e->mod);
 
@@ -614,6 +606,7 @@ static LLVMBool _jug_prepare_module(jug_expression_t *e, bool reload)
     }
 #endif
 
+    
     if (reload) {
         FILE* fd = fopen("expression.bc", "rb");
         fseek(fd, 0, SEEK_END);
@@ -621,23 +614,21 @@ static LLVMBool _jug_prepare_module(jug_expression_t *e, bool reload)
         char* llvm_bc = malloc(llvm_bc_len);
         rewind(fd);
         fread(llvm_bc, 1, llvm_bc_len, fd);
-        LLVMMemoryBufferRef buffer;
-        buffer = LLVMCreateMemoryBufferWithMemoryRange(llvm_bc, llvm_bc_len, "udf", 0);
-        //e->context = LLVMContextCreate();
+        //LLVMMemoryBufferRef buffer = LLVMWriteBitcodeToMemoryBuffer(e->mod);
+        LLVMMemoryBufferRef buffer = LLVMCreateMemoryBufferWithMemoryRange(llvm_bc, llvm_bc_len, "work", 0);
         error = LLVMParseIRInContext(e->context, buffer, &e->mod, &message);
         if (error) {
-            printf("ERRRRRRRRRRRRRRRR %d\n", error);
+            fprintf(stderr, "LLVM module parse error: '%s'\n", message);
+            goto exit;
         }
     }
 
     // Optimze
-#ifndef INA_OS_WINDOWS
     _jug_apply_optimisation_passes(e);
 #ifdef _JUG_DEBUG_WRITE_BC_TO_FILE
     if (LLVMWriteBitcodeToFile(e->mod, "expression_opt.bc") != 0) {
         fprintf(stderr, "error writing bitcode to file, skipping\n");
     }
-#endif
 #endif
 
     // Create execution engine
