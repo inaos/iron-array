@@ -727,6 +727,7 @@ INA_API(ina_rc_t) jug_udf_compile(
     jug_expression_t *e,
     int llvm_bc_len,
     const char *llvm_bc,
+    const char *name,
     uint64_t *function_addr)
 {
     char *message = NULL;
@@ -754,7 +755,7 @@ INA_API(ina_rc_t) jug_udf_compile(
         goto exit;
     }
 
-    *function_addr = LLVMGetFunctionAddress(e->engine, "expr_func");
+    *function_addr = LLVMGetFunctionAddress(e->engine, name);
 
 exit:
     LLVMDisposeMessage(message);

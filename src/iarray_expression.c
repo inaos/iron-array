@@ -236,7 +236,11 @@ fail:
 }
 
 
-INA_API(ina_rc_t) iarray_expr_compile_udf(iarray_expression_t *e, int llvm_bc_len, const char *llvm_bc)
+INA_API(ina_rc_t) iarray_expr_compile_udf(
+    iarray_expression_t *e,
+    int llvm_bc_len,
+    const char *llvm_bc,
+    const char* name)
 {
     INA_VERIFY_NOT_NULL(e);
     INA_VERIFY_NOT_NULL(llvm_bc);
@@ -248,7 +252,7 @@ INA_API(ina_rc_t) iarray_expr_compile_udf(iarray_expression_t *e, int llvm_bc_le
     }
 
     INA_FAIL_IF_ERROR(
-        jug_udf_compile(e->jug_expr, llvm_bc_len, llvm_bc, &e->jug_expr_func)
+        jug_udf_compile(e->jug_expr, llvm_bc_len, llvm_bc, name, &e->jug_expr_func)
     );
 
     return INA_SUCCESS;
