@@ -557,17 +557,19 @@ static void _jug_apply_optimisation_passes(jug_expression_t *e)
      */
 
     LLVMPassManagerBuilderRef pmb = LLVMPassManagerBuilderCreate();
-    LLVMPassManagerBuilderSetOptLevel(pmb, 0); // Opt level 0-3
+    LLVMPassManagerBuilderSetOptLevel(pmb, 3); // Opt level 0-3
 
     // Module pass manager
     LLVMPassManagerRef pm = LLVMCreatePassManager();
     LLVMPassManagerBuilderPopulateModulePassManager(pmb, pm);
 
+/*
     // Passes
     LLVMAddGlobalOptimizerPass(pm); // -globalopt
     //LLVMAddInstructionCombiningPass(pm); // -instcombine
     LLVMAddCFGSimplificationPass(pm); // -simplifycfg
     //LLVMAddScalarReplAggregatesPassSSA(pm); // -sroa
+*/
 
     // Run
     LLVMRunPassManager(pm, e->mod);
@@ -589,7 +591,7 @@ static void _jug_declare_printf(LLVMModuleRef mod)
  * Code common to jug_expression_compile and jug_udf_compile functions:
  * verifies module, optimizes, creates execution engine
  */
-static LLVMBool _jug_prepare_module(jug_expression_t *e)
+static LLVMBool _jug_prepare_module(jug_expression_t *e, bool reload)
 {
     LLVMBool error;
     char *message = NULL;
@@ -611,6 +613,22 @@ static LLVMBool _jug_prepare_module(jug_expression_t *e)
         fprintf(stderr, "error writing bitcode to file, skipping\n");
     }
 #endif
+
+    if (reload) {
+        FILE* fd = fopen("expression.bc", "rb");
+        fseek(fd, 0, SEEK_END);
+        long llvm_bc_len = ftell(fd);
+        char* llvm_bc = malloc(llvm_bc_len);
+        rewind(fd);
+        fread(llvm_bc, 1, llvm_bc_len, fd);
+        LLVMMemoryBufferRef buffer;
+        buffer = LLVMCreateMemoryBufferWithMemoryRange(llvm_bc, llvm_bc_len, "udf", 0);
+        //e->context = LLVMContextCreate();
+        error = LLVMParseIRInContext(e->context, buffer, &e->mod, &message);
+        if (error) {
+            printf("ERRRRRRRRRRRRRRRR %d\n", error);
+        }
+    }
 
     // Optimze
 #ifndef INA_OS_WINDOWS
@@ -747,7 +765,7 @@ INA_API(ina_rc_t) jug_udf_compile(
         goto exit;
     }
 
-    if (_jug_prepare_module(e)) {
+    if (_jug_prepare_module(e, false)) {
         rc = INA_ERR_FAILED;
         goto exit;
     }
@@ -777,7 +795,7 @@ INA_API(ina_rc_t) jug_expression_compile(
     _jug_expr_compile_function(e, "expr_func", expression, num_vars, te_vars);
     jug_te_free(expression);
 
-    if (_jug_prepare_module(e)) {
+    if (_jug_prepare_module(e, true)) {
         return INA_ERR_FAILED;
     }
 
