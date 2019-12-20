@@ -14,6 +14,8 @@
 
 #include <iarray_private.h>
 
+#include <minjugg.h>
+
 #if __linux__
 #include <sys/sysinfo.h>
 #include <sched.h>
@@ -21,6 +23,7 @@
 
 static int _ina_inited = 0;
 static int _blosc_inited = 0;
+static int _jug_inited = 0;
 
 INA_API(ina_rc_t) iarray_init()
 {
@@ -31,6 +34,10 @@ INA_API(ina_rc_t) iarray_init()
     if (!_blosc_inited) {
         blosc_init();
         _blosc_inited = 1;
+    }
+    if (!_jug_inited) {
+        jug_init();
+        _jug_inited = 1;
     }
 
 #if __linux__
@@ -48,6 +55,7 @@ INA_API(ina_rc_t) iarray_init()
 
 INA_API(void) iarray_destroy()
 {
+    jug_destroy();
     blosc_destroy();
     _blosc_inited = 0;
 }
