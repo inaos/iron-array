@@ -76,7 +76,7 @@ steps:
     source activate iArrayEnv
     conda install -y --name iArrayEnv -c intel mkl-include
     conda install -y --name iArrayEnv -c intel mkl-static
-    conda install -y --name iArrayEnv -c conda-forge llvm
+    conda install -y --name iArrayEnv -c anaconda llvmdev
   displayName: Download dependencies
   env:
     jfrog_artifactory_uid: $(jfrog_artifactory_uid)
