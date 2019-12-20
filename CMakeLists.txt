@@ -84,15 +84,17 @@ include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMA
 
 if (DO_COVERAGE)
     target_compile_options(iarray_c PRIVATE -fprofile-arcs -ftest-coverage)
-    inac_merge_static_libs(iarrays iarray_c minjugg blosc2_static caterva_static ${INAC_LIBS})
+    inac_merge_static_libs(iarrays iarray_c blosc2_static caterva_static ${INAC_LIBS})
     target_link_libraries(iarrays -fprofile-arcs)
 else()
-    inac_merge_static_libs(iarrays iarray_c minjugg blosc2_static caterva_static ${INAC_LIBS})
+    inac_merge_static_libs(iarrays iarray_c blosc2_static caterva_static ${INAC_LIBS})
 endif()
 
 if (UNIX)
 set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
-set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc2_static ${IPP_LIBRARIES})
+set(INAC_DEPENDENCY_LIBS minjugg ${INAC_DEPENDENCY_LIBS} blosc2_static ${IPP_LIBRARIES})
+else()
+set(INAC_DEPENDENCY_LIBS minjugg ${INAC_DEPENDENCY_LIBS})
 endif()
 
 inac_add_tests(iarrays)
