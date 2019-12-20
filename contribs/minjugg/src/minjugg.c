@@ -606,16 +606,9 @@ static LLVMBool _jug_prepare_module(jug_expression_t *e, bool reload)
     }
 #endif
 
-    
+    // Workaround
     if (reload) {
-        FILE* fd = fopen("expression.bc", "rb");
-        fseek(fd, 0, SEEK_END);
-        long llvm_bc_len = ftell(fd);
-        char* llvm_bc = malloc(llvm_bc_len);
-        rewind(fd);
-        fread(llvm_bc, 1, llvm_bc_len, fd);
-        //LLVMMemoryBufferRef buffer = LLVMWriteBitcodeToMemoryBuffer(e->mod);
-        LLVMMemoryBufferRef buffer = LLVMCreateMemoryBufferWithMemoryRange(llvm_bc, llvm_bc_len, "work", 0);
+        LLVMMemoryBufferRef buffer = LLVMWriteBitcodeToMemoryBuffer(e->mod);
         error = LLVMParseIRInContext(e->context, buffer, &e->mod, &message);
         if (error) {
             fprintf(stderr, "LLVM module parse error: '%s'\n", message);
