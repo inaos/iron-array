@@ -21,7 +21,7 @@
 #
 
 if (APPLE)
-    set(OMP_ROOT_LIB lib/libiomp5.a)
+    set(OMP_ROOT_LIB libiomp5.dylib)
 elseif (WIN32)
     set(OMP_ROOT_LIB compiler/lib/intel64/libiomp5md.lib)
 else()
