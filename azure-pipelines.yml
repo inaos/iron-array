@@ -99,7 +99,7 @@ steps:
     call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
     mkdir cmake-build-%BUILD_CONFIGURATION%
     cd cmake-build-%BUILD_CONFIGURATION%
-    cmake -G "NMake Makefiles" ../ -DCMAKE_BUILD_TYPE=%BUILD_CONFIGURATION%  -DMULTITHREADING=%MULTITHREADING% -DINAC_TARGET_ARCH=%BUILD_ARCH% -DLLVM_ROOT=%CONDA%/envs/iArrayEnv
+    cmake -G "NMake Makefiles" ../ -DCMAKE_BUILD_TYPE=%BUILD_CONFIGURATION%  -DMULTITHREADING=%MULTITHREADING% -DINAC_TARGET_ARCH=%BUILD_ARCH% -DLLVM_ROOT=%CONDA%\envs\iArrayEnv
     nmake
   displayName: Compile
   env:
