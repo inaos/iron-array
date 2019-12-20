@@ -13,6 +13,7 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 #include <contribs/tinyexpr/tinyexpr.h>
+#include <minjugg.h>
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -36,6 +37,8 @@ struct iarray_expression_s {
     int nvars;
     int32_t max_out_len;
     te_expr *texpr;
+    jug_expression_t *jug_expr;
+    uint64_t jug_expr_func;
     iarray_temporary_t **temp_vars;
     iarray_container_t *out;
     _iarray_tinyexpr_var_t vars[_IARRAY_EXPR_VAR_MAX];
@@ -51,12 +54,16 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e
     (*e)->nvars = 0;
     (*e)->max_out_len = 0;   // helper for leftovers
     ina_mem_set(&(*e)->vars, 0, sizeof(_iarray_tinyexpr_var_t)*_IARRAY_EXPR_VAR_MAX);
+    jug_expression_new(&(*e)->jug_expr);
     return INA_SUCCESS;
 }
 
 INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
 {
     INA_VERIFY_FREE(e);
+    if ((*e)->jug_expr != NULL) {
+        jug_expression_free(&(*e)->jug_expr);
+    }
     for (int nvar=0; nvar < (*e)->nvars; nvar++) {
         free((void*)((*e)->vars[nvar].var));
     }
@@ -116,11 +123,9 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
     return INA_ERROR(INA_ERR_NOT_IMPLEMENTED);
 }
 
-INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
-{
-    INA_VERIFY_NOT_NULL(e);
-    INA_VERIFY_NOT_NULL(expr);
 
+static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
+{
     ina_rc_t rc;
 
     int nthreads = 1;
@@ -143,9 +148,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     }
 #endif
 
-    e->expr = ina_str_new_fromcstr(expr);
     e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t*)); // TODO: This should be freed?
-    te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(te_variable));
     caterva_array_t *catarr = e->vars[0].c->catarr;
 
     e->typesize = catarr->ctx->cparams.typesize;
@@ -215,44 +218,91 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     }
     dtshape_var.shape[0] = temp_var_dim0;
     dtshape_var.dtype = e->vars[0].c->dtshape->dtype;
+
+    for (int nvar = 0; nvar < e->nvars; nvar++) {
+        // Allocate different buffers for each thread too
+        for (int nthread = 0; nthread < nthreads; nthread++) {
+            int ntvar = nthread * e->nvars + nvar;
+            INA_FAIL_IF_ERROR(iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[ntvar]));
+        }
+    }
+
+    *nthreads_out = nthreads;
+    return INA_SUCCESS;
+
+fail:
+    INA_MEM_FREE_SAFE(e->temp_vars);
+    return ina_err_get_rc();
+}
+
+
+INA_API(ina_rc_t) iarray_expr_compile_udf(
+    iarray_expression_t *e,
+    int llvm_bc_len,
+    const char *llvm_bc,
+    const char* name)
+{
+    INA_VERIFY_NOT_NULL(e);
+    INA_VERIFY_NOT_NULL(llvm_bc);
+
+    int nthreads;
+    ina_rc_t rc = _iarray_expr_prepare(e, &nthreads);
+    if (rc != INA_SUCCESS) {
+        return rc;
+    }
+
+    INA_FAIL_IF_ERROR(
+        jug_udf_compile(e->jug_expr, llvm_bc_len, llvm_bc, name, &e->jug_expr_func)
+    );
+
+    return INA_SUCCESS;
+
+fail:
+    return ina_err_get_rc();
+}
+
+INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
+{
+    INA_VERIFY_NOT_NULL(e);
+    INA_VERIFY_NOT_NULL(expr);
+
+    e->expr = ina_str_new_fromcstr(expr);
+
+    int nthreads;
+    ina_rc_t rc = _iarray_expr_prepare(e, &nthreads);
+    if (rc != INA_SUCCESS) {
+        return rc;
+    }
+
+    te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(te_variable));
+    jug_te_variable *jug_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(jug_te_variable));
+    memset(jug_vars, 0, e->nvars * sizeof(jug_te_variable));
     for (int nvar = 0; nvar < e->nvars; nvar++) {
         te_vars[nvar].name = e->vars[nvar].var;
         te_vars[nvar].type = TE_VARIABLE;
         te_vars[nvar].context = NULL;
         te_vars[nvar].address = ina_mempool_dalloc(e->ctx->mp, nthreads * sizeof(void*));
+        jug_vars[nvar].name = e->vars[nvar].var;
         // Allocate different buffers for each thread too
         for (int nthread = 0; nthread < nthreads; nthread++) {
             int ntvar = nthread * e->nvars + nvar;
-            INA_FAIL_IF_ERROR(iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[ntvar]));
             te_vars[nvar].address[nthread] = *(e->temp_vars + ntvar);
         }
     }
+
     int err = 0;
     e->texpr = te_compile(e, ina_str_cstr(e->expr), te_vars, e->nvars, &err);
     if (e->texpr == 0) {
         INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_COMPILED));
     }
-    rc = INA_SUCCESS;
-    goto cleanup;
-    fail:
+    INA_FAIL_IF_ERROR(
+        jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars, jug_vars, &e->jug_expr_func)
+    );
+    return INA_SUCCESS;
+
+fail:
     INA_MEM_FREE_SAFE(e->temp_vars);
-    rc = ina_err_get_rc();
-    cleanup:
-    return rc;
-}
-
-
-// Example of computation.  TODO: To be removed...
-static double poly(const double x)
-{
-    return (x - 1.35) * (x - 4.45) * (x - 8.5);
-}
-
-static void compute_out(const double* x, double* y, const int nelem)
-{
-    for (int i = 0; i < nelem; i++) {
-        y[i] = poly(x[i]);
-    }
+    return ina_err_get_rc();
 }
 
 int prefilter_func(blosc2_prefilter_params *pparams)
@@ -374,7 +424,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     // Setup a new cparams with a prefilter
     blosc2_cparams *cparams = malloc(sizeof(blosc2_cparams));
     memcpy(cparams, ret->cparams, sizeof(blosc2_cparams));
-    cparams->prefilter = (blosc2_prefilter_fn)prefilter_func;
+    cparams->prefilter = (blosc2_prefilter_fn)e->jug_expr_func;
     blosc2_prefilter_params pparams = {0};
     pparams.ninputs = nvars;
     // TODO: add the out_value structure to the user_data also?

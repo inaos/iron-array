@@ -1,6 +1,6 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright INAOS GmbH, Thalwil, 2019.
+ * Copyright Francesc Alted, 2019.
  *
  * All rights reserved.
  *
