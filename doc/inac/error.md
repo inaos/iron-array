@@ -134,7 +134,7 @@ Checkpoints based on INAC error. One need to declare a `fail` label.
 In case of failure the execution will jump to this mark
      
           ...
-          IARRAY_FAIL_IF_ERROR(inaws_connect("localhost", 2222))
+          INA_FAIL_IF_ERROR(inaws_connect("localhost", 2222))
           ...
        fail:
            inaws_destroy();
@@ -144,7 +144,7 @@ In case of failure the execution will jump to this mark
 Checkpoint based on a condition. One need to declare a `fail` label.   
 
           ...
-          IARRAY_FAIL_IF(ctx->h != NULL))
+          INA_FAIL_IF(ctx->h != NULL))
           ....
         fail:
            inaws_destroy();
