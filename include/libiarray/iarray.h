@@ -628,6 +628,10 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
 INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val);
 INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val);
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
+INA_API(ina_rc_t) iarray_expr_compile_udf(iarray_expression_t *e,
+                                          int llvm_bc_len,
+                                          const char *llvm_bc,
+                                          const char *name);
 
 INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
 
