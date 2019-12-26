@@ -115,7 +115,7 @@ INA_TEST_FIXTURE(constructor_empty, 5_d)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int8_t ndim = 5;
     int64_t shape[] = {11, 12, 8, 5, 3};
-    int64_t pshape[] = {3, 4, 20, 13, 3};
+    int64_t pshape[] = {3, 4, 2, 4, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, pshape));
 }
