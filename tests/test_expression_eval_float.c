@@ -148,7 +148,7 @@ static float expr2(const float x)
     return sinhf(x) + (coshf(x) - 1.35f) - tanhf(x + .2f);
 }
 
-INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
+INA_TEST_FIXTURE_SKIP(expression_eval_float, iterblosc_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC;
     data->func = expr2;

@@ -9,7 +9,7 @@
 # Information and shall use it only in accordance with the terms of the license agreement.
 #
 cmake_minimum_required (VERSION 3.12)
-project(iarray VERSION 0.1.2)
+project(iarray VERSION 0.1.3)
 
 option(MULTITHREADING "Use multithreaded iarray" ON)
 
@@ -38,11 +38,20 @@ inac_add_dependency(inac "1.0.6")
 
 inac_add_contrib_lib(tinyexpr)
 
+find_package(LLVM REQUIRED CONFIG)
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+
+add_definitions(${LLVM_DEFINITIONS})
+include_directories(${LLVM_INCLUDE_DIRS})
+
 add_subdirectory(contribs/c-blosc2)
 include_directories(contribs/c-blosc2/blosc)
 set(BLOSC_LIB blosc2_static) # required for caterva tests
 add_subdirectory(contribs/caterva)
 include_directories(contribs/caterva/caterva)
+add_subdirectory(contribs/minjugg)
+include_directories(contribs/minjugg/include)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/contribs/c-blosc2/cmake)
 #configure Intel MKL
@@ -54,7 +63,12 @@ if (MULTITHREADING)
     find_package(OMP)
 endif()
 
-set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${IPP_LIBRARIES})
+# Find the libraries that correspond to the LLVM components
+# that we wish to use
+llvm_map_components_to_libnames(llvm_libs support core irreader executionengine 
+  bitwriter passes vectorize mcjit asmprinter x86info x86codegen)
+
+set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${IPP_LIBRARIES} ${llvm_libs})
 
 set(SRC ${CMAKE_SOURCE_DIR}/src)
 file(GLOB src ${SRC_DIR}/*.c)
@@ -78,7 +92,9 @@ endif()
 
 if (UNIX)
 set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
-set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc2_static ${IPP_LIBRARIES})
+set(INAC_DEPENDENCY_LIBS minjugg ${INAC_DEPENDENCY_LIBS} blosc2_static ${IPP_LIBRARIES})
+else()
+set(INAC_DEPENDENCY_LIBS minjugg ${INAC_DEPENDENCY_LIBS})
 endif()
 
 inac_add_tests(iarrays)
@@ -116,7 +132,7 @@ inac_enable_trace(${CMAKE_BUILD_TYPE} 1)
 add_definitions(-DINA_DLL)
 add_definitions(-DINA_LIB)
 add_library(iarray SHARED ${src})
-target_link_libraries(iarray ${INAC_LIBS} blosc2_static caterva_static ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+target_link_libraries(iarray ${INAC_LIBS} blosc2_static caterva_static minjugg ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 install(TARGETS iarray
         DESTINATION lib
