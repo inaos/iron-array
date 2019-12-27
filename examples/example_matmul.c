@@ -41,7 +41,7 @@ int main()
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = n_threads;
     iarray_context_t *ctx;
-    INA_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
+    IARRAY_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
 
     iarray_dtshape_t dtshape_x;
     dtshape_x.ndim = ndim;
@@ -51,7 +51,7 @@ int main()
         dtshape_x.pshape[i] = pshape_x[i];
     }
     iarray_container_t *c_x;
-    INA_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_x, 0, 1, NULL, 0, &c_x));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_x, 0, 1, NULL, 0, &c_x));
 
     iarray_dtshape_t dtshape_y;
     dtshape_y.ndim = ndim;
@@ -62,7 +62,7 @@ int main()
     }
 
     iarray_container_t *c_y;
-    INA_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_y, 0, 1, NULL, 0, &c_y));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_y, 0, 1, NULL, 0, &c_y));
 
     iarray_dtshape_t dtshape_z;
     dtshape_z.ndim = ndim;
@@ -73,7 +73,7 @@ int main()
     }
 
     iarray_container_t *c_z;
-    INA_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, NULL, 0, &c_z));
+    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, NULL, 0, &c_z));
     mkl_set_num_threads(n_threads);
 
 
@@ -82,14 +82,14 @@ int main()
     double *b_z = (double *) malloc(size_z * sizeof(double));
     double *b_res = (double *) malloc(size_z * sizeof(double));
 
-    INA_FAIL_IF_ERROR(iarray_to_buffer(ctx, c_x, b_x, size_x * sizeof(double)));
-    INA_FAIL_IF_ERROR(iarray_to_buffer(ctx, c_y, b_y, size_y * sizeof(double)));
+    IARRAY_FAIL_IF_ERROR(iarray_to_buffer(ctx, c_x, b_x, size_x * sizeof(double)));
+    IARRAY_FAIL_IF_ERROR(iarray_to_buffer(ctx, c_y, b_y, size_y * sizeof(double)));
 
     INA_STOPWATCH_START(w);
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) shape_x[0], (int) shape_y[1], (int) shape_x[1],
                 1.0, b_x, (int) shape_x[1], b_y, (int) shape_y[1], 0.0, b_z, (int) shape_y[1]);
     INA_STOPWATCH_STOP(w);
-    INA_FAIL_IF_ERROR(ina_stopwatch_duration(w, &elapsed_sec));
+    IARRAY_FAIL_IF_ERROR(ina_stopwatch_duration(w, &elapsed_sec));
 
     printf("Time mkl (C): %.4f\n", elapsed_sec);
 
@@ -115,11 +115,11 @@ int main()
         goto fail;
     }
     INA_STOPWATCH_STOP(w);
-    INA_FAIL_IF_ERROR(ina_stopwatch_duration(w, &elapsed_sec));
+    IARRAY_FAIL_IF_ERROR(ina_stopwatch_duration(w, &elapsed_sec));
 
     printf("Time iarray: %.4f\n", elapsed_sec);
 
-    INA_FAIL_IF_ERROR(iarray_to_buffer(ctx, c_z, b_res, size_z * sizeof(double)));
+    IARRAY_FAIL_IF_ERROR(iarray_to_buffer(ctx, c_z, b_res, size_z * sizeof(double)));
 
     for (int64_t i = 0; i < size_z; ++i) {
         if (fabs((b_res[i] - b_z[i]) / b_res[i]) > 1e-8) {
