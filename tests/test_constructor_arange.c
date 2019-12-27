@@ -24,6 +24,8 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
         typesize = sizeof(float);
     }
 
+    INA_TRACE1("Start test", "Start test");
+
     // Create dtshape
     iarray_dtshape_t xdtshape;
 
@@ -102,7 +104,7 @@ INA_TEST_FIXTURE(constructor_arange, 2_f) {
 
     int8_t ndim = 2;
     int64_t shape[] = {445, 321};
-    int64_t pshape[] = {21, 431};
+    int64_t pshape[] = {21, 221};
     double start = 3123;
     double stop = 45654;
 
@@ -114,7 +116,7 @@ INA_TEST_FIXTURE(constructor_arange, 5_d) {
 
     int8_t ndim = 5;
     int64_t shape[] = {20, 18, 17, 13, 21};
-    int64_t pshape[] = {30, 12, 22, 3, 26};
+    int64_t pshape[] = {3, 12, 14, 3, 20};
     double start = 0.1;
     double stop = 0.2;
 
