@@ -95,7 +95,8 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
             IARRAY_TRACE1(iarray.error, "Start is bigger than stop");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
         }
-        if (pshape[i] > stop_[i] - start_[i]){IARRAY_TRACE1(iarray.error, "The pshape is bigger than shape");
+        if (pshape[i] > stop_[i] - start_[i]){
+            IARRAY_TRACE1(iarray.error, "The pshape is bigger than shape");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_PSHAPE));
         }
     }
