@@ -706,7 +706,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     caterva_dims_t shape = caterva_new_dims(cont->dtshape->shape, cont->dtshape->ndim);
     CATERVA_ERROR(caterva_update_shape(cont->catarr, &shape));
 
-    if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+    if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
         cont->catarr->buf = cont->catarr->ctx->alloc((size_t) cont->catarr->size * typesize);
         if (cont->catarr->buf == NULL) {
             IARRAY_TRACE1(iarray.error, "Error allocating the caterva buffer where data is stored");
@@ -1157,7 +1157,7 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
 
     (*itr)->ctx = ctx;
     (*itr)->container = cont;
-    if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+    if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
         (*itr)->part = (uint8_t *) cont->catarr->ctx->alloc((size_t)cont->catarr->psize *
             cont->catarr->ctx->cparams.typesize);
         cont->catarr->buf = (*itr)->part;
