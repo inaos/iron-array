@@ -15,8 +15,7 @@
 
 static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtype,
                                   int32_t type_size, int8_t ndim, const int64_t *shape,
-                                  const int64_t *pshape, const int64_t *blockshape, bool rewrite)
-{
+                                  const int64_t *pshape, const int64_t *blockshape, bool rewrite) {
     INA_UNUSED(type_size);
     // Create dtshape
     iarray_dtshape_t xdtshape;
@@ -33,46 +32,83 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
 
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x));
 
-    int niter = 1;
-    if (rewrite) {
-        niter++;
-    }
+    // Start Iterator
+    iarray_iter_write_block_t *I;
+    iarray_iter_write_block_value_t val;
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, false));
 
-    for (int j = 0; j < niter; ++j) {
-        // Start Iterator
-        iarray_iter_write_block_t *I;
-        iarray_iter_write_block_value_t val;
-        ina_rc_t err = iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, false);
-        if (rewrite && (j == 1) && c_x->catarr->storage == CATERVA_STORAGE_BLOSC) {
-            if (err != 0) { // We need the iterator to return an error
-                return INA_SUCCESS;
+    while (INA_SUCCEED(iarray_iter_write_block_has_next(I))) {
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(I, NULL, 0));
+
+        int64_t nelem = 0;
+        int64_t inc = 1;
+        for (int i = ndim - 1; i >= 0; --i) {
+            nelem += val.elem_index[i] * inc;
+            inc *= c_x->dtshape->shape[i];
+        }
+        if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
+            for (int64_t i = 0; i < val.block_size; ++i) {
+                ((double *) val.block_pointer)[i] = (double) nelem + i;
+            }
+        } else {
+            for (int64_t i = 0; i < val.block_size; ++i) {
+                ((float *) val.block_pointer)[i] = (float) nelem + i;
             }
         }
-        while (iarray_iter_write_block_has_next(I)) {
-            iarray_iter_write_block_next(I, NULL, 0);
-
-            int64_t nelem = 0;
-            int64_t inc = 1;
-            for (int i = ndim - 1; i >= 0; --i) {
-                nelem += val.elem_index[i] * inc;
-                inc *= c_x->dtshape->shape[i];
-            }
-            if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-                for (int64_t i = 0; i < val.block_size; ++i) {
-                    ((double *) val.block_pointer)[i] = (double) nelem + i;
-                }
-            } else {
-                for (int64_t i = 0; i < val.block_size; ++i) {
-                    ((float *) val.block_pointer)[i] = (float) nelem + i;
-                }
-            }
-        }
-
-        iarray_iter_write_block_free(&I);
     }
 
+    iarray_iter_write_block_free(&I);
+
+    int64_t start[IARRAY_DIMENSION_MAX] = {0, 0, 0, 0, 0, 0, 0, 0};
+    int64_t stop[IARRAY_DIMENSION_MAX] = {2, 3, 4, 3, 3, 4, 4, 3};
+
+    iarray_container_t *c_y;
+
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, start, NULL, 0, true, &c_y));
+
+    // Start Iterator
+    ina_rc_t err = iarray_iter_write_block_new(ctx, &I, c_y, blockshape, &val, false);
+    if (c_y->catarr->storage == CATERVA_STORAGE_BLOSC) {
+        if (err != 0) {
+            return INA_SUCCESS;
+        }
+    }
+    while (INA_SUCCEED(iarray_iter_write_block_has_next(I))) {
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(I, NULL, 0));
+
+        int64_t nelem = 0;
+        int64_t inc = 1;
+        for (int i = ndim - 1; i >= 0; --i) {
+            nelem += val.elem_index[i] * inc;
+            inc *= c_y->dtshape->shape[i];
+        }
+        if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
+            for (int64_t i = 0; i < val.block_size; ++i) {
+                ((double *) val.block_pointer)[i] = 0;
+            }
+        } else {
+            for (int64_t i = 0; i < val.block_size; ++i) {
+                ((float *) val.block_pointer)[i] = 0;
+            }
+        }
+    }
+
+    // Start Read Iterator
+    iarray_iter_read_t *itr_read;
+    iarray_iter_read_value_t val_read;
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_new(ctx, &itr_read, c_x, &val_read));
+
+    while (INA_SUCCEED(iarray_iter_read_has_next(itr_read))) {
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_next(itr_read));
+        if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
+            INA_TEST_ASSERT_EQUAL_UINT64(((double *) val.block_pointer)[0], 0);
+        } else {
+            INA_TEST_ASSERT_EQUAL_UINT64(((float *) val.block_pointer)[0], 0);
+        }
+    }
     return INA_SUCCESS;
 }
+
 
 INA_TEST_DATA(rewrite_cont) {
     iarray_context_t *ctx;
@@ -101,7 +137,7 @@ INA_TEST_FIXTURE(rewrite_cont, 2_d_p) {
     int64_t blockshape[] = {3, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, pshape,
-                                              blockshape, false));
+                                              blockshape, true));
 }
 
 
@@ -129,7 +165,7 @@ INA_TEST_FIXTURE(rewrite_cont, 4_d) {
     int64_t *blockshape = pshape;
 
     INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, pshape,
-                                              blockshape, false));
+                                              blockshape, true));
 }
 
 INA_TEST_FIXTURE(rewrite_cont, 5_f_p) {
@@ -155,7 +191,7 @@ INA_TEST_FIXTURE(rewrite_cont, 6_d_p) {
     int64_t blockshape[] = {2, 3, 5, 4, 3, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, pshape,
-                                              blockshape, false));
+                                              blockshape, true));
 }
 
 INA_TEST_FIXTURE(rewrite_cont, 7_f) {
