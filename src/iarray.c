@@ -79,13 +79,21 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
 
     if (high == 0) {
         size_t L3;
-        ina_cpu_get_l3_cache_size(&L3);
+        ina_rc_t rc = ina_cpu_get_l3_cache_size(&L3);
+        if (INA_FAILED(rc)) {
+            IARRAY_TRACE1(iarray.error, "Can not get the cache size");
+            return ina_err_get_rc();
+        }
         // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
         high = L3 / 4;
     }
     if (low == 0) {
         size_t L2;
-        ina_cpu_get_l2_cache_size(&L2);
+        ina_rc_t rc = ina_cpu_get_l2_cache_size(&L2);
+        if (INA_FAILED(rc)) {
+            IARRAY_TRACE1(iarray.error, "Can not get the cache size");
+            return ina_err_get_rc();
+        }
         low = L2 / 2;
     }
 
@@ -182,13 +190,20 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     if (high == 0) {
         size_t L3;
         ina_rc_t rc = ina_cpu_get_l3_cache_size(&L3);
-        printf("%llu\n", rc);
+        if (INA_FAILED(rc)) {
+            IARRAY_TRACE1(iarray.error, "Can not get the cache size");
+            return ina_err_get_rc();
+        }
         // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
         high = L3 / 4;
     }
     if (low == 0) {
         size_t L2;
-        ina_cpu_get_l2_cache_size(&L2);
+        ina_rc_t rc = ina_cpu_get_l2_cache_size(&L2);
+        if (INA_FAILED(rc)) {
+            IARRAY_TRACE1(iarray.error, "Can not get the cache size");
+            return ina_err_get_rc();
+        }
         low = L2 / 2;
     }
 
