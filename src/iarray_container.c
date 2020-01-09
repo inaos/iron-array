@@ -15,6 +15,44 @@
 #include "iarray_constructor.h"
 
 
+static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype, bool *transposed) {
+    INA_UNUSED(smeta_len);
+    INA_VERIFY_NOT_NULL(smeta);
+    INA_VERIFY_NOT_NULL(dtype);
+    INA_VERIFY_NOT_NULL(transposed);
+    ina_rc_t rc;
+
+    uint8_t *pmeta = smeta;
+
+    //version
+    uint8_t version = *pmeta;
+    pmeta +=1;
+
+    // We only have an entry with the datatype (enumerated < 128)
+    *dtype = *pmeta;
+    pmeta += 1;
+
+    *transposed = false;
+    if ((*pmeta & 64ULL) != 0) {
+        *transposed = true;
+    }
+    pmeta += 1;
+
+    assert(pmeta - smeta == smeta_len);
+
+    if (*dtype >= IARRAY_DATA_TYPE_MAX) {
+        IARRAY_TRACE1(iarray.error, "The data type is invalid");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+    }
+
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
+}
+
 INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dtshape_t *b)
 {
     ina_rc_t rc;
@@ -53,6 +91,152 @@ INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
 
     return _iarray_container_new(ctx, dtshape, store, flags, container);
 }
+
+
+INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
+                                        iarray_container_t *c,
+                                        char *filename) {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(filename);
+
+    if (c->catarr->storage != CATERVA_STORAGE_BLOSC) {
+        IARRAY_TRACE1(iarray.error, "Container must be stored on a blosc schunk");
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+    }
+
+    if (c->catarr->sc->frame == NULL) {
+        blosc2_frame *frame = blosc2_new_frame(filename);
+        if (frame == NULL) {
+            IARRAY_TRACE1(iarray.error, "Error creating blosc2 frame");
+            return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+        }
+        if (blosc2_schunk_to_frame(c->catarr->sc, frame) < 0) {
+            IARRAY_TRACE1(iarray.error, "Error converting a blosc schunk to a blosc frame");
+            return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+        }
+    } else {
+        if (c->catarr->sc->frame->fname != NULL) {
+            IARRAY_TRACE1(iarray.error, "Container is already on disk");
+            return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+        } else {
+            blosc2_frame_to_file(c->catarr->sc->frame, filename);
+        }
+    }
+    return INA_SUCCESS;
+}
+
+
+INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, iarray_store_properties_t *store,
+                                        iarray_container_t **container, bool load_in_mem)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(container);
+
+    ina_rc_t rc;
+    caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, BLOSC2_CPARAMS_DEFAULTS, BLOSC2_DPARAMS_DEFAULTS);
+    if (cat_ctx == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error allocating the caterva context");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+    }
+
+    caterva_array_t *catarr = caterva_from_file(cat_ctx, store->id, load_in_mem);
+    if (catarr == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error creating the caterva array from a file");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+    }
+
+    uint8_t *smeta;
+    uint32_t smeta_len;
+    if (blosc2_get_metalayer(catarr->sc, "iarray", &smeta, &smeta_len) < 0) {
+        IARRAY_TRACE1(iarray.error, "Error getting a blosc metalayer");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+    }
+    iarray_data_type_t dtype;
+    bool transposed;
+    if (deserialize_meta(smeta, smeta_len, &dtype, &transposed) != 0) {
+        IARRAY_TRACE1(iarray.error, "Error deserializing a sframe");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+    }
+
+    *container = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
+    (*container)->catarr = catarr;
+
+    // Build the dtshape
+    (*container)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
+    iarray_dtshape_t* dtshape = (*container)->dtshape;
+    dtshape->dtype = dtype;
+    dtshape->ndim = catarr->ndim;
+    for (int i = 0; i < catarr->ndim; ++i) {
+        dtshape->shape[i] = catarr->shape[i];
+        dtshape->pshape[i] = catarr->pshape[i];
+    }
+
+    // Build the auxshape
+    (*container)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
+    iarray_auxshape_t* auxshape = (*container)->auxshape;
+    for (int8_t i = 0; i < catarr->ndim; ++i) {
+        auxshape->index[i] = i;
+        auxshape->offset[i] = 0;
+        auxshape->shape_wos[i] = catarr->shape[i];
+        auxshape->pshape_wos[i] = catarr->pshape[i];
+    }
+
+    // Populate compression parameters
+    blosc2_cparams *cparams;
+    if (blosc2_schunk_get_cparams(catarr->sc, &cparams) < 0) {
+        IARRAY_TRACE1(iarray.error, "Error getting the cparams from blosc2 schunk");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+    }
+    blosc2_cparams *cparams2 = (blosc2_cparams*)ina_mem_alloc(sizeof(blosc2_cparams));
+    memcpy(cparams2, cparams, sizeof(blosc2_cparams));
+    free(cparams);
+    (*container)->cparams = cparams2;  // we need an INA-allocated struct (to match INA_MEM_FREE_SAFE)
+    blosc2_dparams *dparams;
+    if (blosc2_schunk_get_dparams(catarr->sc, &dparams) < 0) {
+        IARRAY_TRACE1(iarray.error, "Error getting the dparams from blosc2 schunk");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+    }
+    blosc2_dparams *dparams2 = (blosc2_dparams*)ina_mem_alloc(sizeof(blosc2_dparams));
+    memcpy(dparams2, dparams, sizeof(blosc2_dparams));
+    free(dparams);
+    (*container)->dparams = dparams2;  // we need an INA-allocated struct (to match INA_MEM_FREE_SAFE)
+
+    (*container)->transposed = transposed;  // TODO: complete this
+    if (transposed) {
+        int64_t aux[IARRAY_DIMENSION_MAX];
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            aux[i] = (*container)->dtshape->shape[i];
+        }
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            (*container)->dtshape->shape[i] = aux[(*container)->dtshape->ndim - 1 - i];
+        }
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            aux[i] = (*container)->dtshape->pshape[i];
+        }
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            (*container)->dtshape->pshape[i] = aux[(*container)->dtshape->ndim - 1 - i];
+        }
+    }
+    (*container)->view = false;
+
+    (*container)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
+    if ((*container)->store == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error allocating the store parameter");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
+    (*container)->store->id = ina_str_new_fromcstr(store->id);
+
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
+    iarray_container_free(ctx, container);
+    rc = ina_err_get_rc();
+    cleanup:
+    caterva_free_ctx(cat_ctx);
+    return rc;
+}
+
 
 INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    iarray_container_t *c,

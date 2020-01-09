@@ -463,10 +463,14 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                                           void *buffer,
                                           int64_t buflen);
 
-INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
-                                   iarray_store_properties_t *store,
-                                   iarray_container_t **container,
-                                   bool load_in_mem);
+INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx,
+                                        iarray_store_properties_t *store,
+                                        iarray_container_t **container,
+                                        bool load_in_mem);
+
+INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
+                                        iarray_container_t *c,
+                                        char *filename);
 
 INA_API(ina_rc_t) iarray_to_file(iarray_context_t *ctx,
                                  iarray_store_properties_t *store,
