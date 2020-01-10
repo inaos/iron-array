@@ -119,7 +119,7 @@ steps:
     fi
   displayName: Execute tests
   env:
-    - INAC_TRACE: "iarray.*"
+    - INAC_TRACE: $('iarray.*')
 
 - bash: |
     cd cmake-build-$BUILD_CONFIGURATION
