@@ -46,17 +46,22 @@ static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, 
             store->id = NULL;
         }
     }
+    IARRAY_TRACE1(iarray.error, "Create arange");
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, store, flags, &c_x));
 
+
     if (!frame || !fn) {
+        IARRAY_TRACE1(iarray.error, "Save file");
         INA_TEST_ASSERT_SUCCEED(iarray_container_save(ctx, c_x, filename));
     }
 
     iarray_store_properties_t store2 = {.id = filename};
 
+    IARRAY_TRACE1(iarray.error, "load file");
     iarray_container_t *c_y;
     INA_TEST_ASSERT_SUCCEED(iarray_container_load(ctx, &store2, &c_y, true));
 
+    IARRAY_TRACE1(iarray.error, "Assert containers");
     INA_TEST_ASSERT_SUCCEED(iarray_container_almost_equal(c_x, c_y, 1e-12));
 
     iarray_container_free(ctx, &c_x);
@@ -85,7 +90,7 @@ INA_TEST_TEARDOWN(container_load_save) {
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(container_load_save, 2_d) {
+INA_TEST_FIXTURE_SKIP(container_load_save, 2_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
@@ -121,7 +126,7 @@ INA_TEST_FIXTURE_SKIP(container_load_save, 5_d) {
     INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, true, true));
 }
 
-INA_TEST_FIXTURE(container_load_save, 2_f) {
+INA_TEST_FIXTURE_SKIP(container_load_save, 2_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
@@ -145,7 +150,7 @@ INA_TEST_FIXTURE(container_load_save, 3_f) {
     INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, true, false));
 }
 
-INA_TEST_FIXTURE(container_load_save, 5_f) {
+INA_TEST_FIXTURE_SKIP(container_load_save, 5_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 5;
