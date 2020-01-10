@@ -19,6 +19,7 @@ static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, 
 {
     char *filename = "test_load_save.iarray";
 
+    IARRAY_TRACE1(array.error, "Start test load-save");
     // Create dtshape
     iarray_dtshape_t xdtshape;
 
