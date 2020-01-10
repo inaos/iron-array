@@ -100,17 +100,20 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(c);
     INA_VERIFY_NOT_NULL(filename);
 
+    IARRAY_TRACE1(iarray.tracing, "Start save function");
     if (c->catarr->storage != CATERVA_STORAGE_BLOSC) {
         IARRAY_TRACE1(iarray.error, "Container must be stored on a blosc schunk");
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
 
     if (c->catarr->sc->frame == NULL) {
+        IARRAY_TRACE1(iarray.tracing, "Create new frame");
         blosc2_frame *frame = blosc2_new_frame(filename);
         if (frame == NULL) {
             IARRAY_TRACE1(iarray.error, "Error creating blosc2 frame");
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
         }
+        IARRAY_TRACE1(iarray.tracing, "Convert schunk to frame");
         if (blosc2_schunk_to_frame(c->catarr->sc, frame) < 0) {
             IARRAY_TRACE1(iarray.error, "Error converting a blosc schunk to a blosc frame");
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
@@ -120,6 +123,7 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
             IARRAY_TRACE1(iarray.error, "Container is already on disk");
             return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
         } else {
+            IARRAY_TRACE1(iarray.tracing, "Copy frame to file");
             blosc2_frame_to_file(c->catarr->sc->frame, filename);
         }
     }
