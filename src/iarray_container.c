@@ -114,7 +114,9 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
         }
         IARRAY_TRACE1(iarray.tracing, "Convert schunk to frame");
-        if (blosc2_schunk_to_frame(c->catarr->sc, frame) < 0) {
+        int err = blosc2_schunk_to_frame(c->catarr->sc, frame);
+        printf("err: %d\n", err);
+        if (err < 0) {
             IARRAY_TRACE1(iarray.error, "Error converting a blosc schunk to a blosc frame");
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
         }
