@@ -172,6 +172,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     }
     caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
 
+    IARRAY_TRACE1(iarray.tracing, "Create catarr");
     if (store != NULL) {
         (*c)->catarr = caterva_empty_array(cat_ctx, frame, &pshape);
     }
