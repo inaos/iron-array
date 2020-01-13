@@ -109,6 +109,7 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
     iarray_iter_write_t *I;
     iarray_iter_write_value_t val;
 
+    IARRAY_TRACE1(iarrayt.tracing, "Start write iterator");
     IARRAY_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &I, *container, &val));
 
     while (INA_SUCCEED(iarray_iter_write_has_next(I))) {
@@ -131,7 +132,7 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
     }
     IARRAY_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
     iarray_iter_write_free(&I);
-
+    IARRAY_TRACE1(iarray.tracing, "Finish wirte iterator");
     rc = INA_SUCCESS;
     goto cleanup;
     fail:
