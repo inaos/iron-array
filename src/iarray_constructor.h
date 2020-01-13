@@ -185,12 +185,13 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         }
         (*c)->catarr = caterva_empty_array(cat_ctx, NULL, NULL);
     }
+    IARRAY_TRACE1(iarray.error, "Catarr created");
     if (cat_ctx != NULL) caterva_free_ctx(cat_ctx);
     if ((*c)->catarr == NULL) {
         IARRAY_TRACE1(iarray.error, "Error creating the caterva container");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
-
+    IARRAY_TRACE1(iarray.error, "Copy store if persists");
     if (flags & IARRAY_CONTAINER_PERSIST) {
         (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
         if ((*c)->store == NULL) {
