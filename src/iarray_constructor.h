@@ -217,6 +217,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         IARRAY_TRACE1(iarray.tracing, "Metalayers added");
         free(smeta);
     }
+    IARRAY_TRACE1(iarray.tracing, "Finish container_new");
     rc = INA_SUCCESS;
     goto cleanup;
     fail:
