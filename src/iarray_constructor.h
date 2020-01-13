@@ -207,7 +207,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
-
+    IARRAY_TRACE1(iarray.tracing, "Adding metalayers");
     if ((*c)->catarr->storage == CATERVA_STORAGE_BLOSC) {
         // And store it in iarray metalayer
         if (blosc2_add_metalayer((*c)->catarr->sc, "iarray", smeta, (uint32_t) smeta_len) < 0) {
