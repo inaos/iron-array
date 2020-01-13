@@ -49,7 +49,7 @@ static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, 
     IARRAY_TRACE1(iarray.error, "Create arange");
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, store, flags, &c_x));
 
-
+    IARRAY_TRACE1(iarray.tracing, "Container created");
     if (!frame || !fn) {
         IARRAY_TRACE1(iarray.error, "Save file");
         INA_TEST_ASSERT_SUCCEED(iarray_container_save(ctx, c_x, filename));
