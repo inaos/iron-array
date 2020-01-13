@@ -127,6 +127,7 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
             blosc2_frame_to_file(c->catarr->sc->frame, filename);
         }
     }
+    IARRAY_TRACE1(iarray.tracing, "Finish successfully");
     return INA_SUCCESS;
 }
 
