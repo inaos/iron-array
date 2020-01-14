@@ -88,7 +88,7 @@ INA_TEST_TEARDOWN(container_load_save) {
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(container_load_save, 2_d) {
+INA_TEST_FIXTURE_SKIP(container_load_save, 2_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
