@@ -103,9 +103,9 @@ INA_TEST_FIXTURE_SKIP(container_load_save, 2_d) {
 INA_TEST_FIXTURE(container_load_save, 3_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
-    int8_t ndim = 3;
-    int64_t shape[] = {445, 121, 321};
-    int64_t pshape[] = {21, 12, 221};
+    int8_t ndim = 2;
+    int64_t shape[] = {4, 4};
+    int64_t pshape[] = {2, 2};
     double start = 3123;
     double stop = 45654;
 
