@@ -115,7 +115,7 @@ steps:
       then
         echo "Tests for Darwin in Debug mode currently not executed"
     else
-        ./tests container_load_save
+        ./tests
     fi
   displayName: Execute tests
   env:
