@@ -36,18 +36,20 @@ static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, 
     iarray_container_t *c_x;
 
     int flags = 0;
-    iarray_store_properties_t *store = NULL;
-    if (frame) {
-        store = ina_mem_alloc(sizeof(iarray_store_properties_t));
-        if (fn) {
-            store->id = filename;
-            flags = IARRAY_CONTAINER_PERSIST;
-        } else {
-            store->id = NULL;
-        }
+    iarray_store_properties_t store = {.id = NULL};
+
+
+    if (fn) {
+        store.id = filename;
+        flags = IARRAY_CONTAINER_PERSIST;
     }
+
     IARRAY_TRACE1(iarray.error, "Create arange");
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, store, flags, &c_x));
+    if (frame) {
+        INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, flags, &c_x));
+    } else {
+        INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, NULL, flags, &c_x));
+    }
 
     IARRAY_TRACE1(iarray.tracing, "Container created");
     if (!frame || !fn) {
@@ -75,7 +77,6 @@ static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, 
 
 INA_TEST_DATA(container_load_save) {
     iarray_context_t *ctx;
-    char *filename;
 };
 
 INA_TEST_SETUP(container_load_save) {
