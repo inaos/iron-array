@@ -124,7 +124,7 @@ INA_TEST_FIXTURE(container_load_save, 5_d) {
     INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, true, true));
 }
 
-INA_TEST_FIXTURE_SKIP(container_load_save, 2_f) {
+INA_TEST_FIXTURE(container_load_save, 2_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
@@ -136,7 +136,7 @@ INA_TEST_FIXTURE_SKIP(container_load_save, 2_f) {
     INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, false, false));
 }
 
-INA_TEST_FIXTURE_SKIP(container_load_save, 3_f) {
+INA_TEST_FIXTURE(container_load_save, 3_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 3;
@@ -148,12 +148,12 @@ INA_TEST_FIXTURE_SKIP(container_load_save, 3_f) {
     INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, true, false));
 }
 
-INA_TEST_FIXTURE_SKIP(container_load_save, 5_f) {
+INA_TEST_FIXTURE(container_load_save, 5_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 5;
-    int64_t shape[] = {20, 18, 17, 13, 21};
-    int64_t pshape[] = {3, 12, 14, 3, 20};
+    int64_t shape[] = {20, 5, 10, 5, 4};
+    int64_t pshape[] = {3, 4, 3, 3, 2};
     double start = 0.1;
     double stop = 0.2;
 
