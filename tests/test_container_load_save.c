@@ -141,7 +141,7 @@ INA_TEST_FIXTURE(container_load_save, 3_f) {
 
     int8_t ndim = 3;
     int64_t shape[] = {5, 10, 8};
-    int64_t pshape[] = {2, 3, 7};
+    int64_t pshape[] = {4, 7, 7};
     double start = 3123;
     double stop = 45654;
 
