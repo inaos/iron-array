@@ -141,7 +141,7 @@ INA_TEST_FIXTURE(container_load_save, 3_f) {
 
     int8_t ndim = 3;
     int64_t shape[] = {5, 10, 8};
-    int64_t pshape[] = {4, 7, 7};
+    int64_t pshape[] = {2, 7, 7};
     double start = 3123;
     double stop = 45654;
 
@@ -152,7 +152,7 @@ INA_TEST_FIXTURE(container_load_save, 5_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 5;
-    int64_t shape[] = {20, 5, 10, 5, 4};
+    int64_t shape[] = {4, 5, 10, 5, 4};
     int64_t pshape[] = {3, 4, 3, 3, 2};
     double start = 0.1;
     double stop = 0.2;
