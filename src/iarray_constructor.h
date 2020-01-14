@@ -183,6 +183,10 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
             IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
         }
         (*c)->catarr = caterva_empty_array(cat_ctx, frame, &pshape);
+
+        printf("frame->fname: %s\n", (*c)->catarr->sc->frame->fname);
+        printf("frame->len: %lld\n", (*c)->catarr->sc->frame->len);
+        printf("frame->maxlen: %lld\n", (*c)->catarr->sc->frame->maxlen);
     }
     else if (pshape.dims[0] != 0) {
         (*c)->catarr = caterva_empty_array(cat_ctx, NULL, &pshape);
