@@ -137,7 +137,7 @@ INA_TEST_FIXTURE_SKIP(container_load_save, 2_f) {
     INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, false, false));
 }
 
-INA_TEST_FIXTURE(container_load_save, 3_f) {
+INA_TEST_FIXTURE_SKIP(container_load_save, 3_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 3;
