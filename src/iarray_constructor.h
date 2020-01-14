@@ -85,17 +85,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     }
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
 
-
-    char* fname = NULL;
-    if (flags & IARRAY_CONTAINER_PERSIST) {
-        fname = (char*)store->id;
-    }
-    blosc2_frame *frame = blosc2_new_frame(fname);
-    if (frame == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error creating a frame");
-        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
-    }
-
     (*c)->cparams = (blosc2_cparams*)ina_mem_alloc(sizeof(blosc2_cparams));
     if ((*c)->cparams == NULL) {
         IARRAY_TRACE1(iarray.error, "Error allocating the blosc cparams");
@@ -174,6 +163,12 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
     IARRAY_TRACE1(iarray.tracing, "Create catarr");
     if (store != NULL) {
+        char* fname = (char*)store->id;
+        blosc2_frame *frame = blosc2_new_frame(fname);
+        if (frame == NULL) {
+            IARRAY_TRACE1(iarray.error, "Error creating a frame");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+        }
         (*c)->catarr = caterva_empty_array(cat_ctx, frame, &pshape);
     }
     else if (pshape.dims[0] != 0) {
