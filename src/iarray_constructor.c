@@ -132,7 +132,7 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
     }
     IARRAY_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
     iarray_iter_write_free(&I);
-    IARRAY_TRACE1(iarray.tracing, "Finish wirte iterator");
+    IARRAY_TRACE1(iarray.tracing, "Finish write iterator");
     rc = INA_SUCCESS;
     goto cleanup;
     fail:
