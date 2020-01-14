@@ -36,20 +36,19 @@ static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, 
     iarray_container_t *c_x;
 
     int flags = 0;
-    iarray_store_properties_t store = {.id = NULL};
-
-
-    if (fn) {
-        store.id = filename;
-        flags = IARRAY_CONTAINER_PERSIST;
+    iarray_store_properties_t* store = NULL;
+    if (frame) {
+        if (fn) {
+            store = &(iarray_store_properties_t) {.id = filename};
+            flags = IARRAY_CONTAINER_PERSIST;
+        } else {
+            store = &(iarray_store_properties_t) {.id = NULL};
+        }
     }
 
     IARRAY_TRACE1(iarray.error, "Create arange");
-    if (frame) {
-        INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, flags, &c_x));
-    } else {
-        INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, NULL, flags, &c_x));
-    }
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, store, flags, &c_x));
+
 
     IARRAY_TRACE1(iarray.tracing, "Container created");
     if (!frame || !fn) {
