@@ -166,6 +166,8 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         } else {
             (*c)->store->id = NULL;
         }
+    } else {
+        (*c)->store = NULL;
     }
 
     cat_ctx = caterva_new_ctx(NULL, NULL, cparams, dparams);
