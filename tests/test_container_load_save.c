@@ -68,9 +68,7 @@ static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, 
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
-    if (frame) {
-        ina_mem_free(store);
-    }
+
     return INA_SUCCESS;
 }
 
