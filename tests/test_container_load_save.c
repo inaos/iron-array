@@ -115,9 +115,9 @@ INA_TEST_FIXTURE(container_load_save, 3_d) {
 INA_TEST_FIXTURE(container_load_save, 5_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
-    int8_t ndim = 5;
-    int64_t shape[] = {20, 18, 17, 13, 21};
-    int64_t pshape[] = {3, 12, 14, 3, 20};
+    int8_t ndim = 3;
+    int64_t shape[] = {20, 18, 17};
+    int64_t pshape[] = {12, 14, 15};
     double start = 0.1;
     double stop = 0.2;
 
