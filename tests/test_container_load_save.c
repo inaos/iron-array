@@ -154,13 +154,6 @@ INA_TEST_FIXTURE_SKIP_OSX(container_load_save, 5_f) {
     // This crashes in Azure CI in OSX.
     // In all the rest of configurations the test works well even in our laptops.
 
-    char* envvar;
-    envvar = getenv("AGENT_OS");
-    if (envvar != NULL && strncmp(envvar, "Darwin", sizeof("Darwin")) == 0) {
-        printf("Skipping test on Azure CI (Darwin)...");
-        INA_TEST_ASSERT_SUCCEED(INA_SUCCESS);
-    }
-
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 5;
