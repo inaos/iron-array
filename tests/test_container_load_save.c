@@ -15,17 +15,9 @@
 
 static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim,
                                const int64_t *shape, const int64_t *pshape, double start,
-                               double stop, bool frame, bool fname, bool skip)
+                               double stop, bool frame, bool fname)
 {
 
-    if (skip) {
-        char* envvar;
-        envvar = getenv("AGENT_OS");
-        if (envvar != NULL && strncmp(envvar, "Darwin", sizeof("Darwin")) == 0) {
-            printf("Skipping test on Azure CI (Darwin)...");
-            return INA_SUCCESS;
-        }
-    }
     char *filename = "test_load_save.iarray";
 
     IARRAY_TRACE1(array.error, "Start test load-save");
@@ -106,7 +98,7 @@ INA_TEST_FIXTURE(container_load_save, 2_d) {
     double start = - 0.1;
     double stop = - 0.25;
 
-    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, false, false, false));
+    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, false, false));
 }
 
 INA_TEST_FIXTURE(container_load_save, 3_d) {
@@ -118,7 +110,7 @@ INA_TEST_FIXTURE(container_load_save, 3_d) {
     double start = 3123;
     double stop = 45654;
 
-    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, true, false, false));
+    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, true, false));
 }
 
 INA_TEST_FIXTURE(container_load_save, 5_d) {
@@ -130,7 +122,7 @@ INA_TEST_FIXTURE(container_load_save, 5_d) {
     double start = 0.1;
     double stop = 0.2;
 
-    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, true, true, false));
+    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, true, true));
 }
 
 INA_TEST_FIXTURE(container_load_save, 2_f) {
@@ -142,7 +134,7 @@ INA_TEST_FIXTURE(container_load_save, 2_f) {
     double start = - 0.1;
     double stop = - 0.25;
 
-    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, false, false, false));
+    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, false, false));
 }
 
 INA_TEST_FIXTURE(container_load_save, 3_f) {
@@ -154,13 +146,21 @@ INA_TEST_FIXTURE(container_load_save, 3_f) {
     double start = 3123;
     double stop = 45654;
 
-    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, true, false, false));
+    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, true, false));
 }
 
-INA_TEST_FIXTURE(container_load_save, 5_f) {
+INA_TEST_FIXTURE_SKIP_OSX(container_load_save, 5_f) {
 
     // This crashes in Azure CI in OSX.
     // In all the rest of configurations the test works well even in our laptops.
+
+    char* envvar;
+    envvar = getenv("AGENT_OS");
+    if (envvar != NULL && strncmp(envvar, "Darwin", sizeof("Darwin")) == 0) {
+        printf("Skipping test on Azure CI (Darwin)...");
+        INA_TEST_ASSERT_SUCCEED(INA_SUCCESS);
+    }
+
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 5;
@@ -169,5 +169,6 @@ INA_TEST_FIXTURE(container_load_save, 5_f) {
     double start = 0.1;
     double stop = 0.2;
 
-    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, true, true, true));
+    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, true, true));
+
 }
