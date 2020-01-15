@@ -149,19 +149,25 @@ INA_TEST_FIXTURE(container_load_save, 3_f) {
     INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, true, false));
 }
 
-INA_TEST_FIXTURE_SKIP_OSX(container_load_save, 5_f) {
+INA_TEST_FIXTURE(container_load_save, 5_f) {
 
     // This crashes in Azure CI in OSX.
     // In all the rest of configurations the test works well even in our laptops.
 
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    char* envvar;
+    envvar = getenv("AGENT_OS");
+    if (envvar != NULL && strncmp(envvar, "Darwin", sizeof("Darwin")) == 0) {
+        printf("Skipping test on Azure CI (Darwin)...");
+        INA_TEST_ASSERT_SUCCEED(INA_SUCCESS);
+    } else {
+        iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
-    int8_t ndim = 5;
-    int64_t shape[] = {4, 5, 10, 5, 4};
-    int64_t pshape[] = {3, 4, 3, 3, 2};
-    double start = 0.1;
-    double stop = 0.2;
+        int8_t ndim = 5;
+        int64_t shape[] = {4, 5, 10, 5, 4};
+        int64_t pshape[] = {3, 4, 3, 3, 2};
+        double start = 0.1;
+        double stop = 0.2;
 
-    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, true, true));
-
+        INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, pshape, start, stop, true, true));
+    }
 }
