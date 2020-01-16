@@ -20,7 +20,6 @@ static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, 
 
     char *filename = "test_load_save.iarray";
 
-    IARRAY_TRACE1(array.error, "Start test load-save");
     // Create dtshape
     iarray_dtshape_t xdtshape;
 
@@ -47,23 +46,18 @@ static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, 
         }
     }
 
-    IARRAY_TRACE1(iarray.error, "Create arange");
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, store, flags, &c_x));
 
 
-    IARRAY_TRACE1(iarray.tracing, "Container created");
     if (!frame || !fname) {
-        IARRAY_TRACE1(iarray.error, "Save file");
         INA_TEST_ASSERT_SUCCEED(iarray_container_save(ctx, c_x, filename));
     }
 
     iarray_store_properties_t store2 = {.id = filename};
 
-    IARRAY_TRACE1(iarray.error, "load file");
     iarray_container_t *c_y;
     INA_TEST_ASSERT_SUCCEED(iarray_container_load(ctx, &store2, &c_y, true));
 
-    IARRAY_TRACE1(iarray.error, "Assert containers");
     INA_TEST_ASSERT_SUCCEED(iarray_container_almost_equal(c_x, c_y, 1e-12));
 
     iarray_container_free(ctx, &c_x);

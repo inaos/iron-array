@@ -153,7 +153,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
     dparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
     ina_mem_cpy((*c)->dparams, &dparams, sizeof(blosc2_dparams));
-    IARRAY_TRACE1(iarray.error, "Copy store if persists");
 
     if (store != NULL) {
         (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
@@ -172,12 +171,10 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
     cat_ctx = caterva_new_ctx(NULL, NULL, cparams, dparams);
     if (cat_ctx == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error creating the caterva context");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
     caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
 
-    IARRAY_TRACE1(iarray.tracing, "Create catarr");
     if ((*c)->store != NULL) {
         blosc2_frame *frame = blosc2_new_frame((*c)->store->id);
         if (frame == NULL) {
@@ -195,7 +192,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         }
         (*c)->catarr = caterva_empty_array(cat_ctx, NULL, NULL);
     }
-    IARRAY_TRACE1(iarray.error, "Catarr created");
 
     if (cat_ctx != NULL) caterva_free_ctx(cat_ctx);
     if ((*c)->catarr == NULL) {
@@ -211,15 +207,12 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     }
     if ((*c)->catarr->storage == CATERVA_STORAGE_BLOSC) {
         // And store it in iarray metalayer
-        IARRAY_TRACE1(iarray.tracing, "Adding metalayers");
         if (blosc2_add_metalayer((*c)->catarr->sc, "iarray", smeta, (uint32_t) smeta_len) < 0) {
             IARRAY_TRACE1(iarray.error, "Error adding a metalayer to blosc");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
         }
-        IARRAY_TRACE1(iarray.tracing, "Metalayers added");
         free(smeta);
     }
-    IARRAY_TRACE1(iarray.tracing, "Finish container_new");
     rc = INA_SUCCESS;
     goto cleanup;
     fail:

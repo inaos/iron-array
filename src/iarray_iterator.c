@@ -1051,10 +1051,8 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
 
     if (itr->nelem_block == itr->cur_block_size - 1) {
         if (itr->container->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-            IARRAY_TRACE1(iarray.error, "Append buffer");
             int err = blosc2_schunk_append_buffer(catarr->sc, itr->part,
                                                   (size_t) catarr->psize * typesize);
-            IARRAY_TRACE1(iarray.error, "Buffer appended");
             if (err < 0) {
                 IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
