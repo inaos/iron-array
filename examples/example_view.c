@@ -24,7 +24,7 @@ int main()
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_t *ctx;
-    INA_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
+    IARRAY_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
 
     iarray_dtshape_t dtshape;
     dtshape.ndim = ndim;
@@ -34,18 +34,18 @@ int main()
         dtshape.pshape[i] = pshape[i];
     }
     iarray_container_t *cont;
-    INA_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape, NULL, 0, &cont));
+    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape, NULL, 0, &cont));
 
     iarray_iter_write_t *iter_w;
     iarray_iter_write_value_t val_w;
-    INA_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &iter_w, cont, &val_w));
+    IARRAY_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &iter_w, cont, &val_w));
 
     while (INA_SUCCEED(iarray_iter_write_has_next(iter_w))) {
-        INA_FAIL_IF_ERROR(iarray_iter_write_next(iter_w));
+        IARRAY_FAIL_IF_ERROR(iarray_iter_write_next(iter_w));
         ((double *) val_w.elem_pointer)[0] = (double) val_w.elem_flat_index;
     }
     iarray_iter_write_free(&iter_w);
-    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+    IARRAY_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     int64_t start[] = {2, 3};
     int64_t stop[] = {9, 7};
@@ -60,13 +60,13 @@ int main()
     
     iarray_iter_read_t *iter;
     iarray_iter_read_value_t val;
-    INA_FAIL_IF(iarray_iter_read_new(ctx, &iter, cout, &val));
+    IARRAY_FAIL_IF(iarray_iter_read_new(ctx, &iter, cout, &val));
     while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
-        INA_FAIL_IF(iarray_iter_read_next(iter));
+        IARRAY_FAIL_IF(iarray_iter_read_next(iter));
         printf("%f\n", ((double *) val.elem_pointer)[0]);
     }
     iarray_iter_read_free(&iter);
-    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+    IARRAY_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     return INA_SUCCESS;
 

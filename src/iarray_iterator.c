@@ -86,18 +86,21 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
     // Verify that block shape is < than container shapes
     for (int i = 0; i < c1->dtshape->ndim; ++i) {
         if (c1->dtshape->shape[i] < bshape_a[i]) {
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_BSHAPE));
+            IARRAY_TRACE1(iarray.error, "The blockshape is larger than the container shape");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_BSHAPE));
         }
     }
     for (int i = 0; i < c2->dtshape->ndim; ++i) {
         if (c2->dtshape->shape[i] < bshape_b[i]) {
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_BSHAPE));
+            IARRAY_TRACE1(iarray.error, "The blockshape is larger than the container shape");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_BSHAPE));
         }
     }
 
     *itr = (iarray_iter_matmul_t*)ina_mem_alloc(sizeof(iarray_iter_matmul_t));
-    if (itr == NULL) {
-        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    if (*itr == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error allocating the matmul iterator");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
 
     (*itr)->ctx = ctx;
@@ -159,7 +162,8 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr, voi
     // Check if a external buffer is passed
     if (itr->external_buffer) {
         if (bufsize < itr->block_shape_size * typesize + BLOSC_MAX_OVERHEAD) {
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
         }
         itr->block = buffer;
         itr->block_pointer = (void **) &itr->block;
@@ -195,11 +199,11 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr, voi
 
     // Get the desired block
     if (itr->contiguous && (itr->cont->view == false)) {
-        INA_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(itr->ctx, itr->cont, (int64_t *) start_,
+        IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(itr->ctx, itr->cont, (int64_t *) start_,
                                                               (int64_t *) stop_, (void **) &itr->block,
                                                                actual_block_size * typesize));
     } else {
-        INA_FAIL_IF_ERROR(iarray_get_slice_buffer(itr->ctx, itr->cont, (int64_t *) start_,
+        IARRAY_FAIL_IF_ERROR(iarray_get_slice_buffer(itr->ctx, itr->cont, (int64_t *) start_,
                                                      (int64_t *) stop_, itr->block,
                                                      actual_block_size * typesize));
     }
@@ -246,17 +250,20 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     ina_rc_t rc;
 
     if (!cont->catarr->filled) {
-        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
+        IARRAY_TRACE1(iarray.error, "The container is filled");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
     }
 
     if (blockshape == NULL) {
-        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
+        IARRAY_TRACE1(iarray.error, "The blockshape can not be NULL");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
     }
 
     INA_VERIFY_NOT_NULL(itr);
     *itr = (iarray_iter_read_block_t *) ina_mem_alloc(sizeof(iarray_iter_read_block_t));
     if (*itr == NULL) {
-        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+        IARRAY_TRACE1(iarray.error, "Error allocating iterator");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
     memcpy(*itr, &IARRAY_ITER_READ_BLOCK_EMPTY, sizeof(iarray_iter_read_block_t));
 
@@ -347,7 +354,8 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                     ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->psize * sizeof(float));
                 break;
             default:
-                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+                IARRAY_TRACE1(iarray.error, "The data type is invalid");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
     }
     rc = INA_SUCCESS;
@@ -418,12 +426,14 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                 if (itr->compressed_chunk_buffer) {
                     int err = blosc2_schunk_append_chunk(catarr->sc, itr->block, false);
                     if (err < 0) {
-                        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+                        IARRAY_TRACE1(iarray.error, "Error appending a chunk in a blosc schunk");
+                        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
                     }
                 } else {
                     int err = blosc2_schunk_append_buffer(catarr->sc, itr->block, (size_t) psizeb);
                     if (err < 0) {
-                        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+                        IARRAY_TRACE1(iarray.error, "Error appending a buffer in a blosc schunk");
+                        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
                     }
                 }
             } else {
@@ -480,7 +490,8 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                 free(part_aux);
 
                 if (err < 0) {
-                    INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+                    IARRAY_TRACE1(iarray.error, "Error appending a buffer in a blosc schunk");
+                    IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
                 }
             }
         }
@@ -489,7 +500,8 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
     // Check if a external buffer is needed
     if (itr->external_buffer) {
         if (bufsize < itr->block_shape_size * typesize + BLOSC_MAX_OVERHEAD) {
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
         }
         itr->block = buffer;
         itr->block_pointer = (void **) &itr->block;
@@ -560,13 +572,15 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                     int err = blosc2_schunk_append_chunk(catarr->sc, itr->block, false);
                     if (err < 0) {
                         // TODO: if the next call is not zero, it can be interpreted as there are more elements
-                        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+                        IARRAY_TRACE1(iarray.error, "Error appending a chunk to a blosc schunk");
+                        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
                     }
                 } else {
                     int err = blosc2_schunk_append_buffer(catarr->sc, itr->block, (size_t) psizeb);
                     if (err < 0) {
                         // TODO: if the next call is not zero, it can be interpreted as there are more elements
-                        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+                        IARRAY_TRACE1(iarray.error, "Error appending a chunk to a blosc schunk");
+                        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
                     }
                 }
             } else {
@@ -624,7 +638,8 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
 
                 if (err < 0) {
                     // TODO: if the next call is not zero, it can be interpreted as there are more elements
-                    INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+                    IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
+                    IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
                 }
                // memset(part_aux, 0, catarr->psize * catarr->sc->typesize);
 
@@ -659,17 +674,20 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     ina_rc_t rc;
 
     if (!cont->catarr->empty && cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_FULL_CONTAINER)); //TODO: Should we allow a rewrite a non-empty iarray cont
+        IARRAY_TRACE1(iarray.error, "The container can not be full");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_FULL_CONTAINER)); //TODO: Should we allow a rewrite a non-empty iarray cont
     }
 
     if (blockshape == NULL) {
-        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
+        IARRAY_TRACE1(iarray.error, "The blockshape can not be NULL");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
     }
 
     if (cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
         for (int i = 0; i < cont->dtshape->ndim; ++i) {
             if (blockshape[i] != cont->dtshape->pshape[i]) {
-                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_BSHAPE));
+                IARRAY_TRACE1(iarray.error, "The blockshape must be equal to the container pshape");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_BSHAPE));
             }
         }
     }
@@ -677,7 +695,8 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(itr);
     *itr = (iarray_iter_write_block_t *)ina_mem_alloc(sizeof(iarray_iter_write_block_t));
     if (*itr == NULL) {
-        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+        IARRAY_TRACE1(iarray.error, "Error allocating the iterator");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
 
     memcpy(*itr, &IARRAY_ITER_WRITE_BLOCK_EMPTY, sizeof(iarray_iter_write_block_t));
@@ -687,10 +706,11 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     caterva_dims_t shape = caterva_new_dims(cont->dtshape->shape, cont->dtshape->ndim);
     CATERVA_ERROR(caterva_update_shape(cont->catarr, &shape));
 
-    if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+    if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
         cont->catarr->buf = cont->catarr->ctx->alloc((size_t) cont->catarr->size * typesize);
         if (cont->catarr->buf == NULL) {
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+            IARRAY_TRACE1(iarray.error, "Error allocating the caterva buffer where data is stored");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
         }
     }
 
@@ -869,14 +889,14 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
 
         // Decompress the next block
         if (itr->cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && itr->cont->view == false) {
-            INA_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(itr->ctx,
+            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(itr->ctx,
                                                                   itr->cont,
                                                                   (int64_t *) start_,
                                                                   (int64_t *) stop_,
                                                                   (void **) &itr->part,
                                                                   buflen * typesize));
         } else {
-            INA_FAIL_IF_ERROR(iarray_get_slice_buffer(itr->ctx,
+            IARRAY_FAIL_IF_ERROR(iarray_get_slice_buffer(itr->ctx,
                                                          itr->cont,
                                                          (int64_t *) start_,
                                                          (int64_t *) stop_,
@@ -945,12 +965,14 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
     ina_rc_t rc;
 
     if (cont->catarr->filled != true) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_EMPTY_CONTAINER));
+        IARRAY_TRACE1(iarray.error, "The container must be filled");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_EMPTY_CONTAINER));
     }
 
     *itr = (iarray_iter_read_t*)ina_mem_alloc(sizeof(iarray_iter_read_t));
     if (*itr == NULL) {
-        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+        IARRAY_TRACE1(iarray.error, "Error allocating the iterator");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
     memcpy(*itr, &IARRAY_ITER_READ_EMPTY, sizeof(iarray_iter_read_t));
 
@@ -1032,7 +1054,8 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
             int err = blosc2_schunk_append_buffer(catarr->sc, itr->part,
                                                   (size_t) catarr->psize * typesize);
             if (err < 0) {
-                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+                IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
             }
 
             int64_t inc = 1;
@@ -1123,8 +1146,9 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
     ina_rc_t rc;
 
     *itr = (iarray_iter_write_t*) ina_mem_alloc(sizeof(iarray_iter_write_t));
-    if (itr == NULL) {
-        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    if (*itr == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error allocating the iterator");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
     memcpy(*itr, &IARRAY_ITER_WRITE_EMPTY, sizeof(iarray_iter_write_t));
 
@@ -1133,7 +1157,7 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
 
     (*itr)->ctx = ctx;
     (*itr)->container = cont;
-    if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+    if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
         (*itr)->part = (uint8_t *) cont->catarr->ctx->alloc((size_t)cont->catarr->psize *
             cont->catarr->ctx->cparams.typesize);
         cont->catarr->buf = (*itr)->part;

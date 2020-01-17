@@ -48,7 +48,7 @@ inline static ina_rc_t _iarray_test_container_dbl_buffer_cmp(
         double vdiff = fabs(a - b);
         if (vdiff > atol) {
             INA_TEST_MSG("Values differ in (%d nelem) (diff: %g)\n", i, vdiff);
-            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FALSE));
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FALSE));
         }
     }
     ina_mem_free(bufcmp);
@@ -73,7 +73,7 @@ inline static ina_rc_t _iarray_test_container_flt_buffer_cmp(
         double vdiff = fabs(a - b);
         if (vdiff > atol) {
             INA_TEST_MSG("Values differ in (%d nelem) (diff: %g)\n", i, vdiff);
-            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FALSE));
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FALSE));
         }
     }
     ina_mem_free(bufcmp);
