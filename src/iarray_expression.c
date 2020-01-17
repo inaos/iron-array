@@ -170,11 +170,11 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
             bool needs_free;
             int retcode = blosc2_schunk_get_chunk(schunk, 0, &chunk, &needs_free);
             if (retcode < 0) {
-                printf("Cannot retrieve the chunk in position %d\n", 0);
                 if (chunk != NULL) {
                     free(chunk);
                 }
-                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+                IARRAY_TRACE1(iarray.error, "Error getting  chunk from a blosc schunk");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
             }
 
             size_t chunksize, cbytes, blocksize;
@@ -190,8 +190,8 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
             e->chunksize = schunk->chunksize;
         }
         else {
-            fprintf(stderr, "Flag %d is not supported\n", e->ctx->cfg->eval_flags);
-            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
+            IARRAY_TRACE1(iarray.error, "Flag is not supported in evaluator");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
         }
     }
 
@@ -213,8 +213,8 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
         temp_var_dim0 = e->chunksize / e->typesize;
         e->blocksize = 0;
     } else {
-        fprintf(stderr, "Flag %d is not supported\n", e->ctx->cfg->eval_flags);
-        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
+        IARRAY_TRACE1(iarray.error, "Flag is not supported in evaluator");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
     }
     dtshape_var.shape[0] = temp_var_dim0;
     dtshape_var.dtype = e->vars[0].c->dtshape->dtype;
@@ -293,7 +293,8 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     int err = 0;
     e->texpr = te_compile(e, ina_str_cstr(e->expr), te_vars, e->nvars, &err);
     if (e->texpr == 0) {
-        INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_COMPILED));
+        IARRAY_TRACE1(iarray.error, "Error compiling the expression");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_COMPILED));
     }
     INA_FAIL_IF_ERROR(
         jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars, jug_vars, &e->jug_expr_func)
@@ -333,7 +334,7 @@ ina_rc_t iarray_eval_cleanup(iarray_expression_t *e, int64_t nitems_written)
 
     int64_t nitems_in_schunk = e->nbytes / e->typesize;
     if (nitems_written != nitems_in_schunk) {
-        printf("nitems written is different from items in final container\n");
+        IARRAY_TRACE1(iarray.error, "The number of items written is different from items in final container");
         return INA_ERROR(INA_ERR_NOT_COMPLETE);
     }
 
@@ -416,7 +417,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     int nvars = e->nvars;
 
     if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        fprintf(stderr, "ITERBLOSC eval can't be used with a plainbuffer output container.\n");
+        IARRAY_TRACE1(iarray.error, "ITERBLOSC eval can't be used with a plainbuffer output container");
         INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
         goto fail_iterblosc;
     }
@@ -490,6 +491,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         }
         blosc2_free_ctx(cctx);
         if (csize <= 0) {
+            IARRAY_TRACE1(iarray.error, "Error compressing a blosc chunk");
             INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
             goto fail_iterblosc;
         }
@@ -501,6 +503,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
             int nbytes = blosc_decompress(temp, out_value.block_pointer, out_items * e->typesize);
             free(temp);
             if (nbytes <= 0) {
+                IARRAY_TRACE1(iarray.error, "Error decompressing a chunk");
                 INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
                 goto fail_iterblosc;
             }
@@ -689,7 +692,8 @@ ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)
             type_size = sizeof(float);
             break;
         default:
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+            IARRAY_TRACE1(iarray.error, "The data type is invalid");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
     for (int i = 0; i < dtshape->ndim; ++i) {
         *size += dtshape->shape[i] * type_size;
@@ -760,7 +764,7 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
 #endif
 
     err = iarray_temporary_new(expr, NULL, &dtshape, &out);
-    INA_FAIL_IF_ERROR(err);
+    IARRAY_FAIL_IF_ERROR(err);
 
     switch (dtshape.dtype) {
         case IARRAY_DATA_TYPE_DOUBLE: {
@@ -840,7 +844,7 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
                     vdTanh(len, operand1_pointer, out_pointer);
                     break;
                 default:
-                    printf("Operation not supported yet");
+                    IARRAY_TRACE1(iarray.error, "Operation not supported yet");
                     goto fail;
             }
         }
@@ -922,13 +926,13 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
                     vsTanh(len, operand1_pointer, out_pointer);
                     break;
                 default:
-                    printf("Operation not supported yet");
+                    IARRAY_TRACE1(iarray.error, "Operation not supported yet");
                     goto fail;
             }
         }
         break;
         default:
-            printf("Operation not supported yet");
+            IARRAY_TRACE1(iarray.error, "Operation not supported yet");
             goto fail;
     }
 
@@ -1003,7 +1007,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
 #endif
 
     err = iarray_temporary_new(expr, NULL, &dtshape, &out);
-    INA_FAIL_IF_ERROR(err);
+    IARRAY_FAIL_IF_ERROR(err);
 
     switch (dtshape.dtype) {
         case IARRAY_DATA_TYPE_DOUBLE: {
@@ -1023,7 +1027,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     out->scalar_value.d = lhs->scalar_value.d / rhs->scalar_value.d;
                     break;
                 default:
-                    printf("Operation not supported yet");
+                    IARRAY_TRACE1(iarray.error, "Operation not supported yet");
                     goto fail;
                 }
             }
@@ -1053,7 +1057,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     }
                     break;
                 default:
-                    printf("Operation not supported yet");
+                    IARRAY_TRACE1(iarray.error, "Operation not supported yet");
                     goto fail;
                 }
             }
@@ -1080,12 +1084,12 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     }
                     break;
                 default:
-                    printf("Operation not supported yet");
+                    IARRAY_TRACE1(iarray.error, "Operation not supported yet");
                     goto fail;
                 }
             }
             else {
-                printf("DTshape combination not supported yet\n");
+                IARRAY_TRACE1(iarray.error, "Dtshape combination not supported yet\n");
                 goto fail;
             }
         }
@@ -1107,7 +1111,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     out->scalar_value.f = lhs->scalar_value.f / rhs->scalar_value.f;
                     break;
                 default:
-                    printf("Operation not supported yet");
+                    IARRAY_TRACE1(iarray.error, "Operation not supported yet");
                     goto fail;
                 }
             }
@@ -1137,7 +1141,7 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     }
                     break;
                 default:
-                    printf("Operation not supported yet");
+                    IARRAY_TRACE1(iarray.error, "Operation not supported yet");
                     goto fail;
                 }
             }
@@ -1164,18 +1168,18 @@ static iarray_temporary_t* _iarray_op(iarray_expression_t *expr, iarray_temporar
                     }
                     break;
                 default:
-                    printf("Operation not supported yet");
+                    IARRAY_TRACE1(iarray.error, "Operation not supported yet");
                     goto fail;
                 }
             }
             else {
-                printf("DTshape combination not supported yet\n");
+                IARRAY_TRACE1(iarray.error, "Dtshape combination not supported yet\n");
                 goto fail;
             }
         }
         break;
         default:  // switch (dtshape.dtype)
-            printf("data type not supported yet\n");
+            IARRAY_TRACE1(iarray.error, "Data type not supported yet\n");
             goto fail;
     }
 

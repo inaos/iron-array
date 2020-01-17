@@ -118,6 +118,8 @@ steps:
         ./tests
     fi
   displayName: Execute tests
+  env:
+    INAC_TRACE: ""
 
 - bash: |
     cd cmake-build-$BUILD_CONFIGURATION
