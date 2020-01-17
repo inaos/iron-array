@@ -20,7 +20,7 @@ static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx,
 {
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_from_file(ctx, &store_y, &c_y, true));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_load(ctx, &store_y, &c_y, true));
 
     iarray_dtshape_t xdtshape;
     iarray_get_dtshape(ctx, c_y, &xdtshape);
