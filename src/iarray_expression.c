@@ -51,6 +51,7 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e
     *e = ina_mem_alloc(sizeof(iarray_expression_t));
     INA_RETURN_IF_NULL(e);
     (*e)->ctx = ctx;
+    (*e)->expr = NULL;
     (*e)->nvars = 0;
     (*e)->max_out_len = 0;   // helper for leftovers
     ina_mem_set(&(*e)->vars, 0, sizeof(_iarray_tinyexpr_var_t)*_IARRAY_EXPR_VAR_MAX);
