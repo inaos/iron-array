@@ -24,7 +24,7 @@ int main()
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_t *ctx;
-    INA_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
+    IARRAY_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
 
     iarray_dtshape_t dtshape;
     dtshape.ndim = ndim;
@@ -37,7 +37,7 @@ int main()
         size *= shape[i];
     }
     iarray_container_t *cont;
-    INA_FAIL_IF_ERROR(iarray_arange(ctx, &dtshape, 0, size, 1, NULL, 0, &cont));
+    IARRAY_FAIL_IF_ERROR(iarray_arange(ctx, &dtshape, 0, size, 1, NULL, 0, &cont));
 
     int64_t start[] = {2, 3};
     int64_t stop[] = {9, 7};
@@ -49,10 +49,10 @@ int main()
     uint8_t *sview;
     int64_t sview_len;
 
-    INA_FAIL_IF_ERROR(iarray_to_sview(ctx, cout, &sview, &sview_len));
+    IARRAY_FAIL_IF_ERROR(iarray_to_sview(ctx, cout, &sview, &sview_len));
 
     iarray_container_t *cview;
-    INA_FAIL_IF_ERROR(iarray_from_sview(ctx, sview, sview_len, &cview));
+    IARRAY_FAIL_IF_ERROR(iarray_from_sview(ctx, sview, sview_len, &cview));
 
     return INA_SUCCESS;
 
