@@ -85,17 +85,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     }
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
 
-
-    char* fname = NULL;
-    if (flags & IARRAY_CONTAINER_PERSIST) {
-        fname = (char*)store->id;
-    }
-    blosc2_frame *frame = blosc2_new_frame(fname);
-    if (frame == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error creating a frame");
-        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
-    }
-
     (*c)->cparams = (blosc2_cparams*)ina_mem_alloc(sizeof(blosc2_cparams));
     if ((*c)->cparams == NULL) {
         IARRAY_TRACE1(iarray.error, "Error allocating the blosc cparams");
@@ -165,14 +154,33 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     dparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
     ina_mem_cpy((*c)->dparams, &dparams, sizeof(blosc2_dparams));
 
+    if (store != NULL) {
+        (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
+        if ((*c)->store == NULL) {
+            IARRAY_TRACE1(iarray.error, "Error allocating the store parameters");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+        }
+        if (store->id != NULL) {
+            (*c)->store->id = ina_str_new_fromcstr(store->id);
+        } else {
+            (*c)->store->id = NULL;
+        }
+    } else {
+        (*c)->store = NULL;
+    }
+
     cat_ctx = caterva_new_ctx(NULL, NULL, cparams, dparams);
     if (cat_ctx == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error creating the caterva context");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
     caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
 
-    if (flags & IARRAY_CONTAINER_PERSIST) {
+    if ((*c)->store != NULL) {
+        blosc2_frame *frame = blosc2_new_frame((*c)->store->id);
+        if (frame == NULL) {
+            IARRAY_TRACE1(iarray.error, "Error creating a frame");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+        }
         (*c)->catarr = caterva_empty_array(cat_ctx, frame, &pshape);
     }
     else if (pshape.dims[0] != 0) {
@@ -184,33 +192,27 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         }
         (*c)->catarr = caterva_empty_array(cat_ctx, NULL, NULL);
     }
+
     if (cat_ctx != NULL) caterva_free_ctx(cat_ctx);
     if ((*c)->catarr == NULL) {
         IARRAY_TRACE1(iarray.error, "Error creating the caterva container");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
 
-    if (flags & IARRAY_CONTAINER_PERSIST) {
-        (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
-        if ((*c)->store == NULL) {
-            IARRAY_TRACE1(iarray.error, "Error allocating the store parameters");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
-        }
-        (*c)->store->id = ina_str_new_fromcstr(store->id);
-        uint8_t *smeta;
-        int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
-        if (smeta_len < 0) {
-            IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
-        }
+    uint8_t *smeta;
+    int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
+    if (smeta_len < 0) {
+        IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
+    if ((*c)->catarr->storage == CATERVA_STORAGE_BLOSC) {
         // And store it in iarray metalayer
-        if(blosc2_add_metalayer((*c)->catarr->sc, "iarray", smeta, (uint32_t)smeta_len) < 0) {
+        if (blosc2_add_metalayer((*c)->catarr->sc, "iarray", smeta, (uint32_t) smeta_len) < 0) {
             IARRAY_TRACE1(iarray.error, "Error adding a metalayer to blosc");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
         }
         free(smeta);
     }
-
     rc = INA_SUCCESS;
     goto cleanup;
     fail:
