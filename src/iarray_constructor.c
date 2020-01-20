@@ -728,10 +728,13 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     if (flags & IARRAY_CONTAINER_PERSIST) {
         fname = (char*)store->id;
     }
-    blosc2_frame *frame = blosc2_new_frame(fname);
-    if (frame == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error creating a new blosc2 frame");
-        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+    blosc2_frame *frame = NULL;
+    if (src->catarr->sc->frame) {
+        frame = blosc2_new_frame(fname);
+        if (frame == NULL) {
+            IARRAY_TRACE1(iarray.error, "Error creating a new blosc2 frame");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+        }
     }
     (*dest) = (iarray_container_t *) ina_mem_alloc(sizeof(iarray_container_t));
     (*dest)->dtshape = (iarray_dtshape_t *) ina_mem_alloc(sizeof(iarray_dtshape_t));
