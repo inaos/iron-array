@@ -25,7 +25,9 @@ static ina_rc_t test_buffer(iarray_context_t *ctx,
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        xdtshape.pshape[i] = pshape[i];
+        if (pshape != NULL) {
+            xdtshape.pshape[i] = pshape[i];
+        }
     }
 
     int64_t buf_size = 1;
@@ -46,9 +48,16 @@ static ina_rc_t test_buffer(iarray_context_t *ctx,
         }
     }
 
+    iarray_store_properties_t xstore = {.filename=NULL, .enforce_frame=false};
+    if (pshape == NULL) {
+        xstore.storage_type = IARRAY_STORAGE_PLAINBUFFER;
+    } else {
+        xstore.storage_type = IARRAY_STORAGE_BLOSC;
+    }
+
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf_src, (size_t) buf_size, NULL, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf_src, (size_t) buf_size, &xstore, 0, &c_x));
 
     uint8_t *buf_dest = malloc((size_t)buf_size * type_size);
 
@@ -106,7 +115,7 @@ INA_TEST_FIXTURE(constructor_buffer, 4_f_p)
 
     int8_t ndim = 4;
     int64_t shape[] = {10, 12, 10, 13};
-    int64_t pshape[] = {0, 0, 0, 0};
+    int64_t *pshape = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_buffer(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
@@ -123,7 +132,7 @@ INA_TEST_FIXTURE(constructor_buffer, 5_d)
     INA_TEST_ASSERT_SUCCEED(test_buffer(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
 
-INA_TEST_FIXTURE(constructor_buffer, 7_f_p)
+INA_TEST_FIXTURE(constructor_buffer, 7_f)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);

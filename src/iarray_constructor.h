@@ -62,14 +62,16 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         IARRAY_TRACE1(iarray.error, "The container dimension is larger than caterva maximum dimension");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
     }
-    if (flags & IARRAY_CONTAINER_PERSIST && store == NULL) {
+    if (flags & IARRAY_CONTAINER_PERSIST && store->filename == NULL) {
         IARRAY_TRACE1(iarray.error, "Error with persistency flags");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
     }
-    for (int i = 0; i < dtshape->ndim; ++i) {
-        if (dtshape->shape[i] < dtshape->pshape[i]) {
-            IARRAY_TRACE1(iarray.error, "The pshape is larger than the shape");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
+    if (store->storage_type == IARRAY_STORAGE_BLOSC) {
+        for (int i = 0; i < dtshape->ndim; ++i) {
+            if (dtshape->shape[i] < dtshape->pshape[i]) {
+                IARRAY_TRACE1(iarray.error, "The pshape is larger than the shape");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
+            }
         }
     }
 
@@ -155,37 +157,31 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     dparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
     ina_mem_cpy((*c)->dparams, &dparams, sizeof(blosc2_dparams));
 
-    if (store != NULL) {
-        (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
-        if ((*c)->store == NULL) {
-            IARRAY_TRACE1(iarray.error, "Error allocating the store parameters");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
-        }
-        if (store->filename != NULL) {
-            (*c)->store->id = ina_str_new_fromcstr(store->filename);
-        } else {
-            (*c)->store->id = NULL;
-        }
-    } else {
-        (*c)->store = NULL;
+    (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
+    if ((*c)->store == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error allocating the store parameters");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
+    ina_mem_cpy((*c)->store, store, sizeof(iarray_store_properties_t));
+
 
     cat_ctx = caterva_new_ctx(NULL, NULL, cparams, dparams);
     if (cat_ctx == NULL) {
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
-    caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
 
-    if ((*c)->store != NULL) {
-        blosc2_frame *frame = blosc2_new_frame((*c)->store->id);
-        if (frame == NULL) {
-            IARRAY_TRACE1(iarray.error, "Error creating a frame");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    if ((*c)->store->storage_type == IARRAY_STORAGE_BLOSC) {
+        blosc2_frame *frame = NULL;
+        caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
+
+        if ((*c)->store->enforce_frame) {
+            frame = blosc2_new_frame((*c)->store->filename);
+            if (frame == NULL) {
+                IARRAY_TRACE1(iarray.error, "Error creating a frame");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+            }
         }
         (*c)->catarr = caterva_empty_array(cat_ctx, frame, &pshape);
-    }
-    else if (pshape.dims[0] != 0) {
-        (*c)->catarr = caterva_empty_array(cat_ctx, NULL, &pshape);
     } else {
         for (int i = 0; i < dtshape->ndim; ++i) {
             (*c)->dtshape->pshape[i] = dtshape->shape[i];

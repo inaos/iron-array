@@ -229,7 +229,7 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, iarray_store_prop
         IARRAY_TRACE1(iarray.error, "Error allocating the store parameter");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
-    (*container)->store->id = ina_str_new_fromcstr(store->filename);
+    (*container)->store->filename = ina_str_new_fromcstr(store->filename);
 
     rc = INA_SUCCESS;
     goto cleanup;

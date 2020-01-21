@@ -117,7 +117,7 @@ typedef enum iarray_storage_format_e {
 
 typedef enum iarray_storage_type_e {
     IARRAY_STORAGE_PLAINBUFFER = 0,
-    IARRAY_STORAGE_CATERVA = 1,
+    IARRAY_STORAGE_BLOSC = 1,
 } iarray_storage_type_t;
 
 typedef struct iarray_store_properties_s {

@@ -27,9 +27,16 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
         size *= shape[i];
     }
 
+    iarray_store_properties_t xstore = {.filename=NULL, .enforce_frame=false};
+    if (pshape == NULL) {
+        xstore.storage_type = IARRAY_STORAGE_PLAINBUFFER;
+    } else {
+        xstore.storage_type = IARRAY_STORAGE_BLOSC;
+    }
+
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, &xstore, 0, &c_x));
 
     // Test write iterator
     iarray_iter_write_block_t *I;
@@ -82,8 +89,10 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
         xdtshape.shape[1] = aux;
     }
 
+    iarray_store_properties_t ystore = {.filename=NULL, .enforce_frame=false, .storage_type=IARRAY_STORAGE_BLOSC};
+
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->size * type_size, NULL, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->size * type_size, &ystore, 0, &c_y));
 
     if (ndim == 2) {
         INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x));
@@ -157,7 +166,7 @@ INA_TEST_FIXTURE(block_iterator, 2_d_p) {
 
     int8_t ndim = 2;
     int64_t shape[] = {5, 5};
-    int64_t pshape[] = {0, 0};
+    int64_t *pshape = NULL;
     int64_t blockshape[] = {3, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_block_iterator(data->ctx, dtype, type_size, ndim, shape, pshape,
@@ -197,7 +206,7 @@ INA_TEST_FIXTURE(block_iterator, 5_f_p) {
 
     int8_t ndim = 5;
     int64_t shape[] = {40, 26, 35, 23, 21};
-    int64_t pshape[] = {0, 0, 0, 0, 0};
+    int64_t *pshape = NULL;
     int64_t blockshape[] = {12, 12, 12, 12, 12};
 
     INA_TEST_ASSERT_SUCCEED(test_block_iterator(data->ctx, dtype, type_size, ndim, shape, pshape,
@@ -210,7 +219,7 @@ INA_TEST_FIXTURE(block_iterator, 6_d_p) {
 
     int8_t ndim = 6;
     int64_t shape[] = {12, 13, 21, 19, 13, 15};
-    int64_t pshape[] = {0, 0, 0, 0, 0, 0};
+    int64_t *pshape = NULL;
     int64_t blockshape[] = {2, 3, 5, 4, 3, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_block_iterator(data->ctx, dtype, type_size, ndim, shape, pshape,
