@@ -69,7 +69,7 @@ INA_TEST_TEARDOWN(random_mt) {
 INA_TEST_FIXTURE(random_mt, rand) {
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_rand_d.iarray";
+    store_y.filename = "test_rand_d.iarray";
 
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
@@ -79,7 +79,7 @@ INA_TEST_FIXTURE(random_mt, rand) {
 INA_TEST_FIXTURE(random_mt, rand_f) {
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_rand_f.iarray";
+    store_y.filename = "test_rand_f.iarray";
 
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
@@ -89,7 +89,7 @@ INA_TEST_FIXTURE(random_mt, rand_f) {
 INA_TEST_FIXTURE(random_mt, randn) {
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_randn_d.iarray";
+    store_y.filename = "test_randn_d.iarray";
 
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
@@ -99,7 +99,7 @@ INA_TEST_FIXTURE(random_mt, randn) {
 INA_TEST_FIXTURE(random_mt, randn_f) {
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_randn_f.iarray";
+    store_y.filename = "test_randn_f.iarray";
 
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
@@ -113,7 +113,7 @@ INA_TEST_FIXTURE(random_mt, beta) {
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 4.);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_beta_d_3_4.iarray";
+    store_y.filename = "test_beta_d_3_4.iarray";
 
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
@@ -126,7 +126,7 @@ INA_TEST_FIXTURE(random_mt, beta_f) {
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 5.0f);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_beta_f_01_5.iarray";
+    store_y.filename = "test_beta_f_01_5.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
                                       &iarray_random_beta));
@@ -138,7 +138,7 @@ INA_TEST_FIXTURE(random_mt, lognormal) {
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 4.);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_lognormal_d_3_4.iarray";
+    store_y.filename = "test_lognormal_d_3_4.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
                                       &iarray_random_lognormal));
@@ -150,7 +150,7 @@ INA_TEST_FIXTURE(random_mt, lognormal_f) {
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 5.f);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_lognormal_f_01_5.iarray";
+    store_y.filename = "test_lognormal_f_01_5.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
                                       &iarray_random_lognormal));
@@ -161,7 +161,7 @@ INA_TEST_FIXTURE(random_mt, exponential) {
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 3.0f);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_exponential_d_3.iarray";
+    store_y.filename = "test_exponential_d_3.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
                                       &iarray_random_exponential));
@@ -172,7 +172,7 @@ INA_TEST_FIXTURE(random_mt, exponential_f) {
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 0.1f);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_exponential_f_01.iarray";
+    store_y.filename = "test_exponential_f_01.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
                                       &iarray_random_exponential));
@@ -184,7 +184,7 @@ INA_TEST_FIXTURE(random_mt, uniform) {
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_B, 5.);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_uniform_d_3_5.iarray";
+    store_y.filename = "test_uniform_d_3_5.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
                                       &iarray_random_uniform));
@@ -196,7 +196,7 @@ INA_TEST_FIXTURE(random_mt, uniform_f) {
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_B, 0.2f);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_uniform_f_01_02.iarray";
+    store_y.filename = "test_uniform_f_01_02.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
                                       &iarray_random_uniform));
@@ -208,7 +208,7 @@ INA_TEST_FIXTURE(random_mt, normal) {
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 5.);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_normal_d_3_5.iarray";
+    store_y.filename = "test_normal_d_3_5.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
                                       &iarray_random_normal));
@@ -220,7 +220,7 @@ INA_TEST_FIXTURE(random_mt, normal_f) {
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 0.2f);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_normal_f_01_02.iarray";
+    store_y.filename = "test_normal_f_01_02.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
                                       &iarray_random_normal));
@@ -232,7 +232,7 @@ INA_TEST_FIXTURE(random_mt, binomial) {
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.7f);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_binomial_d_3_07.iarray";
+    store_y.filename = "test_binomial_d_3_07.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
                                       &iarray_random_binomial));
@@ -244,7 +244,7 @@ INA_TEST_FIXTURE(random_mt, binomial_f) {
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.01f);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_binomial_f_10_001.iarray";
+    store_y.filename = "test_binomial_f_10_001.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y,
                                       &iarray_random_binomial));
@@ -256,7 +256,7 @@ INA_TEST_FIXTURE(random_mt, poisson) {
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_LAMBDA, 3.0f);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_poisson_d_3.iarray";
+    store_y.filename = "test_poisson_d_3.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y, &iarray_random_poisson));
 }
@@ -267,7 +267,7 @@ INA_TEST_FIXTURE(random_mt, poisson_f) {
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_LAMBDA, 0.001f);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_poisson_f_001.iarray";
+    store_y.filename = "test_poisson_f_001.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y, &iarray_random_poisson));
 }
@@ -277,7 +277,7 @@ INA_TEST_FIXTURE(random_mt, bernouilli) {
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.7f);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_bernoulli_d_07.iarray";
+    store_y.filename = "test_bernoulli_d_07.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y, &iarray_random_bernoulli));
 }
@@ -292,7 +292,7 @@ INA_TEST_FIXTURE(random_mt, bernoulli_f) {
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.01f);
 
     iarray_store_properties_t store_y;
-    store_y.id = "test_bernoulli_f_001.iarray";
+    store_y.filename = "test_bernoulli_f_001.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, store_y, &iarray_random_bernoulli));
 }

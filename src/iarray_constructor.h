@@ -47,6 +47,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(c);
 
     blosc2_cparams cparams = {0};
@@ -160,8 +161,8 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
             IARRAY_TRACE1(iarray.error, "Error allocating the store parameters");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
         }
-        if (store->id != NULL) {
-            (*c)->store->id = ina_str_new_fromcstr(store->id);
+        if (store->filename != NULL) {
+            (*c)->store->id = ina_str_new_fromcstr(store->filename);
         } else {
             (*c)->store->id = NULL;
         }

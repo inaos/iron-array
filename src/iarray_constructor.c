@@ -89,6 +89,7 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     ina_rc_t rc;
@@ -155,6 +156,7 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
 
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     ina_rc_t rc;
@@ -216,6 +218,7 @@ INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     ina_rc_t rc;
@@ -251,6 +254,7 @@ INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     ina_rc_t rc;
@@ -288,6 +292,7 @@ INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx,
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     ina_rc_t rc;
@@ -315,6 +320,7 @@ INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     ina_rc_t rc;
@@ -345,6 +351,7 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(buffer);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     ina_rc_t rc;
@@ -721,12 +728,13 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
 
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(src);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(dest);
     ina_rc_t rc;
 
     char* fname = NULL;
     if (flags & IARRAY_CONTAINER_PERSIST) {
-        fname = (char*)store->id;
+        fname = (char*)store->filename;
     }
     blosc2_frame *frame = NULL;
     if (src->catarr->sc->frame) {
