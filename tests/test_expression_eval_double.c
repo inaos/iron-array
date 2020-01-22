@@ -122,9 +122,19 @@ static double expr_(const double x)
     return (x - 2.3) * (x - 1.35) * (x + 4.2);
 }
 
-INA_TEST_FIXTURE_SKIP(expression_eval_double, iterblosc_superchunk)
+INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC;
+    data->func = expr_;
+    data->expr_str = "(x - 2.3) * (x - 1.35) * (x + 4.2)";
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
+                                                 data->buf_len, false, data->func, data->expr_str));
+}
+
+INA_TEST_FIXTURE(expression_eval_double, iterblosc2_superchunk)
+{
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC2;
     data->func = expr_;
     data->expr_str = "(x - 2.3) * (x - 1.35) * (x + 4.2)";
 
