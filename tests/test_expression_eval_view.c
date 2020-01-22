@@ -160,7 +160,7 @@ static double expr2(const double x)
     return sinh(x) + (cosh(x) - 1.35) - tanh(x + .2);
 }
 
-INA_TEST_FIXTURE(expression_eval_view, iterblosc_superchunk)
+INA_TEST_FIXTURE_SKIP(expression_eval_view, iterblosc_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC;
     data->func = expr2;
