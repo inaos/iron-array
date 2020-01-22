@@ -794,6 +794,9 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             fprintf(stderr, "Invalid eval method.\n");
             return IARRAY_ERR_INVALID_EVAL_METHOD;
     }
+    if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        free(out_pshape);
+    }
 }
 
 ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)
