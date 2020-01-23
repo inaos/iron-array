@@ -55,12 +55,17 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const float *buffer_x
     shape.shape[0] = NELEM;
     shape.pshape[0] = plain_buffer ? 0 : NITEMS_CHUNK;
 
+    iarray_store_properties_t store;
+    store.storage_type = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
+    store.enforce_frame = false;
+    store.filename = NULL;
+
     _fill_y(buffer_x, buffer_y, func);
 
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, (void*)buffer_x, buffer_len, NULL, 0, &c_x));
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &shape, NULL, 0, &c_out));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, (void*)buffer_x, buffer_len, &store, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &shape, &store, 0, &c_out));
 
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));

@@ -25,8 +25,14 @@ static ina_rc_t test_ones(iarray_context_t *ctx,
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        xdtshape.pshape[i] = pshape[i];
+        if (pshape)
+            xdtshape.pshape[i] = pshape[i];
     }
+
+    iarray_store_properties_t store;
+    store.storage_type = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
+    store.enforce_frame = true;
+    store.filename = NULL;
 
     int64_t buf_size = 1;
     for (int j = 0; j < ndim; ++j) {
@@ -37,7 +43,7 @@ static ina_rc_t test_ones(iarray_context_t *ctx,
 
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_ones(ctx, &xdtshape, NULL, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_ones(ctx, &xdtshape, &store, 0, &c_x));
 
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf_dest, (size_t)buf_size * type_size));
 
@@ -93,7 +99,7 @@ INA_TEST_FIXTURE(constructor_ones, 4_f_p)
 
     int8_t ndim = 4;
     int64_t shape[] = {10, 21, 10, 21};
-    int64_t pshape[] = {0, 0, 0, 0};
+    int64_t *pshape = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_ones(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
@@ -117,7 +123,7 @@ INA_TEST_FIXTURE(constructor_ones, 7_f_p)
 
     int8_t ndim = 7;
     int64_t shape[] = {8, 5, 4, 5, 7, 8, 4};
-    int64_t pshape[] = {4, 3, 2, 4, 3, 7, 2};
+    int64_t *pshape = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_ones(data->ctx, dtype, type_size, ndim, shape, pshape));
 }

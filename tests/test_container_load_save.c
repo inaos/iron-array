@@ -36,17 +36,19 @@ static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, 
     iarray_container_t *c_x;
 
     int flags = 0;
-    iarray_store_properties_t* store = NULL;
+    iarray_store_properties_t store;
+    store.storage_type = IARRAY_STORAGE_BLOSC;
+    store.filename = NULL;
+    store.enforce_frame = false;
     if (frame) {
-        if (fname) {
-            store = &(iarray_store_properties_t) {.filename = filename};
-            flags = IARRAY_CONTAINER_PERSIST;
-        } else {
-            store = &(iarray_store_properties_t) {.filename = NULL};
-        }
+        store.enforce_frame = true;
+    }
+    if (fname) {
+        store.filename = filename;
+        flags = IARRAY_CONTAINER_PERSIST;
     }
 
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, store, flags, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, flags, &c_x));
 
 
     if (!frame || !fname) {

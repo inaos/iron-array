@@ -284,7 +284,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
             IARRAY_TRACE1(iarray.error, "Start is bigger than stop");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
         }
-        if (pshape[i] > stop_[i] - start_[i]){
+        if (store->storage_type == IARRAY_STORAGE_BLOSC && pshape[i] > stop_[i] - start_[i]){
             IARRAY_TRACE1(iarray.error, "The pshape is bigger than shape");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_PSHAPE));
         }
@@ -297,7 +297,8 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
 
         for (int i = 0; i < dtshape.ndim; ++i) {
             dtshape.shape[i] = stop_[i] - start_[i];
-            dtshape.pshape[i] = pshape[i];
+            if (pshape)
+                dtshape.pshape[i] = pshape[i];
         }
 
         IARRAY_FAIL_IF_ERROR(_iarray_view_new(ctx, c, &dtshape, start_, container));
@@ -315,7 +316,8 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
 
         for (int i = 0; i < dtshape.ndim; ++i) {
             dtshape.shape[i] = stop_[i] - start_[i];
-            dtshape.pshape[i] = pshape[i];
+            if (pshape)
+                dtshape.pshape[i] = pshape[i];
         }
 
         // Check if matrix is transposed

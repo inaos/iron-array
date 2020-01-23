@@ -23,12 +23,17 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        xdtshape.pshape[i] = pshape[i];
+        if (pshape)
+            xdtshape.pshape[i] = pshape[i];
     }
 
-    iarray_container_t *c_x;
+    iarray_store_properties_t store;
+    store.storage_type = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
+    store.enforce_frame = false;
+    store.filename = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x));
+    iarray_container_t *c_x;
+    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, &store, 0, &c_x));
 
     // Start Iterator
     iarray_iter_write_t *I;
@@ -97,7 +102,7 @@ INA_TEST_FIXTURE(iterator, 2_d_p) {
 
     int8_t ndim = 2;
     int64_t shape[] = {4, 6};
-    int64_t pshape[] = {0, 0};
+    int64_t *pshape = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
@@ -133,7 +138,7 @@ INA_TEST_FIXTURE(iterator, 4_f_p) {
 
     int8_t ndim = 4;
     int64_t shape[] = {15, 18, 14, 13};
-    int64_t pshape[] = {0, 0, 0, 0};
+    int64_t *pshape = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
@@ -144,7 +149,7 @@ INA_TEST_FIXTURE(iterator, 5_d_p) {
 
     int8_t ndim = 5;
     int64_t shape[] = {15, 18, 17, 13, 13};
-    int64_t pshape[] = {0, 0, 0, 0, 0};
+    int64_t *pshape = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
@@ -177,7 +182,7 @@ INA_TEST_FIXTURE(iterator, 8_f_p) {
 
     int8_t ndim = 8;
     int64_t shape[] = {5, 7, 8, 9, 6, 5, 3, 5};
-    int64_t pshape[] = {0, 0, 0, 0, 0, 0, 0, 0};
+    int64_t *pshape = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
