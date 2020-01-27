@@ -56,7 +56,7 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const float *buffer_x
     shape.pshape[0] = plain_buffer ? 0 : NITEMS_CHUNK;
 
     iarray_store_properties_t store;
-    store.storage_type = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
+    store.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;
 

@@ -29,7 +29,7 @@ static ina_rc_t test_cfg(iarray_context_t *ctx,
     }
 
     iarray_store_properties_t xstore;
-    xstore.storage_type = (pshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
+    xstore.backend = (pshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     xstore.enforce_frame = false;
     xstore.filename = NULL;
 

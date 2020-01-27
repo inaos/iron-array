@@ -37,7 +37,7 @@ static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, 
 
     int flags = 0;
     iarray_store_properties_t store;
-    store.storage_type = IARRAY_STORAGE_BLOSC;
+    store.backend = IARRAY_STORAGE_BLOSC;
     store.filename = NULL;
     store.enforce_frame = false;
     if (frame) {

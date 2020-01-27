@@ -29,7 +29,7 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
     }
 
     iarray_store_properties_t store;
-    store.storage_type = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
+    store.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     store.enforce_frame = false;
     store.filename = NULL;
 

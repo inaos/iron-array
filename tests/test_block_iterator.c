@@ -29,7 +29,7 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     }
 
     iarray_store_properties_t xstore;
-    xstore.storage_type = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
+    xstore.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.enforce_frame = false;
     xstore.filename = NULL;
 
@@ -253,7 +253,7 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
     }
 
     iarray_store_properties_t xstore;
-    xstore.storage_type = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
+    xstore.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.enforce_frame = false;
     xstore.filename = NULL;
 
@@ -522,7 +522,7 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
     }
 
     iarray_store_properties_t xstore;
-    xstore.storage_type = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
+    xstore.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.enforce_frame = false;
     xstore.filename = NULL;
 

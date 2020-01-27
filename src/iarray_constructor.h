@@ -66,7 +66,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         IARRAY_TRACE1(iarray.error, "Error with persistency flags");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
     }
-    if (store->storage_type == IARRAY_STORAGE_BLOSC) {
+    if (store->backend == IARRAY_STORAGE_BLOSC) {
         for (int i = 0; i < dtshape->ndim; ++i) {
             if (dtshape->shape[i] < dtshape->pshape[i]) {
                 IARRAY_TRACE1(iarray.error, "The pshape is larger than the shape");
@@ -170,7 +170,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
 
-    if ((*c)->store->storage_type == IARRAY_STORAGE_BLOSC) {
+    if ((*c)->store->backend == IARRAY_STORAGE_BLOSC) {
         blosc2_frame *frame = NULL;
         caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
 

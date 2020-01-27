@@ -50,9 +50,9 @@ static ina_rc_t test_buffer(iarray_context_t *ctx,
 
     iarray_store_properties_t xstore = {.filename=NULL, .enforce_frame=false};
     if (pshape == NULL) {
-        xstore.storage_type = IARRAY_STORAGE_PLAINBUFFER;
+        xstore.backend = IARRAY_STORAGE_PLAINBUFFER;
     } else {
-        xstore.storage_type = IARRAY_STORAGE_BLOSC;
+        xstore.backend = IARRAY_STORAGE_BLOSC;
     }
 
     iarray_container_t *c_x;

@@ -121,7 +121,7 @@ typedef enum iarray_storage_type_e {
 } iarray_storage_type_t;
 
 typedef struct iarray_store_properties_s {
-    iarray_storage_type_t storage_type;
+    iarray_storage_type_t backend;
     const char *filename;
     bool enforce_frame;
 } iarray_store_properties_t;
