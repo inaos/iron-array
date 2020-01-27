@@ -297,8 +297,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
 
         for (int i = 0; i < dtshape.ndim; ++i) {
             dtshape.shape[i] = stop_[i] - start_[i];
-            if (pshape)
-                dtshape.pshape[i] = pshape[i];
+            dtshape.pshape[i] = pshape ? pshape[i] : 0;
         }
 
         IARRAY_FAIL_IF_ERROR(_iarray_view_new(ctx, c, &dtshape, start_, container));
