@@ -74,8 +74,8 @@ int main()
     int64_t size_c = 100 * 100;
 
 
-    int64_t pshape_a[] = {0, 0};
-    int64_t pshape_b[] = {0, 0};
+    int64_t pshape_a[] = {10, 10};
+    int64_t pshape_b[] = {10, 10};
     int64_t pshape_c[] = {10, 10};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -90,8 +90,14 @@ int main()
         dtshape_x.shape[i] = shape_a[i];
         dtshape_x.pshape[i] = pshape_a[i];
     }
+
+    iarray_store_properties_t store;
+    store.backend = IARRAY_STORAGE_BLOSC;
+    store.enforce_frame = false;
+    store.filename = NULL;
+
     iarray_container_t *cont_a;
-    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_a, -100, 100, NULL, 0, &cont_a));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_a, -100, 100, &store, 0, &cont_a));
 
     iarray_dtshape_t dtshape_y;
     dtshape_y.ndim = ndim;
@@ -102,7 +108,7 @@ int main()
     }
 
     iarray_container_t *cont_b;
-    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_b, -100, 100, NULL, 0, &cont_b));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_b, -100, 100, &store, 0, &cont_b));
 
     iarray_dtshape_t dtshape_z;
     dtshape_z.ndim = ndim;
@@ -113,7 +119,7 @@ int main()
     }
 
     iarray_container_t *cont_c;
-    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, NULL, 0, &cont_c));
+    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, &store, 0, &cont_c));
 
     double *a = (double *) malloc(size_a * sizeof(double));
     double *b = (double *) malloc(size_b * sizeof(double));

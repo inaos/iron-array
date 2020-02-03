@@ -33,8 +33,14 @@ int main()
         dtshape.shape[i] = shape[i];
         dtshape.pshape[i] = pshape[i];
     }
+
+    iarray_store_properties_t store;
+    store.backend = IARRAY_STORAGE_BLOSC;
+    store.enforce_frame = false;
+    store.filename = NULL;
+
     iarray_container_t *cont;
-    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape, NULL, 0, &cont));
+    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape, &store, 0, &cont));
 
     iarray_iter_write_t *iter_w;
     iarray_iter_write_value_t val_w;
@@ -51,7 +57,7 @@ int main()
     int64_t stop[] = {9, 7};
 
     iarray_container_t *cout;
-    iarray_get_slice(ctx, cont, start, stop, pshape, NULL, 0, true, &cout);
+    iarray_get_slice(ctx, cont, start, stop, pshape, &store, 0, true, &cout);
     
     int64_t cout_size = 1;
     for (int i = 0; i < cout->dtshape->ndim; ++i) {
