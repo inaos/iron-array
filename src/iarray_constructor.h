@@ -157,7 +157,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     dparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
     ina_mem_cpy((*c)->dparams, &dparams, sizeof(blosc2_dparams));
 
-    (*c)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
+    (*c)->store = ina_mem_alloc(sizeof(iarray_store_properties_t));
     if ((*c)->store == NULL) {
         IARRAY_TRACE1(iarray.error, "Error allocating the store parameters");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
