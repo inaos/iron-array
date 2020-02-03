@@ -8,11 +8,11 @@
 #include <llvm-c/IRReader.h>
 
 #include <llvm-c/Transforms/PassManagerBuilder.h>
-#include <llvm-c/Transforms/IPO.h> // LLVMAddGlobalOptimizerPass
-#include <llvm-c/Transforms/Scalar.h> // LLVMAddCFGSimplificationPass
+#include <llvm-c/Transforms/Vectorize.h> // LLVMAddLoopVectorizePass
 
 #include <blosc2.h>
 
+#include "minjuggutil.h"
 #include "tinyexpr.h"
 
 #define _JUG_DEBUG_WRITE_BC_TO_FILE
@@ -142,7 +142,7 @@ static void _jug_declare_sin_f64(LLVMModuleRef mod)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_sin_f64 = LLVMAddFunction(mod, "llvm.sin.f64", fn_type);
+    _jug_builtin_sin_f64 = LLVMAddFunction(mod, "sin", fn_type);
 }
 
 static void _jug_declare_sinh_f64(LLVMModuleRef mod)
@@ -435,6 +435,7 @@ static LLVMValueRef _jug_expr_compile_function(
     LLVMTypeRef prototype = LLVMFunctionType(LLVMInt32Type(), param_types, 1, 0);
     LLVMValueRef f = LLVMAddFunction(e->mod, name, prototype);
 
+    LLVMBasicBlockRef stackvar_sec = LLVMAppendBasicBlock(f, "stack_vars");
     LLVMBasicBlockRef loop_len = LLVMAppendBasicBlock(f, "loop_len");
     LLVMBasicBlockRef entry = LLVMAppendBasicBlock(f, "entry");
     LLVMBasicBlockRef condition = LLVMAppendBasicBlock(f, "condition");
@@ -445,6 +446,57 @@ static LLVMValueRef _jug_expr_compile_function(
     LLVMBuilderRef builder = LLVMCreateBuilder(); // FIXME, probably better to build it from context, mem-leak?
 
     LLVMValueRef param_ptr = LLVMGetParam(f, 0);
+
+    LLVMValueRef local_output;
+    LLVMValueRef *local_inputs;
+    ina_str_t *local_input_labels;
+    LLVMPositionBuilderAtEnd(builder, stackvar_sec);
+    {
+        local_output = LLVMBuildAlloca(builder, LLVMPointerType(LLVMDoubleType(), 0), "local_output");
+        local_inputs = ina_mem_alloc(sizeof(LLVMValueRef*)*var_len); // leaking memory for now
+        local_input_labels = ina_mem_alloc(sizeof(ina_str_t)*var_len); // leaking memory for now
+
+        LLVMValueRef ninputs = LLVMBuildStructGEP(builder, param_ptr, 0, "ninputs");
+        INA_UNUSED(ninputs); // TODO: compare arg_count with ninputs, return error (constant_one) if different
+
+        LLVMValueRef inputs_ptr = LLVMBuildStructGEP(builder, param_ptr, 1, "inputs_ptr");
+        LLVMValueRef inputs = LLVMBuildLoad(builder, inputs_ptr, "inputs");
+        for (int i = 0; i < var_len; ++i) {
+            local_inputs[i] = ina_mem_alloc(sizeof(LLVMValueRef));
+
+            local_input_labels[i] = ina_str_sprintf("input[%d]", i); // leaking memory for now
+            local_inputs[i] = LLVMBuildAlloca(builder, LLVMPointerType(LLVMDoubleType(), 0), ina_str_cstr(local_input_labels[i]));
+
+            /* Load array of inputs */
+            LLVMValueRef in_addr = LLVMBuildExtractValue(builder, inputs, i, "inputs[index]");
+
+            /* Cast to value type */
+            LLVMTypeRef type_cast = LLVMPointerType(LLVMDoubleType(), 0);
+            LLVMValueRef cast_in = LLVMBuildCast(builder, LLVMBitCast, in_addr, type_cast, "cast[double*]");
+
+            /* Store pointer in stack var */
+            LLVMBuildStore(builder, cast_in, local_inputs[i]);
+
+            /* Load data array */
+            //LLVMValueRef addr = LLVMBuildGEP(builder, cast_in, &index, 1, "buffer[index]");
+            //LLVMValueRef cast_addr = LLVMBuildCast(builder, LLVMBitCast, addr, LLVMPointerType(LLVMDoubleType(), 0), "cast[double]");
+
+            /* Load scalar value 
+            LLVMValueRef val = LLVMBuildLoad(builder, cast_addr, "value");
+            LLVMSetMetadata(val, LLVMInstructionValueKind, md_access);
+            const char *key = vars[i].name;
+            ina_hashtable_set_str(param_values, key, val);*/
+        }
+
+        LLVMValueRef out_ptr = LLVMBuildStructGEP(builder, param_ptr, 4, "out_ptr");
+        LLVMValueRef out = LLVMBuildLoad(builder, out_ptr, "out");
+        LLVMValueRef out_cast = LLVMBuildCast(builder, LLVMBitCast, out, LLVMPointerType(LLVMDoubleType(), 0), "out_cast");
+        LLVMBuildStore(builder, out_cast, local_output);
+        
+
+        LLVMBuildBr(builder, loop_len);
+    }
+
 
     LLVMValueRef len;
     LLVMPositionBuilderAtEnd(builder, loop_len);
@@ -493,25 +545,14 @@ static LLVMValueRef _jug_expr_compile_function(
 
         LLVMValueRef index = LLVMBuildLoad(builder, index_addr, "[index]");
 
-        LLVMValueRef ninputs = LLVMBuildStructGEP(builder, param_ptr, 0, "ninputs");
-        INA_UNUSED(ninputs); // TODO: compare arg_count with ninputs, return error (constant_one) if different
-
-        LLVMValueRef inputs_ptr = LLVMBuildStructGEP(builder, param_ptr, 1, "inputs_ptr");
-        LLVMValueRef inputs = LLVMBuildLoad(builder, inputs_ptr, "inputs");
+        /* Load the scalar values from the inputs */
         for (int i = 0; i < var_len; ++i) {
-            /* Load array of inputs */
-            LLVMValueRef in_addr = LLVMBuildExtractValue(builder, inputs, i, "inputs[index]");
-
-            /* Cast to value type */
-            LLVMTypeRef type_cast = LLVMPointerType(LLVMPointerType(LLVMDoubleType(), 0), 0);
-            LLVMValueRef cast_in = LLVMBuildCast(builder, LLVMBitCast, in_addr, type_cast, "cast[double*]");
-
-            /* Load data array */
-            LLVMValueRef addr = LLVMBuildGEP(builder, cast_in, &index, 1, "buffer[index]");
-            LLVMValueRef cast_addr = LLVMBuildCast(builder, LLVMBitCast, addr, LLVMPointerType(LLVMDoubleType(), 0), "cast[double]");
+            LLVMValueRef stack_var = LLVMBuildLoad(builder, local_inputs[i], "load_stackvar");
+            LLVMValueRef addr = LLVMBuildGEP(builder, stack_var, &index, 1, "buffer[index]");
+            //LLVMValueRef cast_addr = LLVMBuildCast(builder, LLVMBitCast, addr, LLVMPointerType(LLVMDoubleType(), 0), "cast[double]");
 
             /* Load scalar value */
-            LLVMValueRef val = LLVMBuildLoad(builder, cast_addr, "value");
+            LLVMValueRef val = LLVMBuildLoad(builder, addr, "value");
             LLVMSetMetadata(val, LLVMInstructionValueKind, md_access);
             const char *key = vars[i].name;
             ina_hashtable_set_str(param_values, key, val);
@@ -521,10 +562,8 @@ static LLVMValueRef _jug_expr_compile_function(
         LLVMValueRef result = _jug_expr_compile_expression(builder, expression, param_values);
 
         /* store the result */
-        LLVMValueRef out_ptr = LLVMBuildStructGEP(builder, param_ptr, 4, "out_ptr");
-        LLVMValueRef out = LLVMBuildLoad(builder, out_ptr, "out");
-        LLVMValueRef out_cast = LLVMBuildCast(builder, LLVMBitCast, out, LLVMPointerType(LLVMDoubleType(), 0), "out_cast");
-        LLVMValueRef out_addr = LLVMBuildGEP(builder, out_cast, &index, 1, "out_addr");
+        LLVMValueRef local_out_ref = LLVMBuildLoad(builder, local_output, "local_output");
+        LLVMValueRef out_addr = LLVMBuildGEP(builder, local_out_ref, &index, 1, "out_addr");
         LLVMValueRef store = LLVMBuildStore(builder, result, out_addr);
         LLVMSetMetadata(store, LLVMInstructionValueKind, md_access);
 
@@ -562,6 +601,13 @@ static void _jug_apply_optimisation_passes(jug_expression_t *e)
     // Module pass manager
     LLVMPassManagerRef pm = LLVMCreatePassManager();
     LLVMPassManagerBuilderPopulateModulePassManager(pmb, pm);
+    
+    LLVMTargetLibraryInfoRef tli;
+    jug_util_get_svml_vector_library(_jug_def_triple, &tli);
+    LLVMAddTargetLibraryInfo(tli, pm);
+    
+    LLVMAddLoopVectorizePass(pm);
+    LLVMAddSLPVectorizePass(pm);
 
     // Run
     LLVMRunPassManager(pm, e->mod);
