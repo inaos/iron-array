@@ -99,7 +99,7 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx,
 
     iarray_store_properties_t sstore;
     sstore.backend = pshape_slice ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    sstore.enforce_frame = true;
+    sstore.enforce_frame = false;
     sstore.filename = NULL;
 
     iarray_container_t *slice;
