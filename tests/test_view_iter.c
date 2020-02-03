@@ -67,7 +67,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     iarray_store_properties_t outstore;
     outstore.backend = pshape_dest ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    outstore.enforce_frame = true;
+    outstore.enforce_frame = false;
     outstore.filename = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, pshape_dest, &outstore, 0, &c_out));

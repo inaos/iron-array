@@ -53,7 +53,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     iarray_store_properties_t store;
     store.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    store.enforce_frame = true;
+    store.enforce_frame = false;
     store.filename = NULL;
 
     iarray_container_t *c_x;
@@ -67,7 +67,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     iarray_store_properties_t store_dest;
     store_dest.backend = pshape_dest ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    store_dest.enforce_frame = true;
+    store_dest.enforce_frame = false;
     store_dest.filename = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, pshape_dest, &store_dest, 0, &c_out));
