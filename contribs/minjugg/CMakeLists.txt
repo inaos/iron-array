@@ -15,3 +15,4 @@ include_directories("${CMAKE_CURRENT_LIST_DIR}/include")
 
 set(SRC ${CMAKE_CURRENT_LIST_DIR}/src)
 add_library(minjugg ${SRC}/tinyexpr.c ${SRC}/minjugg.c)
+add_library(minjuggutil ${SRC}/minjuggutil.cpp)
