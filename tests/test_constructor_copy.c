@@ -24,13 +24,6 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
 //        printf("Skipping test on Azure CI (Darwin)...");
 //        return INA_SUCCESS;
 //    }
-    
-    int typesize;
-    if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        typesize = sizeof(double);
-    } else {
-        typesize = sizeof(float);
-    }
 
     // Create dtshape
     iarray_dtshape_t xdtshape;
@@ -221,7 +214,7 @@ INA_TEST_FIXTURE(constructor_copy, 8_f_n_n) {
 
     int8_t ndim = 8;
     int64_t shape[] = {5, 4, 7, 5, 4, 6, 2, 3};
-    int64_t pshape[] = {2, 3, 4, 2, 2, 4, 1, 2};
+    int64_t pshape[] = {2, 1, 2, 2, 2, 1, 1, 2};
     int64_t stop_view[] = {2, 2, 2, 2, 2, 2, 2, 2};
     double start = 0;
     double stop = 1;
@@ -235,8 +228,8 @@ INA_TEST_FIXTURE(constructor_copy, 7_f_v_n) {
 
     int8_t ndim = 7;
     int64_t shape[] = {7, 4, 8, 4, 5, 8, 4};
-    int64_t pshape[] = {3, 3, 3, 3, 3, 3, 3};
-    int64_t stop_view[] = {2, 2, 2, 3, 2, 2, 2};
+    int64_t pshape[] = {2, 2, 2, 3, 2, 2, 2};
+    int64_t stop_view[] = {3, 3, 3, 3, 3, 3, 3};
 
     double start = 0;
     double stop = 5;
@@ -249,8 +242,8 @@ INA_TEST_FIXTURE(constructor_copy, 6_f_n_v) {
 
     int8_t ndim = 6;
     int64_t shape[] = {5, 7, 10, 12, 13, 6};
-    int64_t pshape[] = {4, 4, 5, 11, 12, 4};
-    int64_t stop_view[] = {2, 1, 4, 5, 6};
+    int64_t pshape[] = {2, 1, 4, 5, 6};
+    int64_t stop_view[] = {4, 4, 5, 11, 12, 4};
     double start = -0.112;
     double stop = 10102;
 
@@ -262,8 +255,8 @@ INA_TEST_FIXTURE(constructor_copy, 5_f_v_v) {
 
     int8_t ndim = 5;
     int64_t shape[] = {31, 21, 11, 5, 11};
-    int64_t pshape[] = {21, 10, 3, 3, 8};
-    int64_t stop_view[] = {10, 11, 3, 2, 4};
+    int64_t pshape[] = {10, 11, 3, 2, 4};
+    int64_t stop_view[] = {21, 10, 3, 3, 8};
 
     double start = 1;
     double stop = -1;
@@ -276,8 +269,8 @@ INA_TEST_FIXTURE(constructor_copy, 4_d_n_n) {
 
     int8_t ndim = 4;
     int64_t shape[] = {12, 31, 54, 12};
-    int64_t pshape[] = {8, 8, 8, 3};
-    int64_t stop_view[] = {2, 3, 23, 5};
+    int64_t pshape[] = {2, 3, 23, 5};
+    int64_t stop_view[] = {8, 8, 8, 3};
 
     double start = 0.1;
     double stop = 0.9;
@@ -290,8 +283,8 @@ INA_TEST_FIXTURE(constructor_copy, 3_d_v_n) {
 
     int8_t ndim = 3;
     int64_t shape[] = {31, 45, 23};
-    int64_t pshape[] = {21, 17, 11};
-    int64_t stop_view[] = {5, 5, 4};
+    int64_t pshape[] = {5, 5, 4};
+    int64_t stop_view[] = {21, 17, 11};
 
     double start = 0.00001;
     double stop = 0.00002;
