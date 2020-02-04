@@ -5,15 +5,13 @@
 
 using namespace llvm;
 
-extern "C" int jug_util_get_svml_vector_library(const char *triple, LLVMTargetLibraryInfoRef *tli)
+extern "C" int jug_util_set_svml_vector_library()
 {
-    std::string striple(triple);
-    Triple t(striple);
+    const char *argv[2];
+    argv[0] = "opt";
+    argv[1] = "-vector-library=SVML";
 
-    TargetLibraryInfoImpl *TLII = new TargetLibraryInfoImpl(t);
-    TLII->addVectorizableFunctionsFromVecLib(TLII->SVML);
-    
-    *tli = reinterpret_cast<LLVMTargetLibraryInfoRef>(TLII);
+    llvm::cl::ParseCommandLineOptions(2, argv);
 
     return 0;
 }
