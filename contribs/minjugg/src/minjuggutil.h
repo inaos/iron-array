@@ -13,16 +13,11 @@
 #ifndef _MINJUGGUTIL_H_
 #define _MINJUGGUTIL_H_
 
-//#include <libinac/lib.h>
-
-#include <llvm-c/Core.h>
-#include <llvm-c/Target.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int jug_util_get_svml_vector_library(const char *triple, LLVMTargetLibraryInfoRef *tli);
+int jug_util_set_svml_vector_library();
 
 #ifdef __cplusplus
 }
