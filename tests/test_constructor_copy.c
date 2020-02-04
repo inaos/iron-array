@@ -242,7 +242,7 @@ INA_TEST_FIXTURE(constructor_copy, 6_f_n_v) {
 
     int8_t ndim = 6;
     int64_t shape[] = {5, 7, 10, 12, 13, 6};
-    int64_t pshape[] = {2, 1, 4, 5, 6};
+    int64_t pshape[] = {2, 1, 4, 5, 6, 4};
     int64_t stop_view[] = {4, 4, 5, 11, 12, 4};
     double start = -0.112;
     double stop = 10102;
