@@ -89,8 +89,8 @@ INA_TEST_FIXTURE(container_load_save, 2_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
-    int64_t shape[] = {10, 10};
-    int64_t pshape[] = {5, 5};
+    int64_t shape[] = {35, 44};
+    int64_t pshape[] = {12, 10};
     double start = - 0.1;
     double stop = - 0.25;
 
@@ -101,8 +101,8 @@ INA_TEST_FIXTURE(container_load_save, 3_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
-    int64_t shape[] = {4, 4};
-    int64_t pshape[] = {2, 2};
+    int64_t shape[] = {43, 33};
+    int64_t pshape[] = {14, 12};
     double start = 3123;
     double stop = 45654;
 
@@ -113,7 +113,7 @@ INA_TEST_FIXTURE(container_load_save, 5_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 3;
-    int64_t shape[] = {20, 18, 17};
+    int64_t shape[] = {20, 55, 125};
     int64_t pshape[] = {12, 14, 15};
     double start = 0.1;
     double stop = 0.2;
@@ -125,7 +125,7 @@ INA_TEST_FIXTURE(container_load_save, 2_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 2;
-    int64_t shape[] = {10, 10};
+    int64_t shape[] = {12, 10};
     int64_t pshape[] = {5, 5};
     double start = - 0.1;
     double stop = - 0.25;
@@ -137,8 +137,8 @@ INA_TEST_FIXTURE(container_load_save, 3_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 3;
-    int64_t shape[] = {5, 10, 8};
-    int64_t pshape[] = {2, 7, 7};
+    int64_t shape[] = {50, 10, 80};
+    int64_t pshape[] = {21, 7, 7};
     double start = 3123;
     double stop = 45654;
 
