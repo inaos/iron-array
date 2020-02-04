@@ -595,16 +595,14 @@ static void _jug_apply_optimisation_passes(jug_expression_t *e)
      * fail with "SCEVAddExpr operand types don't match!"
      */
 
+    jug_util_set_svml_vector_library();
+
     LLVMPassManagerBuilderRef pmb = LLVMPassManagerBuilderCreate();
     LLVMPassManagerBuilderSetOptLevel(pmb, 3); // Opt level 0-3
 
     // Module pass manager
     LLVMPassManagerRef pm = LLVMCreatePassManager();
     LLVMPassManagerBuilderPopulateModulePassManager(pmb, pm);
-    
-    LLVMTargetLibraryInfoRef tli;
-    jug_util_get_svml_vector_library(_jug_def_triple, &tli);
-    LLVMAddTargetLibraryInfo(tli, pm);
     
     LLVMAddLoopVectorizePass(pm);
     LLVMAddSLPVectorizePass(pm);
