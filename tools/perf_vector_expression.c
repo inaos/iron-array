@@ -111,9 +111,21 @@ int main(int argc, char** argv)
         }
     }
 
-    iarray_store_properties_t mat_x = { .filename = mat_x_name };
-    iarray_store_properties_t mat_y = { .filename = mat_y_name };
-    iarray_store_properties_t mat_out = { .filename = mat_out_name };
+    iarray_store_properties_t mat_x = {
+        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
+        .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
+        .filename = mat_x_name
+    };
+    iarray_store_properties_t mat_y = {
+        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
+        .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
+        .filename = mat_y_name
+    };
+    iarray_store_properties_t mat_out = {
+        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
+        .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
+        .filename = mat_out_name
+    };
 
     int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
 
