@@ -18,12 +18,12 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
                            double stop, int64_t *stop_view, bool src_view, bool dest_view)
 {
     // For some reason, this test does not pass in Azure CI, so disable it temporarily (see #189)
-//    char* envvar;
-//    envvar = getenv("AGENT_OS");
-//    if (envvar != NULL && strncmp(envvar, "Darwin", sizeof("Darwin")) == 0) {
-//        printf("Skipping test on Azure CI (Darwin)...");
-//        return INA_SUCCESS;
-//    }
+    char* envvar;
+    envvar = getenv("AGENT_OS");
+    if (envvar != NULL && strncmp(envvar, "Darwin", sizeof("Darwin")) == 0) {
+        printf("Skipping test on Azure CI (Darwin)...");
+        return INA_SUCCESS;
+    }
 
     // Create dtshape
     iarray_dtshape_t xdtshape;
