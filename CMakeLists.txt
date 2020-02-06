@@ -65,7 +65,10 @@ endif()
 
 # Find the libraries that correspond to the LLVM components
 # that we wish to use
-execute_process(COMMAND "${LLVM_TOOLS_BINARY_DIR}/llvm-config" "--libs" OUTPUT_VARIABLE llvm_libs
+# llvm_map_components_to_libnames(llvm_libs support core irreader executionengine
+#    bitwriter passes vectorize mcjit asmprinter x86info x86codegen)
+# The next should work for all LLVM installations
+execute_process(COMMAND ${LLVM_TOOLS_BINARY_DIR}/llvm-config --libs OUTPUT_VARIABLE llvm_libs
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${IPP_LIBRARIES} ${llvm_libs})
 
