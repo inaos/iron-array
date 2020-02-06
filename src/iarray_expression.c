@@ -149,7 +149,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
     }
 #endif
 
-    e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t*)); // TODO: This should be freed?
+    e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t*));
     caterva_array_t *catarr = e->vars[0].c->catarr;
 
     e->typesize = catarr->ctx->cparams.typesize;
@@ -166,7 +166,8 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
     }
     else {
         blosc2_schunk *schunk = catarr->sc;
-        if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK) {
+        if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK ||
+            e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC2) {
             uint8_t *chunk;
             bool needs_free;
             int retcode = blosc2_schunk_get_chunk(schunk, 0, &chunk, &needs_free);
@@ -207,7 +208,8 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
     iarray_dtshape_t dtshape_var = {0};  // initialize to 0s
     dtshape_var.ndim = 1;
     int32_t temp_var_dim0 = 0;
-    if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK) {
+    if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK ||
+        e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC2) {
         temp_var_dim0 = e->blocksize / e->typesize;
     } else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERCHUNK ||
                e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
@@ -537,6 +539,121 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     return ina_err_get_rc();
 }
 
+INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_container_t *ret, int64_t *out_pshape)
+{
+    ina_rc_t rc;
+    int64_t nitems_written = 0;
+    int nvars = e->nvars;
+
+    if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        IARRAY_TRACE1(iarray.error, "ITERBLOCK2 eval can't be used with a plainbuffer output container");
+        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_STORAGE));
+    }
+
+    // Setup a new cparams with a prefilter
+    blosc2_cparams *cparams = malloc(sizeof(blosc2_cparams));
+    memcpy(cparams, ret->cparams, sizeof(blosc2_cparams));
+    cparams->prefilter = (blosc2_prefilter_fn)e->jug_expr_func;
+    blosc2_prefilter_params pparams = {0};
+    pparams.ninputs = nvars;
+    // TODO: add the out_value structure to the user_data also?
+    pparams.user_data = (void*)e;
+    pparams.compressed_inputs = true;
+    cparams->pparams = &pparams;
+
+    // Initialize the typesize for each variable
+    for (int nvar = 0; nvar < nvars; nvar++) {
+        iarray_container_t *var = e->vars[nvar].c;
+        pparams.input_typesizes[nvar] = var->catarr->sc->typesize;
+    }
+    uint8_t **var_chunks = malloc(nvars * sizeof(void*));
+    bool *var_needs_free = malloc(nvars * sizeof(bool));
+    int32_t blocksize = e->blocksize;
+
+    // Write iterator for output
+    iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
+    iarray_context_t *ctx;
+    iarray_context_new(&cfg, &ctx);
+    iarray_iter_write_block_t *iter_out;
+    iarray_iter_write_block_value_t out_value;
+    int32_t external_buffer_size = ret->catarr->psize * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD;
+    void *external_buffer;  // to inform the iterator that we are passing an external buffer
+    INA_FAIL_IF_ERROR(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, true));
+
+    // Evaluate the expression for all the chunks in variables
+    int32_t nchunk = 0;
+    while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_out))) {
+        external_buffer = malloc(external_buffer_size);
+
+        INA_FAIL_IF_ERROR(INA_FAILED(iarray_iter_write_block_next(iter_out, external_buffer, external_buffer_size)));
+
+        int32_t out_items = (int32_t)(iter_out->cur_block_size);  // TODO: add a protection against cur_block_size > 2**31
+        int32_t nblocks = out_items * e->typesize / blocksize;
+
+        // Get the uncompressed chunks for each variable
+        for (int nvar = 0; nvar < nvars; nvar++) {
+            blosc2_schunk *schunk = e->vars[nvar].c->catarr->sc;
+            int csize = blosc2_schunk_get_chunk(schunk, nchunk, &var_chunks[nvar], &var_needs_free[nvar]);
+            if (csize < 0) {
+                IARRAY_TRACE1(iarray.error, "Error in retrieving chunk from schunk");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
+            }
+            pparams.inputs[nvar] = var_chunks[nvar];
+        }
+
+        // Eval the expression for this chunk
+        blosc2_context *cctx = blosc2_create_cctx(*cparams);  // we need it here to propagate pparams.inputs
+        int csize = blosc2_compress_ctx(cctx, out_items * e->typesize,
+                                        NULL, out_value.block_pointer,
+                                        out_items * e->typesize + BLOSC_MAX_OVERHEAD);
+        if (csize <= 0) {
+            IARRAY_TRACE1(iarray.error, "Error compressing a blosc chunk");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+        }
+        blosc2_free_ctx(cctx);
+        for (int nvar = 0; nvar < e->nvars; nvar++) {
+            if (var_needs_free[nvar]) {
+                free(var_chunks[nvar]);
+            }
+        }
+
+        if (out_items != ret->catarr->psize) {
+            // Not a complete chunk.  Decompress and append it as a regular buffer.
+            uint8_t *temp = malloc(csize);
+            memcpy(temp, out_value.block_pointer, csize);
+            int nbytes = blosc_decompress(temp, out_value.block_pointer, out_items * e->typesize);
+            free(temp);
+            if (nbytes <= 0) {
+                IARRAY_TRACE1(iarray.error, "Error decompressing a chunk");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+            }
+            iter_out->compressed_chunk_buffer = false;
+        }
+        else {
+            iter_out->compressed_chunk_buffer = true;
+        }
+
+        nitems_written += out_items;
+        ina_mempool_reset(e->ctx->mp_tmp_out);
+        nchunk += 1;
+    }
+
+    if (ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0)) {
+        goto fail;
+    }
+
+    iarray_iter_write_block_free(&iter_out);
+    free(var_chunks);
+    free(var_needs_free);
+    iarray_context_free(&ctx);
+
+    rc = iarray_eval_cleanup(e, nitems_written);
+    return rc;
+
+    fail:
+    return ina_err_get_rc();
+}
+
 INA_API(ina_rc_t) iarray_eval_iterblock(iarray_expression_t *e, iarray_container_t *ret, int64_t *out_pshape)
 {
     ina_rc_t rc;
@@ -673,9 +790,14 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
             return iarray_eval_iterblock(e, ret, out_pshape);
         case IARRAY_EXPR_EVAL_ITERBLOSC:
             return iarray_eval_iterblosc(e, ret, out_pshape);
+        case IARRAY_EXPR_EVAL_ITERBLOSC2:
+            return iarray_eval_iterblosc2(e, ret, out_pshape);
         default:
             fprintf(stderr, "Invalid eval method.\n");
             return IARRAY_ERR_INVALID_EVAL_METHOD;
+    }
+    if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        free(out_pshape);
     }
 }
 
