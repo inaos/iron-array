@@ -65,7 +65,7 @@ endif()
 
 # Find the libraries that correspond to the LLVM components
 # that we wish to use
-execute_process(COMMAND "llvm-config" "--libs" OUTPUT_VARIABLE llvm_libs
+execute_process(COMMAND "${LLVM_TOOLS_BINARY_DIR}/llvm-config" "--libs" OUTPUT_VARIABLE llvm_libs
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${IPP_LIBRARIES} ${llvm_libs})
 
