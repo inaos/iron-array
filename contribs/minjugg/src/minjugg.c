@@ -46,6 +46,7 @@ static LLVMValueRef _jug_builtin_fmod_f64;
 
 static char *_jug_def_triple = NULL;
 static LLVMTargetDataRef _jug_data_ref = NULL;
+static LLVMTargetMachineRef tm_ref = NULL;
 
 static void _jug_declare_cos_f64(LLVMModuleRef mod)
 {
@@ -481,7 +482,7 @@ static LLVMValueRef _jug_expr_compile_function(
             //LLVMValueRef addr = LLVMBuildGEP(builder, cast_in, &index, 1, "buffer[index]");
             //LLVMValueRef cast_addr = LLVMBuildCast(builder, LLVMBitCast, addr, LLVMPointerType(LLVMDoubleType(), 0), "cast[double]");
 
-            /* Load scalar value 
+            /* Load scalar value
             LLVMValueRef val = LLVMBuildLoad(builder, cast_addr, "value");
             LLVMSetMetadata(val, LLVMInstructionValueKind, md_access);
             const char *key = vars[i].name;
@@ -492,7 +493,6 @@ static LLVMValueRef _jug_expr_compile_function(
         LLVMValueRef out = LLVMBuildLoad(builder, out_ptr, "out");
         LLVMValueRef out_cast = LLVMBuildCast(builder, LLVMBitCast, out, LLVMPointerType(LLVMDoubleType(), 0), "out_cast");
         LLVMBuildStore(builder, out_cast, local_output);
-        
 
         LLVMBuildBr(builder, loop_len);
     }
@@ -598,12 +598,14 @@ static void _jug_apply_optimisation_passes(jug_expression_t *e)
     jug_util_set_svml_vector_library();
 
     LLVMPassManagerBuilderRef pmb = LLVMPassManagerBuilderCreate();
-    LLVMPassManagerBuilderSetOptLevel(pmb, 3); // Opt level 0-3
+    jug_utils_enable_loop_vectorize(pmb);
+    LLVMPassManagerBuilderSetOptLevel(pmb, 2); // Opt level 0-3
 
     // Module pass manager
     LLVMPassManagerRef pm = LLVMCreatePassManager();
+    LLVMAddAnalysisPasses(tm_ref, pm);
     LLVMPassManagerBuilderPopulateModulePassManager(pmb, pm);
-    
+
     LLVMAddLoopVectorizePass(pm);
     LLVMAddSLPVectorizePass(pm);
 
@@ -708,7 +710,7 @@ INA_API(ina_rc_t) jug_init()
         return INA_ERR_FATAL;
     }
 
-    LLVMTargetMachineRef tm_ref =
+    tm_ref =
         LLVMCreateTargetMachine(target_ref, _jug_def_triple, "", "",
             LLVMCodeGenLevelDefault,
             LLVMRelocDefault,
