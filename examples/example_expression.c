@@ -36,7 +36,7 @@ int main()
     iarray_expression_t* e;
     iarray_expr_new(ctx, &e);
     iarray_expr_bind(e, "x", c_x);
-    iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
+    iarray_expr_compile(e, "(sin(x) - 1.35) * (x - 4.45) * (x - 8.5)");
     iarray_eval(e, c_out);
 
     // Print some values of the outcome
@@ -48,6 +48,7 @@ int main()
     for (int i = 0; i < 10; i++) {
         printf("%.3f, ", buff_out[i]);
     }
+    printf("\n");
 
     iarray_expr_free(ctx, &e);
     iarray_container_free(ctx, &c_out);
