@@ -1,5 +1,7 @@
 #include "minjuggutil.h"
 
+#include <llvm-c/Transforms/PassManagerBuilder.h>
+
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
@@ -17,7 +19,6 @@ extern "C" int jug_util_set_svml_vector_library()
     argv[0] = "opt";
     argv[1] = "-vector-library=SVML";
     llvm::cl::ParseCommandLineOptions(2, argv);
-
     return 0;
 }
 
