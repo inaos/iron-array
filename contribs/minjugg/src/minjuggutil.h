@@ -17,7 +17,7 @@
 extern "C" {
 #endif
 
-#include "llvm-c/Transforms/PassManagerBuilder.h"
+typedef struct LLVMOpaquePassManagerBuilder *LLVMPassManagerBuilderRef;
 
 int jug_util_set_svml_vector_library();
 int jug_utils_enable_loop_vectorize(LLVMPassManagerBuilderRef PMB);
