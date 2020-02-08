@@ -143,7 +143,7 @@ static void _jug_declare_sin_f64(LLVMModuleRef mod)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_sin_f64 = LLVMAddFunction(mod, "sin", fn_type);
+    _jug_builtin_sin_f64 = LLVMAddFunction(mod, "llvm.sin.f64", fn_type);
 }
 
 static void _jug_declare_sinh_f64(LLVMModuleRef mod)
