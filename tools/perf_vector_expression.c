@@ -14,7 +14,7 @@
 #include <iarray_private.h>
 
 #define NELEM (20 * 1000 * 1000)  // multiple of NITEMS_CHUNK for now
-#define NITEMS_CHUNK (200 * 1000)
+#define NITEMS_CHUNK (4000 * 1000)
 #define XMAX 10.
 
 static double _poly(const double x)
@@ -146,8 +146,11 @@ int main(int argc, char** argv)
     else if (eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
         eval_method = "EVAL_ITERBLOSC";
     }
+    else if (eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC2) {
+        eval_method = "EVAL_ITERBLOSC2";
+    }
     else {
-        printf("eval_flags must be 1, 2, 3\n");
+        printf("eval_flags must be 1, 2, 3, 4\n");
         return EXIT_FAILURE;
     }
     //config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions
