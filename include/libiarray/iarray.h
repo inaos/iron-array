@@ -115,8 +115,15 @@ typedef enum iarray_storage_format_e {
     IARRAY_STORAGE_COL_WISE
 } iarray_storage_format_t;
 
+typedef enum iarray_storage_type_e {
+    IARRAY_STORAGE_PLAINBUFFER = 0,
+    IARRAY_STORAGE_BLOSC = 1,
+} iarray_storage_type_t;
+
 typedef struct iarray_store_properties_s {
-    const char *id;
+    iarray_storage_type_t backend;
+    const char *filename;
+    bool enforce_frame;
 } iarray_store_properties_t;
 
 typedef enum iarray_eval_flags_e {

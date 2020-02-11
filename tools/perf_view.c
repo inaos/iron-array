@@ -60,12 +60,28 @@ int main(int argc, char *argv[])
         size_x *= shape_x[i];
     }
 
+    iarray_store_properties_t c_x_prop = {
+        .backend = IARRAY_STORAGE_BLOSC,
+        .enforce_frame = false,
+        .filename = NULL
+    };
+    iarray_store_properties_t c_y_prop = {
+        .backend = IARRAY_STORAGE_BLOSC,
+        .enforce_frame = false,
+        .filename = NULL
+    };
+    iarray_store_properties_t c_z_prop = {
+        .backend = IARRAY_STORAGE_BLOSC,
+        .enforce_frame =false,
+        .filename = NULL
+    }; 
+    
     iarray_container_t *c_x;
-    INA_MUST_SUCCEED(iarray_arange(ctx, &dtshape_x, 0., (double)size_x, 1., NULL, 0, &c_x));
+    INA_MUST_SUCCEED(iarray_arange(ctx, &dtshape_x, 0., (double)size_x, 1., &c_x_prop, 0, &c_x));
 
     INA_STOPWATCH_START(w);
     iarray_container_t *c_y;
-    INA_MUST_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, pshape_y, NULL, 0, false, &c_y));
+    INA_MUST_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, pshape_y, &c_y_prop, 0, false, &c_y));
     INA_MUST_SUCCEED(iarray_squeeze(ctx, c_y));
     INA_STOPWATCH_STOP(w);
 
@@ -74,7 +90,7 @@ int main(int argc, char *argv[])
 
     INA_STOPWATCH_START(w);
     iarray_container_t *c_z;
-    INA_MUST_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, pshape_z, NULL, 0, true, &c_z));
+    INA_MUST_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, pshape_z, &c_z_prop, 0, true, &c_z));
     iarray_squeeze(ctx, c_z);
     INA_STOPWATCH_STOP(w);
 
@@ -125,8 +141,19 @@ int main(int argc, char *argv[])
     iarray_container_t *c_mul;
     iarray_container_t *c_mul_view;
 
-    INA_MUST_SUCCEED(iarray_container_new(ctx, &dtshape_mul, NULL, 0, &c_mul));
-    INA_MUST_SUCCEED(iarray_container_new(ctx, &dtshape_mul, NULL, 0, &c_mul_view));
+    iarray_store_properties_t c_mul_prop = {
+        .backend =  IARRAY_STORAGE_BLOSC,
+        .enforce_frame = false,
+        .filename = NULL
+    };
+    iarray_store_properties_t c_mul_view_prop = {
+        .backend = IARRAY_STORAGE_BLOSC,
+        .enforce_frame = false,
+        .filename = NULL
+    };
+    
+    INA_MUST_SUCCEED(iarray_container_new(ctx, &dtshape_mul, &c_mul_prop, 0, &c_mul));
+    INA_MUST_SUCCEED(iarray_container_new(ctx, &dtshape_mul, &c_mul_view_prop, 0, &c_mul_view));
 
     INA_STOPWATCH_START(w);
     INA_MUST_SUCCEED(iarray_linalg_matmul(ctx, c_y, c_y, c_mul, bshape, bshape, IARRAY_OPERATOR_GENERAL));

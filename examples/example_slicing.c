@@ -36,7 +36,12 @@ int main()
         xdtshape.shape[i] = xshape[i];
     }
 
-    if (INA_FAILED(iarray_partition_advice(ctx, &xdtshape, 0, 0))) {
+    iarray_store_properties_t store;
+    store.backend = IARRAY_STORAGE_BLOSC;
+    store.enforce_frame = false;
+    store.filename = NULL;
+    
+    if (INA_FAILED(iarray_partition_advice(ctx, &xdtshape, 16 * 1024, 128 * 1024))) {
         printf("Error in getting advice for pshape: %s\n", ina_err_strerror(ina_err_get_rc()));
         exit(1);
     }
@@ -49,7 +54,7 @@ int main()
     }
     printf("\n");
 
-    IARRAY_FAIL_IF_ERROR(iarray_fill_double(ctx, &xdtshape, 3.14, NULL, 0, &c_x));
+    IARRAY_FAIL_IF_ERROR(iarray_fill_double(ctx, &xdtshape, 3.14, &store, 0, &c_x));
 
     // Create out container (empty)
     int8_t outndim = 3;
@@ -71,7 +76,7 @@ int main()
 
     // Slicing c_x into c_out
     printf("Slicing c_x into c_out container...\n");
-    IARRAY_FAIL_IF_ERROR(iarray_get_slice(ctx, c_x, start, stop, outpshape, NULL, 0, false, &c_out));
+    IARRAY_FAIL_IF_ERROR(iarray_get_slice(ctx, c_x, start, stop, outpshape, &store, 0, false, &c_out));
     iarray_dtshape_t out_dtshape;
     IARRAY_FAIL_IF_ERROR(iarray_get_dtshape(ctx, c_out, &out_dtshape));
 
