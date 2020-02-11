@@ -97,9 +97,23 @@ int main(int argc, char** argv)
         printf("Storage for iarray containers: *memory*\n");
     }
 
-    iarray_store_properties_t mat_x_prop = { .id = mat_x_name };
-    iarray_store_properties_t mat_y_prop = { .id = mat_y_name };
-    iarray_store_properties_t mat_out_prop = { .id = mat_out_name };
+
+    iarray_store_properties_t mat_x_prop = {
+        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
+        .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
+        .filename = mat_x_name
+    };
+    iarray_store_properties_t mat_y_prop = {
+        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
+        .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
+        .filename = mat_y_name
+    };
+    iarray_store_properties_t mat_out_prop = {
+        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
+        .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
+        .filename = mat_out_name
+    };
+
 
     printf("\n");
     printf("Measuring time for multiplying matrices X and vector Y\n");
@@ -136,7 +150,7 @@ int main(int argc, char** argv)
     mat_y = (double *) ina_mem_alloc((sizeof(double) * size_y));
 
     printf("\n");
-    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_x_prop.id) && _iarray_file_exists(mat_y_prop.id)) {
+    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_x_prop.filename) && _iarray_file_exists(mat_y_prop.filename)) {
         INA_STOPWATCH_START(w);
         INA_MUST_SUCCEED(iarray_container_load(ctx, &mat_x_prop, &con_x, false));
         INA_MUST_SUCCEED(iarray_container_load(ctx, &mat_y_prop, &con_y, false));

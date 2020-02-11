@@ -24,8 +24,6 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
         typesize = sizeof(float);
     }
 
-    INA_TRACE1("Start test", "Start test");
-
     // Create dtshape
     iarray_dtshape_t xdtshape;
 
@@ -34,14 +32,24 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
     int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        xdtshape.pshape[i] = pshape[i];
+        if (pshape != NULL) {
+            xdtshape.pshape[i] = pshape[i];
+        }
         size *= shape[i];
     }
 
     double step = (stop - start) / size;
+
+    iarray_store_properties_t xstore = {.filename=NULL, .enforce_frame=false};
+    if (pshape == NULL) {
+        xstore.backend = IARRAY_STORAGE_PLAINBUFFER;
+    } else {
+        xstore.backend = IARRAY_STORAGE_BLOSC;
+    }
+
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, NULL, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &xstore, 0, &c_x));
 
     // Assert iterator reading it
 
@@ -92,7 +100,7 @@ INA_TEST_FIXTURE(constructor_arange, 2_d_p) {
 
     int8_t ndim = 2;
     int64_t shape[] = {10, 10};
-    int64_t pshape[] = {0, 0};
+    int64_t *pshape = NULL;
     double start = - 0.1;
     double stop = - 0.25;
 
@@ -123,12 +131,12 @@ INA_TEST_FIXTURE(constructor_arange, 5_d) {
     INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
-INA_TEST_FIXTURE(constructor_arange, 7_f_) {
+INA_TEST_FIXTURE(constructor_arange, 7_f_p) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 7;
     int64_t shape[] = {5, 7, 8, 9, 6, 5, 7};
-    int64_t pshape[] = {0, 0, 0, 0, 0, 0, 0};
+    int64_t *pshape = NULL;
     double start = 10;
     double stop = 0;
 

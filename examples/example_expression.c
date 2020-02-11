@@ -28,10 +28,15 @@ int main()
     shape.pshape[0] = 1000; shape.pshape[1] = 200;
     int nelem = shape.shape[0] * shape.shape[1];
 
+    iarray_store_properties_t store;
+    store.backend = IARRAY_STORAGE_BLOSC;
+    store.enforce_frame = false;
+    store.filename = NULL;
+    
     iarray_container_t* c_x;
-    iarray_linspace(ctx, &shape, nelem, 0., 10., NULL, 0, &c_x);
+    iarray_linspace(ctx, &shape, nelem, 0., 10., &store, 0, &c_x);
     iarray_container_t* c_out;
-    iarray_container_new(ctx, &shape, NULL, 0, &c_out);
+    iarray_container_new(ctx, &shape, &store, 0, &c_out);
 
     iarray_expression_t* e;
     iarray_expr_new(ctx, &e);

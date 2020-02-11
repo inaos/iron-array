@@ -111,9 +111,21 @@ int main(int argc, char** argv)
         }
     }
 
-    iarray_store_properties_t mat_x = { .id = mat_x_name };
-    iarray_store_properties_t mat_y = { .id = mat_y_name };
-    iarray_store_properties_t mat_out = { .id = mat_out_name };
+    iarray_store_properties_t mat_x = {
+        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
+        .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
+        .filename = mat_x_name
+    };
+    iarray_store_properties_t mat_y = {
+        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
+        .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
+        .filename = mat_y_name
+    };
+    iarray_store_properties_t mat_out = {
+        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
+        .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
+        .filename = mat_out_name
+    };
 
     int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
 
@@ -177,7 +189,7 @@ int main(int argc, char** argv)
 
     bool x_allocated = false, y_allocated = false;
 
-    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_x.id)) {
+    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_x.filename)) {
         INA_STOPWATCH_START(w);
         INA_MUST_SUCCEED(iarray_container_load(ctx, &mat_x, &con_x, false));
         INA_STOPWATCH_STOP(w);
@@ -249,7 +261,7 @@ int main(int argc, char** argv)
     printf("Compression for X values: %.1f MB -> %.1f MB (%.1fx)\n",
            nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
 
-    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_y.id)) {
+    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_y.filename)) {
         INA_STOPWATCH_START(w);
         INA_MUST_SUCCEED(iarray_container_load(ctx, &mat_y, &con_y, false));
         INA_STOPWATCH_STOP(w);

@@ -62,16 +62,21 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
     shape2.shape[0] = NELEM / 2;
     shape2.pshape[0] = plain_buffer ? 0 : NITEMS_CHUNK / 2;
 
+    iarray_store_properties_t store;
+    store.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
+    store.enforce_frame = false;
+    store.filename = NULL;
+
     _fill_y(buffer_x, buffer_y, func);
 
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, (void*)buffer_x, buffer_len, NULL, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, (void*)buffer_x, buffer_len, &store, 0, &c_x));
 
     int64_t start[IARRAY_DIMENSION_MAX] = {30};
     int64_t stop[IARRAY_DIMENSION_MAX] = {30 + shape2.shape[0]};
-    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, shape2.pshape, NULL, 0, true, &c_x2));
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &shape2, NULL, 0, &c_out));
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, shape2.pshape, &store, 0, true, &c_x2));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &shape2, &store, 0, &c_out));
 
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x2));
