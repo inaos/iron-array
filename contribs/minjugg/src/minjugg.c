@@ -595,8 +595,6 @@ static void _jug_apply_optimisation_passes(jug_expression_t *e)
      * fail with "SCEVAddExpr operand types don't match!"
      */
 
-    jug_util_set_svml_vector_library();
-
     LLVMPassManagerBuilderRef pmb = LLVMPassManagerBuilderCreate();
     jug_utils_enable_loop_vectorize(pmb);
     LLVMPassManagerBuilderSetOptLevel(pmb, 2); // Opt level 0-3
@@ -686,6 +684,7 @@ exit:
 INA_API(ina_rc_t) jug_init()
 {
     char *error = NULL;
+    jug_util_set_svml_vector_library();
 
     LLVMBool llvm_error;
     llvm_error = LLVMInitializeNativeTarget();
