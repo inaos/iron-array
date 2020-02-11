@@ -2,7 +2,6 @@
 
 #include <llvm-c/Transforms/PassManagerBuilder.h>
 
-#include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
