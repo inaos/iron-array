@@ -35,6 +35,7 @@ steps:
     conda create --yes --quiet --name iArrayEnv
     conda install -y --name iArrayEnv -c intel mkl-include
     conda install -y --name iArrayEnv -c intel mkl-static
+    conda install -y --name iArrayEnv -c numba llvmdev
     conda install -y -c conda-forge gcovr
     ls -l $CONDA/bin
   displayName: Download dependencies
@@ -45,7 +46,7 @@ steps:
 - bash: |
     mkdir cmake-build-$BUILD_CONFIGURATION
     cd cmake-build-$BUILD_CONFIGURATION
-    cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING -DDO_COVERAGE=TRUE
+    cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING -DLLVM_ROOT=$CONDA/envs/iArrayEnv -DDO_COVERAGE=TRUE
     cmake --build .
   displayName: Compile
   env:
