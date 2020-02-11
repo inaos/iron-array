@@ -87,6 +87,7 @@ INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     return _iarray_container_new(ctx, dtshape, store, flags, container);
@@ -133,6 +134,7 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, iarray_store_prop
                                         iarray_container_t **container, bool load_in_mem)
 {
     INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     ina_rc_t rc;
@@ -142,7 +144,7 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, iarray_store_prop
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
 
-    caterva_array_t *catarr = caterva_from_file(cat_ctx, store->id, load_in_mem);
+    caterva_array_t *catarr = caterva_from_file(cat_ctx, store->filename, load_in_mem);
     if (catarr == NULL) {
         IARRAY_TRACE1(iarray.error, "Error creating the caterva array from a file");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
@@ -227,7 +229,7 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, iarray_store_prop
         IARRAY_TRACE1(iarray.error, "Error allocating the store parameter");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
-    (*container)->store->id = ina_str_new_fromcstr(store->id);
+    (*container)->store->filename = ina_str_new_fromcstr(store->filename);
 
     rc = INA_SUCCESS;
     goto cleanup;
@@ -254,6 +256,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(c);
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     ina_rc_t rc;
@@ -281,7 +284,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
             IARRAY_TRACE1(iarray.error, "Start is bigger than stop");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
         }
-        if (pshape[i] > stop_[i] - start_[i]){
+        if (store->backend == IARRAY_STORAGE_BLOSC && pshape[i] > stop_[i] - start_[i]){
             IARRAY_TRACE1(iarray.error, "The pshape is bigger than shape");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_PSHAPE));
         }
@@ -294,7 +297,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
 
         for (int i = 0; i < dtshape.ndim; ++i) {
             dtshape.shape[i] = stop_[i] - start_[i];
-            dtshape.pshape[i] = pshape[i];
+            dtshape.pshape[i] = pshape ? pshape[i] : 0;
         }
 
         IARRAY_FAIL_IF_ERROR(_iarray_view_new(ctx, c, &dtshape, start_, container));
@@ -312,7 +315,8 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
 
         for (int i = 0; i < dtshape.ndim; ++i) {
             dtshape.shape[i] = stop_[i] - start_[i];
-            dtshape.pshape[i] = pshape[i];
+            if (pshape)
+                dtshape.pshape[i] = pshape[i];
         }
 
         // Check if matrix is transposed

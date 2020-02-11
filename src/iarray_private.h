@@ -100,7 +100,7 @@ struct iarray_container_s {
     blosc2_cparams *cparams;
     blosc2_dparams *dparams;
     caterva_array_t *catarr;
-    _iarray_container_store_t *store;
+    iarray_store_properties_t *store;
     bool transposed;
     bool view;
     union {

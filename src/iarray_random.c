@@ -288,6 +288,7 @@ INA_API(ina_rc_t) iarray_random_rand(iarray_context_t *ctx,
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(random_ctx);
     INA_VERIFY_NOT_NULL(container);
 
@@ -319,6 +320,7 @@ INA_API(ina_rc_t) iarray_random_randn(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(random_ctx);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
@@ -349,6 +351,7 @@ INA_API(ina_rc_t) iarray_random_beta(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(random_ctx);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     /* validate distribution parameters */
@@ -384,6 +387,7 @@ INA_API(ina_rc_t) iarray_random_lognormal(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(random_ctx);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     /* validate distribution parameters */
@@ -418,6 +422,7 @@ INA_API(ina_rc_t) iarray_random_exponential(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(random_ctx);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     /* validate distribution parameters */
@@ -452,6 +457,7 @@ INA_API(ina_rc_t) iarray_random_uniform(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(random_ctx);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     /* validate distribution parameters */
@@ -486,6 +492,7 @@ INA_API(ina_rc_t) iarray_random_normal(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(random_ctx);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     /* validate distribution parameters */
@@ -520,6 +527,7 @@ INA_API(ina_rc_t) iarray_random_bernoulli(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(random_ctx);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     /* validate distribution parameters */
@@ -557,6 +565,7 @@ INA_API(ina_rc_t) iarray_random_binomial(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(random_ctx);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     /* validate distribution parameters */
@@ -594,6 +603,7 @@ INA_API(ina_rc_t) iarray_random_poisson(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(random_ctx);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     /* validate distribution parameters */
