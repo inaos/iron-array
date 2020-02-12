@@ -329,7 +329,8 @@ int main(int argc, char** argv)
     iarray_expression_t *e;
     iarray_expr_new(ctx, &e);
     iarray_expr_bind(e, "x", con_x);
-    iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
+    // iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
+    iarray_expr_compile(e, "sin(x) - 1.35");
 
     iarray_container_t *con_out;
     INA_MUST_SUCCEED(iarray_container_new(ctx, &dtshape, &mat_out, flags, &con_out));
