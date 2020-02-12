@@ -224,7 +224,7 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename, b
     }
     (*container)->view = false;
 
-    (*container)->store = ina_mem_alloc(sizeof(_iarray_container_store_t));
+    (*container)->store = ina_mem_alloc(sizeof(iarray_store_properties_t));
     if ((*container)->store == NULL) {
         IARRAY_TRACE1(iarray.error, "Error allocating the store parameter");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
