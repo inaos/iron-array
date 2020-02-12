@@ -710,7 +710,8 @@ INA_API(ina_rc_t) jug_init()
     }
 
     tm_ref =
-        LLVMCreateTargetMachine(target_ref, _jug_def_triple, "", "+avx2",
+        // LLVMCreateTargetMachine(target_ref, _jug_def_triple, "", "+avx2",
+           LLVMCreateTargetMachine(target_ref, _jug_def_triple, "", "",
             LLVMCodeGenLevelDefault,
             LLVMRelocDefault,
             LLVMCodeModelJITDefault);
