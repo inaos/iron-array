@@ -130,11 +130,11 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
 }
 
 
-INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, iarray_store_properties_t *store,
-                                        iarray_container_t **container, bool load_in_mem)
+INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename, bool enforce_frame,
+                                        iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
-    INA_VERIFY_NOT_NULL(store);
+    INA_VERIFY_NOT_NULL(filename);
     INA_VERIFY_NOT_NULL(container);
 
     ina_rc_t rc;
@@ -144,7 +144,7 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, iarray_store_prop
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
 
-    caterva_array_t *catarr = caterva_from_file(cat_ctx, store->filename, load_in_mem);
+    caterva_array_t *catarr = caterva_from_file(cat_ctx, filename, enforce_frame);
     if (catarr == NULL) {
         IARRAY_TRACE1(iarray.error, "Error creating the caterva array from a file");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
@@ -229,7 +229,9 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, iarray_store_prop
         IARRAY_TRACE1(iarray.error, "Error allocating the store parameter");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
-    (*container)->store->filename = ina_str_new_fromcstr(store->filename);
+    (*container)->store->filename = ina_str_new_fromcstr(filename);
+    (*container)->store->backend = IARRAY_STORAGE_BLOSC;
+    (*container)->store->enforce_frame = enforce_frame;
 
     rc = INA_SUCCESS;
     goto cleanup;

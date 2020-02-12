@@ -357,7 +357,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
                               int flags,
                               iarray_container_t **dest);
 
-    INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
+INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
                                      double value,
                                      iarray_store_properties_t *store,
@@ -472,9 +472,9 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                                           int64_t buflen);
 
 INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx,
-                                        iarray_store_properties_t *store,
-                                        iarray_container_t **container,
-                                        bool load_in_mem);
+                                        char *filename,
+                                        bool enforce_frame,
+                                        iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
                                         iarray_container_t *c,
