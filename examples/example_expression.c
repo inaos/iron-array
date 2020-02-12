@@ -19,6 +19,7 @@ int main()
 
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
+    cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC2;  // this enforces SVML calls
     iarray_context_new(&cfg, &ctx);
 
     iarray_dtshape_t shape;
