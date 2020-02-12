@@ -49,7 +49,7 @@ int main()
     int64_t stop[] = {9, 7};
 
     iarray_container_t *cout;
-    iarray_get_slice(ctx, cont, start, stop, pshape, &store, 0, true, &cout);
+    iarray_get_slice(ctx, cont, start, stop, true, pshape, &store, 0, &cout);
     iarray_linalg_transpose(ctx, cout);
 
     uint8_t *sview;
