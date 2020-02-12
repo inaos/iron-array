@@ -75,7 +75,7 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
 
     int64_t start[IARRAY_DIMENSION_MAX] = {30};
     int64_t stop[IARRAY_DIMENSION_MAX] = {30 + shape2.shape[0]};
-    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, shape2.pshape, &store, 0, true, &c_x2));
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, shape2.pshape, &store, 0, &c_x2));
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &shape2, &store, 0, &c_out));
 
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));

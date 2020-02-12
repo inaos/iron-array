@@ -75,7 +75,7 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
 
     iarray_container_t *c_y;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, start, &ystore, 0, true, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, start, &ystore, 0, &c_y));
 
     // Start Iterator
     ina_rc_t err = iarray_iter_write_block_new(ctx, &I, c_y, blockshape, &val, false);
