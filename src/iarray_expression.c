@@ -546,7 +546,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
     int nvars = e->nvars;
 
     if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        IARRAY_TRACE1(iarray.error, "ITERBLOCK2 eval can't be used with a plainbuffer output container");
+        IARRAY_TRACE1(iarray.error, "ITERBLOSC2 eval can't be used with a plainbuffer output container");
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_STORAGE));
     }
 
