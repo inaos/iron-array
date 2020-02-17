@@ -57,7 +57,7 @@ int main()
     int64_t stop[] = {9, 7};
 
     iarray_container_t *cout;
-    iarray_get_slice(ctx, cont, start, stop, pshape, &store, 0, true, &cout);
+    iarray_get_slice(ctx, cont, start, stop, true, pshape, &store, 0, &cout);
     
     int64_t cout_size = 1;
     for (int i = 0; i < cout->dtshape->ndim; ++i) {

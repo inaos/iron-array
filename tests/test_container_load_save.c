@@ -63,13 +63,13 @@ static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, 
         INA_TEST_ASSERT_SUCCEED(iarray_container_save(ctx, c_x, filename));
     }
 
-    iarray_store_properties_t store2 = {.filename = filename};
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_container_load(ctx, &store2, &c_y, true));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_load(ctx, filename, true, &c_y));
 
     INA_TEST_ASSERT_SUCCEED(iarray_container_almost_equal(c_x, c_y, 1e-12));
 
+    
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
 
