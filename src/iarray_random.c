@@ -630,13 +630,13 @@ INA_API(ina_rc_t) iarray_random_poisson(iarray_context_t *ctx,
 
 
 INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
-                                       iarray_container_t *c1,
-                                       iarray_container_t *c2,
+                                       iarray_container_t *container1,
+                                       iarray_container_t *container2,
                                        bool *res)
 {
 
-    IARRAY_FAIL_IF(c1->catarr->size != c2->catarr->size);
-    int64_t size = c1->catarr->size;
+    IARRAY_FAIL_IF(container1->catarr->size != container2->catarr->size);
+    int64_t size = container1->catarr->size;
 
     int nbins = 100;
     double bins[100];
@@ -648,13 +648,13 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
 
     iarray_iter_read_t *iter;
     iarray_iter_read_value_t val;
-    IARRAY_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, c1, &val));
+    IARRAY_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, container1, &val));
 
     while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
         IARRAY_FAIL_IF_ERROR(iarray_iter_read_next(iter));
 
         double data;
-        switch(c1->dtshape->dtype){
+        switch(container1->dtshape->dtype){
             case IARRAY_DATA_TYPE_DOUBLE:
                 data = ((double *) val.elem_pointer)[0];
                 break;
@@ -673,12 +673,12 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
 
     iarray_iter_read_free(&iter);
 
-    IARRAY_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, c2, &val));
+    IARRAY_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, container2, &val));
     while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
         IARRAY_FAIL_IF_ERROR(iarray_iter_read_next(iter));
 
         double data;
-        switch(c1->dtshape->dtype){
+        switch(container1->dtshape->dtype){
             case IARRAY_DATA_TYPE_DOUBLE:
                 data = ((double *) val.elem_pointer)[0];
                 break;
@@ -702,13 +702,13 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
         hist2[i] = 0;
     }
 
-    IARRAY_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, c1, &val));
+    IARRAY_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, container1, &val));
 
     while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
         IARRAY_FAIL_IF_ERROR(iarray_iter_read_next(iter));
 
         double data;
-        switch(c1->dtshape->dtype){
+        switch(container1->dtshape->dtype){
             case IARRAY_DATA_TYPE_DOUBLE:
                 data = ((double *) val.elem_pointer)[0];
                 break;
@@ -730,13 +730,13 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
     iarray_iter_read_free(&iter);
     IARRAY_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
-    IARRAY_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, c2, &val));
+    IARRAY_FAIL_IF_ERROR(iarray_iter_read_new(ctx, &iter, container2, &val));
 
     while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
         IARRAY_FAIL_IF_ERROR(iarray_iter_read_next(iter));
 
         double data;
-        switch(c1->dtshape->dtype){
+        switch(container1->dtshape->dtype){
             case IARRAY_DATA_TYPE_DOUBLE:
                 data = ((double *) val.elem_pointer)[0];
                 break;

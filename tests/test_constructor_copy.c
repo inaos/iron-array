@@ -54,7 +54,7 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
         for (int i = 0; i < ndim; ++i) {
             start_view[i] = 0;
         }
-        INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_aux, start_view, stop_view, stop_view, &store, 0, true, &c_x));
+        INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_aux, start_view, stop_view, true, stop_view, &store, 0, &c_x));
         INA_TEST_ASSERT_SUCCEED(iarray_squeeze(ctx, c_x));
     } else {
         INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, 0, &c_x));

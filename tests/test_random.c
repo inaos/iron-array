@@ -18,13 +18,9 @@ static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx,
                           ina_rc_t (*random_fun)(iarray_context_t*, iarray_dtshape_t*,
                           iarray_random_ctx_t*, iarray_store_properties_t*, int, iarray_container_t**))
 {
-    iarray_store_properties_t ystore;
-    ystore.backend = IARRAY_STORAGE_BLOSC;
-    ystore.enforce_frame = true;
-    ystore.filename = filename;
-    
+
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_container_load(ctx, &ystore, &c_y, true));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_load(ctx, filename, true, &c_y));
 
     iarray_dtshape_t xdtshape;
     iarray_get_dtshape(ctx, c_y, &xdtshape);
