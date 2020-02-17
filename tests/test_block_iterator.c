@@ -633,6 +633,7 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
     return INA_SUCCESS;
 }
 
+
 INA_TEST_DATA(block_iterator_not_empty) {
     iarray_context_t *ctx;
 };
