@@ -48,7 +48,7 @@ static ina_rc_t test_buffer(iarray_context_t *ctx,
         }
     }
 
-    iarray_store_properties_t xstore = {.filename=NULL, .enforce_frame=true};
+    iarray_store_properties_t xstore = {.filename=NULL, .enforce_frame=false};
     if (pshape == NULL) {
         xstore.backend = IARRAY_STORAGE_PLAINBUFFER;
     } else {
