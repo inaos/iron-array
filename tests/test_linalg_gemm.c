@@ -557,13 +557,13 @@ INA_TEST_FIXTURE(linalg_gemm, d_trans_notrans_plain_schunk) {
     int64_t xshape[] = {1230, 456};
     int64_t *xpshape = NULL;
 
-    int64_t xbshape[] = {456, 600};
+    int64_t *xbshape = NULL;
     int xtrans = 1;
 
     int64_t yshape[] = {1230, 534};
     int64_t ypshape[] = {200, 210};
 
-    int64_t ybshape[] = {600, 200};
+    int64_t *ybshape = NULL;
     int ytrans = 0;
 
     int64_t zshape[] = {456, 534};
