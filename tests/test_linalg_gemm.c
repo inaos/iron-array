@@ -557,13 +557,13 @@ INA_TEST_FIXTURE(linalg_gemm, d_trans_notrans_plain_schunk) {
     int64_t xshape[] = {1230, 456};
     int64_t *xpshape = NULL;
 
-    int64_t *xbshape = NULL;
+    int64_t xbshape[] = {456, 600};
     int xtrans = 1;
 
     int64_t yshape[] = {1230, 534};
     int64_t ypshape[] = {200, 210};
 
-    int64_t ybshape[] = {1230, 200};
+    int64_t ybshape[] = {600, 200};
     int ytrans = 0;
 
     int64_t zshape[] = {456, 534};
@@ -640,6 +640,54 @@ INA_TEST_FIXTURE(linalg_gemm, d_notrans_notrans_schunk_plain_plain) {
     int ytrans = 0;
 
     int64_t zshape[] = {456, 534};
+    int64_t *zpshape = NULL;
+
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
+                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+}
+
+INA_TEST_FIXTURE(linalg_gemm, f_notrans_notrans_plain_plain_nc_nc) {
+
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    int typesize = sizeof(float);
+
+    int64_t xshape[] = {150, 250};
+    int64_t *xpshape = NULL;
+
+    int64_t xbshape[] = {150, 30};
+    int xtrans = 0;
+
+    int64_t yshape[] = {250, 100};
+    int64_t *ypshape = NULL;
+
+    int64_t ybshape[] = {30, 100};
+    int ytrans = 0;
+
+    int64_t zshape[] = {150, 100};
+    int64_t *zpshape = NULL;
+
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
+                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+}
+
+INA_TEST_FIXTURE(linalg_gemm, f_trans_trans_plain_plain_nc_nc) {
+
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    int typesize = sizeof(float);
+
+    int64_t xshape[] = {100, 250};
+    int64_t *xpshape = NULL;
+
+    int64_t xbshape[] = {250, 30};
+    int xtrans = 1;
+
+    int64_t yshape[] = {250, 100};
+    int64_t *ypshape = NULL;
+
+    int64_t ybshape[] = {30, 250};
+    int ytrans = 1;
+
+    int64_t zshape[] = {250, 250};
     int64_t *zpshape = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
