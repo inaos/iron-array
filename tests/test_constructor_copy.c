@@ -41,7 +41,7 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
     iarray_store_properties_t store;
     store.backend = (pshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     store.filename = NULL;
-    store.enforce_frame = false;
+    store.enforce_frame = (ndim % 2 == 0) ? false : true;
 
     double step = (stop - start) / size;
 
