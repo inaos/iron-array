@@ -139,39 +139,40 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
 {
     ina_rc_t rc;
 
-    iarray_storage_type_t backend = IARRAY_STORAGE_BLOSC;
-    bool equal_pshape = true;
+    if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_DEFAULT) {
+        iarray_storage_type_t backend = IARRAY_STORAGE_BLOSC;
+        bool equal_pshape = true;
 
-    if (e->out->store->backend == IARRAY_STORAGE_PLAINBUFFER) {
-        backend = IARRAY_STORAGE_PLAINBUFFER;
-    } else {
-        for (int i = 0; i < e->nvars; ++i) {
-            iarray_container_t *c = e->vars[i].c;
-            if (c->store->backend == IARRAY_STORAGE_PLAINBUFFER) {
-                backend = IARRAY_STORAGE_PLAINBUFFER;
-                break;
-            }
-            if (equal_pshape) {
-                for (int j = 0; j < c->dtshape->ndim; ++j) {
-                    if (c->dtshape->pshape[j] != e->out->dtshape->pshape[j]) {
-                        equal_pshape = false;
-                        break;
+        if (e->out->store->backend == IARRAY_STORAGE_PLAINBUFFER) {
+            backend = IARRAY_STORAGE_PLAINBUFFER;
+        } else {
+            for (int i = 0; i < e->nvars; ++i) {
+                iarray_container_t *c = e->vars[i].c;
+                if (c->store->backend == IARRAY_STORAGE_PLAINBUFFER) {
+                    backend = IARRAY_STORAGE_PLAINBUFFER;
+                    break;
+                }
+                if (equal_pshape) {
+                    for (int j = 0; j < c->dtshape->ndim; ++j) {
+                        if (c->dtshape->pshape[j] != e->out->dtshape->pshape[j]) {
+                            equal_pshape = false;
+                            break;
+                        }
                     }
                 }
             }
         }
-    }
 
-    if (backend == IARRAY_STORAGE_PLAINBUFFER) {
-        e->ctx->cfg->eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
-    } else {
-        if (!equal_pshape) {
-            e->ctx->cfg->eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC;
+        if (backend == IARRAY_STORAGE_PLAINBUFFER) {
+            e->ctx->cfg->eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
         } else {
-            e->ctx->cfg->eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC2;
+            if (!equal_pshape) {
+                e->ctx->cfg->eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC;
+            } else {
+                e->ctx->cfg->eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC2;
+            }
         }
     }
-
     int nthreads = 1;
 
     e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t*));

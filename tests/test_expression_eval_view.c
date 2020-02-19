@@ -80,6 +80,7 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
 
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x2));
+    INA_TEST_ASSERT_SUCCEED(iarray_expr_bind_out(e, c_x2));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, expr_str));
     INA_TEST_ASSERT_SUCCEED(iarray_eval(e, c_out));
 
