@@ -74,6 +74,7 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
 
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_expr_bind_out(e, c_out));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, expr_str));
     INA_TEST_ASSERT_SUCCEED(iarray_eval(e, c_out));
 
@@ -126,7 +127,7 @@ static double expr_(const double x)
 {
     return (x - 2.3) * (x - 1.35) * (x + 4.2);
 }
-
+/*
 INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC;
@@ -172,12 +173,12 @@ INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk)
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
                                                  data->buf_len, false, data->func, data->expr_str));
 }
-
+*/
 static double expr3(const double x)
 {
     return asin(x) + (acos(x) - 1.35) - atan(x + .2);
 }
-
+/*
 INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk2)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
@@ -186,6 +187,17 @@ INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk2)
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
         data->buf_len, false, data->func, data->expr_str));
+}
+*/
+
+INA_TEST_FIXTURE(expression_eval_double, default_superchunk2)
+{
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_DEFAULT;
+    data->func = expr3;
+    data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
+                                                 data->buf_len, false, data->func, data->expr_str));
 }
 
 static double expr4(const double x)
@@ -198,6 +210,7 @@ static double expr5(const double x)
     return sqrt(x) + atan2(x, x) + pow(x, x);
 }
 
+/*
 INA_TEST_FIXTURE(expression_eval_double, iterchunk_plainbuffer)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
@@ -207,3 +220,15 @@ INA_TEST_FIXTURE(expression_eval_double, iterchunk_plainbuffer)
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
         data->buf_len, true, data->func, data->expr_str));
 }
+
+INA_TEST_FIXTURE(expression_eval_double, default_plainbuffer)
+{
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_DEFAULT;
+    data->func = expr5;
+    data->expr_str = "sqrt(x) + atan2(x, x) + pow(x, x)";
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
+                                                 data->buf_len, true, data->func, data->expr_str));
+}
+
+ */

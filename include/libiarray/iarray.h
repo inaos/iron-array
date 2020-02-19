@@ -127,9 +127,10 @@ typedef struct iarray_store_properties_s {
 } iarray_store_properties_t;
 
 typedef enum iarray_eval_flags_e {
-    IARRAY_EXPR_EVAL_ITERCHUNK = 1,
-    IARRAY_EXPR_EVAL_ITERBLOSC = 2,
-    IARRAY_EXPR_EVAL_ITERBLOSC2 = 3,
+    IARRAY_EXPR_EVAL_DEFAULT = 1,
+    IARRAY_EXPR_EVAL_ITERCHUNK = 2,
+    IARRAY_EXPR_EVAL_ITERBLOSC = 3,
+    IARRAY_EXPR_EVAL_ITERBLOSC2 = 4,
 } iarray_eval_flags_t;
 
 typedef enum iarray_filter_flags_e {
@@ -586,6 +587,7 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e
 INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e);
 
 INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val);
+INA_API(ina_rc_t) iarray_expr_bind_out(iarray_expression_t *e, iarray_container_t *val);
 INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val);
 INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val);
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
