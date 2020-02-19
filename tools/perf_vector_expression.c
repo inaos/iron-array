@@ -152,9 +152,6 @@ int main(int argc, char** argv)
     if (eval_flags == IARRAY_EXPR_EVAL_ITERCHUNK) {
         eval_method = "EVAL_ITERCHUNK";
     }
-    else if (eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK) {
-        eval_method = "EVAL_ITERBLOCK";
-    }
     else if (eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
         eval_method = "EVAL_ITERBLOSC";
     }
