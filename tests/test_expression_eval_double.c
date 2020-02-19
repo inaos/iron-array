@@ -21,7 +21,7 @@
 #define NROWS_CHUNK 20
 #define NCOLS_CHUNK 1000
 #define NELEM (NROWS * NCOLS)
-#define NTHREADS 2  // exercise multithreading in ITERBLOCK
+#define NTHREADS 1
 
 
 /* Compute and fill X values in a buffer */
@@ -152,30 +152,10 @@ static double expr0(const double x)
     return (fabs(-x) - 1.35) * ceil(x) * floor(x - 8.5);
 }
 
-INA_TEST_FIXTURE(expression_eval_double, iterblock_superchunk)
-{
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
-    data->func = expr0;
-    data->expr_str = "(abs(-x) - 1.35) * ceil(x) * floor(x - 8.5)";
-
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
-                                                 data->buf_len, false, data->func, data->expr_str));
-}
-
 static double expr1(const double x)
 {
     return (cos(x) - 1.35) * tan(x) * sin(x - 8.5);
     //return (x - 1.35) + sin(.45);  // TODO: fix evaluation of func(constant)
-}
-
-INA_TEST_FIXTURE(expression_eval_double, iterblock_superchunk2)
-{
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
-    data->func = expr1;
-    data->expr_str = "(cos(x) - 1.35) * tan(x) * sin(x - 8.5)";
-
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
-                                                 data->buf_len, false, data->func, data->expr_str));
 }
 
 static double expr2(const double x)
@@ -211,16 +191,6 @@ INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk2)
 static double expr4(const double x)
 {
     return exp(x) + (log(x) - 1.35) - log10(x + .2);
-}
-
-INA_TEST_FIXTURE(expression_eval_double, iterblock_plainbuffer)
-{
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
-    data->func = expr4;
-    data->expr_str = "exp(x) + (log(x) - 1.35) - log10(x + .2)";
-
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
-        data->buf_len, true, data->func, data->expr_str));
 }
 
 static double expr5(const double x)

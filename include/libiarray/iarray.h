@@ -128,9 +128,8 @@ typedef struct iarray_store_properties_s {
 
 typedef enum iarray_eval_flags_e {
     IARRAY_EXPR_EVAL_ITERCHUNK = 1,
-    IARRAY_EXPR_EVAL_ITERBLOCK = 2,
-    IARRAY_EXPR_EVAL_ITERBLOSC = 3,
-    IARRAY_EXPR_EVAL_ITERBLOSC2 = 4,
+    IARRAY_EXPR_EVAL_ITERBLOSC = 2,
+    IARRAY_EXPR_EVAL_ITERBLOSC2 = 3,
 } iarray_eval_flags_t;
 
 typedef enum iarray_filter_flags_e {

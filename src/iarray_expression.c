@@ -131,24 +131,6 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
 
     int nthreads = 1;
 
-#if defined(_OPENMP)
-    if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK) {
-        // Set a number of threads different from one in case the compiler supports OpemMP
-        // This is not the case for the clang that comes with Mac OSX, but probably the newer
-        // clang that come with later LLVM releases does have support for it.
-        nthreads = e->ctx->cfg->max_num_threads;
-        // The number of threads in config may get overridden by the OMP_NUM_THREADS variable
-        char *envvar = getenv("OMP_NUM_THREADS");
-        if (envvar != NULL) {
-            long value;
-            value = strtol(envvar, NULL, 10);
-            if ((value != EINVAL) && (value >= 0)) {
-                nthreads = (int)value;
-            }
-        }
-    }
-#endif
-
     e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t*));
     caterva_array_t *catarr = e->vars[0].c->catarr;
 
@@ -166,8 +148,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
     }
     else {
         blosc2_schunk *schunk = catarr->sc;
-        if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK ||
-            e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC2) {
+        if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC2) {
             uint8_t *chunk;
             bool needs_free;
             int retcode = blosc2_schunk_get_chunk(schunk, 0, &chunk, &needs_free);
@@ -208,8 +189,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
     iarray_dtshape_t dtshape_var = {0};  // initialize to 0s
     dtshape_var.ndim = 1;
     int32_t temp_var_dim0 = 0;
-    if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK ||
-        e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC2) {
+    if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC2) {
         temp_var_dim0 = e->blocksize / e->typesize;
     } else if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERCHUNK ||
                e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
@@ -546,7 +526,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
     int nvars = e->nvars;
 
     if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        IARRAY_TRACE1(iarray.error, "ITERBLOCK2 eval can't be used with a plainbuffer output container");
+        IARRAY_TRACE1(iarray.error, "ITERBLOSC2 eval can't be used with a plainbuffer output container");
         INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_STORAGE));
     }
 
@@ -654,115 +634,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
     return ina_err_get_rc();
 }
 
-INA_API(ina_rc_t) iarray_eval_iterblock(iarray_expression_t *e, iarray_container_t *ret, int64_t *out_pshape)
-{
-    ina_rc_t rc;
-    int64_t nitems_written = 0;
-    int nvars = e->nvars;
-
-    // This version of the evaluation engine works by using a chunk iterator and use OpenMP
-    // for performing the computations.  The OpenMP loop split the chunk into smaller *blocks* that
-    // are passed the tinyexpr evaluator.
-    // In the future we may want to get rid of the cost of creating/destroying the thread per every chunk.
-    // One possibility is to use pthreads, but this would require more complex code, so we need to discuss it more.
-    int32_t blocksize = e->blocksize;
-    int32_t chunksize = e->chunksize;
-
-    // Create and initialize an iterator per each variable
-    iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    iarray_context_t *ctx = NULL;
-    iarray_context_new(&cfg, &ctx);
-    iarray_iter_read_block_t **iter_var = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_t));
-    iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
-    for (int nvar = 0; nvar < nvars; nvar++) {
-        iarray_container_t *var = e->vars[nvar].c;
-        if (INA_FAILED(iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false))) {
-            goto fail_iterblock;
-        }
-    }
-
-    // Write iterator for output
-    iarray_iter_write_block_t *iter_out;
-    iarray_iter_write_block_value_t out_value;
-    if (INA_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, false))) {
-        goto fail_iterblock;
-    }
-
-    // Evaluate the expression for all the chunks in variables
-    int8_t *outbuf = ina_mem_alloc((size_t)chunksize);
-
-    int32_t nblocks;
-    int32_t out_items;
-
-    while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_out))) {
-        if (INA_FAILED(iarray_iter_write_block_next(iter_out, NULL, 0))) {
-            goto fail_iterblock;
-        }
-
-        for (int nvar = 0; nvar < nvars; nvar++) {
-            if (INA_FAILED(iarray_iter_read_block_next(iter_var[nvar], NULL, 0))) {
-                goto fail_iterblock;
-            }
-        }
-
-        out_items = (int32_t)(iter_out->cur_block_size);  // TODO: add a protection against cur_block_size > 2**31
-        nblocks = out_items * e->typesize / blocksize;
-
-        int nthread = 0;
-
-#if defined(_OPENMP)
-        omp_set_num_threads(e->ctx->cfg->max_num_threads);
-#pragma omp parallel for
-#endif
-        for (int nblock = 0; nblock < nblocks; nblock++) {
-#if defined(_OPENMP)
-            nthread = omp_get_thread_num();
-#endif
-            for (int nvar = 0; nvar < nvars; nvar++) {
-
-                int ntvar = nthread * e->nvars + nvar;
-                e->temp_vars[ntvar]->data = (char *) iter_value[nvar].block_pointer + nblock * blocksize;
-            }
-            e->max_out_len = blocksize / e->typesize;  // so as to prevent operating beyond the limits
-            const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
-            memcpy((char*)out_value.block_pointer + nblock * blocksize, (uint8_t*)expr_out->data, blocksize);
-        }
-
-        // Do a possible last evaluation with the leftovers
-        int32_t leftover = out_items * e->typesize - nblocks * blocksize;
-        if (leftover > 0) {
-            for (int nvar = 0; nvar < nvars; nvar++) {
-                e->temp_vars[nvar]->data = (char *) iter_value[nvar].block_pointer + nblocks * blocksize;
-            }
-            e->max_out_len = leftover / e->typesize;  // so as to prevent operating beyond the leftover
-            const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
-            e->max_out_len = 0;
-            memcpy((char*)out_value.block_pointer + nblocks * blocksize, (uint8_t*)expr_out->data, leftover);
-        }
-
-        // Write the resulting chunk in output
-        nitems_written += out_items;
-        ina_mempool_reset(e->ctx->mp_tmp_out);
-    }
-
-    if (ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0)) {
-        goto fail_iterblock;
-    }
-
-    for (int nvar = 0; nvar < nvars; nvar++) {
-        iarray_iter_read_block_free(&iter_var[nvar]);
-    }
-    iarray_iter_write_block_free(&iter_out);
-    INA_MEM_FREE_SAFE(iter_var);
-    INA_MEM_FREE_SAFE(iter_value);
-    INA_MEM_FREE_SAFE(outbuf);
-    iarray_context_free(&ctx);
-    rc = iarray_eval_cleanup(e, nitems_written);
-    return rc;
-
-    fail_iterblock:
-    return ina_err_get_rc();
-}
 
 INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
 {
@@ -786,8 +657,6 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
     switch (e->ctx->cfg->eval_flags) {
         case IARRAY_EXPR_EVAL_ITERCHUNK:
             return iarray_eval_iterchunk(e, ret, out_pshape);
-        case IARRAY_EXPR_EVAL_ITERBLOCK:
-            return iarray_eval_iterblock(e, ret, out_pshape);
         case IARRAY_EXPR_EVAL_ITERBLOSC:
             return iarray_eval_iterblosc(e, ret, out_pshape);
         case IARRAY_EXPR_EVAL_ITERBLOSC2:
