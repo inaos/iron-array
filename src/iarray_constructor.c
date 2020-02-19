@@ -488,19 +488,19 @@ static void swap_store(void *dest, const void *pa, int size) {
                 pa2_[6] = pa_[1];
                 pa2_[7] = pa_[0];
                 break;
-            case 4:
-                pa2_[0] = pa_[3];
-                pa2_[1] = pa_[2];
-                pa2_[2] = pa_[1];
-                pa2_[3] = pa_[0];
-                break;
-            case 2:
-                pa2_[0] = pa_[1];
-                pa2_[1] = pa_[0];
-                break;
-            case 1:
-                pa2_[0] = pa_[0];
-                break;
+//            case 4:
+//                pa2_[0] = pa_[3];
+//                pa2_[1] = pa_[2];
+//                pa2_[2] = pa_[1];
+//                pa2_[3] = pa_[0];
+//                break;
+//            case 2:
+//                pa2_[0] = pa_[1];
+//                pa2_[1] = pa_[0];
+//                break;
+//            case 1:
+//                pa2_[0] = pa_[0];
+//                break;
             default:
                 fprintf(stderr, "Unhandled size: %d\n", size);
         }
