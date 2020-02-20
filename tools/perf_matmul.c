@@ -151,8 +151,8 @@ int main(int argc, char** argv)
     printf("\n");
     if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_x_prop.filename) && _iarray_file_exists(mat_y_prop.filename)) {
         INA_STOPWATCH_START(w);
-        INA_MUST_SUCCEED(iarray_container_load(ctx, &mat_x_prop, &con_x, false));
-        INA_MUST_SUCCEED(iarray_container_load(ctx, &mat_y_prop, &con_y, false));
+        INA_MUST_SUCCEED(iarray_container_load(ctx, mat_x_prop.filename, false, &con_x));
+        INA_MUST_SUCCEED(iarray_container_load(ctx, mat_y_prop.filename, false, &con_y));
         INA_STOPWATCH_STOP(w);
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
         printf("Time for *opening* X and Y values: %.3g s, %.1f GB/s\n",
