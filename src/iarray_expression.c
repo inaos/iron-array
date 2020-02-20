@@ -175,7 +175,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
     }
     int nthreads = 1;
 
-    e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t*));
+    e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t *));
     caterva_array_t *catarr = e->vars[0].c->catarr;
 
     e->typesize = catarr->ctx->cparams.typesize;
@@ -310,6 +310,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         te_vars[nvar].context = NULL;
         te_vars[nvar].address = ina_mempool_dalloc(e->ctx->mp, nthreads * sizeof(void*));
         jug_vars[nvar].name = e->vars[nvar].var;
+
         // Allocate different buffers for each thread too
         for (int nthread = 0; nthread < nthreads; nthread++) {
             int ntvar = nthread * e->nvars + nvar;
@@ -797,9 +798,6 @@ iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *
     // Creating the temporary means interacting with the INA memory allocator, which is not thread-safe.
     // We should investigate on how to overcome this syncronization point (if possible at all).
     ina_rc_t err;
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
 
     err = iarray_temporary_new(expr, NULL, &dtshape, &out);
     IARRAY_FAIL_IF_ERROR(err);
