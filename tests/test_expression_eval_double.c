@@ -76,7 +76,7 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind_out(e, c_out));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, expr_str));
-    INA_TEST_ASSERT_SUCCEED(iarray_eval(e, c_out));
+    INA_TEST_ASSERT_SUCCEED(iarray_eval(e));
 
     // We use a quite low tolerance as MKL functions always differ from those in OS math libraries
     INA_TEST_ASSERT_SUCCEED(_iarray_test_container_dbl_buffer_cmp(ctx, c_out, buffer_y, buffer_len, 5e-13));

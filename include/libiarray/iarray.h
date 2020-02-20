@@ -596,7 +596,7 @@ INA_API(ina_rc_t) iarray_expr_compile_udf(iarray_expression_t *e,
                                           const char *llvm_bc,
                                           const char *name);
 
-INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
+INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
 
 //FIXME: remove
 INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp);

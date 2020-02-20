@@ -717,8 +717,9 @@ INA_API(ina_rc_t) iarray_eval_default(iarray_expression_t *e, iarray_container_t
     return ina_err_get_rc();
 }
 
-INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret)
+INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e)
 {
+    iarray_container_t *ret = e->out;
     INA_VERIFY_NOT_NULL(e);
     INA_VERIFY_NOT_NULL(ret);
 
