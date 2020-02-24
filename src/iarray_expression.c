@@ -135,7 +135,7 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
 }
 
 
-static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
+static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
 {
     ina_rc_t rc;
 
@@ -173,9 +173,8 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
             }
         }
     }
-    int nthreads = 1;
 
-    e->temp_vars = ina_mem_alloc(nthreads * e->nvars * sizeof(iarray_temporary_t *));
+    e->temp_vars = ina_mem_alloc(e->nvars * sizeof(iarray_temporary_t *));
     caterva_array_t *catarr = e->vars[0].c->catarr;
 
     e->typesize = catarr->ctx->cparams.typesize;
@@ -248,13 +247,9 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e, int *nthreads_out)
 
     for (int nvar = 0; nvar < e->nvars; nvar++) {
         // Allocate different buffers for each thread too
-        for (int nthread = 0; nthread < nthreads; nthread++) {
-            int ntvar = nthread * e->nvars + nvar;
-            INA_FAIL_IF_ERROR(iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[ntvar]));
-        }
+        INA_FAIL_IF_ERROR(iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[nvar]));
     }
 
-    *nthreads_out = nthreads;
     return INA_SUCCESS;
 
 fail:
@@ -272,8 +267,7 @@ INA_API(ina_rc_t) iarray_expr_compile_udf(
     INA_VERIFY_NOT_NULL(e);
     INA_VERIFY_NOT_NULL(llvm_bc);
 
-    int nthreads;
-    ina_rc_t rc = _iarray_expr_prepare(e, &nthreads);
+    ina_rc_t rc = _iarray_expr_prepare(e);
     if (rc != INA_SUCCESS) {
         return rc;
     }
@@ -295,8 +289,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 
     e->expr = ina_str_new_fromcstr(expr);
 
-    int nthreads;
-    ina_rc_t rc = _iarray_expr_prepare(e, &nthreads);
+    ina_rc_t rc = _iarray_expr_prepare(e);
     if (rc != INA_SUCCESS) {
         return rc;
     }
@@ -308,14 +301,12 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         te_vars[nvar].name = e->vars[nvar].var;
         te_vars[nvar].type = TE_VARIABLE;
         te_vars[nvar].context = NULL;
-        te_vars[nvar].address = ina_mempool_dalloc(e->ctx->mp, nthreads * sizeof(void*));
+        te_vars[nvar].address = ina_mempool_dalloc(e->ctx->mp, sizeof(void*));
         jug_vars[nvar].name = e->vars[nvar].var;
 
         // Allocate different buffers for each thread too
-        for (int nthread = 0; nthread < nthreads; nthread++) {
-            int ntvar = nthread * e->nvars + nvar;
-            te_vars[nvar].address[nthread] = *(e->temp_vars + ntvar);
-        }
+        te_vars[nvar].address[0] = *(e->temp_vars + nvar);
+
     }
 
     int err = 0;
