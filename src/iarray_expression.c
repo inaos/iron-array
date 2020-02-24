@@ -301,11 +301,10 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         te_vars[nvar].name = e->vars[nvar].var;
         te_vars[nvar].type = TE_VARIABLE;
         te_vars[nvar].context = NULL;
-        te_vars[nvar].address = ina_mempool_dalloc(e->ctx->mp, sizeof(void*));
         jug_vars[nvar].name = e->vars[nvar].var;
 
         // Allocate different buffers for each thread too
-        te_vars[nvar].address[0] = *(e->temp_vars + nvar);
+        te_vars[nvar].address = *(e->temp_vars + nvar);
 
     }
 
