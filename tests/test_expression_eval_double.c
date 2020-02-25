@@ -192,7 +192,7 @@ INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk2)
 
 INA_TEST_FIXTURE(expression_eval_double, default_superchunk2)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_DEFAULT;
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_AUTO;
     data->func = expr3;
     data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
 
@@ -224,7 +224,7 @@ INA_TEST_FIXTURE(expression_eval_double, iterchunk_plainbuffer)
 
 INA_TEST_FIXTURE(expression_eval_double, default_plainbuffer)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_DEFAULT;
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_AUTO;
     data->func = expr5;
     data->expr_str = "sqrt(x) + atan2(x, x) + pow(x, x)";
 

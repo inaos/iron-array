@@ -139,7 +139,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
 {
     ina_rc_t rc;
 
-    if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_DEFAULT) {
+    if (e->ctx->cfg->eval_flags == IARRAY_EXPR_EVAL_AUTO) {
         iarray_storage_type_t backend = IARRAY_STORAGE_BLOSC;
         bool equal_pshape = true;
 
@@ -576,6 +576,8 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
     pparams.compressed_inputs = true;
     cparams->pparams = &pparams;
 
+    int32_t blocksize = e->blocksize;
+
     // Initialize the typesize for each variable
     for (int nvar = 0; nvar < nvars; nvar++) {
         iarray_container_t *var = e->vars[nvar].c;
@@ -583,7 +585,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
     }
     uint8_t **var_chunks = malloc(nvars * sizeof(void*));
     bool *var_needs_free = malloc(nvars * sizeof(bool));
-    int32_t blocksize = e->blocksize;
 
     // Write iterator for output
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -649,7 +650,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
         }
 
         nitems_written += out_items;
-        ina_mempool_reset(e->ctx->mp_tmp_out);
         nchunk += 1;
     }
 

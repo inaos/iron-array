@@ -127,7 +127,7 @@ typedef struct iarray_store_properties_s {
 } iarray_store_properties_t;
 
 typedef enum iarray_eval_flags_e {
-    IARRAY_EXPR_EVAL_DEFAULT = 1,
+    IARRAY_EXPR_EVAL_AUTO = 1,
     IARRAY_EXPR_EVAL_ITERCHUNK = 2,
     IARRAY_EXPR_EVAL_ITERBLOSC = 3,
     IARRAY_EXPR_EVAL_ITERBLOSC2 = 4,
