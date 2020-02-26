@@ -365,10 +365,10 @@ int prefilter_func(blosc2_prefilter_params *pparams)
         uint8_t* input_chunk = expr_pparams->inputs[i];
         if (expr_pparams->compressed_inputs) {
             int rbytes;
-            int32_t offset_i = pparams->out_offset / pparams->input_typesizes[i];
-            int32_t nitems_i = bsize / pparams->input_typesizes[i];
-            pparams->inputs[i] = malloc(bsize);  // TODO: avoid this malloc if possible
-            rbytes = blosc_getitem(input_chunk, offset_i, nitems_i, pparams->inputs[i]);
+            int32_t offset_i = pparams->out_offset / expr_pparams->input_typesizes[i];
+            int32_t nitems_i = bsize / expr_pparams->input_typesizes[i];
+            expr_pparams->inputs[i] = malloc(bsize);  // TODO: avoid this malloc if possible
+            rbytes = blosc_getitem(input_chunk, offset_i, nitems_i, expr_pparams->inputs[i]);
             if (rbytes != bsize) {
                 fprintf(stderr, "Read from inputs failed inside pipeline\n");
                 return -1;
