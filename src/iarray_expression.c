@@ -40,6 +40,8 @@ struct iarray_expression_s {
     jug_expression_t *jug_expr;
     uint64_t jug_expr_func;
     iarray_temporary_t **temp_vars;
+    iarray_dtshape_t *out_dtshape;
+    iarray_store_properties_t *out_store_properties;
     iarray_container_t *out;
     _iarray_tinyexpr_var_t vars[_IARRAY_EXPR_VAR_MAX];
 };
@@ -88,15 +90,18 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_expr_bind_out(iarray_expression_t *e, iarray_container_t *val)
-{
-    INA_VERIFY_NOT_NULL(e);
-    INA_VERIFY_NOT_NULL(val);
 
-    e->out = val;
+INA_API(ina_rc_t) iarray_expr_bind_out_properties(iarray_expression_t *e, iarray_dtshape_t *dtshape, iarray_store_properties_t *store)
+{
+    e->out_dtshape = ina_mem_alloc(sizeof(iarray_dtshape_t));
+    memcpy(e->out_dtshape, dtshape, sizeof(iarray_dtshape_t));
+
+    e->out_store_properties = ina_mem_alloc(sizeof(iarray_store_properties_t));
+    memcpy(e->out_store_properties, store, sizeof(iarray_store_properties_t));
 
     return INA_SUCCESS;
 }
+
 
 INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val)
 //{
@@ -143,7 +148,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
         iarray_storage_type_t backend = IARRAY_STORAGE_BLOSC;
         bool equal_pshape = true;
 
-        if (e->out->store->backend == IARRAY_STORAGE_PLAINBUFFER) {
+        if (e->out_store_properties->backend == IARRAY_STORAGE_PLAINBUFFER) {
             backend = IARRAY_STORAGE_PLAINBUFFER;
         } else {
             for (int i = 0; i < e->nvars; ++i) {
@@ -154,7 +159,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
                 }
                 if (equal_pshape) {
                     for (int j = 0; j < c->dtshape->ndim; ++j) {
-                        if (c->dtshape->pshape[j] != e->out->dtshape->pshape[j]) {
+                        if (c->dtshape->pshape[j] != e->out_dtshape->pshape[j]) {
                             equal_pshape = false;
                             break;
                         }
@@ -670,11 +675,15 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
 }
 
 
-INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e)
+INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **container)
 {
-    iarray_container_t *ret = e->out;
     INA_VERIFY_NOT_NULL(e);
-    INA_VERIFY_NOT_NULL(ret);
+    INA_VERIFY_NOT_NULL(container);
+
+    int flags = e->out_store_properties->filename ? IARRAY_CONTAINER_PERSIST : 0;
+    iarray_container_new(e->ctx, e->out_dtshape, e->out_store_properties, flags, container);
+    e->out = *container;
+    iarray_container_t *ret = *container;
 
     int64_t *out_pshape;
     if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {

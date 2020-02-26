@@ -47,10 +47,10 @@ int main()
     iarray_expr_new(ctx, &e);
     iarray_expr_bind(e, "x", c_x);
     iarray_expr_bind(e, "y", c_y);
-    iarray_expr_bind_out(e, c_out);
+    iarray_expr_bind_out_properties(e, &shape, &store);
 
     iarray_expr_compile(e, "x + 2*y");
-    iarray_eval(e);
+    iarray_eval(e, &c_out);
 
     // Print some values of the outcome
     size_t buf_len = sizeof(double) * nelem;

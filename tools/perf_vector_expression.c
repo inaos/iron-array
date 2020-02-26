@@ -333,17 +333,16 @@ int main(int argc, char** argv)
 
     // Check IronArray performanc
     iarray_container_t *con_out;
-    INA_MUST_SUCCEED(iarray_container_new(ctx, &dtshape, &mat_out, flags, &con_out));
 
     iarray_expression_t *e;
     iarray_expr_new(ctx, &e);
     iarray_expr_bind(e, "x", con_x);
-    iarray_expr_bind_out(e, con_out);
+    iarray_expr_bind_out_properties(e, &dtshape, &mat_out);
     iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
 
 
     INA_STOPWATCH_START(w);
-    ina_rc_t errcode = iarray_eval(e);
+    ina_rc_t errcode = iarray_eval(e, &con_out);
     if (errcode != INA_SUCCESS) {
         printf("Error during evaluation.  Giving up...\n");
         return -1;
