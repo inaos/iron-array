@@ -46,6 +46,16 @@ struct iarray_expression_s {
     _iarray_tinyexpr_var_t vars[_IARRAY_EXPR_VAR_MAX];
 };
 
+struct iarray_expression_pparams_s {
+    bool compressed_inputs;  // whether the inputs are compressed or not (should be the first to avoid crashes, WTF??)
+    int ninputs;  // number of data inputs
+    uint8_t* inputs[BLOSC2_PREFILTER_INPUTS_MAX];  // the data inputs
+    int32_t input_typesizes[BLOSC2_PREFILTER_INPUTS_MAX];  // the typesizes for data inputs
+    iarray_expression_t *e;
+};
+typedef struct iarray_expression_pparams_s iarray_expression_pparams_t;
+
+
 INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e)
 {
     INA_VERIFY_NOT_NULL(ctx);
@@ -345,12 +355,15 @@ fail:
 
 int prefilter_func(blosc2_prefilter_params *pparams)
 {
+    iarray_expression_pparams_t *expr_pparams = malloc(sizeof(iarray_expression_pparams_t));
+    memcpy(expr_pparams, pparams->user_data, sizeof(iarray_expression_pparams_t));
+
     int32_t bsize = pparams->out_size;
     int32_t typesize = pparams->out_typesize;
 
-    for (int i = 0; i < pparams->ninputs; i++) {
-        uint8_t* input_chunk = pparams->inputs[i];
-        if (pparams->compressed_inputs) {
+    for (int i = 0; i < expr_pparams->ninputs; i++) {
+        uint8_t* input_chunk = expr_pparams->inputs[i];
+        if (expr_pparams->compressed_inputs) {
             int rbytes;
             int32_t offset_i = pparams->out_offset / pparams->input_typesizes[i];
             int32_t nitems_i = bsize / pparams->input_typesizes[i];
@@ -362,16 +375,16 @@ int prefilter_func(blosc2_prefilter_params *pparams)
             }
         }
         else {
-            int32_t offset_i = (pparams->out_offset / typesize) * pparams->input_typesizes[i];
-            pparams->inputs[i] = pparams->inputs[i] + offset_i;
+            int32_t offset_i = (pparams->out_offset / typesize) * expr_pparams->input_typesizes[i];
+            expr_pparams->inputs[i] = expr_pparams->inputs[i] + offset_i;
         }
     }
 
-    struct iarray_expression_s *e = pparams->user_data;
+    struct iarray_expression_s *e = expr_pparams->e;
 
-    int ninputs = pparams->ninputs;
+    int ninputs = expr_pparams->ninputs;
     for (int i = 0; i < ninputs; i++) {
-        e->temp_vars[i]->data = pparams->inputs[i];
+        e->temp_vars[i]->data = expr_pparams->inputs[i];
     }
 
     // Eval the expression for this chunk
@@ -391,9 +404,9 @@ int prefilter_func(blosc2_prefilter_params *pparams)
             return -1;
     }
 
-    if (pparams->compressed_inputs) {
-        for (int i = 0; i < pparams->ninputs; i++) {
-          free(pparams->inputs[i]);
+    if (expr_pparams->compressed_inputs) {
+        for (int i = 0; i < expr_pparams->ninputs; i++) {
+          free(expr_pparams->inputs[i]);
         }
     }
 
@@ -506,9 +519,13 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     memcpy(cparams, ret->cparams, sizeof(blosc2_cparams));
     cparams->prefilter = (blosc2_prefilter_fn)prefilter_func;
     blosc2_prefilter_params pparams = {0};
-    pparams.ninputs = nvars;
+
     // TODO: add the out_value structure to the user_data also?
-    pparams.user_data = (void*)e;
+    iarray_expression_pparams_t expr_pparams = {0};
+    expr_pparams.e = e;
+    expr_pparams.ninputs = nvars;
+    expr_pparams.compressed_inputs = false;
+    pparams.user_data = (void *) &expr_pparams;
     cparams->pparams = &pparams;
 
     // Create and initialize an iterator per variable
@@ -522,7 +539,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         if (INA_FAILED(iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false))) {
             goto fail_iterblosc;
         }
-        pparams.input_typesizes[nvar] = var->catarr->sc->typesize;
+        expr_pparams.input_typesizes[nvar] = var->catarr->sc->typesize;
     }
 
     // Write iterator for output
@@ -554,7 +571,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
                 goto fail_iterblosc;
             }
             e->temp_vars[nvar]->data = iter_value[nvar].block_pointer;
-            pparams.inputs[nvar] = iter_value[nvar].block_pointer;
+            expr_pparams.inputs[nvar] = iter_value[nvar].block_pointer;
         }
 
         // Eval the expression for this chunk
@@ -635,10 +652,13 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
     memcpy(cparams, ret->cparams, sizeof(blosc2_cparams));
     cparams->prefilter = (blosc2_prefilter_fn)prefilter_func;
     blosc2_prefilter_params pparams = {0};
-    pparams.ninputs = nvars;
+
     // TODO: add the out_value structure to the user_data also?
-    pparams.user_data = (void*)e;
-    pparams.compressed_inputs = true;
+    iarray_expression_pparams_t expr_pparams = {0};
+    expr_pparams.e = e;
+    expr_pparams.ninputs = nvars;
+    expr_pparams.compressed_inputs = true;
+    pparams.user_data = (void *) &expr_pparams;
     cparams->pparams = &pparams;
 
     int32_t blocksize = e->blocksize;
@@ -646,7 +666,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
     // Initialize the typesize for each variable
     for (int nvar = 0; nvar < nvars; nvar++) {
         iarray_container_t *var = e->vars[nvar].c;
-        pparams.input_typesizes[nvar] = var->catarr->sc->typesize;
+        expr_pparams.input_typesizes[nvar] = var->catarr->sc->typesize;
     }
     uint8_t **var_chunks = malloc(nvars * sizeof(void*));
     bool *var_needs_free = malloc(nvars * sizeof(bool));
@@ -682,7 +702,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
                 IARRAY_TRACE1(iarray.error, "Error in retrieving chunk from schunk");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_SUPPORTED));
             }
-            pparams.inputs[nvar] = var_chunks[nvar];
+            expr_pparams.inputs[nvar] = var_chunks[nvar];
         }
 
         // Eval the expression for this chunk
