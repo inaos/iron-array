@@ -40,9 +40,6 @@ int main()
     iarray_linspace(ctx, &shape, nelem, 2.1, .1, &store, 0, &c_x);
     iarray_linspace(ctx, &shape, nelem, 0.1, .1, &store, 0, &c_y);
 
-    iarray_container_t* c_out;
-    iarray_container_new(ctx, &shape, &store, 0, &c_out);
-
     iarray_expression_t* e;
     iarray_expr_new(ctx, &e);
     iarray_expr_bind(e, "x", c_x);
@@ -50,6 +47,8 @@ int main()
     iarray_expr_bind_out_properties(e, &shape, &store);
 
     iarray_expr_compile(e, "x + 2*y");
+
+    iarray_container_t* c_out;
     iarray_eval(e, &c_out);
 
     // Print some values of the outcome
