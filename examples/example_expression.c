@@ -28,10 +28,10 @@ int main()
 
     iarray_dtshape_t shape;
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
-    shape.ndim = 2;
-    shape.shape[0] = 1000; shape.shape[1] = 2000;
-    shape.pshape[0] = 110; shape.pshape[1] = 200;
-    int64_t nelem = shape.shape[0] * shape.shape[1];
+    shape.ndim = 1;
+    shape.shape[0] = 1000; // shape.shape[1] = 2000;
+    shape.pshape[0] = 110; //shape.pshape[1] = 200;
+    int64_t nelem = shape.shape[0]; // * shape.shape[1];
 
     iarray_store_properties_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
