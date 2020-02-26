@@ -331,6 +331,29 @@ fail:
 
 int prefilter_func(blosc2_prefilter_params *pparams)
 {
+    int32_t bsize = pparams->out_size;
+    int32_t typesize = pparams->out_typesize;
+
+    for (int i = 0; i < pparams->ninputs; i++) {
+        uint8_t* input_chunk = pparams->inputs[i];
+        if (pparams->compressed_inputs) {
+            int rbytes;
+            int32_t offset_i = pparams->out_offset / pparams->input_typesizes[i];
+            int32_t nitems_i = bsize / pparams->input_typesizes[i];
+            pparams->inputs[i] = malloc(bsize);
+            rbytes = blosc_getitem(input_chunk, offset_i, nitems_i, pparams->inputs[i]);
+
+            if (rbytes != bsize) {
+                fprintf(stderr, "Read from inputs failed inside pipeline\n");
+                return -1;
+            }
+        }
+        else {
+            int32_t offset_i = (pparams->out_offset / typesize) * pparams->input_typesizes[i];
+            pparams->inputs[i] = pparams->inputs[i] + offset_i;
+        }
+    }
+
     struct iarray_expression_s *e = pparams->user_data;
 
     int ninputs = pparams->ninputs;
@@ -339,15 +362,22 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     }
 
     // Eval the expression for this chunk
-    e->max_out_len = pparams->out_size / pparams->out_typesize;  // so as to prevent operating beyond the limits
-    const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
-    memcpy(pparams->out, (uint8_t*)expr_out->data, pparams->out_size);
 
-    // Uncomment the next line and comment out the above ones if one want to do benchmarks
-    // compute_out((double*)(pparams->inputs[0]), (double*)(pparams->out), pparams->out_size / pparams->out_typesize);
+    //e->max_out_len = pparams->out_size / pparams->out_typesize;  // so as to prevent operating beyond the limits
+    //const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
+    //memcpy(pparams->out, (uint8_t*)expr_out->data, pparams->out_size);
+
+    ((blosc2_prefilter_fn)e->jug_expr_func)(pparams);
+
+    if (pparams->compressed_inputs) {
+        for (int i = 0; i < pparams->ninputs; i++) {
+          free(pparams->inputs[i]);
+        }
+    }
 
     return 0;
 }
+
 
 ina_rc_t iarray_eval_cleanup(iarray_expression_t *e, int64_t nitems_written)
 {
@@ -448,7 +478,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     // Setup a new cparams with a prefilter
     blosc2_cparams *cparams = malloc(sizeof(blosc2_cparams));
     memcpy(cparams, ret->cparams, sizeof(blosc2_cparams));
-    cparams->prefilter = (blosc2_prefilter_fn)e->jug_expr_func;
+    cparams->prefilter = (blosc2_prefilter_fn)prefilter_func;
     blosc2_prefilter_params pparams = {0};
     pparams.ninputs = nvars;
     // TODO: add the out_value structure to the user_data also?
@@ -538,6 +568,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
 
         nitems_written += out_items;
         ina_mempool_reset(e->ctx->mp_tmp_out);
+        // free(external_buffer);  // TODO: fix this leak
     }
 
     if (ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0)) {
@@ -573,7 +604,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
     // Setup a new cparams with a prefilter
     blosc2_cparams *cparams = malloc(sizeof(blosc2_cparams));
     memcpy(cparams, ret->cparams, sizeof(blosc2_cparams));
-    cparams->prefilter = (blosc2_prefilter_fn)e->jug_expr_func;
+    cparams->prefilter = (blosc2_prefilter_fn)prefilter_func;
     blosc2_prefilter_params pparams = {0};
     pparams.ninputs = nvars;
     // TODO: add the out_value structure to the user_data also?
@@ -656,6 +687,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
 
         nitems_written += out_items;
         nchunk += 1;
+        // free(external_buffer);  // TODO: fix this leak
     }
 
     if (ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0)) {
