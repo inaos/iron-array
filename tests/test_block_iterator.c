@@ -288,11 +288,12 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
 
     partsize_x += BLOSC_MAX_OVERHEAD;
 
-    uint8_t *part_x = (uint8_t *) malloc(partsize_x);
 
     INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, true));
 
     while (INA_SUCCEED(iarray_iter_write_block_has_next(I))) {
+        uint8_t *part_x = (uint8_t *) malloc(partsize_x);
+
         INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(I, (void *) part_x, partsize_x));
 
         int64_t nelem = 0;
@@ -371,6 +372,7 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
 
     partsize_y += BLOSC_MAX_OVERHEAD;
 
+    uint8_t *part_x = (uint8_t *) malloc(partsize_x);
     uint8_t *part_y = (uint8_t *) malloc(partsize_y);
     INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, true));
 

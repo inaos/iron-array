@@ -431,6 +431,9 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                     }
                 } else {
                     int err = blosc2_schunk_append_buffer(catarr->sc, itr->block, (size_t) psizeb);
+                    if (itr->external_buffer) {
+                      free(itr->block);
+                    }
                     if (err < 0) {
                         IARRAY_TRACE1(iarray.error, "Error appending a buffer in a blosc schunk");
                         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
@@ -487,6 +490,9 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                 }
                 int err = blosc2_schunk_append_buffer(itr->cont->catarr->sc, part_aux,
                                                       (size_t) catarr->psize * typesize);
+                if (itr->external_buffer) {
+                    free(itr->block);
+                }
                 free(part_aux);
 
                 if (err < 0) {
@@ -577,6 +583,10 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                     }
                 } else {
                     int err = blosc2_schunk_append_buffer(catarr->sc, itr->block, (size_t) psizeb);
+                    if (itr->external_buffer) {
+                        free(itr->block);
+                     }
+
                     if (err < 0) {
                         // TODO: if the next call is not zero, it can be interpreted as there are more elements
                         IARRAY_TRACE1(iarray.error, "Error appending a chunk to a blosc schunk");
@@ -634,6 +644,9 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                 }
                 int err = blosc2_schunk_append_buffer(itr->cont->catarr->sc, part_aux,
                                                       (size_t) catarr->psize * typesize);
+                if (itr->external_buffer) {
+                    free(itr->block);
+                }
                 free(part_aux);
 
                 if (err < 0) {

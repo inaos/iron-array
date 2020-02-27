@@ -340,9 +340,8 @@ int prefilter_func(blosc2_prefilter_params *pparams)
             int rbytes;
             int32_t offset_i = pparams->out_offset / pparams->input_typesizes[i];
             int32_t nitems_i = bsize / pparams->input_typesizes[i];
-            pparams->inputs[i] = malloc(bsize);
+            pparams->inputs[i] = malloc(bsize);  // TODO: avoid this malloc if possible
             rbytes = blosc_getitem(input_chunk, offset_i, nitems_i, pparams->inputs[i]);
-
             if (rbytes != bsize) {
                 fprintf(stderr, "Read from inputs failed inside pipeline\n");
                 return -1;
@@ -510,6 +509,9 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
 
     // Evaluate the expression for all the chunks in variables
     while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_out))) {
+        // The external buffer is needed *inside* the write iterator because
+        // this will end as a (realloc'ed) compressed chunk of a final container
+        // (we do so in order to avoid copies as much as possible)
         external_buffer = malloc(external_buffer_size);
 
         if (INA_FAILED(iarray_iter_write_block_next(iter_out, external_buffer, external_buffer_size))) {
@@ -629,12 +631,15 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
     iarray_iter_write_block_t *iter_out;
     iarray_iter_write_block_value_t out_value;
     int32_t external_buffer_size = ret->catarr->psize * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD;
-    void *external_buffer;  // to inform the iterator that we are passing an external buffer
+    void *external_buffer = NULL;  // to inform the iterator that we are passing an external buffer
     INA_FAIL_IF_ERROR(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, true));
 
     // Evaluate the expression for all the chunks in variables
     int32_t nchunk = 0;
     while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_out))) {
+        // The external buffer is needed *inside* the write iterator because
+        // this will end as a (realloc'ed) compressed chunk of a final container
+        // (we do so in order to avoid copies as much as possible)
         external_buffer = malloc(external_buffer_size);
 
         INA_FAIL_IF_ERROR(INA_FAILED(iarray_iter_write_block_next(iter_out, external_buffer, external_buffer_size)));

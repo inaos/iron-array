@@ -76,6 +76,7 @@ int main()
     iarray_expr_free(ctx, &e);
     iarray_container_free(ctx, &c_out);
     iarray_container_free(ctx, &c_x);
+    iarray_container_free(ctx, &c_y);
     iarray_context_free(&ctx);
     free(buff_out);
     free(buff_x);
