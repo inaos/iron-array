@@ -291,9 +291,9 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
 
     INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, true));
     uint8_t *part_x;
-    part_x = (uint8_t *) malloc(partsize_x);
 
     while (INA_SUCCEED(iarray_iter_write_block_has_next(I))) {
+        part_x = (uint8_t *) malloc(partsize_x);
 
         INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(I, (void *) part_x, partsize_x));
 
@@ -317,7 +317,6 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
     iarray_iter_write_block_free(&I);
     INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
-    free(part_x);
 
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));

@@ -419,6 +419,9 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                 caterva_dims_t stop = caterva_new_dims(stop_, ndim);
 
                 IARRAY_ERR_CATERVA(caterva_set_slice_buffer(catarr, itr->block, &start, &stop));
+                if (itr->external_buffer) {
+                    free(itr->block);
+                }
             }
         } else {
             // check if the part should be padded with 0s
@@ -432,7 +435,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                 } else {
                     int err = blosc2_schunk_append_buffer(catarr->sc, itr->block, (size_t) psizeb);
                     if (itr->external_buffer) {
-                        // free(itr->block);
+                        free(itr->block);
                     }
                     if (err < 0) {
                         IARRAY_TRACE1(iarray.error, "Error appending a buffer in a blosc schunk");
@@ -491,7 +494,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                 int err = blosc2_schunk_append_buffer(itr->cont->catarr->sc, part_aux,
                                                       (size_t) catarr->psize * typesize);
                 if (itr->external_buffer) {
-                    // free(itr->block);
+                    free(itr->block);
                 }
                 free(part_aux);
 
@@ -570,6 +573,10 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                 caterva_dims_t stop = caterva_new_dims(stop_, ndim);
 
                 IARRAY_ERR_CATERVA(caterva_set_slice_buffer(catarr, itr->block, &start, &stop));
+                // TODO: Free of the external buffer?
+                if (itr->external_buffer) {
+                    free(itr->block);
+                }
             }
         } else {
             // check if the part should be padded with 0s
@@ -584,8 +591,8 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                 } else {
                     int err = blosc2_schunk_append_buffer(catarr->sc, itr->block, (size_t) psizeb);
                     if (itr->external_buffer) {
-                        // free(itr->block);
-                     }
+                        free(itr->block);
+                    }
 
                     if (err < 0) {
                         // TODO: if the next call is not zero, it can be interpreted as there are more elements
@@ -645,7 +652,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                 int err = blosc2_schunk_append_buffer(itr->cont->catarr->sc, part_aux,
                                                       (size_t) catarr->psize * typesize);
                 if (itr->external_buffer) {
-                    // free(itr->block);
+                    free(itr->block);
                 }
                 free(part_aux);
 
