@@ -290,9 +290,10 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
 
 
     INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, true));
+    uint8_t *part_x;
 
     while (INA_SUCCEED(iarray_iter_write_block_has_next(I))) {
-        uint8_t *part_x = (uint8_t *) malloc(partsize_x);
+        part_x = (uint8_t *) malloc(partsize_x);
 
         INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(I, (void *) part_x, partsize_x));
 
@@ -372,13 +373,13 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
 
     partsize_y += BLOSC_MAX_OVERHEAD;
 
-    uint8_t *part_x = (uint8_t *) malloc(partsize_x);
-    uint8_t *part_y = (uint8_t *) malloc(partsize_y);
+    uint8_t *part_y1 = (uint8_t *) malloc(partsize_y);
+    uint8_t *part_y2 = (uint8_t *) malloc(partsize_y);
     INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, true));
 
     while (INA_SUCCEED(iarray_iter_read_block_has_next(I2)) && INA_SUCCEED(iarray_iter_read_block_has_next(I3))) {
-        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(I2, (void *) part_x, partsize_x));
-        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(I3, (void *) part_y, partsize_y));
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(I2, (void *) part_y1, partsize_x));
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(I3, (void *) part_y2, partsize_y));
 
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
@@ -406,8 +407,8 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
 
-    free(part_x);
-    free(part_y);
+    free(part_y1);
+    free(part_y2);
     ina_mem_free(buf);
 
     return INA_SUCCESS;
