@@ -489,7 +489,7 @@ INA_TEST_FIXTURE(block_iterator_ext_part, 6_d_p) {
     int8_t ndim = 6;
     int64_t shape[] = {12, 13, 21, 19, 13, 15};
     int64_t *pshape = NULL;
-    int64_t blockshape[] = {2, 3, 5, 4, 3, 2};
+    int64_t blockshape[] = {8, 9, 11, 6, 4, 10};
 
     INA_TEST_ASSERT_SUCCEED(test_block_iterator_ext_part(data->ctx, dtype, type_size, ndim, shape, pshape,
                                                          blockshape));
