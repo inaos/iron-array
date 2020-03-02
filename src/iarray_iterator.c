@@ -645,7 +645,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                 int err = blosc2_schunk_append_buffer(itr->cont->catarr->sc, part_aux,
                                                       (size_t) catarr->psize * typesize);
                 if (itr->external_buffer) {
-                    // free(itr->block);
+                    //  free(itr->block);
                 }
                 free(part_aux);
 
