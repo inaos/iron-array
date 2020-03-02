@@ -573,7 +573,6 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                 caterva_dims_t stop = caterva_new_dims(stop_, ndim);
 
                 IARRAY_ERR_CATERVA(caterva_set_slice_buffer(catarr, itr->block, &start, &stop));
-                // TODO: Free of the external buffer?
                 if (itr->external_buffer) {
                     free(itr->block);
                 }
