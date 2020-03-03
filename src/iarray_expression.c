@@ -147,10 +147,6 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
     uint32_t eval_method = e->ctx->cfg->eval_flags & 0x3u;
     uint32_t eval_engine = (e->ctx->cfg->eval_flags & 0x38u) >> 3u;
 
-    if (eval_engine == IARRAY_EXPR_EVAL_ENGINE_AUTO) {
-        eval_engine = IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT;
-        e->ctx->cfg->eval_flags = eval_method | (eval_engine << 3u);
-    }
 
     if (eval_method == IARRAY_EXPR_EVAL_METHOD_AUTO) {
         iarray_storage_type_t backend = IARRAY_STORAGE_BLOSC;
@@ -177,18 +173,25 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
         }
 
         if (backend == IARRAY_STORAGE_PLAINBUFFER) {
-            e->ctx->cfg->eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK | (eval_engine << 3u);
+           eval_method = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK;
         } else {
             if (!equal_pshape) {
-                e->ctx->cfg->eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC | (eval_engine << 3u);
+                eval_method = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC;
             } else {
-                e->ctx->cfg->eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2 | (eval_engine << 3u);
+                eval_method = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2;
             }
         }
     }
 
-    eval_method = e->ctx->cfg->eval_flags & 0x3u;
-    eval_engine = (e->ctx->cfg->eval_flags & 0x38u) >> 3u;
+    if (eval_engine == IARRAY_EXPR_EVAL_ENGINE_AUTO) {
+        if (eval_method == IARRAY_EXPR_EVAL_METHOD_ITERCHUNK) {
+            eval_engine = IARRAY_EXPR_EVAL_ENGINE_TINYEXPR;
+        } else {
+            eval_engine = IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT;
+        }
+    }
+
+    e->ctx->cfg->eval_flags = eval_method | (eval_engine << 3u);
 
     e->temp_vars = ina_mem_alloc(e->nvars * sizeof(iarray_temporary_t *));
     caterva_array_t *catarr = e->vars[0].c->catarr;
@@ -456,6 +459,10 @@ INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container
         }
 
         // Eval the expression for this chunk
+        uint32_t eval_engine = (e->ctx->cfg->eval_flags & 0x38u) >> 3u;
+        if (eval_engine == IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT) {
+            return INA_ERROR(IARRAY_ERR_INVALID_EVAL_ENGINE);
+        }
         e->max_out_len = out_items;  // so as to prevent operating beyond the limits
         const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
         memcpy((char*)out_value.block_pointer, (uint8_t*)expr_out->data, out_items * e->typesize);
