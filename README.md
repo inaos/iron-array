@@ -79,11 +79,15 @@ It is suggested to use a recent version of clang (e.g. 8); see https://embeddeda
 
          cmake -DCMAKE_BUILD_TYPE=Debug ..
          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+
+ * In some Linux, the way to detect LLVM is different, so for example for Clear Linux, one must use:
+
+         cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCLEARLINUX=TRUE ..
          
  * Use multithreaded version, we need to add next flag
  
-          cmake -DCMAKE_BUILD_TYPE=Debug -DMULTITHREADING=TRUE ..
-          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMULTITHREADING=TRUE ..
+         cmake -DCMAKE_BUILD_TYPE=Debug -DMULTITHREADING=TRUE ..
+         cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMULTITHREADING=TRUE ..
 
 ### Limitations
 
