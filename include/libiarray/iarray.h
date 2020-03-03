@@ -38,6 +38,7 @@
 #define IARRAY_ES_RAND_PARAM (INA_ES_USER_DEFINED + 16)
 #define IARRAY_ES_ITER (INA_ES_USER_DEFINED + 17)
 #define IARRAY_ES_EVAL_METHOD (INA_ES_USER_DEFINED + 18)
+#define IARRAY_ES_EVAL_ENGINE (INA_ES_USER_DEFINED + 19)
 
 
 #define IARRAY_ERR_EMPTY_CONTAINER (INA_ERR_EMPTY | IARRAY_ES_CONTAINER)
@@ -56,6 +57,7 @@
 #define IARRAY_ERR_INVALID_RAND_PARAM (INA_ERR_INVALID | IARRAY_ES_RAND_PARAM)
 
 #define IARRAY_ERR_INVALID_EVAL_METHOD (INA_ERR_INVALID | IARRAY_ES_EVAL_METHOD)
+#define IARRAY_ERR_INVALID_EVAL_ENGINE (INA_ERR_INVALID | IARRAY_ES_EVAL_ENGINE)
 
 #define IARRAY_ERR_INVALID_STORAGE (INA_ERR_INVALID | IARRAY_ES_STORAGE)
 #define IARRAY_ERR_TOO_SMALL_BUFFER (INA_ERR_TOO_SMALL | IARRAY_ES_BUFFER)
@@ -126,12 +128,18 @@ typedef struct iarray_store_properties_s {
     bool enforce_frame;
 } iarray_store_properties_t;
 
-typedef enum iarray_eval_flags_e {
-    IARRAY_EXPR_EVAL_AUTO = 1,
-    IARRAY_EXPR_EVAL_ITERCHUNK = 2,
-    IARRAY_EXPR_EVAL_ITERBLOSC = 3,
-    IARRAY_EXPR_EVAL_ITERBLOSC2 = 4,
-} iarray_eval_flags_t;
+typedef enum iarray_eval_method_e {
+    IARRAY_EXPR_EVAL_METHOD_AUTO = 0u,
+    IARRAY_EXPR_EVAL_METHOD_ITERCHUNK = 1u,
+    IARRAY_EXPR_EVAL_METHOD_ITERBLOSC = 2u,
+    IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2 = 3u,
+} iarray_eval_method_t;
+
+typedef enum iarray_eval_engine_e {
+    IARRAY_EXPR_EVAL_ENGINE_AUTO = 0u,
+    IARRAY_EXPR_EVAL_ENGINE_TINYEXPR = 1u,
+    IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT = 2u,
+} iarray_eval_engine_t;
 
 typedef enum iarray_filter_flags_e {
     IARRAY_COMP_SHUFFLE    = 0x1,
@@ -237,7 +245,7 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .compression_level=5,
     .use_dict=0,
     .filter_flags=IARRAY_COMP_SHUFFLE,
-    .eval_flags=IARRAY_EXPR_EVAL_ITERCHUNK,
+    .eval_flags=IARRAY_EXPR_EVAL_METHOD_ITERCHUNK | IARRAY_EXPR_EVAL_ENGINE_TINYEXPR << 3,
     .max_num_threads=1,
     .fp_mantissa_bits=0,
     .blocksize=0 };

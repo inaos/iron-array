@@ -136,9 +136,9 @@ static float expr2(const float x)
     return sinhf(x) + (coshf(x) - 1.35f) - tanhf(x + .2f);
 }
 
-INA_TEST_FIXTURE_SKIP(expression_eval_float, iterblosc_superchunk)
+INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC;
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC | (IARRAY_EXPR_EVAL_ENGINE_TINYEXPR << 3);
     data->func = expr2;
     data->expr_str = "sinh(x) + (cosh(x) - 1.35) - tanh(x + .2)";
 
@@ -153,7 +153,7 @@ static float expr3(const float x)
 
 INA_TEST_FIXTURE(expression_eval_float, iterchunk_superchunk)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK;
     data->func = expr3;
     data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
 
@@ -173,7 +173,7 @@ static float expr5(const float x)
 
 INA_TEST_FIXTURE(expression_eval_float, iterchunk_plainbuffer)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK;
     data->func = expr5;
     data->expr_str = "sqrt(x) + atan2(x, x) + pow(x, x)";
 

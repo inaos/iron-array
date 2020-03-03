@@ -149,10 +149,10 @@ int main(int argc, char** argv)
     config.blocksize = blocksize;
     config.max_num_threads = nthreads;
     config.eval_flags = eval_flags;
-    if (eval_flags == IARRAY_EXPR_EVAL_ITERCHUNK) {
+    if (eval_flags == IARRAY_EXPR_EVAL_METHOD_ITERCHUNK) {
         eval_method = "EVAL_ITERCHUNK";
     }
-    else if (eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
+    else if (eval_flags == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC) {
         eval_method = "EVAL_ITERBLOSC";
     }
     else {
