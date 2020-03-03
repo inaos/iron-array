@@ -208,8 +208,8 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
             IARRAY_TRACE1(iarray.error, "Error adding a metalayer to blosc");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
         }
-        free(smeta);
     }
+    free(smeta);
     rc = INA_SUCCESS;
     goto cleanup;
     fail:

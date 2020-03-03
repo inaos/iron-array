@@ -113,7 +113,6 @@ INA_TEST_SETUP(view_serialization) {
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
-    cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
 
     iarray_context_new(&cfg, &data->ctx);
 }
