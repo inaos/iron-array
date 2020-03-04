@@ -45,6 +45,7 @@ static LLVMValueRef _jug_builtin_tanh_f64;
 static LLVMValueRef _jug_builtin_fmod_f64;
 
 static char *_jug_def_triple = NULL;
+static LLVMTargetMachineRef _jug_tm_ref = NULL;
 static LLVMTargetDataRef _jug_data_ref = NULL;
 static LLVMTargetMachineRef tm_ref = NULL;
 
@@ -709,20 +710,23 @@ INA_API(ina_rc_t) jug_init()
         return INA_ERR_FATAL;
     }
 
-    tm_ref =
+    _jug_tm_ref =
         // LLVMCreateTargetMachine(target_ref, _jug_def_triple, "", "+avx2",
-           LLVMCreateTargetMachine(target_ref, _jug_def_triple, "", "",
+        LLVMCreateTargetMachine(target_ref, _jug_def_triple, "", "",
             LLVMCodeGenLevelDefault,
             LLVMRelocDefault,
             LLVMCodeModelJITDefault);
-    _jug_data_ref = LLVMCreateTargetDataLayout(tm_ref);
+    _jug_data_ref = LLVMCreateTargetDataLayout(_jug_tm_ref);
 
     return INA_SUCCESS;
 }
 
 INA_API(void) jug_destroy()
 {
-    /* FIXME: do proper cleanup of LLVM stuff */
+    if (_jug_tm_ref != NULL) {
+        LLVMDisposeTargetMachine(_jug_tm_ref);
+        _jug_tm_ref = NULL;
+    }
 }
 
 INA_API(ina_rc_t) jug_expression_new(jug_expression_t **expr)

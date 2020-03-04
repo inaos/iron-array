@@ -71,9 +71,8 @@ typedef struct state {
     const char *start;
     const char *next;
     int type;
-    int nthreads;
 	double scalar;
-    union {iarray_temporary_t *value; const void **bound; const void *function;};
+    union {iarray_temporary_t *value; const void *bound; const void *function;};
     void *context;
 	iarray_expression_t *expr;
     const te_variable *lookup;
@@ -96,7 +95,6 @@ static te_expr *new_expr(state *state, const int type, const te_expr *parameters
     //te_expr *ret = malloc(size);
 	ina_mempool_t *mp;
 	iarray_expr_get_mp(state->expr, &mp);
-    iarray_expr_get_nthreads(state->expr, &state->nthreads);
     te_expr *ret = ina_mempool_dalloc(mp, (size_t)size);
     memset(ret, 0, size);
     if (arity && parameters) {
@@ -662,16 +660,10 @@ INA_ENABLE_WARNING_MSVC(4204);
 iarray_temporary_t *te_eval(iarray_expression_t *expr, const te_expr *n) {
     if (!n) return NULL;
 
-    int nthread = 0;
-#if defined(_OPENMP)
-    nthread = omp_get_thread_num();
-#endif
-    //printf("nthread (te_eval): %d\n", nthread);
-
     switch(TYPE_MASK(n->type)) {
         case TE_CONSTANT: return n->value;
         case TE_VARIABLE: {
-            iarray_temporary_t *iatemp = (iarray_temporary_t *) (n->bound[nthread]);
+            iarray_temporary_t *iatemp = (iarray_temporary_t *) (n->bound);
             return iatemp;
         }
         case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:
@@ -780,7 +772,7 @@ static void pn (const te_expr *n, int depth) {
 
     switch(TYPE_MASK(n->type)) {
     case TE_CONSTANT: printf("%f\n", n->value->scalar_value.d); break;
-    case TE_VARIABLE: printf("bound %p\n", n->bound[0]); break;
+    case TE_VARIABLE: printf("bound %p\n", n->bound); break;
 
     case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:
     case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:

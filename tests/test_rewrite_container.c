@@ -24,13 +24,19 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
     int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        xdtshape.pshape[i] = pshape[i];
+        if (pshape)
+            xdtshape.pshape[i] = pshape[i];
         size *= shape[i];
     }
 
+    iarray_store_properties_t xstore;
+    xstore.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
+    xstore.enforce_frame = false;
+    xstore.filename = NULL;
+
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, &xstore, 0, &c_x));
 
     // Start Iterator
     iarray_iter_write_block_t *I;
@@ -62,9 +68,14 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
     int64_t start[IARRAY_DIMENSION_MAX] = {0, 0, 0, 0, 0, 0, 0, 0};
     int64_t stop[IARRAY_DIMENSION_MAX] = {2, 3, 4, 3, 3, 4, 4, 3};
 
+    iarray_store_properties_t ystore;
+    ystore.backend = IARRAY_STORAGE_BLOSC;
+    ystore.enforce_frame = false;
+    ystore.filename = NULL;
+
     iarray_container_t *c_y;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, start, NULL, 0, true, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, start, &ystore, 0, &c_y));
 
     // Start Iterator
     ina_rc_t err = iarray_iter_write_block_new(ctx, &I, c_y, blockshape, &val, false);
@@ -133,7 +144,7 @@ INA_TEST_FIXTURE(rewrite_cont, 2_d_p) {
 
     int8_t ndim = 2;
     int64_t shape[] = {5, 5};
-    int64_t pshape[] = {0, 0};
+    int64_t *pshape = NULL;
     int64_t blockshape[] = {3, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, pshape,
@@ -174,7 +185,7 @@ INA_TEST_FIXTURE(rewrite_cont, 5_f_p) {
 
     int8_t ndim = 5;
     int64_t shape[] = {40, 26, 35, 23, 21};
-    int64_t pshape[] = {0, 0, 0, 0, 0};
+    int64_t *pshape = NULL;
     int64_t blockshape[] = {12, 12, 12, 12, 12};
 
     INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, pshape,
@@ -187,7 +198,7 @@ INA_TEST_FIXTURE(rewrite_cont, 6_d_p) {
 
     int8_t ndim = 6;
     int64_t shape[] = {12, 13, 21, 19, 13, 15};
-    int64_t pshape[] = {0, 0, 0, 0, 0, 0};
+    int64_t *pshape = NULL;
     int64_t blockshape[] = {2, 3, 5, 4, 3, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, pshape,
