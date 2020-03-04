@@ -38,6 +38,7 @@
 #define IARRAY_ES_RAND_PARAM (INA_ES_USER_DEFINED + 16)
 #define IARRAY_ES_ITER (INA_ES_USER_DEFINED + 17)
 #define IARRAY_ES_EVAL_METHOD (INA_ES_USER_DEFINED + 18)
+#define IARRAY_ES_EVAL_ENGINE (INA_ES_USER_DEFINED + 19)
 
 
 #define IARRAY_ERR_EMPTY_CONTAINER (INA_ERR_EMPTY | IARRAY_ES_CONTAINER)
@@ -56,6 +57,7 @@
 #define IARRAY_ERR_INVALID_RAND_PARAM (INA_ERR_INVALID | IARRAY_ES_RAND_PARAM)
 
 #define IARRAY_ERR_INVALID_EVAL_METHOD (INA_ERR_INVALID | IARRAY_ES_EVAL_METHOD)
+#define IARRAY_ERR_INVALID_EVAL_ENGINE (INA_ERR_INVALID | IARRAY_ES_EVAL_ENGINE)
 
 #define IARRAY_ERR_INVALID_STORAGE (INA_ERR_INVALID | IARRAY_ES_STORAGE)
 #define IARRAY_ERR_TOO_SMALL_BUFFER (INA_ERR_TOO_SMALL | IARRAY_ES_BUFFER)
@@ -115,16 +117,29 @@ typedef enum iarray_storage_format_e {
     IARRAY_STORAGE_COL_WISE
 } iarray_storage_format_t;
 
+typedef enum iarray_storage_type_e {
+    IARRAY_STORAGE_PLAINBUFFER = 0,
+    IARRAY_STORAGE_BLOSC = 1,
+} iarray_storage_type_t;
+
 typedef struct iarray_store_properties_s {
-    const char *id;
+    iarray_storage_type_t backend;
+    const char *filename;
+    bool enforce_frame;
 } iarray_store_properties_t;
 
-typedef enum iarray_eval_flags_e {
-    IARRAY_EXPR_EVAL_ITERCHUNK = 1,
-    IARRAY_EXPR_EVAL_ITERBLOCK = 2,
-    IARRAY_EXPR_EVAL_ITERBLOSC = 3,
-    IARRAY_EXPR_EVAL_ITERBLOSC2 = 4,
-} iarray_eval_flags_t;
+typedef enum iarray_eval_method_e {
+    IARRAY_EXPR_EVAL_METHOD_AUTO = 0u,
+    IARRAY_EXPR_EVAL_METHOD_ITERCHUNK = 1u,
+    IARRAY_EXPR_EVAL_METHOD_ITERBLOSC = 2u,
+    IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2 = 3u,
+} iarray_eval_method_t;
+
+typedef enum iarray_eval_engine_e {
+    IARRAY_EXPR_EVAL_ENGINE_AUTO = 0u,
+    IARRAY_EXPR_EVAL_ENGINE_TINYEXPR = 1u,
+    IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT = 2u,
+} iarray_eval_engine_t;
 
 typedef enum iarray_filter_flags_e {
     IARRAY_COMP_SHUFFLE    = 0x1,
@@ -230,7 +245,7 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .compression_level=5,
     .use_dict=0,
     .filter_flags=IARRAY_COMP_SHUFFLE,
-    .eval_flags=IARRAY_EXPR_EVAL_ITERCHUNK,
+    .eval_flags=IARRAY_EXPR_EVAL_METHOD_ITERCHUNK | IARRAY_EXPR_EVAL_ENGINE_TINYEXPR << 3,
     .max_num_threads=1,
     .fp_mantissa_bits=0,
     .blocksize=0 };
@@ -350,7 +365,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
                               int flags,
                               iarray_container_t **dest);
 
-    INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
+INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
                                      double value,
                                      iarray_store_properties_t *store,
@@ -428,30 +443,30 @@ INA_API(ina_rc_t) iarray_random_poisson(iarray_context_t *ctx,
                                         iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
-                                       iarray_container_t *c1,
-                                       iarray_container_t *c2,
+                                       iarray_container_t *container1,
+                                       iarray_container_t *container2,
                                        bool *res);
 
 INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
-                                   iarray_container_t *c,
+                                   iarray_container_t *src,
                                    int64_t *start,
                                    int64_t *stop,
+                                   bool view,
                                    const int64_t *pshape,
                                    iarray_store_properties_t *store,
                                    int flags,
-                                   bool view,
                                    iarray_container_t **container);
 
 
 INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
-                                   iarray_container_t *c,
+                                   iarray_container_t *container,
                                    const int64_t *start,
                                    const int64_t *stop,
                                    iarray_container_t *slice);
 
 
 INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
-                                          iarray_container_t *c,
+                                          iarray_container_t *container,
                                           const int64_t *start,
                                           const int64_t *stop,
                                           void *buffer,
@@ -465,12 +480,12 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                                           int64_t buflen);
 
 INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx,
-                                        iarray_store_properties_t *store,
-                                        iarray_container_t **container,
-                                        bool load_in_mem);
+                                        char *filename,
+                                        bool enforce_frame,
+                                        iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
-                                        iarray_container_t *c,
+                                        iarray_container_t *container,
                                         char *filename);
 
 INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
@@ -496,7 +511,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
 INA_API(bool) iarray_is_empty(iarray_container_t *container);
 
 INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dtshape_t *b);
-INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, int64_t *nbytes, int64_t *cbytes);
+INA_API(ina_rc_t) iarray_container_info(iarray_container_t *container, int64_t *nbytes, int64_t *cbytes);
 
 INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container);
 
@@ -580,15 +595,18 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e
 INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e);
 
 INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val);
+INA_API(ina_rc_t) iarray_expr_bind_out_properties(iarray_expression_t *e, iarray_dtshape_t *dtshape, iarray_store_properties_t *store);
+
 INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val);
 INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val);
+
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
 INA_API(ina_rc_t) iarray_expr_compile_udf(iarray_expression_t *e,
                                           int llvm_bc_len,
                                           const char *llvm_bc,
                                           const char *name);
 
-INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
+INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **container);
 
 //FIXME: remove
 INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp);

@@ -24,12 +24,18 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        xdtshape.pshape[i] = pshape[i];
+        if (pshape)
+            xdtshape.pshape[i] = pshape[i];
     }
+
+    iarray_store_properties_t store;
+    store.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
+    store.enforce_frame = false;
+    store.filename = NULL;
 
     // Empty array
     iarray_container_t *c_x;
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, NULL, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, &store, 0, &c_x));
 
     if (!iarray_is_empty(c_x)) {
         return INA_ERROR(INA_ERR_ERROR);
@@ -37,7 +43,7 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
 
     // Non-empty array
     iarray_container_t *z_x;
-    INA_TEST_ASSERT_SUCCEED(iarray_zeros(ctx, &xdtshape, NULL, 0, &z_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_zeros(ctx, &xdtshape, &store, 0, &z_x));
 
     if (iarray_is_empty(z_x)) {
         return INA_ERROR(INA_ERR_ERROR);
@@ -105,7 +111,7 @@ INA_TEST_FIXTURE(constructor_empty, 4_f_p)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int8_t ndim = 4;
     int64_t shape[] = {10, 5, 6, 10};
-    int64_t pshape[] = {0, 0, 0, 0};
+    int64_t *pshape = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, pshape));
 }
@@ -125,7 +131,7 @@ INA_TEST_FIXTURE(constructor_empty, 7_f_p)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int8_t ndim = 7;
     int64_t shape[] = {10, 6, 6, 4, 12, 7, 10};
-    int64_t pshape[] = {4, 3, 6, 2, 3, 3, 2};
+    int64_t *pshape = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, pshape));
 }

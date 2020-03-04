@@ -111,9 +111,21 @@ int main(int argc, char** argv)
         }
     }
 
-    iarray_store_properties_t mat_x = { .id = mat_x_name };
-    iarray_store_properties_t mat_y = { .id = mat_y_name };
-    iarray_store_properties_t mat_out = { .id = mat_out_name };
+    iarray_store_properties_t mat_x = {
+        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
+        .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
+        .filename = mat_x_name
+    };
+    iarray_store_properties_t mat_y = {
+        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
+        .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
+        .filename = mat_y_name
+    };
+    iarray_store_properties_t mat_out = {
+        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
+        .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
+        .filename = mat_out_name
+    };
 
     int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
 
@@ -137,16 +149,13 @@ int main(int argc, char** argv)
     config.blocksize = blocksize;
     config.max_num_threads = nthreads;
     config.eval_flags = eval_flags;
-    if (eval_flags == IARRAY_EXPR_EVAL_ITERCHUNK) {
+    if (eval_flags == IARRAY_EXPR_EVAL_METHOD_ITERCHUNK) {
         eval_method = "EVAL_ITERCHUNK";
     }
-    else if (eval_flags == IARRAY_EXPR_EVAL_ITERBLOCK) {
-        eval_method = "EVAL_ITERBLOCK";
-    }
-    else if (eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC) {
+    else if (eval_flags == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC) {
         eval_method = "EVAL_ITERBLOSC";
     }
-    else if (eval_flags == IARRAY_EXPR_EVAL_ITERBLOSC2) {
+    else if (eval_flags == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2) {
         eval_method = "EVAL_ITERBLOSC2";
     }
     else {
@@ -180,9 +189,9 @@ int main(int argc, char** argv)
 
     bool x_allocated = false, y_allocated = false;
 
-    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_x.id)) {
+    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_x.filename)) {
         INA_STOPWATCH_START(w);
-        INA_MUST_SUCCEED(iarray_container_load(ctx, &mat_x, &con_x, false));
+        INA_MUST_SUCCEED(iarray_container_load(ctx, mat_x.filename, false, &con_x));
         INA_STOPWATCH_STOP(w);
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
         printf("Time for *opening* X values: %.3g s, %.1f GB/s\n",
@@ -252,9 +261,9 @@ int main(int argc, char** argv)
     printf("Compression for X values: %.1f MB -> %.1f MB (%.1fx)\n",
            nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
 
-    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_y.id)) {
+    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_y.filename)) {
         INA_STOPWATCH_START(w);
-        INA_MUST_SUCCEED(iarray_container_load(ctx, &mat_y, &con_y, false));
+        INA_MUST_SUCCEED(iarray_container_load(ctx, mat_y.filename, false, &con_y));
         INA_STOPWATCH_STOP(w);
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
         printf("Time for *opening* Y values: %.3g s, %.1f GB/s\n",
@@ -325,18 +334,19 @@ int main(int argc, char** argv)
     printf("Compression for Y values: %.1f MB -> %.1f MB (%.1fx)\n",
            nbytes_mb, cbytes_mb, (1.*nbytes) / cbytes);
 
-    // Check IronArray performance
+    // Check IronArray performanc
+    iarray_container_t *con_out;
+
     iarray_expression_t *e;
     iarray_expr_new(ctx, &e);
     iarray_expr_bind(e, "x", con_x);
+    iarray_expr_bind_out_properties(e, &dtshape, &mat_out);
     iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
     // iarray_expr_compile(e, "sin(x) * sin(x) + cos(x) * cos(x)");
 
-    iarray_container_t *con_out;
-    INA_MUST_SUCCEED(iarray_container_new(ctx, &dtshape, &mat_out, flags, &con_out));
 
     INA_STOPWATCH_START(w);
-    ina_rc_t errcode = iarray_eval(e, con_out);
+    ina_rc_t errcode = iarray_eval(e, &con_out);
     if (errcode != INA_SUCCESS) {
         printf("Error during evaluation.  Giving up...\n");
         return -1;
