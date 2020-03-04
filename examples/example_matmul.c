@@ -34,9 +34,9 @@ int main()
     int64_t size_z = 2000 * 1500;
 
 
-    int64_t pshape_x[] = {0, 0};
-    int64_t pshape_y[] = {100, 200};
-    int64_t pshape_z[] = {0, 0};
+    int64_t pshape_x[] = {200, 200};
+    int64_t pshape_y[] = {200, 200};
+    int64_t pshape_z[] = {200, 200};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = n_threads;
@@ -50,8 +50,14 @@ int main()
         dtshape_x.shape[i] = shape_x[i];
         dtshape_x.pshape[i] = pshape_x[i];
     }
+
+    iarray_store_properties_t store;
+    store.backend = IARRAY_STORAGE_BLOSC;
+    store.enforce_frame = false;
+    store.filename = NULL;
+
     iarray_container_t *c_x;
-    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_x, 0, 1, NULL, 0, &c_x));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_x, 0, 1, &store, 0, &c_x));
 
     iarray_dtshape_t dtshape_y;
     dtshape_y.ndim = ndim;
@@ -62,7 +68,7 @@ int main()
     }
 
     iarray_container_t *c_y;
-    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_y, 0, 1, NULL, 0, &c_y));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_y, 0, 1, &store, 0, &c_y));
 
     iarray_dtshape_t dtshape_z;
     dtshape_z.ndim = ndim;
@@ -73,7 +79,7 @@ int main()
     }
 
     iarray_container_t *c_z;
-    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, NULL, 0, &c_z));
+    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, &store, 0, &c_z));
     mkl_set_num_threads(n_threads);
 
 
@@ -93,18 +99,18 @@ int main()
 
     printf("Time mkl (C): %.4f\n", elapsed_sec);
 
-    int64_t bshape_x[] = {2000, 1000};
-    int64_t bshape_y[] = {1000, 1500};
+    // int64_t bshape_x[] = {2000, 1000};
+    // int64_t bshape_y[] = {1000, 1500};
 
     //TODO: When the matmul advice is used, the iarray_linalg_matmul() does not work well (issue #205)
 
-    // int64_t bshape_x[2];
-    // int64_t bshape_y[2];
+    int64_t bshape_x[2];
+    int64_t bshape_y[2];
 
-    // if (INA_FAILED(iarray_matmul_advice(ctx, c_x, c_y, c_z, bshape_x, bshape_y, 0, 0))) {
-    //     printf("Error in getting advice for matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
-    //     exit(1);
-    // }
+    if (INA_FAILED(iarray_matmul_advice(ctx, c_x, c_y, c_z, bshape_x, bshape_y, 16 * 1024, 128 * 1024))) {
+        printf("Error in getting advice for matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
+        exit(1);
+    }
 
     printf("bshape_x: (%d, %d)\n", (int)bshape_x[0], (int)bshape_x[1]);
     printf("bshape_y: (%d, %d)\n", (int)bshape_y[0], (int)bshape_y[1]);

@@ -21,7 +21,7 @@
 #define NROWS_CHUNK 20
 #define NCOLS_CHUNK 1000
 #define NELEM (NROWS * NCOLS)
-#define NTHREADS 2  // exercise multithreading in ITERBLOCK
+#define NTHREADS 1
 
 
 /* Compute and fill X values in a buffer */
@@ -60,17 +60,23 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, const double *buffer_
     shape.pshape[0] = plain_buffer ? 0 : NROWS_CHUNK;
     shape.pshape[1] = plain_buffer ? 0 : NCOLS_CHUNK;
 
+    iarray_store_properties_t store;
+    store.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
+    store.enforce_frame = false;
+    store.filename = NULL;
+
     _fill_y(buffer_x, buffer_y, func);
 
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, (void*)buffer_x, buffer_len, NULL, 0, &c_x));
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &shape, NULL, 0, &c_out));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, (void*)buffer_x, buffer_len, &store, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &shape, &store, 0, &c_out));
 
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_expr_bind_out_properties(e, &shape, &store));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, expr_str));
-    INA_TEST_ASSERT_SUCCEED(iarray_eval(e, c_out));
+    INA_TEST_ASSERT_SUCCEED(iarray_eval(e, &c_out));
 
     // We use a quite low tolerance as MKL functions always differ from those in OS math libraries
     INA_TEST_ASSERT_SUCCEED(_iarray_test_container_dbl_buffer_cmp(ctx, c_out, buffer_y, buffer_len, 5e-13));
@@ -124,7 +130,7 @@ static double expr_(const double x)
 
 INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC;
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC;
     data->func = expr_;
     data->expr_str = "(x - 2.3) * (x - 1.35) * (x + 4.2)";
 
@@ -134,7 +140,7 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk)
 
 INA_TEST_FIXTURE(expression_eval_double, iterblosc2_superchunk)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOSC2;
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2;
     data->func = expr_;
     data->expr_str = "(x - 2.3) * (x - 1.35) * (x + 4.2)";
 
@@ -147,30 +153,10 @@ static double expr0(const double x)
     return (fabs(-x) - 1.35) * ceil(x) * floor(x - 8.5);
 }
 
-INA_TEST_FIXTURE(expression_eval_double, iterblock_superchunk)
-{
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
-    data->func = expr0;
-    data->expr_str = "(abs(-x) - 1.35) * ceil(x) * floor(x - 8.5)";
-
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
-                                                 data->buf_len, false, data->func, data->expr_str));
-}
-
 static double expr1(const double x)
 {
     return (cos(x) - 1.35) * tan(x) * sin(x - 8.5);
     //return (x - 1.35) + sin(.45);  // TODO: fix evaluation of func(constant)
-}
-
-INA_TEST_FIXTURE(expression_eval_double, iterblock_superchunk2)
-{
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
-    data->func = expr1;
-    data->expr_str = "(cos(x) - 1.35) * tan(x) * sin(x - 8.5)";
-
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
-                                                 data->buf_len, false, data->func, data->expr_str));
 }
 
 static double expr2(const double x)
@@ -180,7 +166,7 @@ static double expr2(const double x)
 
 INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK | (IARRAY_EXPR_EVAL_ENGINE_AUTO << 3);
     data->func = expr2;
     data->expr_str = "sinh(x) + (cosh(x) - 1.35) - tanh(x + .2)";
 
@@ -195,7 +181,7 @@ static double expr3(const double x)
 
 INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk2)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK;
     data->func = expr3;
     data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
 
@@ -203,19 +189,20 @@ INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk2)
         data->buf_len, false, data->func, data->expr_str));
 }
 
+
+INA_TEST_FIXTURE(expression_eval_double, default_superchunk2)
+{
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_AUTO | (IARRAY_EXPR_EVAL_ENGINE_AUTO << 3);
+    data->func = expr3;
+    data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
+                                                 data->buf_len, false, data->func, data->expr_str));
+}
+
 static double expr4(const double x)
 {
     return exp(x) + (log(x) - 1.35) - log10(x + .2);
-}
-
-INA_TEST_FIXTURE(expression_eval_double, iterblock_plainbuffer)
-{
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERBLOCK;
-    data->func = expr4;
-    data->expr_str = "exp(x) + (log(x) - 1.35) - log10(x + .2)";
-
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
-        data->buf_len, true, data->func, data->expr_str));
 }
 
 static double expr5(const double x)
@@ -223,12 +210,24 @@ static double expr5(const double x)
     return sqrt(x) + atan2(x, x) + pow(x, x);
 }
 
+
 INA_TEST_FIXTURE(expression_eval_double, iterchunk_plainbuffer)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_ITERCHUNK;
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK;
     data->func = expr5;
     data->expr_str = "sqrt(x) + atan2(x, x) + pow(x, x)";
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
         data->buf_len, true, data->func, data->expr_str));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_double, default_plainbuffer)
+{
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_AUTO;
+    data->func = expr5;
+    data->expr_str = "sqrt(x) + atan2(x, x) + pow(x, x)";
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, data->buffer_x, data->buffer_y,
+                                                 data->buf_len, true, data->func, data->expr_str));
 }
