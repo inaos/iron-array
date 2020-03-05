@@ -429,7 +429,7 @@ static LLVMValueRef _jug_expr_compile_function(
     params_struct_types[5] = LLVMInt32Type();
     params_struct_types[6] = LLVMInt32Type();
     params_struct_types[7] = LLVMInt32Type();
-    params_struct_types[8] = LLVMInt8Type();
+    params_struct_types[8] = LLVMInt32Type();
 
     LLVMStructSetBody(params_struct, params_struct_types, 9, 0);
 
