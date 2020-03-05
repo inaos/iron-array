@@ -20,6 +20,9 @@
 
 #define IARRAY_DIMENSION_MAX 8  /* A fixed size simplifies the code and should be enough for most IronArray cases */
 
+#define IARRAY_EXPR_OPERANDS_MAX (128)
+// The maximum number of operands in expressions
+
 #define IARRAY_ES_CONTAINER (INA_ES_USER_DEFINED + 1)
 #define IARRAY_ES_DTSHAPE (INA_ES_USER_DEFINED + 2)
 #define IARRAY_ES_SHAPE (INA_ES_USER_DEFINED + 3)

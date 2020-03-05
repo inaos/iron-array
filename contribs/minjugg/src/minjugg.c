@@ -10,8 +10,6 @@
 #include <llvm-c/Transforms/PassManagerBuilder.h>
 #include <llvm-c/Transforms/Vectorize.h> // LLVMAddLoopVectorizePass
 
-#include <blosc2.h>
-
 #include "minjuggutil.h"
 #include "tinyexpr.h"
 
@@ -422,8 +420,8 @@ static LLVMValueRef _jug_expr_compile_function(
     LLVMTypeRef params_struct = LLVMStructCreateNamed(e->context, "struct.blosc2_prefilter_params");
     LLVMTypeRef *params_struct_types = ina_mem_alloc(sizeof(LLVMTypeRef) * 9);
     params_struct_types[0] = LLVMInt32Type();
-    params_struct_types[1] = LLVMArrayType(LLVMPointerType(LLVMInt8Type(), 0), BLOSC2_PREFILTER_INPUTS_MAX);
-    params_struct_types[2] = LLVMArrayType(LLVMInt32Type(), BLOSC2_PREFILTER_INPUTS_MAX);
+    params_struct_types[1] = LLVMArrayType(LLVMPointerType(LLVMInt8Type(), 0), IARRAY_EXPR_OPERANDS_MAX);
+    params_struct_types[2] = LLVMArrayType(LLVMInt32Type(), IARRAY_EXPR_OPERANDS_MAX);
     params_struct_types[3] = LLVMPointerType(LLVMInt8Type(), 0); /* userdata */
     params_struct_types[4] = LLVMPointerType(LLVMInt8Type(), 0); /* out */
     params_struct_types[5] = LLVMInt32Type();

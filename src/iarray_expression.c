@@ -19,7 +19,6 @@
 #include <omp.h>
 #endif
 
-#define _IARRAY_EXPR_VAR_MAX   (BLOSC2_PREFILTER_INPUTS_MAX)
 
 typedef struct _iarray_tinyexpr_var_s {
     const char *var;
@@ -43,14 +42,14 @@ struct iarray_expression_s {
     iarray_dtshape_t *out_dtshape;
     iarray_store_properties_t *out_store_properties;
     iarray_container_t *out;
-    _iarray_tinyexpr_var_t vars[_IARRAY_EXPR_VAR_MAX];
+    _iarray_tinyexpr_var_t vars[IARRAY_EXPR_OPERANDS_MAX];
 };
 
 struct iarray_expression_pparams_s {
     bool compressed_inputs;  // whether the inputs are compressed or not (should be the first to avoid crashes, WTF??)
     int ninputs;  // number of data inputs
-    uint8_t* inputs[BLOSC2_PREFILTER_INPUTS_MAX];  // the data inputs
-    int32_t input_typesizes[BLOSC2_PREFILTER_INPUTS_MAX];  // the typesizes for data inputs
+    uint8_t* inputs[IARRAY_EXPR_OPERANDS_MAX];  // the data inputs
+    int32_t input_typesizes[IARRAY_EXPR_OPERANDS_MAX];  // the typesizes for data inputs
     iarray_expression_t *e;
 };
 typedef struct iarray_expression_pparams_s iarray_expression_pparams_t;
@@ -66,7 +65,7 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e
     (*e)->expr = NULL;
     (*e)->nvars = 0;
     (*e)->max_out_len = 0;   // helper for leftovers
-    ina_mem_set(&(*e)->vars, 0, sizeof(_iarray_tinyexpr_var_t)*_IARRAY_EXPR_VAR_MAX);
+    ina_mem_set(&(*e)->vars, 0, sizeof(_iarray_tinyexpr_var_t) * IARRAY_EXPR_OPERANDS_MAX);
     jug_expression_new(&(*e)->jug_expr);
     return INA_SUCCESS;
 }
