@@ -420,7 +420,7 @@ static LLVMValueRef _jug_expr_compile_function(
 
     /* define the parameter structure for prefilter */
     LLVMTypeRef params_struct = LLVMStructCreateNamed(e->context, "struct.blosc2_prefilter_params");
-    LLVMTypeRef *params_struct_types = ina_mem_alloc(sizeof(LLVMTypeRef) * 7);
+    LLVMTypeRef *params_struct_types = ina_mem_alloc(sizeof(LLVMTypeRef) * 9);
     params_struct_types[0] = LLVMInt32Type();
     params_struct_types[1] = LLVMArrayType(LLVMPointerType(LLVMInt8Type(), 0), BLOSC2_PREFILTER_INPUTS_MAX);
     params_struct_types[2] = LLVMArrayType(LLVMInt32Type(), BLOSC2_PREFILTER_INPUTS_MAX);
@@ -428,8 +428,10 @@ static LLVMValueRef _jug_expr_compile_function(
     params_struct_types[4] = LLVMPointerType(LLVMInt8Type(), 0); /* out */
     params_struct_types[5] = LLVMInt32Type();
     params_struct_types[6] = LLVMInt32Type();
+    params_struct_types[7] = LLVMInt32Type();
+    params_struct_types[8] = LLVMInt8Type();
 
-    LLVMStructSetBody(params_struct, params_struct_types, 7, 0);
+    LLVMStructSetBody(params_struct, params_struct_types, 9, 0);
 
     LLVMTypeRef param_types[1] = {
         LLVMPointerType(params_struct, 0)
