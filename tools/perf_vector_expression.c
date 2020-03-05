@@ -65,10 +65,10 @@ int main(int argc, char** argv)
     const char *mat_x_name = NULL;
     const char *mat_y_name = NULL;
     const char *mat_out_name = NULL;
-    const char *eval_method = NULL;
 
     INA_OPTS(opt,
-             INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOCK = 2, EVAL_ITERBLOSC = 3"),
+             INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOSC = 2, EVAL_ITERBLOSC2 = 3"),
+             INA_OPT_INT("E", "eval-engine", 1, "EVAL_TINYEXPR = 1, EVAL_JUGGERNAUT = 2"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
              INA_OPT_INT("b", "blocksize", 0, "Use blocksize for chunks (0 means automatic)"),
@@ -87,8 +87,10 @@ int main(int argc, char** argv)
     }
     ina_set_cleanup_handler(ina_cleanup_handler);
 
-    int eval_flags;
-    INA_MUST_SUCCEED(ina_opt_get_int("e", &eval_flags));
+    int eval_method;
+    INA_MUST_SUCCEED(ina_opt_get_int("e", &eval_method));
+    int eval_engine;
+    INA_MUST_SUCCEED(ina_opt_get_int("E", &eval_engine));
     int clevel;
     INA_MUST_SUCCEED(ina_opt_get_int("c", &clevel));
     int codec;
@@ -140,7 +142,7 @@ int main(int argc, char** argv)
     }
     else {
         config.filter_flags = IARRAY_COMP_SHUFFLE;
-        if (mantissa_bits > 0) {
+        if (mantissa_bits >  0) {
             config.filter_flags |= IARRAY_COMP_TRUNC_PREC;
             config.fp_mantissa_bits = mantissa_bits;
         }
@@ -148,20 +150,39 @@ int main(int argc, char** argv)
     config.use_dict = INA_SUCCEED(ina_opt_isset("d")) ? 1 : 0;
     config.blocksize = blocksize;
     config.max_num_threads = nthreads;
-    config.eval_flags = eval_flags;
-    if (eval_flags == IARRAY_EXPR_EVAL_METHOD_ITERCHUNK) {
-        eval_method = "EVAL_ITERCHUNK";
+    const char *eval_method_str = NULL;
+    unsigned eval_flags;
+    if (eval_method == 1) {
+        eval_method_str = "ITERCHUNK";
+        eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK;
     }
-    else if (eval_flags == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC) {
-        eval_method = "EVAL_ITERBLOSC";
+    else if (eval_method == 2) {
+        eval_method_str = "ITERBLOSC";
+        eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC;
     }
-    else if (eval_flags == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2) {
-        eval_method = "EVAL_ITERBLOSC2";
+    else if (eval_method == 3) {
+        eval_method_str = "ITERBLOSC2";
+        eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2;
     }
     else {
-        printf("eval_flags must be 1, 2, 3, 4\n");
+        printf("eval_method must be 1, 2, 3\n");
         return EXIT_FAILURE;
     }
+
+    const char *eval_engine_str = NULL;
+    if (eval_engine == 1) {
+        eval_engine_str = "TINYEXPR";
+        eval_flags |= IARRAY_EXPR_EVAL_ENGINE_TINYEXPR << 3;
+    }
+    else if (eval_engine == 2) {
+        eval_engine_str = "JUGGERNAUT";
+        eval_flags |= IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT << 3;
+    }
+    else {
+        printf("eval_engine must be 1, 2\n");
+        return EXIT_FAILURE;
+    }
+    config.eval_flags = eval_flags;
     //config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
@@ -334,7 +355,7 @@ int main(int argc, char** argv)
     printf("Compression for Y values: %.1f MB -> %.1f MB (%.1fx)\n",
            nbytes_mb, cbytes_mb, (1.*nbytes) / cbytes);
 
-    // Check IronArray performanc
+    // Check IronArray performance
     iarray_container_t *con_out;
 
     iarray_expression_t *e;
@@ -355,8 +376,8 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     iarray_container_info(con_out, &nbytes, &cbytes);
     printf("\n");
-    printf("Time for computing and filling OUT values using iarray (%s):  %.3g s, %.1f MB/s\n",
-           eval_method, elapsed_sec, nbytes / (elapsed_sec * _IARRAY_SIZE_MB));
+    printf("Time for computing and filling OUT values using iarray (%s, %s):  %.3g s, %.1f MB/s\n",
+           eval_method_str, eval_engine_str, elapsed_sec, nbytes / (elapsed_sec * _IARRAY_SIZE_MB));
     nbytes_mb = ((double)nbytes / (double)_IARRAY_SIZE_MB);
     cbytes_mb = ((double)cbytes / (double)_IARRAY_SIZE_MB);
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
@@ -378,7 +399,7 @@ int main(int argc, char** argv)
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     printf("Time for checking that two iarrays are equal:  %.3g s, %.1f MB/s\n",
-           elapsed_sec, (nbytes * 2) / (elapsed_sec * _IARRAY_SIZE_MB));
+           elapsed_sec, (nbytes * 2.) / (elapsed_sec * _IARRAY_SIZE_MB));
 
     iarray_container_free(ctx, &con_x);
     iarray_container_free(ctx, &con_y);
