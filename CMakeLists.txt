@@ -11,7 +11,7 @@
 cmake_minimum_required (VERSION 3.12)
 project(iarray VERSION 0.1.3)
 
-option(MULTITHREADING "Use multithreaded iarray" ON)
+option(MULTITHREADING "Use multithreaded iarray" OFF)
 
 # Disable weird MSVC warnings
 if (MSVC)
@@ -58,7 +58,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DI
 find_package(MKL)
 #configure Intel IPP
 find_package(IPP)
-#configure OMP
+# configure OMP
 if (MULTITHREADING)
     find_package(OMP)
 endif()
