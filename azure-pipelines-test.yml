@@ -7,13 +7,6 @@ steps:
 
 - powershell: | 
     az extension add -n azure-devops
-    az artifacts universal download |
-      --organization "https://dev.azure.com/inaos/" |
-      --project "91c218bd-84d1-4796-85e7-b9adfd3d51ac" |
-      --scope project |
-      --feed "llvm" |
-      --name "llvm-windows_vs17-x86_64-debug" |
-      --version "7.0.1" |
-      --path .
+    az artifacts universal download --organization "https://dev.azure.com/inaos/" --project "91c218bd-84d1-4796-85e7-b9adfd3d51ac" --scope project --feed "llvm" --name "llvm-windows_vs17-x86_64-debug" --version "7.0.1" --path .
     Expand-Archive llvm-windows_vs17-x86_64-debug.zip
     
