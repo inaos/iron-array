@@ -417,19 +417,17 @@ static LLVMValueRef _jug_expr_compile_function(
     e->context = LLVMContextCreate();
 
     /* define the parameter structure for prefilter */
-    LLVMTypeRef params_struct = LLVMStructCreateNamed(e->context, "struct.blosc2_prefilter_params");
-    LLVMTypeRef *params_struct_types = ina_mem_alloc(sizeof(LLVMTypeRef) * 9);
-    params_struct_types[0] = LLVMInt32Type();
-    params_struct_types[1] = LLVMArrayType(LLVMPointerType(LLVMInt8Type(), 0), IARRAY_EXPR_OPERANDS_MAX);
-    params_struct_types[2] = LLVMArrayType(LLVMInt32Type(), IARRAY_EXPR_OPERANDS_MAX);
-    params_struct_types[3] = LLVMPointerType(LLVMInt8Type(), 0); /* userdata */
-    params_struct_types[4] = LLVMPointerType(LLVMInt8Type(), 0); /* out */
-    params_struct_types[5] = LLVMInt32Type();
-    params_struct_types[6] = LLVMInt32Type();
-    params_struct_types[7] = LLVMInt32Type();
-    params_struct_types[8] = LLVMInt32Type();
+    LLVMTypeRef params_struct = LLVMStructCreateNamed(e->context, "struct.iarray_eval_pparams_t");
+    LLVMTypeRef *params_struct_types = ina_mem_alloc(sizeof(LLVMTypeRef) * 7);
+    params_struct_types[0] = LLVMInt32Type();  /* ninputs */
+    params_struct_types[1] = LLVMArrayType(LLVMPointerType(LLVMInt8Type(), 0), IARRAY_EXPR_OPERANDS_MAX);  /* inputs */
+    params_struct_types[2] = LLVMArrayType(LLVMInt32Type(), IARRAY_EXPR_OPERANDS_MAX);  /* inputs typesizes */
+    params_struct_types[3] = LLVMPointerType(LLVMInt8Type(), 0);  /* userdata */
+    params_struct_types[4] = LLVMPointerType(LLVMInt8Type(), 0);  /* out */
+    params_struct_types[5] = LLVMInt32Type();  /* out_size */
+    params_struct_types[6] = LLVMInt32Type();  /* out typesize */
 
-    LLVMStructSetBody(params_struct, params_struct_types, 9, 1);
+    LLVMStructSetBody(params_struct, params_struct_types, 7, 0);
 
     LLVMTypeRef param_types[1] = {
         LLVMPointerType(params_struct, 0)
@@ -508,7 +506,7 @@ static LLVMValueRef _jug_expr_compile_function(
 
         LLVMValueRef out_typesize_ptr = LLVMBuildStructGEP(builder, param_ptr, 6, "out_typesize_ptr");
         LLVMValueRef out_typesize = LLVMBuildLoad(builder, out_typesize_ptr, "out_typesize");
-        LLVMValueRef out_typesize_val = LLVMBuildPtrToInt(builder, out_typesize, LLVMInt32Type(), "out_size_val");
+        LLVMValueRef out_typesize_val = LLVMBuildPtrToInt(builder, out_typesize, LLVMInt32Type(), "out_typesize_val");
 
         len = LLVMBuildExactSDiv(builder, out_size_val, out_typesize_val, "calculate_len");
         LLVMBuildBr(builder, entry);
@@ -609,7 +607,7 @@ static void _jug_apply_optimisation_passes(jug_expression_t *e)
     LLVMAddSLPVectorizePass(pm);
 
     // Run
-    LLVMRunPassManager(pm, e->mod);
+    // LLVMRunPassManager(pm, e->mod);  // TODO: fix this
 
     // Dispose
     LLVMDisposePassManager(pm);
@@ -733,6 +731,7 @@ INA_API(ina_rc_t) jug_expression_new(jug_expression_t **expr)
 {
     LLVMModuleRef m;
     *expr = (jug_expression_t*)ina_mem_alloc(sizeof(jug_expression_t));
+    memset(*expr, 0, sizeof(jug_expression_t));
     (*expr)->mod = LLVMModuleCreateWithName("expr_engine");
     m = (*expr)->mod;
 
