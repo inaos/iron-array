@@ -483,7 +483,7 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                                           int64_t buflen);
 
 INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx,
-                                        char *filename,
+                                        const char *filename,
                                         bool enforce_frame,
                                         iarray_container_t **container);
 
