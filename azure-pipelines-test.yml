@@ -14,5 +14,5 @@ steps:
     vstsPackageVersion: '7.0.1'
     
 - powershell: | 
-    Expand-Archive llvm-windows_vs17-x86_64-debug.zip
+    Expand-Archive $(System.DefaultWorkingDirectory)/llvm-windows_vs17-x86_64-debug.zip
     
