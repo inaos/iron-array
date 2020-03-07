@@ -8,6 +8,7 @@ steps:
   displayName: 'LLVM package download'
   inputs:
     command: download
+    feedsToUse: 'internal'
     vstsFeed: 'llvm'
     vstsFeedPackage: 'llvm-windows_vs17-x86_64-debug'
     vstsPackageVersion: 7.0.1
