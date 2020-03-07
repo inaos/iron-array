@@ -6,22 +6,22 @@ variables:
 
 strategy:
   matrix:
-    linux-debug:
-      imageName: 'ubuntu-18.04'
-      BUILD_CONFIGURATION: Debug
-      MULTITHREADING: False
-    linux-release:
-      imageName: 'ubuntu-18.04'
-      BUILD_CONFIGURATION: RelWithDebInfo
-      MULTITHREADING: False
-    mac-debug:
-      imageName: 'macos-10.14'
-      BUILD_CONFIGURATION: Debug
-      MULTITHREADING: False
-    mac-release:
-      imageName: 'macos-10.14'
-      BUILD_CONFIGURATION: RelWithDebInfo
-      MULTITHREADING: False
+#    linux-debug:
+#      imageName: 'ubuntu-18.04'
+#      BUILD_CONFIGURATION: Debug
+#      MULTITHREADING: False
+#    linux-release:
+#      imageName: 'ubuntu-18.04'
+#      BUILD_CONFIGURATION: RelWithDebInfo
+#      MULTITHREADING: False
+#    mac-debug:
+#      imageName: 'macos-10.14'
+#      BUILD_CONFIGURATION: Debug
+#      MULTITHREADING: False
+#    mac-release:
+#      imageName: 'macos-10.14'
+#      BUILD_CONFIGURATION: RelWithDebInfo
+#      MULTITHREADING: False
     windows-debug:
       imageName: 'vs2017-win2016'
       BUILD_CONFIGURATION: Debug
@@ -128,7 +128,7 @@ steps:
     call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
     mkdir cmake-build-%BUILD_CONFIGURATION%
     cd cmake-build-%BUILD_CONFIGURATION%
-    cmake -G "NMake Makefiles" ../ -DCMAKE_BUILD_TYPE=%BUILD_CONFIGURATION%  -DMULTITHREADING=%MULTITHREADING% -DINAC_TARGET_ARCH=%BUILD_ARCH% -DLLVM_ROOT=%LLVM_PKG_NAME%-%LLVM_PKG_VERSION%/lib/cmake/llvm
+    cmake -G "NMake Makefiles" ../ -DCMAKE_BUILD_TYPE=%BUILD_CONFIGURATION%  -DMULTITHREADING=%MULTITHREADING% -DINAC_TARGET_ARCH=%BUILD_ARCH% -DLLVM_DIR=%LLVM_PKG_NAME%-%LLVM_PKG_VERSION%/lib/cmake/llvm
     nmake
   displayName: Compile
   env:
