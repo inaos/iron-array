@@ -9,7 +9,7 @@ steps:
   inputs:
     command: download
     feedsToUse: 'internal'
-    vstsFeed: '91c218bd-84d1-4796-85e7-b9adfd3d51ac'
+    vstsFeed: '3eedad50-ec7f-4115-8ba9-09bbcc76f8f5'
     vstsFeedPackage: 'llvm-windows_vs17-x86_64-debug'
     vstsPackageVersion: 7.0.1
     
