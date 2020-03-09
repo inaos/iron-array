@@ -14,6 +14,7 @@
 #define _MINJUGG_H_
 
 #include <libinac/lib.h>
+#include <libiarray/iarray.h>
 
 typedef struct jug_context_s jug_context_t;
 typedef struct jug_expression_s jug_expression_t;
@@ -24,7 +25,7 @@ INA_API(void) jug_destroy();
 
 INA_API(ina_rc_t) jug_expression_new(jug_expression_t **expr);
 INA_API(void) jug_expression_free(jug_expression_t **expr);
-INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e, 
+INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
     const char *expr, int num_vars, void *vars, uint64_t *function_addr);
 
 INA_API(ina_rc_t) jug_udf_compile(jug_expression_t *e,

@@ -11,7 +11,7 @@
 cmake_minimum_required (VERSION 3.12)
 project(iarray VERSION 0.1.3)
 
-option(MULTITHREADING "Use multithreaded iarray" ON)
+option(MULTITHREADING "Use multithreaded iarray" OFF)
 
 # Disable weird MSVC warnings
 if (MSVC)
@@ -58,7 +58,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DI
 find_package(MKL)
 #configure Intel IPP
 find_package(IPP)
-#configure OMP
+# configure OMP
 if (MULTITHREADING)
     find_package(OMP)
 endif()
@@ -96,9 +96,9 @@ endif()
 
 if (UNIX)
 set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
-set(INAC_DEPENDENCY_LIBS minjugg ${INAC_DEPENDENCY_LIBS} blosc2_static ${IPP_LIBRARIES})
+set(INAC_DEPENDENCY_LIBS minjugg minjuggutil ${INAC_DEPENDENCY_LIBS} blosc2_static ${IPP_LIBRARIES})
 else()
-set(INAC_DEPENDENCY_LIBS minjugg ${INAC_DEPENDENCY_LIBS})
+set(INAC_DEPENDENCY_LIBS minjugg minjuggutil ${INAC_DEPENDENCY_LIBS})
 endif()
 
 inac_add_tests(iarrays)
@@ -136,7 +136,7 @@ inac_enable_trace(${CMAKE_BUILD_TYPE} 1)
 add_definitions(-DINA_DLL)
 add_definitions(-DINA_LIB)
 add_library(iarray SHARED ${src})
-target_link_libraries(iarray ${INAC_LIBS} blosc2_static caterva_static minjugg ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+target_link_libraries(iarray ${INAC_LIBS} blosc2_static caterva_static minjugg minjuggutil ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 install(TARGETS iarray
         DESTINATION lib

@@ -20,6 +20,9 @@
 
 #define IARRAY_DIMENSION_MAX 8  /* A fixed size simplifies the code and should be enough for most IronArray cases */
 
+#define IARRAY_EXPR_OPERANDS_MAX (128)
+// The maximum number of operands in expressions
+
 #define IARRAY_ES_CONTAINER (INA_ES_USER_DEFINED + 1)
 #define IARRAY_ES_DTSHAPE (INA_ES_USER_DEFINED + 2)
 #define IARRAY_ES_SHAPE (INA_ES_USER_DEFINED + 3)
@@ -480,7 +483,7 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                                           int64_t buflen);
 
 INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx,
-                                        char *filename,
+                                        const char *filename,
                                         bool enforce_frame,
                                         iarray_container_t **container);
 
