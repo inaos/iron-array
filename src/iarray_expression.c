@@ -622,6 +622,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
 
 void _iarray_reset_padding(void *src, int8_t typesize, int8_t ndim, int64_t *a_pshape, int32_t *d_pshape) {
 
+    uint8_t *bsrc = (uint8_t *) src;
     int32_t actual_pshape[IARRAY_DIMENSION_MAX];
     int32_t dest_pshape[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
@@ -650,47 +651,47 @@ void _iarray_reset_padding(void *src, int8_t typesize, int8_t ndim, int64_t *a_p
     for (ii[0] = 0; ii[0] < dest_pshape[0]; ++ii[0]) {
         desp[0] = acumulate_desp[0] * ii[0];
         if (ii[0] >= actual_pshape[0]) {
-            memset(src + desp[0], 0, size_to_set[0] * typesize);
+            memset(bsrc + desp[0], 0, size_to_set[0] * typesize);
             break;
         } else {
             for (ii[1] = 0; ii[1] < dest_pshape[1]; ++ii[1]) {
                 desp[1] = desp[0] + acumulate_desp[1] * ii[1];
                 if (ii[1] >= actual_pshape[1]) {
-                    memset(src + desp[1], 0, size_to_set[1] * typesize);
+                    memset(bsrc + desp[1], 0, size_to_set[1] * typesize);
                     break;
                 } else {
                     for (ii[2] = 0; ii[2] < dest_pshape[2]; ++ii[2]) {
                         desp[2] = desp[1] + acumulate_desp[2] * ii[2];
                         if (ii[2] >= actual_pshape[2]) {
-                            memset(src + desp[2], 0, size_to_set[2] * typesize);
+                            memset(bsrc + desp[2], 0, size_to_set[2] * typesize);
                             break;
                         } else {
                             for (ii[3] = 0; ii[3] < dest_pshape[3]; ++ii[3]) {
                                 desp[3] = desp[2] + acumulate_desp[3] * ii[3];
                                 if (ii[3] >= actual_pshape[3]) {
-                                    memset(src + desp[3], 0, size_to_set[3] * typesize);
+                                    memset(bsrc + desp[3], 0, size_to_set[3] * typesize);
                                     break;
                                 } else {
                                     for (ii[4] = 0; ii[4] < dest_pshape[4]; ++ii[4]) {
                                         desp[4] = desp[3] + acumulate_desp[4] * ii[4];
                                         if (ii[4] >= actual_pshape[4]) {
-                                            memset(src + desp[4], 0, size_to_set[4] * typesize);
+                                            memset(bsrc + desp[4], 0, size_to_set[4] * typesize);
                                             break;
                                         } else {
                                             for (ii[5] = 0; ii[5] < dest_pshape[5]; ++ii[5]) {
                                                 desp[5] = desp[4] + acumulate_desp[5] * ii[5];
                                                 if (ii[5] >= actual_pshape[5]) {
-                                                    memset(src + desp[5], 0, size_to_set[5] * typesize);
+                                                    memset(bsrc + desp[5], 0, size_to_set[5] * typesize);
                                                     break;
                                                 } else {
                                                     for (ii[6] = 0; ii[6] < dest_pshape[6]; ++ii[6]) {
                                                         desp[6] = desp[5] + acumulate_desp[6] * ii[6];
                                                         if (ii[6] >= actual_pshape[6]) {
-                                                            memset(src + desp[6], 0, size_to_set[6] * typesize);
+                                                            memset(bsrc + desp[6], 0, size_to_set[6] * typesize);
                                                             break;
                                                         } else {
                                                             desp[7] = desp[6] + acumulate_desp[7] * ii[7];
-                                                            memset(src + desp[7], 0, size_to_set[7] * typesize);
+                                                            memset(bsrc + desp[7], 0, size_to_set[7] * typesize);
                                                         }
                                                     }
                                                 }
