@@ -624,9 +624,9 @@ void _iarray_reset_padding(void *src, int8_t typesize, int8_t ndim, int64_t *a_p
 
     int32_t actual_pshape[IARRAY_DIMENSION_MAX];
     int32_t dest_pshape[IARRAY_DIMENSION_MAX];
-    for (int i = 0; i < CATERVA_MAXDIM; ++i) {
-        actual_pshape[(CATERVA_MAXDIM - ndim + i) % CATERVA_MAXDIM] = a_pshape[i];
-        dest_pshape[(CATERVA_MAXDIM - ndim + i) % CATERVA_MAXDIM] = d_pshape[i];
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        actual_pshape[(IARRAY_DIMENSION_MAX - ndim + i) % IARRAY_DIMENSION_MAX] = a_pshape[i];
+        dest_pshape[(IARRAY_DIMENSION_MAX - ndim + i) % IARRAY_DIMENSION_MAX] = d_pshape[i];
     }
     for (int i = 0; i < IARRAY_DIMENSION_MAX - ndim; ++i) {
         actual_pshape[i] = 1;

@@ -13,17 +13,23 @@
 #include <libiarray/iarray.h>
 
 
+double eval_expr(double x, double y) {
+    double out = sinh(x) + (cosh(x) - 1.35) - tanh(x + .2);
+    //printf("Out: %f\n", out);
+    return out;
+}
+
 
 int main()
 {
     iarray_init();
 
-    char *expr = "x+1";
+    char *expr = "sinh(x) + (cosh(x) - 1.35) - tanh(x + .2)";
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int8_t ndim = 3;
-    int64_t shape[] = {7, 7, 7};
-    int64_t pshape[] = {3, 3, 3};
+    int64_t shape[] = {7, 8, 7};
+    int64_t pshape[] = {5, 3, 2};
 
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -76,7 +82,7 @@ int main()
 
     bool success = true;
     for (int64_t i = 0; i < nelem; i++) {
-        if (buff_out[i] != buff_x[i]+1) {
+        if (buff_out[i] != eval_expr(buff_x[i], buff_y[i])) {
             printf("ERROR in pos %lld\n", i);
             success = false;
             break;
