@@ -379,6 +379,8 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     eval_pparams.out = pparams->out;
     eval_pparams.out_size = pparams->out_size;
     eval_pparams.out_typesize = pparams->out_typesize;
+    // int32_t tid = pparams->tid;
+    // blosc2_context *ctx = pparams->ctx;
 
     // The code below works for the case where inputs and output have the same typesize
     // More love is needed for a possible future case where we want to allow mixed types in expressions
@@ -387,11 +389,21 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     int32_t nitems = bsize / typesize;
     int32_t offset = pparams->out_offset / typesize;
 
+    int avail_space = pparams->ttmp_nbytes;
+    int used_space = 0;
+    int ninputs_malloced = 0;
     for (int i = 0; i < ninputs; i++) {
-        uint8_t* input_chunk = expr_pparams->inputs[i];
         if (expr_pparams->compressed_inputs) {
-            eval_pparams.inputs[i] = malloc(bsize);  // TODO: avoid this malloc if possible
-            int rbytes = blosc_getitem(input_chunk, offset, nitems, eval_pparams.inputs[i]);
+            if ((used_space + bsize) <= avail_space) {
+                // We have an available ttmp block that can be used for this operand
+                eval_pparams.inputs[i] = pparams->ttmp + used_space;
+                used_space += bsize;
+            }
+            else {
+                eval_pparams.inputs[i] = malloc(bsize);
+                ninputs_malloced++;
+            }
+            int rbytes = blosc_getitem(expr_pparams->inputs[i], offset, nitems, eval_pparams.inputs[i]);
             if (rbytes != bsize) {
                 fprintf(stderr, "Read from inputs failed inside pipeline\n");
                 return -1;
@@ -430,8 +442,8 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     }
 
     if (expr_pparams->compressed_inputs) {
-        for (int i = 0; i < ninputs; i++) {
-          free(eval_pparams.inputs[i]);
+        for (int i = (ninputs - ninputs_malloced); i < ninputs; i++) {
+            free(eval_pparams.inputs[i]);
         }
     }
 
