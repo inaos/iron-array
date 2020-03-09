@@ -801,18 +801,10 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
             }
 
-            for (int i = 0; i < ret->catarr->psize; ++i) {
-                //printf("%f -- \n", ((double *) out_value.block_pointer)[i]);
-            }
-
             // Set the padding to 0's
 
             _iarray_reset_padding(out_value.block_pointer, ret->cparams->typesize, ret->dtshape->ndim, out_value.block_shape, ret->catarr->pshape);
 
-            for (int i = 0; i < ret->catarr->psize; ++i) {
-                printf("%f -- %d\n", ((double *) out_value.block_pointer)[i], i);
-            }
-            printf("\n");
             iter_out->compressed_chunk_buffer = false;
 
             iter_out->cur_block_size = ret->catarr->psize;
