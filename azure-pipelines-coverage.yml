@@ -7,7 +7,7 @@ variables:
 strategy:
   matrix:
     linux-release:
-      imageName: 'ubuntu-16.04'
+      imageName: 'ubuntu-18.04'
       BUILD_CONFIGURATION: RelWithDebInfo
       MULTITHREADING: False
 
