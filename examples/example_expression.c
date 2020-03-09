@@ -18,6 +18,7 @@ int main()
     iarray_init();
 
     char *expr = "x + 2*y";
+    //char *expr = "sin(x) + 2*y";
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2;
@@ -27,10 +28,10 @@ int main()
 
     iarray_dtshape_t shape;
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
-    shape.ndim = 2;
-    shape.shape[0] = 1000; shape.shape[1] = 2000;
-    shape.pshape[0] = 110; shape.pshape[1] = 200;
-    int64_t nelem = shape.shape[0] * shape.shape[1];
+    shape.ndim = 1;
+    shape.shape[0] = 1000; // shape.shape[1] = 2000;
+    shape.pshape[0] = 110; //shape.pshape[1] = 200;
+    int64_t nelem = shape.shape[0]; // * shape.shape[1];
 
     iarray_store_properties_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
@@ -72,6 +73,7 @@ int main()
     if (success) {
       printf("Evaluation of '%s' expression is correct!\n", expr);
     }
+    printf("\n");
 
     iarray_expr_free(ctx, &e);
     iarray_container_free(ctx, &c_out);
