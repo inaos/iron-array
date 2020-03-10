@@ -20,6 +20,9 @@ struct jug_expression_s {
     LLVMContextRef context;
     LLVMModuleRef mod;
     LLVMExecutionEngineRef engine;
+    LLVMBuilderRef builder;
+    int32_t typesize;
+    LLVMTypeRef expr_type;
 };
 
 static LLVMValueRef _jug_builtin_cos_f64;
@@ -42,141 +45,296 @@ static LLVMValueRef _jug_builtin_tan_f64;
 static LLVMValueRef _jug_builtin_tanh_f64;
 static LLVMValueRef _jug_builtin_fmod_f64;
 
+static LLVMValueRef _jug_builtin_cos_f32;
+static LLVMValueRef _jug_builtin_abs_f32;
+static LLVMValueRef _jug_builtin_acos_f32;
+static LLVMValueRef _jug_builtin_asin_f32;
+static LLVMValueRef _jug_builtin_atan_f32;
+static LLVMValueRef _jug_builtin_atan2_f32;
+static LLVMValueRef _jug_builtin_ceil_f32;
+static LLVMValueRef _jug_builtin_cosh_f32;
+static LLVMValueRef _jug_builtin_exp_f32;
+static LLVMValueRef _jug_builtin_floor_f32;
+static LLVMValueRef _jug_builtin_ln_f32;
+static LLVMValueRef _jug_builtin_log_f32;
+static LLVMValueRef _jug_builtin_pow_f32;
+static LLVMValueRef _jug_builtin_sin_f32;
+static LLVMValueRef _jug_builtin_sinh_f32;
+static LLVMValueRef _jug_builtin_sqrt_f32;
+static LLVMValueRef _jug_builtin_tan_f32;
+static LLVMValueRef _jug_builtin_tanh_f32;
+static LLVMValueRef _jug_builtin_fmod_f32;
+
 static char *_jug_def_triple = NULL;
 static LLVMTargetDataRef _jug_data_ref = NULL;
 static LLVMTargetMachineRef _jug_tm_ref = NULL;
 
-static void _jug_declare_cos_f64(LLVMModuleRef mod)
+static void _jug_declare_cos_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_cos_f64 = LLVMAddFunction(mod, "llvm.cos.f64", fn_type);
+    _jug_builtin_cos_f64 = LLVMAddFunction(e->mod, "llvm.cos.f64", fn_type);
 }
 
-static void _jug_declare_abs_f64(LLVMModuleRef mod)
+static void _jug_declare_abs_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_abs_f64 = LLVMAddFunction(mod, "llvm.fabs.f64", fn_type);
+    _jug_builtin_abs_f64 = LLVMAddFunction(e->mod, "llvm.fabs.f64", fn_type);
 }
 
-static void _jug_declare_acos_f64(LLVMModuleRef mod)
+static void _jug_declare_acos_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_acos_f64 = LLVMAddFunction(mod, "acos", fn_type);
+    _jug_builtin_acos_f64 = LLVMAddFunction(e->mod, "acos", fn_type);
 }
 
-static void _jug_declare_asin_f64(LLVMModuleRef mod)
+static void _jug_declare_asin_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_asin_f64 = LLVMAddFunction(mod, "asin", fn_type);
+    _jug_builtin_asin_f64 = LLVMAddFunction(e->mod, "asin", fn_type);
 }
 
-static void _jug_declare_atan_f64(LLVMModuleRef mod)
+static void _jug_declare_atan_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_atan_f64 = LLVMAddFunction(mod, "atan", fn_type);
+    _jug_builtin_atan_f64 = LLVMAddFunction(e->mod, "atan", fn_type);
 }
 
-static void _jug_declare_atan2_f64(LLVMModuleRef mod)
+static void _jug_declare_atan2_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType(), LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 2, 0);
-    _jug_builtin_atan2_f64 = LLVMAddFunction(mod, "atan2", fn_type);
+    _jug_builtin_atan2_f64 = LLVMAddFunction(e->mod, "atan2", fn_type);
 }
 
-static void _jug_declare_ceil_f64(LLVMModuleRef mod)
+static void _jug_declare_ceil_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_ceil_f64 = LLVMAddFunction(mod, "llvm.ceil.f64", fn_type);
+    _jug_builtin_ceil_f64 = LLVMAddFunction(e->mod, "llvm.ceil.f64", fn_type);
 }
 
-static void _jug_declare_cosh_f64(LLVMModuleRef mod)
+static void _jug_declare_cosh_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_cosh_f64 = LLVMAddFunction(mod, "cosh", fn_type);
+    _jug_builtin_cosh_f64 = LLVMAddFunction(e->mod, "cosh", fn_type);
 }
 
-static void _jug_declare_exp_f64(LLVMModuleRef mod)
+static void _jug_declare_exp_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_exp_f64 = LLVMAddFunction(mod, "llvm.exp.f64", fn_type);
+    _jug_builtin_exp_f64 = LLVMAddFunction(e->mod, "llvm.exp.f64", fn_type);
 }
 
-static void _jug_declare_floor_f64(LLVMModuleRef mod)
+static void _jug_declare_floor_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_floor_f64 = LLVMAddFunction(mod, "llvm.floor.f64", fn_type);
+    _jug_builtin_floor_f64 = LLVMAddFunction(e->mod, "llvm.floor.f64", fn_type);
 }
 
-static void _jug_declare_ln_f64(LLVMModuleRef mod)
+static void _jug_declare_ln_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_ln_f64 = LLVMAddFunction(mod, "llvm.log.f64", fn_type);
+    _jug_builtin_ln_f64 = LLVMAddFunction(e->mod, "llvm.log.f64", fn_type);
 }
 
-static void _jug_declare_log_f64(LLVMModuleRef mod)
+static void _jug_declare_log_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_log_f64 = LLVMAddFunction(mod, "llvm.log10.f64", fn_type);
+    _jug_builtin_log_f64 = LLVMAddFunction(e->mod, "llvm.log10.f64", fn_type);
 }
 
-static void _jug_declare_pow_f64(LLVMModuleRef mod)
+static void _jug_declare_pow_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType(), LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 2, 0);
-    _jug_builtin_pow_f64 = LLVMAddFunction(mod, "llvm.pow.f64", fn_type);
+    _jug_builtin_pow_f64 = LLVMAddFunction(e->mod, "llvm.pow.f64", fn_type);
 }
 
-static void _jug_declare_sin_f64(LLVMModuleRef mod)
+static void _jug_declare_sin_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_sin_f64 = LLVMAddFunction(mod, "llvm.sin.f64", fn_type);
+    _jug_builtin_sin_f64 = LLVMAddFunction(e->mod, "llvm.sin.f64", fn_type);
 }
 
-static void _jug_declare_sinh_f64(LLVMModuleRef mod)
+static void _jug_declare_sinh_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_sinh_f64 = LLVMAddFunction(mod, "sinh", fn_type);
+    _jug_builtin_sinh_f64 = LLVMAddFunction(e->mod, "sinh", fn_type);
 }
 
-static void _jug_declare_sqrt_f64(LLVMModuleRef mod)
+static void _jug_declare_sqrt_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_sqrt_f64 = LLVMAddFunction(mod, "llvm.sqrt.f64", fn_type);
+    _jug_builtin_sqrt_f64 = LLVMAddFunction(e->mod, "llvm.sqrt.f64", fn_type);
 }
 
-static void _jug_declare_tan_f64(LLVMModuleRef mod)
+static void _jug_declare_tan_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_tan_f64 = LLVMAddFunction(mod, "tan", fn_type);
+    _jug_builtin_tan_f64 = LLVMAddFunction(e->mod, "tan", fn_type);
 }
 
-static void _jug_declare_tanh_f64(LLVMModuleRef mod)
+static void _jug_declare_tanh_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 1, 0);
-    _jug_builtin_tanh_f64 = LLVMAddFunction(mod, "tanh", fn_type);
+    _jug_builtin_tanh_f64 = LLVMAddFunction(e->mod, "tanh", fn_type);
 }
 
-static void _jug_declare_fmod_f64(LLVMModuleRef mod)
+static void _jug_declare_fmod_f64(jug_expression_t *e)
 {
     LLVMTypeRef param_types[] = { LLVMDoubleType(), LLVMDoubleType() };
     LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 2, 0);
-    _jug_builtin_fmod_f64 = LLVMAddFunction(mod, "fmod", fn_type);
+    _jug_builtin_fmod_f64 = LLVMAddFunction(e->mod, "fmod", fn_type);
+}
+
+/* 32 bit funcs */
+
+static void _jug_declare_cos_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_cos_f32 = LLVMAddFunction(e->mod, "llvm.cos.f32", fn_type);
+}
+
+static void _jug_declare_abs_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_abs_f32 = LLVMAddFunction(e->mod, "llvm.fabs.f32", fn_type);
+}
+
+static void _jug_declare_acos_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_acos_f32 = LLVMAddFunction(e->mod, "acos", fn_type);
+}
+
+static void _jug_declare_asin_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_asin_f32 = LLVMAddFunction(e->mod, "asin", fn_type);
+}
+
+static void _jug_declare_atan_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_atan_f32 = LLVMAddFunction(e->mod, "atan", fn_type);
+}
+
+static void _jug_declare_atan2_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType(), LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 2, 0);
+    _jug_builtin_atan2_f32 = LLVMAddFunction(e->mod, "atan2", fn_type);
+}
+
+static void _jug_declare_ceil_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_ceil_f32 = LLVMAddFunction(e->mod, "llvm.ceil.f32", fn_type);
+}
+
+static void _jug_declare_cosh_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_cosh_f32 = LLVMAddFunction(e->mod, "cosh", fn_type);
+}
+
+static void _jug_declare_exp_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_exp_f32 = LLVMAddFunction(e->mod, "llvm.exp.f32", fn_type);
+}
+
+static void _jug_declare_floor_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_floor_f32 = LLVMAddFunction(e->mod, "llvm.floor.f32", fn_type);
+}
+
+static void _jug_declare_ln_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_ln_f32 = LLVMAddFunction(e->mod, "llvm.log.f32", fn_type);
+}
+
+static void _jug_declare_log_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_log_f32 = LLVMAddFunction(e->mod, "llvm.log10.f32", fn_type);
+}
+
+static void _jug_declare_pow_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType(), LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 2, 0);
+    _jug_builtin_pow_f32 = LLVMAddFunction(e->mod, "llvm.pow.f32", fn_type);
+}
+
+static void _jug_declare_sin_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_sin_f32 = LLVMAddFunction(e->mod, "llvm.sin.f32", fn_type);
+}
+
+static void _jug_declare_sinh_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_sinh_f32 = LLVMAddFunction(e->mod, "sinh", fn_type);
+}
+
+static void _jug_declare_sqrt_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_sqrt_f32 = LLVMAddFunction(e->mod, "llvm.sqrt.f32", fn_type);
+}
+
+static void _jug_declare_tan_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_tan_f32 = LLVMAddFunction(e->mod, "tan", fn_type);
+}
+
+static void _jug_declare_tanh_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 1, 0);
+    _jug_builtin_tanh_f32 = LLVMAddFunction(e->mod, "tanh", fn_type);
+}
+
+static void _jug_declare_fmod_f32(jug_expression_t *e)
+{
+    LLVMTypeRef param_types[] = { LLVMFloatType(), LLVMFloatType() };
+    LLVMTypeRef fn_type = LLVMFunctionType(LLVMFloatType(), param_types, 2, 0);
+    _jug_builtin_fmod_f32 = LLVMAddFunction(e->mod, "fmod", fn_type);
 }
 
 static LLVMValueRef _jug_build_comma(LLVMBuilderRef builder, LLVMValueRef lhs, LLVMValueRef rhs, const char *name)
@@ -187,161 +345,282 @@ static LLVMValueRef _jug_build_comma(LLVMBuilderRef builder, LLVMValueRef lhs, L
     return rhs;
 }
 
-static LLVMValueRef _jug_build_cos_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_cos(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_cos_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_cos_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_cos_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_abs_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_abs(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_abs_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_abs_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_abs_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_acos_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_acos(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_acos_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_acos_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_acos_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_asin_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_asin(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_asin_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_asin_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_asin_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_atan_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_atan(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_atan_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_atan_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_atan_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_atan2_f64(LLVMBuilderRef builder, LLVMValueRef lhs, LLVMValueRef rhs, const char *name)
+static LLVMValueRef _jug_build_atan2(jug_expression_t *e, LLVMValueRef lhs, LLVMValueRef rhs, const char *name)
 {
     LLVMValueRef args[] = { lhs, rhs };
-    return LLVMBuildCall(builder, _jug_builtin_atan2_f64, args, 2, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_atan2_f64, args, 2, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_atan2_f32, args, 2, name);
+    }
 }
 
-static LLVMValueRef _jug_build_ceil_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_ceil(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_ceil_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_ceil_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_ceil_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_cosh_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_cosh(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_cosh_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_cosh_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_cosh_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_exp_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_exp(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_exp_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_exp_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_exp_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_ln_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_ln(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_ln_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_ln_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_ln_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_log_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_log(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_log_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_log_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_log_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_floor_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_floor(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_floor_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_floor_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_floor_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_pow_f64(LLVMBuilderRef builder, LLVMValueRef lhs, LLVMValueRef rhs, const char *name)
+static LLVMValueRef _jug_build_pow(jug_expression_t *e, LLVMValueRef lhs, LLVMValueRef rhs, const char *name)
 {
     LLVMValueRef args[] = { lhs, rhs };
-    return LLVMBuildCall(builder, _jug_builtin_pow_f64, args, 2, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_pow_f64, args, 2, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_pow_f32, args, 2, name);
+    }
 }
 
-static LLVMValueRef _jug_build_sin_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_sin(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_sin_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_sin_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_sin_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_sinh_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_sinh(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_sinh_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_sinh_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_sinh_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_sqrt_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_sqrt(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_sqrt_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_sqrt_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_sqrt_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_tan_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_tan(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_tan_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_tan_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_tan_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_tanh_f64(LLVMBuilderRef builder, LLVMValueRef arg, const char *name)
+static LLVMValueRef _jug_build_tanh(jug_expression_t *e, LLVMValueRef arg, const char *name)
 {
     LLVMValueRef args[] = { arg };
-    return LLVMBuildCall(builder, _jug_builtin_tanh_f64, args, 1, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_tanh_f64, args, 1, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_tanh_f32, args, 1, name);
+    }
 }
 
-static LLVMValueRef _jug_build_fmod_f64(LLVMBuilderRef builder, LLVMValueRef lhs, LLVMValueRef rhs, const char *name)
+static LLVMValueRef _jug_build_fmod(jug_expression_t *e, LLVMValueRef lhs, LLVMValueRef rhs, const char *name)
 {
     LLVMValueRef args[] = { lhs, rhs };
-    return LLVMBuildCall(builder, _jug_builtin_fmod_f64, args, 2, name);
+    if (e->typesize == 8) {
+        return LLVMBuildCall(e->builder, _jug_builtin_fmod_f64, args, 2, name);
+    }
+    else {
+        return LLVMBuildCall(e->builder, _jug_builtin_fmod_f32, args, 2, name);
+    }
+}
+
+static LLVMValueRef _jug_build_add(jug_expression_t *e, LLVMValueRef lhs, LLVMValueRef rhs, const char *name)
+{
+    return LLVMBuildFAdd(e->builder, lhs, rhs, name);
+}
+
+static LLVMValueRef _jug_build_sub(jug_expression_t *e, LLVMValueRef lhs, LLVMValueRef rhs, const char *name)
+{
+    return LLVMBuildFSub(e->builder, lhs, rhs, name);
+}
+
+static LLVMValueRef _jug_build_mul(jug_expression_t *e, LLVMValueRef lhs, LLVMValueRef rhs, const char *name)
+{
+    return LLVMBuildFMul(e->builder, lhs, rhs, name);
+}
+
+static LLVMValueRef _jug_build_div(jug_expression_t *e, LLVMValueRef lhs, LLVMValueRef rhs, const char *name)
+{
+    return LLVMBuildFDiv(e->builder, lhs, rhs, name);
+}
+
+static LLVMValueRef _jug_build_neg(jug_expression_t *e, LLVMValueRef arg, const char *name)
+{
+    return LLVMBuildNeg(e->builder, arg, name);
 }
 
 static void* _jug_function_map[] = {
-    LLVMBuildFAdd,
-    LLVMBuildFSub,
-    LLVMBuildFMul,
-    LLVMBuildFDiv,
-    LLVMBuildFNeg,
+    _jug_build_add,
+    _jug_build_sub,
+    _jug_build_mul,
+    _jug_build_div,
+    _jug_build_neg,
     _jug_build_comma,
-    _jug_build_abs_f64,
-    _jug_build_acos_f64,
-    _jug_build_asin_f64,
-    _jug_build_atan_f64,
-    _jug_build_atan2_f64,
-    _jug_build_ceil_f64,
-    _jug_build_cos_f64,
-    _jug_build_cosh_f64,
+    _jug_build_abs,
+    _jug_build_acos,
+    _jug_build_asin,
+    _jug_build_atan,
+    _jug_build_atan2,
+    _jug_build_ceil,
+    _jug_build_cos,
+    _jug_build_cosh,
     NULL,//"EXPR_TYPE_E",
-    _jug_build_exp_f64,
+    _jug_build_exp,
     NULL,// EXPR_TYPE_FAC,
-    _jug_build_floor_f64,
-    _jug_build_ln_f64,
-    _jug_build_log_f64,
+    _jug_build_floor,
+    _jug_build_ln,
+    _jug_build_log,
     NULL,//"EXPR_TYPE_NCR",
     NULL,//"EXPR_TYPE_NPR",
     NULL,//"EXPR_TYPE_PI",
-    _jug_build_pow_f64,
-    _jug_build_sin_f64,
-    _jug_build_sinh_f64,
-    _jug_build_sqrt_f64,
-    _jug_build_tan_f64,
-    _jug_build_tanh_f64,
-    _jug_build_fmod_f64,
+    _jug_build_pow,
+    _jug_build_sin,
+    _jug_build_sinh,
+    _jug_build_sqrt,
+    _jug_build_tan,
+    _jug_build_tanh,
+    _jug_build_fmod,
     0,
 };
+typedef jug_expression_t* jug_expression_ptr_t;
 #define TE_FUN(...) ((LLVMValueRef(*)(__VA_ARGS__))_jug_function_map[n->function])
-#define M(e) _jug_expr_compile_expression(builder, n->parameters[e], params)
+#define M(p) _jug_expr_compile_expression(e, n->parameters[p], params)
 #define TYPE_MASK(TYPE) ((TYPE)&0x0000001F)
 #define ARITY(TYPE) ( ((TYPE) & (TE_FUNCTION0 | TE_CLOSURE0)) ? ((TYPE) & 0x00000007) : 0 )
-static LLVMValueRef _jug_expr_compile_expression(LLVMBuilderRef builder, jug_te_expr *n, ina_hashtable_t *params)
+static LLVMValueRef _jug_expr_compile_expression(jug_expression_t *e, jug_te_expr *n, ina_hashtable_t *params)
 {
     switch (TYPE_MASK(n->type)) {
-        case TE_CONSTANT: return LLVMConstReal(LLVMDoubleType(), n->value);
+        case TE_CONSTANT: return LLVMConstReal(e->expr_type, n->value);
         case TE_VARIABLE: {
             LLVMValueRef param;
             ina_hashtable_get_str(params, n->bound, (void**)&param);
@@ -350,28 +629,28 @@ static LLVMValueRef _jug_expr_compile_expression(LLVMBuilderRef builder, jug_te_
         case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:
         case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:
             switch (ARITY(n->type)) {
-            case 0: return TE_FUN(LLVMBuilderRef, const char*)(builder, te_function_map_str[n->function]);
-            case 1: return TE_FUN(LLVMBuilderRef, LLVMValueRef, const char*)(builder, M(0), te_function_map_str[n->function]);
-            case 2: return TE_FUN(LLVMBuilderRef, LLVMValueRef, LLVMValueRef, const char*)(builder, M(0), M(1), te_function_map_str[n->function]);
-            case 3: return TE_FUN(LLVMBuilderRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(builder, M(0), M(1), M(2), te_function_map_str[n->function]);
-            case 4: return TE_FUN(LLVMBuilderRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(builder, M(0), M(1), M(2), M(3), te_function_map_str[n->function]);
-            case 5: return TE_FUN(LLVMBuilderRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(builder, M(0), M(1), M(2), M(3), M(4), te_function_map_str[n->function]);
-            case 6: return TE_FUN(LLVMBuilderRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(builder, M(0), M(1), M(2), M(3), M(4), M(5), te_function_map_str[n->function]);
-            case 7: return TE_FUN(LLVMBuilderRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(builder, M(0), M(1), M(2), M(3), M(4), M(5), M(6), te_function_map_str[n->function]);
+            case 0: return TE_FUN(jug_expression_ptr_t, const char*)(e, te_function_map_str[n->function]);
+            case 1: return TE_FUN(jug_expression_ptr_t, LLVMValueRef, const char*)(e, M(0), te_function_map_str[n->function]);
+            case 2: return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, const char*)(e, M(0), M(1), te_function_map_str[n->function]);
+            case 3: return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(e, M(0), M(1), M(2), te_function_map_str[n->function]);
+            case 4: return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(e, M(0), M(1), M(2), M(3), te_function_map_str[n->function]);
+            case 5: return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(e, M(0), M(1), M(2), M(3), M(4), te_function_map_str[n->function]);
+            case 6: return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(e, M(0), M(1), M(2), M(3), M(4), M(5), te_function_map_str[n->function]);
+            case 7: return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(e, M(0), M(1), M(2), M(3), M(4), M(5), M(6), te_function_map_str[n->function]);
             default: return NULL;
             }
 
         case TE_CLOSURE0: case TE_CLOSURE1: case TE_CLOSURE2: case TE_CLOSURE3:
         case TE_CLOSURE4: case TE_CLOSURE5: case TE_CLOSURE6: case TE_CLOSURE7:
             switch (ARITY(n->type)) {
-            case 0: return TE_FUN(void*, LLVMBuilderRef, const char*)(n->parameters[0], builder, te_function_map_str[n->function]);
-            case 1: return TE_FUN(void*, LLVMBuilderRef, LLVMValueRef, const char*)(n->parameters[1], builder, M(0), te_function_map_str[n->function]);
-            case 2: return TE_FUN(void*, LLVMBuilderRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[2], builder, M(0), M(1), te_function_map_str[n->function]);
-            case 3: return TE_FUN(void*, LLVMBuilderRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[3], builder, M(0), M(1), M(2), te_function_map_str[n->function]);
-            case 4: return TE_FUN(void*, LLVMBuilderRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[4], builder, M(0), M(1), M(2), M(3), te_function_map_str[n->function]);
-            case 5: return TE_FUN(void*, LLVMBuilderRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[5], builder, M(0), M(1), M(2), M(3), M(4), te_function_map_str[n->function]);
-            case 6: return TE_FUN(void*, LLVMBuilderRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[6], builder, M(0), M(1), M(2), M(3), M(4), M(5), te_function_map_str[n->function]);
-            case 7: return TE_FUN(void*, LLVMBuilderRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[7], builder, M(0), M(1), M(2), M(3), M(4), M(5), M(6), te_function_map_str[n->function]);
+            case 0: return TE_FUN(void*, jug_expression_ptr_t, const char*)(n->parameters[0], e, te_function_map_str[n->function]);
+            case 1: return TE_FUN(void*, jug_expression_ptr_t, LLVMValueRef, const char*)(n->parameters[1], e, M(0), te_function_map_str[n->function]);
+            case 2: return TE_FUN(void*, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[2], e, M(0), M(1), te_function_map_str[n->function]);
+            case 3: return TE_FUN(void*, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[3], e, M(0), M(1), M(2), te_function_map_str[n->function]);
+            case 4: return TE_FUN(void*, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[4], e, M(0), M(1), M(2), M(3), te_function_map_str[n->function]);
+            case 5: return TE_FUN(void*, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[5], e, M(0), M(1), M(2), M(3), M(4), te_function_map_str[n->function]);
+            case 6: return TE_FUN(void*, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[6], e, M(0), M(1), M(2), M(3), M(4), M(5), te_function_map_str[n->function]);
+            case 7: return TE_FUN(void*, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[7], e, M(0), M(1), M(2), M(3), M(4), M(5), M(6), te_function_map_str[n->function]);
             default: return NULL;
             }
 
@@ -395,6 +674,7 @@ static LLVMValueRef _jug_expr_compile_function(
     jug_expression_t *e,
     const char *name,
     jug_te_expr *expression,
+    int32_t typesize,
     int var_len,
     jug_te_variable *vars)
 {
@@ -414,6 +694,16 @@ static LLVMValueRef _jug_expr_compile_function(
     LLVMValueRef constant_one = LLVMConstInt(int32Type, 1, 1);
 
     e->context = LLVMContextCreate();
+    e->typesize = typesize;
+    if (e->typesize == 8) {
+        e->expr_type = LLVMDoubleType();
+    }
+    else if (e->typesize == 4) {
+        e->expr_type = LLVMFloatType();
+    }
+    else {
+        return NULL;
+    }
 
     /* define the parameter structure for prefilter */
     LLVMTypeRef params_struct = LLVMStructCreateNamed(e->context, "struct.iarray_eval_pparams_t");
@@ -442,90 +732,80 @@ static LLVMValueRef _jug_expr_compile_function(
     LLVMBasicBlockRef increment = LLVMAppendBasicBlock(f, "increment");
     LLVMBasicBlockRef end = LLVMAppendBasicBlock(f, "end");
 
-    LLVMBuilderRef builder = LLVMCreateBuilder(); // FIXME, probably better to build it from context, mem-leak?
+    e->builder = LLVMCreateBuilder(); // FIXME, probably better to build it from context, mem-leak?
 
     LLVMValueRef param_ptr = LLVMGetParam(f, 0);
 
     LLVMValueRef local_output;
     LLVMValueRef *local_inputs;
     ina_str_t *local_input_labels;
-    LLVMPositionBuilderAtEnd(builder, stackvar_sec);
+    LLVMPositionBuilderAtEnd(e->builder, stackvar_sec);
     {
-        local_output = LLVMBuildAlloca(builder, LLVMPointerType(LLVMDoubleType(), 0), "local_output");
+        local_output = LLVMBuildAlloca(e->builder, LLVMPointerType(e->expr_type, 0), "local_output");
         local_inputs = ina_mem_alloc(sizeof(LLVMValueRef*)*var_len); // leaking memory for now
         local_input_labels = ina_mem_alloc(sizeof(ina_str_t)*var_len); // leaking memory for now
 
-        LLVMValueRef ninputs = LLVMBuildStructGEP(builder, param_ptr, 0, "ninputs");
+        LLVMValueRef ninputs = LLVMBuildStructGEP(e->builder, param_ptr, 0, "ninputs");
         INA_UNUSED(ninputs); // TODO: compare arg_count with ninputs, return error (constant_one) if different
 
-        LLVMValueRef inputs_ptr = LLVMBuildStructGEP(builder, param_ptr, 1, "inputs_ptr");
-        LLVMValueRef inputs = LLVMBuildLoad(builder, inputs_ptr, "inputs");
+        LLVMValueRef inputs_ptr = LLVMBuildStructGEP(e->builder, param_ptr, 1, "inputs_ptr");
+        LLVMValueRef inputs = LLVMBuildLoad(e->builder, inputs_ptr, "inputs");
         for (int i = 0; i < var_len; ++i) {
             local_inputs[i] = ina_mem_alloc(sizeof(LLVMValueRef));
 
             local_input_labels[i] = ina_str_sprintf("input[%d]", i); // leaking memory for now
-            local_inputs[i] = LLVMBuildAlloca(builder, LLVMPointerType(LLVMDoubleType(), 0), ina_str_cstr(local_input_labels[i]));
+            local_inputs[i] = LLVMBuildAlloca(e->builder, LLVMPointerType(e->expr_type, 0), ina_str_cstr(local_input_labels[i]));
 
             /* Load array of inputs */
-            LLVMValueRef in_addr = LLVMBuildExtractValue(builder, inputs, i, "inputs[index]");
+            LLVMValueRef in_addr = LLVMBuildExtractValue(e->builder, inputs, i, "inputs[index]");
 
             /* Cast to value type */
-            LLVMTypeRef type_cast = LLVMPointerType(LLVMDoubleType(), 0);
-            LLVMValueRef cast_in = LLVMBuildCast(builder, LLVMBitCast, in_addr, type_cast, "cast[double*]");
+            LLVMTypeRef type_cast = LLVMPointerType(e->expr_type, 0);
+            LLVMValueRef cast_in = LLVMBuildCast(e->builder, LLVMBitCast, in_addr, type_cast, "cast[double*]");
 
             /* Store pointer in stack var */
-            LLVMBuildStore(builder, cast_in, local_inputs[i]);
-
-            /* Load data array */
-            //LLVMValueRef addr = LLVMBuildGEP(builder, cast_in, &index, 1, "buffer[index]");
-            //LLVMValueRef cast_addr = LLVMBuildCast(builder, LLVMBitCast, addr, LLVMPointerType(LLVMDoubleType(), 0), "cast[double]");
-
-            /* Load scalar value
-            LLVMValueRef val = LLVMBuildLoad(builder, cast_addr, "value");
-            LLVMSetMetadata(val, LLVMInstructionValueKind, md_access);
-            const char *key = vars[i].name;
-            ina_hashtable_set_str(param_values, key, val);*/
+            LLVMBuildStore(e->builder, cast_in, local_inputs[i]);
         }
 
-        LLVMValueRef out_ptr = LLVMBuildStructGEP(builder, param_ptr, 4, "out_ptr");
-        LLVMValueRef out = LLVMBuildLoad(builder, out_ptr, "out");
-        LLVMValueRef out_cast = LLVMBuildCast(builder, LLVMBitCast, out, LLVMPointerType(LLVMDoubleType(), 0), "out_cast");
-        LLVMBuildStore(builder, out_cast, local_output);
+        LLVMValueRef out_ptr = LLVMBuildStructGEP(e->builder, param_ptr, 4, "out_ptr");
+        LLVMValueRef out = LLVMBuildLoad(e->builder, out_ptr, "out");
+        LLVMValueRef out_cast = LLVMBuildCast(e->builder, LLVMBitCast, out, LLVMPointerType(e->expr_type, 0), "out_cast");
+        LLVMBuildStore(e->builder, out_cast, local_output);
 
-        LLVMBuildBr(builder, loop_len);
+        LLVMBuildBr(e->builder, loop_len);
     }
 
 
     LLVMValueRef len;
-    LLVMPositionBuilderAtEnd(builder, loop_len);
+    LLVMPositionBuilderAtEnd(e->builder, loop_len);
     {
-        LLVMValueRef out_size_ptr = LLVMBuildStructGEP(builder, param_ptr, 5, "out_size_ptr");
-        LLVMValueRef out_size = LLVMBuildLoad(builder, out_size_ptr, "out_size");
-        LLVMValueRef out_size_val = LLVMBuildPtrToInt(builder, out_size, LLVMInt32Type(), "out_size_val");
+        LLVMValueRef out_size_ptr = LLVMBuildStructGEP(e->builder, param_ptr, 5, "out_size_ptr");
+        LLVMValueRef out_size = LLVMBuildLoad(e->builder, out_size_ptr, "out_size");
+        LLVMValueRef out_size_val = LLVMBuildPtrToInt(e->builder, out_size, LLVMInt32Type(), "out_size_val");
 
-        LLVMValueRef out_typesize_ptr = LLVMBuildStructGEP(builder, param_ptr, 6, "out_typesize_ptr");
-        LLVMValueRef out_typesize = LLVMBuildLoad(builder, out_typesize_ptr, "out_typesize");
-        LLVMValueRef out_typesize_val = LLVMBuildPtrToInt(builder, out_typesize, LLVMInt32Type(), "out_typesize_val");
+        LLVMValueRef out_typesize_ptr = LLVMBuildStructGEP(e->builder, param_ptr, 6, "out_typesize_ptr");
+        LLVMValueRef out_typesize = LLVMBuildLoad(e->builder, out_typesize_ptr, "out_typesize");
+        LLVMValueRef out_typesize_val = LLVMBuildPtrToInt(e->builder, out_typesize, LLVMInt32Type(), "out_typesize_val");
 
-        len = LLVMBuildExactSDiv(builder, out_size_val, out_typesize_val, "calculate_len");
-        LLVMBuildBr(builder, entry);
+        len = LLVMBuildExactSDiv(e->builder, out_size_val, out_typesize_val, "calculate_len");
+        LLVMBuildBr(e->builder, entry);
     }
 
     LLVMValueRef index_addr;
-    LLVMPositionBuilderAtEnd(builder, entry);
+    LLVMPositionBuilderAtEnd(e->builder, entry);
     {
-        index_addr = LLVMBuildAlloca(builder, int32Type, "index");
-        LLVMBuildStore(builder, constant_zero, index_addr);
-        LLVMBuildBr(builder, condition);
+        index_addr = LLVMBuildAlloca(e->builder, int32Type, "index");
+        LLVMBuildStore(e->builder, constant_zero, index_addr);
+        LLVMBuildBr(e->builder, condition);
     }
 
-    LLVMPositionBuilderAtEnd(builder, condition);
+    LLVMPositionBuilderAtEnd(e->builder, condition);
     {
-        LLVMValueRef index = LLVMBuildLoad(builder, index_addr, "[index]");
-        LLVMValueRef cond = LLVMBuildICmp(builder, LLVMIntSLT, index, len, "index < len");
-        LLVMBuildCondBr(builder, cond, body, end);
+        LLVMValueRef index = LLVMBuildLoad(e->builder, index_addr, "[index]");
+        LLVMValueRef cond = LLVMBuildICmp(e->builder, LLVMIntSLT, index, len, "index < len");
+        LLVMBuildCondBr(e->builder, cond, body, end);
     }
-    LLVMPositionBuilderAtEnd(builder, body);
+    LLVMPositionBuilderAtEnd(e->builder, body);
     {
         LLVMValueRef md_values_access[] = { LLVMMDString("llvm.access.group",
             (unsigned int)strlen("llvm.access.group")) };
@@ -541,43 +821,42 @@ static LLVMValueRef _jug_expr_compile_function(
         };
         LLVMValueRef md_node_vec = LLVMMDNode(md_values_vec, 2);*/
 
-        LLVMValueRef index = LLVMBuildLoad(builder, index_addr, "[index]");
+        LLVMValueRef index = LLVMBuildLoad(e->builder, index_addr, "[index]");
 
         /* Load the scalar values from the inputs */
         for (int i = 0; i < var_len; ++i) {
-            LLVMValueRef stack_var = LLVMBuildLoad(builder, local_inputs[i], "load_stackvar");
-            LLVMValueRef addr = LLVMBuildGEP(builder, stack_var, &index, 1, "buffer[index]");
-            //LLVMValueRef cast_addr = LLVMBuildCast(builder, LLVMBitCast, addr, LLVMPointerType(LLVMDoubleType(), 0), "cast[double]");
-
+            LLVMValueRef stack_var = LLVMBuildLoad(e->builder, local_inputs[i], "load_stackvar");
+            LLVMValueRef addr = LLVMBuildGEP(e->builder, stack_var, &index, 1, "buffer[index]");
+            
             /* Load scalar value */
-            LLVMValueRef val = LLVMBuildLoad(builder, addr, "value");
+            LLVMValueRef val = LLVMBuildLoad(e->builder, addr, "value");
             LLVMSetMetadata(val, LLVMInstructionValueKind, md_access);
             const char *key = vars[i].name;
             ina_hashtable_set_str(param_values, key, val);
         }
 
         /* compute the expression */
-        LLVMValueRef result = _jug_expr_compile_expression(builder, expression, param_values);
+        LLVMValueRef result = _jug_expr_compile_expression(e, expression, param_values);
 
         /* store the result */
-        LLVMValueRef local_out_ref = LLVMBuildLoad(builder, local_output, "local_output");
-        LLVMValueRef out_addr = LLVMBuildGEP(builder, local_out_ref, &index, 1, "out_addr");
-        LLVMValueRef store = LLVMBuildStore(builder, result, out_addr);
+        LLVMValueRef local_out_ref = LLVMBuildLoad(e->builder, local_output, "local_output");
+        LLVMValueRef out_addr = LLVMBuildGEP(e->builder, local_out_ref, &index, 1, "out_addr");
+        LLVMValueRef store = LLVMBuildStore(e->builder, result, out_addr);
         LLVMSetMetadata(store, LLVMInstructionValueKind, md_access);
 
-        LLVMValueRef loop_latch = LLVMBuildBr(builder, increment);
+        LLVMValueRef loop_latch = LLVMBuildBr(e->builder, increment);
         LLVMSetMetadata(loop_latch, LLVMInstructionValueKind, md_node);
     }
-    LLVMPositionBuilderAtEnd(builder, increment);
+    LLVMPositionBuilderAtEnd(e->builder, increment);
     {
-        LLVMValueRef index = LLVMBuildLoad(builder, index_addr, "[index]");
-        LLVMValueRef indexpp = LLVMBuildAdd(builder, index, constant_one, "index++");
-        LLVMBuildStore(builder, indexpp, index_addr);
-        LLVMBuildBr(builder, condition);
+        LLVMValueRef index = LLVMBuildLoad(e->builder, index_addr, "[index]");
+        LLVMValueRef indexpp = LLVMBuildAdd(e->builder, index, constant_one, "index++");
+        LLVMBuildStore(e->builder, indexpp, index_addr);
+        LLVMBuildBr(e->builder, condition);
     }
-    LLVMPositionBuilderAtEnd(builder, end);
+    LLVMPositionBuilderAtEnd(e->builder, end);
 
-    LLVMBuildRet(builder, constant_zero);
+    LLVMBuildRet(e->builder, constant_zero);
 
     ina_hashtable_free(&param_values);
 
@@ -736,25 +1015,46 @@ INA_API(ina_rc_t) jug_expression_new(jug_expression_t **expr)
     m = (*expr)->mod;
 
     _jug_declare_printf(m);
-    _jug_declare_abs_f64(m);
-    _jug_declare_acos_f64(m);
-    _jug_declare_asin_f64(m);
-    _jug_declare_atan_f64(m);
-    _jug_declare_atan2_f64(m);
-    _jug_declare_ceil_f64(m);
-    _jug_declare_cos_f64(m);
-    _jug_declare_cosh_f64(m);
-    _jug_declare_exp_f64(m);
-    _jug_declare_floor_f64(m);
-    _jug_declare_ln_f64(m);
-    _jug_declare_log_f64(m);
-    _jug_declare_pow_f64(m);
-    _jug_declare_sin_f64(m);
-    _jug_declare_sinh_f64(m);
-    _jug_declare_sqrt_f64(m);
-    _jug_declare_tan_f64(m);
-    _jug_declare_tanh_f64(m);
-    _jug_declare_fmod_f64(m);
+    
+    _jug_declare_abs_f64(*expr);
+    _jug_declare_acos_f64(*expr);
+    _jug_declare_asin_f64(*expr);
+    _jug_declare_atan_f64(*expr);
+    _jug_declare_atan2_f64(*expr);
+    _jug_declare_ceil_f64(*expr);
+    _jug_declare_cos_f64(*expr);
+    _jug_declare_cosh_f64(*expr);
+    _jug_declare_exp_f64(*expr);
+    _jug_declare_floor_f64(*expr);
+    _jug_declare_ln_f64(*expr);
+    _jug_declare_log_f64(*expr);
+    _jug_declare_pow_f64(*expr);
+    _jug_declare_sin_f64(*expr);
+    _jug_declare_sinh_f64(*expr);
+    _jug_declare_sqrt_f64(*expr);
+    _jug_declare_tan_f64(*expr);
+    _jug_declare_tanh_f64(*expr);
+    _jug_declare_fmod_f64(*expr);
+
+    _jug_declare_abs_f32(*expr);
+    _jug_declare_acos_f32(*expr);
+    _jug_declare_asin_f32(*expr);
+    _jug_declare_atan_f32(*expr);
+    _jug_declare_atan2_f32(*expr);
+    _jug_declare_ceil_f32(*expr);
+    _jug_declare_cos_f32(*expr);
+    _jug_declare_cosh_f32(*expr);
+    _jug_declare_exp_f32(*expr);
+    _jug_declare_floor_f32(*expr);
+    _jug_declare_ln_f32(*expr);
+    _jug_declare_log_f32(*expr);
+    _jug_declare_pow_f32(*expr);
+    _jug_declare_sin_f32(*expr);
+    _jug_declare_sinh_f32(*expr);
+    _jug_declare_sqrt_f32(*expr);
+    _jug_declare_tan_f32(*expr);
+    _jug_declare_tanh_f32(*expr);
+    _jug_declare_fmod_f32(*expr);
 
     return INA_SUCCESS;
 }
@@ -818,6 +1118,7 @@ INA_API(ina_rc_t) jug_expression_compile(
     const char *expr_str,
     int num_vars,
     void *vars,
+    int32_t typesize,
     uint64_t *function_addr)
 {
     int parse_error = 0;
@@ -826,7 +1127,7 @@ INA_API(ina_rc_t) jug_expression_compile(
     if (parse_error) {
         return INA_ERR_INVALID_ARGUMENT;
     }
-    _jug_expr_compile_function(e, "expr_func", expression, num_vars, te_vars);
+    _jug_expr_compile_function(e, "expr_func", expression, typesize, num_vars, te_vars);
     jug_te_free(expression);
 
     if (_jug_prepare_module(e, true)) {
@@ -837,61 +1138,3 @@ INA_API(ina_rc_t) jug_expression_compile(
 
     return INA_SUCCESS;
 }
-
-/*int main(int argc, char **argv)
-{
-
-
-
-
-    int argc_eval = argc - 2;
-    char **argv_eval = argv + 2;
-
-    blosc2_prefilter_params params = {
-            .ninputs = argc_eval,  // number of data inputs
-            //.inputs = inputs,  // the data inputs
-            .input_typesizes[0] = sizeof(double),  // the typesizes for data inputs
-            .user_data = NULL,  // user-provided info (optional)
-            //.out = out,  // automatically filled
-            .out_size = 10 * sizeof(double),  // automatically filled
-            .out_typesize = sizeof(double),  // automatically filled
-    };
-
-    te_variable *vars = malloc(sizeof(te_variable)*argc_eval);
-    memset(vars, 0, sizeof(te_variable)*argc_eval);
-
-    double *out = malloc(10 * sizeof(double));
-    // Fill the parameters of the prefilter
-    for (int i = 0; i < argc_eval; ++i) {
-        vars[i].name = strtok(argv_eval[i], "=");
-        double val = strtod(strtok(NULL, "="), NULL);
-        params.inputs[i] = malloc(sizeof(double) * 10);
-        double *b = (double*)params.inputs[i];
-        for (int z = 0; z < 10; ++z) {
-            b[z] = val;
-        }
-    }
-
-    params.out = (uint8_t*)out;
-
-    //_jug_expr_t *expression = _jug_expr_parse_expression(&argv[1]);
-
-
-    typedef int(*fun_t)(blosc2_prefilter_params *params);
-    uint64_t fun_addr = 0;
-    fun_t fun = (fun_t)fun_addr;
-
-    // invoke jitted code
-
-    fun(&params);
-
-    double *test = (double*)params.out;
-    for (int i = 0; i < 10; ++i) {
-        printf("Result: %f\n", test[i]);
-    }
-
-
-
-    return 0;
-}
-*/
