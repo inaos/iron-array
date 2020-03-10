@@ -43,7 +43,6 @@ static LLVMValueRef _jug_builtin_tanh_f64;
 static LLVMValueRef _jug_builtin_fmod_f64;
 
 static char *_jug_def_triple = NULL;
-static LLVMTargetMachineRef _jug_tm_ref = NULL;
 static LLVMTargetDataRef _jug_data_ref = NULL;
 static LLVMTargetMachineRef tm_ref = NULL;
 
@@ -607,7 +606,7 @@ static void _jug_apply_optimisation_passes(jug_expression_t *e)
     LLVMAddSLPVectorizePass(pm);
 
     // Run
-    // LLVMRunPassManager(pm, e->mod);  // TODO: fix this
+    LLVMRunPassManager(pm, e->mod);  // TODO: fix this
 
     // Dispose
     LLVMDisposePassManager(pm);
@@ -708,22 +707,22 @@ INA_API(ina_rc_t) jug_init()
         return INA_ERR_FATAL;
     }
 
-    _jug_tm_ref =
+    tm_ref =
         // LLVMCreateTargetMachine(target_ref, _jug_def_triple, "", "+avx2",
         LLVMCreateTargetMachine(target_ref, _jug_def_triple, "", "",
             LLVMCodeGenLevelDefault,
             LLVMRelocDefault,
             LLVMCodeModelJITDefault);
-    _jug_data_ref = LLVMCreateTargetDataLayout(_jug_tm_ref);
+    _jug_data_ref = LLVMCreateTargetDataLayout(tm_ref);
 
     return INA_SUCCESS;
 }
 
 INA_API(void) jug_destroy()
 {
-    if (_jug_tm_ref != NULL) {
-        LLVMDisposeTargetMachine(_jug_tm_ref);
-        _jug_tm_ref = NULL;
+    if (tm_ref != NULL) {
+        LLVMDisposeTargetMachine(tm_ref);
+        tm_ref = NULL;
     }
 }
 
