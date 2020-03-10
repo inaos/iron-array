@@ -355,7 +355,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     }
     else if (eval_engine == IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT) {
         INA_FAIL_IF_ERROR(jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars,
-                          jug_vars, &e->jug_expr_func)
+                          jug_vars, e->typesize, &e->jug_expr_func)
         );
     }
     else {
