@@ -674,6 +674,96 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     return ina_err_get_rc();
 }
 
+
+void _iarray_reset_padding(void *src, int8_t typesize, int8_t ndim, int64_t *a_pshape, int32_t *d_pshape) {
+
+    uint8_t *bsrc = (uint8_t *) src;
+    int32_t actual_pshape[IARRAY_DIMENSION_MAX];
+    int32_t dest_pshape[IARRAY_DIMENSION_MAX];
+    for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+        actual_pshape[(IARRAY_DIMENSION_MAX - ndim + i) % IARRAY_DIMENSION_MAX] = a_pshape[i];
+        dest_pshape[(IARRAY_DIMENSION_MAX - ndim + i) % IARRAY_DIMENSION_MAX] = d_pshape[i];
+    }
+    for (int i = 0; i < IARRAY_DIMENSION_MAX - ndim; ++i) {
+        actual_pshape[i] = 1;
+    }
+
+    int32_t acumulate_desp[IARRAY_DIMENSION_MAX];
+    acumulate_desp[7] = typesize;
+    for (int i = IARRAY_DIMENSION_MAX - 2; i >= 0 ; --i) {
+        acumulate_desp[i] = acumulate_desp[i+1] * dest_pshape[i+1];
+    }
+
+    int32_t size_to_set[IARRAY_DIMENSION_MAX];
+    size_to_set[7] = dest_pshape[7] - actual_pshape[7];
+    for (int i = IARRAY_DIMENSION_MAX - 2; i >= 0 ; --i) {
+        size_to_set[i] = acumulate_desp[i] * (dest_pshape[i] - actual_pshape[i]) / typesize;
+    }
+
+    int32_t ii[IARRAY_DIMENSION_MAX];
+    int32_t desp[IARRAY_DIMENSION_MAX];
+    ii[7] = actual_pshape[7];
+    for (ii[0] = 0; ii[0] < dest_pshape[0]; ++ii[0]) {
+        desp[0] = acumulate_desp[0] * ii[0];
+        if (ii[0] >= actual_pshape[0]) {
+            memset(bsrc + desp[0], 0, size_to_set[0] * typesize);
+            break;
+        } else {
+            for (ii[1] = 0; ii[1] < dest_pshape[1]; ++ii[1]) {
+                desp[1] = desp[0] + acumulate_desp[1] * ii[1];
+                if (ii[1] >= actual_pshape[1]) {
+                    memset(bsrc + desp[1], 0, size_to_set[1] * typesize);
+                    break;
+                } else {
+                    for (ii[2] = 0; ii[2] < dest_pshape[2]; ++ii[2]) {
+                        desp[2] = desp[1] + acumulate_desp[2] * ii[2];
+                        if (ii[2] >= actual_pshape[2]) {
+                            memset(bsrc + desp[2], 0, size_to_set[2] * typesize);
+                            break;
+                        } else {
+                            for (ii[3] = 0; ii[3] < dest_pshape[3]; ++ii[3]) {
+                                desp[3] = desp[2] + acumulate_desp[3] * ii[3];
+                                if (ii[3] >= actual_pshape[3]) {
+                                    memset(bsrc + desp[3], 0, size_to_set[3] * typesize);
+                                    break;
+                                } else {
+                                    for (ii[4] = 0; ii[4] < dest_pshape[4]; ++ii[4]) {
+                                        desp[4] = desp[3] + acumulate_desp[4] * ii[4];
+                                        if (ii[4] >= actual_pshape[4]) {
+                                            memset(bsrc + desp[4], 0, size_to_set[4] * typesize);
+                                            break;
+                                        } else {
+                                            for (ii[5] = 0; ii[5] < dest_pshape[5]; ++ii[5]) {
+                                                desp[5] = desp[4] + acumulate_desp[5] * ii[5];
+                                                if (ii[5] >= actual_pshape[5]) {
+                                                    memset(bsrc + desp[5], 0, size_to_set[5] * typesize);
+                                                    break;
+                                                } else {
+                                                    for (ii[6] = 0; ii[6] < dest_pshape[6]; ++ii[6]) {
+                                                        desp[6] = desp[5] + acumulate_desp[6] * ii[6];
+                                                        if (ii[6] >= actual_pshape[6]) {
+                                                            memset(bsrc + desp[6], 0, size_to_set[6] * typesize);
+                                                            break;
+                                                        } else {
+                                                            desp[7] = desp[6] + acumulate_desp[7] * ii[7];
+                                                            memset(bsrc + desp[7], 0, size_to_set[7] * typesize);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_container_t *ret, int64_t *out_pshape)
 {
     ina_rc_t rc;
@@ -744,9 +834,9 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
 
         // Eval the expression for this chunk
         blosc2_context *cctx = blosc2_create_cctx(*cparams);  // we need it here to propagate pparams.inputs
-        int csize = blosc2_compress_ctx(cctx, out_items * e->typesize,
+        int csize = blosc2_compress_ctx(cctx, ret->catarr->psize * e->typesize,
                                         NULL, out_value.block_pointer,
-                                        out_items * e->typesize + BLOSC_MAX_OVERHEAD);
+                                        ret->catarr->psize * e->typesize + BLOSC_MAX_OVERHEAD);
         if (csize <= 0) {
             IARRAY_TRACE1(iarray.error, "Error compressing a blosc chunk");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
@@ -762,13 +852,24 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
             // Not a complete chunk.  Decompress and append it as a regular buffer.
             uint8_t *temp = malloc(csize);
             memcpy(temp, out_value.block_pointer, csize);
-            int nbytes = blosc_decompress(temp, out_value.block_pointer, out_items * e->typesize);
+            int nbytes = blosc_decompress(temp, out_value.block_pointer, ret->catarr->psize * e->typesize);
             free(temp);
             if (nbytes <= 0) {
                 IARRAY_TRACE1(iarray.error, "Error decompressing a chunk");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
             }
+
+            // Set the padding to 0's
+
+            _iarray_reset_padding(out_value.block_pointer, ret->cparams->typesize, ret->dtshape->ndim, out_value.block_shape, ret->catarr->pshape);
+
             iter_out->compressed_chunk_buffer = false;
+
+            iter_out->cur_block_size = ret->catarr->psize;
+            for (int i = 0; i < ret->catarr->ndim; ++i) {
+                iter_out->cur_block_shape[i] = ret->catarr->shape[i];
+            }
+
         }
         else {
             iter_out->compressed_chunk_buffer = true;
