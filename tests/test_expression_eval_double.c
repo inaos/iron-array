@@ -19,7 +19,7 @@
 #define NROWS 50
 #define NCOLS 3000
 #define NROWS_CHUNK 20
-#define NCOLS_CHUNK 1000
+#define NCOLS_CHUNK 2000
 #define NELEM (NROWS * NCOLS)
 #define NTHREADS 1
 
