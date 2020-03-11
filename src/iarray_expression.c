@@ -347,6 +347,11 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     int err = 0;
     uint32_t eval_engine = (e->ctx->cfg->eval_flags & 0x38u) >> 3u;
     if (eval_engine == IARRAY_EXPR_EVAL_ENGINE_TINYEXPR) {
+        if (e->ctx->cfg->max_num_threads > 1) {
+            // tinyexpr engine does not support multi-threading, so disable it silently
+            IARRAY_TRACE1(iarray.warning, "tinyexpr does not support multithreading: fall back to use 1 thread");
+            e->ctx->cfg->max_num_threads = 1;
+        }
         e->texpr = te_compile(e, ina_str_cstr(e->expr), te_vars, e->nvars, &err);
         if (e->texpr == 0) {
             IARRAY_TRACE1(iarray.error, "Error compiling the expression");
