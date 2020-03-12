@@ -62,6 +62,7 @@ find_package(IPP)
 if (MULTITHREADING)
     find_package(OMP)
 endif()
+find_package(SVML)
 
 # Find the libraries that correspond to the LLVM components
 # that we wish to use

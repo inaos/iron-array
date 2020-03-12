@@ -51,7 +51,7 @@ steps:
 - bash: |
     mkdir -p $HOME/.inaos/cmake
     mkdir -p $HOME/INAOS
-    echo "INAC_REPOSITORY_LOCAL=$HOME/INAOS" > $HOME/.inaos/cmake/repository.txt 
+    echo "INAC_REPOSITORY_LOCAL=$HOME/INAOS" > $HOME/.inaos/cmake/repository.txt
     echo "INAC_REPOSITORY_REMOTE=https://inaos.jfrog.io/inaos/libs-release-local/inaos" >> $HOME/.inaos/cmake/repository.txt
     echo "INAC_REPOSITORY_USRPWD=licensed:AKCp5bBraH7CasbsYCURsjzkbjXwVwdYcT7u39EiuL6GjnK1VKfKQWCd1E2E64mHokU5YUHku" >> $HOME/.inaos/cmake/repository.txt
     git submodule update --init --recursive
@@ -80,6 +80,7 @@ steps:
     source activate iArrayEnv
     conda install -y --name iArrayEnv -c intel mkl-include
     conda install -y --name iArrayEnv -c intel mkl-static
+    conda install -y --name iArrayEnv -c intel icc_rt
     if [ "$AGENT_OS" != "Windows_NT" ]
       then
         conda install -y --name iArrayEnv -c numba llvmdev
@@ -102,15 +103,15 @@ steps:
     LLVM_PKG_VERSION: $(LLVM_PKG_VERSION)
   condition:
     eq( variables['Agent.OS'], 'Windows_NT' )
-  
-- bash: | 
+
+- bash: |
     unzip ${LLVM_PKG_NAME}-${LLVM_PKG_VERSION}.zip
   env:
     LLVM_PKG_NAME: $(LLVM_PKG_NAME)
     LLVM_PKG_VERSION: $(LLVM_PKG_VERSION)
   condition:
     eq( variables['Agent.OS'], 'Windows_NT' )
-    
+
 - bash: |
     if [ "$AGENT_OS" != "Windows_NT" ]
       then
@@ -123,7 +124,7 @@ steps:
   env:
     BUILD_CONFIGURATION: $(BUILD_CONFIGURATION)
     MULTITHREADING: $(MULTITHREADING)
-    
+
 - script: |
     call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
     mkdir cmake-build-%BUILD_CONFIGURATION%
@@ -198,13 +199,13 @@ steps:
   env:
     IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
   condition:
-    eq( variables['Agent.OS'], 'Windows_NT' )  
+    eq( variables['Agent.OS'], 'Windows_NT' )
 
 - task: PublishBuildArtifacts@1
   inputs:
     pathtoPublish: '$(Build.ArtifactStagingDirectory)'
     artifactName: iarray-$(imageName)
-    
+
 - bash: |
     cd cmake-build-$BUILD_CONFIGURATION
     src=`ls iarray*.zip`
