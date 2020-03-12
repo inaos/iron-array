@@ -203,7 +203,7 @@ INA_TEST_FIXTURE(expression_eval_view, iterchunk_plainbuffer)
 
     int8_t ndim = 3;
     int64_t shape[] = {121, 121, 123};
-    int64_t pshape[] = {};
+    int64_t pshape[] = {0, 0, 0};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, true, data->func, data->expr_str));
 }
