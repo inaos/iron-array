@@ -224,7 +224,7 @@ INA_TEST_FIXTURE(expression_eval_double, iterchunk_plainbuffer)
 
     int8_t ndim = 1;
     int64_t shape[] = {20000};
-    int64_t pshape[] = {0};
+    int64_t pshape[] = {0, 0, 0};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, true, data->func, data->expr_str));
 }
@@ -238,7 +238,7 @@ INA_TEST_FIXTURE(expression_eval_double, default_plainbuffer)
 
     int8_t ndim = 3;
     int64_t shape[] = {121, 2, 123};
-    int64_t pshape[] = {};
+    int64_t pshape[] = {0, 0, 0};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, true, data->func, data->expr_str));
 }
