@@ -104,6 +104,10 @@ steps:
   condition:
     eq( variables['Agent.OS'], 'Windows_NT' )
 
+- powershell: |
+    dir C:/Miniconda/envs/iArrayEnv
+    dir C:/Miniconda/envs/iArrayEnv/Library
+    
 - bash: |
     unzip ${LLVM_PKG_NAME}-${LLVM_PKG_VERSION}.zip
   env:
@@ -185,8 +189,6 @@ steps:
     IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
 
 - script: |
-    dir C:/Miniconda/envs/iArrayEnv
-    dir C:/Miniconda/envs/iArrayEnv/Library
     call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
     cd cmake-build-%BUILD_CONFIGURATION%
     call "C:\Program Files\CMake\bin\cpack.exe"
