@@ -81,7 +81,6 @@ steps:
     conda install -y --name iArrayEnv -c intel mkl-include
     conda install -y --name iArrayEnv -c intel mkl-static
     conda install -y --name iArrayEnv -c intel icc_rt
-    ls -l $ENV{CONDA}/envs/iArrayEnv/lib/intel64
     if [ "$AGENT_OS" != "Windows_NT" ]
       then
         conda install -y --name iArrayEnv -c numba llvmdev
