@@ -18,10 +18,12 @@ find_path(SVML_ROOT_DIR
         $ENV{HOME}/miniconda3/lib
         $ENV{USERPROFILE}/miniconda3/Library
         $ENV{CONDA}/envs/iArrayEnv/lib/intel64 # Azure pipelines
-		$ENV{CONDA}/envs/iArrayEnv/lib # Azure pipelines
+        $ENV{CONDA}/envs/iArrayEnv/lib # Azure pipelines
         /Users/vsts/.conda/envs/iArrayEnv # Azure pipelines
         C:/Miniconda/envs/iArrayEnv # Azure pipelines
-		C:/Miniconda/envs/iArrayEnv/Library/bin # Azure pipelines
+        C:/Miniconda/envs/iArrayEnv/Library/bin # Azure pipelines
+        /opt/intel/compilers_and_libraries/linux/lib/intel64_lin # Intel ICC on Linux
+	/opt/intel/compilers_and_libraries/mac/lib/intel64_lin # Intel ICC on MacOS
 )
 
 foreach (LIB ${SVML_LIB})
@@ -35,4 +37,7 @@ foreach (LIB ${SVML_LIB})
     endif()
 endforeach()
 
-set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${SVML_LIBRARY})
+# This is necessary at least on Linux and MacOS.  TODO: complete this for Win if necessary
+string(REPLACE "svml" "intlc" INTLC_LIBRARY ${SVML_LIBRARY})
+
+set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${SVML_LIBRARY} ${INTLC_LIBRARY})
