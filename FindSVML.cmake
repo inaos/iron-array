@@ -18,6 +18,7 @@ find_path(SVML_ROOT_DIR
         $ENV{HOME}/miniconda3/lib
         $ENV{USERPROFILE}/miniconda3/Library
         $ENV{CONDA}/envs/iArrayEnv/lib/intel64 # Azure pipelines
+		$ENV{CONDA}/envs/iArrayEnv/lib # Azure pipelines
         /Users/vsts/.conda/envs/iArrayEnv # Azure pipelines
         C:/Miniconda/envs/iArrayEnv # Azure pipelines
 )
