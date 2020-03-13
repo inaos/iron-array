@@ -21,7 +21,7 @@ find_path(SVML_ROOT_DIR
 		$ENV{CONDA}/envs/iArrayEnv/lib # Azure pipelines
         /Users/vsts/.conda/envs/iArrayEnv # Azure pipelines
         C:/Miniconda/envs/iArrayEnv # Azure pipelines
-		C:/Miniconda/envs/iArrayEnv/bin # Azure pipelines
+		C:/Miniconda/envs/iArrayEnv/Library/bin # Azure pipelines
 )
 
 foreach (LIB ${SVML_LIB})
