@@ -6,22 +6,22 @@ variables:
 
 strategy:
   matrix:
-    linux-debug:
-      imageName: 'ubuntu-18.04'
-      BUILD_CONFIGURATION: Debug
-      MULTITHREADING: False
-    linux-release:
-      imageName: 'ubuntu-18.04'
-      BUILD_CONFIGURATION: RelWithDebInfo
-      MULTITHREADING: False
-    mac-debug:
-      imageName: 'macos-10.14'
-      BUILD_CONFIGURATION: Debug
-      MULTITHREADING: False
-    mac-release:
-      imageName: 'macos-10.14'
-      BUILD_CONFIGURATION: RelWithDebInfo
-      MULTITHREADING: False
+#    linux-debug:
+#      imageName: 'ubuntu-18.04'
+#      BUILD_CONFIGURATION: Debug
+#      MULTITHREADING: False
+#    linux-release:
+#      imageName: 'ubuntu-18.04'
+#      BUILD_CONFIGURATION: RelWithDebInfo
+#      MULTITHREADING: False
+#    mac-debug:
+#      imageName: 'macos-10.14'
+#      BUILD_CONFIGURATION: Debug
+#      MULTITHREADING: False
+#    mac-release:
+#      imageName: 'macos-10.14'
+#      BUILD_CONFIGURATION: RelWithDebInfo
+#      MULTITHREADING: False
     windows-debug:
       imageName: 'vs2017-win2016'
       BUILD_CONFIGURATION: Debug
@@ -185,6 +185,8 @@ steps:
     IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
 
 - script: |
+    dir C:/Miniconda/envs/iArrayEnv
+    dir C:/Miniconda/envs/iArrayEnv/Library
     call "C:\Program Files (x86)\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
     cd cmake-build-%BUILD_CONFIGURATION%
     call "C:\Program Files\CMake\bin\cpack.exe"
