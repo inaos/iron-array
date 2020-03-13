@@ -23,12 +23,12 @@ find_path(SVML_ROOT_DIR
         C:/Miniconda/envs/iArrayEnv # Azure pipelines
         C:/Miniconda/envs/iArrayEnv/Library/bin # Azure pipelines
         /opt/intel/compilers_and_libraries/linux/lib/intel64_lin # Intel ICC on Linux
-	/opt/intel/compilers_and_libraries/mac/lib/intel64_lin # Intel ICC on MacOS
+	    /opt/intel/compilers_and_libraries/mac/lib/intel64_lin # Intel ICC on MacOS
 )
 
 foreach (LIB ${SVML_LIB})
     message(STATUS "Looking ${LIB} in: ${${LIB}_PATH}")
-    find_library(${LIB}_PATH ${LIB} PATHS ${SVML_ROOT_DIR})
+    find_file(${LIB}_PATH ${LIB} PATHS ${SVML_ROOT_DIR})
     if(${LIB}_PATH)
         set(SVML_LIBRARY ${SVML_LIBRARY} ${${LIB}_PATH})
         message(STATUS "Found SVML ${LIB} in: ${${LIB}_PATH}")
