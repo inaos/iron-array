@@ -104,10 +104,10 @@ steps:
   condition:
     eq( variables['Agent.OS'], 'Windows_NT' )
 
-- powershell: |
-    dir C:/Miniconda/envs/iArrayEnv
-    dir C:/Miniconda/envs/iArrayEnv/Library
-    dir C:/Miniconda/envs/iArrayEnv/Library/bin
+#- powershell: |
+#    dir C:/Miniconda/envs/iArrayEnv
+#    dir C:/Miniconda/envs/iArrayEnv/Library
+#    dir C:/Miniconda/envs/iArrayEnv/Library/bin
 
 - bash: |
     unzip ${LLVM_PKG_NAME}-${LLVM_PKG_VERSION}.zip
