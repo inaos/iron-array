@@ -22,6 +22,16 @@ static double _poly(const double x)
     return (x - 1.35) * (x - 4.45) * (x - 8.5);
 }
 
+static double _trans1(const double x)
+{
+    return sin(x) * sin(x) + cos(x) * cos(x);
+}
+
+static double _trans2(const double x)
+{
+    return (cos(x) - 1.35) * (x - 4.45) * (sin(x) - 8.5);
+}
+
 // Fill X values in regular array
 static int _fill_x(double* x)
 {
@@ -35,13 +45,34 @@ static int _fill_x(double* x)
 }
 
 // Compute and fill Y values in regular array
-static void _compute_y(const double* x, double* y)
+static void _compute_y(const double* x, double* y, int expr_type)
 {
 // If compiled with OpenMP executes, it prevents the pthreads in Blosc (e.g. EVAL_ITERBLOSC) to run in parallel (!)
 // See #176
 // #pragma omp parallel for
-    for (int i = 0; i < NELEM; i++) {
-        y[i] = _poly(x[i]);
+    switch (expr_type) {
+        case 0:
+            for (int i = 0; i < NELEM; i++) {
+                y[i] = x[i];
+            }
+            break;
+        case 1:
+            for (int i = 0; i < NELEM; i++) {
+                y[i] = _poly(x[i]);
+            }
+            break;
+        case 2:
+            for (int i = 0; i < NELEM; i++) {
+                y[i] = _trans1(x[i]);
+            }
+            break;
+        case 3:
+            for (int i = 0; i < NELEM; i++) {
+                y[i] = _trans2(x[i]);
+            }
+            break;
+        default:
+            printf("Wrong expr-type value!\n");
     }
 }
 
@@ -67,7 +98,8 @@ int main(int argc, char** argv)
     const char *mat_out_name = NULL;
 
     INA_OPTS(opt,
-             INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOSC = 2, EVAL_ITERBLOSC2 = 3"),
+             INA_OPT_INT("e", "expr-type", 1, "COPY = 0, POLY = 1, TRANS1 = 2, , TRANS2 = 3"),
+             INA_OPT_INT("M", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOSC = 2, EVAL_ITERBLOSC2 = 3"),
              INA_OPT_INT("E", "eval-engine", 1, "EVAL_TINYEXPR = 1, EVAL_JUGGERNAUT = 2"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
@@ -87,8 +119,10 @@ int main(int argc, char** argv)
     }
     ina_set_cleanup_handler(ina_cleanup_handler);
 
+    int expr_type;
+    INA_MUST_SUCCEED(ina_opt_get_int("e", &expr_type));
     int eval_method;
-    INA_MUST_SUCCEED(ina_opt_get_int("e", &eval_method));
+    INA_MUST_SUCCEED(ina_opt_get_int("M", &eval_method));
     int eval_engine;
     INA_MUST_SUCCEED(ina_opt_get_int("E", &eval_engine));
     int clevel;
@@ -150,6 +184,25 @@ int main(int argc, char** argv)
     config.use_dict = INA_SUCCEED(ina_opt_isset("d")) ? 1 : 0;
     config.blocksize = blocksize;
     config.max_num_threads = nthreads;
+
+    const char *expr_type_str = NULL;
+    if (expr_type == 0) {
+        expr_type_str = "COPY";
+    }
+    else if (expr_type == 1) {
+        expr_type_str = "POLY";
+    }
+    else if (expr_type == 2) {
+        expr_type_str = "TRANS1";
+    }
+    else if (expr_type == 3) {
+        expr_type_str = "TRANS2";
+    }
+    else {
+        printf("expr-type must be 0, 1, 2, 3\n");
+        return EXIT_FAILURE;
+    }
+
     const char *eval_method_str = NULL;
     unsigned eval_flags;
     if (eval_method == 1) {
@@ -300,7 +353,24 @@ int main(int argc, char** argv)
             double incx = XMAX / NELEM;
             while (iarray_iter_write_has_next(I)) {
                 iarray_iter_write_next(I);
-                double value = _poly(incx * (double) val.elem_flat_index);
+                double value;
+                double _x = incx * (double) val.elem_flat_index;
+                switch (expr_type) {
+                    case 0:
+                        value = _x;
+                        break;
+                    case 1:
+                        value = _poly(_x);
+                        break;
+                    case 2:
+                        value = _trans1(_x);
+                        break;
+                    case 3:
+                        value = _trans2(_x);
+                        break;
+                    default:
+                        printf("Wrong expr-type value!\n");
+                }
                 memcpy(val.elem_pointer, &value, sizeof(double));
             }
             iarray_iter_write_free(&I);
@@ -319,8 +389,33 @@ int main(int argc, char** argv)
             while (iarray_iter_write_block_has_next(I)) {
                 iarray_iter_write_block_next(I, NULL, 0);
                 int64_t part_size = val.block_size;
-                for (int64_t i = 0; i < part_size; ++i) {
-                    ((double *) val.block_pointer)[i] = _poly(incx * (double) (i + val.nblock * part_size));
+                switch (expr_type) {
+                    case 0:
+                        for (int64_t i = 0; i < part_size; ++i) {
+                            double _x = incx * (double) (i + val.nblock * part_size);
+                            ((double *) val.block_pointer)[i] = _x;
+                        }
+                        break;
+                    case 1:
+                        for (int64_t i = 0; i < part_size; ++i) {
+                            double _x = incx * (double) (i + val.nblock * part_size);
+                            ((double *) val.block_pointer)[i] = _poly(_x);
+                        }
+                        break;
+                    case 2:
+                        for (int64_t i = 0; i < part_size; ++i) {
+                            double _x = incx * (double) (i + val.nblock * part_size);
+                            ((double *) val.block_pointer)[i] = _trans1(_x);
+                        }
+                        break;
+                    case 3:
+                        for (int64_t i = 0; i < part_size; ++i) {
+                            double _x = incx * (double) (i + val.nblock * part_size);
+                            ((double *) val.block_pointer)[i] = _trans2(_x);
+                        }
+                        break;
+                    default:
+                        printf("Wrong expr-type value!\n");
                 }
             }
             iarray_iter_write_block_free(&I);
@@ -335,7 +430,7 @@ int main(int argc, char** argv)
             INA_STOPWATCH_START(w);
             y = (double*)ina_mem_alloc(buffer_len);
             y_allocated = true;
-            _compute_y(x, y);
+            _compute_y(x, y, expr_type);
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf("Time for computing and filling Y values: %.3g s, %.1f MB/s\n",
@@ -362,9 +457,22 @@ int main(int argc, char** argv)
     iarray_expr_new(ctx, &e);
     iarray_expr_bind(e, "x", con_x);
     iarray_expr_bind_out_properties(e, &dtshape, &mat_out);
-    iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
-    // iarray_expr_compile(e, "sin(x) * sin(x) + cos(x) * cos(x)");
-
+    switch (expr_type) {
+        case 0:
+            iarray_expr_compile(e, "x");
+            break;
+        case 1:
+            iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
+            break;
+        case 2:
+            iarray_expr_compile(e, "sin(x) * sin(x) + cos(x) * cos(x)");
+            break;
+        case 3:
+            iarray_expr_compile(e, "(cos(x) - 1.35) * (x - 4.45) * (sin(x) - 8.5)");
+            break;
+        default:
+            printf("Wrong expr-type value!\n");
+    }
 
     INA_STOPWATCH_START(w);
     ina_rc_t errcode = iarray_eval(e, &con_out);
@@ -376,8 +484,8 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     iarray_container_info(con_out, &nbytes, &cbytes);
     printf("\n");
-    printf("Time for computing and filling OUT values using iarray (%s, %s):  %.3g s, %.1f MB/s\n",
-           eval_method_str, eval_engine_str, elapsed_sec, nbytes / (elapsed_sec * _IARRAY_SIZE_MB));
+    printf("Time for computing and filling OUT values using iarray (%s, %s, %s):  %.3g s, %.1f MB/s\n",
+           expr_type_str, eval_method_str, eval_engine_str, elapsed_sec, nbytes / (elapsed_sec * _IARRAY_SIZE_MB));
     nbytes_mb = ((double)nbytes / (double)_IARRAY_SIZE_MB);
     cbytes_mb = ((double)cbytes / (double)_IARRAY_SIZE_MB);
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
