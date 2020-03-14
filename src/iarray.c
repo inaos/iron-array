@@ -270,14 +270,9 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
     *ctx = ina_mem_alloc(sizeof(iarray_context_t));
 
     INA_VERIFY_NOT_NULL(cfg);
-    (*ctx)->cfg = ina_mem_alloc(sizeof(iarray_config_t)); //
+    (*ctx)->cfg = ina_mem_alloc(sizeof(iarray_config_t));
 
     ina_mem_cpy((*ctx)->cfg, cfg, sizeof(iarray_config_t));
-
-    if (cfg->eval_flags == 0) {
-        // The default is iterating by chunks (the inputs can have different blocksize)
-        (*ctx)->cfg->eval_flags |= IARRAY_EXPR_EVAL_METHOD_ITERCHUNK;
-    }
 
     IARRAY_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp));
     IARRAY_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_part_cache));

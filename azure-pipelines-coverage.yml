@@ -35,6 +35,7 @@ steps:
     conda create --yes --quiet --name iArrayEnv
     conda install -y --name iArrayEnv -c intel mkl-include
     conda install -y --name iArrayEnv -c intel mkl-static
+    conda install -y --name iArrayEnv -c intel icc_rt
     conda install -y --name iArrayEnv -c numba llvmdev
     conda install -y -c conda-forge gcovr
     ls -l $CONDA/bin
