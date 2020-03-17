@@ -13,7 +13,14 @@ Execute the following commands:
 
 ### Build
 
-We use inac cmake build-system.
+We use inac cmake build-system in combination with different libraries which can be installed using
+miniconda3.  In particular, one can install MKL, IPP and SVML from Intel in a cross-platform
+portable way with:
+
+$ conda install -c intel mkl-include  # MKL
+$ conda install -c intel mkl-static  # MKL
+$ conda install -c intel ipp  # IPP
+$ conda install -c intel icc_rt  # SVML
 
 #### Windows
 
@@ -33,25 +40,21 @@ We use inac cmake build-system.
 
 #### Mac
 
-**Important note**: By default, the iron-array library is compiled in OpenMP mode, so you need
-a compiler that supports OpenMP, which is **not** the case for the compiler that comes with the OS.
-It is suggested to use a recent version of clang (e.g. 8); see https://embeddedartistry.com/blog/2017/2/20/installing-clangllvm-on-osx for instructions on how to install it.
-
-* INAC build setup
+* INAC build setup:
     * Make sure that you have a configured repository.txt file in ~/.inaos/cmake
     * Also you'll need a directory ~/INAOS (can be empty)
 
-* Create a build folder
+* Create a build folder:
 
          mkdir build
          cd build
 
-* Invoke CMAKE, we have to define the build-type
+* Invoke CMAKE, we have to define the build-type:
 
          cmake -DCMAKE_BUILD_TYPE=Debug ..
          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 
-* Use multithreaded version, we need to add next flag
+* If one wants to use the multithreaded version, then add next flag:
 
          cmake -DCMAKE_BUILD_TYPE=Debug -DMULTITHREADING=TRUE ..
          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMULTITHREADING=TRUE ..
@@ -63,7 +66,7 @@ It is suggested to use a recent version of clang (e.g. 8); see https://embeddeda
     * Make sure that you have a configured repository.txt file in ~/.inaos/cmake
     * Also you'll need a directory ~/INAOS (can be empty)
     
-* MKL setup.  For Ubuntu machines, it is best to use Intel's Ubuntu repo:
+* MKL setup.  For Ubuntu machines, it is best to use Intel's Ubuntu repo (but you can use conda packages described above too):
 
          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
          apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
@@ -80,14 +83,15 @@ It is suggested to use a recent version of clang (e.g. 8); see https://embeddeda
          cmake -DCMAKE_BUILD_TYPE=Debug ..
          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 
- * In some Linux, the way to detect LLVM is different, so for example for Clear Linux, one must use:
+* In some Linux, the way to detect LLVM is different, so for example for Clear Linux, one must use:
 
          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCLEARLINUX=TRUE ..
          
- * Use multithreaded version, we need to add next flag
- 
+* If one wants to use the multithreaded version, then add next flag:
+
          cmake -DCMAKE_BUILD_TYPE=Debug -DMULTITHREADING=TRUE ..
          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMULTITHREADING=TRUE ..
+
 
 ### Limitations
 

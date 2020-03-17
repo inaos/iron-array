@@ -155,7 +155,7 @@ static double expr2(const double x)
 }
 
 // TODO: fix that for Linux in Azure CI (it works well on my local linux box and MacOSX)
-INA_TEST_FIXTURE_SKIP(expression_eval_view, iterblosc_superchunk)
+INA_TEST_FIXTURE(expression_eval_view, iterblosc_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC | (IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT << 3);
     data->func = expr2;
