@@ -124,12 +124,16 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     } else {
         c_block = ina_mem_alloc(c_size);
     }
-    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
-        a_block = ina_mem_alloc(a_size);
-    }
-    if (b->view || b->catarr->storage == CATERVA_STORAGE_BLOSC || !b_contiguous) {
-        b_block = ina_mem_alloc(b_size);
-    }
+//    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
+//        a_block = ina_mem_alloc(a_size);
+//    }
+//    if (b->view || b->catarr->storage == CATERVA_STORAGE_BLOSC || !b_contiguous) {
+//        b_block = ina_mem_alloc(b_size);
+//    }
+
+    a_block = ina_mem_alloc(a_size);
+    b_block = ina_mem_alloc(b_size);
+
     memset(c_block, 0, c_size);
 
     // Start a iterator that returns the index matrix blocks
@@ -329,16 +333,12 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     } else {
         c_block = ina_mem_alloc(c_size);
     }
-//    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
-//        a_block = ina_mem_alloc(a_size);
-//    }
-//    if (b->view || b->catarr->storage == CATERVA_STORAGE_BLOSC || !b_contiguous) {
-//        b_block = ina_mem_alloc(b_size);
-//    }
-
-    a_block = ina_mem_alloc(a_size);
-    b_block = ina_mem_alloc(b_size);
-
+    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
+        a_block = ina_mem_alloc(a_size);
+    }
+    if (b->view || b->catarr->storage == CATERVA_STORAGE_BLOSC || !b_contiguous) {
+        b_block = ina_mem_alloc(b_size);
+    }
     memset(c_block, 0, c_size);
 
     // Start a iterator that returns the index matrix blocks
