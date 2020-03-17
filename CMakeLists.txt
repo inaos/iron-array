@@ -96,6 +96,8 @@ else()
 endif()
 
 if (UNIX)
+set(CMAKE_EXE_LINKER_FLAGS    "-Wl,--no-as-needed ${CMAKE_EXE_LINKER_FLAGS}")
+set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-as-needed ${CMAKE_SHARED_LINKER_FLAGS}")
 set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
 set(INAC_DEPENDENCY_LIBS minjugg minjuggutil ${INAC_DEPENDENCY_LIBS} blosc2_static ${IPP_LIBRARIES})
 else()
