@@ -96,7 +96,7 @@ else()
 endif()
 
 if (UNIX)
-	if (NOT APPPLE)
+	if (NOT APPLE)
 		set(CMAKE_EXE_LINKER_FLAGS    "-Wl,--no-as-needed ${CMAKE_EXE_LINKER_FLAGS}")
 		set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-as-needed ${CMAKE_SHARED_LINKER_FLAGS}")
 	endif()
