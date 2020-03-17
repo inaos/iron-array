@@ -192,7 +192,7 @@ INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk2)
 }
 
 // TODO: this fails on Linux CI.  Investigate why it is so.
-INA_TEST_FIXTURE_SKIP(expression_eval_double, default_superchunk2)
+INA_TEST_FIXTURE(expression_eval_double, default_superchunk2)
 {
     data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_AUTO | (IARRAY_EXPR_EVAL_ENGINE_AUTO << 3);
     data->func = expr3;
