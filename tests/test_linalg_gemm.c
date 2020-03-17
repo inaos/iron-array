@@ -107,8 +107,8 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
                         (double *) ybuffer, ldy, 0.0, (double *) obuffer, ldo);
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            cblas_sgemm(CblasRowMajor, xflag, yflag, M, N, K, 1.0, (float *) xbuffer, ldx,
-                        (float *) ybuffer, ldy, 0.0, (float *) obuffer, ldo);
+            cblas_sgemm(CblasRowMajor, xflag, yflag, M, N, K, 1.0f, (float *) xbuffer, ldx,
+                        (float *) ybuffer, ldy, 0.0f, (float *) obuffer, ldo);
             break;
         default:
             return INA_ERR_EXCEEDED;
@@ -183,7 +183,7 @@ INA_TEST_TEARDOWN(linalg_gemm) {
     iarray_destroy();
 }
 
-/*
+
 INA_TEST_FIXTURE(linalg_gemm, f_notrans_notrans_plain_plain) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -669,7 +669,7 @@ INA_TEST_FIXTURE(linalg_gemm, f_notrans_notrans_plain_plain_nc_nc) {
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
                                       yshape, ypshape, ybshape, ytrans, zshape, zpshape));
 }
-*/
+
 
 // TODO: This crashes *sometimes* on Mac in CI and always on my Mac (Francesc)
 INA_TEST_FIXTURE(linalg_gemm, f_trans_trans_plain_plain_nc_nc) {
