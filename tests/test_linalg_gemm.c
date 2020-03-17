@@ -183,7 +183,7 @@ INA_TEST_TEARDOWN(linalg_gemm) {
     iarray_destroy();
 }
 
-
+/*
 INA_TEST_FIXTURE(linalg_gemm, f_notrans_notrans_plain_plain) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -669,9 +669,10 @@ INA_TEST_FIXTURE(linalg_gemm, f_notrans_notrans_plain_plain_nc_nc) {
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
                                       yshape, ypshape, ybshape, ytrans, zshape, zpshape));
 }
+*/
 
 // TODO: This crashes *sometimes* on Mac in CI and always on my Mac (Francesc)
-INA_TEST_FIXTURE_SKIP(linalg_gemm, f_trans_trans_plain_plain_nc_nc) {
+INA_TEST_FIXTURE(linalg_gemm, f_trans_trans_plain_plain_nc_nc) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int typesize = sizeof(float);
