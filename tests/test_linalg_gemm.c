@@ -43,7 +43,7 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, xsize, 1, &xstore, 0, &c_x));
 
     // iarray container x to buffer
-    uint8_t *xbuffer = malloc(xsize * typesize);
+    uint8_t *xbuffer = ina_mem_alloc(xsize * typesize);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, xbuffer, xsize * typesize));
 
     // transpose x
@@ -73,7 +73,7 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &ydtshape, 0, ysize, 1, &ystore, 0, &c_y));
 
     // iarray container y to buffer
-    uint8_t *ybuffer = malloc(ysize * typesize);
+    uint8_t *ybuffer = ina_mem_alloc(ysize * typesize);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_y, ybuffer, ysize * typesize));
 
     // transpose y
@@ -84,7 +84,7 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
 
     // define o buffer
     int64_t osize = c_x->dtshape->shape[0] * c_y->dtshape->shape[1];
-    uint8_t *obuffer = malloc((size_t)osize * typesize);
+    uint8_t *obuffer = ina_mem_alloc((size_t)osize * typesize);
 
     // MKL matrix-matrix multiplication
     int M = (int) c_x->dtshape->shape[0];
@@ -138,7 +138,7 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y, c_z, xbshape, ybshape, IARRAY_OPERATOR_GENERAL));
 
     // define z buffer
-    uint8_t *zbuffer = malloc(zsize * typesize);
+    uint8_t *zbuffer = ina_mem_alloc(zsize * typesize);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_z, zbuffer, zsize * typesize));
 
     // assert
@@ -163,6 +163,15 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
                 return INA_ERR_EXCEEDED;
         }
     }
+
+    iarray_container_free(ctx, &c_x);
+    iarray_container_free(ctx, &c_y);
+    iarray_container_free(ctx, &c_z);
+
+    INA_MEM_FREE_SAFE(xbuffer);
+    INA_MEM_FREE_SAFE(ybuffer);
+    INA_MEM_FREE_SAFE(obuffer);
+    INA_MEM_FREE_SAFE(zbuffer);
 
     return INA_SUCCESS;
 }
