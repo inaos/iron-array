@@ -17,10 +17,10 @@ We use inac cmake build-system in combination with different libraries which can
 miniconda3.  In particular, one can install MKL, IPP and SVML from Intel in a cross-platform
 portable way with:
 
-$ conda install -c intel mkl-include  # MKL
-$ conda install -c intel mkl-static  # MKL
-$ conda install -c intel ipp  # IPP
-$ conda install -c intel icc_rt  # SVML
+    $ conda install -c intel mkl-include  # MKL
+    $ conda install -c intel mkl-static  # MKL
+    $ conda install -c intel ipp  # IPP
+    $ conda install -c intel icc_rt  # SVML
 
 #### Windows
 
