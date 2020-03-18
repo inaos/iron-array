@@ -168,10 +168,10 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_z);
 
-    INA_MEM_FREE_SAFE(xbuffer);
-    INA_MEM_FREE_SAFE(ybuffer);
-    INA_MEM_FREE_SAFE(obuffer);
-    INA_MEM_FREE_SAFE(zbuffer);
+    ina_mem_free(xbuffer);
+    ina_mem_free(ybuffer);
+    ina_mem_free(obuffer);
+    ina_mem_free(zbuffer);
 
     return INA_SUCCESS;
 }
