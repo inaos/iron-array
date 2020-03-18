@@ -144,15 +144,16 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc2_superchunk)
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, false, data->func, data->expr_str));
 }
 
+// TODO: make a test for testing these special functions
 static double expr0(const double x)
 {
     return (fabs(-x) - 1.35) * ceil(x) * floor(x - 8.5);
 }
 
+// TODO: make a test for testing the evaluation of a func(constant)
 static double expr1(const double x)
 {
-    return (cos(x) - 1.35) * tan(x) * sin(x - 8.5);
-    //return (x - 1.35) + sin(.45);  // TODO: fix evaluation of func(constant)
+    return (x - 1.35) + sin(.45);
 }
 
 static double expr2(const double x)
@@ -162,7 +163,7 @@ static double expr2(const double x)
 
 INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK | (IARRAY_EXPR_EVAL_ENGINE_AUTO << 3);
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK;
     data->func = expr2;
     data->expr_str = "sinh(x) + (cosh(x) - 1.35) - tanh(x + .2)";
 
@@ -191,10 +192,9 @@ INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk2)
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, false, data->func, data->expr_str));
 }
 
-// TODO: this fails on Linux CI.  Investigate why it is so.
 INA_TEST_FIXTURE(expression_eval_double, default_superchunk2)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_AUTO | (IARRAY_EXPR_EVAL_ENGINE_AUTO << 3);
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_AUTO | IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT;
     data->func = expr3;
     data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
 
@@ -207,14 +207,26 @@ INA_TEST_FIXTURE(expression_eval_double, default_superchunk2)
 
 static double expr4(const double x)
 {
-    return exp(x) + (log(x) - 1.35) - log10(x + .2);
+    return sin(x) * sin(x) + cos(x) * cos(x);
+}
+
+INA_TEST_FIXTURE(expression_eval_double, llvm_dup_trans)
+{
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK | (IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT << 3);
+    data->func = expr4;
+    data->expr_str = "sin(x) * sin(x) + cos(x) * cos(x)";
+
+    int8_t ndim = 4;
+    int64_t shape[] = {20, 20, 15, 19};
+    int64_t pshape[] = {5, 7, 11, 19};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, false, data->func, data->expr_str));
 }
 
 static double expr5(const double x)
 {
     return sqrt(x) + atan2(x, x) + pow(x, x);
 }
-
 
 INA_TEST_FIXTURE(expression_eval_double, iterchunk_plainbuffer)
 {
@@ -242,3 +254,4 @@ INA_TEST_FIXTURE(expression_eval_double, default_plainbuffer)
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, true, data->func, data->expr_str));
 }
+
