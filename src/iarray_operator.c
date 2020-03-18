@@ -45,31 +45,6 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     int64_t typesize = a->catarr->ctx->cparams.typesize;
 
-    bool a_contiguous = (a->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
-    if (a_contiguous) {
-        if (a->transposed) {
-            if (bshape_a[0] != a->dtshape->shape[0]) {
-                a_contiguous = false;
-            }
-        } else {
-            if (bshape_a[1] != a->dtshape->shape[1]) {
-                a_contiguous = false;
-            }
-        }
-    }
-    bool b_contiguous = (b->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
-    if (b_contiguous) {
-        if (b->transposed) {
-            if (bshape_b[0] != b->dtshape->shape[0]) {
-                b_contiguous = false;
-            }
-        } else {
-            if (bshape_b[1] != b->dtshape->shape[1]) {
-                b_contiguous = false;
-            }
-        }
-    }
-
     // define mkl parameters
     int64_t B0 = bshape_a[0];
     int64_t B1 = bshape_a[1];
@@ -124,12 +99,6 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     } else {
         c_block = ina_mem_alloc(c_size);
     }
-//    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
-//        a_block = ina_mem_alloc(a_size);
-//    }
-//    if (b->view || b->catarr->storage == CATERVA_STORAGE_BLOSC || !b_contiguous) {
-//        b_block = ina_mem_alloc(b_size);
-//    }
 
     a_block = ina_mem_alloc(a_size);
     b_block = ina_mem_alloc(b_size);
@@ -177,33 +146,21 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
 
         // Obtain desired blocks from iarray containers
-//        if (!a->view && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && a_contiguous) {
-//            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
-//        } else {
-//            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
-//        }
-//        if (!b->view && b->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && b_contiguous) {
-//            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
-//        } else {
-//            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
-//        }
 
         IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
         IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
 
         // Make blocks multiplication
 
-        // mkl_set_num_threads(ctx->cfg->max_num_threads);
-
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                cblas_dgemm(CblasRowMajor, flag_a, flag_b, (int) B0, (int) B2, (int) B1, 1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 1.0, (double *)c_block, ld_c);
-                // mult_c((double *) a_block, (double *) b_block, (double *) c_block, B0, B2, B1);
+                cblas_dgemm(CblasRowMajor, flag_a, flag_b, (int) B0, (int) B2, (int) B1,
+                    1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 1.0, (double *)c_block, ld_c);
 
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 cblas_sgemm(CblasRowMajor, flag_a, flag_b, (const int)B0, (const int)B2, (const int)B1,
-                            1.0f, (float *)a_block, ld_a, (float *)b_block, ld_b, 1.0f, (float *)c_block, ld_c);
+                    1.0f, (float *)a_block, ld_a, (float *)b_block, ld_b, 1.0f, (float *)c_block, ld_c);
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "The data type is invalid");
@@ -237,13 +194,6 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     cleanup:
     _iarray_iter_matmul_free(&iter);
 
-    // if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
-    //    INA_MEM_FREE_SAFE(a_block);
-    // }
-    // if (b->view || b->catarr->storage == CATERVA_STORAGE_BLOSC || !b_contiguous) {
-    //    INA_MEM_FREE_SAFE(b_block);
-    // }
-
     INA_MEM_FREE_SAFE(a_block);
     INA_MEM_FREE_SAFE(b_block);
 
@@ -269,20 +219,6 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     IARRAY_ERR_CATERVA(caterva_update_shape(c->catarr, &shape));
     int64_t typesize = a->catarr->ctx->cparams.typesize;
-
-    bool a_contiguous = (a->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
-    if (a_contiguous) {
-        if (a->transposed) {
-            if (bshape_a[0] != a->dtshape->shape[0]) {
-                a_contiguous = false;
-            }
-        } else {
-            if (bshape_a[1] != a->dtshape->shape[1]) {
-                a_contiguous = false;
-            }
-        }
-    }
-    bool b_contiguous = (b->catarr->storage == CATERVA_STORAGE_BLOSC) ? false: true;
 
     // Define parameters needed in mkl multiplication
     int64_t B0 = bshape_a[0];
@@ -333,12 +269,10 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     } else {
         c_block = ina_mem_alloc(c_size);
     }
-    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
-        a_block = ina_mem_alloc(a_size);
-    }
-    if (b->view || b->catarr->storage == CATERVA_STORAGE_BLOSC || !b_contiguous) {
-        b_block = ina_mem_alloc(b_size);
-    }
+
+    a_block = ina_mem_alloc(a_size);
+    b_block = ina_mem_alloc(b_size);
+
     memset(c_block, 0, c_size);
 
     // Start a iterator that returns the index matrix blocks
@@ -382,21 +316,10 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
             stop_b[0] = start_b[0] + bshape_b[0];
         }
 
-        // Obtain desired blocks from iarray containers
-        if (!a->view && a->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && a_contiguous) {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
-        } else {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
-        }
-        if (!b->view && b->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && b_contiguous) {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
-        } else {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
-        }
+        IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+        IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
 
         // Make blocks multiplication
-        mkl_set_num_threads(ctx->cfg->max_num_threads);
-        //printf("Num. threads: %d\n", mkl_get_max_threads());
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 cblas_dgemv(CblasRowMajor, flag_a, M, K, 1.0, (double *) a_block, ld_a, (double *) b_block, 1, 1.0, (double *) c_block, 1);
@@ -429,12 +352,10 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     rc = ina_err_get_rc();
     cleanup:
     _iarray_iter_matmul_free(&iter);
-    if (a->view || a->catarr->storage == CATERVA_STORAGE_BLOSC || !a_contiguous) {
-        INA_MEM_FREE_SAFE(a_block);
-    }
-    if (b->view || b->catarr->storage == CATERVA_STORAGE_BLOSC || !b_contiguous) {
-        INA_MEM_FREE_SAFE(b_block);
-    }
+
+    INA_MEM_FREE_SAFE(a_block);
+    INA_MEM_FREE_SAFE(b_block);
+
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
         INA_MEM_FREE_SAFE(c_block);
     }
