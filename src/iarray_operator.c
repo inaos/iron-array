@@ -45,6 +45,27 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     int64_t typesize = a->catarr->ctx->cparams.typesize;
 
+    /* Check if the block is equal to the shape */
+    bool a_copy = a->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
+    if (!a_copy) {
+        for (int i = 0; i < a->dtshape->ndim; ++i) {
+            if (bshape_a[i] != a->dtshape->shape[i]) {
+                a_copy = true;
+                break;
+            }
+        }
+    }
+
+    bool b_copy = b->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
+    if (!b_copy) {
+        for (int i = 0; i < b->dtshape->ndim; ++i) {
+            if (bshape_b[i] != b->dtshape->shape[i]) {
+                b_copy = true;
+                break;
+            }
+        }
+    }
+
     // define mkl parameters
     int64_t B0 = bshape_a[0];
     int64_t B1 = bshape_a[1];
@@ -100,8 +121,12 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         c_block = ina_mem_alloc(c_size);
     }
 
-    a_block = ina_mem_alloc(a_size);
-    b_block = ina_mem_alloc(b_size);
+    if (a_copy) {
+        a_block = ina_mem_alloc(a_size);
+    }
+    if (b_copy) {
+        b_block = ina_mem_alloc(b_size);
+    }
 
     memset(c_block, 0, c_size);
 
@@ -146,9 +171,16 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
 
         // Obtain desired blocks from iarray containers
-
-        IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
-        IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
+        if (!a_copy) {
+            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
+        } else {
+            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+        }
+        if (!b_copy) {
+            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
+        } else {
+            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
+        }
 
         // Make blocks multiplication
 
@@ -194,8 +226,12 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     cleanup:
     _iarray_iter_matmul_free(&iter);
 
-    INA_MEM_FREE_SAFE(a_block);
-    INA_MEM_FREE_SAFE(b_block);
+    if (a_copy) {
+        INA_MEM_FREE_SAFE(a_block);
+    }
+    if (b_copy) {
+        INA_MEM_FREE_SAFE(b_block);
+    }
 
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
         INA_MEM_FREE_SAFE(c_block);
@@ -219,6 +255,27 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
     IARRAY_ERR_CATERVA(caterva_update_shape(c->catarr, &shape));
     int64_t typesize = a->catarr->ctx->cparams.typesize;
+
+    /* Check if the block is equal to the shape */
+    bool a_copy = a->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
+    if (!a_copy) {
+        for (int i = 0; i < a->dtshape->ndim; ++i) {
+            if (bshape_a[i] != a->dtshape->shape[i]) {
+                a_copy = true;
+                break;
+            }
+        }
+    }
+
+    bool b_copy = b->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
+    if (!b_copy) {
+        for (int i = 0; i < b->dtshape->ndim; ++i) {
+            if (bshape_b[i] != b->dtshape->shape[i]) {
+                b_copy = true;
+                break;
+            }
+        }
+    }
 
     // Define parameters needed in mkl multiplication
     int64_t B0 = bshape_a[0];
@@ -270,8 +327,12 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         c_block = ina_mem_alloc(c_size);
     }
 
-    a_block = ina_mem_alloc(a_size);
-    b_block = ina_mem_alloc(b_size);
+    if (a_copy) {
+        a_block = ina_mem_alloc(a_size);
+    }
+    if (b_copy) {
+        b_block = ina_mem_alloc(b_size);
+    }
 
     memset(c_block, 0, c_size);
 
@@ -316,8 +377,16 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
             stop_b[0] = start_b[0] + bshape_b[0];
         }
 
-        IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
-        IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
+        if (!a_copy) {
+            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
+        } else {
+            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+        }
+        if (!b_copy) {
+            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
+        } else {
+            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
+        }
 
         // Make blocks multiplication
         switch (dtype) {
@@ -353,8 +422,12 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     cleanup:
     _iarray_iter_matmul_free(&iter);
 
-    INA_MEM_FREE_SAFE(a_block);
-    INA_MEM_FREE_SAFE(b_block);
+    if (a_copy) {
+        INA_MEM_FREE_SAFE(a_block);
+    }
+    if (b_copy) {
+        INA_MEM_FREE_SAFE(b_block);
+    }
 
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
         INA_MEM_FREE_SAFE(c_block);
