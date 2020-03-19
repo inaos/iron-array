@@ -390,7 +390,7 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     if ((e->ctx->cfg->eval_flags & 0x7u) == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC) {
         // We can only set the shape for the output for the ITERBLOSC eval method.
         // For ITERBLOSC2 we will need to wait til the storage backend would support sub-partitions.
-        eval_pparams.out_dtshape = e->out->dtshape;
+        eval_pparams.out_dtshape = e->out_dtshape;
     }
     else {
         // eval_pparams is initialized to {0} above, but better be explicit
