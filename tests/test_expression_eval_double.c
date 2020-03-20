@@ -212,7 +212,7 @@ static double expr4(const double x)
 
 INA_TEST_FIXTURE(expression_eval_double, llvm_dup_trans)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK | (IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT << 3);
+    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_AUTO | (IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT << 3);
     data->func = expr4;
     data->expr_str = "sin(x) * sin(x) + cos(x) * cos(x)";
 
