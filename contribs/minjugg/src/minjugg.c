@@ -13,9 +13,9 @@
 #include "minjuggutil.h"
 #include "tinyexpr.h"
 
-//#define _JUG_DEBUG_WRITE_BC_TO_FILE
-//#define _JUG_DEBUG_WRITE_ERROR_TO_STDERR
-//#define _JUG_DEBUG_DECLARE_PRINT_IN_IR
+#define _JUG_DEBUG_WRITE_BC_TO_FILE
+#define _JUG_DEBUG_WRITE_ERROR_TO_STDERR
+#define _JUG_DEBUG_DECLARE_PRINT_IN_IR
 
 typedef enum _jug_expression_dtype_e {
     _JUG_EXPRESSION_DTYPE_DOUBLE = 1,
@@ -28,6 +28,7 @@ struct jug_expression_s {
     LLVMExecutionEngineRef engine;
     _jug_expression_dtype_t dtype;
     ina_hashtable_t *fun_map;
+    ina_hashtable_t *decl_cache;
     void **fun_map_te;
     LLVMBuilderRef builder;
     int32_t typesize;
@@ -103,16 +104,22 @@ static LLVMValueRef _jug_build_fun_call(jug_expression_t *e, const char *name, i
     LLVMTypeRef *param_types = NULL;
     LLVMValueRef fun_decl = NULL;
     if (f->require_decl) {
-        param_types = (LLVMTypeRef*)ina_mem_alloc(sizeof(LLVMTypeRef)*num_args);
-        for (int i = 0; i < num_args; ++i) {
-            param_types[i] = e->expr_type;
-        }
-        LLVMTypeRef fn_type = LLVMFunctionType(e->expr_type, param_types, num_args, 0);
+        const char *fun_name;
         if (e->dtype == _JUG_EXPRESSION_DTYPE_FLOAT) {
-            fun_decl = LLVMAddFunction(e->mod, f->decl_name_f32, fn_type);
+            fun_name = f->decl_name_f32;
         }
         else {
-            fun_decl = LLVMAddFunction(e->mod, f->decl_name_f64, fn_type);
+            fun_name = f->decl_name_f64;
+        }
+        ina_hashtable_get_str(e->decl_cache, fun_name, (void**)&fun_decl);
+        if (fun_decl == NULL) {
+            param_types = (LLVMTypeRef*)ina_mem_alloc(sizeof(LLVMTypeRef)*num_args);
+            for (int i = 0; i < num_args; ++i) {
+                param_types[i] = e->expr_type;
+            }
+            LLVMTypeRef fn_type = LLVMFunctionType(e->expr_type, param_types, num_args, 0);
+            fun_decl = LLVMAddFunction(e->mod, fun_name, fn_type);
+            ina_hashtable_set_str(e->decl_cache, fun_name, fun_decl);
         }
     }
     else {
@@ -138,8 +145,10 @@ static LLVMValueRef _jug_build_fun_call(jug_expression_t *e, const char *name, i
         ret = LLVMBuildCall(e->builder, fun_decl, args, num_args, name); 
     }
 
-    /* cleanup */
-    ina_mem_free(param_types);
+    /* cleanup - if required */
+    if (param_types != NULL) {
+        ina_mem_free(param_types);
+    }
     
     return ret;
 }
@@ -165,6 +174,14 @@ static ina_rc_t _jug_register_functions(jug_expression_t *e)
         INA_HASHTABLE_SHRINK_DEFAULT,
         INA_HASHTABLE_DEFAULT_CAPACITY,
         INA_HASHTABLE_CF_DEFAULT, &e->fun_map);
+
+    ina_hashtable_new(INA_HASHTABLE_STR_KEY,
+        INA_HASH32_LOOKUP3,
+        INA_HASHTABLE_TYPE_DEFAULT,
+        INA_HASHTABLE_GROW_DEFAULT,
+        INA_HASHTABLE_SHRINK_DEFAULT,
+        INA_HASHTABLE_DEFAULT_CAPACITY,
+        INA_HASHTABLE_CF_DEFAULT, &e->decl_cache);
 
     int size = (sizeof(_jug_function_map) / sizeof(_jug_fun_type_t)) - 1; /* do not count the sentinel */
 
@@ -596,6 +613,9 @@ INA_API(void) jug_expression_free(jug_expression_t **expr)
     INA_VERIFY_FREE(expr);
     if ((*expr)->fun_map != NULL) {
         ina_hashtable_free(&(*expr)->fun_map);
+    }
+    if ((*expr)->fun_map != NULL) {
+        ina_hashtable_free(&(*expr)->decl_cache);
     }
     if ((*expr)->fun_map_te != NULL) {
         ina_mem_free((*expr)->fun_map_te);
