@@ -10,7 +10,8 @@ def main():
 		sys.exit()
 	
 	inname = ntpath.basename(filepath)
-	deffile = open(inname+".def", "w")
+	outname = os.path.splitext(inname)[0] + ".def"
+	deffile = open(outname, "w")
 	printlines = False
 	start = False
 	stop = False
