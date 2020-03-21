@@ -37,6 +37,7 @@ foreach (LIB ${SVML_LIB})
 			get_filename_component(SVML_LIBRARY_NAME ${SVM_LIBRARY_DLL} NAME)
 			string(REPLACE ".dll" ".lib" SVML_LIBRARY_NEWNAME ${SVML_LIBRARY_NAME})
 			set(SVML_LIBRARY ${CMAKE_BINARY_DIR}/${SVML_LIBRARY_NEWNAME})
+			file(COPY "${SVM_LIBRARY_DLL}" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 		else(WIN32)
 			set(SVML_LIBRARY ${SVML_LIBRARY} ${${LIB}_PATH})
 		endif(WIN32)
@@ -47,7 +48,7 @@ foreach (LIB ${SVML_LIB})
 endforeach()
 
 if (NOT WIN32)
-	# This is necessary at least on Linux and MacOS.  TODO: complete this for Win if necessary
+	# This is necessary at least on Linux and MacOS
 	string(REPLACE "svml" "intlc" INTLC_LIBRARY ${SVML_LIBRARY})
 endif()
 
