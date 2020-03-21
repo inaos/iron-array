@@ -146,6 +146,9 @@ target_link_libraries(iarray ${INAC_LIBS} blosc2_static caterva_static minjugg m
 install(TARGETS iarray
         DESTINATION lib
         COMPONENT libraries)
+install(FILES ${INAC_DEPENDENCY_BINS}
+            DESTINATION lib
+            COMPONENT libraries)
 
 inac_package()
 
