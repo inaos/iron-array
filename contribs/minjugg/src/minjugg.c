@@ -13,9 +13,12 @@
 #include "minjuggutil.h"
 #include "tinyexpr.h"
 
-#define _JUG_DEBUG_WRITE_BC_TO_FILE
-#define _JUG_DEBUG_WRITE_ERROR_TO_STDERR
-#define _JUG_DEBUG_DECLARE_PRINT_IN_IR
+//#define _JUG_DEBUG_WRITE_BC_TO_FILE
+//#define _JUG_DEBUG_WRITE_ERROR_TO_STDERR
+//#define _JUG_DEBUG_DECLARE_PRINT_IN_IR
+
+/* This is required to make sure Intel SVML is being linked and loaded properly */
+extern double *__svml_sin2(double *input);
 
 typedef enum _jug_expression_dtype_e {
     _JUG_EXPRESSION_DTYPE_DOUBLE = 1,
@@ -578,6 +581,10 @@ INA_API(ina_rc_t) jug_init()
             LLVMRelocDefault,
             LLVMCodeModelJITDefault);
     _jug_data_ref = LLVMCreateTargetDataLayout(_jug_tm_ref);
+
+    /* This is required to make sure Intel SVML is being linked and loaded properly */
+    double wrkarnd[2] = { 0.1, 0.2 };
+    __svml_sin2(wrkarnd);
 
     return INA_SUCCESS;
 }
