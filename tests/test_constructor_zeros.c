@@ -25,8 +25,14 @@ static ina_rc_t test_zeros(iarray_context_t *ctx,
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        xdtshape.pshape[i] = pshape[i];
+        if (pshape)
+            xdtshape.pshape[i] = pshape[i];
     }
+
+    iarray_store_properties_t store;
+    store.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
+    store.enforce_frame = false;
+    store.filename = NULL;
 
     int64_t buf_size = 1;
     for (int j = 0; j < ndim; ++j) {
@@ -36,7 +42,7 @@ static ina_rc_t test_zeros(iarray_context_t *ctx,
     uint8_t *buf_dest = malloc((size_t)buf_size * type_size);
 
     iarray_container_t *c_x;
-    INA_TEST_ASSERT_SUCCEED(iarray_zeros(ctx, &xdtshape, NULL, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_zeros(ctx, &xdtshape, &store, 0, &c_x));
 
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf_dest, (size_t)buf_size * type_size));
 
@@ -73,14 +79,14 @@ INA_TEST_TEARDOWN(constructor_zeros)
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(constructor_zeros, 2_d)
+INA_TEST_FIXTURE(constructor_zeros, 2_d_p)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
     int8_t ndim = 2;
     int64_t shape[] = {10, 10};
-    int64_t pshape[] = {10, 10};
+    int64_t *pshape = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
@@ -92,7 +98,7 @@ INA_TEST_FIXTURE(constructor_zeros, 4_f_p)
 
     int8_t ndim = 4;
     int64_t shape[] = {10, 15, 20, 12};
-    int64_t pshape[] = {0, 0, 0, 0};
+    int64_t *pshape = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
@@ -104,19 +110,19 @@ INA_TEST_FIXTURE(constructor_zeros, 5_d)
 
     int8_t ndim = 5;
     int64_t shape[] = {10, 4, 12, 13, 12};
-    int64_t pshape[] = {3, 4, 50, 3, 3};
+    int64_t pshape[] = {3, 4, 10, 3, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, pshape));
 }
 
-INA_TEST_FIXTURE(constructor_zeros, 7_f_p)
+INA_TEST_FIXTURE(constructor_zeros, 7_f)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(float);
 
     int8_t ndim = 7;
     int64_t shape[] = {10, 6, 8, 6, 4, 4, 2};
-    int64_t pshape[] = {4, 3, 10, 10, 3, 3, 2};
+    int64_t pshape[] = {4, 3, 5, 5, 3, 3, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, pshape));
 }

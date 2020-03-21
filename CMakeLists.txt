@@ -9,9 +9,9 @@
 # Information and shall use it only in accordance with the terms of the license agreement.
 #
 cmake_minimum_required (VERSION 3.12)
-project(iarray VERSION 0.1.2)
+project(iarray VERSION 0.1.3)
 
-option(MULTITHREADING "Use multithreaded iarray" ON)
+option(MULTITHREADING "Use multithreaded iarray" OFF)
 
 # Disable weird MSVC warnings
 if (MSVC)
@@ -38,23 +38,42 @@ inac_add_dependency(inac "1.0.6")
 
 inac_add_contrib_lib(tinyexpr)
 
+find_package(LLVM REQUIRED CONFIG)
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+
+add_definitions(${LLVM_DEFINITIONS})
+include_directories(${LLVM_INCLUDE_DIRS})
+
 add_subdirectory(contribs/c-blosc2)
 include_directories(contribs/c-blosc2/blosc)
 set(BLOSC_LIB blosc2_static) # required for caterva tests
 add_subdirectory(contribs/caterva)
 include_directories(contribs/caterva/caterva)
+add_subdirectory(contribs/minjugg)
+include_directories(contribs/minjugg/include)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/contribs/c-blosc2/cmake)
 #configure Intel MKL
 find_package(MKL)
 #configure Intel IPP
 find_package(IPP)
-#configure OMP
+# configure OMP
 if (MULTITHREADING)
     find_package(OMP)
 endif()
+find_package(SVML)
 
-set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${IPP_LIBRARIES})
+# Find the libraries that correspond to the LLVM components
+# that we wish to use
+llvm_map_components_to_libnames(llvm_libs support core irreader executionengine
+   bitwriter passes vectorize mcjit asmprinter x86info x86codegen)
+# The next should work for all LLVM installations, but seems to have problems with Azure CI
+if (CLEARLINUX)
+    execute_process(COMMAND ${LLVM_TOOLS_BINARY_DIR}/llvm-config --libs OUTPUT_VARIABLE llvm_libs
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
+set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${IPP_LIBRARIES} ${llvm_libs})
 
 set(SRC ${CMAKE_SOURCE_DIR}/src)
 file(GLOB src ${SRC_DIR}/*.c)
@@ -77,9 +96,15 @@ else()
 endif()
 
 if (UNIX)
-set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
-set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} blosc2_static ${IPP_LIBRARIES})
-endif()
+    if (NOT APPLE)
+		set(CMAKE_EXE_LINKER_FLAGS    "-Wl,--no-as-needed ${CMAKE_EXE_LINKER_FLAGS}")
+		set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-as-needed ${CMAKE_SHARED_LINKER_FLAGS}")
+	endif()
+	set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
+	set(INAC_DEPENDENCY_LIBS minjugg minjuggutil ${INAC_DEPENDENCY_LIBS} blosc2_static ${IPP_LIBRARIES})
+else(UNIX)
+	set(INAC_DEPENDENCY_LIBS minjugg minjuggutil ${INAC_DEPENDENCY_LIBS})
+endif(UNIX)
 
 inac_add_tests(iarrays)
 
@@ -92,6 +117,8 @@ endif()
 #inac_add_benchmarks(iarrays)
 inac_add_tools(iarrays)
 inac_add_examples(iarrays)
+
+inac_enable_trace(${CMAKE_BUILD_TYPE} 1)
 
 # Playing with OpenMP (available mainly on GCC)
 #if (UNIX AND NOT CMAKE_C_COMPILER_ID STREQUAL Clang)
@@ -114,7 +141,7 @@ inac_add_examples(iarrays)
 add_definitions(-DINA_DLL)
 add_definitions(-DINA_LIB)
 add_library(iarray SHARED ${src})
-target_link_libraries(iarray ${INAC_LIBS} blosc2_static caterva_static ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
+target_link_libraries(iarray ${INAC_LIBS} blosc2_static caterva_static minjugg minjuggutil ${INAC_DEPENDENCY_LIBS} ${PLATFORM_LIBS})
 
 install(TARGETS iarray
         DESTINATION lib
