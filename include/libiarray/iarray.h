@@ -20,6 +20,9 @@
 
 #define IARRAY_DIMENSION_MAX 8  /* A fixed size simplifies the code and should be enough for most IronArray cases */
 
+#define IARRAY_EXPR_OPERANDS_MAX (128)
+// The maximum number of operands in expressions
+
 #define IARRAY_ES_CONTAINER (INA_ES_USER_DEFINED + 1)
 #define IARRAY_ES_DTSHAPE (INA_ES_USER_DEFINED + 2)
 #define IARRAY_ES_SHAPE (INA_ES_USER_DEFINED + 3)
@@ -38,6 +41,7 @@
 #define IARRAY_ES_RAND_PARAM (INA_ES_USER_DEFINED + 16)
 #define IARRAY_ES_ITER (INA_ES_USER_DEFINED + 17)
 #define IARRAY_ES_EVAL_METHOD (INA_ES_USER_DEFINED + 18)
+#define IARRAY_ES_EVAL_ENGINE (INA_ES_USER_DEFINED + 19)
 
 
 #define IARRAY_ERR_EMPTY_CONTAINER (INA_ERR_EMPTY | IARRAY_ES_CONTAINER)
@@ -56,6 +60,7 @@
 #define IARRAY_ERR_INVALID_RAND_PARAM (INA_ERR_INVALID | IARRAY_ES_RAND_PARAM)
 
 #define IARRAY_ERR_INVALID_EVAL_METHOD (INA_ERR_INVALID | IARRAY_ES_EVAL_METHOD)
+#define IARRAY_ERR_INVALID_EVAL_ENGINE (INA_ERR_INVALID | IARRAY_ES_EVAL_ENGINE)
 
 #define IARRAY_ERR_INVALID_STORAGE (INA_ERR_INVALID | IARRAY_ES_STORAGE)
 #define IARRAY_ERR_TOO_SMALL_BUFFER (INA_ERR_TOO_SMALL | IARRAY_ES_BUFFER)
@@ -67,7 +72,13 @@
 
 #define IARRAY_ERR_END_ITER (IARRAY_ES_ITER | INA_ERR_COMPLETE)
 
-#define IARRAY_ERR_CATERVA(rc) do {if (rc != CATERVA_SUCCEED) {INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));}} while(0)
+#define IARRAY_ERR_CATERVA(rc) do {if (rc != CATERVA_SUCCEED) {IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));}} while(0)
+
+#define IARRAY_TRACE1(cat, fmt) INA_TRACE1(cat, fmt " %s:%d", __FILE__, __LINE__)
+#define IARRAY_TRACE2(cat, fmt) INA_TRACE2(cat, fmt " %s:%d", __FILE__, __LINE__)
+#define IARRAY_TRACE3(cat, fmt) INA_TRACE3(cat, fmt " %s:%d", __FILE__, __LINE__)
+#define IARRAY_FAIL_IF(cond) do { if ((cond)) {IARRAY_TRACE2(iarray.error, "Tracing: "); goto fail;}} while(0)
+#define IARRAY_FAIL_IF_ERROR(rc) IARRAY_FAIL_IF(INA_FAILED((rc)))
 
 typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;
@@ -109,15 +120,29 @@ typedef enum iarray_storage_format_e {
     IARRAY_STORAGE_COL_WISE
 } iarray_storage_format_t;
 
+typedef enum iarray_storage_type_e {
+    IARRAY_STORAGE_PLAINBUFFER = 0,
+    IARRAY_STORAGE_BLOSC = 1,
+} iarray_storage_type_t;
+
 typedef struct iarray_store_properties_s {
-    const char *id;
+    iarray_storage_type_t backend;
+    const char *filename;
+    bool enforce_frame;
 } iarray_store_properties_t;
 
-typedef enum iarray_eval_flags_e {
-    IARRAY_EXPR_EVAL_ITERCHUNK = 1,
-    IARRAY_EXPR_EVAL_ITERBLOCK = 2,
-    IARRAY_EXPR_EVAL_ITERBLOSC = 3,
-} iarray_eval_flags_t;
+typedef enum iarray_eval_method_e {
+    IARRAY_EXPR_EVAL_METHOD_AUTO = 0u,
+    IARRAY_EXPR_EVAL_METHOD_ITERCHUNK = 1u,
+    IARRAY_EXPR_EVAL_METHOD_ITERBLOSC = 2u,
+    IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2 = 3u,
+} iarray_eval_method_t;
+
+typedef enum iarray_eval_engine_e {
+    IARRAY_EXPR_EVAL_ENGINE_AUTO = 0u,
+    IARRAY_EXPR_EVAL_ENGINE_TINYEXPR = 1u,
+    IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT = 2u,
+} iarray_eval_engine_t;
 
 typedef enum iarray_filter_flags_e {
     IARRAY_COMP_SHUFFLE    = 0x1,
@@ -223,7 +248,7 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .compression_level=5,
     .use_dict=0,
     .filter_flags=IARRAY_COMP_SHUFFLE,
-    .eval_flags=IARRAY_EXPR_EVAL_ITERCHUNK,
+    .eval_flags=IARRAY_EXPR_EVAL_METHOD_ITERCHUNK | IARRAY_EXPR_EVAL_ENGINE_TINYEXPR << 3,
     .max_num_threads=1,
     .fp_mantissa_bits=0,
     .blocksize=0 };
@@ -343,7 +368,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
                               int flags,
                               iarray_container_t **dest);
 
-    INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
+INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
                                      double value,
                                      iarray_store_properties_t *store,
@@ -421,30 +446,30 @@ INA_API(ina_rc_t) iarray_random_poisson(iarray_context_t *ctx,
                                         iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
-                                       iarray_container_t *c1,
-                                       iarray_container_t *c2,
+                                       iarray_container_t *container1,
+                                       iarray_container_t *container2,
                                        bool *res);
 
 INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
-                                   iarray_container_t *c,
+                                   iarray_container_t *src,
                                    int64_t *start,
                                    int64_t *stop,
+                                   bool view,
                                    const int64_t *pshape,
                                    iarray_store_properties_t *store,
                                    int flags,
-                                   bool view,
                                    iarray_container_t **container);
 
 
 INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
-                                   iarray_container_t *c,
+                                   iarray_container_t *container,
                                    const int64_t *start,
                                    const int64_t *stop,
                                    iarray_container_t *slice);
 
 
 INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
-                                          iarray_container_t *c,
+                                          iarray_container_t *container,
                                           const int64_t *start,
                                           const int64_t *stop,
                                           void *buffer,
@@ -457,14 +482,14 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                                           void *buffer,
                                           int64_t buflen);
 
-INA_API(ina_rc_t) iarray_from_file(iarray_context_t *ctx,
-                                   iarray_store_properties_t *store,
-                                   iarray_container_t **container,
-                                   bool load_in_mem);
+INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx,
+                                        const char *filename,
+                                        bool enforce_frame,
+                                        iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_to_file(iarray_context_t *ctx,
-                                 iarray_store_properties_t *store,
-                                 iarray_container_t **container);
+INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
+                                        iarray_container_t *container,
+                                        char *filename);
 
 INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
                                  iarray_container_t *container);
@@ -488,11 +513,8 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
 
 INA_API(bool) iarray_is_empty(iarray_container_t *container);
 
-INA_API(ina_rc_t) iarray_to_sview(iarray_context_t *ctx, iarray_container_t *c, uint8_t **sview, int64_t *sview_len);
-INA_API(ina_rc_t) iarray_from_sview(iarray_context_t *ctx, uint8_t *sview, int64_t sview_len, iarray_container_t **c);
-
 INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dtshape_t *b);
-INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, int64_t *nbytes, int64_t *cbytes);
+INA_API(ina_rc_t) iarray_container_info(iarray_container_t *container, int64_t *nbytes, int64_t *cbytes);
 
 INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **container);
 
@@ -507,19 +529,6 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
 
 INA_API(ina_rc_t) iarray_container_is_symmetric(iarray_container_t *a);
 INA_API(ina_rc_t) iarray_container_is_triangular(iarray_container_t *a);
-
-/* Logical operators -> not supported yet as we only support float and double and return would be int8 */
-INA_API(ina_rc_t) iarray_operator_and(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_or(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_xor(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_nand(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_not(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-
-/* Arithmetic operators -> element-wise */
-INA_API(ina_rc_t) iarray_operator_add(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_sub(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_mul(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_div(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
 
 /* linear algebra */
 INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a);
@@ -536,36 +545,6 @@ INA_API(ina_rc_t) iarray_linalg_svd(iarray_context_t *ctx, iarray_container_t *a
 INA_API(ina_rc_t) iarray_linalg_qr(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result); // Not clear to which MKL function we need to map
 INA_API(ina_rc_t) iarray_linalg_lu(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result); // ?getrf (MKL) - Not clear to which MKL function we need to map
 INA_API(ina_rc_t) iarray_linalg_cholesky(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-
-/* Function operators -> element-wise */
-INA_API(ina_rc_t) iarray_operator_abs(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_acos(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_asin(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_atanc(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_atan2(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_ceil(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_cos(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_cosh(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_exp(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_floor(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_log(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_log10(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_pow(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_sin(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_sinh(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_sqrt(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_tan(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_tanh(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_erf(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_erfc(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_cdfnorm(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_erfinv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_erfcinv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_cdfnorminv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_lgamma(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_tgamma(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_expint1(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_operator_cumsum(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 
 /* Reductions */
 INA_API(ina_rc_t) iarray_reduction_sum(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
@@ -619,11 +598,18 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e
 INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e);
 
 INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val);
+INA_API(ina_rc_t) iarray_expr_bind_out_properties(iarray_expression_t *e, iarray_dtshape_t *dtshape, iarray_store_properties_t *store);
+
 INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val);
 INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val);
-INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
 
-INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t *ret); /* e.g. IARRAY_BIND_UPDATE_CONTAINER */
+INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
+INA_API(ina_rc_t) iarray_expr_compile_udf(iarray_expression_t *e,
+                                          int llvm_bc_len,
+                                          const char *llvm_bc,
+                                          const char *name);
+
+INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **container);
 
 //FIXME: remove
 INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp);

@@ -15,21 +15,59 @@
 #include "iarray_constructor.h"
 
 
+static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype, bool *transposed) {
+    INA_UNUSED(smeta_len);
+    INA_VERIFY_NOT_NULL(smeta);
+    INA_VERIFY_NOT_NULL(dtype);
+    INA_VERIFY_NOT_NULL(transposed);
+    ina_rc_t rc;
+
+    uint8_t *pmeta = smeta;
+
+    //version
+    uint8_t version = *pmeta;
+    pmeta +=1;
+
+    // We only have an entry with the datatype (enumerated < 128)
+    *dtype = *pmeta;
+    pmeta += 1;
+
+    *transposed = false;
+    if ((*pmeta & 64ULL) != 0) {
+        *transposed = true;
+    }
+    pmeta += 1;
+
+    assert(pmeta - smeta == smeta_len);
+
+    if (*dtype >= IARRAY_DATA_TYPE_MAX) {
+        IARRAY_TRACE1(iarray.error, "The data type is invalid");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+    }
+
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
+    rc = ina_err_get_rc();
+    cleanup:
+    return rc;
+}
+
 INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dtshape_t *b)
 {
     ina_rc_t rc;
     if (a->dtype != b->dtype) {
-        printf("Dtypes are not equals\n");
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+        IARRAY_TRACE1(iarray.error, "The data types are not equal");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
     if (a->ndim != b->ndim) {
-        printf("Dims are not equals\n");
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
+        IARRAY_TRACE1(iarray.error, "The dimensions are not equal");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
     }
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         if (a->shape[i] != b->shape[i]) {
-            printf("Shapes are not equals\n");
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_SHAPE));
+            IARRAY_TRACE1(iarray.error, "The shapes are not equal\n");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_SHAPE));
         }
     }
     rc = INA_SUCCESS;
@@ -49,25 +87,178 @@ INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     return _iarray_container_new(ctx, dtshape, store, flags, container);
 }
 
+
+INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
+                                        iarray_container_t *container,
+                                        char *filename) {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(container);
+    INA_VERIFY_NOT_NULL(filename);
+
+    if (container->catarr->storage != CATERVA_STORAGE_BLOSC) {
+        IARRAY_TRACE1(iarray.error, "Container must be stored on a blosc schunk");
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+    }
+
+    if (container->catarr->sc->frame == NULL) {
+        blosc2_frame *frame = blosc2_new_frame(filename);
+        if (frame == NULL) {
+            IARRAY_TRACE1(iarray.error, "Error creating blosc2 frame");
+            return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+        }
+        int err = blosc2_schunk_to_frame(container->catarr->sc, frame);
+
+        if (err < 0) {
+            IARRAY_TRACE1(iarray.error, "Error converting a blosc schunk to a blosc frame");
+            return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+        }
+    } else {
+        if (container->catarr->sc->frame->fname != NULL) {
+            IARRAY_TRACE1(iarray.error, "Container is already on disk");
+            return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+        } else {
+            blosc2_frame_to_file(container->catarr->sc->frame, filename);
+        }
+    }
+    return INA_SUCCESS;
+}
+
+
+INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, const char *filename, bool enforce_frame,
+                                        iarray_container_t **container)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(filename);
+    INA_VERIFY_NOT_NULL(container);
+
+    ina_rc_t rc;
+    caterva_ctx_t *cat_ctx = caterva_new_ctx(NULL, NULL, BLOSC2_CPARAMS_DEFAULTS, BLOSC2_DPARAMS_DEFAULTS);
+    if (cat_ctx == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error allocating the caterva context");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+    }
+
+    caterva_array_t *catarr = caterva_from_file(cat_ctx, filename, enforce_frame);
+    if (catarr == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error creating the caterva array from a file");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
+    }
+
+    uint8_t *smeta;
+    uint32_t smeta_len;
+    if (blosc2_get_metalayer(catarr->sc, "iarray", &smeta, &smeta_len) < 0) {
+        IARRAY_TRACE1(iarray.error, "Error getting a blosc metalayer");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+    }
+    iarray_data_type_t dtype;
+    bool transposed;
+    if (deserialize_meta(smeta, smeta_len, &dtype, &transposed) != 0) {
+        IARRAY_TRACE1(iarray.error, "Error deserializing a sframe");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+    }
+
+    *container = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
+    (*container)->catarr = catarr;
+
+    // Build the dtshape
+    (*container)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
+    iarray_dtshape_t* dtshape = (*container)->dtshape;
+    dtshape->dtype = dtype;
+    dtshape->ndim = catarr->ndim;
+    for (int i = 0; i < catarr->ndim; ++i) {
+        dtshape->shape[i] = catarr->shape[i];
+        dtshape->pshape[i] = catarr->pshape[i];
+    }
+
+    // Build the auxshape
+    (*container)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
+    iarray_auxshape_t* auxshape = (*container)->auxshape;
+    for (int8_t i = 0; i < catarr->ndim; ++i) {
+        auxshape->index[i] = i;
+        auxshape->offset[i] = 0;
+        auxshape->shape_wos[i] = catarr->shape[i];
+        auxshape->pshape_wos[i] = catarr->pshape[i];
+    }
+
+    // Populate compression parameters
+    blosc2_cparams *cparams;
+    if (blosc2_schunk_get_cparams(catarr->sc, &cparams) < 0) {
+        IARRAY_TRACE1(iarray.error, "Error getting the cparams from blosc2 schunk");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+    }
+    blosc2_cparams *cparams2 = (blosc2_cparams*)ina_mem_alloc(sizeof(blosc2_cparams));
+    memcpy(cparams2, cparams, sizeof(blosc2_cparams));
+    free(cparams);
+    (*container)->cparams = cparams2;  // we need an INA-allocated struct (to match INA_MEM_FREE_SAFE)
+    blosc2_dparams *dparams;
+    if (blosc2_schunk_get_dparams(catarr->sc, &dparams) < 0) {
+        IARRAY_TRACE1(iarray.error, "Error getting the dparams from blosc2 schunk");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+    }
+    blosc2_dparams *dparams2 = (blosc2_dparams*)ina_mem_alloc(sizeof(blosc2_dparams));
+    memcpy(dparams2, dparams, sizeof(blosc2_dparams));
+    free(dparams);
+    (*container)->dparams = dparams2;  // we need an INA-allocated struct (to match INA_MEM_FREE_SAFE)
+
+    (*container)->transposed = transposed;  // TODO: complete this
+    if (transposed) {
+        int64_t aux[IARRAY_DIMENSION_MAX];
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            aux[i] = (*container)->dtshape->shape[i];
+        }
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            (*container)->dtshape->shape[i] = aux[(*container)->dtshape->ndim - 1 - i];
+        }
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            aux[i] = (*container)->dtshape->pshape[i];
+        }
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            (*container)->dtshape->pshape[i] = aux[(*container)->dtshape->ndim - 1 - i];
+        }
+    }
+    (*container)->view = false;
+
+    (*container)->store = ina_mem_alloc(sizeof(iarray_store_properties_t));
+    if ((*container)->store == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error allocating the store parameter");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
+    (*container)->store->filename = filename;
+    (*container)->store->backend = IARRAY_STORAGE_BLOSC;
+    (*container)->store->enforce_frame = enforce_frame;
+
+    rc = INA_SUCCESS;
+    goto cleanup;
+    fail:
+    iarray_container_free(ctx, container);
+    rc = ina_err_get_rc();
+    cleanup:
+    caterva_free_ctx(cat_ctx);
+    return rc;
+}
+
+
 INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
-                                   iarray_container_t *c,
+                                   iarray_container_t *src,
                                    int64_t *start,
                                    int64_t *stop,
+                                   bool view,
                                    const int64_t *pshape,
                                    iarray_store_properties_t *store,
                                    int flags,
-                                   bool view,
                                    iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
-    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(src);
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
+    INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(container);
 
     ina_rc_t rc;
@@ -75,87 +266,87 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
     int64_t start_[IARRAY_DIMENSION_MAX];
     int64_t stop_[IARRAY_DIMENSION_MAX];
 
-    int64_t *offset = c->auxshape->offset;
+    int64_t *offset = src->auxshape->offset;
 
-    for (int i = 0; i < c->dtshape->ndim; ++i) {
+    for (int i = 0; i < src->dtshape->ndim; ++i) {
         if (start[i] < 0) {
-            start_[i] =  offset[i] + start[i] + c->dtshape->shape[i];
+            start_[i] =  offset[i] + start[i] + src->dtshape->shape[i];
         } else{
             start_[i] = offset[i] + (int64_t) start[i];
         }
         if (stop[i] < 0) {
-            stop_[i] =  offset[i] + stop[i] + c->dtshape->shape[i];
+            stop_[i] =  offset[i] + stop[i] + src->dtshape->shape[i];
         } else {
             stop_[i] = offset[i] + (int64_t) stop[i];
         }
     }
 
-    for (int i = 0; i < c->dtshape->ndim; ++i) {
+    for (int i = 0; i < src->dtshape->ndim; ++i) {
         if (start_[i] >= stop_[i]) {
-            printf("Start is bigger than stop\n");
-            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
+            IARRAY_TRACE1(iarray.error, "Start is bigger than stop");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
         }
-        if (pshape[i] > stop_[i] - start_[i]){
-            printf("pshape is bigger than shape\n");
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_PSHAPE));
+        if (store->backend == IARRAY_STORAGE_BLOSC && pshape[i] > stop_[i] - start_[i]){
+            IARRAY_TRACE1(iarray.error, "The pshape is bigger than shape");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_PSHAPE));
         }
     }
 
     if (view) {
-
         iarray_dtshape_t dtshape;
-        dtshape.ndim = c->dtshape->ndim;
-        dtshape.dtype = c->dtshape->dtype;
+        dtshape.ndim = src->dtshape->ndim;
+        dtshape.dtype = src->dtshape->dtype;
 
         for (int i = 0; i < dtshape.ndim; ++i) {
             dtshape.shape[i] = stop_[i] - start_[i];
-            dtshape.pshape[i] = pshape[i];
+            dtshape.pshape[i] = pshape ? pshape[i] : 0;
         }
 
-        INA_FAIL_IF_ERROR(_iarray_view_new(ctx, c, &dtshape, start_, container));
+        IARRAY_FAIL_IF_ERROR(_iarray_view_new(ctx, src, &dtshape, start_, container));
 
         (*container)->view = 1;
-        if (c->transposed == 1) {
+        if (src->transposed == 1) {
             (*container)->transposed = 1;
         }
 
     } else {
         iarray_dtshape_t dtshape;
 
-        dtshape.ndim = c->dtshape->ndim;
-        dtshape.dtype = c->dtshape->dtype;
+        dtshape.ndim = src->dtshape->ndim;
+        dtshape.dtype = src->dtshape->dtype;
 
         for (int i = 0; i < dtshape.ndim; ++i) {
             dtshape.shape[i] = stop_[i] - start_[i];
-            dtshape.pshape[i] = pshape[i];
+            if (pshape)
+                dtshape.pshape[i] = pshape[i];
         }
 
         // Check if matrix is transposed
-        if (c->transposed) {
+        if (src->transposed) {
             int64_t aux_stop[IARRAY_DIMENSION_MAX];
             int64_t aux_start[IARRAY_DIMENSION_MAX];
 
-            for (int i = 0; i < c->dtshape->ndim; ++i) {
+            for (int i = 0; i < src->dtshape->ndim; ++i) {
                 aux_start[i] = start_[i];
                 aux_stop[i] = stop_[i];
             }
 
-            for (int i = 0; i < c->dtshape->ndim; ++i) {
-                start_[i] = aux_start[c->dtshape->ndim - 1 - i];
-                stop_[i] = aux_stop[c->dtshape->ndim - 1 - i];
+            for (int i = 0; i < src->dtshape->ndim; ++i) {
+                start_[i] = aux_start[src->dtshape->ndim - 1 - i];
+                stop_[i] = aux_stop[src->dtshape->ndim - 1 - i];
             }
         }
 
-        INA_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape, store, flags, container));
+        IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape, store, flags, container));
 
-        if (c->transposed) {
+        if (src->transposed) {
             (*container)->transposed = true;
         }
 
-        caterva_dims_t start__ = caterva_new_dims((int64_t *) start_, c->dtshape->ndim);
-        caterva_dims_t stop__ = caterva_new_dims((int64_t *) stop_, c->dtshape->ndim);
+        caterva_dims_t start__ = caterva_new_dims((int64_t *) start_, src->dtshape->ndim);
+        caterva_dims_t stop__ = caterva_new_dims((int64_t *) stop_, src->dtshape->ndim);
 
-        IARRAY_ERR_CATERVA(caterva_get_slice((*container)->catarr, c->catarr, &start__, &stop__));
+        IARRAY_ERR_CATERVA(caterva_get_slice((*container)->catarr, src->catarr, &start__, &stop__));
     }
 
     rc = INA_SUCCESS;
@@ -168,24 +359,26 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
 }
 
 INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
-                                   iarray_container_t *c,
+                                   iarray_container_t *container,
                                    const int64_t *start,
                                    const int64_t *stop,
                                    iarray_container_t *slice)
 {
     INA_VERIFY_NOT_NULL(ctx);
-    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(container);
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
     INA_VERIFY_NOT_NULL(slice);
 
     ina_rc_t rc;
 
-    if (c->dtshape->dtype != slice->dtshape->dtype) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+    if (container->dtshape->dtype != slice->dtshape->dtype) {
+        IARRAY_TRACE1(iarray.error, "The data types are different");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
-    if (c->dtshape->ndim != slice->dtshape->ndim) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
+    if (container->dtshape->ndim != slice->dtshape->ndim) {
+        IARRAY_TRACE1(iarray.error, "The dimensions are different");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
     }
 
     int typesize = slice->catarr->ctx->cparams.typesize;
@@ -194,12 +387,12 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
     uint8_t *buffer;
     if (slice->catarr->storage == CATERVA_STORAGE_BLOSC) {
         buffer = ina_mem_alloc(buflen * typesize);
-        INA_FAIL_IF_ERROR(iarray_to_buffer(ctx, slice, buffer, buflen * typesize));
+        IARRAY_FAIL_IF_ERROR(iarray_to_buffer(ctx, slice, buffer, buflen * typesize));
     } else {
         buffer = slice->catarr->buf;
     }
 
-    INA_FAIL_IF_ERROR(iarray_set_slice_buffer(ctx, c, start,stop, buffer, buflen * typesize));
+    IARRAY_FAIL_IF_ERROR(iarray_set_slice_buffer(ctx, container, start, stop, buffer, buflen * typesize));
 
     if (slice->catarr->storage == CATERVA_STORAGE_BLOSC) {
         INA_MEM_FREE_SAFE(buffer);
@@ -218,7 +411,7 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
 
 
 INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
-                                          iarray_container_t *c,
+                                          iarray_container_t *container,
                                           const int64_t *start,
                                           const int64_t *stop,
                                           void *buffer,
@@ -231,83 +424,83 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
 
     ina_rc_t rc;
 
-    int8_t ndim = c->dtshape->ndim;
-    int64_t *offset = c->auxshape->offset;
-    int8_t *index = c->auxshape->index;
+    int8_t ndim = container->dtshape->ndim;
+    int64_t *offset = container->auxshape->offset;
+    int8_t *index = container->auxshape->index;
 
     int64_t start_[IARRAY_DIMENSION_MAX];
     int64_t stop_[IARRAY_DIMENSION_MAX];
 
-    for (int i = 0; i < c->catarr->ndim; ++i) {
+    for (int i = 0; i < container->catarr->ndim; ++i) {
         start_[i] = 0 + offset[i];
         stop_[i] = 1 + offset[i];
     }
 
     for (int i = 0; i < ndim; ++i) {
         if (start[i] < 0) {
-            start_[index[i]] += start[i] + c->dtshape->shape[i];
+            start_[index[i]] += start[i] + container->dtshape->shape[i];
         } else{
             start_[index[i]] += (int64_t) start[i];
         }
         if (stop[i] < 0) {
-            stop_[index[i]] += stop[i] + c->dtshape->shape[i] - 1;
+            stop_[index[i]] += stop[i] + container->dtshape->shape[i] - 1;
         } else {
             stop_[index[i]] += (int64_t) stop[i] - 1;
         }
     }
 
-    for (int i = 0; i < c->dtshape->ndim; ++i) {
+    for (int i = 0; i < container->dtshape->ndim; ++i) {
         if (start_[i] >= stop_[i]) {
-            printf("Start is bigger than stop\n");
-            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
+            IARRAY_TRACE1(iarray.error, "Start is bigger than stop");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
         }
     }
 
 
-    if (c->transposed) {
+    if (container->transposed) {
         int64_t aux_stop[IARRAY_DIMENSION_MAX];
         int64_t aux_start[IARRAY_DIMENSION_MAX];
 
-        for (int i = 0; i < c->dtshape->ndim; ++i) {
+        for (int i = 0; i < container->dtshape->ndim; ++i) {
             aux_start[i] = start_[i];
             aux_stop[i] = stop_[i];
         }
 
-        for (int i = 0; i < c->dtshape->ndim; ++i) {
-            start_[i] = aux_start[c->dtshape->ndim - 1 - i];
-            stop_[i] = aux_stop[c->dtshape->ndim - 1 - i];
+        for (int i = 0; i < container->dtshape->ndim; ++i) {
+            start_[i] = aux_start[container->dtshape->ndim - 1 - i];
+            stop_[i] = aux_stop[container->dtshape->ndim - 1 - i];
         }
     }
 
     int64_t pshape[IARRAY_DIMENSION_MAX];
     int64_t psize = 1;
-    for (int i = 0; i < c->catarr->ndim; ++i) {
+    for (int i = 0; i < container->catarr->ndim; ++i) {
         pshape[i] = stop_[i] - start_[i];
         psize *= pshape[i];
     }
 
-    if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
+    if (container->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
         if (psize * (int64_t)sizeof(double) > buflen) {
-            printf("The buffer size is not enough\n");
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            IARRAY_TRACE1(iarray.error, "The buffer size is not enough\n");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
         }
     } else {
         if (psize * (int64_t)sizeof(float) > buflen) {
-            printf("The buffer size is not enough\n");
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
         }
     }
 
-    caterva_dims_t start__ = caterva_new_dims((int64_t *) start_, c->catarr->ndim);
-    caterva_dims_t stop__ = caterva_new_dims((int64_t *) stop_, c->catarr->ndim);
-    caterva_dims_t pshape_ = caterva_new_dims((int64_t *) pshape, c->catarr->ndim);
+    caterva_dims_t start__ = caterva_new_dims((int64_t *) start_, container->catarr->ndim);
+    caterva_dims_t stop__ = caterva_new_dims((int64_t *) stop_, container->catarr->ndim);
+    caterva_dims_t pshape_ = caterva_new_dims((int64_t *) pshape, container->catarr->ndim);
 
-    IARRAY_ERR_CATERVA(caterva_get_slice_buffer(buffer, c->catarr, &start__, &stop__, &pshape_));
+    IARRAY_ERR_CATERVA(caterva_get_slice_buffer(buffer, container->catarr, &start__, &stop__, &pshape_));
 
     size_t rows = (size_t)stop_[0] - start_[0];
     size_t cols = (size_t)stop_[1] - start_[1];
-    if (c->transposed) {
-        switch (c->dtshape->dtype) {
+    if (container->transposed) {
+        switch (container->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 mkl_dimatcopy('R', 'T', rows, cols, 1.0, (double *) buffer, cols, rows);
                 break;
@@ -315,7 +508,8 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                 mkl_simatcopy('R', 'T', rows, cols, 1.0f, (float *) buffer, cols, rows);
                 break;
             default:
-                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+                IARRAY_TRACE1(iarray.error, "The data type is invalid");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
     }
 
@@ -346,7 +540,8 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
     ina_rc_t rc;
 
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_STORAGE));
+        IARRAY_TRACE1(iarray.error, "The container is not backed by a plainbuffer");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_STORAGE));
     }
 
     int8_t ndim = c->dtshape->ndim;
@@ -376,13 +571,16 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
 
     for (int i = 0; i < c->catarr->ndim; ++i) {
         if (start_[i] < 0) {
-            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
+            IARRAY_TRACE1(iarray.error, "Start is negative");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
         }
         if (stop_[i] < start_[i]) {
-            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
+            IARRAY_TRACE1(iarray.error, "Start is larger than stop");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
         }
         if (c->catarr->shape[i] < stop_[i]) {
-            INA_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
+            IARRAY_TRACE1(iarray.error, "Stop is larger than the container shape");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
         }
     }
 
@@ -397,7 +595,8 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                 mkl_simatcopy('R', 'T', rows, cols, 1.0f, (float *) buffer, cols, rows);
                 break;
             default:
-                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+                IARRAY_TRACE1(iarray.error, "The data type is invalid");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
     }
 
@@ -423,15 +622,20 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
 
     switch (c->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            if (psize * (int64_t)sizeof(double) > buflen)
-                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            if (psize * (int64_t)sizeof(double) > buflen) {
+                IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            }
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            if (psize * (int64_t)sizeof(float) > buflen)
-                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            if (psize * (int64_t)sizeof(float) > buflen) {
+                IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            }
             break;
         default:
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+            IARRAY_TRACE1(iarray.error, "The data type is invalid");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
 
     caterva_dims_t start__ = caterva_new_dims(start_, c->dtshape->ndim);
@@ -457,6 +661,7 @@ INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
+    INA_VERIFY_NOT_NULL(buffer);
 
     ina_rc_t rc;
 
@@ -509,15 +714,20 @@ INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
 
     switch (c->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            if (psize * (int64_t)sizeof(double) > buflen)
-                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            if (psize * (int64_t)sizeof(double) > buflen) {
+                IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            }
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            if (psize * (int64_t)sizeof(float) > buflen)
-                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            if (psize * (int64_t)sizeof(float) > buflen) {
+                IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            }
             break;
         default:
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+            IARRAY_TRACE1(iarray.error, "the data type is invalid");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
 
     caterva_dims_t start__ = caterva_new_dims((int64_t *) start_, c->catarr->ndim);
@@ -602,15 +812,20 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
 
     switch (c->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            if (psize * (int64_t)sizeof(double) > buflen)
-                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            if (psize * (int64_t)sizeof(double) > buflen) {
+                IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            }
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            if (psize * (int64_t)sizeof(float) > buflen)
-                INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            if (psize * (int64_t)sizeof(float) > buflen) {
+                IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
+            }
             break;
         default:
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+            IARRAY_TRACE1(iarray.error, "The data type is invalid");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
 
     caterva_dims_t start__ = caterva_new_dims((int64_t *) start_, c->catarr->ndim);
@@ -689,19 +904,19 @@ INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_container_info(iarray_container_t *c, int64_t *nbytes, int64_t *cbytes)
+INA_API(ina_rc_t) iarray_container_info(iarray_container_t *container, int64_t *nbytes, int64_t *cbytes)
 {
-    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(container);
     INA_VERIFY_NOT_NULL(nbytes);
     INA_VERIFY_NOT_NULL(cbytes);
 
-    if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        *nbytes = c->catarr->size * c->catarr->ctx->cparams.typesize;
+    if (container->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+        *nbytes = container->catarr->size * container->catarr->ctx->cparams.typesize;
         *cbytes = *nbytes;
     }
     else {
-        *nbytes = c->catarr->sc->nbytes;
-        *cbytes = c->catarr->sc->cbytes;
+        *nbytes = container->catarr->sc->nbytes;
+        *cbytes = container->catarr->sc->cbytes;
     }
 
     return INA_SUCCESS;
@@ -712,17 +927,17 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     ina_rc_t rc;
 
     if (a->dtshape->dtype != b->dtshape->dtype){
-        printf("Dtypes are not equals\n");
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+        IARRAY_TRACE1(iarray.error, "The data types are not equals");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
     if (a->dtshape->ndim != b->dtshape->ndim) {
-        printf("Dims are not equals\n");
-        INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
+        IARRAY_TRACE1(iarray.error, "The dimensions are not equals");
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
     }
     for (int i = 0; i < a->dtshape->ndim; ++i) {
         if (a->dtshape->shape[i] != b->dtshape->shape[i]) {
-            printf("Shapes are not equals");
-            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_SHAPE));
+            IARRAY_TRACE1(iarray.error, "The shapes are not equals");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_SHAPE));
         }
     }
 
@@ -737,17 +952,17 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_t *ctx = NULL;
-    INA_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
+    IARRAY_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
     iarray_iter_read_block_t *iter_a;
     iarray_iter_read_block_value_t val_a;
-    INA_FAIL_IF_ERROR(iarray_iter_read_block_new(ctx, &iter_a, a, blocksize, &val_a, false));
+    IARRAY_FAIL_IF_ERROR(iarray_iter_read_block_new(ctx, &iter_a, a, blocksize, &val_a, false));
     iarray_iter_read_block_t *iter_b;
     iarray_iter_read_block_value_t val_b;
-    INA_FAIL_IF_ERROR(iarray_iter_read_block_new(ctx, &iter_b, b, blocksize, &val_b, false));
+    IARRAY_FAIL_IF_ERROR(iarray_iter_read_block_new(ctx, &iter_b, b, blocksize, &val_b, false));
 
     while (INA_SUCCEED(iarray_iter_read_block_has_next(iter_a))) {
-        INA_FAIL_IF_ERROR(iarray_iter_read_block_next(iter_a, NULL, 0));
-        INA_FAIL_IF_ERROR(iarray_iter_read_block_next(iter_b, NULL, 0));
+        IARRAY_FAIL_IF_ERROR(iarray_iter_read_block_next(iter_a, NULL, 0));
+        IARRAY_FAIL_IF_ERROR(iarray_iter_read_block_next(iter_b, NULL, 0));
 
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
             for (int64_t i = 0; i < val_a.block_size; ++i) {
@@ -755,10 +970,9 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
                 double rdiff = fabs(((double *)val_a.block_pointer)[i] - ((double *)val_b.block_pointer)[i]) /
                     ((double *)val_a.block_pointer)[i];
                 if (rdiff > tol) {
-                    printf("%f, %f\n", ((double *)val_a.block_pointer)[i], ((double *)val_b.block_pointer)[i]);
-                    printf("Values differ in nelem: %ld (diff: %f)\n",
-                           (long)(i + val_a.nblock * val_a.block_size), adiff);
-                    INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_ASSERTION_FAILED));
+                    //printf("%f, %f\n", ((double *)val_a.block_pointer)[i], ((double *)val_b.block_pointer)[i]);
+                    IARRAY_TRACE1(iarray.error, "Values are different");
+                    IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_ASSERTION_FAILED));
                 }
             }
         }
@@ -768,16 +982,15 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
                 float vdiff = fabsf(((float *)val_a.block_pointer)[i] - ((float *)val_b.block_pointer)[i]) /
                     ((float *)val_a.block_pointer)[i];
                 if (vdiff > tol) {
-                    printf("%f, %f\n", ((float *)val_a.block_pointer)[i], ((float *)val_b.block_pointer)[i]);
-                    printf("Values differ in nelem: %ld (diff: %f)\n",
-                           (long)(i + val_a.nblock * val_a.block_size), adiff);
-                    INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_ASSERTION_FAILED));
+                    //printf("%f, %f\n", ((float *)val_a.block_pointer)[i], ((float *)val_b.block_pointer)[i]);
+                    IARRAY_TRACE1(iarray.error, "Values are different");
+                    IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_ASSERTION_FAILED));
                 }
             }
         }
     }
 
-    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+    IARRAY_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     rc = INA_SUCCESS;
     goto cleanup;
@@ -805,6 +1018,7 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
         INA_MEM_FREE_SAFE((*container)->dparams);
         INA_MEM_FREE_SAFE((*container)->dtshape);
         INA_MEM_FREE_SAFE((*container)->auxshape);
+        INA_MEM_FREE_SAFE((*container)->store);
         INA_MEM_FREE_SAFE(*container);
     }
 }

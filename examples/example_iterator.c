@@ -25,7 +25,7 @@ int main()
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_t *ctx;
-    INA_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
+    IARRAY_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
 
     iarray_dtshape_t dtshape;
     dtshape.ndim = ndim;
@@ -34,26 +34,32 @@ int main()
         dtshape.shape[i] = shape[i];
         dtshape.pshape[i] = pshape[i];
     }
+
+    iarray_store_properties_t store;
+    store.backend = IARRAY_STORAGE_BLOSC;
+    store.enforce_frame = false;
+    store.filename = NULL;
+    
     iarray_container_t *cont;
-    INA_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape, NULL, 0, &cont));
+    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape, &store, 0, &cont));
 
 
     iarray_iter_write_t *iter_w;
     iarray_iter_write_value_t val_w;
-    INA_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &iter_w, cont, &val_w));
+    IARRAY_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &iter_w, cont, &val_w));
 
     while (INA_SUCCEED(iarray_iter_write_has_next(iter_w))) {
-        INA_FAIL_IF_ERROR(iarray_iter_write_next(iter_w));
+        IARRAY_FAIL_IF_ERROR(iarray_iter_write_next(iter_w));
         ((double *) val_w.elem_pointer)[0] = (double) val_w.elem_flat_index;
     }
     iarray_iter_write_free(&iter_w);
-    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+    IARRAY_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     iarray_iter_read_block_t *iter;
     iarray_iter_read_block_value_t val;
-    INA_FAIL_IF(iarray_iter_read_block_new(ctx, &iter, cont, bshape, &val, false));
+    IARRAY_FAIL_IF(iarray_iter_read_block_new(ctx, &iter, cont, bshape, &val, false));
     while (INA_SUCCEED(iarray_iter_read_block_has_next(iter))) {
-        INA_FAIL_IF(iarray_iter_read_block_next(iter, NULL, 0));
+        IARRAY_FAIL_IF(iarray_iter_read_block_next(iter, NULL, 0));
         for (int64_t i = 0; i < val.block_size; ++i) {
             double value = ((double *) val.block_pointer)[i];
             printf("%f - ", value);
@@ -61,7 +67,7 @@ int main()
         printf("\n");
     }
     iarray_iter_read_block_free(&iter);
-    INA_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+    IARRAY_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     rc = INA_SUCCESS;
     goto cleanup;

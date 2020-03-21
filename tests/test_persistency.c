@@ -55,8 +55,8 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
 
     // Close the container and re-open it from disk
     iarray_container_free(ctx, &c_x);
-    INA_TEST_ASSERT(_iarray_file_exists(store->id));
-    INA_TEST_ASSERT_SUCCEED(iarray_from_file(ctx, store, &c_x, false));
+    INA_TEST_ASSERT(_iarray_file_exists(store->filename));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_load(ctx, store->filename, false, &c_x));
 
     // Check values
     iarray_iter_read_t *I2;
@@ -92,15 +92,17 @@ INA_TEST_SETUP(persistency) {
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
 
-    data->store.id = "test_persistency.b2frame";
-    if (_iarray_file_exists(data->store.id)) {
-        remove(data->store.id);
+    data->store.enforce_frame = true;
+    data->store.backend = IARRAY_STORAGE_BLOSC;
+    data->store.filename = "test_persistency.b2frame";
+    if (_iarray_file_exists(data->store.filename)) {
+        remove(data->store.filename);
     }
 }
 
 INA_TEST_TEARDOWN(persistency) {
-    if (_iarray_file_exists(data->store.id)) {
-        remove(data->store.id);
+    if (_iarray_file_exists(data->store.filename)) {
+        remove(data->store.filename);
     }
     iarray_context_free(&data->ctx);
     iarray_destroy();
@@ -201,8 +203,8 @@ static ina_rc_t test_persistency_transposed(iarray_context_t *ctx, iarray_data_t
     // Close the container and re-open it from disk
     iarray_container_free(ctx, &c_x);
 
-    INA_TEST_ASSERT(_iarray_file_exists(store->id));
-    INA_TEST_ASSERT_SUCCEED(iarray_from_file(ctx, store, &c_x, false));
+    INA_TEST_ASSERT(_iarray_file_exists(store->filename));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_load(ctx, store->filename, false, &c_x));
 
     // Check values
     iarray_iter_read_t *I2;
@@ -238,15 +240,17 @@ INA_TEST_SETUP(persistency_trans) {
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
 
-    data->store.id = "test_persistency.b2frame";
-    if (_iarray_file_exists(data->store.id)) {
-        remove(data->store.id);
+    data->store.enforce_frame = true;
+    data->store.backend = IARRAY_STORAGE_BLOSC;
+    data->store.filename = "test_persistency.b2frame";
+    if (_iarray_file_exists(data->store.filename)) {
+        remove(data->store.filename);
     }
 }
 
 INA_TEST_TEARDOWN(persistency_trans) {
-    if (_iarray_file_exists(data->store.id)) {
-        remove(data->store.id);
+    if (_iarray_file_exists(data->store.filename)) {
+        remove(data->store.filename);
     }
     iarray_context_free(&data->ctx);
     iarray_destroy();

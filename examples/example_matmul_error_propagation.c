@@ -74,14 +74,14 @@ int main()
     int64_t size_c = 100 * 100;
 
 
-    int64_t pshape_a[] = {0, 0};
-    int64_t pshape_b[] = {0, 0};
+    int64_t pshape_a[] = {10, 10};
+    int64_t pshape_b[] = {10, 10};
     int64_t pshape_c[] = {10, 10};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = n_threads;
     iarray_context_t *ctx;
-    INA_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
+    IARRAY_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
 
     iarray_dtshape_t dtshape_x;
     dtshape_x.ndim = ndim;
@@ -90,8 +90,14 @@ int main()
         dtshape_x.shape[i] = shape_a[i];
         dtshape_x.pshape[i] = pshape_a[i];
     }
+
+    iarray_store_properties_t store;
+    store.backend = IARRAY_STORAGE_BLOSC;
+    store.enforce_frame = false;
+    store.filename = NULL;
+
     iarray_container_t *cont_a;
-    INA_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_a, -100, 100, NULL, 0, &cont_a));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_a, -100, 100, &store, 0, &cont_a));
 
     iarray_dtshape_t dtshape_y;
     dtshape_y.ndim = ndim;
@@ -102,7 +108,7 @@ int main()
     }
 
     iarray_container_t *cont_b;
-    INA_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_b, -100, 100, NULL, 0, &cont_b));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_b, -100, 100, &store, 0, &cont_b));
 
     iarray_dtshape_t dtshape_z;
     dtshape_z.ndim = ndim;
@@ -113,7 +119,7 @@ int main()
     }
 
     iarray_container_t *cont_c;
-    INA_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, NULL, 0, &cont_c));
+    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, &store, 0, &cont_c));
 
     double *a = (double *) malloc(size_a * sizeof(double));
     double *b = (double *) malloc(size_b * sizeof(double));
@@ -121,8 +127,8 @@ int main()
     double *c_mkl = (double *) malloc(size_c * sizeof(double));
     double *c_iarray = (double *) malloc(size_c * sizeof(double));
 
-    INA_FAIL_IF_ERROR(iarray_to_buffer(ctx, cont_a, a, size_a * sizeof(double)));
-    INA_FAIL_IF_ERROR(iarray_to_buffer(ctx, cont_b, b, size_b * sizeof(double)));
+    IARRAY_FAIL_IF_ERROR(iarray_to_buffer(ctx, cont_a, a, size_a * sizeof(double)));
+    IARRAY_FAIL_IF_ERROR(iarray_to_buffer(ctx, cont_b, b, size_b * sizeof(double)));
 
     mult_c(a, b, c_c, I, J, K);
 
@@ -133,7 +139,7 @@ int main()
 
    mult_iarray(ctx, cont_a, bshape_a, cont_b, bshape_b, cont_c);
 
-   INA_FAIL_IF_ERROR(iarray_to_buffer(ctx, cont_c, c_iarray, size_c * sizeof(double)));
+   IARRAY_FAIL_IF_ERROR(iarray_to_buffer(ctx, cont_c, c_iarray, size_c * sizeof(double)));
 
     printf("Error percentage (C - MKL): %.4f\n", error_percent(c_c, c_mkl, size_c));
     printf("Error percentage (C - iarray): %.4f\n", error_percent(c_c, c_iarray, size_c));
