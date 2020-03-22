@@ -101,6 +101,7 @@ int main(int argc, char** argv)
              INA_OPT_INT("e", "expr-type", 1, "COPY = 0, POLY = 1, TRANS1 = 2, , TRANS2 = 3"),
              INA_OPT_INT("M", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOSC = 2, EVAL_ITERBLOSC2 = 3"),
              INA_OPT_INT("E", "eval-engine", 1, "EVAL_TINYEXPR = 1, EVAL_JUGGERNAUT = 2"),
+             INA_OPT_INT("n", "eval-niter", 1, "Number of times to evaluate (default 1)"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
              INA_OPT_INT("b", "blocksize", 0, "Use blocksize for chunks (0 means automatic)"),
@@ -125,6 +126,8 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_opt_get_int("M", &eval_method));
     int eval_engine;
     INA_MUST_SUCCEED(ina_opt_get_int("E", &eval_engine));
+    int eval_niter;
+    INA_MUST_SUCCEED(ina_opt_get_int("n", &eval_niter));
     int clevel;
     INA_MUST_SUCCEED(ina_opt_get_int("c", &clevel));
     int codec;
@@ -475,17 +478,19 @@ int main(int argc, char** argv)
     }
 
     INA_STOPWATCH_START(w);
-    ina_rc_t errcode = iarray_eval(e, &con_out);
-    if (errcode != INA_SUCCESS) {
-        printf("Error during evaluation.  Giving up...\n");
-        return -1;
+    for (int i = 0; i < eval_niter; i++) {
+        ina_rc_t errcode = iarray_eval(e, &con_out);
+        if (errcode != INA_SUCCESS) {
+            printf("Error during evaluation.  Giving up...\n");
+            return -1;
+        }
     }
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     iarray_container_info(con_out, &nbytes, &cbytes);
     printf("\n");
     printf("Time for computing and filling OUT values using iarray (%s, %s, %s):  %.3g s, %.1f MB/s\n",
-           expr_type_str, eval_method_str, eval_engine_str, elapsed_sec, nbytes / (elapsed_sec * _IARRAY_SIZE_MB));
+           expr_type_str, eval_method_str, eval_engine_str, elapsed_sec, (nbytes * eval_niter) / (elapsed_sec * _IARRAY_SIZE_MB));
     nbytes_mb = ((double)nbytes / (double)_IARRAY_SIZE_MB);
     cbytes_mb = ((double)cbytes / (double)_IARRAY_SIZE_MB);
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
