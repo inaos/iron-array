@@ -399,13 +399,17 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     int ninputs_malloced = 0;
     for (int i = 0; i < ninputs; i++) {
         if (expr_pparams->compressed_inputs) {
-            if ((used_space + bsize) <= avail_space) {
+            if (false && (used_space + bsize) <= avail_space) {
+                // Unfortunately, we cannot re-use temporaries in threads because SVML refuse to vectorize operations
                 // We have an available ttmp block that can be used for this operand
                 eval_pparams.inputs[i] = pparams->ttmp + used_space;
                 used_space += bsize;
             }
             else {
-                eval_pparams.inputs[i] = malloc(bsize);
+                // eval_pparams.inputs[i] = malloc(bsize);
+                // ina_mem_alloc_aligned has the same performance than regular malloc, but allows to specify alignment
+                // and alignment can be important for e.g. AVX-512 (64 bytes)
+                eval_pparams.inputs[i] = ina_mem_alloc_aligned(64, bsize);
                 ninputs_malloced++;
             }
             int rbytes = blosc_getitem(expr_pparams->inputs[i], offset, nitems, eval_pparams.inputs[i]);
@@ -448,7 +452,8 @@ int prefilter_func(blosc2_prefilter_params *pparams)
 
     if (expr_pparams->compressed_inputs) {
         for (int i = (ninputs - ninputs_malloced); i < ninputs; i++) {
-            free(eval_pparams.inputs[i]);
+            // free(eval_pparams.inputs[i]);
+            INA_MEM_FREE_SAFE(eval_pparams.inputs[i]);
         }
     }
 
