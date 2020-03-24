@@ -52,6 +52,7 @@ typedef struct iarray_expr_pparams_s {
     uint8_t* inputs[IARRAY_EXPR_OPERANDS_MAX];  // the data inputs
     int32_t input_typesizes[IARRAY_EXPR_OPERANDS_MAX];  // the typesizes for data inputs
     iarray_expression_t *e;
+    iarray_iter_write_block_value_t out_value;
 } iarray_expr_pparams_t;
 
 // Struct to be used as argument to the evaluation function
@@ -63,7 +64,9 @@ typedef struct iarray_eval_pparams_s {
     uint8_t *out;  // the output buffer
     int32_t out_size;  // the size of output buffer (in bytes)
     int32_t out_typesize;  // the typesize of output
-    iarray_dtshape_t *out_dtshape;  // the dtshape of the output buffer (NULL if not available)
+    int8_t ndim;  // the number of dimensions for inputs / output arrays
+    int64_t *vis_shape;  // the visible shape of the input arrays (NULL if not available)
+    int64_t *elem_index; // the starting index for the visible shape (NULL
 } iarray_eval_pparams_t;
 
 typedef int (*iarray_eval_fn)(iarray_eval_pparams_t *params);
@@ -376,6 +379,8 @@ fail:
 
 int prefilter_func(blosc2_prefilter_params *pparams)
 {
+    int64_t out_shape;
+    int64_t out_offset;
     iarray_expr_pparams_t *expr_pparams = (iarray_expr_pparams_t*)pparams->user_data;
     struct iarray_expression_s *e = expr_pparams->e;
     int ninputs = expr_pparams->ninputs;
@@ -387,15 +392,27 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     eval_pparams.out = pparams->out;
     eval_pparams.out_size = pparams->out_size;
     eval_pparams.out_typesize = pparams->out_typesize;
-    if ((e->ctx->cfg->eval_flags & 0x7u) == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC) {
-        // We can only set the shape for the output for the ITERBLOSC eval method.
-        // For ITERBLOSC2 we will need to wait til the storage backend would support sub-partitions.
-        eval_pparams.out_dtshape = e->out_dtshape;
+    eval_pparams.ndim = expr_pparams->e->out_dtshape->ndim;
+    unsigned int eval_method = e->ctx->cfg->eval_flags & 0x7u;
+    if (eval_method == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC) {
+        // We can only set the visible shape of the output for the ITERBLOSC eval method.
+        eval_pparams.vis_shape = expr_pparams->out_value.block_shape;
+        eval_pparams.elem_index = expr_pparams->out_value.elem_index;
+    }
+    else if (eval_pparams.ndim == 1 && eval_method == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2) {
+        // For iterblosc2 we will need to wait til the storage backend would support sub-partitions.
+        // However, we can still provide the info with 1-dim vectors.
+        out_shape = pparams->out_size / pparams->out_typesize;
+        eval_pparams.vis_shape = &out_shape;
+        out_offset = pparams->out_offset;
+        eval_pparams.elem_index = &out_offset;
     }
     else {
-        // eval_pparams is initialized to {0} above, but better be explicit
-        eval_pparams.out_dtshape = NULL;
+        // eval_pparams is initialized to {0} above, but better be explicit.
+        eval_pparams.vis_shape = NULL;
+        eval_pparams.elem_index = NULL;
     }
+    // printf("shape: %lld, index: %lld\n", eval_pparams.vis_shape[0], eval_pparams.elem_index[0]);
 
     // The code below only works for the case where inputs and output have the same typesize.
     // More love is needed in the future, where we would want to allow mixed types in expressions.
@@ -571,7 +588,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     cparams->prefilter = (blosc2_prefilter_fn)prefilter_func;
     blosc2_prefilter_params pparams = {0};
 
-    // TODO: add the out_value structure to the user_data also?
     iarray_expr_pparams_t expr_pparams = {0};
     expr_pparams.e = e;
     expr_pparams.ninputs = nvars;
@@ -597,7 +613,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     iarray_iter_write_block_t *iter_out;
     iarray_iter_write_block_value_t out_value;
     int32_t external_buffer_size = ret->catarr->psize * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD;
-    void *external_buffer;  // to inform the iterator that we are passing an external buffer
+    void *external_buffer;  // for informing the iterator that we are passing an external buffer
     if (INA_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, true))) {
         goto fail_iterblosc;
     }
@@ -626,6 +642,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         }
 
         // Eval the expression for this chunk
+        expr_pparams.out_value = out_value;  // useful for the prefilter function
         blosc2_context *cctx = blosc2_create_cctx(*cparams);
         int csize = blosc2_compress_ctx(cctx, out_items * e->typesize,
                                         NULL, out_value.block_pointer,
@@ -794,7 +811,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
     cparams->prefilter = (blosc2_prefilter_fn)prefilter_func;
     blosc2_prefilter_params pparams = {0};
 
-    // TODO: add the out_value structure to the user_data also?
     iarray_expr_pparams_t expr_pparams = {0};
     expr_pparams.e = e;
     expr_pparams.ninputs = nvars;
@@ -846,6 +862,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
         }
 
         // Eval the expression for this chunk
+        expr_pparams.out_value = out_value;  // useful for the prefilter function
         blosc2_context *cctx = blosc2_create_cctx(*cparams);  // we need it here to propagate pparams.inputs
         int csize = blosc2_compress_ctx(cctx, ret->catarr->psize * e->typesize,
                                         NULL, out_value.block_pointer,
@@ -873,7 +890,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
             }
 
             // Set the padding to 0's
-
             _iarray_reset_padding(out_value.block_pointer, ret->cparams->typesize, ret->dtshape->ndim, out_value.block_shape, ret->catarr->pshape);
 
             iter_out->compressed_chunk_buffer = false;
