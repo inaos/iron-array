@@ -362,10 +362,10 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
     int64_t partsize_y = 0;
     switch (c_y->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            partsize_y = c_y->catarr->psize * sizeof(double);
+            partsize_y = c_y->catarr->chunksize * sizeof(double);
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            partsize_y = c_y->catarr->psize * sizeof(float);
+            partsize_y = c_y->catarr->chunksize * sizeof(float);
             break;
         default:
             break;

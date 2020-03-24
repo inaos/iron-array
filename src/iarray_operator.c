@@ -40,10 +40,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     ina_rc_t rc;
 
-    caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    IARRAY_ERR_CATERVA(caterva_update_shape(c->catarr, &shape));
-
-    int64_t typesize = a->catarr->ctx->cparams.typesize;
+    int64_t typesize = a->catarr->itemsize;
 
     /* Check if the block is equal to the shape */
     bool a_copy = a->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
@@ -115,8 +112,13 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     uint8_t *c_block;
 
+    caterva_config_t cfg = {0};
+    _iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+    caterva_context_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
+
     if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        c_block = c->catarr->ctx->alloc(c_size);
+        c_block = cat_ctx->cfg->alloc(c_size);
     } else {
         c_block = ina_mem_alloc(c_size);
     }
@@ -128,6 +130,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         b_block = ina_mem_alloc(b_size);
     }
 
+    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
     memset(c_block, 0, c_size);
 
     // Start a iterator that returns the index matrix blocks
@@ -252,9 +255,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     ina_rc_t rc;
 
-    caterva_dims_t shape = caterva_new_dims(c->dtshape->shape, c->dtshape->ndim);
-    IARRAY_ERR_CATERVA(caterva_update_shape(c->catarr, &shape));
-    int64_t typesize = a->catarr->ctx->cparams.typesize;
+    int64_t typesize = a->catarr->itemsize;
 
     /* Check if the block is equal to the shape */
     bool a_copy = a->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
@@ -321,8 +322,13 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     uint8_t *c_block;
 
+    caterva_config_t cfg = {0};
+    _iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+    caterva_context_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
+
     if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        c_block = c->catarr->ctx->alloc(c_size);
+        c_block = cat_ctx->cfg->alloc(c_size);
     } else {
         c_block = ina_mem_alloc(c_size);
     }
@@ -333,6 +339,8 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     if (b_copy) {
         b_block = ina_mem_alloc(b_size);
     }
+
+    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
 
     memset(c_block, 0, c_size);
 
@@ -448,12 +456,10 @@ static ina_rc_t _iarray_operator_elwise_a(
     INA_VERIFY_NOT_NULL(mkl_fun_d);
     INA_VERIFY_NOT_NULL(mkl_fun_s);
 
-    caterva_dims_t shape = caterva_new_dims(result->dtshape->shape, result->dtshape->ndim);
-    IARRAY_ERR_CATERVA(caterva_update_shape(result->catarr, &shape));
 
     size_t psize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {
-        psize *= a->catarr->pshape[i];
+        psize *= a->catarr->chunkshape[i];
     }
 
     int8_t *a_chunk = (int8_t*)ina_mempool_dalloc(ctx->mp_op, psize);
@@ -510,16 +516,13 @@ static ina_rc_t _iarray_operator_elwise_ab(
 
     IARRAY_FAIL_IF_ERROR(iarray_container_dtshape_equal(a->dtshape, b->dtshape));
 
-    caterva_dims_t shape = caterva_new_dims(result->dtshape->shape, result->dtshape->ndim);
-    IARRAY_ERR_CATERVA(caterva_update_shape(result->catarr, &shape));
-
     size_t psize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {
-        if (a->catarr->pshape[i] != b->catarr->pshape[i]) {
+        if (a->catarr->chunkshape[i] != b->catarr->chunkshape[i]) {
             IARRAY_TRACE1(iarray.error, "The pshapes must be equals");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_PSHAPE));
         }
-        psize *= a->catarr->pshape[i];
+        psize *= a->catarr->chunkshape[i];
     }
 
     int8_t *a_chunk = (int8_t*)ina_mempool_dalloc(ctx->mp_op, psize);
