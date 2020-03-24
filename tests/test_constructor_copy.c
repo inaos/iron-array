@@ -99,7 +99,7 @@ INA_TEST_TEARDOWN(constructor_copy) {
     iarray_destroy();
 }
 
-
+/*
 INA_TEST_FIXTURE(constructor_copy, 1_f_p_n_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
@@ -112,6 +112,7 @@ INA_TEST_FIXTURE(constructor_copy, 1_f_p_n_n) {
 
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, false, false));
 }
+*/
 
 INA_TEST_FIXTURE(constructor_copy, 2_f_p_v_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -166,10 +167,11 @@ INA_TEST_FIXTURE(constructor_copy, 5_d_p_n_n) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, false, false));
 }
 
+
 INA_TEST_FIXTURE(constructor_copy, 6_d_p_v_n) {
 iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
-int8_t ndim = 2;
+int8_t ndim = 6;
 int64_t shape[] = {6, 3, 6, 3, 6, 3};
 int64_t *pshape = NULL;
 int64_t stop_view[] = {4, 3, 2, 3, 4, 3};
@@ -183,7 +185,7 @@ INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, 
 INA_TEST_FIXTURE(constructor_copy, 7_d_p_n_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
-    int8_t ndim = 2;
+    int8_t ndim = 7;
     int64_t shape[] = {2, 4, 6, 8, 6, 4, 2};
     int64_t *pshape = NULL;
     int64_t stop_view[] = {2, 3, 5, 2, 2, 2};
@@ -237,6 +239,7 @@ INA_TEST_FIXTURE(constructor_copy, 7_f_v_n) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, true, false));
 }
 
+
 INA_TEST_FIXTURE(constructor_copy, 6_f_n_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
@@ -249,6 +252,7 @@ INA_TEST_FIXTURE(constructor_copy, 6_f_n_v) {
 
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, false, true));
 }
+
 
 INA_TEST_FIXTURE(constructor_copy, 5_f_v_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -318,3 +322,4 @@ INA_TEST_FIXTURE(constructor_copy, 1_d_v_v) {
 
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, start, stop, stop_view, true, true));
 }
+

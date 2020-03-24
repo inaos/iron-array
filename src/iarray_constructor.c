@@ -777,7 +777,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     caterva_config_t cfg = {0};
     _iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
     caterva_context_t *cat_ctx;
-    IARRAY_FAIL_IF(caterva_context_new(&cfg, &cat_ctx) != CATERVA_SUCCEED);
+    IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
     (*dest) = (iarray_container_t *) ina_mem_alloc(sizeof(iarray_container_t));
     (*dest)->dtshape = (iarray_dtshape_t *) ina_mem_alloc(sizeof(iarray_dtshape_t));
