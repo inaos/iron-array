@@ -157,7 +157,7 @@ void _iarray_iter_matmul_free(iarray_iter_matmul_t **itr)
 
 INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr, void *buffer, int32_t bufsize)
 {
-    int64_t typesize = itr->cont->catarr->ctx->cparams.typesize;
+    int64_t typesize = itr->cont->catarr->itemsize;
 
     // Check if a external buffer is passed
     if (itr->external_buffer) {
@@ -270,7 +270,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     (*itr)->ctx = ctx;
 
     (*itr)->cont = cont;
-    int64_t typesize = (*itr)->cont->catarr->ctx->cparams.typesize;
+    int64_t typesize = (*itr)->cont->catarr->itemsize;
 
     (*itr)->val = value;
     (*itr)->aux = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
@@ -347,11 +347,11 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
         switch (cont->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 cont->catarr->part_cache.data =
-                    ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->psize * sizeof(double));
+                    ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->chunksize * sizeof(double));
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 cont->catarr->part_cache.data =
-                    ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->psize * sizeof(float));
+                    ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->chunksize * sizeof(float));
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "The data type is invalid");
@@ -400,7 +400,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
 
     caterva_array_t *catarr = itr->cont->catarr;
     int8_t ndim = catarr->ndim;
-    int64_t typesize = itr->cont->catarr->ctx->cparams.typesize;
+    int64_t typesize = itr->cont->catarr->itemsize;
     int64_t psizeb = itr->cur_block_size * typesize;
 
     // Check if block is the first
@@ -410,22 +410,31 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                 int64_t dir = itr->nblock * itr->cur_block_size * typesize;
                 itr->block = &itr->cont->catarr->buf[dir];
             } else {
-                caterva_dims_t start = caterva_new_dims(itr->cur_elem_index, ndim);
-
-                int64_t stop_[IARRAY_DIMENSION_MAX];
+                int64_t *start =itr->cur_elem_index;
+                int64_t stop[IARRAY_DIMENSION_MAX];
                 for (int i = 0; i < ndim; ++i) {
-                    stop_[i] = start.dims[i] + itr->cur_block_shape[i];
+                    stop[i] = start[i] + itr->cur_block_shape[i];
                 }
-                caterva_dims_t stop = caterva_new_dims(stop_, ndim);
+                int64_t blocksize = typesize;
+                for (int i = 0; i < catarr->ndim; ++i) {
+                    blocksize *= itr->block_shape[i];
+                }
 
-                IARRAY_ERR_CATERVA(caterva_set_slice_buffer(catarr, itr->block, &start, &stop));
+                caterva_config_t cfg = {0};
+                _iarray_create_caterva_cfg(itr->ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+                caterva_context_t *cat_ctx;
+                IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
+
+                IARRAY_ERR_CATERVA(caterva_array_set_slice_buffer(cat_ctx, itr->block, blocksize, start, stop, catarr));
+
+                IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
                 if (itr->external_buffer) {
                     free(itr->block);
                 }
             }
         } else {
             // check if the part should be padded with 0s
-            if (itr->cur_block_size == catarr->psize) {
+            if (itr->cur_block_size == catarr->chunksize) {
                 if (itr->compressed_chunk_buffer) {
                     int err = blosc2_schunk_append_chunk(catarr->sc, itr->block, false);
                     if (err < 0) {
@@ -443,8 +452,8 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                     }
                 }
             } else {
-                uint8_t *part_aux = malloc((size_t) catarr->psize * typesize);
-                memset(part_aux, 0, catarr->psize * typesize);
+                uint8_t *part_aux = malloc((size_t) catarr->chunksize * typesize);
+                memset(part_aux, 0, catarr->chunksize * typesize);
 
                 //reverse part_shape
                 int64_t shaper[CATERVA_MAXDIM];
@@ -467,11 +476,11 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                                         for (ii[6] = 0; ii[6] < shaper[6]; ++ii[6]) {
 
                                             int64_t aux_p = 0;
-                                            int64_t aux_i = catarr->pshape[ndim - 1];
+                                            int64_t aux_i = catarr->chunkshape[ndim - 1];
 
                                             for (int i = ndim - 2; i >= 0; --i) {
                                                 aux_p += ii[CATERVA_MAXDIM - ndim + i] * aux_i;
-                                                aux_i *= catarr->pshape[i];
+                                                aux_i *= catarr->chunkshape[i];
                                             }
 
                                             int64_t itr_p = 0;
@@ -492,7 +501,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                     }
                 }
                 int err = blosc2_schunk_append_buffer(itr->cont->catarr->sc, part_aux,
-                                                      (size_t) catarr->psize * typesize);
+                                                      (size_t) catarr->chunksize * typesize);
                 if (itr->external_buffer) {
                     free(itr->block);
                 }
@@ -560,26 +569,37 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
     if ( itr->nblock == (itr->cont_esize / itr->block_shape_size)) {  // TODO: cannot it be itr->total_blocks ?
         caterva_array_t *catarr = itr->cont->catarr;
         int8_t ndim = catarr->ndim;
-        int64_t typesize = itr->cont->catarr->ctx->cparams.typesize;
+        int64_t typesize = itr->cont->catarr->itemsize;
         int64_t psizeb = itr->cur_block_size * typesize;
         if (itr->cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
             if (!itr->contiguous) {
-                caterva_dims_t start = caterva_new_dims(itr->cur_elem_index, ndim);
+                int64_t *start = itr->cur_elem_index;
 
-                int64_t stop_[IARRAY_DIMENSION_MAX];
+                int64_t stop[IARRAY_DIMENSION_MAX];
                 for (int i = 0; i < ndim; ++i) {
-                    stop_[i] = start.dims[i] + itr->cur_block_shape[i];
+                    stop[i] = start[i] + itr->cur_block_shape[i];
                 }
-                caterva_dims_t stop = caterva_new_dims(stop_, ndim);
+                int64_t blocksize = typesize;
+                for (int i = 0; i < catarr->ndim; ++i) {
+                    blocksize *= itr->block_shape[i];
+                }
 
-                IARRAY_ERR_CATERVA(caterva_set_slice_buffer(catarr, itr->block, &start, &stop));
+                caterva_config_t cfg = {0};
+                _iarray_create_caterva_cfg(itr->ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+                caterva_context_t *cat_ctx;
+                IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
+
+                IARRAY_ERR_CATERVA(caterva_array_set_slice_buffer(cat_ctx, itr->block, blocksize, start, stop, catarr));
+
+                IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
+
                 if (itr->external_buffer) {
                     free(itr->block);
                 }
             }
         } else {
             // check if the part should be padded with 0s
-            if (itr->cur_block_size == catarr->psize) {
+            if (itr->cur_block_size == catarr->chunksize) {
                 if (itr->compressed_chunk_buffer) {
                     int err = blosc2_schunk_append_chunk(catarr->sc, itr->block, false);
                     if (err < 0) {
@@ -600,8 +620,8 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                     }
                 }
             } else {
-                uint8_t *part_aux = malloc((size_t) catarr->psize * typesize);
-                memset(part_aux, 0, catarr->psize * typesize);
+                uint8_t *part_aux = malloc((size_t) catarr->chunksize * typesize);
+                memset(part_aux, 0, catarr->chunksize * typesize);
 
                 //reverse part_shape
                 int64_t shaper[CATERVA_MAXDIM];
@@ -624,11 +644,11 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                                         for (ii[6] = 0; ii[6] < shaper[6]; ++ii[6]) {
 
                                             int64_t aux_p = 0;
-                                            int64_t aux_i = catarr->pshape[ndim - 1];
+                                            int64_t aux_i = catarr->chunkshape[ndim - 1];
 
                                             for (int i = ndim - 2; i >= 0; --i) {
                                                 aux_p += ii[CATERVA_MAXDIM - ndim + i] * aux_i;
-                                                aux_i *= catarr->pshape[i];
+                                                aux_i *= catarr->chunkshape[i];
                                             }
 
                                             int64_t itr_p = 0;
@@ -649,7 +669,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                     }
                 }
                 int err = blosc2_schunk_append_buffer(itr->cont->catarr->sc, part_aux,
-                                                      (size_t) catarr->psize * typesize);
+                                                      (size_t) catarr->chunksize * typesize);
                 if (itr->external_buffer) {
                     free(itr->block);
                 }
@@ -711,6 +731,8 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         }
     }
 
+    cont->catarr->empty = false;
+
     INA_VERIFY_NOT_NULL(itr);
     *itr = (iarray_iter_write_block_t *)ina_mem_alloc(sizeof(iarray_iter_write_block_t));
     if (*itr == NULL) {
@@ -720,18 +742,21 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
     memcpy(*itr, &IARRAY_ITER_WRITE_BLOCK_EMPTY, sizeof(iarray_iter_write_block_t));
 
-    int64_t typesize = cont->catarr->ctx->cparams.typesize;
+    int64_t typesize = cont->catarr->itemsize;
 
-    caterva_dims_t shape = caterva_new_dims(cont->dtshape->shape, cont->dtshape->ndim);
-    CATERVA_ERROR(caterva_update_shape(cont->catarr, &shape));
+    caterva_config_t cfg = {0};
+    _iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+    caterva_context_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
     if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
-        cont->catarr->buf = cont->catarr->ctx->alloc((size_t) cont->catarr->size * typesize);
+        cont->catarr->buf = cat_ctx->cfg->alloc((size_t) cont->catarr->size * typesize);
         if (cont->catarr->buf == NULL) {
             IARRAY_TRACE1(iarray.error, "Error allocating the caterva buffer where data is stored");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
         }
     }
+    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
 
     (*itr)->compressed_chunk_buffer = false;  // the default is to pass uncompressed buffers
     (*itr)->val = value;
@@ -749,10 +774,10 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     for (int i = 0; i < (*itr)->cont->dtshape->ndim; ++i) {
         (*itr)->block_shape[i] = blockshape[i];
         size *= (*itr)->block_shape[i];
-        if (cont->catarr->eshape[i] % blockshape[i] == 0) {
-            (*itr)->cont_eshape[i] = (cont->catarr->eshape[i] / blockshape[i]) * blockshape[i];
+        if (cont->catarr->extendedshape[i] % blockshape[i] == 0) {
+            (*itr)->cont_eshape[i] = (cont->catarr->extendedshape[i] / blockshape[i]) * blockshape[i];
         } else {
-            (*itr)->cont_eshape[i] = (cont->catarr->eshape[i] / blockshape[i] + 1) * blockshape[i];
+            (*itr)->cont_eshape[i] = (cont->catarr->extendedshape[i] / blockshape[i] + 1) * blockshape[i];
 
         }
         (*itr)->cont_esize *= (*itr)->cont_eshape[i];
@@ -865,7 +890,7 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
 {
     int ndim = itr->cont->dtshape->ndim;
 
-    int64_t typesize = itr->cont->catarr->ctx->cparams.typesize;
+    int64_t typesize = itr->cont->catarr->itemsize;
 
     // check if a block is readed totally and decompress next
     if ((itr->nelem_block == itr->cur_block_size - 1) || (itr->nelem == 0)){
@@ -1010,7 +1035,7 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
     }
 
     if (cont->catarr->storage == CATERVA_STORAGE_BLOSC || cont->view) {
-        (*itr)->part = (uint8_t *) ina_mem_alloc((size_t) block_size * cont->catarr->ctx->cparams.typesize);
+        (*itr)->part = (uint8_t *) ina_mem_alloc((size_t) block_size * cont->catarr->itemsize);
     }
 
     (*itr)->val = val;
@@ -1065,13 +1090,13 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
 {
     caterva_array_t *catarr = itr->container->catarr;
     int ndim = catarr->ndim;
-    int64_t typesize = itr->container->catarr->ctx->cparams.typesize;
+    int64_t typesize = itr->container->catarr->itemsize;
     // check if a part is filled totally and append it
 
     if (itr->nelem_block == itr->cur_block_size - 1) {
         if (itr->container->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
             int err = blosc2_schunk_append_buffer(catarr->sc, itr->part,
-                                                  (size_t) catarr->psize * typesize);
+                                                  (size_t) catarr->chunksize * typesize);
             if (err < 0) {
                 IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
@@ -1083,16 +1108,16 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
             itr->nblock += 1;
 
             for (int i = ndim - 1; i >= 0; --i) {
-                itr->cur_block_index[i] = itr->nblock % (inc * (catarr->eshape[i] / catarr->pshape[i])) / inc;
-                inc *= (catarr->eshape[i] / catarr->pshape[i]);
-                if ((itr->cur_block_index[i] + 1) * catarr->pshape[i] > catarr->shape[i]) {
-                    itr->cur_block_shape[i] = catarr->shape[i] - itr->cur_block_index[i] * catarr->pshape[i];
+                itr->cur_block_index[i] = itr->nblock % (inc * (catarr->extendedshape[i] / catarr->chunkshape[i])) / inc;
+                inc *= (catarr->extendedshape[i] / catarr->chunkshape[i]);
+                if ((itr->cur_block_index[i] + 1) * catarr->chunkshape[i] > catarr->shape[i]) {
+                    itr->cur_block_shape[i] = catarr->shape[i] - itr->cur_block_index[i] * catarr->chunkshape[i];
                 } else {
-                    itr->cur_block_shape[i] = catarr->pshape[i];
+                    itr->cur_block_shape[i] = catarr->chunkshape[i];
                 }
                 itr->cur_block_size *= itr->cur_block_shape[i];
             }
-            memset(itr->part, 0, catarr->psize * typesize);
+            memset(itr->part, 0, catarr->chunksize * typesize);
             itr->nelem_block = 0;
         }
     } else if (itr->nelem != 0) {
@@ -1112,10 +1137,10 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
     for (int i = ndim - 1; i >= 0; --i) {
         ind_part_elem[i] = itr->nelem_block % (inc * itr->cur_block_shape[i]) / inc;
         cont_pointer += ind_part_elem[i] * inc_p;
-        itr->elem_index[i] = ind_part_elem[i] + itr->cur_block_index[i] * catarr->pshape[i];
+        itr->elem_index[i] = ind_part_elem[i] + itr->cur_block_index[i] * catarr->chunkshape[i];
         itr->elem_flat_index += itr->elem_index[i] * inc_s;
         inc *= itr->cur_block_shape[i];
-        inc_p *= catarr->pshape[i];
+        inc_p *= catarr->chunkshape[i];
         inc_s *= catarr->shape[i];
     }
     itr->pointer = (void *)&(itr->part)[cont_pointer * typesize];
@@ -1133,11 +1158,11 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
 
 INA_API(ina_rc_t) iarray_iter_write_has_next(iarray_iter_write_t *itr)
 {
-    int64_t typesize = itr->container->catarr->ctx->cparams.typesize;
+    int64_t typesize = itr->container->catarr->itemsize;
     if (itr->nelem == itr->container->catarr->size) {
         if (itr->container->catarr->storage == CATERVA_STORAGE_BLOSC) {
             blosc2_schunk_append_buffer(itr->container->catarr->sc, itr->part,
-                                        (size_t) itr->container->catarr->psize * typesize);
+                                        (size_t) itr->container->catarr->chunksize * typesize);
         }
     }
 
@@ -1171,18 +1196,23 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
     }
     memcpy(*itr, &IARRAY_ITER_WRITE_EMPTY, sizeof(iarray_iter_write_t));
 
-    caterva_dims_t shape = caterva_new_dims(cont->dtshape->shape, cont->dtshape->ndim);
-    IARRAY_ERR_CATERVA(caterva_update_shape(cont->catarr, &shape));
-
     (*itr)->ctx = ctx;
     (*itr)->container = cont;
+    cont->catarr->empty = false;
+
+    caterva_config_t cfg = {0};
+    _iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+    caterva_context_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
+
     if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
-        (*itr)->part = (uint8_t *) cont->catarr->ctx->alloc((size_t)cont->catarr->psize *
-            cont->catarr->ctx->cparams.typesize);
+        (*itr)->part = (uint8_t *) cat_ctx->cfg->alloc((size_t)cont->catarr->chunksize *
+            cont->catarr->itemsize);
         cont->catarr->buf = (*itr)->part;
     } else {
-        (*itr)->part = (uint8_t *) ina_mem_alloc((size_t)cont->catarr->psize * cont->catarr->ctx->cparams.typesize);
+        (*itr)->part = (uint8_t *) ina_mem_alloc((size_t)cont->catarr->chunksize * cont->catarr->itemsize);
     }
+    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
 
     (*itr)->elem_index = (int64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(int64_t));
     (*itr)->cur_block_index = (int64_t *) ina_mem_alloc(CATERVA_MAXDIM * sizeof(int64_t));
@@ -1195,15 +1225,15 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
     for (int i = 0; i < CATERVA_MAXDIM; ++i) {
         (*itr)->elem_index[i] = 0;
         (*itr)->cur_block_index[i] = 0;
-        if ((*itr)->container->catarr->pshape[i] > (*itr)->container->catarr->shape[i]) {
+        if ((*itr)->container->catarr->chunkshape[i] > (*itr)->container->catarr->shape[i]) {
             (*itr)->cur_block_shape[i] = (*itr)->container->catarr->shape[i];
         } else {
-            (*itr)->cur_block_shape[i] = (*itr)->container->catarr->pshape[i];
+            (*itr)->cur_block_shape[i] = (*itr)->container->catarr->chunkshape[i];
         }
         (*itr)->cur_block_size *= (*itr)->cur_block_shape[i];
     }
 
-    memset((*itr)->part, 0, cont->catarr->psize * cont->catarr->ctx->cparams.typesize);
+    memset((*itr)->part, 0, cont->catarr->chunksize * cont->catarr->itemsize);
 
     rc = INA_SUCCESS;
     goto cleanup;
