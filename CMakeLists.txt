@@ -9,7 +9,7 @@
 # Information and shall use it only in accordance with the terms of the license agreement.
 #
 cmake_minimum_required (VERSION 3.12)
-project(iarray VERSION 0.1.3)
+project(iarray VERSION 0.1.4)
 
 option(MULTITHREADING "Use multithreaded iarray" OFF)
 
@@ -34,7 +34,7 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
 endif()
 include("${CMAKE_BINARY_DIR}/inac.cmake")
 
-inac_add_dependency(inac "1.0.6")
+inac_add_dependency(inac "1.0.7")
 
 inac_add_contrib_lib(tinyexpr)
 
@@ -146,6 +146,9 @@ target_link_libraries(iarray ${INAC_LIBS} blosc2_static caterva_static minjugg m
 install(TARGETS iarray
         DESTINATION lib
         COMPONENT libraries)
+install(FILES ${INAC_DEPENDENCY_BINS}
+            DESTINATION lib
+            COMPONENT libraries)
 
 inac_package()
 

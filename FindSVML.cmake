@@ -50,6 +50,13 @@ endforeach()
 if (NOT WIN32)
 	# This is necessary at least on Linux and MacOS
 	string(REPLACE "svml" "intlc" INTLC_LIBRARY ${SVML_LIBRARY})
+        string(REPLACE ".so" ".so.5" INTLC_LIBRARY ${INTLC_LIBRARY})
 endif()
 
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${SVML_LIBRARY} ${INTLC_LIBRARY})
+if(WIN32)
+    set(INAC_DEPENDENCY_BINS ${SVM_LIBRARY_DLL})
+else()
+    set(INAC_DEPENDENCY_BINS ${SVML_LIBRARY} ${INTLC_LIBRARY})
+endif()
+
