@@ -58,15 +58,16 @@ portable way with:
 
          cmake -DCMAKE_BUILD_TYPE=Debug -DMULTITHREADING=TRUE ..
          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMULTITHREADING=TRUE ..
- 
-    
+
+
 #### Linux
 
 * INAC build setup
     * Make sure that you have a configured repository.txt file in ~/.inaos/cmake
     * Also you'll need a directory ~/INAOS (can be empty)
-    
-* MKL setup.  For Ubuntu machines, it is best to use Intel's Ubuntu repo (but you can use conda packages described above too):
+
+* MKL setup.  For Ubuntu machines, it is best to use Intel's Ubuntu repo (but
+  you can use conda packages described above too):
 
          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
          apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
@@ -80,13 +81,9 @@ portable way with:
 
 * Invoke CMAKE, we have to define the build-type, but only two types are supported
 
-         cmake -DCMAKE_BUILD_TYPE=Debug ..
-         cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
-
-* In some Linux, the way to detect LLVM is different, so for example for Clear Linux, one must use:
-
+         cmake -DCMAKE_BUILD_TYPE=Debug -DCLEARLINUX=TRUE ..
          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCLEARLINUX=TRUE ..
-         
+
 * If one wants to use the multithreaded version, then add next flag:
 
          cmake -DCMAKE_BUILD_TYPE=Debug -DMULTITHREADING=TRUE ..
