@@ -131,6 +131,7 @@ typedef struct iarray_store_properties_s {
     bool enforce_frame;
 } iarray_store_properties_t;
 
+// The first 3 bits (0, 1, 2) of eval_flags are reserved for the eval method
 typedef enum iarray_eval_method_e {
     IARRAY_EXPR_EVAL_METHOD_AUTO = 0u,
     IARRAY_EXPR_EVAL_METHOD_ITERCHUNK = 1u,
@@ -138,6 +139,7 @@ typedef enum iarray_eval_method_e {
     IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2 = 3u,
 } iarray_eval_method_t;
 
+// The next 3 bits (3, 4, 5) of eval_flags are reserved for the eval engine
 typedef enum iarray_eval_engine_e {
     IARRAY_EXPR_EVAL_ENGINE_AUTO = 0u,
     IARRAY_EXPR_EVAL_ENGINE_TINYEXPR = 1u,
