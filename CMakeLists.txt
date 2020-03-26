@@ -9,7 +9,7 @@
 # Information and shall use it only in accordance with the terms of the license agreement.
 #
 cmake_minimum_required (VERSION 3.12)
-project(iarray VERSION 0.1.4)
+project(iarray VERSION 0.1.5)
 
 option(MULTITHREADING "Use multithreaded iarray" OFF)
 
@@ -34,7 +34,7 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
 endif()
 include("${CMAKE_BINARY_DIR}/inac.cmake")
 
-inac_add_dependency(inac "1.0.6")
+inac_add_dependency(inac "1.0.7")
 
 inac_add_contrib_lib(tinyexpr)
 
