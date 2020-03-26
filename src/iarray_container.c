@@ -327,6 +327,8 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                 dtshape.pshape[i] = pshape[i];
         }
 
+        iarray_container_new(ctx, &dtshape, store, flags, container);
+
         // Check if matrix is transposed
         if (src->transposed) {
             int64_t aux_stop[IARRAY_DIMENSION_MAX];
@@ -350,10 +352,12 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         caterva_config_t cfg = {0};
         _iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
         caterva_context_t *cat_ctx;
-        IARRAY_FAIL_IF(caterva_context_new(&cfg, &cat_ctx) != CATERVA_SUCCEED);
+        IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
         caterva_storage_t storage = {0};
         _iarray_create_caterva_storage(&dtshape, store, &storage);
+
+        caterva_array_free(cat_ctx, &(*container)->catarr);
 
         IARRAY_ERR_CATERVA(caterva_array_get_slice(cat_ctx, src->catarr, start_, stop_, &storage, &(*container)->catarr));
         IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
