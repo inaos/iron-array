@@ -45,6 +45,9 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     /* Check if the block is equal to the shape */
     bool a_copy = a->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
     if (!a_copy) {
+        a_copy = a->view ? true : false;
+    }
+    if (!a_copy) {
         for (int i = 0; i < a->dtshape->ndim; ++i) {
             if (bshape_a[i] != a->dtshape->shape[i]) {
                 a_copy = true;
@@ -54,6 +57,9 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     bool b_copy = b->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
+    if (!b_copy) {
+        b_copy = b->view ? true : false;
+    }
     if (!b_copy) {
         for (int i = 0; i < b->dtshape->ndim; ++i) {
             if (bshape_b[i] != b->dtshape->shape[i]) {
@@ -260,6 +266,9 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     /* Check if the block is equal to the shape */
     bool a_copy = a->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
     if (!a_copy) {
+        a_copy = a->view ? true : false;
+    }
+    if (!a_copy) {
         for (int i = 0; i < a->dtshape->ndim; ++i) {
             if (bshape_a[i] != a->dtshape->shape[i]) {
                 a_copy = true;
@@ -269,6 +278,9 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     }
 
     bool b_copy = b->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
+    if (!b_copy) {
+        b_copy = b->view ? true : false;
+    }
     if (!b_copy) {
         for (int i = 0; i < b->dtshape->ndim; ++i) {
             if (bshape_b[i] != b->dtshape->shape[i]) {
