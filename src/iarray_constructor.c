@@ -375,7 +375,6 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
     }
 
     // TODO: would it be interesting to add a `buffer_len` parameter to `caterva_from_buffer()`?
-
     caterva_config_t cfg = {0};
     _iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
     caterva_params_t params = {0};
@@ -386,6 +385,7 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
     caterva_context_t *cat_ctx;
     IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
+    IARRAY_ERR_CATERVA(caterva_array_free(cat_ctx, &(*container)->catarr));
     IARRAY_ERR_CATERVA(caterva_array_from_buffer(cat_ctx, buffer, buflen, &params, &storage, &(*container)->catarr));
 
     IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
