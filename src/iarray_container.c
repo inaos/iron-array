@@ -1071,7 +1071,9 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
     INA_VERIFY_FREE(container);
 
     if (!(*container)->view) {
+        printf("Container is not a view");
         if ((*container)->catarr != NULL) {
+            printf("Container catarr is not NULL");
             caterva_config_t cfg = {0};
             _iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
             caterva_context_t *cat_ctx;
