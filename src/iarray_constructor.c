@@ -388,6 +388,8 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
     IARRAY_ERR_CATERVA(caterva_array_from_buffer(cat_ctx, buffer, buflen, &params, &storage, &(*container)->catarr));
 
+    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
+
     rc = INA_SUCCESS;
     goto cleanup;
     fail:

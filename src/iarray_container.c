@@ -1078,6 +1078,7 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
             caterva_context_new(&cfg, &cat_ctx);
 
             caterva_array_free(cat_ctx, &(*container)->catarr);
+            printf("Free array!\n");
             caterva_context_free(&cat_ctx);
         }
 
