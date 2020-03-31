@@ -379,8 +379,6 @@ fail:
 
 int prefilter_func(blosc2_prefilter_params *pparams)
 {
-    int64_t out_shape;
-    int64_t out_offset;
     iarray_expr_pparams_t *expr_pparams = (iarray_expr_pparams_t*)pparams->user_data;
     struct iarray_expression_s *e = expr_pparams->e;
     int ninputs = expr_pparams->ninputs;
@@ -393,6 +391,11 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     eval_pparams.out_size = pparams->out_size;
     eval_pparams.out_typesize = pparams->out_typesize;
     eval_pparams.ndim = expr_pparams->e->out_dtshape->ndim;
+    int32_t bsize = pparams->out_size;
+    int32_t typesize = pparams->out_typesize;
+    int64_t nitems = bsize / typesize;
+    int64_t offset_index = pparams->out_offset / typesize;
+
     unsigned int eval_method = e->ctx->cfg->eval_flags & 0x7u;
     if (eval_method == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC) {
         // We can only set the visible shape of the output for the ITERBLOSC eval method.
@@ -402,10 +405,8 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     else if (eval_pparams.ndim == 1 && eval_method == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2) {
         // For iterblosc2 we will need to wait til the storage backend would support sub-partitions.
         // However, we can still provide the info with 1-dim vectors.
-        out_shape = pparams->out_size / pparams->out_typesize;
-        eval_pparams.vis_shape = &out_shape;
-        out_offset = pparams->out_offset;
-        eval_pparams.elem_index = &out_offset;
+        eval_pparams.vis_shape = &nitems;
+        eval_pparams.elem_index = &offset_index;
     }
     else {
         // eval_pparams is initialized to {0} above, but better be explicit.
@@ -416,10 +417,6 @@ int prefilter_func(blosc2_prefilter_params *pparams)
 
     // The code below only works for the case where inputs and output have the same typesize.
     // More love is needed in the future, where we would want to allow mixed types in expressions.
-    int32_t bsize = pparams->out_size;
-    int32_t typesize = pparams->out_typesize;
-    int32_t nitems = bsize / typesize;
-    int32_t offset = pparams->out_offset / typesize;
 
     int avail_space = pparams->ttmp_nbytes;
     int used_space = 0;
@@ -439,7 +436,7 @@ int prefilter_func(blosc2_prefilter_params *pparams)
                 eval_pparams.inputs[i] = ina_mem_alloc_aligned(64, bsize);
                 ninputs_malloced++;
             }
-            int rbytes = blosc_getitem(expr_pparams->inputs[i], offset, nitems, eval_pparams.inputs[i]);
+            int rbytes = blosc_getitem(expr_pparams->inputs[i], offset_index, nitems, eval_pparams.inputs[i]);
             if (rbytes != bsize) {
                 fprintf(stderr, "Read from inputs failed inside pipeline\n");
                 return -1;
