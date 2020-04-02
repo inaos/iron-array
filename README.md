@@ -99,3 +99,5 @@ portable way with:
 
 * For now only element-wise operations are supported in expression.
 
+* The iron-array library supports disabling SVML optimization by setting a `DISABLE_SVML` environment variable to *any* value.  This can be useful for debugging purposes.
+
