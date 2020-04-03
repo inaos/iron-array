@@ -66,7 +66,7 @@ typedef struct iarray_eval_pparams_s {
     int32_t out_typesize;  // the typesize of output
     int8_t ndim;  // the number of dimensions for inputs / output arrays
     int64_t *vis_shape;  // the visible shape of the input arrays (NULL if not available)
-    int64_t *elem_index; // the starting index for the visible shape (NULL
+    int64_t *elem_index; // the starting index for the visible shape (NULL if not available)
 } iarray_eval_pparams_t;
 
 typedef int (*iarray_eval_fn)(iarray_eval_pparams_t *params);
