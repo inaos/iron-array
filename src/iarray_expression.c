@@ -65,8 +65,8 @@ typedef struct iarray_eval_pparams_s {
     int32_t out_size;  // the size of output buffer (in bytes)
     int32_t out_typesize;  // the typesize of output
     int8_t ndim;  // the number of dimensions for inputs / output arrays
-    int64_t *vis_shape;  // the visible shape of the input arrays (NULL if not available)
-    int64_t *elem_index; // the starting index for the visible shape (NULL if not available)
+    int64_t *window_shape;  // the shape of the window for the input arrays (NULL if not available)
+    int64_t *window_start; // the start coordinates for the window shape (NULL if not available)
 } iarray_eval_pparams_t;
 
 typedef int (*iarray_eval_fn)(iarray_eval_pparams_t *params);
@@ -399,21 +399,20 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     unsigned int eval_method = e->ctx->cfg->eval_flags & 0x7u;
     if (eval_method == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC) {
         // We can only set the visible shape of the output for the ITERBLOSC eval method.
-        eval_pparams.vis_shape = expr_pparams->out_value.block_shape;
-        eval_pparams.elem_index = expr_pparams->out_value.elem_index;
+        eval_pparams.window_shape = expr_pparams->out_value.block_shape;
+        eval_pparams.window_start = expr_pparams->out_value.elem_index;
     }
     else if (eval_pparams.ndim == 1 && eval_method == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2) {
         // For iterblosc2 we will need to wait til the storage backend would support sub-partitions.
         // However, we can still provide the info with 1-dim vectors.
-        eval_pparams.vis_shape = &nitems;
-        eval_pparams.elem_index = &offset_index;
+        eval_pparams.window_shape = &nitems;
+        eval_pparams.window_start = &offset_index;
     }
     else {
         // eval_pparams is initialized to {0} above, but better be explicit.
-        eval_pparams.vis_shape = NULL;
-        eval_pparams.elem_index = NULL;
+        eval_pparams.window_shape = NULL;
+        eval_pparams.window_start = NULL;
     }
-    // printf("shape: %lld, index: %lld\n", eval_pparams.vis_shape[0], eval_pparams.elem_index[0]);
 
     // The code below only works for the case where inputs and output have the same typesize.
     // More love is needed in the future, where we would want to allow mixed types in expressions.
