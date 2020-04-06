@@ -300,7 +300,7 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx)
     INA_MEM_FREE_SAFE(*ctx);
 }
 
-INA_API(void) _iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t), void (*free)(void *), caterva_config_t *cat_cfg) {
+ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t), void (*free)(void *), caterva_config_t *cat_cfg) {
     cat_cfg->alloc = alloc;
     cat_cfg->free = free;
 
@@ -328,19 +328,21 @@ INA_API(void) _iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(si
     if (cfg->filter_flags & IARRAY_COMP_DELTA) {
         cat_cfg->filters[blosc_filter_idx] = BLOSC_DELTA;
     }
+    return INA_SUCCESS;
 }
 
 
-INA_API(void) _iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_t *params) {
+ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_t *params) {
     params->ndim = dtshape->ndim;
     params->itemsize = dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ? sizeof(double) : sizeof(float);
     for (int i = 0; i < params->ndim; ++i) {
         params->shape[i] = dtshape->shape[i];
     }
+    return INA_SUCCESS;
 }
 
 
-INA_API(void) _iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_store_properties_t *store, caterva_storage_t *storage) {
+ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_store_properties_t *store, caterva_storage_t *storage) {
     storage->backend = store->backend == IARRAY_STORAGE_BLOSC ? CATERVA_STORAGE_BLOSC : CATERVA_STORAGE_PLAINBUFFER;
     switch (storage->backend) {
         case CATERVA_STORAGE_BLOSC:
@@ -353,4 +355,5 @@ INA_API(void) _iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_s
         case CATERVA_STORAGE_PLAINBUFFER:
             break;
     }
+    return INA_SUCCESS;
 }

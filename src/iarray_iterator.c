@@ -421,7 +421,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                 }
 
                 caterva_config_t cfg = {0};
-                _iarray_create_caterva_cfg(itr->ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+                iarray_create_caterva_cfg(itr->ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
                 caterva_context_t *cat_ctx;
                 IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
@@ -585,7 +585,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                 }
 
                 caterva_config_t cfg = {0};
-                _iarray_create_caterva_cfg(itr->ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+                iarray_create_caterva_cfg(itr->ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
                 caterva_context_t *cat_ctx;
                 IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
@@ -745,7 +745,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     int64_t typesize = cont->catarr->itemsize;
 
     caterva_config_t cfg = {0};
-    _iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+    iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
     caterva_context_t *cat_ctx;
     IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
@@ -1201,7 +1201,7 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
     cont->catarr->empty = false;
 
     caterva_config_t cfg = {0};
-    _iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+    iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
     caterva_context_t *cat_ctx;
     IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
