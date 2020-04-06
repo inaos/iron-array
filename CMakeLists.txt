@@ -12,6 +12,7 @@ cmake_minimum_required (VERSION 3.12)
 project(iarray VERSION 0.1.5)
 
 option(MULTITHREADING "Use multithreaded iarray" OFF)
+option(DISABLE_LLVM_CONFIG "Disable the use of llvm-config for finding libraris" OFF)
 
 # Disable weird MSVC warnings
 if (MSVC)
@@ -68,8 +69,8 @@ find_package(SVML)
 # that we wish to use
 llvm_map_components_to_libnames(llvm_libs support core irreader executionengine
    bitwriter passes vectorize mcjit asmprinter x86info x86codegen)
-if (UNIX AND NOT APPLE)
-    # The next should work for all LLVM installations, but for now only Linux seems safe
+if (UNIX AND NOT APPLE AND NOT DISABLE_LLVM_CONFIG)
+    # The next should be the canonical way, but for now only Linux and some llvm distros seems safe
     execute_process(COMMAND ${LLVM_TOOLS_BINARY_DIR}/llvm-config --libs OUTPUT_VARIABLE llvm_libs
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif(UNIX AND NOT APPLE)

@@ -10,18 +10,22 @@ strategy:
       imageName: 'ubuntu-18.04'
       BUILD_CONFIGURATION: Debug
       MULTITHREADING: False
+      DISABLE_LLVM_CONFIG: True
     linux-release:
       imageName: 'ubuntu-18.04'
       BUILD_CONFIGURATION: RelWithDebInfo
       MULTITHREADING: False
+      DISABLE_LLVM_CONFIG: True
     mac-debug:
       imageName: 'macos-10.14'
       BUILD_CONFIGURATION: Debug
       MULTITHREADING: False
+      DISABLE_LLVM_CONFIG: True
     mac-release:
       imageName: 'macos-10.14'
       BUILD_CONFIGURATION: RelWithDebInfo
       MULTITHREADING: False
+      DISABLE_LLVM_CONFIG: True
     windows-debug:
       imageName: 'vs2017-win2016'
       BUILD_CONFIGURATION: Debug
@@ -117,7 +121,7 @@ steps:
       then
         mkdir cmake-build-$BUILD_CONFIGURATION
         cd cmake-build-$BUILD_CONFIGURATION
-        cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING -DLLVM_ROOT=$CONDA/envs/iArrayEnv
+        cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING -DDISABLE_LLVM_CONFIG=$DISABLE_LLVM_CONFIG -DLLVM_ROOT=$CONDA/envs/iArrayEnv
         make -j
     fi
   displayName: Compile
