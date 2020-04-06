@@ -447,9 +447,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
         iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
         caterva_context_t *cat_ctx;
         IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
-
         IARRAY_ERR_CATERVA(caterva_array_to_buffer(cat_ctx, container->catarr, buffer, buflen));
-
         IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
     }
 
