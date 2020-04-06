@@ -376,11 +376,11 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
     // TODO: would it be interesting to add a `buffer_len` parameter to `caterva_from_buffer()`?
     caterva_config_t cfg = {0};
-    _iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+    iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
     caterva_params_t params = {0};
-    _iarray_create_caterva_params(dtshape, &params);
+    iarray_create_caterva_params(dtshape, &params);
     caterva_storage_t storage = {0};
-    _iarray_create_caterva_storage(dtshape, store, &storage);
+    iarray_create_caterva_storage(dtshape, store, &storage);
 
     caterva_context_t *cat_ctx;
     IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
@@ -444,7 +444,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
         IARRAY_FAIL_IF_ERROR(iarray_get_slice_buffer(ctx, container, start, stop, buffer, buflen));
     } else {
         caterva_config_t cfg = {0};
-        _iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+        iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
         caterva_context_t *cat_ctx;
         IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
@@ -779,7 +779,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     ina_rc_t rc;
 
     caterva_config_t cfg = {0};
-    _iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+    iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
     caterva_context_t *cat_ctx;
     IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
@@ -813,10 +813,10 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
         (*dest)->catarr = src->catarr;
     } else {
         caterva_params_t params = {0};
-        _iarray_create_caterva_params(src->dtshape, &params);
+        iarray_create_caterva_params(src->dtshape, &params);
 
         caterva_storage_t storage = {0};
-        _iarray_create_caterva_storage(src->dtshape, store, &storage);
+        iarray_create_caterva_storage(src->dtshape, store, &storage);
 
         if (src->view) {
             int64_t *start = src->auxshape->offset;

@@ -169,15 +169,15 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     ina_mem_cpy((*c)->store, store, sizeof(iarray_store_properties_t));
 
     caterva_config_t cfg = {0};
-    _iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+    iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
     caterva_context_t *cat_ctx;
     IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
     caterva_params_t params = {0};
-   _iarray_create_caterva_params(dtshape, &params);
+    iarray_create_caterva_params(dtshape, &params);
 
     caterva_storage_t storage = {0};
-   _iarray_create_caterva_storage(dtshape, store, &storage);
+    iarray_create_caterva_storage(dtshape, store, &storage);
 
     IARRAY_ERR_CATERVA(caterva_array_empty(cat_ctx, &params, &storage, &(*c)->catarr));
 
