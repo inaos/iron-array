@@ -10,6 +10,7 @@ strategy:
       imageName: 'ubuntu-18.04'
       BUILD_CONFIGURATION: RelWithDebInfo
       MULTITHREADING: False
+      DISABLE_LLVM_CONFIG: True
 
 pool:
   vmImage: $(imageName)
@@ -47,7 +48,9 @@ steps:
 - bash: |
     mkdir cmake-build-$BUILD_CONFIGURATION
     cd cmake-build-$BUILD_CONFIGURATION
-    cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING -DLLVM_ROOT=$CONDA/envs/iArrayEnv -DDO_COVERAGE=TRUE
+    cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING -DDISABLE_LLVM_CONFIG=$DISABLE_LLVM_CONFIG -DLLVM_ROOT=$CONDA/envs/iArrayEnv -DDO_COVERAGE=TRUE
+    cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION  -DMULTITHREADING=$MULTITHREADING
+
     cmake --build .
   displayName: Compile
   env:
