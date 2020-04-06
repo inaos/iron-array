@@ -1204,9 +1204,6 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
     IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
     if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
-//        (*itr)->part = (uint8_t *) cat_ctx->cfg->alloc((size_t)cont->catarr->chunksize *
-//            cont->catarr->itemsize);
-//        cont->catarr->buf = (*itr)->part;
         (*itr)->part = cont->catarr->buf;
     } else {
         (*itr)->part = (uint8_t *) ina_mem_alloc((size_t)cont->catarr->chunksize * cont->catarr->itemsize);
