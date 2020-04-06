@@ -200,7 +200,7 @@ INA_TEST_FIXTURE(set_slice_buffer, 4_d) {
     int32_t type_size = sizeof(double);
 
     const int8_t ndim = 4;
-    int64_t shape[] = {100, 123, 234, 31};
+    int64_t shape[] = {60, 80, 80, 15};
     int64_t *pshape = NULL;
     int64_t start[] = {23, 31, 22, 1};
     int64_t stop[] = {54, 78, 76, 2};
@@ -232,10 +232,10 @@ INA_TEST_FIXTURE(set_slice_buffer, 6_f) {
     int32_t type_size = sizeof(float);
 
     const int8_t ndim = 6;
-    int64_t shape[] = {10, 12, 23, 32, 14, 14};
+    int64_t shape[] = {8, 7, 6, 7, 8, 5};
     int64_t *pshape = NULL;
-    int64_t start[] = {1, 2, 3, 4, 5, 6};
-    int64_t stop[] = {8, 9, 10, 11, 12, 13};
+    int64_t start[] = {1, 2, 3, 4, 5, 2};
+    int64_t stop[] = {3, 4, 4, 7, 7, 4};
     bool transposed = false;
 
 
@@ -248,10 +248,10 @@ INA_TEST_FIXTURE(set_slice_buffer, 7_d) {
     int32_t type_size = sizeof(double);
 
     const int8_t ndim = 7;
-    int64_t shape[] = {10, 12, 23, 32, 14, 14, 12};
+    int64_t shape[] = {5, 7, 6, 4, 8, 6, 5};
     int64_t *pshape = NULL;
-    int64_t start[] = {1, 2, 3, 4, 5, 6, 3};
-    int64_t stop[] = {8, 9, 7, 7, 12, 8, 5};
+    int64_t start[] = {1, 2, 1, 2, 0, 2, 1};
+    int64_t stop[] = {5, 4, 4, 3, 6, 3, 4};
     bool transposed = false;
 
 
