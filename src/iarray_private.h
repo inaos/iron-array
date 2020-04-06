@@ -329,4 +329,9 @@ INA_API(ina_rc_t) iarray_operator_expint1(iarray_context_t *ctx, iarray_containe
 INA_API(ina_rc_t) iarray_operator_cumsum(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 
 
+/* Caterva private functions */
+ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t), void (*free)(void *), caterva_config_t *cat_cfg);
+ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_t *params);
+ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_store_properties_t *store, caterva_storage_t *storage);
+
 #endif
