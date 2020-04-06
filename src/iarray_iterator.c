@@ -588,9 +588,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                 iarray_create_caterva_cfg(itr->ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
                 caterva_context_t *cat_ctx;
                 IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
-
                 IARRAY_ERR_CATERVA(caterva_array_set_slice_buffer(cat_ctx, itr->block, blocksize, start, stop, catarr));
-
                 IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
 
                 if (itr->external_buffer) {
