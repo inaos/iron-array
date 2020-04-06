@@ -57,7 +57,7 @@ static ina_rc_t test_buffer(iarray_context_t *ctx,
 
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf_src, (size_t) buf_size, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf_src, (size_t) buf_size * type_size, &xstore, 0, &c_x));
 
     uint8_t *buf_dest = malloc((size_t)buf_size * type_size);
 

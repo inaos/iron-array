@@ -52,7 +52,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
 
     blosc2_cparams cparams = {0};
     blosc2_dparams dparams = {0};
-    caterva_ctx_t *cat_ctx = NULL;
 
     ina_rc_t rc;
     int blosc_filter_idx = 0;
@@ -85,6 +84,11 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     if ((*c)->dtshape == NULL) {
         IARRAY_TRACE1(iarray.error, "Error allocating the iarray dtshape");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+    }
+    if (store->backend == IARRAY_STORAGE_PLAINBUFFER) {
+        for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
+            dtshape->pshape[i] = dtshape->shape[i];
+        }
     }
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
 
@@ -164,52 +168,40 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     }
     ina_mem_cpy((*c)->store, store, sizeof(iarray_store_properties_t));
 
+    caterva_config_t cfg = {0};
+    iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+    caterva_context_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
-    cat_ctx = caterva_new_ctx(NULL, NULL, cparams, dparams);
-    if (cat_ctx == NULL) {
-        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
-    }
+    caterva_params_t params = {0};
+    iarray_create_caterva_params(dtshape, &params);
 
-    if ((*c)->store->backend == IARRAY_STORAGE_BLOSC) {
-        blosc2_frame *frame = NULL;
-        caterva_dims_t pshape = caterva_new_dims((*c)->dtshape->pshape, (*c)->dtshape->ndim);
+    caterva_storage_t storage = {0};
+    iarray_create_caterva_storage(dtshape, store, &storage);
 
-        if ((*c)->store->enforce_frame) {
-            frame = blosc2_new_frame((*c)->store->filename);
-            if (frame == NULL) {
-                IARRAY_TRACE1(iarray.error, "Error creating a frame");
-                IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
-            }
-        }
-        (*c)->catarr = caterva_empty_array(cat_ctx, frame, &pshape);
-    } else {
-        for (int i = 0; i < dtshape->ndim; ++i) {
-            (*c)->dtshape->pshape[i] = dtshape->shape[i];
-            (*c)->auxshape->pshape_wos[i] = dtshape->shape[i];
-        }
-        (*c)->catarr = caterva_empty_array(cat_ctx, NULL, NULL);
-    }
+    IARRAY_ERR_CATERVA(caterva_array_empty(cat_ctx, &params, &storage, &(*c)->catarr));
 
-    if (cat_ctx != NULL) caterva_free_ctx(cat_ctx);
+    if (cat_ctx != NULL) caterva_context_free(&cat_ctx);
+
     if ((*c)->catarr == NULL) {
         IARRAY_TRACE1(iarray.error, "Error creating the caterva container");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
     }
 
-    uint8_t *smeta;
-    int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
-    if (smeta_len < 0) {
-        IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
-        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
-    }
     if ((*c)->catarr->storage == CATERVA_STORAGE_BLOSC) {
+        uint8_t *smeta;
+        int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
+        if (smeta_len < 0) {
+            IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
+        }
         // And store it in iarray metalayer
         if (blosc2_add_metalayer((*c)->catarr->sc, "iarray", smeta, (uint32_t) smeta_len) < 0) {
             IARRAY_TRACE1(iarray.error, "Error adding a metalayer to blosc");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
         }
+        free(smeta);
     }
-    free(smeta);
     rc = INA_SUCCESS;
     goto cleanup;
     fail:
