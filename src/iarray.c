@@ -299,3 +299,61 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx)
     INA_MEM_FREE_SAFE((*ctx)->cfg);
     INA_MEM_FREE_SAFE(*ctx);
 }
+
+ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t), void (*free)(void *), caterva_config_t *cat_cfg) {
+    cat_cfg->alloc = alloc;
+    cat_cfg->free = free;
+
+    cat_cfg->nthreads = cfg->max_num_threads;
+    cat_cfg->compcodec = cfg->compression_codec;
+    cat_cfg->complevel = cfg->compression_level;
+    cat_cfg->usedict = cfg->use_dict;
+    cat_cfg->prefilter = NULL;
+    cat_cfg->pparams = NULL;
+
+    int blosc_filter_idx = 0;
+    if ((cfg->filter_flags & IARRAY_COMP_TRUNC_PREC)) {
+        cat_cfg->filters[blosc_filter_idx] = BLOSC_TRUNC_PREC;
+        cat_cfg->filtersmeta[blosc_filter_idx] = cfg->fp_mantissa_bits;
+        blosc_filter_idx++;
+    }
+    if (cfg->filter_flags & IARRAY_COMP_BITSHUFFLE) {
+        cat_cfg->filters[blosc_filter_idx] = BLOSC_BITSHUFFLE;
+        blosc_filter_idx++;
+    }
+    if (cfg->filter_flags & IARRAY_COMP_SHUFFLE) {
+        cat_cfg->filters[blosc_filter_idx] = BLOSC_SHUFFLE;
+        blosc_filter_idx++;
+    }
+    if (cfg->filter_flags & IARRAY_COMP_DELTA) {
+        cat_cfg->filters[blosc_filter_idx] = BLOSC_DELTA;
+    }
+    return INA_SUCCESS;
+}
+
+
+ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_t *params) {
+    params->ndim = dtshape->ndim;
+    params->itemsize = dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ? sizeof(double) : sizeof(float);
+    for (int i = 0; i < params->ndim; ++i) {
+        params->shape[i] = dtshape->shape[i];
+    }
+    return INA_SUCCESS;
+}
+
+
+ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_store_properties_t *store, caterva_storage_t *storage) {
+    storage->backend = store->backend == IARRAY_STORAGE_BLOSC ? CATERVA_STORAGE_BLOSC : CATERVA_STORAGE_PLAINBUFFER;
+    switch (storage->backend) {
+        case CATERVA_STORAGE_BLOSC:
+            storage->properties.blosc.enforceframe = store->enforce_frame;
+            storage->properties.blosc.filename = store->filename;
+            for (int i = 0; i < dtshape->ndim; ++i) {
+                storage->properties.blosc.chunkshape[i] = dtshape->pshape[i];
+            }
+            break;
+        case CATERVA_STORAGE_PLAINBUFFER:
+            break;
+    }
+    return INA_SUCCESS;
+}

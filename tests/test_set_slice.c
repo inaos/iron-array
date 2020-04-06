@@ -126,6 +126,7 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx,
     }
 
     iarray_container_free(ctx, &c_x);
+    iarray_container_free(ctx, &slice);
 
     ina_mem_free(buffer_x);
     ina_mem_free(bufdes);
