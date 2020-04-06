@@ -90,8 +90,12 @@ Following our guideline:
 
 ### Adhere to INAC conventions wherever possible
 
-* Alwalys use ina_rc_t as return type of functions
-* Only for functions that end in suffix '_free' we should use the 'void'
+* Always use `ina_rc_t` as return type of functions
+* Add `INA_API(ina_rc_t)` prefix for iron-array public functions
+* Use a plain `ina_rc_t` prefix for private functions to iron-array, but available across compilation units/modules (i.e. those in `iarray_private.h`)
+* Use a `_` prefix for functions private to the compilation unit, usually identified by `static ina_rc_t` (this is to easily spot functions that are local to the compilation unit)
+* Only use `void` as return type for functions that end in suffix `_free` 
+
 
 ### Conditionals for data types
 
