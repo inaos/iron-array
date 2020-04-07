@@ -100,7 +100,7 @@ int main(int argc, char** argv)
     INA_OPTS(opt,
              INA_OPT_INT("e", "expr-type", 1, "COPY = 0, POLY = 1, TRANS1 = 2, , TRANS2 = 3"),
              INA_OPT_INT("M", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOSC = 2, EVAL_ITERBLOSC2 = 3"),
-             INA_OPT_INT("E", "eval-engine", 1, "EVAL_TINYEXPR = 1, EVAL_JUGGERNAUT = 2"),
+             INA_OPT_INT("E", "eval-engine", 1, "EVAL_INTERPRETER = 1, EVAL_COMPILER = 2"),
              INA_OPT_INT("n", "eval-niter", 1, "Number of times to evaluate (default 1)"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
@@ -210,15 +210,15 @@ int main(int argc, char** argv)
     unsigned eval_flags;
     if (eval_method == 1) {
         eval_method_str = "ITERCHUNK";
-        eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK;
+        eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
     }
     else if (eval_method == 2) {
         eval_method_str = "ITERBLOSC";
-        eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC;
+        eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
     }
     else if (eval_method == 3) {
         eval_method_str = "ITERBLOSC2";
-        eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2;
+        eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2;
     }
     else {
         printf("eval_method must be 1, 2, 3\n");
@@ -227,12 +227,12 @@ int main(int argc, char** argv)
 
     const char *eval_engine_str = NULL;
     if (eval_engine == 1) {
-        eval_engine_str = "TINYEXPR";
-        eval_flags |= IARRAY_EXPR_EVAL_ENGINE_TINYEXPR << 3;
+        eval_engine_str = "INTERPRETER";
+        eval_flags |= IARRAY_EVAL_ENGINE_INTERPRETER << 3;
     }
     else if (eval_engine == 2) {
-        eval_engine_str = "JUGGERNAUT";
-        eval_flags |= IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT << 3;
+        eval_engine_str = "COMPILER";
+        eval_flags |= IARRAY_EVAL_ENGINE_COMPILER << 3;
     }
     else {
         printf("eval_engine must be 1, 2\n");

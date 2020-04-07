@@ -113,7 +113,7 @@ INA_TEST_SETUP(get_slice) {
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
-    cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK;
+    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
 
     iarray_context_new(&cfg, &data->ctx);
 }
@@ -333,7 +333,7 @@ INA_TEST_FIXTURE(get_slice_trans, 2_d) {
     int64_t start[] = {2, 1};
     int64_t stop[] = {7, 3};
     int64_t pshape_dest[] = {2, 2};
-    
+
     double result[] = {12, 22, 13, 23, 14, 24, 15, 25, 16, 26};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
@@ -350,7 +350,7 @@ INA_TEST_FIXTURE(get_slice_trans, 2_f_p) {
     int64_t start[] = {2, 1};
     int64_t stop[] = {7, 3};
     int64_t *pshape_dest = NULL;
-    
+
     float result[] = {12, 22, 13, 23, 14, 24, 15, 25, 16, 26};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
@@ -368,7 +368,7 @@ INA_TEST_FIXTURE(get_slice_trans, 2_f) {
     int64_t start[] = {3, 1};
     int64_t stop[] = {5, 8};
     int64_t pshape_dest[] = {2, 1};
-    
+
     float result[] = {13, 23, 33, 43, 53, 63, 73, 14, 24, 34, 44, 54, 64, 74};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
