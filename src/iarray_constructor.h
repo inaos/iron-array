@@ -189,6 +189,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     }
 
     if ((*c)->catarr->storage == CATERVA_STORAGE_BLOSC) {
+        printf("[C] Adding iarray metalayer\n");
         uint8_t *smeta;
         int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
         if (smeta_len < 0) {
@@ -201,6 +202,8 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
         }
         free(smeta);
+
+        printf(blosc2_has_metalayer((*c)->catarr->sc))
     }
     rc = INA_SUCCESS;
     goto cleanup;
