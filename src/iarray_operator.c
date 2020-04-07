@@ -42,6 +42,9 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     int64_t typesize = a->catarr->itemsize;
 
+    c->catarr->empty = false;
+    c->catarr->filled = true;
+
     /* Check if the block is equal to the shape */
     bool a_copy = a->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
     if (!a_copy) {
@@ -262,6 +265,9 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     ina_rc_t rc;
 
     int64_t typesize = a->catarr->itemsize;
+
+    c->catarr->empty = false;
+    c->catarr->filled = true;
 
     /* Check if the block is equal to the shape */
     bool a_copy = a->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
