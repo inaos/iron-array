@@ -21,7 +21,7 @@ int main()
     //char *expr = "sin(x) + 2*y";
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2;
+    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2;
     cfg.blocksize = 0;
     cfg.max_num_threads = 1;
     iarray_context_new(&cfg, &ctx);
