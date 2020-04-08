@@ -57,7 +57,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     int blosc_filter_idx = 0;
 
     /* validation */
-    if (dtshape->ndim > CATERVA_MAXDIM) {
+    if (dtshape->ndim > CATERVA_MAX_DIM) {
         IARRAY_TRACE1(iarray.error, "The container dimension is larger than caterva maximum dimension");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
     }
@@ -202,6 +202,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
         }
         free(smeta);
     }
+
     rc = INA_SUCCESS;
     goto cleanup;
     fail:
@@ -227,7 +228,7 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     ina_rc_t rc;
 
     /* validation */
-    if (dtshape->ndim > CATERVA_MAXDIM) {
+    if (dtshape->ndim > CATERVA_MAX_DIM) {
         IARRAY_TRACE1(iarray.error, "The container dimension is larger than the caterva maximum dimension");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
     }
