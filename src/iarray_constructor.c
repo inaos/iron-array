@@ -397,7 +397,6 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
     }
     IARRAY_ERR_CATERVA(caterva_array_free(cat_ctx, &(*container)->catarr));
 
-    printf("%s\n", storage.properties.blosc.metalayers[0].name);
     IARRAY_ERR_CATERVA(caterva_array_from_buffer(cat_ctx, buffer, buflen, &params, &storage, &(*container)->catarr));
 
     if (storage.backend == CATERVA_STORAGE_BLOSC) {
