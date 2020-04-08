@@ -64,7 +64,7 @@ INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dts
         IARRAY_TRACE1(iarray.error, "The dimensions are not equal");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
     }
-    for (int i = 0; i < CATERVA_MAXDIM; ++i) {
+    for (int i = 0; i < CATERVA_MAX_DIM; ++i) {
         if (a->shape[i] != b->shape[i]) {
             IARRAY_TRACE1(iarray.error, "The shapes are not equal\n");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_SHAPE));
@@ -675,24 +675,24 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
 int _caterva_get_slice_buffer_no_copy(void **dest, caterva_array_t *src, int64_t *start,
                                       int64_t *stop, int64_t *d_pshape) {
     CATERVA_UNUSED_PARAM(d_pshape);
-    int64_t start_[CATERVA_MAXDIM];
-    int64_t stop_[CATERVA_MAXDIM];
+    int64_t start_[CATERVA_MAX_DIM];
+    int64_t stop_[CATERVA_MAX_DIM];
     int8_t s_ndim = src->ndim;
 
     int64_t *shape = src->shape;
-    int64_t s_shape[CATERVA_MAXDIM];
-    for (int i = 0; i < CATERVA_MAXDIM; ++i) {
-        start_[(CATERVA_MAXDIM - s_ndim + i) % CATERVA_MAXDIM] = i < s_ndim ? start[i] : 1;
-        stop_[(CATERVA_MAXDIM - s_ndim + i) % CATERVA_MAXDIM] = i < s_ndim ? stop[i] : 1;
-        s_shape[(CATERVA_MAXDIM - s_ndim + i) % CATERVA_MAXDIM] = i < s_ndim ? shape[i] : 1;
+    int64_t s_shape[CATERVA_MAX_DIM];
+    for (int i = 0; i < CATERVA_MAX_DIM; ++i) {
+        start_[(CATERVA_MAX_DIM - s_ndim + i) % CATERVA_MAX_DIM] = i < s_ndim ? start[i] : 1;
+        stop_[(CATERVA_MAX_DIM - s_ndim + i) % CATERVA_MAX_DIM] = i < s_ndim ? stop[i] : 1;
+        s_shape[(CATERVA_MAX_DIM - s_ndim + i) % CATERVA_MAX_DIM] = i < s_ndim ? shape[i] : 1;
     }
-    for (int j = 0; j < CATERVA_MAXDIM - s_ndim; ++j) {
+    for (int j = 0; j < CATERVA_MAX_DIM - s_ndim; ++j) {
         start_[j] = 0;
     }
 
     int64_t chunk_pointer = 0;
     int64_t chunk_pointer_inc = 1;
-    for (int i = CATERVA_MAXDIM - 1; i >= 0; --i) {
+    for (int i = CATERVA_MAX_DIM - 1; i >= 0; --i) {
         chunk_pointer += start_[i] * chunk_pointer_inc;
         chunk_pointer_inc *= s_shape[i];
     }
