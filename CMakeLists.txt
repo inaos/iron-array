@@ -73,7 +73,7 @@ if (UNIX AND NOT APPLE AND NOT DISABLE_LLVM_CONFIG)
     # The next should be the canonical way, but for now only Linux and some llvm distros seems safe
     execute_process(COMMAND ${LLVM_TOOLS_BINARY_DIR}/llvm-config --libs OUTPUT_VARIABLE llvm_libs
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif(UNIX AND NOT APPLE)
+endif(UNIX AND NOT APPLE AND NOT DISABLE_LLVM_CONFIG)
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${IPP_LIBRARIES} ${llvm_libs})
 
 set(SRC ${CMAKE_SOURCE_DIR}/src)
