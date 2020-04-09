@@ -1,10 +1,10 @@
 #include "minjuggutil.h"
-#include <stdlib.h>
+#include <cstdlib>
 
 #include <llvm-c/Transforms/PassManagerBuilder.h>
-
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/Support/CommandLine.h"
 
 
 using namespace llvm;
