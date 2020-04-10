@@ -170,7 +170,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
     uint32_t eval_method = e->ctx->cfg->eval_flags & 0x3u;
     uint32_t eval_engine = (e->ctx->cfg->eval_flags & 0x38u) >> 3u;
 
-    if (eval_method == IARRAY_EXPR_EVAL_METHOD_AUTO) {
+    if (eval_method == IARRAY_EVAL_METHOD_AUTO) {
         iarray_storage_type_t backend = IARRAY_STORAGE_BLOSC;
         bool equal_pshape = true;
 
@@ -195,21 +195,21 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
         }
 
         if (backend == IARRAY_STORAGE_PLAINBUFFER) {
-           eval_method = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK;
+           eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;
         } else {
             if (!equal_pshape) {
-                eval_method = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC;
+                eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
             } else {
-                eval_method = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2;
+                eval_method = IARRAY_EVAL_METHOD_ITERBLOSC2;
             }
         }
     }
 
-    if (eval_engine == IARRAY_EXPR_EVAL_ENGINE_AUTO) {
-        if (eval_method == IARRAY_EXPR_EVAL_METHOD_ITERCHUNK) {
-            eval_engine = IARRAY_EXPR_EVAL_ENGINE_TINYEXPR;
+    if (eval_engine == IARRAY_EVAL_ENGINE_AUTO) {
+        if (eval_method == IARRAY_EVAL_METHOD_ITERCHUNK) {
+            eval_engine = IARRAY_EVAL_ENGINE_INTERPRETER;
         } else {
-            eval_engine = IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT;
+            eval_engine = IARRAY_EVAL_ENGINE_COMPILER;
         }
     }
 
@@ -232,7 +232,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
     }
     else {
         blosc2_schunk *schunk = catarr->sc;
-        if (eval_method == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2) {
+        if (eval_method == IARRAY_EVAL_METHOD_ITERBLOSC2) {
             uint8_t *chunk;
             bool needs_free;
             int retcode = blosc2_schunk_get_chunk(schunk, 0, &chunk, &needs_free);
@@ -252,8 +252,8 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
             e->chunksize = (int32_t) chunksize;
             e->blocksize = (int32_t) blocksize;
         }
-        else if (eval_method == IARRAY_EXPR_EVAL_METHOD_ITERCHUNK ||
-                 eval_method == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC) {
+        else if (eval_method == IARRAY_EVAL_METHOD_ITERCHUNK ||
+                 eval_method == IARRAY_EVAL_METHOD_ITERBLOSC) {
             e->chunksize = schunk->chunksize;
         }
         else {
@@ -273,10 +273,10 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
     iarray_dtshape_t dtshape_var = {0};  // initialize to 0s
     dtshape_var.ndim = 1;
     int32_t temp_var_dim0 = 0;
-    if (eval_method == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2) {
+    if (eval_method == IARRAY_EVAL_METHOD_ITERBLOSC2) {
         temp_var_dim0 = e->blocksize / e->typesize;
-    } else if (eval_method == IARRAY_EXPR_EVAL_METHOD_ITERCHUNK ||
-               eval_method == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC) {
+    } else if (eval_method == IARRAY_EVAL_METHOD_ITERCHUNK ||
+               eval_method == IARRAY_EVAL_METHOD_ITERBLOSC) {
         temp_var_dim0 = e->chunksize / e->typesize;
         e->blocksize = 0;
     } else {
@@ -350,7 +350,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 
     int err = 0;
     uint32_t eval_engine = (e->ctx->cfg->eval_flags & 0x38u) >> 3u;
-    if (eval_engine == IARRAY_EXPR_EVAL_ENGINE_TINYEXPR) {
+    if (eval_engine == IARRAY_EVAL_ENGINE_INTERPRETER) {
         if (e->ctx->cfg->max_num_threads > 1) {
             // tinyexpr engine does not support multi-threading, so disable it silently
             IARRAY_TRACE1(iarray.warning, "tinyexpr does not support multithreading: fall back to use 1 thread");
@@ -362,7 +362,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_EVAL_ENGINE_NOT_COMPILED));
         }
     }
-    else if (eval_engine == IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT) {
+    else if (eval_engine == IARRAY_EVAL_ENGINE_COMPILER) {
         ina_rc_t err = jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars,
                                               jug_vars, e->typesize, &e->jug_expr_func);
         if (err) {
@@ -400,12 +400,12 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     int64_t offset_index = pparams->out_offset / typesize;
 
     unsigned int eval_method = e->ctx->cfg->eval_flags & 0x7u;
-    if (eval_method == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC) {
+    if (eval_method == IARRAY_EVAL_METHOD_ITERBLOSC) {
         // We can only set the visible shape of the output for the ITERBLOSC eval method.
         eval_pparams.window_shape = expr_pparams->out_value.block_shape;
         eval_pparams.window_start = expr_pparams->out_value.elem_index;
     }
-    else if (eval_pparams.ndim == 1 && eval_method == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2) {
+    else if (eval_pparams.ndim == 1 && eval_method == IARRAY_EVAL_METHOD_ITERBLOSC2) {
         // For iterblosc2 we will need to wait til the storage backend would support sub-partitions.
         // However, we can still provide the info with 1-dim vectors.
         eval_pparams.window_shape = &nitems;
@@ -457,12 +457,12 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     int ret;
     uint32_t eval_engine = (e->ctx->cfg->eval_flags & 0x38u) >> 3u;
     switch (eval_engine) {
-        case IARRAY_EXPR_EVAL_ENGINE_TINYEXPR:
+        case IARRAY_EVAL_ENGINE_INTERPRETER:
             e->max_out_len = pparams->out_size / pparams->out_typesize;  // so as to prevent operating beyond the limits
             const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
             memcpy(pparams->out, (uint8_t*)expr_out->data, pparams->out_size);
             break;
-        case IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT:
+        case IARRAY_EVAL_ENGINE_COMPILER:
             ret = ((iarray_eval_fn)e->jug_expr_func)(&eval_pparams);
             switch (ret) {
                 case 0:
@@ -551,7 +551,7 @@ INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container
 
         // Eval the expression for this chunk
         uint32_t eval_engine = (e->ctx->cfg->eval_flags & 0x38u) >> 3u;
-        if (eval_engine == IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT) {
+        if (eval_engine == IARRAY_EVAL_ENGINE_COMPILER) {
             IARRAY_TRACE1(iarray.error, "LLVM engine cannot be used with iterchunk");
             return INA_ERROR(IARRAY_ERR_INVALID_EVAL_ENGINE);
         }
@@ -967,11 +967,11 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
     uint32_t eval_method = e->ctx->cfg->eval_flags & 0x3u;
 
     switch (eval_method) {
-        case IARRAY_EXPR_EVAL_METHOD_ITERCHUNK:
+        case IARRAY_EVAL_METHOD_ITERCHUNK:
             return iarray_eval_iterchunk(e, ret, out_pshape);
-        case IARRAY_EXPR_EVAL_METHOD_ITERBLOSC:
+        case IARRAY_EVAL_METHOD_ITERBLOSC:
             return iarray_eval_iterblosc(e, ret, out_pshape);
-        case IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2:
+        case IARRAY_EVAL_METHOD_ITERBLOSC2:
             return iarray_eval_iterblosc2(e, ret, out_pshape);
         default:
             IARRAY_TRACE1(iarray.error, "Invalid eval method");

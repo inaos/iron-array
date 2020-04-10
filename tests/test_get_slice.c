@@ -113,7 +113,7 @@ INA_TEST_SETUP(get_slice) {
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
-    cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK;
+    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
 
     iarray_context_new(&cfg, &data->ctx);
 }
@@ -270,43 +270,6 @@ INA_TEST_FIXTURE(get_slice, 7_f) {
                                                   start, stop, result, false));
 }
 
-INA_TEST_FIXTURE(get_slice, 8_d_p_v) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int32_t type_size = sizeof(double);
-
-    const int8_t ndim = 8;
-    int64_t shape[] = {10, 10, 10, 10, 10, 10, 10, 10};
-    int64_t *pshape = NULL;
-    int64_t start[] = {3, 5, 2, 4, 5, 1, 6, 0};
-    int64_t stop[] = {6, 6, 4, 6, 7, 3, 7, 3};
-    int64_t *pshape_dest = NULL;
-
-    double result[] = {35245160, 35245161, 35245162, 35245260, 35245261, 35245262, 35246160,
-                       35246161, 35246162, 35246260, 35246261, 35246262, 35255160, 35255161,
-                       35255162, 35255260, 35255261, 35255262, 35256160, 35256161, 35256162,
-                       35256260, 35256261, 35256262, 35345160, 35345161, 35345162, 35345260,
-                       35345261, 35345262, 35346160, 35346161, 35346162, 35346260, 35346261,
-                       35346262, 35355160, 35355161, 35355162, 35355260, 35355261, 35355262,
-                       35356160, 35356161, 35356162, 35356260, 35356261, 35356262, 45245160,
-                       45245161, 45245162, 45245260, 45245261, 45245262, 45246160, 45246161,
-                       45246162, 45246260, 45246261, 45246262, 45255160, 45255161, 45255162,
-                       45255260, 45255261, 45255262, 45256160, 45256161, 45256162, 45256260,
-                       45256261, 45256262, 45345160, 45345161, 45345162, 45345260, 45345261,
-                       45345262, 45346160, 45346161, 45346162, 45346260, 45346261, 45346262,
-                       45355160, 45355161, 45355162, 45355260, 45355261, 45355262, 45356160,
-                       45356161, 45356162, 45356260, 45356261, 45356262, 55245160, 55245161,
-                       55245162, 55245260, 55245261, 55245262, 55246160, 55246161, 55246162,
-                       55246260, 55246261, 55246262, 55255160, 55255161, 55255162, 55255260,
-                       55255261, 55255262, 55256160, 55256161, 55256162, 55256260, 55256261,
-                       55256262, 55345160, 55345161, 55345162, 55345260, 55345261, 55345262,
-                       55346160, 55346161, 55346162, 55346260, 55346261, 55346262, 55355160,
-                       55355161, 55355162, 55355260, 55355261, 55355262, 55356160, 55356161,
-                       55356162, 55356260, 55356261, 55356262};
-
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
-                                                  start, stop, result, false));
-}
-
 INA_TEST_DATA(get_slice_trans) {
     iarray_context_t *ctx;
 };
@@ -333,7 +296,7 @@ INA_TEST_FIXTURE(get_slice_trans, 2_d) {
     int64_t start[] = {2, 1};
     int64_t stop[] = {7, 3};
     int64_t pshape_dest[] = {2, 2};
-    
+
     double result[] = {12, 22, 13, 23, 14, 24, 15, 25, 16, 26};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
@@ -350,7 +313,7 @@ INA_TEST_FIXTURE(get_slice_trans, 2_f_p) {
     int64_t start[] = {2, 1};
     int64_t stop[] = {7, 3};
     int64_t *pshape_dest = NULL;
-    
+
     float result[] = {12, 22, 13, 23, 14, 24, 15, 25, 16, 26};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
@@ -368,7 +331,7 @@ INA_TEST_FIXTURE(get_slice_trans, 2_f) {
     int64_t start[] = {3, 1};
     int64_t stop[] = {5, 8};
     int64_t pshape_dest[] = {2, 1};
-    
+
     float result[] = {13, 23, 33, 43, 53, 63, 73, 14, 24, 34, 44, 54, 64, 74};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
