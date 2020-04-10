@@ -135,6 +135,7 @@ INA_TEST_TEARDOWN(set_slice_buffer) {
     iarray_destroy();
 }
 
+
 INA_TEST_FIXTURE(set_slice_buffer, 2_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
@@ -238,7 +239,6 @@ INA_TEST_FIXTURE(set_slice_buffer, 6_f) {
     int64_t stop[] = {3, 4, 4, 7, 7, 4};
     bool transposed = false;
 
-
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, pshape,
                                                       start, stop, transposed));
 }
@@ -253,7 +253,6 @@ INA_TEST_FIXTURE(set_slice_buffer, 7_d) {
     int64_t start[] = {1, 2, 1, 2, 0, 2, 1};
     int64_t stop[] = {5, 4, 4, 3, 6, 3, 4};
     bool transposed = false;
-
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, pshape,
                                                       start, stop, transposed));
