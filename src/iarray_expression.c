@@ -358,14 +358,17 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         }
         e->texpr = te_compile(e, ina_str_cstr(e->expr), te_vars, e->nvars, &err);
         if (e->texpr == 0) {
-            IARRAY_TRACE1(iarray.error, "Error compiling the expression");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_NOT_COMPILED));
+            IARRAY_TRACE1(iarray.error, "Error compiling the expression with tinyexpr");
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_EVAL_ENGINE_NOT_COMPILED));
         }
     }
     else if (eval_engine == IARRAY_EVAL_ENGINE_COMPILER) {
-        INA_FAIL_IF_ERROR(jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars,
-                          jug_vars, e->typesize, &e->jug_expr_func)
-        );
+        ina_rc_t err = jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars,
+                                              jug_vars, e->typesize, &e->jug_expr_func);
+        if (err) {
+            IARRAY_TRACE1(iarray.error, "Error compiling the expression with juggernaut");
+            INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_EVAL_ENGINE_NOT_COMPILED));
+        }
     }
     else {
         return IARRAY_ERR_INVALID_EVAL_ENGINE;
@@ -461,14 +464,21 @@ int prefilter_func(blosc2_prefilter_params *pparams)
             break;
         case IARRAY_EVAL_ENGINE_COMPILER:
             ret = ((iarray_eval_fn)e->jug_expr_func)(&eval_pparams);
-            if (ret < 0) {
-                IARRAY_TRACE1(iarray.error, "Error in LLVM eval engine");
-                return -2;
+            switch (ret) {
+                case 0:
+                    // 0 means success
+                    break;
+                case 1:
+                    IARRAY_TRACE1(iarray.error, "Out of bounds in LLVM eval engine");
+                    return INA_ERROR(IARRAY_ERR_EVAL_ENGINE_OUT_OF_RANGE);
+                default:
+                    IARRAY_TRACE1(iarray.error, "Error in executing LLVM eval engine");
+                    return INA_ERROR(IARRAY_ERR_EVAL_ENGINE_FAILED);
             }
             break;
         default:
             IARRAY_TRACE1(iarray.error, "Invalid eval engine");
-            return -1;
+            return INA_ERROR(IARRAY_ERR_INVALID_EVAL_ENGINE);
     }
 
     if (expr_pparams->compressed_inputs) {
