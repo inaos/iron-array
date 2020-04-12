@@ -92,14 +92,6 @@ steps:
     jfrog_artifactory_pwd: $(jfrog_artifactory_pwd)
 
 - bash: |
-    unzip ${LLVM_PKG_NAME}-${LLVM_PKG_VERSION}.zip
-  env:
-    LLVM_PKG_NAME: $(LLVM_PKG_NAME)
-    LLVM_PKG_VERSION: $(LLVM_PKG_VERSION)
-  condition:
-    eq( variables['Agent.OS'], 'Windows_NT' )
-
-- bash: |
     if [ "$AGENT_OS" != "Windows_NT" ]
       then
         mkdir cmake-build-$BUILD_CONFIGURATION
