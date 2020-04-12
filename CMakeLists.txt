@@ -9,6 +9,8 @@
 # Information and shall use it only in accordance with the terms of the license agreement.
 #
 cmake_minimum_required (VERSION 3.12)
+cmake_policy(SET CMP0048 NEW)
+cmake_policy(SET CMP0091 NEW)
 project(iarray VERSION 0.1.5)
 
 option(MULTITHREADING "Use multithreaded iarray" OFF)
