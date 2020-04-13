@@ -2,16 +2,16 @@
 
 # iron-array
 
-### Setup
+## Setup
 
-#### Git commit-hooks
+### Git commit-hooks
 
 Execute the following commands:
 
       cp conf/pre-commit .git/hooks/
 
 
-### Build
+## Build
 
 We use inac cmake build-system in combination with different libraries which can be installed using
 miniconda3.  In particular, one can install MKL, IPP and SVML from Intel in a cross-platform
@@ -22,7 +22,11 @@ portable way with:
     $ conda install -c intel ipp  # IPP
     $ conda install -c intel icc_rt  # SVML
 
-#### Windows
+Also, you will need to install LLVM development libraries.  You can use conda for that (`llvmdev`)
+package, although it is better to use the native libraries in the system (using `apt`, `brew` or any
+other packager of your preference).
+
+### Windows
 
 * INAC build setup
     * Make sure that you have a configured repository.txt file in ~\.inaos\cmake
@@ -38,7 +42,7 @@ portable way with:
          cmake -G"Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Debug ..
          cmake -G"Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 
-#### Mac
+### Mac
 
 * INAC build setup:
     * Make sure that you have a configured repository.txt file in ~/.inaos/cmake
@@ -60,7 +64,7 @@ portable way with:
          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMULTITHREADING=TRUE ..
 
 
-#### Linux
+### Linux
 
 * INAC build setup
     * Make sure that you have a configured repository.txt file in ~/.inaos/cmake
@@ -90,9 +94,8 @@ portable way with:
          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMULTITHREADING=TRUE ..
 
 
-#### Expressions
+### Expressions
 
 * For now only element-wise operations are supported in expression.
 
 * The iron-array library supports disabling SVML optimization by setting a `DISABLE_SVML` environment variable to *any* value.  This can be useful for debugging purposes.
-
