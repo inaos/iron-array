@@ -1080,11 +1080,6 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
             caterva_context_free(&cat_ctx);
         }
     }
-    INA_MEM_FREE_SAFE((*container)->cparams);
-    INA_MEM_FREE_SAFE((*container)->dparams);
-    INA_MEM_FREE_SAFE((*container)->dtshape);
-    INA_MEM_FREE_SAFE((*container)->auxshape);
-    INA_MEM_FREE_SAFE((*container)->store);
     INA_MEM_FREE_SAFE(*container);
 }
 
