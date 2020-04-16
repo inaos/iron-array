@@ -75,6 +75,10 @@ static ina_rc_t test_buffer(iarray_context_t *ctx,
         }
     }
 
+    free(buf_dest);
+    free(buf_src);
+    iarray_container_free(ctx, &c_x);
+
     return INA_SUCCESS;
 }
 
