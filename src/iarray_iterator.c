@@ -748,7 +748,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
     if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
-        cont->catarr->buf = cat_ctx->cfg->alloc((size_t) cont->catarr->size * typesize);
+        memset(cont->catarr->buf, 0, cont->catarr->size * typesize);
         if (cont->catarr->buf == NULL) {
             IARRAY_TRACE1(iarray.error, "Error allocating the caterva buffer where data is stored");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
