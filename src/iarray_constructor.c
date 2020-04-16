@@ -386,11 +386,9 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
     uint8_t *smeta = NULL;
     if (storage.backend == CATERVA_STORAGE_BLOSC) {
-        blosc2_metalayer *metalayer = (*container)->catarr->sc->metalayers[1];
         storage.properties.blosc.nmetalayers = 1;
         storage.properties.blosc.metalayers[0].name = "iarray";
-        uint32_t smeta_len = metalayer->content_len;
-        //smeta = malloc(smeta_len);
+        uint32_t smeta_len;
         blosc2_get_metalayer((*container)->catarr->sc, "iarray", &smeta, &smeta_len);
         storage.properties.blosc.metalayers[0].sdata = smeta;
         storage.properties.blosc.metalayers[0].size = smeta_len;
