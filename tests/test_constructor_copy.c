@@ -78,6 +78,7 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
     }
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_x);
+    iarray_container_free(ctx, &c_aux);
 
     return INA_SUCCESS;
 }
