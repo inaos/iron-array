@@ -49,6 +49,8 @@ static ina_rc_t test_cfg(iarray_context_t *ctx,
         return INA_ERROR(INA_ERR_ERROR);
     }
 
+    iarray_container_free(ctx, &c_x);
+    iarray_container_free(ctx, &z_x);
     return INA_SUCCESS;
 
 }
