@@ -1079,14 +1079,13 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
             caterva_array_free(cat_ctx, &(*container)->catarr);
             caterva_context_free(&cat_ctx);
         }
-
-        INA_MEM_FREE_SAFE((*container)->cparams);
-        INA_MEM_FREE_SAFE((*container)->dparams);
-        INA_MEM_FREE_SAFE((*container)->dtshape);
-        INA_MEM_FREE_SAFE((*container)->auxshape);
-        INA_MEM_FREE_SAFE((*container)->store);
-        INA_MEM_FREE_SAFE(*container);
     }
+    INA_MEM_FREE_SAFE((*container)->cparams);
+    INA_MEM_FREE_SAFE((*container)->dparams);
+    INA_MEM_FREE_SAFE((*container)->dtshape);
+    INA_MEM_FREE_SAFE((*container)->auxshape);
+    INA_MEM_FREE_SAFE((*container)->store);
+    INA_MEM_FREE_SAFE(*container);
 }
 
 INA_API(ina_rc_t) iarray_container_gt(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result)
