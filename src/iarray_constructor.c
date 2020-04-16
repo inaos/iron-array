@@ -800,13 +800,18 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     ina_mem_cpy((*dest)->dtshape, src->dtshape, sizeof(iarray_dtshape_t));
     (*dest)->view = view;
     (*dest)->transposed = src->transposed;
-    (*dest)->cparams = (blosc2_cparams *) ina_mem_alloc(sizeof(blosc2_cparams));
-    ina_mem_cpy((*dest)->cparams, src->cparams, sizeof(blosc2_cparams));
-    (*dest)->dparams = (blosc2_dparams *) ina_mem_alloc(sizeof(blosc2_dparams));
-    ina_mem_cpy((*dest)->dparams, src->dparams, sizeof(blosc2_dparams));
-
-    (*dest)->store = (iarray_store_properties_t *) ina_mem_alloc(sizeof(iarray_store_properties_t));
-    ina_mem_cpy((*dest)->store, store, sizeof(iarray_store_properties_t));
+    if ((*dest)->view) {
+        (*dest)->cparams = src->cparams;
+        (*dest)->dparams = src->dparams;
+        (*dest)->store = src->store;
+    } else {
+        (*dest)->cparams = (blosc2_cparams *) ina_mem_alloc(sizeof(blosc2_cparams));
+        ina_mem_cpy((*dest)->cparams, src->cparams, sizeof(blosc2_cparams));
+        (*dest)->dparams = (blosc2_dparams *) ina_mem_alloc(sizeof(blosc2_dparams));
+        ina_mem_cpy((*dest)->dparams, src->dparams, sizeof(blosc2_dparams));
+        (*dest)->store = (iarray_store_properties_t *) ina_mem_alloc(sizeof(iarray_store_properties_t));
+        ina_mem_cpy((*dest)->store, store, sizeof(iarray_store_properties_t));
+    }
 
     if (src->view && !view) {
         (*dest)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
