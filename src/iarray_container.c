@@ -239,6 +239,8 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, const char *filen
     (*container)->store->backend = IARRAY_STORAGE_BLOSC;
     (*container)->store->enforce_frame = enforce_frame;
 
+    free(smeta);
+
     rc = INA_SUCCESS;
     goto cleanup;
     fail:
