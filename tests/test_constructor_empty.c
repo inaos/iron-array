@@ -54,6 +54,9 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
     INA_TEST_ASSERT_SUCCEED(iarray_container_info(z_x, &nbytes, &cbytes));
     INA_TEST_ASSERT_SUCCEED(cbytes <= nbytes);
 
+    iarray_container_free(ctx, &c_x);
+    iarray_container_free(ctx, &z_x);
+
     return INA_SUCCESS;
 
 }
