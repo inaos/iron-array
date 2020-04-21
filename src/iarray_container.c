@@ -118,6 +118,7 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
             IARRAY_TRACE1(iarray.error, "Error converting a blosc schunk to a blosc frame");
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
         }
+        free(frame);
     } else {
         if (container->catarr->sc->frame->fname != NULL) {
             IARRAY_TRACE1(iarray.error, "Container is already on disk");
