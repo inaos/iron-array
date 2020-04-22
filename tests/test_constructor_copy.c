@@ -73,11 +73,11 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
     }
     iarray_container_almost_equal(c_x, c_y, tol);
 
+    iarray_container_free(ctx, &c_y);
+    iarray_container_free(ctx, &c_x);
     if (src_view) {
         iarray_container_free(ctx, &c_aux);
     }
-    iarray_container_free(ctx, &c_y);
-    iarray_container_free(ctx, &c_x);
 
     return INA_SUCCESS;
 }

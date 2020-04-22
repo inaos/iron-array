@@ -608,6 +608,7 @@ INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_containe
         blosc2_get_metalayer(a->catarr->sc, "iarray", &content, &content_len);
         *(content + 2) = *(content + 2) ^ 64ULL;
         blosc2_update_metalayer(a->catarr->sc, "iarray", content, content_len);
+        free(content);
     }
 
     int64_t aux[IARRAY_DIMENSION_MAX];
