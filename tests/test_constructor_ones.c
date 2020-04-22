@@ -59,6 +59,9 @@ static ina_rc_t test_ones(iarray_context_t *ctx,
         }
     }
 
+    iarray_container_free(ctx, &c_x);
+    free(buf_dest);
+
     return INA_SUCCESS;
 }
 
