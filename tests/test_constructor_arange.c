@@ -104,7 +104,7 @@ INA_TEST_FIXTURE(constructor_arange, 2_d_p) {
     double start = - 0.1;
     double stop = - 0.25;
 
-    INA_TEST_ASSERT_SUCCEED(test_frame_leak(data->ctx, dtype, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
 INA_TEST_FIXTURE(constructor_arange, 2_f) {
@@ -116,7 +116,7 @@ INA_TEST_FIXTURE(constructor_arange, 2_f) {
     double start = 3123;
     double stop = 45654;
 
-    INA_TEST_ASSERT_SUCCEED(test_frame_leak(data->ctx, dtype, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
 INA_TEST_FIXTURE(constructor_arange, 5_d) {
@@ -128,7 +128,7 @@ INA_TEST_FIXTURE(constructor_arange, 5_d) {
     double start = 0.1;
     double stop = 0.2;
 
-    INA_TEST_ASSERT_SUCCEED(test_frame_leak(data->ctx, dtype, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
 INA_TEST_FIXTURE(constructor_arange, 7_f_p) {
@@ -140,5 +140,5 @@ INA_TEST_FIXTURE(constructor_arange, 7_f_p) {
     double start = 10;
     double stop = 0;
 
-    INA_TEST_ASSERT_SUCCEED(test_frame_leak(data->ctx, dtype, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }

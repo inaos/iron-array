@@ -13,7 +13,7 @@
 #include <libiarray/iarray.h>
 
 
-static ina_rc_t test_frame_leak(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim,
+static ina_rc_t test_frame_bug(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim,
                                 const int64_t *shape, const int64_t *pshape, double start,
                                 double stop)
 {
@@ -79,35 +79,35 @@ static ina_rc_t test_frame_leak(iarray_context_t *ctx, iarray_data_type_t dtype,
     return INA_SUCCESS;
 }
 
-INA_TEST_DATA(constructor_arange) {
+INA_TEST_DATA(frame_bug) {
     iarray_context_t *ctx;
 };
 
-INA_TEST_SETUP(constructor_arange) {
+INA_TEST_SETUP(frame_bug) {
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
 }
 
-INA_TEST_TEARDOWN(constructor_arange) {
+INA_TEST_TEARDOWN(frame_bug) {
     iarray_context_free(&data->ctx);
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(constructor_arange, 2_d) {
+INA_TEST_FIXTURE(frame_bug, 2_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
     int64_t shape[] = {100, 100};
-    int64_t *pshape = {23, 3};
+    int64_t pshape[] = {23, 3};
     double start = - 0.1;
     double stop = - 0.25;
 
-    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_frame_bug(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
-INA_TEST_FIXTURE(constructor_arange, 2_f) {
+INA_TEST_FIXTURE(frame_bug, 2_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 2;
@@ -116,10 +116,10 @@ INA_TEST_FIXTURE(constructor_arange, 2_f) {
     double start = 3123;
     double stop = 45654;
 
-    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_frame_bug(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
-INA_TEST_FIXTURE(constructor_arange, 5_d) {
+INA_TEST_FIXTURE(frame_bug, 5_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 5;
@@ -128,17 +128,17 @@ INA_TEST_FIXTURE(constructor_arange, 5_d) {
     double start = 0.1;
     double stop = 0.2;
 
-    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_frame_bug(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
 
-INA_TEST_FIXTURE(constructor_arange, 7_f) {
+INA_TEST_FIXTURE(frame_bug, 7_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 7;
     int64_t shape[] = {5, 7, 8, 9, 6, 5, 7};
-    int64_t *pshape = {2, 2, 2, 2, 2, 2, 2};
+    int64_t pshape[] = {2, 2, 2, 2, 2, 2, 2};
     double start = 10;
     double stop = 0;
 
-    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_frame_bug(data->ctx, dtype, ndim, shape, pshape, start, stop));
 }
