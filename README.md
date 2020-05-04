@@ -21,6 +21,7 @@ portable way with:
     $ conda install -c intel mkl-static  # MKL
     $ conda install -c intel ipp  # IPP
     $ conda install -c intel icc_rt  # SVML
+    $ conda install -c numba llvmdev # LLVM
 
 Also, you will need to install LLVM development libraries.  You can use conda for that (`llvmdev`)
 package, although it is better to use the native libraries in the system (using `apt`, `brew` or any
