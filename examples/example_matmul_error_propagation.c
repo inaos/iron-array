@@ -80,7 +80,7 @@ int main()
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = n_threads;
-    iarray_context_t *ctx;
+    iarray_context_t *ctx = NULL;
     IARRAY_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
 
     iarray_dtshape_t dtshape_x;
@@ -96,7 +96,7 @@ int main()
     store.enforce_frame = false;
     store.filename = NULL;
 
-    iarray_container_t *cont_a;
+    iarray_container_t *cont_a = NULL;
     IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_a, -100, 100, &store, 0, &cont_a));
 
     iarray_dtshape_t dtshape_y;
@@ -107,7 +107,7 @@ int main()
         dtshape_y.pshape[i] = pshape_b[i];
     }
 
-    iarray_container_t *cont_b;
+    iarray_container_t *cont_b = NULL;
     IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_b, -100, 100, &store, 0, &cont_b));
 
     iarray_dtshape_t dtshape_z;
@@ -118,7 +118,7 @@ int main()
         dtshape_z.pshape[i] = pshape_c[i];
     }
 
-    iarray_container_t *cont_c;
+    iarray_container_t *cont_c = NULL;
     IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, &store, 0, &cont_c));
 
     double *a = (double *) malloc(size_a * sizeof(double));
@@ -148,7 +148,7 @@ int main()
     rc = INA_SUCCESS;
     goto cleanup;
     fail:
-        rc = ina_err_get_rc();
+        return ina_err_get_rc();
     cleanup:
         iarray_container_free(ctx, &cont_a);
         iarray_container_free(ctx, &cont_b);
