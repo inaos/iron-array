@@ -138,7 +138,7 @@ int main()
     success = true;
     goto cleanup;
     fail:
-    success = false;
+    return ina_err_get_rc();
     cleanup:
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
