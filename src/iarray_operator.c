@@ -13,20 +13,6 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-static int mult_c(const double *a, const double *b, double *c, const int I, const int J, const int K) {
-
-    for (int i = 0; i < I; ++i) {
-        for (int j = 0; j < J; ++j) {
-            double sum = 0;
-            for (int k = 0; k < K; ++k) {
-                sum = sum + a[i * K + k] * b[k * J + j];
-            }
-            c[i * J + j] += sum;
-        }
-    }
-
-    return 0;
-}
 
 static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c,
                              int64_t *bshape_a, int64_t *bshape_b) {

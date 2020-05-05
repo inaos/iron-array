@@ -653,7 +653,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
     while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
         IARRAY_FAIL_IF_ERROR(iarray_iter_read_next(iter));
 
-        double data;
+        double data = 0.0;
         switch(container1->dtshape->dtype){
             case IARRAY_DATA_TYPE_DOUBLE:
                 data = ((double *) val.elem_pointer)[0];
@@ -677,7 +677,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
     while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
         IARRAY_FAIL_IF_ERROR(iarray_iter_read_next(iter));
 
-        double data;
+        double data = 0.0;
         switch(container1->dtshape->dtype){
             case IARRAY_DATA_TYPE_DOUBLE:
                 data = ((double *) val.elem_pointer)[0];
