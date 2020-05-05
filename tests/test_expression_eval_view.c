@@ -136,26 +136,23 @@ INA_TEST_TEARDOWN(expression_eval_view)
     iarray_destroy();
 }
 
-static double expr0(const double x)
-{
-    return (fabs(-x) - 1.35) * ceil(x) * floor(x - 8.5);
-}
+//static double expr0(const double x)
+//{
+//    return (fabs(-x) - 1.35) * ceil(x) * floor(x - 8.5);
+//}
 
 
-static double expr1(const double x)
-{
-    return (cos(x) - 1.35) * tan(x) * sin(x - 8.5);
-    //return (x - 1.35) + sin(.45);  // TODO: fix evaluation of func(constant)
-}
-
+//static double expr1(const double x)
+//{
+//    return (x - 1.35) + sin(.45);  // TODO: fix evaluation of func(constant)
+//}
 
 static double expr2(const double x)
 {
     return sinh(x) + (cosh(x) - 1.35) - tanh(x + .2);
 }
 
-// TODO: fix that for Linux in Azure CI (it works well on my local linux box and MacOSX)
-INA_TEST_FIXTURE(expression_eval_view, iterblosc_superchunk)
+INA_TEST_FIXTURE(expression_eval_view, iterblosc_superchunk_2)
 {
     data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC | (IARRAY_EVAL_ENGINE_COMPILER << 3);
     data->func = expr2;
@@ -173,9 +170,9 @@ static double expr3(const double x)
     return asin(x) + (acos(x) - 1.35) - atan(x + .2);
 }
 
-INA_TEST_FIXTURE(expression_eval_view, iterchunk_superchunk)
+INA_TEST_FIXTURE(expression_eval_view, iterchunk_superchunk_3)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr3;
     data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
 
@@ -191,12 +188,25 @@ static double expr4(const double x)
     return exp(x) + (log(x) - 1.35) - log10(x + .2);
 }
 
+INA_TEST_FIXTURE(expression_eval_view, iterchunk_plainbuffer_4)
+{
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
+    data->func = expr4;
+    data->expr_str = "exp(x) + (log(x) - 1.35) - log10(x + .2)";
+
+    int8_t ndim = 3;
+    int64_t shape[] = {121, 121, 123};
+    int64_t pshape[] = {0, 0, 0};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, true, data->func, data->expr_str));
+}
+
 static double expr5(const double x)
 {
     return sqrt(x) + atan2(x, x) + pow(x, x);
 }
 
-INA_TEST_FIXTURE(expression_eval_view, iterchunk_plainbuffer)
+INA_TEST_FIXTURE(expression_eval_view, iterchunk_plainbuffer_5)
 {
     data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
     data->func = expr5;
