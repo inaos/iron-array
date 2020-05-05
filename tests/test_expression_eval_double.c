@@ -110,6 +110,7 @@ INA_TEST_SETUP(expression_eval_double)
 
 INA_TEST_TEARDOWN(expression_eval_double)
 {
+    INA_UNUSED(data);
     iarray_destroy();
 }
 

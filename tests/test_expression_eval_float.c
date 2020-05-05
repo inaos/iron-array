@@ -109,6 +109,7 @@ INA_TEST_SETUP(expression_eval_float)
 
 INA_TEST_TEARDOWN(expression_eval_float)
 {
+    INA_UNUSED(data);
     iarray_destroy();
 }
 
