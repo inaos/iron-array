@@ -20,7 +20,6 @@ int main()
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int64_t shape[] = {10, 10};
     int64_t pshape[] = {2, 3};
-    int64_t bshape[] = {2, 10};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_t *ctx;
