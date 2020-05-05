@@ -340,7 +340,7 @@ INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
                                      void *buffer,
-                                     size_t buflen,
+                                     int64_t buflen,
                                      iarray_store_properties_t *store,
                                      int flags,
                                      iarray_container_t **container)
@@ -358,13 +358,13 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
     switch ((*container)->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            if ((* container)->catarr->size * (int64_t)sizeof(double) > buflen) {
+            if ((* container)->catarr->size * sizeof(double) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The size of the buffer is not enough");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             }
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            if ((* container)->catarr->size * (int64_t)sizeof(float) > buflen) {
+            if ((* container)->catarr->size * sizeof(float) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The size of the buffer is not enough");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             }
@@ -415,9 +415,9 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
 
 INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
-    iarray_container_t *container,
-    void *buffer,
-    size_t buflen)
+                                   iarray_container_t *container,
+                                   void *buffer,
+                                   int64_t buflen)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(buffer);
@@ -432,13 +432,13 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
 
     switch (container->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            if (size * (int64_t)sizeof(double) > buflen) {
+            if (size * sizeof(double) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             }
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            if (size * (int64_t)sizeof(float) > buflen) {
+            if (size * sizeof(float) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             }
