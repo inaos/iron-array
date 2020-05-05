@@ -112,17 +112,16 @@ INA_TEST_TEARDOWN(expression_eval_float)
     iarray_destroy();
 }
 
-static float expr0(const float x)
-{
-    return (fabsf(-x) - 1.35f) * ceilf(x) * floorf(x - 8.5f);
-}
-
-
-static float expr1(const float x)
-{
-    return (cosf(x) - 1.35f) * tanf(x) * sinf(x - 8.5f);
-    //return (x - 1.35) + sin(.45);  // TODO: fix evaluation of func(constant)
-}
+//static float expr0(const float x)
+//{
+//    return (fabsf(-x) - 1.35f) * ceilf(x) * floorf(x - 8.5f);
+//}
+//
+//
+//static float expr1(const float x)
+//{
+//    return (x - 1.35) + sin(.45);  // TODO: fix evaluation of func(constant)
+//}
 
 
 static float expr2(const float x)
@@ -161,10 +160,23 @@ INA_TEST_FIXTURE(expression_eval_float, iterchunk_superchunk)
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, false, data->func, data->expr_str));
 }
 
-static float expr4(const float x)
-{
-    return expf(x) + (logf(x) - 1.35f) - log10f(x + .2f);
-}
+//static float expr4(const float x)
+//{
+//    return expf(x) + (logf(x) - 1.35f) - log10f(x + .2f); //TODO: Fix error with this function
+//}
+//
+//INA_TEST_FIXTURE(expression_eval_float, iterchunk_plainbuffer_4)
+//{
+//    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
+//    data->func = expr4;
+//    data->expr_str = "expf(x) + (logf(x) - 1.35f) - log10f(x + .2f)";
+//
+//    int8_t ndim = 3;
+//    int64_t shape[] = {121, 121, 123};
+//    int64_t pshape[] = {0, 0, 0};
+//
+//    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, true, data->func, data->expr_str));
+//}
 
 static float expr5(const float x)
 {
