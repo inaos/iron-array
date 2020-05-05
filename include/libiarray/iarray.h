@@ -507,7 +507,7 @@ INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
                                      void *buffer,
-                                     size_t buflen,
+                                     int64_t buflen,
                                      iarray_store_properties_t *store,
                                      int flags,
                                      iarray_container_t **container);
@@ -515,7 +515,7 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
                                    iarray_container_t *container,
                                    void *buffer,
-                                   size_t buflen);
+                                   int64_t buflen);
 
 INA_API(bool) iarray_is_empty(iarray_container_t *container);
 

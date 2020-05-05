@@ -831,8 +831,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
     pparams.user_data = (void *) &expr_pparams;
     cparams->pparams = &pparams;
 
-    int32_t blocksize = e->blocksize;
-
     // Initialize the typesize for each variable
     for (int nvar = 0; nvar < nvars; nvar++) {
         iarray_container_t *var = e->vars[nvar].c;

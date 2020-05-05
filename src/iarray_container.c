@@ -26,6 +26,7 @@ static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data
 
     //version
     uint8_t version = *pmeta;
+    INA_UNUSED(version);
     pmeta +=1;
 
     // We only have an entry with the datatype (enumerated < 128)
@@ -1034,7 +1035,8 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
                 double rdiff = fabs(((double *)val_a.block_pointer)[i] - ((double *)val_b.block_pointer)[i]) /
                     ((double *)val_a.block_pointer)[i];
                 if (rdiff > tol) {
-                    //printf("%f, %f\n", ((double *)val_a.block_pointer)[i], ((double *)val_b.block_pointer)[i]);
+                    printf("%f, %f (adiff: %f, rdiff: %f)\n", ((double *)val_a.block_pointer)[i],
+                        ((double *)val_b.block_pointer)[i], adiff, rdiff);
                     IARRAY_TRACE1(iarray.error, "Values are different");
                     IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_ASSERTION_FAILED));
                 }
@@ -1043,10 +1045,11 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
         else {
             for (int64_t i = 0; i < val_a.block_size; ++i) {
                 float adiff = fabsf(((float *)val_a.block_pointer)[i] - ((float *)val_b.block_pointer)[i]);
-                float vdiff = fabsf(((float *)val_a.block_pointer)[i] - ((float *)val_b.block_pointer)[i]) /
+                float rdiff = fabsf(((float *)val_a.block_pointer)[i] - ((float *)val_b.block_pointer)[i]) /
                     ((float *)val_a.block_pointer)[i];
-                if (vdiff > tol) {
-                    //printf("%f, %f\n", ((float *)val_a.block_pointer)[i], ((float *)val_b.block_pointer)[i]);
+                if (rdiff > tol) {
+                    printf("%f, %f (adiff: %f, rdiff: %f)\n", ((float *)val_a.block_pointer)[i],
+                           ((float *)val_b.block_pointer)[i], adiff, rdiff);
                     IARRAY_TRACE1(iarray.error, "Values are different");
                     IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_ASSERTION_FAILED));
                 }
