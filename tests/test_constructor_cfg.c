@@ -61,6 +61,7 @@ INA_TEST_DATA(constructor_cfg) {
 
 INA_TEST_SETUP(constructor_cfg)
 {
+    INA_UNUSED(data);
     iarray_init();
 }
 
