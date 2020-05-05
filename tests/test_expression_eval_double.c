@@ -144,17 +144,17 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc2_superchunk)
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, false, data->func, data->expr_str));
 }
 
-// TODO: make a test for testing these special functions
-static double expr0(const double x)
-{
-    return (fabs(-x) - 1.35) * ceil(x) * floor(x - 8.5);
-}
-
-// TODO: make a test for testing the evaluation of a func(constant)
-static double expr1(const double x)
-{
-    return (x - 1.35) + sin(.45);
-}
+//// TODO: make a test for testing these special functions
+//static double expr0(const double x)
+//{
+//    return (fabs(-x) - 1.35) * ceil(x) * floor(x - 8.5);
+//}
+//
+//// TODO: make a test for testing the evaluation of a func(constant)
+//static double expr1(const double x)
+//{
+//    return (x - 1.35) + sin(.45);
+//}
 
 static double expr2(const double x)
 {
