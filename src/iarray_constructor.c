@@ -358,13 +358,13 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
     switch ((*container)->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            if ((* container)->catarr->size * sizeof(double) > buflen) {
+            if ((* container)->catarr->size * (int64_t) sizeof(double) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The size of the buffer is not enough");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             }
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            if ((* container)->catarr->size * sizeof(float) > buflen) {
+            if ((* container)->catarr->size * (int64_t) sizeof(float) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The size of the buffer is not enough");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             }
@@ -432,13 +432,13 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
 
     switch (container->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            if (size * sizeof(double) > buflen) {
+            if (size * (int64_t) sizeof(double) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             }
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            if (size * sizeof(float) > buflen) {
+            if (size * (int64_t) sizeof(float) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             }
@@ -651,6 +651,8 @@ INA_API(ina_rc_t) iarray_to_sview(iarray_context_t *ctx, iarray_container_t *c, 
 
 INA_API(ina_rc_t) iarray_from_sview(iarray_context_t *ctx, uint8_t *sview, int64_t sview_len, iarray_container_t **c) {
 
+    INA_UNUSED(sview_len);
+
     ina_rc_t rc;
 
     INA_VERIFY_NOT_NULL(ctx);
@@ -770,10 +772,6 @@ INA_API(ina_rc_t) iarray_from_sview(iarray_context_t *ctx, uint8_t *sview, int64
     memcpy((*c)->dparams, &dparams, sizeof(blosc2_dparams));
 
     rc = INA_SUCCESS;
-    goto cleanup;
-    fail:
-    rc = ina_err_get_rc();
-    cleanup:
     return rc;
 }
 
@@ -788,6 +786,8 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(src);
     INA_VERIFY_NOT_NULL(store);
     INA_VERIFY_NOT_NULL(dest);
+
+    INA_UNUSED(flags);
     ina_rc_t rc;
 
     caterva_config_t cfg = {0};
