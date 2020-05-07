@@ -13,6 +13,9 @@ cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0091 NEW)
 project(iarray VERSION 0.1.5)
 
+set(GCC_COVERAGE_COMPILE_FLAGS "-Wall")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}" )
+
 option(MULTITHREADING "Use multithreaded iarray" OFF)
 option(DISABLE_LLVM_CONFIG "Disable the use of llvm-config for finding libraris" OFF)
 

@@ -14,6 +14,7 @@
 
 
 double eval_expr(double x, double y) {
+    INA_UNUSED(y);
     double out = sinh(x) + (cosh(x) - 1.35) - tanh(x + .2);
     //printf("Out: %f\n", out);
     return out;
