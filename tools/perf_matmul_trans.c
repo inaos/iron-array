@@ -45,9 +45,9 @@ int main(int argc, char** argv)
 {
     ina_stopwatch_t *w = NULL;
     iarray_context_t *ctx = NULL;
-    const char *mat_x_name = NULL;
-    const char *mat_y_name = NULL;
-    const char *mat_out_name = NULL;
+    char *mat_x_name = NULL;
+    char *mat_y_name = NULL;
+    char *mat_out_name = NULL;
 
     int64_t nbytes = 0;
     int64_t cbytes = 0;
