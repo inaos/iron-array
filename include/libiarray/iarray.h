@@ -131,7 +131,7 @@ typedef enum iarray_storage_type_e {
 
 typedef struct iarray_store_properties_s {
     iarray_storage_type_t backend;
-    const char *filename;
+    char *filename;
     bool enforce_frame;
 } iarray_store_properties_t;
 
@@ -489,7 +489,7 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                                           int64_t buflen);
 
 INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx,
-                                        const char *filename,
+                                        char *filename,
                                         bool enforce_frame,
                                         iarray_container_t **container);
 

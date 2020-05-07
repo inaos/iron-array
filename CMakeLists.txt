@@ -53,9 +53,13 @@ include_directories(${LLVM_INCLUDE_DIRS})
 
 add_subdirectory(contribs/c-blosc2)
 include_directories(contribs/c-blosc2/blosc)
-set(BLOSC_LIB blosc2_static) # required for caterva tests
+set(BLOSC_LIB blosc2_static) # required for caterva
+
+set(CATERVA_BUILD_TESTS OFF)
+set(CATERVA_BUILD_EXAMPLES OFF)
 add_subdirectory(contribs/caterva)
 include_directories(contribs/caterva/caterva)
+
 add_subdirectory(contribs/minjugg)
 include_directories(contribs/minjugg/include)
 
