@@ -19,7 +19,6 @@ portable way with:
 
     $ conda install -c intel mkl-include  # MKL
     $ conda install -c intel mkl-static  # MKL
-    $ conda install -c intel ipp  # IPP
     $ conda install -c intel ipp-devel # IPP
     $ conda install -c intel icc_rt  # SVML
     $ conda install -c numba llvmdev # LLVM
