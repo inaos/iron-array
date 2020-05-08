@@ -115,37 +115,37 @@ void jug_te_free(jug_te_expr *n) {
 }
 
 
-static double pi(void) {return 3.14159265358979323846;}
-static double e(void) {return 2.71828182845904523536;}
-static double fac(double a) {/* simplest version of fac */
-    if (a < 0.0)
-        return NAN;
-    if (a > UINT_MAX)
-        return INFINITY;
-    unsigned int ua = (unsigned int)(a);
-    unsigned long int result = 1, i;
-    for (i = 1; i <= ua; i++) {
-        if (i > ULONG_MAX / result)
-            return INFINITY;
-        result *= i;
-    }
-    return (double)result;
-}
-static double ncr(double n, double r) {
-    if (n < 0.0 || r < 0.0 || n < r) return NAN;
-    if (n > UINT_MAX || r > UINT_MAX) return INFINITY;
-    unsigned long int un = (unsigned int)(n), ur = (unsigned int)(r), i;
-    unsigned long int result = 1;
-    if (ur > un / 2) ur = un - ur;
-    for (i = 1; i <= ur; i++) {
-        if (result > ULONG_MAX / (un - ur + i))
-            return INFINITY;
-        result *= un - ur + i;
-        result /= i;
-    }
-    return result;
-}
-static double npr(double n, double r) {return ncr(n, r) * fac(r);}
+//static double pi(void) {return 3.14159265358979323846;}
+//static double e(void) {return 2.71828182845904523536;}
+//static double fac(double a) {/* simplest version of fac */
+//    if (a < 0.0)
+//        return NAN;
+//    if (a > UINT_MAX)
+//        return INFINITY;
+//    unsigned int ua = (unsigned int)(a);
+//    unsigned long int result = 1, i;
+//    for (i = 1; i <= ua; i++) {
+//        if (i > ULONG_MAX / result)
+//            return INFINITY;
+//        result *= i;
+//    }
+//    return (double)result;
+//}
+//static double ncr(double n, double r) {
+//    if (n < 0.0 || r < 0.0 || n < r) return NAN;
+//    if (n > UINT_MAX || r > UINT_MAX) return INFINITY;
+//    unsigned long int un = (unsigned int)(n), ur = (unsigned int)(r), i;
+//    unsigned long int result = 1;
+//    if (ur > un / 2) ur = un - ur;
+//    for (i = 1; i <= ur; i++) {
+//        if (result > ULONG_MAX / (un - ur + i))
+//            return INFINITY;
+//        result *= un - ur + i;
+//        result /= i;
+//    }
+//    return result;
+//}
+//static double npr(double n, double r) {return ncr(n, r) * fac(r);}
 
 static const jug_te_variable functions[] = {
     /* must be in alphabetical order */
@@ -216,12 +216,12 @@ static const jug_te_variable *find_lookup(const state *s, const char *name, int 
 
 
 
-static double add(double a, double b) {return a + b;}
-static double sub(double a, double b) {return a - b;}
-static double mul(double a, double b) {return a * b;}
-static double divide(double a, double b) {return a / b;}
-static double negate(double a) {return -a;}
-static double comma(double a, double b) {(void)a; return b;}
+//static double add(double a, double b) {return a + b;}
+//static double sub(double a, double b) {return a - b;}
+//static double mul(double a, double b) {return a * b;}
+//static double divide(double a, double b) {return a / b;}
+//static double negate(double a) {return -a;}
+//static double comma(double a, double b) {(void)a; return b;}
 
 
 static void next_token(state *s) {
@@ -558,30 +558,30 @@ static jug_te_expr *list(state *s) {
 #undef TE_FUN
 #undef M
 
-static void optimize(jug_te_expr *n) {
-    /* Evaluates as much as possible. */
-    if (n->type == TE_CONSTANT) return;
-    if (n->type == TE_VARIABLE) return;
-
-    /* Only optimize out functions flagged as pure. */
-    if (IS_PURE(n->type)) {
-        const int arity = ARITY(n->type);
-        int known = 1;
-        int i;
-        for (i = 0; i < arity; ++i) {
-            optimize(n->parameters[i]);
-            if (((jug_te_expr*)(n->parameters[i]))->type != TE_CONSTANT) {
-                known = 0;
-            }
-        }
-        /*if (known) {
-            const double value = te_eval(n);
-            te_free_parameters(n);
-            n->type = TE_CONSTANT;
-            n->value = value;
-        }*/
-    }
-}
+//static void optimize(jug_te_expr *n) {
+//    /* Evaluates as much as possible. */
+//    if (n->type == TE_CONSTANT) return;
+//    if (n->type == TE_VARIABLE) return;
+//
+//    /* Only optimize out functions flagged as pure. */
+//    if (IS_PURE(n->type)) {
+//        const int arity = ARITY(n->type);
+//        int known = 1;
+//        int i;
+//        for (i = 0; i < arity; ++i) {
+//            optimize(n->parameters[i]);
+//            if (((jug_te_expr*)(n->parameters[i]))->type != TE_CONSTANT) {
+//                known = 0;
+//            }
+//        }
+//        /*if (known) {
+//            const double value = te_eval(n);
+//            te_free_parameters(n);
+//            n->type = TE_CONSTANT;
+//            n->value = value;
+//        }*/
+//    }
+//}
 
 jug_te_expr *jug_te_compile(const char *expression, const jug_te_variable *variables, int var_count, int *error) {
     state s;
@@ -618,32 +618,32 @@ jug_te_expr *jug_te_compile(const char *expression, const jug_te_variable *varia
     return ret;
 }*/
 
-static void pn (const jug_te_expr *n, int depth) {
-    int i, arity;
-    printf("%*s", depth, "");
-
-    switch(TYPE_MASK(n->type)) {
-    case TE_CONSTANT: printf("%f\n", n->value); break;
-    case TE_VARIABLE: printf("bound %s\n", n->bound); break;
-
-    case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:
-    case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:
-    case TE_CLOSURE0: case TE_CLOSURE1: case TE_CLOSURE2: case TE_CLOSURE3:
-    case TE_CLOSURE4: case TE_CLOSURE5: case TE_CLOSURE6: case TE_CLOSURE7:
-         arity = ARITY(n->type);
-         printf("%s(%d)", te_function_map_str[n->function], arity);
-         /*for(i = 0; i < arity; i++) {
-             printf(" %p", n->parameters[i]);
-         }*/
-         printf("\n");
-         for(i = 0; i < arity; i++) {
-             pn(n->parameters[i], depth + 1);
-         }
-         break;
-    }
-}
-
-
-static void te_print(const jug_te_expr *n) {
-    pn(n, 0);
-}
+//static void pn (const jug_te_expr *n, int depth) {
+//    int i, arity;
+//    printf("%*s", depth, "");
+//
+//    switch(TYPE_MASK(n->type)) {
+//    case TE_CONSTANT: printf("%f\n", n->value); break;
+//    case TE_VARIABLE: printf("bound %s\n", n->bound); break;
+//
+//    case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:
+//    case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:
+//    case TE_CLOSURE0: case TE_CLOSURE1: case TE_CLOSURE2: case TE_CLOSURE3:
+//    case TE_CLOSURE4: case TE_CLOSURE5: case TE_CLOSURE6: case TE_CLOSURE7:
+//         arity = ARITY(n->type);
+//         printf("%s(%d)", te_function_map_str[n->function], arity);
+//         /*for(i = 0; i < arity; i++) {
+//             printf(" %p", n->parameters[i]);
+//         }*/
+//         printf("\n");
+//         for(i = 0; i < arity; i++) {
+//             pn(n->parameters[i], depth + 1);
+//         }
+//         break;
+//    }
+//}
+//
+//
+//static void te_print(const jug_te_expr *n) {
+//    pn(n, 0);
+//}

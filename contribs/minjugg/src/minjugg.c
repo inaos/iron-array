@@ -57,12 +57,12 @@ typedef struct _jug_fun_type_s {
 } _jug_fun_type_t;
 
 static const _jug_fun_type_t _jug_function_map[] = {
-    {"EXPR_TYPE_ADD", 0, 0, 2, (void*)LLVMBuildFAdd, (void*)LLVMBuildFAdd, 0, 0},
-    {"EXPR_TYPE_SUB", 0, 0, 2, (void*)LLVMBuildFSub, (void*)LLVMBuildFSub, 0, 0},
-    {"EXPR_TYPE_MUL", 0, 0, 2, (void*)LLVMBuildFMul, (void*)LLVMBuildFMul, 0, 0},
-    {"EXPR_TYPE_DIVIDE", 0, 0, 2, (void*)LLVMBuildFDiv, (void*)LLVMBuildFDiv, 0, 0},
-    {"EXPR_TYPE_NEGATE", 0, 0, 1, (void*)LLVMBuildFNeg, (void*)LLVMBuildFNeg, 0, 0},
-    {"EXPR_TYPE_COMMA", 1, 1, 1, NULL, NULL, 0, 0},
+    {"EXPR_TYPE_ADD", 0, 0, 2, (void*)LLVMBuildFAdd, (void*)LLVMBuildFAdd, {0}, {0}},
+    {"EXPR_TYPE_SUB", 0, 0, 2, (void*)LLVMBuildFSub, (void*)LLVMBuildFSub, {0}, {0}},
+    {"EXPR_TYPE_MUL", 0, 0, 2, (void*)LLVMBuildFMul, (void*)LLVMBuildFMul, {0}, {0}},
+    {"EXPR_TYPE_DIVIDE", 0, 0, 2, (void*)LLVMBuildFDiv, (void*)LLVMBuildFDiv, {0}, {0}},
+    {"EXPR_TYPE_NEGATE", 0, 0, 1, (void*)LLVMBuildFNeg, (void*)LLVMBuildFNeg, {0}, {0}},
+    {"EXPR_TYPE_COMMA", 1, 1, 1, NULL, NULL, {0}, {0}},
     {"EXPR_TYPE_ABS", 1, 0, 1, NULL, NULL, "llvm.fabs.f32", "llvm.fabs.f64"},
     {"EXPR_TYPE_ACOS", 1, 0, 1, NULL, NULL, "acosf", "acos"},
     {"EXPR_TYPE_ASIN", 1, 0, 1, NULL, NULL, "asinf", "asin"},
@@ -71,23 +71,22 @@ static const _jug_fun_type_t _jug_function_map[] = {
     {"EXPR_TYPE_CEIL", 1, 0, 1, NULL, NULL, "llvm.ceil.f32", "llvm.ceil.f64"},
     {"EXPR_TYPE_COS", 1, 0, 1, NULL, NULL, "llvm.cos.f32", "llvm.cos.f64"},
     {"EXPR_TYPE_COSH", 1, 0, 1, NULL, NULL, "coshf", "cosh"},
-    {"EXPR_TYPE_E", 1, 1, 1, NULL, NULL, 0, 0},
+    {"EXPR_TYPE_E", 1, 1, 1, NULL, NULL, {0}, {0}},
     {"EXPR_TYPE_EXP", 1, 0, 1, NULL, NULL, "llvm.exp.f32", "llvm.exp.f64"},
-    {"EXPR_TYPE_FAC", 1, 1, 1, NULL, NULL, 0, 0},
+    {"EXPR_TYPE_FAC", 1, 1, 1, NULL, NULL, {0}, {0}},
     {"EXPR_TYPE_FLOOR", 1, 0, 1, NULL, NULL, "llvm.floor.f32", "llvm.floor.f64"},
     {"EXPR_TYPE_LN", 1, 0, 1, NULL, NULL, "llvm.log.f32", "llvm.log.f64"},
     {"EXPR_TYPE_LOG", 1, 0, 1, NULL, NULL, "llvm.log10.f32", "llvm.log10.f64"},
-    {"EXPR_TYPE_NCR", 1, 1, 1, NULL, NULL, 0, 0},
-    {"EXPR_TYPE_NPR", 1, 1, 1, NULL, NULL, 0, 0},
-    {"EXPR_TYPE_PI", 1, 1, 1, NULL, NULL, 0, 0},
+    {"EXPR_TYPE_NCR", 1, 1, 1, NULL, NULL, {0}, {0}},
+    {"EXPR_TYPE_NPR", 1, 1, 1, NULL, NULL, {0}, {0}},
+    {"EXPR_TYPE_PI", 1, 1, 1, NULL, NULL, {0}, {0}},
     {"EXPR_TYPE_POW", 1, 0, 2, NULL, NULL, "llvm.pow.f32", "llvm.pow.f64"},
     {"EXPR_TYPE_SIN", 1, 0, 1, NULL, NULL, "llvm.sin.f32", "llvm.sin.f64"},
     {"EXPR_TYPE_SINH", 1, 0, 1, NULL, NULL, "sinhf", "sinh"},
     {"EXPR_TYPE_SQRT", 1, 0, 1, NULL, NULL, "llvm.sqrt.f32", "llvm.sqrt.f64"},
     {"EXPR_TYPE_TAN", 1, 0, 1, NULL, NULL, "tanf", "tan"},
     {"EXPR_TYPE_TANH", 1, 0, 1, NULL, NULL, "tanhf", "tanh"},
-    {"EXPR_TYPE_FMOD", 1, 0, 2, NULL, NULL, "fmodf", "fmod"},
-    0,
+    {"EXPR_TYPE_FMOD", 1, 0, 2, NULL, NULL, "fmodf", "fmod"}
 };
 
 static LLVMValueRef _jug_build_fun_call(jug_expression_t *e, const char *name, int num_args, LLVMValueRef *args)
