@@ -13,7 +13,7 @@
 #include <libiarray/iarray.h>
 
 
-int main()
+int main(void)
 {
     iarray_init();
 
