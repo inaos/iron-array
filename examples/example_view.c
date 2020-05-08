@@ -14,7 +14,7 @@
 #include <iarray_private.h>
 
 
-int main()
+int main(void)
 {
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
