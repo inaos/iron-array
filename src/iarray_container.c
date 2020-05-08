@@ -693,6 +693,8 @@ int _caterva_get_slice_buffer_no_copy(void **dest, caterva_array_t *src, int64_t
     for (int j = 0; j < CATERVA_MAX_DIM - s_ndim; ++j) {
         start_[j] = 0;
     }
+    
+    CATERVA_UNUSED_PARAM(stop);
 
     int64_t chunk_pointer = 0;
     int64_t chunk_pointer_inc = 1;
