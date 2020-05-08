@@ -12,7 +12,7 @@
 
 #include <libiarray/iarray.h>
 
-int main()
+int main(void)
 {
     ina_rc_t rc;
 

@@ -21,7 +21,7 @@ double eval_expr(double x, double y) {
 }
 
 
-int main()
+int main(void)
 {
     iarray_init();
 

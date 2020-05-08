@@ -53,7 +53,7 @@ double error_percent(const double *a, const double *b, uint64_t size) {
     return cont / (double) size;
 }
 
-int main()
+int main(void)
 {
     iarray_init();
     ina_rc_t rc;
