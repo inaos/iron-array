@@ -553,6 +553,7 @@ INA_API(ina_rc_t) jug_init()
     LLVMBool llvm_error;
     llvm_error = LLVMInitializeNativeTarget();
     llvm_error = LLVMInitializeNativeAsmPrinter();
+    INA_UNUSED(llvm_error);
     LLVMLinkInMCJIT();
 
     _jug_def_triple = LLVMGetDefaultTargetTriple();
@@ -604,7 +605,7 @@ INA_API(ina_rc_t) jug_expression_new(jug_expression_t **expr)
     memset(*expr, 0, sizeof(jug_expression_t));
     (*expr)->mod = LLVMModuleCreateWithName("expr_engine");
     m = (*expr)->mod;
-
+    INA_UNUSED(m);
     _jug_register_functions(*expr);
 
 #ifdef _JUG_DEBUG_DECLARE_PRINT_IN_IR
