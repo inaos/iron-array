@@ -84,7 +84,7 @@ int main(void)
     bool success = true;
     for (int64_t i = 0; i < nelem; i++) {
         if (buff_out[i] != eval_expr(buff_x[i], buff_y[i])) {
-            printf("ERROR in pos %lld\n", i);
+            printf("ERROR in pos %ld\n", i);
             success = false;
             break;
         }
