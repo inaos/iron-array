@@ -14,7 +14,11 @@ cmake_policy(SET CMP0091 NEW)
 
 project(iarray VERSION 0.1.5)
 
-set(CMAKE_C_FLAGS "-Wall -Wextra")
+if (MSVC)
+    set(CMAKE_C_FLAGS "/W3")
+else()
+    set(CMAKE_C_FLAGS "-Wall -Wextra")
+endif()
 option(MULTITHREADING "Use multithreaded iarray" OFF)
 option(DISABLE_LLVM_CONFIG "Disable the use of llvm-config for finding libraris" OFF)
 
