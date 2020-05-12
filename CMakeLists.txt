@@ -26,7 +26,7 @@ option(DISABLE_LLVM_CONFIG "Disable the use of llvm-config for finding libraris"
 if (MSVC)
     add_compile_options(/wd4204)
     add_compile_options(/wd4232)  # TODO: fix this (warning C4232: nonstandard extension used)
-    add_compile_options(/wd)  # TODO: fix this (warning C4127: conditional expression is constant)
+    add_compile_options(/wd4127)  # TODO: fix this (warning C4127: conditional expression is constant)
 endif()
 
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
