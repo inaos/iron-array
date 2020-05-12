@@ -15,7 +15,7 @@ cmake_policy(SET CMP0091 NEW)
 project(iarray VERSION 0.1.5)
 
 if (MSVC)
-    set(CMAKE_C_FLAGS "/W3")
+    set(CMAKE_C_FLAGS "/W4")
 else()
     set(CMAKE_C_FLAGS "-Wall -Wextra")
 endif()
