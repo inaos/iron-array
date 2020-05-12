@@ -24,7 +24,8 @@ option(DISABLE_LLVM_CONFIG "Disable the use of llvm-config for finding libraris"
 
 # Disable weird MSVC warnings
 if (MSVC)
-add_compile_options(/wd4204)
+    add_compile_options(/wd4204)
+    add_compile_options(/wd4232)  # TODO: Fix this
 endif()
 
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
