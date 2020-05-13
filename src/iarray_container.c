@@ -113,7 +113,7 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
             IARRAY_TRACE1(iarray.error, "Error creating blosc2 frame");
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
         }
-        int err = blosc2_schunk_to_frame(container->catarr->sc, frame);
+        int64_t err = blosc2_schunk_to_frame(container->catarr->sc, frame);
 
         if (err < 0) {
             IARRAY_TRACE1(iarray.error, "Error converting a blosc schunk to a blosc frame");
@@ -402,7 +402,7 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
     int typesize = slice->catarr->itemsize;
     int64_t buflen = slice->catarr->size;
 
-    uint8_t *buffer;
+    uint8_t *buffer = NULL;
     if (slice->catarr->storage == CATERVA_STORAGE_BLOSC) {
         buffer = ina_mem_alloc(buflen * typesize);
         IARRAY_FAIL_IF_ERROR(iarray_to_buffer(ctx, slice, buffer, buflen * typesize));
@@ -433,7 +433,7 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                                           const int64_t *start,
                                           const int64_t *stop,
                                           void *buffer,
-                                          const int64_t buflen)
+                                          int64_t buflen)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(start);
@@ -548,7 +548,7 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                                           const int64_t *start,
                                           const int64_t *stop,
                                           void *buffer,
-                                          const int64_t buflen)
+                                          int64_t buflen)
 {
     // TODO: make use of buflen so as to avoid exceeding the buffer boundaries
     INA_UNUSED(ctx);

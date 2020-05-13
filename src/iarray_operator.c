@@ -105,7 +105,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint8_t *a_block = NULL;
     uint8_t *b_block = NULL;
 
-    uint8_t *c_block;
+    uint8_t *c_block = NULL;
 
     caterva_config_t cfg = {0};
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
@@ -324,7 +324,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint8_t *a_block = NULL;
     uint8_t *b_block = NULL;
 
-    uint8_t *c_block;
+    uint8_t *c_block = NULL;
 
     caterva_config_t cfg = {0};
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);

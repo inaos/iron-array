@@ -363,9 +363,9 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         }
     }
     else if (eval_engine == IARRAY_EVAL_ENGINE_COMPILER) {
-        ina_rc_t err = jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars,
+        ina_rc_t ina_err = jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars,
                                               jug_vars, e->typesize, &e->jug_expr_func);
-        if (err) {
+        if (INA_FAILED(ina_err)) {
             IARRAY_TRACE1(iarray.error, "Error compiling the expression with juggernaut");
             INA_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_EVAL_ENGINE_NOT_COMPILED));
         }
@@ -438,7 +438,7 @@ int prefilter_func(blosc2_prefilter_params *pparams)
                 eval_pparams.inputs[i] = ina_mem_alloc_aligned(64, bsize);
                 ninputs_malloced++;
             }
-            int rbytes = blosc_getitem(expr_pparams->inputs[i], offset_index, nitems, eval_pparams.inputs[i]);
+            int64_t rbytes = blosc_getitem(expr_pparams->inputs[i], offset_index, nitems, eval_pparams.inputs[i]);
             if (rbytes != bsize) {
                 fprintf(stderr, "Read from inputs failed inside pipeline\n");
                 return -1;
@@ -724,7 +724,7 @@ void _iarray_reset_padding(void *src, int8_t typesize, int8_t ndim, int64_t *a_p
     int32_t actual_pshape[IARRAY_DIMENSION_MAX];
     int32_t dest_pshape[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
-        actual_pshape[(IARRAY_DIMENSION_MAX - ndim + i) % IARRAY_DIMENSION_MAX] = a_pshape[i];
+        actual_pshape[(IARRAY_DIMENSION_MAX - ndim + i) % IARRAY_DIMENSION_MAX] = (int32_t) a_pshape[i];
         dest_pshape[(IARRAY_DIMENSION_MAX - ndim + i) % IARRAY_DIMENSION_MAX] = d_pshape[i];
     }
     for (int i = 0; i < IARRAY_DIMENSION_MAX - ndim; ++i) {
@@ -901,7 +901,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
             }
 
             // Set the padding to 0's
-            _iarray_reset_padding(out_value.block_pointer, ret->cparams->typesize, ret->dtshape->ndim, out_value.block_shape, ret->catarr->chunkshape);
+            _iarray_reset_padding(out_value.block_pointer, (int8_t) ret->cparams->typesize, ret->dtshape->ndim, out_value.block_shape, ret->catarr->chunkshape);
 
             iter_out->compressed_chunk_buffer = false;
 
@@ -952,7 +952,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
         // Compute a decent pshape for a plainbuffer output
         int32_t nelems = e->chunksize / e->typesize;
         for (int i = ret->dtshape->ndim - 1; i >= 0; i--) {
-            int32_t pshapei = nelems < ret->dtshape->shape[i] ? nelems : ret->dtshape->shape[i];
+            int32_t pshapei = nelems < ret->dtshape->shape[i] ? nelems : (int32_t) ret->dtshape->shape[i];
             out_pshape[i] = pshapei;
             nelems = nelems / pshapei;
         }
