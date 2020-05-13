@@ -470,15 +470,15 @@ int prefilter_func(blosc2_prefilter_params *pparams)
                     break;
                 case 1:
                     IARRAY_TRACE1(iarray.error, "Out of bounds in LLVM eval engine");
-                    return INA_ERROR(IARRAY_ERR_EVAL_ENGINE_OUT_OF_RANGE);
+                    return -2;
                 default:
                     IARRAY_TRACE1(iarray.error, "Error in executing LLVM eval engine");
-                    return INA_ERROR(IARRAY_ERR_EVAL_ENGINE_FAILED);
+                    return -3;
             }
             break;
         default:
             IARRAY_TRACE1(iarray.error, "Invalid eval engine");
-            return INA_ERROR(IARRAY_ERR_INVALID_EVAL_ENGINE);
+            return -4;
     }
 
     if (expr_pparams->compressed_inputs) {
