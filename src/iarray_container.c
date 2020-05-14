@@ -389,6 +389,7 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(slice);
 
     ina_rc_t rc;
+    uint8_t *buffer = NULL;
 
     if (container->dtshape->dtype != slice->dtshape->dtype) {
         IARRAY_TRACE1(iarray.error, "The data types are different");
@@ -402,7 +403,6 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
     int typesize = slice->catarr->itemsize;
     int64_t buflen = slice->catarr->size;
 
-    uint8_t *buffer = NULL;
     if (slice->catarr->storage == CATERVA_STORAGE_BLOSC) {
         buffer = ina_mem_alloc(buflen * typesize);
         IARRAY_FAIL_IF_ERROR(iarray_to_buffer(ctx, slice, buffer, buflen * typesize));
