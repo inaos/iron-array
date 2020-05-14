@@ -57,7 +57,7 @@ int main(void)
 
     iarray_container_t* c_x;
     iarray_container_t* c_y;
-    iarray_arange(ctx, &dtshape, 0, nelem, 1, &store, 0, &c_x);
+    iarray_arange(ctx, &dtshape, 0., nelem, 1., &store, 0, &c_x);
     iarray_linspace(ctx, &dtshape, nelem, 0.1, .1, &store, 0, &c_y);
 
     iarray_expression_t* e;
@@ -84,7 +84,7 @@ int main(void)
     bool success = true;
     for (int64_t i = 0; i < nelem; i++) {
         if (buff_out[i] != eval_expr(buff_x[i], buff_y[i])) {
-            printf("ERROR in pos %ld\n", i);
+            printf("ERROR in pos %"PRId64"\n", i);
             success = false;
             break;
         }
