@@ -421,6 +421,7 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     // More love is needed in the future, where we would want to allow mixed types in expressions.
 
     int avail_space = pparams->ttmp_nbytes;
+    INA_UNUSED(avail_space);  // Fix build warning
     int used_space = 0;
     int ninputs_malloced = 0;
     for (int i = 0; i < ninputs; i++) {
@@ -438,7 +439,7 @@ int prefilter_func(blosc2_prefilter_params *pparams)
                 eval_pparams.inputs[i] = ina_mem_alloc_aligned(64, bsize);
                 ninputs_malloced++;
             }
-            int64_t rbytes = blosc_getitem(expr_pparams->inputs[i], offset_index, nitems, eval_pparams.inputs[i]);
+            int64_t rbytes = blosc_getitem(expr_pparams->inputs[i], offset_index, (int) nitems, eval_pparams.inputs[i]);
             if (rbytes != bsize) {
                 fprintf(stderr, "Read from inputs failed inside pipeline\n");
                 return -1;
