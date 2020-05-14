@@ -112,9 +112,9 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
     while (INA_SUCCEED(iarray_iter_read_has_next(itr_read))) {
         INA_TEST_ASSERT_SUCCEED(iarray_iter_read_next(itr_read));
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            INA_TEST_ASSERT_EQUAL_UINT64(((double *) val.block_pointer)[0], 0);
+            INA_TEST_ASSERT_EQUAL_FLOATING(((double *) val.block_pointer)[0], 0);
         } else {
-            INA_TEST_ASSERT_EQUAL_UINT64(((float *) val.block_pointer)[0], 0);
+            INA_TEST_ASSERT_EQUAL_FLOATING(((float *) val.block_pointer)[0], 0);
         }
     }
     return INA_SUCCESS;

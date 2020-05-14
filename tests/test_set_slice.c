@@ -103,7 +103,7 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx,
     sstore.filename = NULL;
 
     iarray_container_t *slice;
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &sdtshape, 0, bufdes_size, 1, &sstore, 0, &slice));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &sdtshape, 0, (double) bufdes_size, 1, &sstore, 0, &slice));
 
     iarray_container_t *c_x;
 
@@ -117,11 +117,11 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx,
 
     if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
         for (int64_t l = 0; l < bufdes_size; ++l) {
-            INA_TEST_ASSERT_EQUAL_FLOATING(((double *) bufdes)[l], l);
+            INA_TEST_ASSERT_EQUAL_FLOATING(((double *) bufdes)[l], (double) l);
         }
     } else {
         for (int64_t l = 0; l < bufdes_size; ++l) {
-            INA_TEST_ASSERT_EQUAL_FLOATING(((float *) bufdes)[l], l);
+            INA_TEST_ASSERT_EQUAL_FLOATING(((float *) bufdes)[l], (float) l);
         }
     }
 

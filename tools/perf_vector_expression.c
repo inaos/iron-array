@@ -180,7 +180,7 @@ int main(int argc, char** argv)
     else {
         config.filter_flags = IARRAY_COMP_SHUFFLE;
         if (mantissa_bits >  0) {
-            config.filter_flags |= IARRAY_COMP_TRUNC_PREC;
+            config.filter_flags |= (int) IARRAY_COMP_TRUNC_PREC;
             config.fp_mantissa_bits = mantissa_bits;
         }
     }
@@ -454,7 +454,7 @@ int main(int argc, char** argv)
            nbytes_mb, cbytes_mb, (1.*nbytes) / cbytes);
 
     // Check IronArray performance
-    iarray_container_t *con_out;
+    iarray_container_t *con_out = NULL;
 
     iarray_expression_t *e;
     iarray_expr_new(ctx, &e);
