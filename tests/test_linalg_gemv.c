@@ -25,7 +25,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     iarray_dtshape_t xdtshape;
     xdtshape.ndim = 2;
     xdtshape.dtype = dtype;
-    size_t xsize = 1;
+    int64_t xsize = 1;
     for (int i = 0; i < xdtshape.ndim; ++i) {
         xdtshape.shape[i] = xshape[i];
         if (xpshape)
@@ -39,7 +39,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     xstore.enforce_frame = false;
 
     iarray_container_t *c_x;
-    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &xdtshape, (int64_t)xsize, 0, 10, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &xdtshape, xsize, 0, 10, &xstore, 0, &c_x));
 
     // iarray container x to buffer
     uint8_t *xbuffer = ina_mem_alloc(xsize * typesize);
@@ -55,7 +55,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     iarray_dtshape_t ydtshape;
     ydtshape.ndim = 1;
     ydtshape.dtype = dtype;
-    size_t ysize = 1;
+    int64_t ysize = 1;
     for (int i = 0; i < ydtshape.ndim; ++i) {
         ydtshape.shape[i] = yshape[i];
         if (ypshape)
@@ -69,7 +69,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     ystore.enforce_frame = false;
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &ydtshape, (int64_t)ysize, 0, 10, &ystore, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &ydtshape, ysize, 0, 10, &ystore, 0, &c_y));
 
     // iarray container y to buffer
     uint8_t *ybuffer = ina_mem_alloc(ysize * typesize);
@@ -107,7 +107,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     iarray_dtshape_t zdtshape;
     zdtshape.ndim = 1;
     zdtshape.dtype = dtype;
-    size_t zsize = 1;
+    int64_t zsize = 1;
     for (int i = 0; i < zdtshape.ndim; ++i) {
         zdtshape.shape[i] = zshape[i];
         if (zpshape)
@@ -133,7 +133,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
 
     // assert
     double res;
-    for (size_t i = 0; i < zsize; ++i) {
+    for (int64_t i = 0; i < zsize; ++i) {
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 res = (((double *) zbuffer)[i] - ((double *) obuffer)[i]) / ((double *) zbuffer)[i];

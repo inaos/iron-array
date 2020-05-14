@@ -143,7 +143,7 @@ int main(int argc, char** argv)
     else {
         config.filter_flags = IARRAY_COMP_SHUFFLE;
         if (mantissa_bits > 0) {
-            config.filter_flags |= IARRAY_COMP_TRUNC_PREC;
+            config.filter_flags |= (int) IARRAY_COMP_TRUNC_PREC;
             config.fp_mantissa_bits = mantissa_bits;
         }
     }
