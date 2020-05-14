@@ -42,7 +42,7 @@ int main(void)
     store.filename = NULL;
 
     iarray_container_t *cont;
-    IARRAY_FAIL_IF_ERROR(iarray_arange(ctx, &dtshape, 0, size, 1, &store, 0, &cont));
+    IARRAY_FAIL_IF_ERROR(iarray_arange(ctx, &dtshape, 0, (double) size, 1, &store, 0, &cont));
 
     int64_t start[] = {2, 3};
     int64_t stop[] = {9, 7};
