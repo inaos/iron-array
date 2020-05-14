@@ -595,7 +595,7 @@ jug_te_expr *jug_te_compile(const char *expression, const jug_te_variable *varia
     if (s.type != TOK_END) {
         jug_te_free(root);
         if (error) {
-            *error = int (s.next - s.start);
+            *error = (int) (s.next - s.start);
             if (*error == 0) *error = 1;
         }
         return 0;
