@@ -20,7 +20,7 @@
 
 
 /* Compute and fill X values in a buffer */
-static int _fill_x(float* x, int nelem)
+static int _fill_x(float* x, int64_t nelem)
 {
     /* Fill even values between 0. and 1. */
     float incx = 1.f / nelem;
@@ -31,7 +31,7 @@ static int _fill_x(float* x, int nelem)
 }
 
 /* Compute and fill Y values in a buffer */
-static void _fill_y(const float* x, float* y, int nelem, float (func)(float))
+static void _fill_y(const float* x, float* y, int64_t nelem, float (func)(float))
 {
     for (int i = 0; i < nelem; i++) {
         y[i] = func(x[i]);
