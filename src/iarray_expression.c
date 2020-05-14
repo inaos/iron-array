@@ -439,7 +439,7 @@ int prefilter_func(blosc2_prefilter_params *pparams)
                 eval_pparams.inputs[i] = ina_mem_alloc_aligned(64, bsize);
                 ninputs_malloced++;
             }
-            int64_t rbytes = blosc_getitem(expr_pparams->inputs[i], offset_index, (int) nitems, eval_pparams.inputs[i]);
+            int64_t rbytes = blosc_getitem(expr_pparams->inputs[i], (int) offset_index, (int) nitems, eval_pparams.inputs[i]);
             if (rbytes != bsize) {
                 fprintf(stderr, "Read from inputs failed inside pipeline\n");
                 return -1;
