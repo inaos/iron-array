@@ -280,9 +280,9 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
 
     for (int i = 0; i < c_x->dtshape->ndim; ++i) {
         if (c_x->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-            partsize_x *= c_x->dtshape->shape[i];
+            partsize_x *= (int32_t) c_x->dtshape->shape[i];
         } else {
-            partsize_x *= c_x->dtshape->pshape[i];
+            partsize_x *= (int32_t) c_x->dtshape->pshape[i];
         }
     }
 
