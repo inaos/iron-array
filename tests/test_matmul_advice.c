@@ -102,7 +102,7 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     double *buffer_c = (double *) malloc(size_c * sizeof(double));
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_c, buffer_c, size_c * sizeof(double)));
 
-    double mult_value = dtshape_a.shape[1];
+    double mult_value = (double) dtshape_a.shape[1];
     for (int i = 0; i < size_c; ++i) {
         if (fabs((buffer_c[i] - mult_value) / buffer_c[i]) > 1e-8) {
             printf("%f - %f = %f\n", buffer_c[i], mult_value, buffer_c[i] - mult_value);
