@@ -66,6 +66,8 @@ if (MULTITHREADING)
     find_package(OMP)
 endif()
 find_package(SVML)
+# For some reason, this is needed for building wheels (TODO: check this out again after wheels are building)
+set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} -lz)
 
 # Find the libraries that correspond to the LLVM components
 # that we wish to use
