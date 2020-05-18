@@ -28,8 +28,10 @@ find_path(MKL_ROOT_DIR
         /opt/intel/compilers_and_libraries/mac/mkl
         "C:/IntelSWTools/compilers_and_libraries/windows/mkl/"
         "C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl"
-        # conda packages
         $ENV{CONDA_PREFIX}  # conda environments are accessible here (including base)
+        $ENV{CONDA}/envs/iArrayEnv # not sure why this would be needed
+        /Users/vsts/.conda/envs/iArrayEnv # MacOS
+        C:/Miniconda/envs/iArrayEnv/Library # Win
 )
 
 find_path(MKL_INCLUDE_DIR
