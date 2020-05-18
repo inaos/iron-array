@@ -15,14 +15,7 @@ find_path(SVML_ROOT_DIR
     ${SVML_LIB}
     PATHS
         $ENV{SVMLROOT}
-        $ENV{HOME}/miniconda3/lib
-        $ENV{USERPROFILE}/miniconda3/Library
-        $ENV{CONDA}/envs/iArrayEnv/lib/intel64 # Azure pipelines
-        $ENV{CONDA}/envs/iArrayEnv/lib # Azure pipelines
-        $ENV{CONDA_PREFIX}/lib # conda environments are accessible here
-        /Users/vsts/.conda/envs/iArrayEnv # Azure pipelines
-        C:/Miniconda/envs/iArrayEnv # Azure pipelines
-        C:/Miniconda/envs/iArrayEnv/Library/bin # Azure pipelines
+        $ENV{CONDA_PREFIX}/lib # conda environments are accessible here (including base)
         /opt/intel/compilers_and_libraries/linux/lib/intel64_lin # Intel ICC on Linux
 	    /opt/intel/compilers_and_libraries/mac/lib/intel64_lin # Intel ICC on MacOS
 )
