@@ -24,13 +24,12 @@ find_path(MKL_ROOT_DIR
     include/mkl.h
     PATHS
         $ENV{MKLROOT}
-        /opt/intel/compilers_and_libraries/linux/mkl
-        /opt/intel/compilers_and_libraries/mac/mkl
         "C:/IntelSWTools/compilers_and_libraries/windows/mkl/"
         "C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl"
         $ENV{CONDA_PREFIX}  # conda environments are accessible here (including base)
-        $ENV{CONDA}/envs/iArrayEnv # not sure why this would be needed
-        C:/Miniconda/envs/iArrayEnv/Library # Win
+        $ENV{CONDA}/envs/iArrayEnv  # not sure why this would be needed (old conda on azure?)
+        /opt/intel/compilers_and_libraries/linux/mkl  # Intel ICC on Linux
+        /opt/intel/compilers_and_libraries/mac/mkl  # Intel ICC on Mac
 )
 
 find_path(MKL_INCLUDE_DIR
