@@ -28,6 +28,7 @@ find_path(MKL_ROOT_DIR
         "C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl"
         $ENV{CONDA_PREFIX}  # conda environments are accessible here (including base)
         $ENV{CONDA}/envs/iArrayEnv  # not sure why this would be needed (old conda on azure?)
+        $ENV{CONDA}/envs/iArrayEnv/Library  # Win (old conda on azure?)
         /opt/intel/compilers_and_libraries/linux/mkl  # Intel ICC on Linux
         /opt/intel/compilers_and_libraries/mac/mkl  # Intel ICC on Mac
 )
