@@ -28,13 +28,8 @@ find_path(MKL_ROOT_DIR
         /opt/intel/compilers_and_libraries/mac/mkl
         "C:/IntelSWTools/compilers_and_libraries/windows/mkl/"
         "C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl"
-        $ENV{HOME}/miniconda3
-        $ENV{HOME}/miniconda3/envs/iarray
-        $ENV{USERPROFILE}/miniconda3/Library
-        "C:/Miniconda37-x64/Library" # Making AppVeyor happy
-        $ENV{CONDA}/envs/iArrayEnv # Azure pipelines
-        /Users/vsts/.conda/envs/iArrayEnv # Azure pipelines
-        C:/Miniconda/envs/iArrayEnv/Library # Azure pipelines
+        # conda packages
+        $ENV{CONDA_PREFIX}  # conda environments are accessible here (including base)
 )
 
 find_path(MKL_INCLUDE_DIR
