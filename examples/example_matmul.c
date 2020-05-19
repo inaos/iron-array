@@ -130,7 +130,7 @@ int main(void)
     for (int64_t i = 0; i < size_z; ++i) {
         if (fabs((b_res[i] - b_z[i]) / b_res[i]) > 1e-8) {
             fprintf(stderr, "%f - %f = %f\n", b_res[i], b_z[i], b_res[i] - b_z[i]);
-            fprintf(stderr, "Error in element" PRIu64 "\n", i);
+            fprintf(stderr, "Error in element %" PRId64 "\n", i);
             return INA_ERROR(INA_ERR_ERROR);
         }
     }
