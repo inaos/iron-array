@@ -13,7 +13,7 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-int main()
+int main(void)
 {
     bool success;
     iarray_init();
@@ -130,7 +130,7 @@ int main()
     for (int64_t i = 0; i < size_z; ++i) {
         if (fabs((b_res[i] - b_z[i]) / b_res[i]) > 1e-8) {
             fprintf(stderr, "%f - %f = %f\n", b_res[i], b_z[i], b_res[i] - b_z[i]);
-            fprintf(stderr, "Error in element %llu\n", i);
+            fprintf(stderr, "Error in element %" PRId64 "\n", i);
             return INA_ERROR(INA_ERR_ERROR);
         }
     }
@@ -138,7 +138,7 @@ int main()
     success = true;
     goto cleanup;
     fail:
-    success = false;
+    return ina_err_get_rc();
     cleanup:
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);

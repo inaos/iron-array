@@ -40,7 +40,7 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     xstore.enforce_frame = false;
 
     iarray_container_t *c_x;
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, xsize, 1, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, (double) xsize, 1, &xstore, 0, &c_x));
 
     // iarray container x to buffer
     uint8_t *xbuffer = ina_mem_alloc(xsize * typesize);
@@ -70,7 +70,7 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     ystore.enforce_frame = false;
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &ydtshape, 0, ysize, 1, &ystore, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &ydtshape, 0, (double) ysize, 1, &ystore, 0, &c_y));
 
     // iarray container y to buffer
     uint8_t *ybuffer = ina_mem_alloc(ysize * typesize);
@@ -118,7 +118,7 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     iarray_dtshape_t zdtshape;
     zdtshape.ndim = 2;
     zdtshape.dtype = dtype;
-    size_t zsize = 1;
+    int64_t zsize = 1;
     for (int i = 0; i < zdtshape.ndim; ++i) {
         zdtshape.shape[i] = zshape[i];
         if (zpshape)
@@ -143,19 +143,19 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
 
     // assert
     double res;
-    for (size_t i = 0; i < zsize; ++i) {
+    for (int64_t i = 0; i < zsize; ++i) {
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 res = (((double *) zbuffer)[i] - ((double *) obuffer)[i]) / ((double *) zbuffer)[i];
                 if (fabs(res) > 1e-14) {
-                    printf("%lu - %.15f ", i, fabs(res));
+                    printf("%"PRId64" - %.15f ", i, fabs(res));
                     return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
                 }
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 res = (((float *) zbuffer)[i] - ((float *) obuffer)[i]) / ((float *) zbuffer)[i];
                 if (fabs(res) > 1e-5) {
-                    printf("%lu - %.6f ", i, fabs(res));
+                    printf("%"PRId64" - %.6f ", i, fabs(res));
                     return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
                 }
                 break;

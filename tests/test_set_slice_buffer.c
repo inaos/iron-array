@@ -83,9 +83,9 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx,
 
     for (int i = 0; i < bufdes_size; ++i) {
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            ((double *) bufdes)[i] = i;
+            ((double *) bufdes)[i] = (double) i;
         } else {
-            ((float *) bufdes)[i] = i;
+            ((float *) bufdes)[i] = (float) i;
         }
     }
 
@@ -101,11 +101,11 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx,
 
     if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
         for (int64_t l = 0; l < bufdes_size; ++l) {
-            INA_TEST_ASSERT_EQUAL_FLOATING(((double *) bufdes)[l], l);
+            INA_TEST_ASSERT_EQUAL_FLOATING(((double *) bufdes)[l], (double) l);
         }
     } else {
         for (int64_t l = 0; l < bufdes_size; ++l) {
-            INA_TEST_ASSERT_EQUAL_FLOATING(((float *) bufdes)[l], l);
+            INA_TEST_ASSERT_EQUAL_FLOATING(((float *) bufdes)[l], (float) l);
         }
     }
 

@@ -182,7 +182,7 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     if (high == 0) {
         size_t L3;
         ina_rc_t rc = ina_cpu_get_l3_cache_size(&L3);
-        printf("%llu\n", rc);
+        printf("%"PRId64"\n", rc);
         // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
         high = L3 / 4;
     }
@@ -349,7 +349,7 @@ ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_store_p
             storage->properties.blosc.enforceframe = store->enforce_frame;
             storage->properties.blosc.filename = store->filename;
             for (int i = 0; i < dtshape->ndim; ++i) {
-                storage->properties.blosc.chunkshape[i] = dtshape->pshape[i];
+                storage->properties.blosc.chunkshape[i] = (int32_t) dtshape->pshape[i];
             }
             break;
         case CATERVA_STORAGE_PLAINBUFFER:
