@@ -37,7 +37,7 @@ static ina_rc_t test_partition_advice(iarray_context_t *ctx,
 //    }
 
     for (int i = 0; i < ndim; i++) {
-        INA_TEST_ASSERT_EQUAL_INT(_pshape[i], dtshape.pshape[i]);
+        INA_TEST_ASSERT_EQUAL_INT64(_pshape[i], dtshape.pshape[i]);
     }
 
     return INA_SUCCESS;

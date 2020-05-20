@@ -17,12 +17,6 @@ static ina_rc_t test_constructor_frame(iarray_context_t *ctx, iarray_data_type_t
                                 const int64_t *shape, const int64_t *pshape, double start,
                                 double stop)
 {
-    int typesize;
-    if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        typesize = sizeof(double);
-    } else {
-        typesize = sizeof(float);
-    }
 
     // Create dtshape
     iarray_dtshape_t xdtshape;

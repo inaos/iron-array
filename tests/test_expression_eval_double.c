@@ -20,7 +20,7 @@
 
 
 /* Compute and fill X values in a buffer */
-static int _fill_x(double* x, int nelem)
+static int _fill_x(double* x, int64_t nelem)
 {
     /* Fill even values between 0. and 1. */
     double incx = 1. / nelem;
@@ -31,7 +31,7 @@ static int _fill_x(double* x, int nelem)
 }
 
 /* Compute and fill Y values in a buffer */
-static void _fill_y(const double* x, double* y, int nelem, double (func)(double))
+static void _fill_y(const double* x, double* y, int64_t nelem, double (func)(double))
 {
     for (int i = 0; i < nelem; i++) {
         y[i] = func(x[i]);
@@ -110,6 +110,7 @@ INA_TEST_SETUP(expression_eval_double)
 
 INA_TEST_TEARDOWN(expression_eval_double)
 {
+    INA_UNUSED(data);
     iarray_destroy();
 }
 
@@ -144,17 +145,17 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc2_superchunk)
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, false, data->func, data->expr_str));
 }
 
-// TODO: make a test for testing these special functions
-static double expr0(const double x)
-{
-    return (fabs(-x) - 1.35) * ceil(x) * floor(x - 8.5);
-}
-
-// TODO: make a test for testing the evaluation of a func(constant)
-static double expr1(const double x)
-{
-    return (x - 1.35) + sin(.45);
-}
+//// TODO: make a test for testing these special functions
+//static double expr0(const double x)
+//{
+//    return (fabs(-x) - 1.35) * ceil(x) * floor(x - 8.5);
+//}
+//
+//// TODO: make a test for testing the evaluation of a func(constant)
+//static double expr1(const double x)
+//{
+//    return (x - 1.35) + sin(.45);
+//}
 
 static double expr2(const double x)
 {

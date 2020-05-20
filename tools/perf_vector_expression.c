@@ -93,9 +93,9 @@ int main(int argc, char** argv)
     int8_t ndim = 1;
     ina_stopwatch_t *w;
     iarray_context_t *ctx = NULL;
-    const char *mat_x_name = NULL;
-    const char *mat_y_name = NULL;
-    const char *mat_out_name = NULL;
+    char *mat_x_name = NULL;
+    char *mat_y_name = NULL;
+    char *mat_out_name = NULL;
 
     INA_OPTS(opt,
              INA_OPT_INT("e", "expr-type", 1, "COPY = 0, POLY = 1, TRANS1 = 2, , TRANS2 = 3"),
@@ -454,7 +454,7 @@ int main(int argc, char** argv)
            nbytes_mb, cbytes_mb, (1.*nbytes) / cbytes);
 
     // Check IronArray performance
-    iarray_container_t *con_out;
+    iarray_container_t *con_out = NULL;
 
     iarray_expression_t *e;
     iarray_expr_new(ctx, &e);

@@ -11,14 +11,23 @@
 cmake_minimum_required (VERSION 3.12)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0091 NEW)
+
 project(iarray VERSION 0.1.5)
 
+if (MSVC)
+    set(CMAKE_C_FLAGS "/W4")
+else()
+    set(CMAKE_C_FLAGS "-Wall -Wextra")
+endif()
 option(MULTITHREADING "Use multithreaded iarray" OFF)
 option(DISABLE_LLVM_CONFIG "Disable the use of llvm-config for finding libraris" OFF)
 
 # Disable weird MSVC warnings
 if (MSVC)
-add_compile_options(/wd4204)
+    add_compile_options(/wd4204)
+    add_compile_options(/wd4201)  # TODO: gix this (warning C4201: nonstandard extension used: nameless struct/union)
+    add_compile_options(/wd4232)  # TODO: fix this (warning C4232: nonstandard extension used)
+    add_compile_options(/wd4127)  # TODO: fix this (warning C4127: conditional expression is constant)
 endif()
 
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
@@ -48,11 +57,18 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 add_definitions(${LLVM_DEFINITIONS})
 include_directories(${LLVM_INCLUDE_DIRS})
 
+set(BUILD_TESTS OFF)
+set(BUILD_BENCHMARKS OFF)
+set(BUILD_EXAMPLES OFF)
 add_subdirectory(contribs/c-blosc2)
 include_directories(contribs/c-blosc2/blosc)
-set(BLOSC_LIB blosc2_static) # required for caterva tests
+set(BLOSC_LIB blosc2_static) # required for caterva
+
+set(CATERVA_BUILD_TESTS OFF)
+set(CATERVA_BUILD_EXAMPLES OFF)
 add_subdirectory(contribs/caterva)
 include_directories(contribs/caterva/caterva)
+
 add_subdirectory(contribs/minjugg)
 include_directories(contribs/minjugg/include)
 

@@ -265,7 +265,7 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
     iarray_iter_write_block_t *I;
     iarray_iter_write_block_value_t val;
 
-    int64_t partsize_x = 0;
+    int32_t partsize_x = 0;
 
     switch (c_x->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
@@ -280,9 +280,9 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
 
     for (int i = 0; i < c_x->dtshape->ndim; ++i) {
         if (c_x->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-            partsize_x *= c_x->dtshape->shape[i];
+            partsize_x *= (int32_t) c_x->dtshape->shape[i];
         } else {
-            partsize_x *= c_x->dtshape->pshape[i];
+            partsize_x *= (int32_t) c_x->dtshape->pshape[i];
         }
     }
 
@@ -359,7 +359,7 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
     iarray_iter_read_block_t *I3;
     iarray_iter_read_block_value_t val3;
 
-    int64_t partsize_y = 0;
+    int32_t partsize_y = 0;
     switch (c_y->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
             partsize_y = c_y->catarr->chunksize * sizeof(double);
@@ -532,7 +532,7 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
 
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, size, 1, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, (double) size, 1, &xstore, 0, &c_x));
 
     // Test write iterator
     iarray_iter_write_block_t *I;

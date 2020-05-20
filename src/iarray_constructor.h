@@ -20,7 +20,9 @@
 
 static int32_t serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
 {
-    INA_VERIFY_NOT_NULL(smeta);
+    if (smeta == NULL) {
+        return -1;
+    }
     if (dtype > IARRAY_DATA_TYPE_MAX) {
         return -1;
     }
