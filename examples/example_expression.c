@@ -13,7 +13,7 @@
 #include <libiarray/iarray.h>
 
 
-int main()
+int main(void)
 {
     iarray_init();
 
@@ -65,7 +65,7 @@ int main()
     bool success = true;
     for (int64_t i = 0; i < nelem; i++) {
         if (buff_out[i] != (buff_x[i] + 2 * buff_y[i])) {
-            printf("ERROR in pos %lld\n", i);
+            printf("ERROR in pos %" PRId64 "\n", i);
             success = false;
             break;
         }

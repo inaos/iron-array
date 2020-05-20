@@ -25,7 +25,7 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     int64_t low = 128 * 1024;
     int64_t high = 1024 * 1024;
 
-    int ndim = 2;
+    int8_t ndim = 2;
 
     // Build array A
     iarray_dtshape_t dtshape_a;
@@ -89,8 +89,8 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
 //    printf("\n");
 
     for (int i = 0; i < ndim; i++) {
-        INA_TEST_ASSERT_EQUAL_INT(_bshape_a[i], bshape_a[i]);
-        INA_TEST_ASSERT_EQUAL_INT(_bshape_b[i], bshape_b[i]);
+        INA_TEST_ASSERT_EQUAL_INT64(_bshape_a[i], bshape_a[i]);
+        INA_TEST_ASSERT_EQUAL_INT64(_bshape_b[i], bshape_b[i]);
     }
 
     if (INA_FAILED(iarray_linalg_matmul(ctx, c_a, c_b ,c_c, _bshape_a, _bshape_b, IARRAY_OPERATOR_GENERAL))) {
@@ -102,7 +102,7 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     double *buffer_c = (double *) malloc(size_c * sizeof(double));
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_c, buffer_c, size_c * sizeof(double)));
 
-    double mult_value = dtshape_a.shape[1];
+    double mult_value = (double) dtshape_a.shape[1];
     for (int i = 0; i < size_c; ++i) {
         if (fabs((buffer_c[i] - mult_value) / buffer_c[i]) > 1e-8) {
             printf("%f - %f = %f\n", buffer_c[i], mult_value, buffer_c[i] - mult_value);

@@ -14,13 +14,12 @@
 #include <iarray_private.h>
 
 
-int main()
+int main(void)
 {
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int64_t shape[] = {10, 10};
     int64_t pshape[] = {2, 3};
-    int64_t bshape[] = {2, 10};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_t *ctx;
@@ -43,7 +42,7 @@ int main()
     store.filename = NULL;
 
     iarray_container_t *cont;
-    IARRAY_FAIL_IF_ERROR(iarray_arange(ctx, &dtshape, 0, size, 1, &store, 0, &cont));
+    IARRAY_FAIL_IF_ERROR(iarray_arange(ctx, &dtshape, 0, (double) size, 1, &store, 0, &cont));
 
     int64_t start[] = {2, 3};
     int64_t stop[] = {9, 7};

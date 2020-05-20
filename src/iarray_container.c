@@ -26,6 +26,7 @@ static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data
 
     //version
     uint8_t version = *pmeta;
+    INA_UNUSED(version);
     pmeta +=1;
 
     // We only have an entry with the datatype (enumerated < 128)
@@ -112,7 +113,7 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
             IARRAY_TRACE1(iarray.error, "Error creating blosc2 frame");
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
         }
-        int err = blosc2_schunk_to_frame(container->catarr->sc, frame);
+        int64_t err = blosc2_schunk_to_frame(container->catarr->sc, frame);
 
         if (err < 0) {
             IARRAY_TRACE1(iarray.error, "Error converting a blosc schunk to a blosc frame");
@@ -131,7 +132,7 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
 }
 
 
-INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, const char *filename, bool enforce_frame,
+INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename, bool enforce_frame,
                                         iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
@@ -388,6 +389,7 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(slice);
 
     ina_rc_t rc;
+    uint8_t *buffer = NULL;
 
     if (container->dtshape->dtype != slice->dtshape->dtype) {
         IARRAY_TRACE1(iarray.error, "The data types are different");
@@ -401,7 +403,6 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
     int typesize = slice->catarr->itemsize;
     int64_t buflen = slice->catarr->size;
 
-    uint8_t *buffer;
     if (slice->catarr->storage == CATERVA_STORAGE_BLOSC) {
         buffer = ina_mem_alloc(buflen * typesize);
         IARRAY_FAIL_IF_ERROR(iarray_to_buffer(ctx, slice, buffer, buflen * typesize));
@@ -432,7 +433,7 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                                           const int64_t *start,
                                           const int64_t *stop,
                                           void *buffer,
-                                          const int64_t buflen)
+                                          int64_t buflen)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(start);
@@ -547,7 +548,7 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                                           const int64_t *start,
                                           const int64_t *stop,
                                           void *buffer,
-                                          const int64_t buflen)
+                                          int64_t buflen)
 {
     // TODO: make use of buflen so as to avoid exceeding the buffer boundaries
     INA_UNUSED(ctx);
@@ -678,21 +679,22 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
 int _caterva_get_slice_buffer_no_copy(void **dest, caterva_array_t *src, int64_t *start,
                                       int64_t *stop, int64_t *d_pshape) {
     CATERVA_UNUSED_PARAM(d_pshape);
+    CATERVA_UNUSED_PARAM(stop);
     int64_t start_[CATERVA_MAX_DIM];
-    int64_t stop_[CATERVA_MAX_DIM];
+    // int64_t stop_[CATERVA_MAX_DIM];
     int8_t s_ndim = src->ndim;
 
     int64_t *shape = src->shape;
     int64_t s_shape[CATERVA_MAX_DIM];
     for (int i = 0; i < CATERVA_MAX_DIM; ++i) {
         start_[(CATERVA_MAX_DIM - s_ndim + i) % CATERVA_MAX_DIM] = i < s_ndim ? start[i] : 1;
-        stop_[(CATERVA_MAX_DIM - s_ndim + i) % CATERVA_MAX_DIM] = i < s_ndim ? stop[i] : 1;
+        // stop_[(CATERVA_MAX_DIM - s_ndim + i) % CATERVA_MAX_DIM] = i < s_ndim ? stop[i] : 1;
         s_shape[(CATERVA_MAX_DIM - s_ndim + i) % CATERVA_MAX_DIM] = i < s_ndim ? shape[i] : 1;
     }
     for (int j = 0; j < CATERVA_MAX_DIM - s_ndim; ++j) {
         start_[j] = 0;
     }
-
+    
     int64_t chunk_pointer = 0;
     int64_t chunk_pointer_inc = 1;
     for (int i = CATERVA_MAX_DIM - 1; i >= 0; --i) {
@@ -1034,7 +1036,8 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
                 double rdiff = fabs(((double *)val_a.block_pointer)[i] - ((double *)val_b.block_pointer)[i]) /
                     ((double *)val_a.block_pointer)[i];
                 if (rdiff > tol) {
-                    //printf("%f, %f\n", ((double *)val_a.block_pointer)[i], ((double *)val_b.block_pointer)[i]);
+                    printf("%f, %f (adiff: %f, rdiff: %f)\n", ((double *)val_a.block_pointer)[i],
+                        ((double *)val_b.block_pointer)[i], adiff, rdiff);
                     IARRAY_TRACE1(iarray.error, "Values are different");
                     IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_ASSERTION_FAILED));
                 }
@@ -1043,10 +1046,11 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
         else {
             for (int64_t i = 0; i < val_a.block_size; ++i) {
                 float adiff = fabsf(((float *)val_a.block_pointer)[i] - ((float *)val_b.block_pointer)[i]);
-                float vdiff = fabsf(((float *)val_a.block_pointer)[i] - ((float *)val_b.block_pointer)[i]) /
+                float rdiff = fabsf(((float *)val_a.block_pointer)[i] - ((float *)val_b.block_pointer)[i]) /
                     ((float *)val_a.block_pointer)[i];
-                if (vdiff > tol) {
-                    //printf("%f, %f\n", ((float *)val_a.block_pointer)[i], ((float *)val_b.block_pointer)[i]);
+                if (rdiff > tol) {
+                    printf("%f, %f (adiff: %f, rdiff: %f)\n", ((float *)val_a.block_pointer)[i],
+                           ((float *)val_b.block_pointer)[i], adiff, rdiff);
                     IARRAY_TRACE1(iarray.error, "Values are different");
                     IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_ASSERTION_FAILED));
                 }

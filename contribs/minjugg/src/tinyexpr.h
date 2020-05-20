@@ -81,8 +81,7 @@ static const char te_function_map_str[][32] = {
     "EXPR_TYPE_SQRT",
     "EXPR_TYPE_TAN",
     "EXPR_TYPE_TANH",
-    "EXPR_TYPE_FMOD",
-    0,
+    "EXPR_TYPE_FMOD"
 };
 
 /* Parses the input expression and binds variables. */

@@ -64,10 +64,10 @@ int main(int argc, char** argv)
     int8_t ndim = 1;
     ina_stopwatch_t *w;
     iarray_context_t *ctx = NULL;
-    const char *mat_x_name = NULL;
-    const char *mat_y_name = NULL;
-    const char *mat_out_name = NULL;
-    const char *eval_method = NULL;
+    char *mat_x_name = NULL;
+    char *mat_y_name = NULL;
+    char *mat_out_name = NULL;
+    char *eval_method = NULL;
 
     INA_OPTS(opt,
              INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOCK = 2, EVAL_ITERBLOSC = 3"),
@@ -143,7 +143,7 @@ int main(int argc, char** argv)
     else {
         config.filter_flags = IARRAY_COMP_SHUFFLE;
         if (mantissa_bits > 0) {
-            config.filter_flags |= IARRAY_COMP_TRUNC_PREC;
+            config.filter_flags |= (int) IARRAY_COMP_TRUNC_PREC;
             config.fp_mantissa_bits = mantissa_bits;
         }
     }
