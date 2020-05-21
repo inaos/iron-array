@@ -350,6 +350,7 @@ ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_store_p
             storage->properties.blosc.filename = store->filename;
             for (int i = 0; i < dtshape->ndim; ++i) {
                 storage->properties.blosc.chunkshape[i] = (int32_t) dtshape->pshape[i];
+                storage->properties.blosc.blockshape[i] = (int32_t) dtshape->bshape[i];
             }
             break;
         case CATERVA_STORAGE_PLAINBUFFER:

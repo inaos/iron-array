@@ -91,6 +91,7 @@ typedef struct iarray_auxshape_s {
     int64_t offset[IARRAY_DIMENSION_MAX];
     int64_t shape_wos[IARRAY_DIMENSION_MAX];
     int64_t pshape_wos[IARRAY_DIMENSION_MAX];
+    int64_t bshape_wos[IARRAY_DIMENSION_MAX];
     int8_t index[IARRAY_DIMENSION_MAX];
 } iarray_auxshape_t;
 
@@ -127,6 +128,7 @@ typedef struct iarray_iter_write_s {
     int64_t *elem_index; // The elem index in coord
     int64_t elem_flat_index; // The elem index if the container will be flatten
 
+    caterva_context_t *cat_ctx;
 } iarray_iter_write_t;
 
 static const iarray_iter_write_t IARRAY_ITER_WRITE_EMPTY = {0};

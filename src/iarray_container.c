@@ -310,6 +310,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         for (int i = 0; i < dtshape.ndim; ++i) {
             dtshape.shape[i] = stop_[i] - start_[i];
             dtshape.pshape[i] = pshape ? pshape[i] : 0;
+            dtshape.bshape[i] = bshape ? bshape[i] : 0;
         }
 
         IARRAY_FAIL_IF_ERROR(_iarray_view_new(ctx, src, &dtshape, start_, container));
@@ -929,8 +930,10 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
                 }
                 container->dtshape->shape[i] = container->catarr->shape[i];
                 container->dtshape->pshape[i] = container->catarr->chunkshape[i];
+                container->dtshape->bshape[i] = container->catarr->blockshape[i];
                 container->auxshape->shape_wos[i] = container->catarr->shape[i];
                 container->auxshape->pshape_wos[i] = container->catarr->chunkshape[i];
+                container->auxshape->bshape_wos[i] = container->catarr->blockshape[i];
                 container->auxshape->offset[i] = container->auxshape->offset[i + inc];
             }
         }
@@ -942,6 +945,7 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
             } else {
                 container->dtshape->shape[i - inc] = container->dtshape->shape[i];
                 container->dtshape->pshape[i - inc] = container->dtshape->pshape[i];
+                container->dtshape->bshape[i - inc] = container->dtshape->bshape[i];
                 container->auxshape->index[i - inc] = (uint8_t) i;
             }
         }
@@ -966,6 +970,7 @@ INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
     for (int i = 0; i < c->dtshape->ndim; ++i) {
         dtshape->shape[i] = c->dtshape->shape[i];
         dtshape->pshape[i] = c->dtshape->pshape[i];
+        dtshape->bshape[i] = c->dtshape->bshape[i];
     }
     return INA_SUCCESS;
 }

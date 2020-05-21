@@ -209,6 +209,7 @@ typedef struct iarray_dtshape_s {
     int8_t ndim;     /* if ndim = 0 it is a scalar */
     int64_t shape[IARRAY_DIMENSION_MAX];
     int64_t pshape[IARRAY_DIMENSION_MAX]; /* partition shape */
+    int64_t bshape[IARRAY_DIMENSION_MAX]; /* block shape */
 } iarray_dtshape_t;
 
 typedef struct iarray_iter_write_value_s {
@@ -256,8 +257,7 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .filter_flags=IARRAY_COMP_SHUFFLE,
     .eval_flags=IARRAY_EVAL_METHOD_ITERCHUNK | IARRAY_EVAL_ENGINE_INTERPRETER << 3,
     .max_num_threads=1,
-    .fp_mantissa_bits=0,
-    .blocksize=0 };
+    .fp_mantissa_bits=0};
 
 static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = {
     .compression_codec=IARRAY_COMPRESSION_LZ4,
@@ -266,8 +266,7 @@ static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = {
     .filter_flags=0,
     .eval_flags=0,
     .max_num_threads=1,
-    .fp_mantissa_bits=0,
-    .blocksize=0 };
+    .fp_mantissa_bits=0};
 
 INA_API(ina_rc_t) iarray_init(void);
 INA_API(void) iarray_destroy(void);

@@ -90,6 +90,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     if (store->backend == IARRAY_STORAGE_PLAINBUFFER) {
         for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
             dtshape->pshape[i] = dtshape->shape[i];
+            dtshape->bshape[i] = dtshape->shape[i];
         }
     }
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
@@ -110,6 +111,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *d
     for (int i = 0; i < dtshape->ndim; ++i) {
         auxshape.shape_wos[i] = dtshape->shape[i];
         auxshape.pshape_wos[i] = dtshape->pshape[i];
+        auxshape.bshape_wos[i] = dtshape->bshape[i];
         auxshape.offset[i] = 0;
         auxshape.index[i] = (uint8_t) i;
     }

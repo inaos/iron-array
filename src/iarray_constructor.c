@@ -820,6 +820,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
             (*dest)->auxshape->index[i] = (int8_t) i;
             (*dest)->auxshape->shape_wos[i] = src->dtshape->shape[i];
             (*dest)->auxshape->pshape_wos[i] = src->dtshape->pshape[i];
+            (*dest)->auxshape->bshape_wos[i] = src->dtshape->bshape[i];
         }
     } else {
         (*dest)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));

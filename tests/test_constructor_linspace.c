@@ -14,7 +14,7 @@
 
 
 static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim,
-                              const int64_t *shape, const int64_t *pshape, double start,
+                              const int64_t *shape, const int64_t *pshape, const int64_t *bshape, double start,
                               double stop) {
     // Create dtshape
     iarray_dtshape_t xdtshape;
@@ -24,8 +24,10 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, i
     int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        if (pshape)
+        if (pshape) {
             xdtshape.pshape[i] = pshape[i];
+            xdtshape.bshape[i] = bshape[i];
+        }
         size *= shape[i];
     }
 
@@ -90,10 +92,11 @@ INA_TEST_FIXTURE(constructor_linspace, 2_d) {
     int8_t ndim = 2;
     int64_t shape[] = {223, 456};
     int64_t pshape[] = {31, 323};
+    int64_t bshape[] = {10, 10};
     double start = - 0.1;
     double stop = - 0.25;
 
-    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop));
 }
 
 INA_TEST_FIXTURE(constructor_linspace, 2_f_p) {
@@ -102,10 +105,11 @@ INA_TEST_FIXTURE(constructor_linspace, 2_f_p) {
     int8_t ndim = 2;
     int64_t shape[] = {445, 321};
     int64_t *pshape = NULL;
+    int64_t *bshape = NULL;
     double start = 3123;
     double stop = 45654;
 
-    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop));
 }
 
 INA_TEST_FIXTURE(constructor_linspace, 5_d_p) {
@@ -114,10 +118,11 @@ INA_TEST_FIXTURE(constructor_linspace, 5_d_p) {
     int8_t ndim = 5;
     int64_t shape[] = {20, 18, 17, 13, 21};
     int64_t *pshape = NULL;
+    int64_t *bshape = NULL;
     double start = 0.1;
     double stop = 0.2;
 
-    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop));
 }
 
 INA_TEST_FIXTURE(constructor_linspace, 7_f) {
@@ -126,8 +131,9 @@ INA_TEST_FIXTURE(constructor_linspace, 7_f) {
     int8_t ndim = 7;
     int64_t shape[] = {5, 7, 8, 9, 6, 5, 7};
     int64_t pshape[] = {3, 5, 3, 3, 3, 2, 3};
+    int64_t bshape[] = {2, 2, 2, 2, 2, 2, 2};
     double start = 10;
     double stop = 0;
 
-    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop));
 }
