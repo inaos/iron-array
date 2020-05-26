@@ -66,7 +66,7 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx,
             xdtshape.pshape[j] = pshape[j];
     }
 
-    iarray_store_properties_t xstore;
+    iarray_storage_t xstore;
     xstore.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.enforce_frame = false;
     xstore.filename = NULL;
@@ -97,7 +97,7 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx,
             sdtshape.pshape[j] = pshape_slice[j];
     }
 
-    iarray_store_properties_t sstore;
+    iarray_storage_t sstore;
     sstore.backend = pshape_slice ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     sstore.enforce_frame = false;
     sstore.filename = NULL;

@@ -15,7 +15,7 @@
 
 
 static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, int8_t ndim,
-                                 const int64_t *shape, const int64_t *pshape, iarray_store_properties_t *store)
+                                 const int64_t *shape, const int64_t *pshape, iarray_storage_t *store)
 {
     // For some reason, this test does not pass in Azure CI, so disable it temporarily (see #189)
     char* envvar;
@@ -83,7 +83,7 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
 
 INA_TEST_DATA(persistency) {
     iarray_context_t *ctx;
-    iarray_store_properties_t store;
+    iarray_storage_t store;
 };
 
 INA_TEST_SETUP(persistency) {
@@ -153,7 +153,7 @@ INA_TEST_FIXTURE(persistency, float_7) {
 }
 
 static ina_rc_t test_persistency_transposed(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, int8_t ndim,
-                                            const int64_t *shape, const int64_t *pshape, iarray_store_properties_t *store)
+                                            const int64_t *shape, const int64_t *pshape, iarray_storage_t *store)
 {
     // For some reason, this test does not pass in Azure CI, so disable it temporarily (see #189)
     char* envvar;
@@ -231,7 +231,7 @@ static ina_rc_t test_persistency_transposed(iarray_context_t *ctx, iarray_data_t
 
 INA_TEST_DATA(persistency_trans) {
     iarray_context_t *ctx;
-    iarray_store_properties_t store;
+    iarray_storage_t store;
 };
 
 INA_TEST_SETUP(persistency_trans) {

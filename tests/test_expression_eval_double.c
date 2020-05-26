@@ -56,7 +56,7 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
         nelem *= shape[i];
     }
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;

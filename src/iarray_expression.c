@@ -40,7 +40,7 @@ struct iarray_expression_s {
     uint64_t jug_expr_func;
     iarray_temporary_t **temp_vars;
     iarray_dtshape_t *out_dtshape;
-    iarray_store_properties_t *out_store_properties;
+    iarray_storage_t *out_store_properties;
     iarray_container_t *out;
     _iarray_tinyexpr_var_t vars[IARRAY_EXPR_OPERANDS_MAX];
 };
@@ -116,13 +116,13 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
 }
 
 
-INA_API(ina_rc_t) iarray_expr_bind_out_properties(iarray_expression_t *e, iarray_dtshape_t *dtshape, iarray_store_properties_t *store)
+INA_API(ina_rc_t) iarray_expr_bind_out_properties(iarray_expression_t *e, iarray_dtshape_t *dtshape, iarray_storage_t *store)
 {
     e->out_dtshape = ina_mem_alloc(sizeof(iarray_dtshape_t));
     memcpy(e->out_dtshape, dtshape, sizeof(iarray_dtshape_t));
 
-    e->out_store_properties = ina_mem_alloc(sizeof(iarray_store_properties_t));
-    memcpy(e->out_store_properties, store, sizeof(iarray_store_properties_t));
+    e->out_store_properties = ina_mem_alloc(sizeof(iarray_storage_t));
+    memcpy(e->out_store_properties, store, sizeof(iarray_storage_t));
 
     return INA_SUCCESS;
 }

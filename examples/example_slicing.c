@@ -36,7 +36,7 @@ int main(void)
         xdtshape.shape[i] = xshape[i];
     }
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;
@@ -76,7 +76,7 @@ int main(void)
 
     // Slicing c_x into c_out
     printf("Slicing c_x into c_out container...\n");
-    IARRAY_FAIL_IF_ERROR(iarray_get_slice(ctx, c_x, start, stop, false, outpshape, &store, 0, &c_out));
+    IARRAY_FAIL_IF_ERROR(iarray_get_slice(ctx, c_x, start, stop, false, 0, &c_out, NULL));
     iarray_dtshape_t out_dtshape;
     IARRAY_FAIL_IF_ERROR(iarray_get_dtshape(ctx, c_out, &out_dtshape));
 

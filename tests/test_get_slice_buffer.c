@@ -50,7 +50,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
             xdtshape.pshape[j] = pshape[j];
     }
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     store.enforce_frame = false;
     store.filename = NULL;

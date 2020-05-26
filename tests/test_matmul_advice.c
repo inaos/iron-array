@@ -36,7 +36,7 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
         dtshape_a.pshape[i] = 0;
     }
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.filename = NULL;
     store.enforce_frame = false;

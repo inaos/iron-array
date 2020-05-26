@@ -16,7 +16,7 @@
 static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx,
                           char* filename,
                           ina_rc_t (*random_fun)(iarray_context_t*, iarray_dtshape_t*,
-                          iarray_random_ctx_t*, iarray_store_properties_t*, int, iarray_container_t**))
+                                                 iarray_random_ctx_t*, iarray_storage_t*, int, iarray_container_t**))
 {
 
     iarray_container_t *c_y;
@@ -25,7 +25,7 @@ static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx,
     iarray_dtshape_t xdtshape;
     iarray_get_dtshape(ctx, c_y, &xdtshape);
 
-    iarray_store_properties_t xstore;
+    iarray_storage_t xstore;
     xstore.backend = IARRAY_STORAGE_BLOSC;
     xstore.enforce_frame = false;
     xstore.filename = NULL;

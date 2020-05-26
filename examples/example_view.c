@@ -33,7 +33,7 @@ int main(void)
         dtshape.pshape[i] = pshape[i];
     }
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;
@@ -56,7 +56,7 @@ int main(void)
     int64_t stop[] = {9, 7};
 
     iarray_container_t *cout;
-    iarray_get_slice(ctx, cont, start, stop, true, pshape, &store, 0, &cout);
+    iarray_get_slice(ctx, cont, start, stop, true, 0, &cout, NULL);
     
     int64_t cout_size = 1;
     for (int i = 0; i < cout->dtshape->ndim; ++i) {

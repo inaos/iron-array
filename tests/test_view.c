@@ -14,16 +14,17 @@
 #include <tests/iarray_test.h>
 
 static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_x, int64_t *start,
-                           int64_t *stop, const int64_t *pshape, iarray_store_properties_t *stores,
-                           int flags, iarray_container_t **c_out) {
-    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, pshape, stores, flags, c_out));
+                           int64_t *stop, const int64_t *pshape, const int64_t *bshape,
+                           iarray_storage_t *stores, int flags, iarray_container_t **c_out) {
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, stores, flags, c_out));
     INA_TEST_ASSERT_SUCCEED(iarray_squeeze(ctx, *c_out));
 
     return INA_SUCCESS;
 }
 
 static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int32_t type_size, int8_t ndim,
-                                      const int64_t *shape, const int64_t *pshape, const int64_t *pshape_dest,
+                                      const int64_t *shape, const int64_t *pshape, const int64_t *bshape,
+                                      const int64_t *pshape_dest, const int64_t *bshape_dest,
                                       int64_t *start, int64_t *stop, const void *result, bool transposed) {
     void *buffer_x;
     size_t buffer_x_len;
@@ -51,7 +52,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
             xdtshape.pshape[j] = pshape[j];
     }
 
-    iarray_store_properties_t xstore;
+    iarray_storage_t xstore;
     xstore.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.enforce_frame = false;
     xstore.filename = NULL;
@@ -65,12 +66,12 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
         iarray_linalg_transpose(ctx, c_x);
     }
 
-    iarray_store_properties_t outstore;
+    iarray_storage_t outstore;
     outstore.backend = pshape_dest ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     outstore.enforce_frame = false;
     outstore.filename = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, pshape_dest, &outstore, 0, &c_out));
+    INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, pshape_dest, bshape_dest, &outstore, 0, &c_out));
 
     int64_t bufdes_size = 1;
 

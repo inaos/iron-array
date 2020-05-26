@@ -101,7 +101,7 @@ struct iarray_container_s {
     blosc2_cparams *cparams;
     blosc2_dparams *dparams;
     caterva_array_t *catarr;
-    iarray_store_properties_t *store;
+    iarray_storage_t *store;
     bool transposed;
     bool view;
     union {
@@ -334,6 +334,6 @@ INA_API(ina_rc_t) iarray_operator_cumsum(iarray_context_t *ctx, iarray_container
 /* Caterva private functions */
 ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t), void (*free)(void *), caterva_config_t *cat_cfg);
 ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_t *params);
-ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_store_properties_t *store, caterva_storage_t *storage);
+ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage_t *store, caterva_storage_t *storage);
 
 #endif

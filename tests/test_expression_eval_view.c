@@ -67,7 +67,7 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
         nelem2 *= dtshape2.shape[i];
     }
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;
@@ -88,7 +88,7 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
         stop[i] = shape[i] / 2 + 20;
     }
 
-    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, dtshape2.pshape, &store, 0, &c_x2));
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, &store, 0, &c_x2));
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x2, buffer_x, nelem * sizeof(double)));
 
     _fill_y(buffer_x, buffer_y, nelem2, func);

@@ -50,7 +50,7 @@ int main(void)
     }
 
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;

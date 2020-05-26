@@ -342,7 +342,7 @@ ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_
 }
 
 
-ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_store_properties_t *store, caterva_storage_t *storage) {
+ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage_t *store, caterva_storage_t *storage) {
     storage->backend = store->backend == IARRAY_STORAGE_BLOSC ? CATERVA_STORAGE_BLOSC : CATERVA_STORAGE_PLAINBUFFER;
     switch (storage->backend) {
         case CATERVA_STORAGE_BLOSC:

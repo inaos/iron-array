@@ -33,7 +33,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
         xsize *= xshape[i];
     }
 
-    iarray_store_properties_t xstore;
+    iarray_storage_t xstore;
     xstore.backend = xpshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.filename = NULL;
     xstore.enforce_frame = false;
@@ -63,7 +63,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
         ysize *= yshape[i];
     }
 
-    iarray_store_properties_t ystore;
+    iarray_storage_t ystore;
     ystore.backend = ypshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     ystore.filename = NULL;
     ystore.enforce_frame = false;
@@ -115,7 +115,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
         zsize *= zshape[i];
     }
 
-    iarray_store_properties_t zstore;
+    iarray_storage_t zstore;
     zstore.backend = zpshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     zstore.filename = NULL;
     zstore.enforce_frame = false;

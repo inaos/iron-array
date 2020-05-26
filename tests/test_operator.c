@@ -86,7 +86,7 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
     shape.pshape[0] = (int64_t)p;
     shape.pshape[1] = (int64_t)p;
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.filename = NULL;
     store.enforce_frame = false;
@@ -157,7 +157,7 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
     shape.pshape[0] = (int64_t)p;
     shape.pshape[1] = (int64_t)p;
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.filename = NULL;
     store.enforce_frame = false;

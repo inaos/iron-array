@@ -29,7 +29,7 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
         size *= shape[i];
     }
 
-    iarray_store_properties_t xstore;
+    iarray_storage_t xstore;
     xstore.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.enforce_frame = false;
     xstore.filename = NULL;
@@ -68,14 +68,14 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
     int64_t start[IARRAY_DIMENSION_MAX] = {0, 0, 0, 0, 0, 0, 0, 0};
     int64_t stop[IARRAY_DIMENSION_MAX] = {2, 3, 4, 3, 3, 4, 4, 3};
 
-    iarray_store_properties_t ystore;
+    iarray_storage_t ystore;
     ystore.backend = IARRAY_STORAGE_BLOSC;
     ystore.enforce_frame = false;
     ystore.filename = NULL;
 
     iarray_container_t *c_y;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, start, &ystore, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, 0, &c_y, NULL));
 
     // Start Iterator
     ina_rc_t err = iarray_iter_write_block_new(ctx, &I, c_y, blockshape, &val, false);

@@ -33,7 +33,7 @@ int main(void)
     shape.pshape[0] = 110; //shape.pshape[1] = 200;
     int64_t nelem = shape.shape[0]; // * shape.shape[1];
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;

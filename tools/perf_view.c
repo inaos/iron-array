@@ -60,17 +60,17 @@ int main(int argc, char *argv[])
         size_x *= shape_x[i];
     }
 
-    iarray_store_properties_t c_x_prop = {
+    iarray_storage_t c_x_prop = {
         .backend = IARRAY_STORAGE_BLOSC,
         .enforce_frame = false,
         .filename = NULL
     };
-    iarray_store_properties_t c_y_prop = {
+    iarray_storage_t c_y_prop = {
         .backend = IARRAY_STORAGE_BLOSC,
         .enforce_frame = false,
         .filename = NULL
     };
-    iarray_store_properties_t c_z_prop = {
+    iarray_storage_t c_z_prop = {
         .backend = IARRAY_STORAGE_BLOSC,
         .enforce_frame =false,
         .filename = NULL
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 
     INA_STOPWATCH_START(w);
     iarray_container_t *c_y;
-    INA_MUST_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, false, pshape_y, &c_y_prop, 0, &c_y));
+    INA_MUST_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, false, 0, &c_y, NULL));
     INA_MUST_SUCCEED(iarray_squeeze(ctx, c_y));
     INA_STOPWATCH_STOP(w);
 
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 
     INA_STOPWATCH_START(w);
     iarray_container_t *c_z;
-    INA_MUST_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, pshape_z, &c_z_prop, 0, &c_z));
+    INA_MUST_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, 0, &c_z, NULL));
     iarray_squeeze(ctx, c_z);
     INA_STOPWATCH_STOP(w);
 
@@ -141,12 +141,12 @@ int main(int argc, char *argv[])
     iarray_container_t *c_mul;
     iarray_container_t *c_mul_view;
 
-    iarray_store_properties_t c_mul_prop = {
+    iarray_storage_t c_mul_prop = {
         .backend =  IARRAY_STORAGE_BLOSC,
         .enforce_frame = false,
         .filename = NULL
     };
-    iarray_store_properties_t c_mul_view_prop = {
+    iarray_storage_t c_mul_view_prop = {
         .backend = IARRAY_STORAGE_BLOSC,
         .enforce_frame = false,
         .filename = NULL
