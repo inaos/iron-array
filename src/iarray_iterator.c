@@ -722,7 +722,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
     if (cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
         for (int i = 0; i < cont->dtshape->ndim; ++i) {
-            if (blockshape[i] != cont->dtshape->pshape[i]) {
+            if (blockshape[i] != cont->storage->pshape[i]) {
                 IARRAY_TRACE1(iarray.error, "The blockshape must be equal to the container pshape");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_BSHAPE));
             }
@@ -1028,7 +1028,7 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
 
     int64_t block_size = 1;
     for (int i = 0; i < cont->dtshape->ndim; ++i) {
-        (*itr)->block_shape[i] = cont->dtshape->pshape[i];
+        (*itr)->block_shape[i] = cont->storage->pshape[i];
         block_size *= (*itr)->block_shape[i];
     }
 

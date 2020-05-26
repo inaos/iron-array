@@ -33,10 +33,6 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
     int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        if (pshape != NULL) {
-            xdtshape.pshape[i] = pshape[i];
-            xdtshape.bshape[i] = bshape[i];
-        }
         size *= shape[i];
     }
 
@@ -44,7 +40,13 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
     store.backend = (pshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     store.filename = NULL;
     store.enforce_frame = (ndim % 2 == 0) ? false : true;
-
+    for (int i = 0; i < ndim; ++i) {
+        if (pshape != NULL) {
+            store.pshape[i] = pshape[i];
+            store.bshape[i] = bshape[i];
+        }
+        size *= shape[i];
+    }
     double step = (stop - start) / size;
 
     iarray_container_t *c_x;

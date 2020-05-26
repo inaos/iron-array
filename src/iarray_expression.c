@@ -179,7 +179,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
         } else {
             for (int i = 0; i < e->nvars; ++i) {
                 iarray_container_t *c = e->vars[i].c;
-                if (c->store->backend == IARRAY_STORAGE_PLAINBUFFER) {
+                if (c->storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
                     backend = IARRAY_STORAGE_PLAINBUFFER;
                     break;
                 }

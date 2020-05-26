@@ -24,10 +24,6 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, i
     int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        if (pshape) {
-            xdtshape.pshape[i] = pshape[i];
-            xdtshape.bshape[i] = bshape[i];
-        }
         size *= shape[i];
     }
 
@@ -35,6 +31,12 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, i
     store.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     store.enforce_frame = false;
     store.filename = NULL;
+    for (int i = 0; i < ndim; ++i) {
+        if (pshape != NULL) {
+            store.pshape[i] = pshape[i];
+            store.bshape[i] = bshape[i];
+        }
+    }
 
     iarray_container_t *c_x;
 

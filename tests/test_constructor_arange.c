@@ -26,10 +26,7 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
     int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        if (pshape != NULL) {
-            xdtshape.pshape[i] = pshape[i];
-            xdtshape.bshape[i] = bshape[i];
-        }
+        xdtshape.pshape[i] = 1000000;
         size *= shape[i];
     }
 
@@ -40,6 +37,10 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
         xstore.backend = IARRAY_STORAGE_PLAINBUFFER;
     } else {
         xstore.backend = IARRAY_STORAGE_BLOSC;
+        for (int i = 0; i < ndim; ++i) {
+            xstore.pshape[i] = pshape[i];
+            xstore.bshape[i] = bshape[i];
+        }
     }
 
     iarray_container_t *c_x;
@@ -90,7 +91,7 @@ INA_TEST_TEARDOWN(constructor_arange) {
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE_SKIP(constructor_arange, 2_d_p) {
+INA_TEST_FIXTURE(constructor_arange, 2_d_p) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
@@ -116,7 +117,7 @@ INA_TEST_FIXTURE(constructor_arange, 2_f) {
     INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop));
 }
 
-/*
+
 INA_TEST_FIXTURE(constructor_arange, 5_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
@@ -142,4 +143,3 @@ INA_TEST_FIXTURE(constructor_arange, 7_f_p) {
 
     INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop));
 }
-*/

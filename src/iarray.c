@@ -332,25 +332,25 @@ ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t),
 }
 
 
-ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_t *params) {
-    params->ndim = dtshape->ndim;
-    params->itemsize = dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ? sizeof(double) : sizeof(float);
-    for (int i = 0; i < params->ndim; ++i) {
-        params->shape[i] = dtshape->shape[i];
+ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_t *cat_params) {
+    cat_params->ndim = dtshape->ndim;
+    cat_params->itemsize = dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ? sizeof(double) : sizeof(float);
+    for (int i = 0; i < cat_params->ndim; ++i) {
+        cat_params->shape[i] = dtshape->shape[i];
     }
     return INA_SUCCESS;
 }
 
 
-ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage_t *store, caterva_storage_t *storage) {
-    storage->backend = store->backend == IARRAY_STORAGE_BLOSC ? CATERVA_STORAGE_BLOSC : CATERVA_STORAGE_PLAINBUFFER;
-    switch (storage->backend) {
+ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage_t *storage, caterva_storage_t *cat_storage) {
+    cat_storage->backend = storage->backend == IARRAY_STORAGE_BLOSC ? CATERVA_STORAGE_BLOSC : CATERVA_STORAGE_PLAINBUFFER;
+    switch (cat_storage->backend) {
         case CATERVA_STORAGE_BLOSC:
-            storage->properties.blosc.enforceframe = store->enforce_frame;
-            storage->properties.blosc.filename = store->filename;
+            cat_storage->properties.blosc.enforceframe = storage->enforce_frame;
+            cat_storage->properties.blosc.filename = storage->filename;
             for (int i = 0; i < dtshape->ndim; ++i) {
-                storage->properties.blosc.chunkshape[i] = (int32_t) dtshape->pshape[i];
-                storage->properties.blosc.blockshape[i] = (int32_t) dtshape->bshape[i];
+                cat_storage->properties.blosc.chunkshape[i] = (int32_t) storage->pshape[i];
+                cat_storage->properties.blosc.blockshape[i] = (int32_t) storage->bshape[i];
             }
             break;
         case CATERVA_STORAGE_PLAINBUFFER:

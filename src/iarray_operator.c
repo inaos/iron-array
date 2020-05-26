@@ -32,7 +32,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     c->catarr->filled = true;
 
     /* Check if the block is equal to the shape */
-    bool a_copy = a->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
+    bool a_copy = a->storage->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
     if (!a_copy) {
         a_copy = a->view ? true : false;
     }
@@ -45,7 +45,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
     }
 
-    bool b_copy = b->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
+    bool b_copy = b->storage->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
     if (!b_copy) {
         b_copy = b->view ? true : false;
     }
@@ -256,7 +256,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     c->catarr->filled = true;
 
     /* Check if the block is equal to the shape */
-    bool a_copy = a->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
+    bool a_copy = a->storage->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
     if (!a_copy) {
         a_copy = a->view ? true : false;
     }
@@ -269,7 +269,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
     }
 
-    bool b_copy = b->store->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
+    bool b_copy = b->storage->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
     if (!b_copy) {
         b_copy = b->view ? true : false;
     }
@@ -605,10 +605,10 @@ INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_containe
         a->dtshape->shape[i] = aux[a->dtshape->ndim - 1 - i];
     }
     for (int i = 0; i < a->dtshape->ndim; ++i) {
-        aux[i] = a->dtshape->pshape[i];
+        aux[i] = a->storage->pshape[i];
     }
     for (int i = 0; i < a->dtshape->ndim; ++i) {
-        a->dtshape->pshape[i] = aux[a->dtshape->ndim - 1 - i];
+        a->storage->pshape[i] = aux[a->dtshape->ndim - 1 - i];
     }
     return INA_SUCCESS;
 }
@@ -689,7 +689,7 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
         return INA_ERROR(IARRAY_ERR_INVALID_BSHAPE);
     }
 
-    if (bshape_a[0] != c->dtshape->pshape[0]){
+    if (bshape_a[0] != c->storage->pshape[0]){
         IARRAY_TRACE1(iarray.error, "The first dimension of the first bshape must be"
                                     "equal to the first dimension of the output container pshape");
         return INA_ERROR(IARRAY_ERR_INVALID_BSHAPE);
@@ -699,7 +699,7 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
         return _iarray_gemv(ctx, a, b, c, bshape_a, bshape_b);
     }
     else if (b->dtshape->ndim == 2) {
-        if (bshape_b[1] != c->dtshape->pshape[1]) {
+        if (bshape_b[1] != c->storage->pshape[1]) {
             IARRAY_TRACE1(iarray.error, "The second dimension of the second bshape must be"
                                         "equal to the second dimension of the output container pshape");
             return INA_ERROR(IARRAY_ERR_INVALID_BSHAPE);

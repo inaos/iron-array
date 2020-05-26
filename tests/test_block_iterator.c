@@ -23,21 +23,21 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        if (pshape) {
-            xdtshape.pshape[i] = pshape[i];
-            xdtshape.bshape[i] = bshape[i];
-        }
         size *= shape[i];
     }
 
-    iarray_storage_t xstore;
-    xstore.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    xstore.enforce_frame = false;
-    xstore.filename = NULL;
+    iarray_storage_t xstorage;
+    xstorage.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
+    xstorage.enforce_frame = false;
+    xstorage.filename = NULL;
+    for (int i = 0; i < ndim; ++i) {
+        xstorage.pshape[i] = pshape ? pshape[i] : 0;
+        xstorage.bshape[i] = bshape ? bshape[i] : 0;
+    }
 
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, &xstorage, 0, &c_x));
 
     // Test write iterator
     iarray_iter_write_block_t *I;
@@ -91,7 +91,7 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     }
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->size * type_size, &xstore, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->size * type_size, &xstorage, 0, &c_y));
 
     if (ndim == 2) {
         INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x));

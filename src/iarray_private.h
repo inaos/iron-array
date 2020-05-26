@@ -101,7 +101,7 @@ struct iarray_container_s {
     blosc2_cparams *cparams;
     blosc2_dparams *dparams;
     caterva_array_t *catarr;
-    iarray_storage_t *store;
+    iarray_storage_t *storage;
     bool transposed;
     bool view;
     union {
@@ -266,10 +266,10 @@ void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr);
 int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr);
 
 // Utilities
-bool _iarray_file_exists(const char * filename);
+bool _iarray_file_exists(const char *filename);
 
 ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
-                                  iarray_container_t *c,
+                                  iarray_container_t *container,
                                   int64_t *start,
                                   int64_t *stop,
                                   int64_t *pshape,
@@ -277,7 +277,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
                                   int64_t buflen);
 
 INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
-                                                   iarray_container_t *c,
+                                                   iarray_container_t *container,
                                                    int64_t *start,
                                                    int64_t *stop,
                                                    void **buffer,
@@ -333,7 +333,7 @@ INA_API(ina_rc_t) iarray_operator_cumsum(iarray_context_t *ctx, iarray_container
 
 /* Caterva private functions */
 ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t), void (*free)(void *), caterva_config_t *cat_cfg);
-ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_t *params);
-ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage_t *store, caterva_storage_t *storage);
+ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_t *cat_params);
+ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage_t *storage, caterva_storage_t *cat_storage);
 
 #endif

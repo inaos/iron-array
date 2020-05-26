@@ -26,10 +26,6 @@ static ina_rc_t test_buffer(iarray_context_t *ctx,
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        if (pshape != NULL) {
-            xdtshape.pshape[i] = pshape[i];
-            xdtshape.bshape[i] = bshape[i];
-        }
     }
 
     int64_t buf_size = 1;
@@ -55,6 +51,10 @@ static ina_rc_t test_buffer(iarray_context_t *ctx,
         xstore.backend = IARRAY_STORAGE_PLAINBUFFER;
     } else {
         xstore.backend = IARRAY_STORAGE_BLOSC;
+        for (int i = 0; i < ndim; ++i) {
+            xstore.pshape[i] = pshape[i];
+            xstore.bshape[i] = bshape[i];
+        }
     }
 
     iarray_container_t *c_x;

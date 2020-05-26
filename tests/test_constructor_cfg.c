@@ -25,16 +25,18 @@ static ina_rc_t test_cfg(iarray_context_t *ctx,
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        if (pshape != NULL) {
-            xdtshape.pshape[i] = pshape[i];
-            xdtshape.bshape[i] = bshape[i];
-        }
     }
 
     iarray_storage_t xstore;
     xstore.backend = (pshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     xstore.enforce_frame = false;
     xstore.filename = NULL;
+    for (int i = 0; i < ndim; ++i) {
+        if (pshape != NULL) {
+            xstore.pshape[i] = pshape[i];
+            xstore.bshape[i] = bshape[i];
+        }
+    }
 
     // Empty array
     iarray_container_t *c_x;
