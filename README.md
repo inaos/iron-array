@@ -61,8 +61,8 @@ other packager of your preference).
 
 * If one wants to use the multithreaded version, then add next flag:
 
-         cmake -DCMAKE_BUILD_TYPE=Debug -DMULTITHREADING=TRUE ..
-         cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMULTITHREADING=TRUE ..
+         cmake -DCMAKE_BUILD_TYPE=Debug ..
+         cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 
 
 ### Linux
@@ -91,8 +91,8 @@ other packager of your preference).
 
 * If one wants to use the multithreaded version, then add next flag:
 
-         cmake -DCMAKE_BUILD_TYPE=Debug -DMULTITHREADING=TRUE ..
-         cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMULTITHREADING=TRUE ..
+         cmake -DCMAKE_BUILD_TYPE=Debug ..
+         cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 
 
 ### Expressions
