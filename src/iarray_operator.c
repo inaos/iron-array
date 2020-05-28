@@ -28,9 +28,6 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     int64_t typesize = a->catarr->itemsize;
 
-    c->catarr->empty = false;
-    c->catarr->filled = true;
-
     /* Check if the block is equal to the shape */
     bool a_copy = a->storage->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
     if (!a_copy) {
@@ -64,20 +61,13 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     int64_t B2 = bshape_b[1];
 
     int flag_a = CblasNoTrans;
-    int ld_a = (int) B1;
     if (a->transposed == 1) {
         flag_a = CblasTrans;
-        ld_a = (int) B0;
     }
-
     int flag_b = CblasNoTrans;
-    int ld_b = (int) B2;
     if (b->transposed == 1) {
         flag_b = CblasTrans;
-        ld_b = (int) B1;
     }
-
-    int ld_c = (int) B2;
 
     // the extended shape is recalculated from the block shape
     int64_t eshape_a[IARRAY_DIMENSION_MAX];
@@ -124,8 +114,6 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     if (b_copy) {
         b_block = ina_mem_alloc(b_size);
     }
-
-    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
     memset(c_block, 0, c_size);
 
     // Start a iterator that returns the index matrix blocks
@@ -134,8 +122,12 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     for (_iarray_iter_matmul_init(iter); !_iarray_iter_matmul_finished(iter); _iarray_iter_matmul_next(iter)) {
         int64_t start_a[IARRAY_DIMENSION_MAX];
         int64_t stop_a[IARRAY_DIMENSION_MAX];
+        int64_t cbshape_a[IARRAY_DIMENSION_MAX];
+        int64_t csize_a;
         int64_t start_b[IARRAY_DIMENSION_MAX];
         int64_t stop_b[IARRAY_DIMENSION_MAX];
+        int64_t cbshape_b[IARRAY_DIMENSION_MAX];
+        int64_t csize_b;
 
         int64_t inc_a = 1;
         int64_t inc_b = 1;
@@ -153,6 +145,8 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
 
         // a start and a stop are calculated from the block coords
+        csize_a = typesize;
+        csize_b = typesize;
         for (int i = 0; i < a->dtshape->ndim; ++i) {
             start_a[i] = part_ind_a[i] * bshape_a[i];
             start_b[i] = part_ind_b[i] * bshape_b[i];
@@ -166,30 +160,48 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
             } else {
                 stop_b[i] = start_b[i] + bshape_b[i];
             }
+            cbshape_a[i] = stop_a[i] - start_a[i];
+            cbshape_b[i] = stop_b[i] - start_b[i];
+            csize_a *= cbshape_a[i];
+            csize_b *= cbshape_b[i];
+
         }
 
         // Obtain desired blocks from iarray containers
         if (!a_copy) {
             IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
         } else {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, cbshape_a, a_block, csize_a));
         }
         if (!b_copy) {
             IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
         } else {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
+            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, cbshape_b, b_block, csize_b));
         }
 
-        // Make blocks multiplication
+        int64_t cB0 = cbshape_a[0];
+        int64_t cB1 = cbshape_a[1];
+        int64_t cB2 = cbshape_b[1];
 
+        int ld_a = (int) cB1;
+        if (a->transposed == 1) {
+            ld_a = (int) cB0;
+        }
+        int ld_b = (int) cB2;
+        if (b->transposed == 1) {
+            ld_b = (int) cB1;
+        }
+        int ld_c = (int) cB2;
+
+        // Make blocks multiplication
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                cblas_dgemm(CblasRowMajor, flag_a, flag_b, (int) B0, (int) B2, (int) B1,
+                cblas_dgemm(CblasRowMajor, flag_a, flag_b, (int) cB0, (int) cB2, (int) cB1,
                     1.0, (double *)a_block, ld_a, (double *)b_block, ld_b, 1.0, (double *)c_block, ld_c);
 
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                cblas_sgemm(CblasRowMajor, flag_a, flag_b, (const int)B0, (const int)B2, (const int)B1,
+                cblas_sgemm(CblasRowMajor, flag_a, flag_b, (const int)cB0, (const int)cB2, (const int)cB1,
                     1.0f, (float *)a_block, ld_a, (float *)b_block, ld_b, 1.0f, (float *)c_block, ld_c);
                 break;
             default:
@@ -205,11 +217,12 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         } else {
             // Append it to a new iarray container
             if ((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
-                int blosc_rc = blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], c_size);
-                if (blosc_rc < 0) {
-                    IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
-                    IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-                }
+                caterva_array_append(cat_ctx, c->catarr, &c_block[0], cB0 * cB2 * typesize);
+//                int blosc_rc = blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], c_size);
+//                if (blosc_rc < 0) {
+//                    IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
+//                    IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+//                }
                 memset(c_block, 0, c_size);
             }
         }
