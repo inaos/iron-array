@@ -583,7 +583,7 @@ INA_API(ina_rc_t) iarray_to_sview(iarray_context_t *ctx, iarray_container_t *c, 
     for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
         *pview = 0xd3;
         pview += 1;
-        swap_store(pview, &c->dtshape->pshape[i], sizeof(int64_t));
+        swap_store(pview, &c->storage->pshape[i], sizeof(int64_t));
         pview += sizeof(int64_t);
     }
 
@@ -687,7 +687,7 @@ INA_API(ina_rc_t) iarray_from_sview(iarray_context_t *ctx, uint8_t *sview, int64
     pview += 1;
     for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
         pview += 1;
-        swap_store(&(*c)->dtshape->pshape[i], pview, sizeof(int64_t));
+        swap_store(&(*c)->storage->pshape[i], pview, sizeof(int64_t));
         pview += sizeof(int64_t);
     }
 

@@ -214,24 +214,6 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename, b
     free(dparams);
     (*container)->dparams = dparams2;  // we need an INA-allocated struct (to match INA_MEM_FREE_SAFE)
 
-    (*container)->transposed = transposed;  // TODO: complete this
-    if (transposed) {
-        int64_t aux[IARRAY_DIMENSION_MAX];
-        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
-            aux[i] = (*container)->dtshape->shape[i];
-        }
-        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
-            (*container)->dtshape->shape[i] = aux[(*container)->dtshape->ndim - 1 - i];
-        }
-        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
-            aux[i] = (*container)->dtshape->pshape[i];
-        }
-        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
-            (*container)->dtshape->pshape[i] = aux[(*container)->dtshape->ndim - 1 - i];
-        }
-    }
-    (*container)->view = false;
-
     (*container)->storage = ina_mem_alloc(sizeof(iarray_storage_t));
     if ((*container)->storage == NULL) {
         IARRAY_TRACE1(iarray.error, "Error allocating the store parameter");
@@ -244,6 +226,24 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename, b
         (*container)->storage->pshape[i] = catarr->chunkshape[i];
         (*container)->storage->bshape[i] = catarr->blockshape[i];
     }
+
+    (*container)->transposed = transposed;  // TODO: complete this
+    if (transposed) {
+        int64_t aux[IARRAY_DIMENSION_MAX];
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            aux[i] = (*container)->dtshape->shape[i];
+        }
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            (*container)->dtshape->shape[i] = aux[(*container)->dtshape->ndim - 1 - i];
+        }
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            aux[i] = (*container)->storage->pshape[i];
+        }
+        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
+            (*container)->storage->pshape[i] = aux[(*container)->dtshape->ndim - 1 - i];
+        }
+    }
+    (*container)->view = false;
 
     free(smeta);
 
@@ -299,9 +299,11 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
             IARRAY_TRACE1(iarray.error, "Start is bigger than stop");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
         }
-        if (storage->backend == IARRAY_STORAGE_BLOSC && storage->pshape[i] > stop_[i] - start_[i]){
-            IARRAY_TRACE1(iarray.error, "The pshape is bigger than shape");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_PSHAPE));
+        if (!view) {
+            if (storage->backend == IARRAY_STORAGE_BLOSC && storage->pshape[i] > stop_[i] - start_[i]) {
+                IARRAY_TRACE1(iarray.error, "The pshape is bigger than shape");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_PSHAPE));
+            }
         }
     }
 
@@ -967,8 +969,6 @@ INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
     dtshape->dtype = c->dtshape->dtype;
     for (int i = 0; i < c->dtshape->ndim; ++i) {
         dtshape->shape[i] = c->dtshape->shape[i];
-        dtshape->pshape[i] = c->dtshape->pshape[i];
-        dtshape->bshape[i] = c->dtshape->bshape[i];
     }
     return INA_SUCCESS;
 }

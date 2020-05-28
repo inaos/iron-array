@@ -15,9 +15,9 @@
 
 
 static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize,
-                          const int64_t *xshape, const int64_t *xpshape, int64_t *xbshape, int xtrans,
-                          const int64_t *yshape, const int64_t *ypshape, int64_t *ybshape, int ytrans,
-                          const int64_t *zshape, const int64_t *zpshape)
+                          const int64_t *xshape, const int64_t *xpshape, const int64_t *xbshape, int64_t *xblockshape, int xtrans,
+                          const int64_t *yshape, const int64_t *ypshape, const int64_t *ybshape, int64_t *yblockbshape, int ytrans,
+                          const int64_t *zshape, const int64_t *zpshape, const int64_t *zbshape)
 {
     int xflag = CblasNoTrans;
     int yflag = CblasNoTrans;
@@ -29,8 +29,6 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     size_t xsize = 1;
     for (int i = 0; i < xdtshape.ndim; ++i) {
         xdtshape.shape[i] = xshape[i];
-        if (xpshape)
-            xdtshape.pshape[i] = xpshape[i];
         xsize *= xshape[i];
     }
 
@@ -38,7 +36,13 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     xstore.backend = xpshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.filename = NULL;
     xstore.enforce_frame = false;
-
+    if (xpshape != NULL) {
+        for (int i = 0; i < xdtshape.ndim; ++i) {
+            xstore.pshape[i] = xpshape[i];
+            xstore.bshape[i] = xbshape[i];
+        }
+    }
+    
     iarray_container_t *c_x;
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, (double) xsize, 1, &xstore, 0, &c_x));
 
@@ -59,8 +63,6 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     size_t ysize = 1;
     for (int i = 0; i < ydtshape.ndim; ++i) {
         ydtshape.shape[i] = yshape[i];
-        if (ypshape)
-            ydtshape.pshape[i] = ypshape[i];
         ysize *= yshape[i];
     }
 
@@ -68,7 +70,12 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     ystore.backend = ypshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     ystore.filename = NULL;
     ystore.enforce_frame = false;
-
+    if (ypshape != NULL) {
+        for (int i = 0; i < ydtshape.ndim; ++i) {
+            ystore.pshape[i] = ypshape[i];
+            ystore.bshape[i] = ybshape[i];
+        }
+    }
     iarray_container_t *c_y;
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &ydtshape, 0, (double) ysize, 1, &ystore, 0, &c_y));
 
@@ -101,18 +108,18 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     }
     int ldo = N;
 
-    switch (dtype) {
-        case IARRAY_DATA_TYPE_DOUBLE:
-            cblas_dgemm(CblasRowMajor, xflag, yflag, M, N, K, 1.0, (double *) xbuffer, ldx,
-                        (double *) ybuffer, ldy, 0.0, (double *) obuffer, ldo);
-            break;
-        case IARRAY_DATA_TYPE_FLOAT:
-            cblas_sgemm(CblasRowMajor, xflag, yflag, M, N, K, 1.0f, (float *) xbuffer, ldx,
-                        (float *) ybuffer, ldy, 0.0f, (float *) obuffer, ldo);
-            break;
-        default:
-            return INA_ERR_EXCEEDED;
-    }
+//    switch (dtype) {
+//        case IARRAY_DATA_TYPE_DOUBLE:
+//            cblas_dgemm(CblasRowMajor, xflag, yflag, M, N, K, 1.0, (double *) xbuffer, ldx,
+//                        (double *) ybuffer, ldy, 0.0, (double *) obuffer, ldo);
+//            break;
+//        case IARRAY_DATA_TYPE_FLOAT:
+//            cblas_sgemm(CblasRowMajor, xflag, yflag, M, N, K, 1.0f, (float *) xbuffer, ldx,
+//                        (float *) ybuffer, ldy, 0.0f, (float *) obuffer, ldo);
+//            break;
+//        default:
+//            return INA_ERR_EXCEEDED;
+//    }
 
     //Define iarray container z
     iarray_dtshape_t zdtshape;
@@ -121,8 +128,6 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     int64_t zsize = 1;
     for (int i = 0; i < zdtshape.ndim; ++i) {
         zdtshape.shape[i] = zshape[i];
-        if (zpshape)
-            zdtshape.pshape[i] = zpshape[i];
         zsize *= zshape[i];
     }
 
@@ -130,12 +135,17 @@ static ina_rc_t test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     zstore.backend = zpshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     zstore.filename = NULL;
     zstore.enforce_frame = false;
-
+    if (zpshape != NULL) {
+        for (int i = 0; i < zdtshape.ndim; ++i) {
+            zstore.pshape[i] = zpshape[i];
+            zstore.bshape[i] = zbshape[i];
+        }
+    }
     iarray_container_t *c_z;
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &zdtshape, &zstore, 0, &c_z));
 
     // iarray multiplication
-    INA_TEST_ASSERT_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y, c_z, xbshape, ybshape, IARRAY_OPERATOR_GENERAL));
+    INA_TEST_ASSERT_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y, c_z, xblockshape, yblockbshape, IARRAY_OPERATOR_GENERAL));
 
     // define z buffer
     uint8_t *zbuffer = ina_mem_alloc(zsize * typesize);
@@ -192,7 +202,7 @@ INA_TEST_TEARDOWN(linalg_gemm) {
     iarray_destroy();
 }
 
-
+/*
 INA_TEST_FIXTURE(linalg_gemm, f_notrans_notrans_plain_plain) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -200,22 +210,28 @@ INA_TEST_FIXTURE(linalg_gemm, f_notrans_notrans_plain_plain) {
 
     int64_t xshape[] = {150, 250};
     int64_t *xpshape = NULL;
-
     int64_t *xbshape = NULL;
+
+    int64_t *xblockshape = NULL;
     int xtrans = 0;
 
     int64_t yshape[] = {250, 100};
     int64_t *ypshape = NULL;
-
     int64_t *ybshape = NULL;
+
+    int64_t *yblockshape = NULL;
     int ytrans = 0;
 
     int64_t zshape[] = {150, 100};
     int64_t *zpshape = NULL;
+    int64_t *zbshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                           xshape, xpshape, xbshape, xblockshape, xtrans,
+                                           yshape, ypshape, ybshape, yblockshape, ytrans,
+                                           zshape, zpshape, zbshape));
 }
+
 
 INA_TEST_FIXTURE(linalg_gemm, d_notrans_notrans_plain_plain) {
 
@@ -224,22 +240,28 @@ INA_TEST_FIXTURE(linalg_gemm, d_notrans_notrans_plain_plain) {
 
     int64_t xshape[] = {100, 200};
     int64_t *xpshape = NULL;
-
     int64_t *xbshape = NULL;
+
+    int64_t *xblockshape = NULL;
     int xtrans = 0;
 
     int64_t yshape[] = {200, 150};
     int64_t *ypshape = NULL;
-
     int64_t *ybshape = NULL;
+
+    int64_t *yblockshape = NULL;
     int ytrans = 0;
 
     int64_t zshape[] = {100, 150};
     int64_t *zpshape = NULL;
+    int64_t *zbshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
+
 
 INA_TEST_FIXTURE(linalg_gemm, f_notrans_notrans_schunk_schunk) {
 
@@ -248,23 +270,29 @@ INA_TEST_FIXTURE(linalg_gemm, f_notrans_notrans_schunk_schunk) {
 
     int64_t xshape[] = {100, 170};
     int64_t xpshape[] = {27, 30};
+    int64_t xbshape[] = {12, 7};
 
-    int64_t xbshape[] = {40, 20};
+    int64_t xblockshape[] = {40, 20};
     int xtrans = 0;
 
 
     int64_t yshape[] = {170, 21};
-    int64_t ypshape[] = {20, 5};
+    int64_t ypshape[] = {20, 11};
+    int64_t ybshape[] = {10, 5};
 
-    int64_t ybshape[] = {20, 3};
+    int64_t yblockshape[] = {20, 3};
     int ytrans = 0;
 
     int64_t zshape[] = {100, 21};
     int64_t zpshape[] = {40, 3};
+    int64_t zbshape[] = {20, 3};
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
+*/
 
 INA_TEST_FIXTURE(linalg_gemm, d_notrans_notrans_schunk_schunk) {
 
@@ -273,24 +301,30 @@ INA_TEST_FIXTURE(linalg_gemm, d_notrans_notrans_schunk_schunk) {
 
     int64_t xshape[] = {300, 670};
     int64_t xpshape[] = {28, 300};
+    int64_t xbshape[] = {11, 31};
 
-    int64_t xbshape[] = {43, 20};
+    int64_t xblockshape[] = {43, 20};
     int xtrans = 0;
 
 
     int64_t yshape[] = {670, 210};
     int64_t ypshape[] = {20, 45};
+    int64_t ybshape[] = {7, 12};
 
-    int64_t ybshape[] = {20, 11};
+    int64_t yblockshape[] = {20, 11};
     int ytrans = 0;
 
     int64_t zshape[] = {300, 210};
     int64_t zpshape[] = {43, 11};
+    int64_t zbshape[] = {13, 5};
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
+/*
 INA_TEST_FIXTURE(linalg_gemm, f_notrans_trans_plain_plain) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -311,8 +345,10 @@ INA_TEST_FIXTURE(linalg_gemm, f_notrans_trans_plain_plain) {
     int64_t zshape[] = {100, 150};
     int64_t *zpshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, d_notrans_trans_plain_plain) {
@@ -335,8 +371,10 @@ INA_TEST_FIXTURE(linalg_gemm, d_notrans_trans_plain_plain) {
     int64_t zshape[] = {100, 150};
     int64_t *zpshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 
@@ -360,8 +398,10 @@ INA_TEST_FIXTURE(linalg_gemm, f_notrans_trans_schunk_schunk) {
     int64_t zshape[] = {100, 150};
     int64_t zpshape[] = {20, 30};
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, d_notrans_trans_schunk_schunk) {
@@ -384,8 +424,10 @@ INA_TEST_FIXTURE(linalg_gemm, d_notrans_trans_schunk_schunk) {
     int64_t zshape[] = {100, 150};
     int64_t zpshape[] = {20, 30};
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, f_trans_notrans_plain_plain) {
@@ -408,8 +450,10 @@ INA_TEST_FIXTURE(linalg_gemm, f_trans_notrans_plain_plain) {
     int64_t zshape[] = {130, 210};
     int64_t *zpshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 
@@ -433,8 +477,10 @@ INA_TEST_FIXTURE(linalg_gemm, d_trans_notrans_plain_plain) {
     int64_t zshape[] = {100, 200};
     int64_t *zpshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, f_trans_trans_schunk_schunk) {
@@ -457,8 +503,10 @@ INA_TEST_FIXTURE(linalg_gemm, f_trans_trans_schunk_schunk) {
     int64_t zshape[] = {650, 874};
     int64_t zpshape[] = {155, 234};
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, d_trans_trans_schunk_schunk) {
@@ -481,8 +529,10 @@ INA_TEST_FIXTURE(linalg_gemm, d_trans_trans_schunk_schunk) {
     int64_t zshape[] = {350, 150};
     int64_t zpshape[] = {125, 43};
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, f_trans_trans_plain_plain) {
@@ -505,8 +555,10 @@ INA_TEST_FIXTURE(linalg_gemm, f_trans_trans_plain_plain) {
     int64_t zshape[] = {212, 432};
     int64_t *zpshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 
@@ -530,8 +582,10 @@ INA_TEST_FIXTURE(linalg_gemm, d_trans_trans_plain_plain) {
     int64_t zshape[] = {456, 874};
     int64_t *zpshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, f_notrans_notrans_plain_schunk) {
@@ -554,8 +608,10 @@ INA_TEST_FIXTURE(linalg_gemm, f_notrans_notrans_plain_schunk) {
     int64_t zshape[] = {1230, 534};
     int64_t zpshape[] = {1230, 124};
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, d_trans_notrans_plain_schunk) {
@@ -578,8 +634,10 @@ INA_TEST_FIXTURE(linalg_gemm, d_trans_notrans_plain_schunk) {
     int64_t zshape[] = {456, 534};
     int64_t zpshape[] = {456, 210};
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, f_trans_trans_schunk_plain) {
@@ -602,8 +660,10 @@ INA_TEST_FIXTURE(linalg_gemm, f_trans_trans_schunk_plain) {
     int64_t zshape[] = {433, 678};
     int64_t zpshape[] = {236, 88};
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, d_trans_notrans_schunk_plain) {
@@ -626,8 +686,10 @@ INA_TEST_FIXTURE(linalg_gemm, d_trans_notrans_schunk_plain) {
     int64_t zshape[] = {456, 534};
     int64_t zpshape[] = {123, 534};
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 
@@ -651,8 +713,10 @@ INA_TEST_FIXTURE(linalg_gemm, d_notrans_notrans_schunk_plain_plain) {
     int64_t zshape[] = {456, 534};
     int64_t *zpshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, f_notrans_notrans_plain_plain_nc_nc) {
@@ -675,8 +739,10 @@ INA_TEST_FIXTURE(linalg_gemm, f_notrans_notrans_plain_plain_nc_nc) {
     int64_t zshape[] = {150, 100};
     int64_t *zpshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
 
 
@@ -701,6 +767,9 @@ INA_TEST_FIXTURE(linalg_gemm, f_trans_trans_plain_plain_nc_nc) {
     int64_t zshape[] = {250, 250};
     int64_t *zpshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize, xshape, xpshape, xbshape, xtrans,
-                                      yshape, ypshape, ybshape, ytrans, zshape, zpshape));
+    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
+                                      xshape, xpshape, xbshape, xblockshape, xtrans,
+                                      yshape, ypshape, ybshape, yblockshape, ytrans,
+                                      zshape, zpshape, zbshape));
 }
+*/

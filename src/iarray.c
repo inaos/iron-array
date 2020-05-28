@@ -71,7 +71,7 @@ int64_t get_nearest_power2(int64_t value)
 }
 
 // Given a shape, offer advice on the partition size
-INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape,
+INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t storage,
                                           int64_t low, int64_t high)
 {
     INA_UNUSED(ctx);  // we could use context in the future
@@ -97,7 +97,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     iarray_data_type_t dtype = dtshape->dtype;
     int ndim = dtshape->ndim;
     int64_t *shape = dtshape->shape;
-    int64_t *pshape = dtshape->pshape;
+    int64_t *pshape = storage.pshape;
     int itemsize = 0;
     switch (dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
@@ -212,8 +212,8 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
     // First, the m and n values *have* to be the same for the partition of the output
-    int64_t m_dim = c->dtshape->pshape[0];
-    int64_t n_dim = c->dtshape->pshape[1];
+    int64_t m_dim = c->storage->pshape[0];
+    int64_t n_dim = c->storage->pshape[1];
 
     // Now that we have a hint for M and K, get a guess of the N
     int64_t k_dim_guess1 = high / (m_dim * itemsize);

@@ -11,6 +11,7 @@
  */
 
 #include <libiarray/iarray.h>
+#include "../../../../../../usr/local/Cellar/gcc/9.3.0_1/include/c++/9.3.0/bits/codecvt.h"
 
 int main(void)
 {
@@ -41,7 +42,7 @@ int main(void)
     store.enforce_frame = false;
     store.filename = NULL;
     
-    if (INA_FAILED(iarray_partition_advice(ctx, &xdtshape, 16 * 1024, 128 * 1024))) {
+    if (INA_FAILED(iarray_partition_advice(ctx, &xdtshape, result, 16 * 1024, 128 * 1024))) {
         printf("Error in getting advice for pshape: %s\n", ina_err_strerror(ina_err_get_rc()));
         exit(1);
     }

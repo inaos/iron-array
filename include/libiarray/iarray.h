@@ -202,8 +202,6 @@ typedef struct iarray_dtshape_s {
     iarray_data_type_t dtype;
     int8_t ndim;     /* if ndim = 0 it is a scalar */
     int64_t shape[IARRAY_DIMENSION_MAX];
-    int64_t pshape[IARRAY_DIMENSION_MAX]; /* partition shape */
-    int64_t bshape[IARRAY_DIMENSION_MAX]; /* block shape */
 } iarray_dtshape_t;
 
 typedef struct iarray_storage_s {
@@ -284,7 +282,7 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx);
  *  `low` and `high` contain low and high values for the partition size.  If `low` is 0, it defaults
  *  to a fraction of L2 cache size.  If `high` is 0, it defaults to a fraction of L3 cache size.
  */
-INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape,
+INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t storage,
                                           int64_t low, int64_t high);
 
 /*

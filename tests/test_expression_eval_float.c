@@ -52,7 +52,6 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
     int64_t nelem = 1;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
-        dtshape.pshape[i] = plain_buffer ? 0 : pshape[i];
         nelem *= shape[i];
     }
 

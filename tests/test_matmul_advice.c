@@ -33,7 +33,6 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     dtshape_a.ndim = ndim;
     for (int i = 0; i < ndim; i++) {
         dtshape_a.shape[i] = shape_a[i];
-        dtshape_a.pshape[i] = 0;
     }
 
     iarray_storage_t store;
@@ -41,7 +40,7 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     store.filename = NULL;
     store.enforce_frame = false;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_a, low, high));
+    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_a, store, low, high));
     iarray_container_t *c_a;
     INA_TEST_ASSERT_SUCCEED(iarray_ones(ctx, &dtshape_a, &store, 0, &c_a));
 
@@ -51,9 +50,8 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     dtshape_b.ndim = ndim;
     for (int i = 0; i < ndim; i++) {
         dtshape_b.shape[i] = shape_b[i];
-        dtshape_b.pshape[i] = 0;
     }
-    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_b, low, high));
+    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_b, store, low, high));
     iarray_container_t *c_b;
     INA_TEST_ASSERT_SUCCEED(iarray_ones(ctx, &dtshape_b, &store, 0, &c_b));
 
@@ -63,7 +61,7 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     dtshape_c.ndim = ndim;
     dtshape_c.shape[0] = shape_a[0];
     dtshape_c.shape[1] = shape_b[1];
-    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_c, low, high));
+    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_c, store, low, high));
     iarray_container_t *c_c;
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &dtshape_c, &store, 0, &c_c));
 

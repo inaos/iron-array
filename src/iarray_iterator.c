@@ -401,7 +401,6 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
     caterva_array_t *catarr = itr->cont->catarr;
     int8_t ndim = catarr->ndim;
     int64_t typesize = itr->cont->catarr->itemsize;
-    int64_t psizeb = itr->cur_block_size * typesize;
 
     // Check if block is the first
     if (itr->nblock != 0) {
@@ -433,85 +432,19 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                 }
             }
         } else {
-            // check if the part should be padded with 0s
-            if (itr->cur_block_size == catarr->chunksize) {
-                if (itr->compressed_chunk_buffer) {
-                    int err = blosc2_schunk_append_chunk(catarr->sc, itr->block, false);
-                    if (err < 0) {
-                        IARRAY_TRACE1(iarray.error, "Error appending a chunk in a blosc schunk");
-                        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-                    }
-                } else {
-                    int err = blosc2_schunk_append_buffer(catarr->sc, itr->block, (size_t) psizeb);
-                    if (itr->external_buffer) {
-                        free(itr->block);
-                    }
-                    if (err < 0) {
-                        IARRAY_TRACE1(iarray.error, "Error appending a buffer in a blosc schunk");
-                        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-                    }
+            if (itr->compressed_chunk_buffer) {
+                int err = blosc2_schunk_append_chunk(catarr->sc, itr->block, false);
+                if (err < 0) {
+                    IARRAY_TRACE1(iarray.error, "Error appending a chunk in a blosc schunk");
+                    IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
                 }
             } else {
-                uint8_t *part_aux = malloc((size_t) catarr->chunksize * typesize);
-                memset(part_aux, 0, catarr->chunksize * typesize);
-
-                //reverse part_shape
-                int64_t shaper[CATERVA_MAX_DIM];
-                for (int i = 0; i < CATERVA_MAX_DIM; ++i) {
-                    if (i >= CATERVA_MAX_DIM - ndim) {
-                        shaper[i] = itr->cur_block_shape[i - CATERVA_MAX_DIM + ndim];
-                    } else {
-                        shaper[i] = 1;
-                    }
-                }
-
-                //copy buffer data to an aux buffer padded with 0's
-                int64_t ii[CATERVA_MAX_DIM];
-                for (ii[0] = 0; ii[0] < shaper[0]; ++ii[0]) {
-                    for (ii[1] = 0; ii[1] < shaper[1]; ++ii[1]) {
-                        for (ii[2] = 0; ii[2] < shaper[2]; ++ii[2]) {
-                            for (ii[3] = 0; ii[3] < shaper[3]; ++ii[3]) {
-                                for (ii[4] = 0; ii[4] < shaper[4]; ++ii[4]) {
-                                    for (ii[5] = 0; ii[5] < shaper[5]; ++ii[5]) {
-                                        for (ii[6] = 0; ii[6] < shaper[6]; ++ii[6]) {
-
-                                            int64_t aux_p = 0;
-                                            int64_t aux_i = catarr->chunkshape[ndim - 1];
-
-                                            for (int i = ndim - 2; i >= 0; --i) {
-                                                aux_p += ii[CATERVA_MAX_DIM - ndim + i] * aux_i;
-                                                aux_i *= catarr->chunkshape[i];
-                                            }
-
-                                            int64_t itr_p = 0;
-                                            int64_t itr_i = shaper[CATERVA_MAX_DIM - 1];
-
-                                            for (int i = CATERVA_MAX_DIM - 2; i >= CATERVA_MAX_DIM - ndim; --i) {
-                                                itr_p += ii[i] * itr_i;
-                                                itr_i *= shaper[i];
-                                            }
-                                            memcpy(&part_aux[aux_p * typesize],
-                                                   &(((uint8_t *) itr->block)[itr_p * typesize]),
-                                                   shaper[7] * typesize);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                int err = blosc2_schunk_append_buffer(itr->cont->catarr->sc, part_aux,
-                                                      (size_t) catarr->chunksize * typesize);
+                caterva_array_append(itr->cat_ctx, catarr, itr->block, itr->cur_block_size * typesize);
                 if (itr->external_buffer) {
                     free(itr->block);
                 }
-                free(part_aux);
-
-                if (err < 0) {
-                    IARRAY_TRACE1(iarray.error, "Error appending a buffer in a blosc schunk");
-                    IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-                }
             }
+
         }
     }
 
@@ -570,7 +503,6 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
         caterva_array_t *catarr = itr->cont->catarr;
         int8_t ndim = catarr->ndim;
         int64_t typesize = itr->cont->catarr->itemsize;
-        int64_t psizeb = itr->cur_block_size * typesize;
         if (itr->cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
             if (!itr->contiguous) {
                 int64_t *start = itr->cur_elem_index;
@@ -597,89 +529,18 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
             }
         } else {
             // check if the part should be padded with 0s
-            if (itr->cur_block_size == catarr->chunksize) {
-                if (itr->compressed_chunk_buffer) {
-                    int err = blosc2_schunk_append_chunk(catarr->sc, itr->block, false);
-                    if (err < 0) {
-                        // TODO: if the next call is not zero, it can be interpreted as there are more elements
-                        IARRAY_TRACE1(iarray.error, "Error appending a chunk to a blosc schunk");
-                        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-                    }
-                } else {
-                    int err = blosc2_schunk_append_buffer(catarr->sc, itr->block, (size_t) psizeb);
-                    if (itr->external_buffer) {
-                        free(itr->block);
-                    }
-
-                    if (err < 0) {
-                        // TODO: if the next call is not zero, it can be interpreted as there are more elements
-                        IARRAY_TRACE1(iarray.error, "Error appending a chunk to a blosc schunk");
-                        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-                    }
+            if (itr->compressed_chunk_buffer) {
+                int err = blosc2_schunk_append_chunk(catarr->sc, itr->block, false);
+                if (err < 0) {
+                    // TODO: if the next call is not zero, it can be interpreted as there are more elements
+                    IARRAY_TRACE1(iarray.error, "Error appending a chunk to a blosc schunk");
+                    IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
                 }
             } else {
-                uint8_t *part_aux = malloc((size_t) catarr->chunksize * typesize);
-                memset(part_aux, 0, catarr->chunksize * typesize);
-
-                //reverse part_shape
-                int64_t shaper[CATERVA_MAX_DIM];
-                for (int i = 0; i < CATERVA_MAX_DIM; ++i) {
-                    if (i >= CATERVA_MAX_DIM - ndim) {
-                        shaper[i] = itr->cur_block_shape[i - CATERVA_MAX_DIM + ndim];
-                    } else {
-                        shaper[i] = 1;
-                    }
-                }
-
-                // copy buffer data to an aux buffer padded with 0's
-                int64_t ii[CATERVA_MAX_DIM];
-                for (ii[0] = 0; ii[0] < shaper[0]; ++ii[0]) {
-                    for (ii[1] = 0; ii[1] < shaper[1]; ++ii[1]) {
-                        for (ii[2] = 0; ii[2] < shaper[2]; ++ii[2]) {
-                            for (ii[3] = 0; ii[3] < shaper[3]; ++ii[3]) {
-                                for (ii[4] = 0; ii[4] < shaper[4]; ++ii[4]) {
-                                    for (ii[5] = 0; ii[5] < shaper[5]; ++ii[5]) {
-                                        for (ii[6] = 0; ii[6] < shaper[6]; ++ii[6]) {
-
-                                            int64_t aux_p = 0;
-                                            int64_t aux_i = catarr->chunkshape[ndim - 1];
-
-                                            for (int i = ndim - 2; i >= 0; --i) {
-                                                aux_p += ii[CATERVA_MAX_DIM - ndim + i] * aux_i;
-                                                aux_i *= catarr->chunkshape[i];
-                                            }
-
-                                            int64_t itr_p = 0;
-                                            int64_t itr_i = shaper[CATERVA_MAX_DIM - 1];
-
-                                            for (int i = CATERVA_MAX_DIM - 2; i >= CATERVA_MAX_DIM - ndim; --i) {
-                                                itr_p += ii[i] * itr_i;
-                                                itr_i *= shaper[i];
-                                            }
-                                            memcpy(&part_aux[aux_p * typesize],
-                                                   &(((uint8_t *) itr->block)[itr_p * typesize]),
-                                                   shaper[7] * typesize);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                int err = blosc2_schunk_append_buffer(itr->cont->catarr->sc, part_aux,
-                                                      (size_t) catarr->chunksize * typesize);
+                caterva_array_append(itr->cat_ctx, catarr, itr->block, itr->cur_block_size * typesize);
                 if (itr->external_buffer) {
                     free(itr->block);
                 }
-                free(part_aux);
-
-                if (err < 0) {
-                    // TODO: if the next call is not zero, it can be interpreted as there are more elements
-                    IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
-                    IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-                }
-               // memset(part_aux, 0, catarr->psize * catarr->sc->typesize);
-
             }
         }
     }
@@ -691,7 +552,6 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
         return INA_SUCCESS;
     }
     return INA_ERROR(IARRAY_ERR_END_ITER);
-
     fail:
     return ina_err_get_rc();
 }
@@ -744,8 +604,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
     caterva_config_t cfg = {0};
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
-    caterva_context_t *cat_ctx;
-    IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
+    IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &(*itr)->cat_ctx));
 
     if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
         memset(cont->catarr->buf, 0, cont->catarr->size * typesize);
@@ -754,7 +613,6 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
         }
     }
-    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
 
     (*itr)->compressed_chunk_buffer = false;  // the default is to pass uncompressed buffers
     (*itr)->val = value;

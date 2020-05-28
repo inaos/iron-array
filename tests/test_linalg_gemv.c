@@ -28,8 +28,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     int64_t xsize = 1;
     for (int i = 0; i < xdtshape.ndim; ++i) {
         xdtshape.shape[i] = xshape[i];
-        if (xpshape)
-            xdtshape.pshape[i] = xpshape[i];
+
         xsize *= xshape[i];
     }
 
@@ -58,8 +57,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     int64_t ysize = 1;
     for (int i = 0; i < ydtshape.ndim; ++i) {
         ydtshape.shape[i] = yshape[i];
-        if (ypshape)
-            ydtshape.pshape[i] = ypshape[i];
+
         ysize *= yshape[i];
     }
 
@@ -110,8 +108,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     int64_t zsize = 1;
     for (int i = 0; i < zdtshape.ndim; ++i) {
         zdtshape.shape[i] = zshape[i];
-        if (zpshape)
-            zdtshape.pshape[i] = zpshape[i];
+
         zsize *= zshape[i];
     }
 

@@ -48,8 +48,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     xdtshape.ndim = ndim;
     for (int j = 0; j < xdtshape.ndim; ++j) {
         xdtshape.shape[j] = shape[j];
-        if (pshape)
-            xdtshape.pshape[j] = pshape[j];
+
     }
 
     iarray_container_t *c_x;
@@ -84,7 +83,6 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     INA_TEST_ASSERT(c_out->dtshape->ndim == c_sview->dtshape->ndim);
     for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
         INA_TEST_ASSERT(c_out->dtshape->shape[i] == c_sview->dtshape->shape[i]);
-        INA_TEST_ASSERT(c_out->dtshape->pshape[i] == c_sview->dtshape->pshape[i]);
         INA_TEST_ASSERT(c_out->auxshape->offset[i] == c_sview->auxshape->offset[i]);
         INA_TEST_ASSERT(c_out->auxshape->shape_wos[i] == c_sview->auxshape->shape_wos[i]);
         INA_TEST_ASSERT(c_out->auxshape->pshape_wos[i] == c_sview->auxshape->pshape_wos[i]);

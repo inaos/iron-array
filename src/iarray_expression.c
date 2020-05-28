@@ -185,7 +185,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
                 }
                 if (equal_pshape) {
                     for (int j = 0; j < c->dtshape->ndim; ++j) {
-                        if (c->dtshape->pshape[j] != e->out_dtshape->pshape[j]) {
+                        if (c->storage->pshape[j] != e->out_store_properties->pshape[j]) {
                             equal_pshape = false;
                             break;
                         }
@@ -959,7 +959,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
         }
     } else {
         for (int i = 0; i < ret->dtshape->ndim; ++i) {
-            out_pshape[i] = ret->dtshape->pshape[i];
+            out_pshape[i] = ret->storage->pshape[i];
         }
     }
 

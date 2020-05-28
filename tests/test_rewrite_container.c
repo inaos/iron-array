@@ -24,8 +24,7 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
     int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        if (pshape)
-            xdtshape.pshape[i] = pshape[i];
+
         size *= shape[i];
     }
 

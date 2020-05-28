@@ -26,7 +26,6 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
     int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        xdtshape.pshape[i] = 1000000;
         size *= shape[i];
     }
 

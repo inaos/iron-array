@@ -62,8 +62,7 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx,
     xdtshape.ndim = ndim;
     for (int j = 0; j < xdtshape.ndim; ++j) {
         xdtshape.shape[j] = shape[j];
-        if (pshape)
-            xdtshape.pshape[j] = pshape[j];
+
     }
 
     iarray_storage_t xstore;
@@ -93,8 +92,7 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx,
         int64_t st = (start[j] + shape[j]) % shape[j];
         int64_t sp = (stop[j] + shape[j] - 1) % shape[j] + 1;
         sdtshape.shape[j] = sp - st;
-        if (pshape_slice)
-            sdtshape.pshape[j] = pshape_slice[j];
+
     }
 
     iarray_storage_t sstore;

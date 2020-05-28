@@ -255,8 +255,8 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     iarray_auxshape_t auxshape;
     for (int i = 0; i < dtshape->ndim; ++i) {
         auxshape.shape_wos[i] = dtshape->shape[i];
-        auxshape.pshape_wos[i] = dtshape->pshape[i];
-        auxshape.bshape_wos[i] = dtshape->bshape[i];
+        auxshape.pshape_wos[i] = pred->storage->pshape[i];
+        auxshape.bshape_wos[i] = pred->storage->bshape[i];
         auxshape.offset[i] = offset[i];
         auxshape.index[i] = (uint8_t) i;
     }
@@ -266,13 +266,6 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
         IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
     }
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
-
-    if ((*c)->dtshape->pshape[0] == 0) {
-        for (int i = 0; i < dtshape->ndim; ++i) {
-            (*c)->dtshape->pshape[i] = dtshape->shape[i];
-            (*c)->auxshape->pshape_wos[i] = dtshape->shape[i];
-        }
-    }
 
     (*c)->cparams = pred->cparams;
     (*c)->dparams = pred->dparams;

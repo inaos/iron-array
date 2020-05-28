@@ -177,6 +177,8 @@ typedef struct iarray_iter_write_block_s {
     bool contiguous; // Flag to avoid copies using plainbuffer
     bool compressed_chunk_buffer;  // Flag to append an already compressed buffer
     bool external_buffer; // Flag to indicate if a external part is passed
+
+    caterva_context_t *cat_ctx;
 } iarray_iter_write_block_t;
 
 static const iarray_iter_write_block_t IARRAY_ITER_WRITE_BLOCK_EMPTY = {0};

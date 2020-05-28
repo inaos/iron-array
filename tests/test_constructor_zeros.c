@@ -26,8 +26,6 @@ static ina_rc_t test_zeros(iarray_context_t *ctx,
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        if (pshape)
-            xdtshape.pshape[i] = pshape[i];
     }
 
     iarray_storage_t store;
