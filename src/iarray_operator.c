@@ -98,7 +98,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint8_t *c_block = NULL;
 
     caterva_config_t cfg = {0};
-    iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+    IARRAY_ERR_CATERVA(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
     caterva_context_t *cat_ctx;
     IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
@@ -217,17 +217,12 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         } else {
             // Append it to a new iarray container
             if ((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
-                caterva_array_append(cat_ctx, c->catarr, &c_block[0], cB0 * cB2 * typesize);
-//                int blosc_rc = blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], c_size);
-//                if (blosc_rc < 0) {
-//                    IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
-//                    IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-//                }
+                IARRAY_ERR_CATERVA(caterva_array_append(cat_ctx, c->catarr, &c_block[0], cB0 * cB2 * typesize));
                 memset(c_block, 0, c_size);
             }
         }
     }
-
+    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
     c->catarr->filled = true;
     rc = INA_SUCCESS;
     goto cleanup;
