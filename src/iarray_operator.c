@@ -260,9 +260,6 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     int64_t typesize = a->catarr->itemsize;
 
-    c->catarr->empty = false;
-    c->catarr->filled = true;
-
     /* Check if the block is equal to the shape */
     bool a_copy = a->storage->backend == IARRAY_STORAGE_PLAINBUFFER ? false : true;
     if (!a_copy) {
@@ -294,15 +291,14 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     int64_t B0 = bshape_a[0];
     int64_t B1 = bshape_a[1];
 
-    int M = (int) bshape_a[0];
-    int K = (int) bshape_a[1];
-    int ld_a = K;
+    // block sizes are claculated
+    size_t a_size = (size_t) B0 * B1 * typesize;
+    size_t b_size = (size_t) B1 * typesize;
+    size_t c_size = (size_t) B0 * typesize;
+
     int flag_a = CblasNoTrans;
     if (a->transposed == 1) {
         flag_a = CblasTrans;
-        ld_a = M;
-        M = (int) bshape_a[1];
-        K = (int) bshape_a[0];
     }
 
     int64_t eshape_a[2];
@@ -322,11 +318,6 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         eshape_b[0] = (b->dtshape->shape[0] / bshape_b[0] + 1) * bshape_b[0];
     }
 
-    // block sizes are claculated
-    size_t a_size = (size_t) B0 * B1 * typesize;
-    size_t b_size = (size_t) B1 * typesize;
-    size_t c_size = (size_t) B0 * typesize;
-
     int dtype = a->dtshape->dtype;
 
     uint8_t *a_block = NULL;
@@ -335,7 +326,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     uint8_t *c_block = NULL;
 
     caterva_config_t cfg = {0};
-    iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+    IARRAY_ERR_CATERVA(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
     caterva_context_t *cat_ctx;
     IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
@@ -352,8 +343,6 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         b_block = ina_mem_alloc(b_size);
     }
 
-    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
-
     memset(c_block, 0, c_size);
 
     // Start a iterator that returns the index matrix blocks
@@ -364,8 +353,12 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
         int64_t start_a[IARRAY_DIMENSION_MAX];
         int64_t stop_a[IARRAY_DIMENSION_MAX];
+        int64_t cbshape_a[IARRAY_DIMENSION_MAX];
+        int64_t csize_a;
         int64_t start_b[IARRAY_DIMENSION_MAX];
         int64_t stop_b[IARRAY_DIMENSION_MAX];
+        int64_t cbshape_b[IARRAY_DIMENSION_MAX];
+        int64_t csize_b;
 
         int64_t inc_a = 1;
 
@@ -381,6 +374,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
 
         // a start and a stop are calculated from the block coords
+        csize_a = typesize;
         for (int i = 0; i < a->dtshape->ndim; ++i) {
             start_a[i] = part_ind_a[i] * bshape_a[i];
             if (start_a[i] + bshape_a[i] > a->dtshape->shape[i]) {
@@ -388,33 +382,48 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
             } else {
                 stop_a[i] = start_a[i] + bshape_a[i];
             }
-
+            cbshape_a[i] = stop_a[i] - start_a[i];
+            csize_a *= cbshape_a[i];
         }
+
+        csize_b = typesize;
         start_b[0] = part_ind_b[0] * bshape_b[0];
         if (start_b[0] + bshape_b[0] > b->dtshape->shape[0]) {
             stop_b[0] = b->dtshape->shape[0];
         } else {
             stop_b[0] = start_b[0] + bshape_b[0];
         }
+        cbshape_b[0] = stop_b[0] - start_b[0];
+        csize_b *= cbshape_b[0];
+
+        int64_t cB0 = cbshape_a[0];
+        int64_t cB1 = cbshape_a[1];
+
+        int ld_a = (int) cB1;
+        if (a->transposed == 1) {
+            ld_a = (int) cB0;
+            cB0 = cbshape_a[1];
+            cB1 = cbshape_a[0];
+        }
 
         if (!a_copy) {
             IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
         } else {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, bshape_a, a_block, a_size));
+            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, cbshape_a, a_block, csize_a));
         }
         if (!b_copy) {
             IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
         } else {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, bshape_b, b_block, b_size));
+            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, cbshape_b, b_block, csize_b));
         }
 
         // Make blocks multiplication
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                cblas_dgemv(CblasRowMajor, flag_a, M, K, 1.0, (double *) a_block, ld_a, (double *) b_block, 1, 1.0, (double *) c_block, 1);
+                cblas_dgemv(CblasRowMajor, flag_a, cB0, cB1, 1.0, (double *) a_block, ld_a, (double *) b_block, 1, 1.0, (double *) c_block, 1);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                cblas_sgemv(CblasRowMajor, flag_a, M, K, 1.0f, (float *) a_block, ld_a, (float *) b_block, 1, 1.0f, (float *) c_block, 1);
+                cblas_sgemv(CblasRowMajor, flag_a, cB0, cB1, 1.0f, (float *) a_block, ld_a, (float *) b_block, 1, 1.0f, (float *) c_block, 1);
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "The data type is invalid");
@@ -428,12 +437,13 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         } else {
             // Append it to a new iarray container
             if ((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
-                blosc2_schunk_append_buffer(c->catarr->sc, &c_block[0], c_size);
+                IARRAY_ERR_CATERVA(caterva_array_append(cat_ctx, c->catarr, &c_block[0], cbshape_a[0] * typesize));
                 memset(c_block, 0, c_size);
             }
         }
     }
 
+    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
     c->catarr->filled = true;
     rc = INA_SUCCESS;
     goto cleanup;
