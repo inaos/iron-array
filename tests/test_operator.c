@@ -53,7 +53,8 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
                                            iarray_data_type_t dtype,
                                            int32_t type_size,
                                            int64_t n,
-                                           int64_t p)
+                                           int64_t p,
+                                           int64_t b)
 {
     void *buffer_x;
     void *buffer_r;
@@ -88,7 +89,11 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
     store.backend = IARRAY_STORAGE_BLOSC;
     store.filename = NULL;
     store.enforce_frame = false;
-
+    for (int i = 0; i < shape.ndim; ++i) {
+        store.pshape[i] = p;
+        store.bshape[i] = b;
+    }
+    
     iarray_container_t *c_x;
     iarray_container_t *c_out;
     iarray_container_t *c_res;
@@ -116,7 +121,8 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
                                             iarray_data_type_t dtype,
                                             int32_t type_size,
                                             int64_t n,
-                                            int64_t p)
+                                            int64_t p,
+                                            int64_t b)
 {
     void *buffer_x;
     void *buffer_y;
@@ -158,7 +164,10 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
     store.backend = IARRAY_STORAGE_BLOSC;
     store.filename = NULL;
     store.enforce_frame = false;
-
+    for (int i = 0; i < shape.ndim; ++i) {
+        store.pshape[i] = p;
+        store.bshape[i] = b;
+    }
     iarray_container_t *c_x;
     iarray_container_t *c_y;
     iarray_container_t *c_out;
@@ -201,6 +210,7 @@ INA_TEST_TEARDOWN(operator_element_wise)
     iarray_destroy();
 }
 
+
 INA_TEST_FIXTURE(operator_element_wise, add_float_data)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -208,8 +218,9 @@ INA_TEST_FIXTURE(operator_element_wise, add_float_data)
 
     int64_t N = 387;
     int64_t P = 44;
-
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_add, vdAdd, vsAdd, dtype, type_size, N, P));
+    int64_t B = 22;
+    
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_add, vdAdd, vsAdd, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, add_double_data)
@@ -218,9 +229,10 @@ INA_TEST_FIXTURE(operator_element_wise, add_double_data)
     int32_t type_size = sizeof(double);
 
     int64_t N = 298;
-    int64_t P = 22;
+    int64_t P = 66;
+    int64_t B = 22;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_add, vdAdd, vsAdd, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_add, vdAdd, vsAdd, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, sub_float_data)
@@ -229,9 +241,10 @@ INA_TEST_FIXTURE(operator_element_wise, sub_float_data)
     int32_t type_size = sizeof(float);
 
     int64_t N = 237;
-    int64_t P = 11;
+    int64_t P = 66;
+    int64_t B = 11;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_sub, vdSub, vsSub, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_sub, vdSub, vsSub, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, sub_double_data)
@@ -241,8 +254,9 @@ INA_TEST_FIXTURE(operator_element_wise, sub_double_data)
 
     int64_t N = 249;
     int64_t P = 46;
+    int64_t B = 22;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_sub, vdSub, vsSub, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_sub, vdSub, vsSub, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, mul_float_data)
@@ -251,9 +265,10 @@ INA_TEST_FIXTURE(operator_element_wise, mul_float_data)
     int32_t type_size = sizeof(float);
 
     int64_t N = 273;
-    int64_t P = 15;
+    int64_t P = 77;
+    int64_t B = 22;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_mul, vdMul, vsMul, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_mul, vdMul, vsMul, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, mul_double_data)
@@ -263,8 +278,9 @@ INA_TEST_FIXTURE(operator_element_wise, mul_double_data)
 
     int64_t N = 243;
     int64_t P = 48;
+    int64_t B = 12;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_mul, vdMul, vsMul, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_mul, vdMul, vsMul, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, div_float_data)
@@ -273,9 +289,10 @@ INA_TEST_FIXTURE(operator_element_wise, div_float_data)
     int32_t type_size = sizeof(float);
 
     int64_t N = 153;
-    int64_t P = 14;
+    int64_t P = 102;
+    int64_t B = 14;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_div, vdDiv, vsDiv, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_div, vdDiv, vsDiv, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, div_double_data)
@@ -285,8 +302,9 @@ INA_TEST_FIXTURE(operator_element_wise, div_double_data)
 
     int64_t N = 223;
     int64_t P = 51;
+    int64_t B = 22;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_div, vdDiv, vsDiv, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_div, vdDiv, vsDiv, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, abs_float_data)
@@ -294,10 +312,11 @@ INA_TEST_FIXTURE(operator_element_wise, abs_float_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
-    int64_t N = 113;
-    int64_t P = 9;
+    int64_t N = 40;
+    int64_t P = 20;
+    int64_t B = 10;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_abs, vdAbs, vsAbs, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_abs, vdAbs, vsAbs, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, abs_double_data)
@@ -305,10 +324,11 @@ INA_TEST_FIXTURE(operator_element_wise, abs_double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
-    int64_t N = 113;
-    int64_t P = 9;
+    int64_t N = 513;
+    int64_t P = 129;
+    int64_t B = 14;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_abs, vdAbs, vsAbs, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_abs, vdAbs, vsAbs, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, acos_float_data)
@@ -316,10 +336,11 @@ INA_TEST_FIXTURE(operator_element_wise, acos_float_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
-    int64_t N = 133;
-    int64_t P = 23;
+    int64_t N = 433;
+    int64_t P = 77;
+    int64_t B = 10;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_acos, vdAcos, vsAcos, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_acos, vdAcos, vsAcos, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, acos_double_data)
@@ -329,8 +350,9 @@ INA_TEST_FIXTURE(operator_element_wise, acos_double_data)
 
     int64_t N = 133;
     int64_t P = 23;
+    int64_t B = 22;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_acos, vdAcos, vsAcos, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_acos, vdAcos, vsAcos, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, asin_float_data)
@@ -339,9 +361,10 @@ INA_TEST_FIXTURE(operator_element_wise, asin_float_data)
     int32_t type_size = sizeof(float);
 
     int64_t N = 131;
-    int64_t P = 22;
+    int64_t P = 32;
+    int64_t B = 12;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_asin, vdAsin, vsAsin, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_asin, vdAsin, vsAsin, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, asin_double_data)
@@ -351,8 +374,9 @@ INA_TEST_FIXTURE(operator_element_wise, asin_double_data)
 
     int64_t N = 131;
     int64_t P = 22;
+    int64_t B = 22;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_asin, vdAsin, vsAsin, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_asin, vdAsin, vsAsin, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, atanc_float_data)
@@ -370,10 +394,12 @@ INA_TEST_FIXTURE(operator_element_wise, ceil_float_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
-    int64_t N = 111;
-    int64_t P = 11;
+    int64_t N = 211;
+    int64_t P = 44;
+    int64_t B = 11;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_ceil, vdCeil, vsCeil, dtype, type_size, N, P));
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_ceil, vdCeil, vsCeil, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, ceil_double_data)
@@ -381,10 +407,12 @@ INA_TEST_FIXTURE(operator_element_wise, ceil_double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
-    int64_t N = 111;
-    int64_t P = 11;
+    int64_t N = 321;
+    int64_t P = 66;
+    int64_t B = 12;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_ceil, vdCeil, vsCeil, dtype, type_size, N, P));
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_ceil, vdCeil, vsCeil, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, cos_float_data)
@@ -392,10 +420,11 @@ INA_TEST_FIXTURE(operator_element_wise, cos_float_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
-    int64_t N = 110;
-    int64_t P = 10;
+    int64_t N = 310;
+    int64_t P = 60;
+    int64_t B = 12;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cos, vdCos, vsCos, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cos, vdCos, vsCos, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, cos_double_data)
@@ -403,10 +432,11 @@ INA_TEST_FIXTURE(operator_element_wise, cos_double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
-    int64_t N = 110;
-    int64_t P = 10;
+    int64_t N = 177;
+    int64_t P = 29;
+    int64_t B = 8;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cos, vdCos, vsCos, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cos, vdCos, vsCos, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, cosh_float_data)
@@ -415,9 +445,10 @@ INA_TEST_FIXTURE(operator_element_wise, cosh_float_data)
     int32_t type_size = sizeof(float);
 
     int64_t N = 109;
-    int64_t P = 9;
+    int64_t P = 55;
+    int64_t B = 12;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cosh, vdCosh, vsCosh, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cosh, vdCosh, vsCosh, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, cosh_double_data)
@@ -425,10 +456,11 @@ INA_TEST_FIXTURE(operator_element_wise, cosh_double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
-    int64_t N = 109;
-    int64_t P = 9;
+    int64_t N = 500;
+    int64_t P = 100;
+    int64_t B = 10;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cosh, vdCosh, vsCosh, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cosh, vdCosh, vsCosh, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, exp_float_data)
@@ -438,8 +470,9 @@ INA_TEST_FIXTURE(operator_element_wise, exp_float_data)
 
     int64_t N = 112;
     int64_t P = 12;
+    int64_t B = 12;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_exp, vdExp, vsExp, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_exp, vdExp, vsExp, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, exp_double_data)
@@ -447,10 +480,11 @@ INA_TEST_FIXTURE(operator_element_wise, exp_double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
-    int64_t N = 112;
-    int64_t P = 12;
+    int64_t N = 324;
+    int64_t P = 77;
+    int64_t B = 9;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_exp, vdExp, vsExp, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_exp, vdExp, vsExp, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, floor_float_data)
@@ -458,10 +492,11 @@ INA_TEST_FIXTURE(operator_element_wise, floor_float_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
-    int64_t N = 114;
-    int64_t P = 14;
+    int64_t N = 222;
+    int64_t P = 222;
+    int64_t B = 11;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_floor, vdFloor, vsFloor, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_floor, vdFloor, vsFloor, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, floor_double_data)
@@ -469,10 +504,11 @@ INA_TEST_FIXTURE(operator_element_wise, floor_double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
-    int64_t N = 114;
-    int64_t P = 14;
+    int64_t N = 237;
+    int64_t P = 67;
+    int64_t B = 67;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_floor, vdFloor, vsFloor, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_floor, vdFloor, vsFloor, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, log_float_data)
@@ -481,9 +517,10 @@ INA_TEST_FIXTURE(operator_element_wise, log_float_data)
     int32_t type_size = sizeof(float);
 
     int64_t N = 115;
-    int64_t P = 15;
+    int64_t P = 115;
+    int64_t B = 115;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_log, vdLn, vsLn, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_log, vdLn, vsLn, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, log_double_data)
@@ -491,10 +528,11 @@ INA_TEST_FIXTURE(operator_element_wise, log_double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
-    int64_t N = 115;
-    int64_t P = 15;
+    int64_t N = 223;
+    int64_t P = 66;
+    int64_t B = 66;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_log, vdLn, vsLn, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_log, vdLn, vsLn, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, log10_float_data)
@@ -503,9 +541,10 @@ INA_TEST_FIXTURE(operator_element_wise, log10_float_data)
     int32_t type_size = sizeof(float);
 
     int64_t N = 108;
-    int64_t P = 8;
+    int64_t P = 55;
+    int64_t B = 12;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_log10, vdLog10, vsLog10, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_log10, vdLog10, vsLog10, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, log10_double_data)
@@ -514,9 +553,10 @@ INA_TEST_FIXTURE(operator_element_wise, log10_double_data)
     int32_t type_size = sizeof(double);
 
     int64_t N = 108;
-    int64_t P = 8;
+    int64_t P = 51;
+    int64_t B = 31;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_log10, vdLog10, vsLog10, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_log10, vdLog10, vsLog10, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, pow_float_data)
@@ -524,10 +564,11 @@ INA_TEST_FIXTURE(operator_element_wise, pow_float_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
-    int64_t N = 107;
-    int64_t P = 7;
+    int64_t N = 307;
+    int64_t P = 70;
+    int64_t B = 15;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_pow, vdPow, vsPow, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_pow, vdPow, vsPow, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, pow_double_data)
@@ -536,9 +577,10 @@ INA_TEST_FIXTURE(operator_element_wise, pow_double_data)
     int32_t type_size = sizeof(double);
 
     int64_t N = 107;
-    int64_t P = 7;
+    int64_t P = 70;
+    int64_t B = 15;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_pow, vdPow, vsPow, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_pow, vdPow, vsPow, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, sin_float_data)
@@ -548,8 +590,9 @@ INA_TEST_FIXTURE(operator_element_wise, sin_float_data)
 
     int64_t N = 116;
     int64_t P = 16;
+    int64_t B = 16;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_sin, vdSin, vsSin, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_sin, vdSin, vsSin, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, sin_double_data)
@@ -559,8 +602,9 @@ INA_TEST_FIXTURE(operator_element_wise, sin_double_data)
 
     int64_t N = 116;
     int64_t P = 16;
+    int64_t B = 16;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_sin, vdSin, vsSin, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_sin, vdSin, vsSin, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, sinh_float_data)
@@ -568,10 +612,11 @@ INA_TEST_FIXTURE(operator_element_wise, sinh_float_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
-    int64_t N = 117;
-    int64_t P = 17;
+    int64_t N = 417;
+    int64_t P = 57;
+    int64_t B = 17;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_sinh, vdSinh, vsSinh, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_sinh, vdSinh, vsSinh, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, sinh_double_data)
@@ -579,10 +624,11 @@ INA_TEST_FIXTURE(operator_element_wise, sinh_double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
-    int64_t N = 117;
-    int64_t P = 17;
+    int64_t N = 417;
+    int64_t P = 57;
+    int64_t B = 17;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_sinh, vdSinh, vsSinh, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_sinh, vdSinh, vsSinh, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, sqrt_float_data)
@@ -591,9 +637,10 @@ INA_TEST_FIXTURE(operator_element_wise, sqrt_float_data)
     int32_t type_size = sizeof(float);
 
     int64_t N = 118;
-    int64_t P = 18;
+    int64_t P = 33;
+    int64_t B = 11;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_sqrt, vdSqrt, vsSqrt, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_sqrt, vdSqrt, vsSqrt, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, sqrt_double_data)
@@ -602,9 +649,10 @@ INA_TEST_FIXTURE(operator_element_wise, sqrt_double_data)
     int32_t type_size = sizeof(double);
 
     int64_t N = 118;
-    int64_t P = 18;
+    int64_t P = 33;
+    int64_t B = 11;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_sqrt, vdSqrt, vsSqrt, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_sqrt, vdSqrt, vsSqrt, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, tan_float_data)
@@ -612,10 +660,11 @@ INA_TEST_FIXTURE(operator_element_wise, tan_float_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
-    int64_t N = 119;
-    int64_t P = 19;
+    int64_t N = 321;
+    int64_t P = 321;
+    int64_t B = 11;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_tan, vdTan, vsTan, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_tan, vdTan, vsTan, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, tan_double_data)
@@ -623,10 +672,11 @@ INA_TEST_FIXTURE(operator_element_wise, tan_double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
-    int64_t N = 119;
-    int64_t P = 19;
+    int64_t N = 321;
+    int64_t P = 321;
+    int64_t B = 11;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_tan, vdTan, vsTan, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_tan, vdTan, vsTan, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, tanh_float_data)
@@ -636,8 +686,9 @@ INA_TEST_FIXTURE(operator_element_wise, tanh_float_data)
 
     int64_t N = 120;
     int64_t P = 20;
+    int64_t B = 10;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_tanh, vdTanh, vsTanh, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_tanh, vdTanh, vsTanh, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, tanh_double_data)
@@ -647,8 +698,9 @@ INA_TEST_FIXTURE(operator_element_wise, tanh_double_data)
 
     int64_t N = 120;
     int64_t P = 20;
+    int64_t B = 10;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_tanh, vdTanh, vsTanh, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_tanh, vdTanh, vsTanh, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, erf_float_data)
@@ -656,10 +708,11 @@ INA_TEST_FIXTURE(operator_element_wise, erf_float_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
-    int64_t N = 121;
-    int64_t P = 21;
+    int64_t N = 221;
+    int64_t P = 41;
+    int64_t B = 11;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erf, vdErf, vsErf, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erf, vdErf, vsErf, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, erf_double_data)
@@ -667,10 +720,11 @@ INA_TEST_FIXTURE(operator_element_wise, erf_double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
-    int64_t N = 121;
-    int64_t P = 21;
+    int64_t N = 221;
+    int64_t P = 41;
+    int64_t B = 11;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erf, vdErf, vsErf, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erf, vdErf, vsErf, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, erfc_float_data)
@@ -678,10 +732,11 @@ INA_TEST_FIXTURE(operator_element_wise, erfc_float_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
-    int64_t N = 122;
-    int64_t P = 22;
+    int64_t N = 257;
+    int64_t P = 257;
+    int64_t B = 11;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erfc, vdErfc, vsErfc, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erfc, vdErfc, vsErfc, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, erfc_double_data)
@@ -689,10 +744,11 @@ INA_TEST_FIXTURE(operator_element_wise, erfc_double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
-    int64_t N = 122;
-    int64_t P = 22;
+    int64_t N = 257;
+    int64_t P = 257;
+    int64_t B = 11;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erfc, vdErfc, vsErfc, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erfc, vdErfc, vsErfc, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, cdfnorm_float_data)
@@ -702,8 +758,9 @@ INA_TEST_FIXTURE(operator_element_wise, cdfnorm_float_data)
 
     int64_t N = 123;
     int64_t P = 23;
+    int64_t B = 10;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cdfnorm, vdCdfNorm, vsCdfNorm, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cdfnorm, vdCdfNorm, vsCdfNorm, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, cdfnorm_double_data)
@@ -713,8 +770,9 @@ INA_TEST_FIXTURE(operator_element_wise, cdfnorm_double_data)
 
     int64_t N = 123;
     int64_t P = 23;
+    int64_t B = 10;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cdfnorm, vdCdfNorm, vsCdfNorm, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cdfnorm, vdCdfNorm, vsCdfNorm, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, erfinv_float_data)
@@ -722,10 +780,11 @@ INA_TEST_FIXTURE(operator_element_wise, erfinv_float_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
-    int64_t N = 124;
-    int64_t P = 24;
+    int64_t N = 156;
+    int64_t P = 55;
+    int64_t B = 15;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erfinv, vdErfInv, vsErfInv, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erfinv, vdErfInv, vsErfInv, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, erfinv_double_data)
@@ -733,10 +792,11 @@ INA_TEST_FIXTURE(operator_element_wise, erfinv_double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
-    int64_t N = 124;
-    int64_t P = 24;
+    int64_t N = 156;
+    int64_t P = 55;
+    int64_t B = 15;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erfinv, vdErfInv, vsErfInv, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erfinv, vdErfInv, vsErfInv, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, erfcinv_float_data)
@@ -746,8 +806,9 @@ INA_TEST_FIXTURE(operator_element_wise, erfcinv_float_data)
 
     int64_t N = 125;
     int64_t P = 25;
+    int64_t B = 12;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erfcinv, vdErfcInv, vsErfcInv, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erfcinv, vdErfcInv, vsErfcInv, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, erfcinv_double_data)
@@ -757,8 +818,9 @@ INA_TEST_FIXTURE(operator_element_wise, erfcinv_double_data)
 
     int64_t N = 125;
     int64_t P = 25;
+    int64_t B = 12;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erfcinv, vdErfcInv, vsErfcInv, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_erfcinv, vdErfcInv, vsErfcInv, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, cdfnorminv_float_data)
@@ -766,10 +828,11 @@ INA_TEST_FIXTURE(operator_element_wise, cdfnorminv_float_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
-    int64_t N = 126;
-    int64_t P = 26;
+    int64_t N = 125;
+    int64_t P = 25;
+    int64_t B = 12;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cdfnorminv, vdCdfNormInv, vsCdfNormInv, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cdfnorminv, vdCdfNormInv, vsCdfNormInv, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, cdfnorminv_double_data)
@@ -777,10 +840,11 @@ INA_TEST_FIXTURE(operator_element_wise, cdfnorminv_double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
-    int64_t N = 126;
-    int64_t P = 26;
+    int64_t N = 125;
+    int64_t P = 25;
+    int64_t B = 12;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cdfnorminv, vdCdfNormInv, vsCdfNormInv, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_cdfnorminv, vdCdfNormInv, vsCdfNormInv, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, lgamma_float_data)
@@ -788,10 +852,11 @@ INA_TEST_FIXTURE(operator_element_wise, lgamma_float_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
-    int64_t N = 127;
-    int64_t P = 27;
+    int64_t N = 237;
+    int64_t P = 47;
+    int64_t B = 13;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_lgamma, vdLGamma, vsLGamma, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_lgamma, vdLGamma, vsLGamma, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, lgamma_double_data)
@@ -799,10 +864,11 @@ INA_TEST_FIXTURE(operator_element_wise, lgamma_double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
-    int64_t N = 127;
-    int64_t P = 27;
+    int64_t N = 237;
+    int64_t P = 47;
+    int64_t B = 13;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_lgamma, vdLGamma, vsLGamma, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_lgamma, vdLGamma, vsLGamma, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, tgamma_float_data)
@@ -810,10 +876,11 @@ INA_TEST_FIXTURE(operator_element_wise, tgamma_float_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
-    int64_t N = 128;
-    int64_t P = 28;
+    int64_t N = 237;
+    int64_t P = 47;
+    int64_t B = 13;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_tgamma, vdTGamma, vsTGamma, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_tgamma, vdTGamma, vsTGamma, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, tgamma_double_data)
@@ -821,10 +888,11 @@ INA_TEST_FIXTURE(operator_element_wise, tgamma_double_data)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
-    int64_t N = 128;
-    int64_t P = 28;
+    int64_t N = 237;
+    int64_t P = 47;
+    int64_t B = 13;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_tgamma, vdTGamma, vsTGamma, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_tgamma, vdTGamma, vsTGamma, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, expint1_float_data)
@@ -833,9 +901,10 @@ INA_TEST_FIXTURE(operator_element_wise, expint1_float_data)
     int32_t type_size = sizeof(float);
 
     int64_t N = 129;
-    int64_t P = 29;
+    int64_t P = 119;
+    int64_t B = 109;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_expint1, vdExpInt1, vsExpInt1, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_expint1, vdExpInt1, vsExpInt1, dtype, type_size, N, P, B));
 }
 
 INA_TEST_FIXTURE(operator_element_wise, expint1_double_data)
@@ -844,8 +913,8 @@ INA_TEST_FIXTURE(operator_element_wise, expint1_double_data)
     int32_t type_size = sizeof(double);
 
     int64_t N = 129;
-    int64_t P = 29;
+    int64_t P = 119;
+    int64_t B = 109;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_expint1, vdExpInt1, vsExpInt1, dtype, type_size, N, P));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_x(data->ctx, iarray_operator_expint1, vdExpInt1, vsExpInt1, dtype, type_size, N, P, B));
 }
-

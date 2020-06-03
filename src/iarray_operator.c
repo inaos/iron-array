@@ -484,40 +484,38 @@ static ina_rc_t _iarray_operator_elwise_a(
         psize *= a->catarr->chunkshape[i];
     }
 
-    int8_t *a_chunk = (int8_t*)ina_mempool_dalloc(ctx->mp_op, psize);
-    int8_t *c_chunk = (int8_t*)ina_mempool_dalloc(ctx->mp_op, psize);
+    iarray_iter_read_block_t *iter_read;
+    iarray_iter_read_block_value_t val_read;
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &iter_read, a, result->storage->pshape, &val_read, false));
 
-    for (int i = 0; i < a->catarr->sc->nchunks; ++i) {
-        if (blosc2_schunk_decompress_chunk(a->catarr->sc, i, a_chunk, psize) < 0) {
-            IARRAY_TRACE1(iarray.error, "Error decompressing a chunk from a schunk");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-        }
+    iarray_iter_write_block_t *iter_write;
+    iarray_iter_write_block_value_t val_write;
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &iter_write, result, result->storage->pshape, &val_write, false));
 
+    while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_write)) && INA_SUCCEED(iarray_iter_read_block_has_next(iter_read))) {
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(iter_write, NULL, 0));
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(iter_read, NULL, 0));
         switch (a->dtshape->dtype) {
-        case IARRAY_DATA_TYPE_DOUBLE:
-            mkl_fun_d((const int)(psize / sizeof(double)), (const double*)a_chunk, (double*)c_chunk);
-            break;
-        case IARRAY_DATA_TYPE_FLOAT:
-            mkl_fun_s((const int)(psize / sizeof(float)), (const float*)a_chunk, (float*)c_chunk);
-            break;
-        default:
-            IARRAY_TRACE1(iarray.error, "The data type is invalid");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
-        }
-        if (blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize) < 0) {
-            IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
+            case IARRAY_DATA_TYPE_DOUBLE:
+                mkl_fun_d((const int)(iter_read->cur_block_size), (const double *) *iter_read->block_pointer, (double *) *iter_write->block_pointer);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                mkl_fun_s((const int)(iter_read->cur_block_size), (const float *) *iter_read->block_pointer, (float *) *iter_write->block_pointer);
+                break;
+            default:
+                IARRAY_TRACE1(iarray.error, "The data type is invalid");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
     }
+    iarray_iter_read_block_free(&iter_read);
+    iarray_iter_write_block_free(&iter_write);
 
-    result->catarr->filled = true;
-    ina_mempool_reset(ctx->mp_op);
+    INA_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+    INA_FAIL_IF_ERROR(ina_err_set_rc(INA_SUCCESS));
 
     return INA_SUCCESS;
 
 fail:
-    ina_mempool_reset(ctx->mp_op);
-    /* FIXME: error handling */
     return ina_err_get_rc();
 }
 
@@ -547,39 +545,44 @@ static ina_rc_t _iarray_operator_elwise_ab(
         psize *= a->catarr->chunkshape[i];
     }
 
-    int8_t *a_chunk = (int8_t*)ina_mempool_dalloc(ctx->mp_op, psize);
-    int8_t *b_chunk = (int8_t*)ina_mempool_dalloc(ctx->mp_op, psize);
-    int8_t *c_chunk = (int8_t*)ina_mempool_dalloc(ctx->mp_op, psize);
+    iarray_iter_read_block_t *iter_read;
+    iarray_iter_read_block_value_t val_read;
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &iter_read, a, result->storage->pshape, &val_read, false));
 
-    for (int i = 0; i < a->catarr->sc->nchunks; ++i) {
-        if (blosc2_schunk_decompress_chunk(a->catarr->sc, i, a_chunk, psize) < 0) {
-            IARRAY_TRACE1(iarray.error, "Error decompressing a chunk from a blosc schunk");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-        }
-        if (blosc2_schunk_decompress_chunk(b->catarr->sc, i, b_chunk, psize) < 0) {
-            IARRAY_TRACE1(iarray.error, "Error decompressing a chunk from a blosc schunk");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-        }
+    iarray_iter_read_block_t *iter_read2;
+    iarray_iter_read_block_value_t val_read2;
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &iter_read2, b, result->storage->pshape, &val_read2, false));
+
+    iarray_iter_write_block_t *iter_write;
+    iarray_iter_write_block_value_t val_write;
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &iter_write, result, result->storage->pshape, &val_write, false));
+
+    while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_write)) &&
+           INA_SUCCEED(iarray_iter_read_block_has_next(iter_read)) &&
+            INA_SUCCEED(iarray_iter_read_block_has_next(iter_read2))) {
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(iter_write, NULL, 0));
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(iter_read, NULL, 0));
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(iter_read2, NULL, 0));
         switch (a->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                mkl_fun_d((const int) (psize/sizeof(double)), (const double*) a_chunk, (const double*) b_chunk, (double*) c_chunk);
+                mkl_fun_d((const int)(iter_read->cur_block_size), (const double *) *iter_read->block_pointer,
+                          (double *) *iter_read2->block_pointer, (double *) *iter_write->block_pointer);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                mkl_fun_s((const int) (psize / sizeof(float)), (const float*) a_chunk, (const float*) b_chunk, (float*) c_chunk);
+                mkl_fun_s((const int)(iter_read->cur_block_size), (const float *) *iter_read->block_pointer,
+                          (float *) *iter_read2->block_pointer, (float *) *iter_write->block_pointer);
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "The data type is invalid");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
-        if (blosc2_schunk_append_buffer(result->catarr->sc, c_chunk, psize) < 0) {
-            IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-        }
     }
+    iarray_iter_read_block_free(&iter_read);
+    iarray_iter_read_block_free(&iter_read2);
+    iarray_iter_write_block_free(&iter_write);
 
-    result->catarr->filled = true;
-
-    ina_mempool_reset(ctx->mp_op);
+    INA_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+    INA_FAIL_IF_ERROR(ina_err_set_rc(INA_SUCCESS));
 
     return INA_SUCCESS;
 
