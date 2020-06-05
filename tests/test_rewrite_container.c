@@ -24,7 +24,6 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
     int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-
         size *= shape[i];
     }
 
@@ -32,6 +31,10 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
     xstore.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.enforce_frame = false;
     xstore.filename = NULL;
+    for (int i = 0; i < ndim; ++i) {
+        xstore.pshape[i] = pshape[i];
+        size *= shape[i];
+    }
 
     iarray_container_t *c_x;
 

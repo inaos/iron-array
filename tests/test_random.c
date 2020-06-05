@@ -71,7 +71,7 @@ INA_TEST_TEARDOWN(random_mt) {
 }
 
 
-INA_TEST_FIXTURE(random_mt, rand) {
+INA_TEST_FIXTURE_SKIP(random_mt, rand) {
 
     char *filename = "test_rand_d.iarray";
 
@@ -79,7 +79,7 @@ INA_TEST_FIXTURE(random_mt, rand) {
                                       &iarray_random_rand));
 }
 
-INA_TEST_FIXTURE(random_mt, rand_f) {
+INA_TEST_FIXTURE_SKIP(random_mt, rand_f) {
 
     char* filename = "test_rand_f.iarray";
 
@@ -87,7 +87,7 @@ INA_TEST_FIXTURE(random_mt, rand_f) {
                                       &iarray_random_rand));
 }
 
-INA_TEST_FIXTURE(random_mt, randn) {
+INA_TEST_FIXTURE_SKIP(random_mt, randn) {
 
     char* filename = "test_randn_d.iarray";
 
@@ -95,7 +95,7 @@ INA_TEST_FIXTURE(random_mt, randn) {
                                       &iarray_random_randn));
 }
 
-INA_TEST_FIXTURE(random_mt, randn_f) {
+INA_TEST_FIXTURE_SKIP(random_mt, randn_f) {
 
     char* filename = "test_randn_f.iarray";
 
@@ -103,7 +103,7 @@ INA_TEST_FIXTURE(random_mt, randn_f) {
                                       &iarray_random_randn));
 }
 
-INA_TEST_FIXTURE(random_mt, beta) {
+INA_TEST_FIXTURE_SKIP(random_mt, beta) {
 
 
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_ALPHA, 3.);
@@ -115,7 +115,7 @@ INA_TEST_FIXTURE(random_mt, beta) {
                                       &iarray_random_beta));
 }
 
-INA_TEST_FIXTURE(random_mt, beta_f) {
+INA_TEST_FIXTURE_SKIP(random_mt, beta_f) {
 
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_ALPHA, 0.1f);
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 5.0f);
@@ -126,7 +126,7 @@ INA_TEST_FIXTURE(random_mt, beta_f) {
                                       &iarray_random_beta));
 }
 
-INA_TEST_FIXTURE(random_mt, lognormal) {
+INA_TEST_FIXTURE_SKIP(random_mt, lognormal) {
 
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 3.);
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 4.);
@@ -137,7 +137,7 @@ INA_TEST_FIXTURE(random_mt, lognormal) {
                                       &iarray_random_lognormal));
 }
 
-INA_TEST_FIXTURE(random_mt, lognormal_f) {
+INA_TEST_FIXTURE_SKIP(random_mt, lognormal_f) {
 
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 0.1f);
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 5.f);
@@ -148,7 +148,7 @@ INA_TEST_FIXTURE(random_mt, lognormal_f) {
                                       &iarray_random_lognormal));
 }
 
-INA_TEST_FIXTURE(random_mt, exponential) {
+INA_TEST_FIXTURE_SKIP(random_mt, exponential) {
 
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 3.0f);
     
@@ -158,7 +158,7 @@ INA_TEST_FIXTURE(random_mt, exponential) {
                                       &iarray_random_exponential));
 }
 
-INA_TEST_FIXTURE(random_mt, exponential_f) {
+INA_TEST_FIXTURE_SKIP(random_mt, exponential_f) {
 
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 0.1f);
 
@@ -168,7 +168,7 @@ INA_TEST_FIXTURE(random_mt, exponential_f) {
                                       &iarray_random_exponential));
 }
 
-INA_TEST_FIXTURE(random_mt, uniform) {
+INA_TEST_FIXTURE_SKIP(random_mt, uniform) {
 
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_A, 3.);
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_B, 5.);
@@ -179,7 +179,7 @@ INA_TEST_FIXTURE(random_mt, uniform) {
                                       &iarray_random_uniform));
 }
 
-INA_TEST_FIXTURE(random_mt, uniform_f) {
+INA_TEST_FIXTURE_SKIP(random_mt, uniform_f) {
 
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_A, 0.1f);
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_B, 0.2f);
@@ -190,7 +190,7 @@ INA_TEST_FIXTURE(random_mt, uniform_f) {
                                       &iarray_random_uniform));
 }
 
-INA_TEST_FIXTURE(random_mt, normal) {
+INA_TEST_FIXTURE_SKIP(random_mt, normal) {
 
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 3.);
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 5.);
@@ -201,7 +201,7 @@ INA_TEST_FIXTURE(random_mt, normal) {
                                       &iarray_random_normal));
 }
 
-INA_TEST_FIXTURE(random_mt, normal_f) {
+INA_TEST_FIXTURE_SKIP(random_mt, normal_f) {
 
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 0.1f);
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 0.2f);
@@ -212,7 +212,7 @@ INA_TEST_FIXTURE(random_mt, normal_f) {
                                       &iarray_random_normal));
 }
 
-INA_TEST_FIXTURE(random_mt, binomial) {
+INA_TEST_FIXTURE_SKIP(random_mt, binomial) {
 
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_M, 3.f);
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.7f);
@@ -223,7 +223,7 @@ INA_TEST_FIXTURE(random_mt, binomial) {
                                       &iarray_random_binomial));
 }
 
-INA_TEST_FIXTURE(random_mt, binomial_f) {
+INA_TEST_FIXTURE_SKIP(random_mt, binomial_f) {
 
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_M, 10.f);
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.01f);
@@ -235,7 +235,7 @@ INA_TEST_FIXTURE(random_mt, binomial_f) {
 }
 
 
-INA_TEST_FIXTURE(random_mt, poisson) {
+INA_TEST_FIXTURE_SKIP(random_mt, poisson) {
 
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_LAMBDA, 3.0f);
 
@@ -245,7 +245,7 @@ INA_TEST_FIXTURE(random_mt, poisson) {
 }
 
 
-INA_TEST_FIXTURE(random_mt, poisson_f) {
+INA_TEST_FIXTURE_SKIP(random_mt, poisson_f) {
 
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_LAMBDA, 0.001f);
 
@@ -254,7 +254,7 @@ INA_TEST_FIXTURE(random_mt, poisson_f) {
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, filename, &iarray_random_poisson));
 }
 
-INA_TEST_FIXTURE(random_mt, bernouilli) {
+INA_TEST_FIXTURE_SKIP(random_mt, bernouilli) {
 
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.7f);
 
@@ -264,7 +264,7 @@ INA_TEST_FIXTURE(random_mt, bernouilli) {
 }
 
 
-INA_TEST_FIXTURE(random_mt, bernoulli_f) {
+INA_TEST_FIXTURE_SKIP(random_mt, bernoulli_f) {
 
     iarray_random_ctx_free(data->ctx, &data->rnd_ctx);
 
