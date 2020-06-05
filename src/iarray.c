@@ -71,12 +71,15 @@ int64_t get_nearest_power2(int64_t value)
 }
 
 // Given a shape, offer advice on the partition size
-INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t storage,
+INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
                                           int64_t low, int64_t high)
 {
     INA_UNUSED(ctx);  // we could use context in the future
     INA_VERIFY_NOT_NULL(dtshape);
-
+    INA_VERIFY_NOT_NULL(storage);
+    if (storage->backend != IARRAY_STORAGE_BLOSC) {
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+    }
     if (high == 0) {
         size_t L3;
         ina_cpu_get_l3_cache_size(&L3);
@@ -97,7 +100,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     iarray_data_type_t dtype = dtshape->dtype;
     int ndim = dtshape->ndim;
     int64_t *shape = dtshape->shape;
-    int64_t *pshape = storage.pshape;
+    int64_t *pshape = storage->pshape;
     int itemsize = 0;
     switch (dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
@@ -150,12 +153,13 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
             }
         }
     }
-
+    for (int i = 0; i < ndim; ++i) {
+        storage->bshape[i] = storage->pshape[i];
+    }
     if (psize > INT32_MAX) {
         INA_TRACE1(iarray.error, "The partition size can not be larger than 2 GB");
         return INA_ERROR(IARRAY_ERR_INVALID_PSHAPE);
     }
-
     return INA_SUCCESS;
 }
 

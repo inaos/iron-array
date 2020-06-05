@@ -120,8 +120,7 @@ INA_TEST_TEARDOWN(view_serialization) {
     iarray_destroy();
 }
 
-/*
-INA_TEST_FIXTURE(view_serialization, 2_d_p_v) {
+INA_TEST_FIXTURE_SKIP(view_serialization, 2_d_p_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
@@ -136,7 +135,7 @@ INA_TEST_FIXTURE(view_serialization, 2_d_p_v) {
         start, stop, false));
 }
 
-INA_TEST_FIXTURE(view_serialization, 3_f_v) {
+INA_TEST_FIXTURE_SKIP(view_serialization, 3_f_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
@@ -151,7 +150,7 @@ INA_TEST_FIXTURE(view_serialization, 3_f_v) {
                                                   start, stop, false));
 }
 
-INA_TEST_FIXTURE(view_serialization, 4_d_v) {
+INA_TEST_FIXTURE_SKIP(view_serialization, 4_d_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
@@ -166,7 +165,7 @@ INA_TEST_FIXTURE(view_serialization, 4_d_v) {
                                                   start, stop, false));
 }
 
-INA_TEST_FIXTURE(view_serialization, 5_f_p_v) {
+INA_TEST_FIXTURE_SKIP(view_serialization, 5_f_p_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
@@ -181,7 +180,7 @@ INA_TEST_FIXTURE(view_serialization, 5_f_p_v) {
                                                   start, stop, false));
 }
 
-INA_TEST_FIXTURE(view_serialization, 6_d_p_v) {
+INA_TEST_FIXTURE_SKIP(view_serialization, 6_d_p_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
@@ -196,7 +195,7 @@ INA_TEST_FIXTURE(view_serialization, 6_d_p_v) {
                                                   start, stop, false));
 }
 
-INA_TEST_FIXTURE(view_serialization, 7_f_v) {
+INA_TEST_FIXTURE_SKIP(view_serialization, 7_f_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
@@ -227,7 +226,7 @@ INA_TEST_TEARDOWN(view_serialization_trans) {
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(view_serialization_trans, 2_d_v) {
+INA_TEST_FIXTURE_SKIP(view_serialization_trans, 2_d_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
@@ -242,7 +241,7 @@ INA_TEST_FIXTURE(view_serialization_trans, 2_d_v) {
                                                   start, stop, true));
 }
 
-INA_TEST_FIXTURE(view_serialization_trans, 2_f_p_v) {
+INA_TEST_FIXTURE_SKIP(view_serialization_trans, 2_f_p_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
@@ -257,8 +256,7 @@ INA_TEST_FIXTURE(view_serialization_trans, 2_f_p_v) {
                                                   start, stop, true));
 }
 
-
-INA_TEST_FIXTURE(view_serialization_trans, 2_f_v) {
+INA_TEST_FIXTURE_SKIP(view_serialization_trans, 2_f_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
@@ -272,4 +270,3 @@ INA_TEST_FIXTURE(view_serialization_trans, 2_f_v) {
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, pshape, pshape_dest,
                                                   start, stop, true));
 }
-*/

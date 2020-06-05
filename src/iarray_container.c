@@ -271,7 +271,6 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(src);
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
-    INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(container);
 
     ina_rc_t rc;
