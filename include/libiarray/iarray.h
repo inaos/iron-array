@@ -195,7 +195,6 @@ typedef struct iarray_config_s {
     unsigned int eval_flags;
     int max_num_threads; /* Maximum number of threads to use */
     uint8_t fp_mantissa_bits; /* Only useful together with flag: IARRAY_COMP_TRUNC_PREC */
-    int blocksize; /* Advanced Tuning Parameter */
 } iarray_config_t;
 
 typedef struct iarray_dtshape_s {

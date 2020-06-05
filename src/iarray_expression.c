@@ -173,6 +173,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
     if (eval_method == IARRAY_EVAL_METHOD_AUTO) {
         iarray_storage_type_t backend = IARRAY_STORAGE_BLOSC;
         bool equal_pshape = true;
+        bool equal_bshape = true;
 
         if (e->out_store_properties->backend == IARRAY_STORAGE_PLAINBUFFER) {
             backend = IARRAY_STORAGE_PLAINBUFFER;
@@ -191,6 +192,14 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
                         }
                     }
                 }
+                if (equal_bshape) {
+                    for (int j = 0; j < c->dtshape->ndim; ++j) {
+                        if (c->storage->bshape[j] != e->out_store_properties->bshape[j]) {
+                            equal_bshape = false;
+                            break;
+                        }
+                    }
+                }
             }
         }
 
@@ -200,6 +209,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
             if (!equal_pshape) {
                 eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
             } else {
+                // Add new method for equal blockshape
                 eval_method = IARRAY_EVAL_METHOD_ITERBLOSC2;
             }
         }

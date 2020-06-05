@@ -142,7 +142,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     cparams.compcode = ctx->cfg->compression_codec;
     cparams.use_dict = ctx->cfg->use_dict;
     cparams.clevel = (uint8_t)ctx->cfg->compression_level; /* Since its just a mapping, we know the cast is ok */
-    cparams.blocksize = ctx->cfg->blocksize;
+    cparams.blocksize = (*c)->catarr->blocksize;
     cparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
     if ((ctx->cfg->filter_flags & IARRAY_COMP_TRUNC_PREC) &&
         (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT || dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE)) {
