@@ -606,7 +606,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
 
     // Setup a new cparams with a prefilter
     blosc2_cparams *cparams = malloc(sizeof(blosc2_cparams));
-    memcpy(cparams, ret->cparams, sizeof(blosc2_cparams));
+    // memcpy(cparams, ret->cparams, sizeof(blosc2_cparams));
     cparams->prefilter = (blosc2_prefilter_fn)prefilter_func;
     blosc2_prefilter_params pparams = {0};
 
@@ -615,7 +615,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     expr_pparams.ninputs = nvars;
     expr_pparams.compressed_inputs = false;
     pparams.user_data = (void *) &expr_pparams;
-    cparams->pparams = &pparams;
+//    cparams->pparams = &pparams;
 
     // Create and initialize an iterator per variable
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -831,7 +831,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
 
     // Setup a new cparams with a prefilter
     blosc2_cparams *cparams = malloc(sizeof(blosc2_cparams));
-    memcpy(cparams, ret->cparams, sizeof(blosc2_cparams));
+    // memcpy(cparams, ret->cparams, sizeof(blosc2_cparams));
     cparams->prefilter = (blosc2_prefilter_fn)prefilter_func;
     blosc2_prefilter_params pparams = {0};
 
@@ -912,7 +912,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
             }
 
             // Set the padding to 0's
-            _iarray_reset_padding(out_value.block_pointer, (int8_t) ret->cparams->typesize, ret->dtshape->ndim, out_value.block_shape, ret->catarr->chunkshape);
+            _iarray_reset_padding(out_value.block_pointer, (int8_t) ret->catarr->itemsize, ret->dtshape->ndim, out_value.block_shape, ret->catarr->chunkshape);
 
             iter_out->compressed_chunk_buffer = false;
 

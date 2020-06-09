@@ -98,8 +98,6 @@ typedef struct iarray_auxshape_s {
 struct iarray_container_s {
     iarray_dtshape_t *dtshape;
     iarray_auxshape_t *auxshape;
-    blosc2_cparams *cparams;
-    blosc2_dparams *dparams;
     caterva_array_t *catarr;
     iarray_storage_t *storage;
     bool transposed;

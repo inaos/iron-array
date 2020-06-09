@@ -53,9 +53,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(c);
 
-    blosc2_cparams cparams = {0};
-    blosc2_dparams dparams = {0};
-
     ina_rc_t rc;
     int blosc_filter_idx = 0;
 
@@ -97,18 +94,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
         }
     }
 
-    (*c)->cparams = (blosc2_cparams*)ina_mem_alloc(sizeof(blosc2_cparams));
-    if ((*c)->cparams == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error allocating the blosc cparams");
-        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
-    }
-
-    (*c)->dparams = (blosc2_dparams*)ina_mem_alloc(sizeof(blosc2_dparams));
-    if ((*c)->dparams == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error allocating the blosc dparams");
-        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FAILED));
-    }
-
     iarray_auxshape_t auxshape;
     for (int i = 0; i < dtshape->ndim; ++i) {
         auxshape.shape_wos[i] = dtshape->shape[i];
@@ -126,46 +111,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
 
     (*c)->transposed = false;
     (*c)->view = false;
-
-    switch (dtshape->dtype) {
-        case IARRAY_DATA_TYPE_DOUBLE:
-            cparams.typesize = sizeof(double);
-            break;
-        case IARRAY_DATA_TYPE_FLOAT:
-            cparams.typesize = sizeof(float);
-            break;
-        default:
-            IARRAY_TRACE1(iarray.error, "The data type is invalid");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
-            break;
-    }
-    cparams.compcode = ctx->cfg->compression_codec;
-    cparams.use_dict = ctx->cfg->use_dict;
-    cparams.clevel = (uint8_t)ctx->cfg->compression_level; /* Since its just a mapping, we know the cast is ok */
-    cparams.blocksize = (*c)->catarr->blocksize;
-    cparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
-    if ((ctx->cfg->filter_flags & IARRAY_COMP_TRUNC_PREC) &&
-        (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT || dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE)) {
-        cparams.filters[blosc_filter_idx] = BLOSC_TRUNC_PREC;
-        cparams.filters_meta[blosc_filter_idx] = ctx->cfg->fp_mantissa_bits;
-        blosc_filter_idx++;
-    }
-    if (ctx->cfg->filter_flags & IARRAY_COMP_BITSHUFFLE) {
-        cparams.filters[blosc_filter_idx] = BLOSC_BITSHUFFLE;
-        blosc_filter_idx++;
-    }
-    if (ctx->cfg->filter_flags & IARRAY_COMP_SHUFFLE) {
-        cparams.filters[blosc_filter_idx] = BLOSC_SHUFFLE;
-        blosc_filter_idx++;
-    }
-    if (ctx->cfg->filter_flags & IARRAY_COMP_DELTA) {
-        cparams.filters[blosc_filter_idx] = BLOSC_DELTA;
-        blosc_filter_idx++;
-    }
-    ina_mem_cpy((*c)->cparams, &cparams, sizeof(blosc2_cparams));
-
-    dparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
-    ina_mem_cpy((*c)->dparams, &dparams, sizeof(blosc2_dparams));
 
     (*c)->storage = ina_mem_alloc(sizeof(iarray_storage_t));
     if ((*c)->storage == NULL) {
@@ -267,8 +212,6 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     }
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
 
-    (*c)->cparams = pred->cparams;
-    (*c)->dparams = pred->dparams;
     (*c)->transposed = pred->transposed;
     (*c)->view = true;
     (*c)->storage = pred->storage;

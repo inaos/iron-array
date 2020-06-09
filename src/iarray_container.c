@@ -194,26 +194,6 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename, b
         auxshape->bshape_wos[i] = catarr->blockshape[i];
     }
 
-    // Populate compression parameters
-    blosc2_cparams *cparams;
-    if (blosc2_schunk_get_cparams(catarr->sc, &cparams) < 0) {
-        IARRAY_TRACE1(iarray.error, "Error getting the cparams from blosc2 schunk");
-        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-    }
-    blosc2_cparams *cparams2 = (blosc2_cparams*)ina_mem_alloc(sizeof(blosc2_cparams));
-    memcpy(cparams2, cparams, sizeof(blosc2_cparams));
-    free(cparams);
-    (*container)->cparams = cparams2;  // we need an INA-allocated struct (to match INA_MEM_FREE_SAFE)
-    blosc2_dparams *dparams;
-    if (blosc2_schunk_get_dparams(catarr->sc, &dparams) < 0) {
-        IARRAY_TRACE1(iarray.error, "Error getting the dparams from blosc2 schunk");
-        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
-    }
-    blosc2_dparams *dparams2 = (blosc2_dparams*)ina_mem_alloc(sizeof(blosc2_dparams));
-    memcpy(dparams2, dparams, sizeof(blosc2_dparams));
-    free(dparams);
-    (*container)->dparams = dparams2;  // we need an INA-allocated struct (to match INA_MEM_FREE_SAFE)
-
     (*container)->storage = ina_mem_alloc(sizeof(iarray_storage_t));
     if ((*container)->storage == NULL) {
         IARRAY_TRACE1(iarray.error, "Error allocating the store parameter");
@@ -1088,8 +1068,6 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
             caterva_array_free(cat_ctx, &(*container)->catarr);
             caterva_context_free(&cat_ctx);
         }
-        INA_MEM_FREE_SAFE((*container)->cparams);
-        INA_MEM_FREE_SAFE((*container)->dparams);
         INA_MEM_FREE_SAFE((*container)->storage);
 
     }

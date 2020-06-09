@@ -662,8 +662,6 @@ INA_API(ina_rc_t) iarray_from_sview(iarray_context_t *ctx, uint8_t *sview, int64
     *c = (iarray_container_t *) ina_mem_alloc(sizeof(iarray_container_t));
     (*c)->dtshape = (iarray_dtshape_t *) ina_mem_alloc(sizeof(iarray_dtshape_t));
     (*c)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
-    (*c)->cparams = (blosc2_cparams *) ina_mem_alloc(sizeof(blosc2_cparams));
-    (*c)->dparams = (blosc2_dparams *) ina_mem_alloc(sizeof(blosc2_dparams));
 
     //dtype
     uint8_t *pview = sview;
@@ -741,36 +739,6 @@ INA_API(ina_rc_t) iarray_from_sview(iarray_context_t *ctx, uint8_t *sview, int64
 
     (*c)->view = true;
 
-    blosc2_cparams cparams = {0};
-    blosc2_dparams dparams = {0};
-    int blosc_filter_idx = 0;
-    cparams.compcode = ctx->cfg->compression_codec;
-    cparams.use_dict = ctx->cfg->use_dict;
-    cparams.clevel = (uint8_t)ctx->cfg->compression_level; /* Since its just a mapping, we know the cast is ok */
-    cparams.blocksize = (*c)->catarr->blocksize;
-    cparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
-    if ((ctx->cfg->filter_flags & IARRAY_COMP_TRUNC_PREC)) {
-        cparams.filters[blosc_filter_idx] = BLOSC_TRUNC_PREC;
-        cparams.filters_meta[blosc_filter_idx] = ctx->cfg->fp_mantissa_bits;
-        blosc_filter_idx++;
-    }
-    if (ctx->cfg->filter_flags & IARRAY_COMP_BITSHUFFLE) {
-        cparams.filters[blosc_filter_idx] = BLOSC_BITSHUFFLE;
-        blosc_filter_idx++;
-    }
-    if (ctx->cfg->filter_flags & IARRAY_COMP_SHUFFLE) {
-        cparams.filters[blosc_filter_idx] = BLOSC_SHUFFLE;
-        blosc_filter_idx++;
-    }
-    if (ctx->cfg->filter_flags & IARRAY_COMP_DELTA) {
-        cparams.filters[blosc_filter_idx] = BLOSC_DELTA;
-        blosc_filter_idx++;
-    }
-    dparams.nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
-
-    memcpy((*c)->cparams, &cparams, sizeof(blosc2_cparams));
-    memcpy((*c)->dparams, &dparams, sizeof(blosc2_dparams));
-
     rc = INA_SUCCESS;
     return rc;
 }
@@ -801,14 +769,8 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     (*dest)->view = view;
     (*dest)->transposed = src->transposed;
     if ((*dest)->view) {
-        (*dest)->cparams = src->cparams;
-        (*dest)->dparams = src->dparams;
         (*dest)->storage = src->storage;
     } else {
-        (*dest)->cparams = (blosc2_cparams *) ina_mem_alloc(sizeof(blosc2_cparams));
-        ina_mem_cpy((*dest)->cparams, src->cparams, sizeof(blosc2_cparams));
-        (*dest)->dparams = (blosc2_dparams *) ina_mem_alloc(sizeof(blosc2_dparams));
-        ina_mem_cpy((*dest)->dparams, src->dparams, sizeof(blosc2_dparams));
         (*dest)->storage = (iarray_storage_t *) ina_mem_alloc(sizeof(iarray_storage_t));
         ina_mem_cpy((*dest)->storage, storage, sizeof(iarray_storage_t));
     }
