@@ -843,7 +843,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
 
         // Eval the expression for this chunk
         expr_pparams.out_value = out_value;  // useful for the prefilter function
-        blosc2_cparams cparams;
+        blosc2_cparams cparams = {0};
         iarray_create_blosc_cparams(&cparams, ctx, ret->catarr->itemsize,
                                     ret->catarr->itemsize * ret->catarr->blocksize);
         blosc2_context *cctx = blosc2_create_cctx(cparams);  // we need it here to propagate pparams.inputs
