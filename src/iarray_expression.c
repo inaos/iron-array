@@ -864,7 +864,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
         iter_out->compressed_chunk_buffer = true;
         nitems_written += out_items;
         nchunk += 1;
-        // free(external_buffer);  // TODO: fix this leak
     }
 
     if (ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0)) {
