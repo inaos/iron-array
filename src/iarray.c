@@ -283,6 +283,8 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
     IARRAY_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_OP_CHUNKS, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_op));
     IARRAY_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL_TMP, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_tmp_out));
 
+    (*ctx)->prefilter_fn = NULL;
+    (*ctx)->prefilter_params = NULL;
     rc = INA_SUCCESS;
     goto cleanup;
 
@@ -303,7 +305,38 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx)
     INA_MEM_FREE_SAFE((*ctx)->cfg);
     INA_MEM_FREE_SAFE(*ctx);
 }
-
+ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams,
+                                     iarray_context_t *ctx,
+                                     int8_t typesize,
+                                     int64_t blocksize) {
+    cparams->pparams = ctx->prefilter_params;
+    cparams->prefilter = ctx->prefilter_fn;
+    int blosc_filter_idx = 0;
+    cparams->compcode = ctx->cfg->compression_codec;
+    cparams->use_dict = ctx->cfg->use_dict;
+    cparams->clevel = (uint8_t)ctx->cfg->compression_level; /* Since its just a mapping, we know the cast is ok */
+    cparams->blocksize = blocksize;
+    cparams->typesize = typesize;
+    cparams->nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
+    if ((ctx->cfg->filter_flags & IARRAY_COMP_TRUNC_PREC)) {
+        cparams->filters[blosc_filter_idx] = BLOSC_TRUNC_PREC;
+        cparams->filters_meta[blosc_filter_idx] = ctx->cfg->fp_mantissa_bits;
+        blosc_filter_idx++;
+    }
+    if (ctx->cfg->filter_flags & IARRAY_COMP_BITSHUFFLE) {
+        cparams->filters[blosc_filter_idx] = BLOSC_BITSHUFFLE;
+        blosc_filter_idx++;
+    }
+    if (ctx->cfg->filter_flags & IARRAY_COMP_SHUFFLE) {
+        cparams->filters[blosc_filter_idx] = BLOSC_SHUFFLE;
+        blosc_filter_idx++;
+    }
+    if (ctx->cfg->filter_flags & IARRAY_COMP_DELTA) {
+        cparams->filters[blosc_filter_idx] = BLOSC_DELTA;
+        blosc_filter_idx++;
+    }
+    return INA_SUCCESS;
+}
 ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t), void (*free)(void *), caterva_config_t *cat_cfg) {
     cat_cfg->alloc = alloc;
     cat_cfg->free = free;

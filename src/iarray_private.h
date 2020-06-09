@@ -80,6 +80,8 @@ struct iarray_context_s {
     ina_mempool_t *mp_part_cache;
     ina_mempool_t *mp_op;
     ina_mempool_t *mp_tmp_out;
+    blosc2_prefilter_fn prefilter_fn;
+    blosc2_prefilter_params *prefilter_params;
     /* FIXME: track expressions -> list */
 };
 
@@ -330,6 +332,8 @@ INA_API(ina_rc_t) iarray_operator_tgamma(iarray_context_t *ctx, iarray_container
 INA_API(ina_rc_t) iarray_operator_expint1(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 INA_API(ina_rc_t) iarray_operator_cumsum(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 
+/* Blosc private functions */
+ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams, iarray_context_t *ctx, int8_t typesize, int64_t blocksize);
 
 /* Caterva private functions */
 ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t), void (*free)(void *), caterva_config_t *cat_cfg);
