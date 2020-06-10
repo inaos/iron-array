@@ -615,10 +615,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     pparams.user_data = (void *) &expr_pparams;
 
     // Create and initialize an iterator per variable
-    iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    iarray_context_t *ctx = NULL;
-    iarray_context_new(&cfg, &ctx);
-
+    iarray_context_t *ctx = e->ctx;
     ctx->prefilter_fn = prefilter;
     ctx->prefilter_params = &pparams;
 
@@ -708,7 +705,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     iarray_iter_write_block_free(&iter_out);
     INA_MEM_FREE_SAFE(iter_var);
     INA_MEM_FREE_SAFE(iter_value);
-    iarray_context_free(&ctx);
 
     rc = iarray_eval_cleanup(e, nitems_written);
     return rc;
@@ -811,7 +807,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
     iarray_iter_write_block_free(&iter_out);
     free(var_chunks);
     free(var_needs_free);
-    iarray_context_free(&ctx);
 
     rc = iarray_eval_cleanup(e, nitems_written);
     return rc;
