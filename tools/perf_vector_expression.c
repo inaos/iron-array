@@ -15,7 +15,7 @@
 
 #define NELEM (20 * 1000 * 1000)  // multiple of NITEMS_CHUNK for now
 #define NITEMS_CHUNK (4000 * 1000)
-#define NITEMS_BLOCK (4000)
+#define NITEMS_BLOCK (16000)
 #define XMAX 10.
 
 static double _poly(const double x)
@@ -252,7 +252,6 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
     config.eval_flags = eval_flags;
-    //config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
 

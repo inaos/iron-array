@@ -746,9 +746,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
     bool *var_needs_free = malloc(nvars * sizeof(bool));
 
     // Write iterator for output
-    iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    iarray_context_t *ctx;
-    iarray_context_new(&cfg, &ctx);
+    iarray_context_t *ctx = e->ctx;
     ctx->prefilter_fn = (blosc2_prefilter_fn)prefilter_func;
     ctx->prefilter_params = &pparams;
 
