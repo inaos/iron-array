@@ -88,8 +88,8 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
     int64_t start[IARRAY_DIMENSION_MAX];
     int64_t stop[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ndim; ++i) {
-        start[i] = 20;
-        stop[i] = shape[i] / 2 + 20;
+        start[i] = 10;
+        stop[i] = shape[i] / 2 + 10;
     }
 
     INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, &store, 0, &c_x2));
@@ -157,7 +157,7 @@ static double expr2(const double x)
     return sinh(x) + (cosh(x) - 1.35) - tanh(x + .2);
 }
 
-INA_TEST_FIXTURE_SKIP(expression_eval_view, iterblosc_superchunk_2)
+INA_TEST_FIXTURE(expression_eval_view, iterblosc_superchunk_2)
 {
     data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC | (IARRAY_EVAL_ENGINE_COMPILER << 3);
     data->func = expr2;
@@ -173,14 +173,14 @@ INA_TEST_FIXTURE_SKIP(expression_eval_view, iterblosc_superchunk_2)
 
 static double expr3(const double x)
 {
-    return asin(x) + (acos(x) - 1.35) - atan(x + .2);
+    return asin(x + .1) + (acos(x) - 1.35) - atan(x + .2);
 }
 
 INA_TEST_FIXTURE(expression_eval_view, iterchunk_superchunk_3)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
     data->func = expr3;
-    data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
+    data->expr_str = "asin(x + 2) + (acos(x) - 1.35) - atan(x + .2)";
 
     int8_t ndim = 3;
     int64_t shape[] = {100, 100, 100};
@@ -227,4 +227,3 @@ INA_TEST_FIXTURE(expression_eval_view, iterchunk_plainbuffer_5)
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, true, data->func, data->expr_str));
 }
-
