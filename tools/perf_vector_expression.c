@@ -15,6 +15,7 @@
 
 #define NELEM (20 * 1000 * 1000)  // multiple of NITEMS_CHUNK for now
 #define NITEMS_CHUNK (4000 * 1000)
+#define NITEMS_BLOCK (4000)
 #define XMAX 10.
 
 static double _poly(const double x)
@@ -90,6 +91,7 @@ int main(int argc, char** argv)
 {
     int64_t shape[] = {NELEM};
     int64_t pshape[] = {NITEMS_CHUNK};
+    int64_t bshape[] = {NITEMS_BLOCK};
     int8_t ndim = 1;
     ina_stopwatch_t *w;
     iarray_context_t *ctx = NULL;
@@ -155,16 +157,28 @@ int main(int argc, char** argv)
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
         .filename = mat_x_name
     };
+    if (!INA_SUCCEED(ina_opt_isset("P"))) {
+        mat_x.pshape[0] = pshape[0];
+        mat_x.bshape[0] = bshape[0];
+    }
     iarray_storage_t mat_y = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
         .filename = mat_y_name
     };
+    if (!INA_SUCCEED(ina_opt_isset("P"))) {
+        mat_y.pshape[0] = pshape[0];
+        mat_y.bshape[0] = bshape[0];
+    }
     iarray_storage_t mat_out = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
         .filename = mat_out_name
     };
+    if (!INA_SUCCEED(ina_opt_isset("P"))) {
+        mat_out.pshape[0] = pshape[0];
+        mat_out.bshape[0] = bshape[0];
+    }
 
     int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
 
@@ -185,7 +199,6 @@ int main(int argc, char** argv)
         }
     }
     config.use_dict = INA_SUCCEED(ina_opt_isset("d")) ? 1 : 0;
-    config.blocksize = blocksize;
     config.max_num_threads = nthreads;
 
     const char *expr_type_str = NULL;
@@ -253,7 +266,6 @@ int main(int argc, char** argv)
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
-        dtshape.pshape[i] = INA_SUCCEED(ina_opt_isset("P")) ? 0 : pshape[i];
     }
 
     int64_t nbytes = 0;
@@ -387,7 +399,7 @@ int main(int argc, char** argv)
             iarray_container_new(ctx, &dtshape, &mat_y, flags, &con_y);
             iarray_iter_write_block_t *I;
             iarray_iter_write_block_value_t val;
-            iarray_iter_write_block_new(ctx, &I, con_y, dtshape.pshape, &val, false);
+            iarray_iter_write_block_new(ctx, &I, con_y, mat_y.pshape, &val, false);
             double incx = XMAX / NELEM;
             while (iarray_iter_write_block_has_next(I)) {
                 iarray_iter_write_block_next(I, NULL, 0);

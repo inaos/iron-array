@@ -38,7 +38,7 @@ static void _fill_y(const float* x, float* y, int64_t nelem, float (func)(float)
     }
 }
 
-static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t *shape, int64_t *pshape,
+static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t *shape, int64_t *pshape, int64_t *bshape,
                                      bool plain_buffer, float (func)(float), char* expr_str)
 {
     iarray_context_t *ctx;
@@ -59,7 +59,12 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
     store.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;
-
+    if (!plain_buffer) {
+        for (int i = 0; i < ndim; ++i) {
+            store.pshape[i] = pshape[i];
+            store.bshape[i] = bshape[i];
+        }
+    }
     float *buffer_x = (float *) ina_mem_alloc(nelem * sizeof(float));
     float *buffer_y = (float *) ina_mem_alloc(nelem * sizeof(float));
 
@@ -138,8 +143,9 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
     int8_t ndim = 1;
     int64_t shape[] = {20000};
     int64_t pshape[] = {3456};
+    int64_t bshape[] = {456};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
 }
 
 static float expr3(const float x)
@@ -156,8 +162,9 @@ INA_TEST_FIXTURE(expression_eval_float, iterchunk_superchunk)
     int8_t ndim = 3;
     int64_t shape[] = {100, 230, 121};
     int64_t pshape[] = {31, 32, 17};
+    int64_t bshape[] = {7, 7, 7};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
 }
 
 //static float expr4(const float x)
@@ -192,6 +199,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterchunk_plainbuffer)
     int8_t ndim = 3;
     int64_t shape[] = {121, 2, 123};
     int64_t pshape[] = {0, 0, 0};
+    int64_t bshape[] = {0, 0, 0};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, true, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, true, data->func, data->expr_str));
 }

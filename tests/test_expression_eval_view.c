@@ -38,7 +38,7 @@ static void _fill_y(const double* x, double* y, int64_t nelem, double (func)(dou
     }
 }
 
-static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t *shape, int64_t *pshape,
+static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t *shape, int64_t *pshape, int64_t *bshape,
                                      bool plain_buffer, double (func)(double), char* expr_str)
 {
     iarray_context_t *ctx;
@@ -69,6 +69,12 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
     store.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;
+    if (!plain_buffer) {
+        for (int i = 0; i < ndim; ++i) {
+            store.pshape[i] = pshape[i];
+            store.bshape[i] = bshape[i];
+        }
+    }
 
     double *buffer_x = (double *) ina_mem_alloc(nelem * sizeof(double));
     double *buffer_y = (double *) ina_mem_alloc(nelem * sizeof(double));
@@ -100,7 +106,7 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
     INA_TEST_ASSERT_SUCCEED(iarray_eval(e, &c_out));
 
     // We use a quite low tolerance as MKL functions always differ from those in OS math libraries
-    INA_TEST_ASSERT_SUCCEED(_iarray_test_container_dbl_buffer_cmp(ctx, c_out, buffer_y, nelem2 * sizeof(double), 5e-13));
+    INA_TEST_ASSERT_SUCCEED(_iarray_test_container_dbl_buffer_cmp(ctx, c_out, buffer_y, nelem2 * sizeof(double), 1e-13));
 
     iarray_expr_free(ctx, &e);
     ina_mem_free(buffer_x);
@@ -151,7 +157,7 @@ static double expr2(const double x)
     return sinh(x) + (cosh(x) - 1.35) - tanh(x + .2);
 }
 
-INA_TEST_FIXTURE(expression_eval_view, iterblosc_superchunk_2)
+INA_TEST_FIXTURE_SKIP(expression_eval_view, iterblosc_superchunk_2)
 {
     data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC | (IARRAY_EVAL_ENGINE_COMPILER << 3);
     data->func = expr2;
@@ -160,8 +166,9 @@ INA_TEST_FIXTURE(expression_eval_view, iterblosc_superchunk_2)
     int8_t ndim = 1;
     int64_t shape[] = {20000};
     int64_t pshape[] = {3456};
+    int64_t bshape[] = {236};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
 }
 
 static double expr3(const double x)
@@ -176,10 +183,11 @@ INA_TEST_FIXTURE(expression_eval_view, iterchunk_superchunk_3)
     data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
 
     int8_t ndim = 3;
-    int64_t shape[] = {100, 230, 121};
-    int64_t pshape[] = {12, 2, 17};
+    int64_t shape[] = {100, 100, 100};
+    int64_t pshape[] = {20, 20, 20};
+    int64_t bshape[] = {10, 10, 10};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
 }
 
 static double expr4(const double x)
@@ -196,8 +204,9 @@ INA_TEST_FIXTURE(expression_eval_view, iterchunk_plainbuffer_4)
     int8_t ndim = 3;
     int64_t shape[] = {121, 121, 123};
     int64_t pshape[] = {0, 0, 0};
+    int64_t bshape[] = {0, 0, 0};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, true, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, true, data->func, data->expr_str));
 }
 
 static double expr5(const double x)
@@ -214,7 +223,8 @@ INA_TEST_FIXTURE(expression_eval_view, iterchunk_plainbuffer_5)
     int8_t ndim = 3;
     int64_t shape[] = {121, 121, 123};
     int64_t pshape[] = {0, 0, 0};
+    int64_t bshape[] = {0, 0, 0};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, true, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, true, data->func, data->expr_str));
 }
 
