@@ -13,7 +13,7 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
-#define NELEM (40 * 1000 * 1000)  // multiple of NITEMS_CHUNK for now
+#define NELEM (20 * 1000 * 1000)  // multiple of NITEMS_CHUNK for now
 #define NITEMS_CHUNK (4000 * 1000)
 #define NITEMS_BLOCK (4000)
 #define XMAX 10.
