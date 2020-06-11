@@ -73,7 +73,6 @@ int main(void)
     int64_t size_b = shape_a[0] * shape_a[1];
     int64_t size_c = 100 * 100;
 
-
     int64_t pshape_a[] = {10, 10};
     int64_t pshape_b[] = {10, 10};
     int64_t pshape_c[] = {10, 10};
@@ -88,38 +87,52 @@ int main(void)
     dtshape_x.dtype = dtype;
     for (int i = 0; i < ndim; ++i) {
         dtshape_x.shape[i] = shape_a[i];
-        dtshape_x.pshape[i] = pshape_a[i];
     }
 
-    iarray_storage_t store;
-    store.backend = IARRAY_STORAGE_BLOSC;
-    store.enforce_frame = false;
-    store.filename = NULL;
-
+    iarray_storage_t store_x;
+    store_x.backend = IARRAY_STORAGE_BLOSC;
+    store_x.enforce_frame = false;
+    store_x.filename = NULL;
+    for (int i = 0; i < ndim; ++i) {
+        store_x.pshape[i] = pshape_a[i];
+        store_x.bshape[i] = pshape_a[i];
+    }
     iarray_container_t *cont_a = NULL;
-    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_a, -100, 100, &store, 0, &cont_a));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_a, -100, 100, &store_x, 0, &cont_a));
 
     iarray_dtshape_t dtshape_y;
     dtshape_y.ndim = ndim;
     dtshape_y.dtype = dtype;
     for (int i = 0; i < ndim; ++i) {
         dtshape_y.shape[i] = shape_b[i];
-        dtshape_y.pshape[i] = pshape_b[i];
     }
-
+    iarray_storage_t store_y;
+    store_y.backend = IARRAY_STORAGE_BLOSC;
+    store_y.enforce_frame = false;
+    store_y.filename = NULL;
+    for (int i = 0; i < ndim; ++i) {
+        store_y.pshape[i] = pshape_b[i];
+        store_y.bshape[i] = pshape_b[i];
+    }
     iarray_container_t *cont_b = NULL;
-    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_b, -100, 100, &store, 0, &cont_b));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_b, -100, 100, &store_y, 0, &cont_b));
 
     iarray_dtshape_t dtshape_z;
     dtshape_z.ndim = ndim;
     dtshape_z.dtype = dtype;
     for (int i = 0; i < ndim; ++i) {
         dtshape_z.shape[i] = shape_z[i];
-        dtshape_z.pshape[i] = pshape_c[i];
     }
-
+    iarray_storage_t store_z;
+    store_z.backend = IARRAY_STORAGE_BLOSC;
+    store_z.enforce_frame = false;
+    store_z.filename = NULL;
+    for (int i = 0; i < ndim; ++i) {
+        store_z.pshape[i] = pshape_c[i];
+        store_z.bshape[i] = pshape_c[i];
+    }
     iarray_container_t *cont_c = NULL;
-    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, &store, 0, &cont_c));
+    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, &store_z, 0, &cont_c));
 
     double *a = (double *) malloc(size_a * sizeof(double));
     double *b = (double *) malloc(size_b * sizeof(double));

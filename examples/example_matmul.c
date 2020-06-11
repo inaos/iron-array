@@ -37,6 +37,10 @@ int main(void)
     int64_t pshape_x[] = {200, 200};
     int64_t pshape_y[] = {200, 200};
     int64_t pshape_z[] = {200, 200};
+    
+    int64_t bshape_x[] = {20, 15};
+    int64_t bshape_y[] = {31, 17};
+    int64_t bshape_z[] = {45, 77};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = n_threads;
@@ -48,38 +52,52 @@ int main(void)
     dtshape_x.dtype = dtype;
     for (int i = 0; i < ndim; ++i) {
         dtshape_x.shape[i] = shape_x[i];
-        dtshape_x.pshape[i] = pshape_x[i];
     }
 
-    iarray_storage_t store;
-    store.backend = IARRAY_STORAGE_BLOSC;
-    store.enforce_frame = false;
-    store.filename = NULL;
-
+    iarray_storage_t store_x;
+    store_x.backend = IARRAY_STORAGE_BLOSC;
+    store_x.enforce_frame = false;
+    store_x.filename = NULL;
+    for (int i = 0; i < ndim; ++i) {
+        store_x.pshape[i] = pshape_x[i];
+        store_x.bshape[i] = bshape_x[i];
+    }
     iarray_container_t *c_x;
-    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_x, 0, 1, &store, 0, &c_x));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_x, 0, 1, &store_x, 0, &c_x));
 
     iarray_dtshape_t dtshape_y;
     dtshape_y.ndim = ndim;
     dtshape_y.dtype = dtype;
     for (int i = 0; i < ndim; ++i) {
         dtshape_y.shape[i] = shape_y[i];
-        dtshape_y.pshape[i] = pshape_y[i];
     }
-
+    iarray_storage_t store_y;
+    store_y.backend = IARRAY_STORAGE_BLOSC;
+    store_y.enforce_frame = false;
+    store_y.filename = NULL;
+    for (int i = 0; i < ndim; ++i) {
+        store_y.pshape[i] = pshape_y[i];
+        store_y.bshape[i] = bshape_y[i];
+    }
     iarray_container_t *c_y;
-    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_y, 0, 1, &store, 0, &c_y));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_y, 0, 1, &store_y, 0, &c_y));
 
     iarray_dtshape_t dtshape_z;
     dtshape_z.ndim = ndim;
     dtshape_z.dtype = dtype;
     for (int i = 0; i < ndim; ++i) {
         dtshape_z.shape[i] = shape_z[i];
-        dtshape_z.pshape[i] = pshape_z[i];
     }
-
+    iarray_storage_t store_z;
+    store_z.backend = IARRAY_STORAGE_BLOSC;
+    store_z.enforce_frame = false;
+    store_z.filename = NULL;
+    for (int i = 0; i < ndim; ++i) {
+        store_z.pshape[i] = pshape_z[i];
+        store_z.bshape[i] = bshape_z[i];
+    }
     iarray_container_t *c_z;
-    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, &store, 0, &c_z));
+    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, &store_z, 0, &c_z));
     mkl_set_num_threads(n_threads);
 
 
@@ -104,19 +122,19 @@ int main(void)
 
     //TODO: When the matmul advice is used, the iarray_linalg_matmul() does not work well (issue #205)
 
-    int64_t bshape_x[2];
-    int64_t bshape_y[2];
+    int64_t blockshape_x[2];
+    int64_t blockshape_y[2];
 
-    if (INA_FAILED(iarray_matmul_advice(ctx, c_x, c_y, c_z, bshape_x, bshape_y, 16 * 1024, 128 * 1024))) {
+    if (INA_FAILED(iarray_matmul_advice(ctx, c_x, c_y, c_z, blockshape_x, blockshape_y, 16 * 1024, 128 * 1024))) {
         printf("Error in getting advice for matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
         exit(1);
     }
 
-    printf("bshape_x: (%d, %d)\n", (int)bshape_x[0], (int)bshape_x[1]);
-    printf("bshape_y: (%d, %d)\n", (int)bshape_y[0], (int)bshape_y[1]);
+    printf("bshape_x: (%d, %d)\n", (int)blockshape_x[0], (int)blockshape_x[1]);
+    printf("bshape_y: (%d, %d)\n", (int)blockshape_y[0], (int)blockshape_y[1]);
 
     INA_STOPWATCH_START(w);
-    if (INA_FAILED(iarray_linalg_matmul(ctx, c_x, c_y ,c_z, bshape_x, bshape_y, IARRAY_OPERATOR_GENERAL))) {
+    if (INA_FAILED(iarray_linalg_matmul(ctx, c_x, c_y ,c_z, blockshape_x, blockshape_y, IARRAY_OPERATOR_GENERAL))) {
         fprintf(stderr, "Error in linalg_matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
         goto fail;
     }
