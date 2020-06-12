@@ -261,7 +261,7 @@ INA_TEST_FIXTURE(constructor_copy, 6_f_n_v) {
     int64_t bshape[] = {2, 1, 2, 3, 2, 3};
     int64_t stop_view[] = {4, 4, 5, 11, 12, 4};
     double start = -0.112;
-    double stop = 10102;
+    double stop = 51;
 
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, false, true));
 }
