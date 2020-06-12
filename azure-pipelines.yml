@@ -131,9 +131,9 @@ steps:
     INAC_TRACE: ""
 
 - bash: |
-      if [ "$AGENT_OS" == "Windows_NT" ]
-        then
-          for EX in $(ls example_*.exe); do ./$EX; done
+    if [ "$AGENT_OS" == "Windows_NT" ]
+      then
+        for EX in $(ls example_*.exe); do ./$EX; done
       else
         for EX in $(ls example_*); do ./$EX; done
       fi
