@@ -141,8 +141,8 @@ steps:
   displayName: Execute examples
   condition:
     eq( variables['BUILD_CONFIGURATION'], 'Release' )
-    env:
-      INAC_TRACE: ""
+  env:
+    INAC_TRACE: ""
 
 
 - bash: |
