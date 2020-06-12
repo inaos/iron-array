@@ -126,7 +126,7 @@ steps:
     ./tests
   displayName: Execute tests
   condition:
-    eq( variables['BUILD_CONFIGURATION'], 'Release' )
+    eq( variables['BUILD_CONFIGURATION'], 'RelWithDebInfo' )
   env:
     INAC_TRACE: ""
 
@@ -140,7 +140,7 @@ steps:
     fi
   displayName: Execute examples
   condition:
-    eq( variables['BUILD_CONFIGURATION'], 'Release' )
+    eq( variables['BUILD_CONFIGURATION'], 'RelWithDebInfo' )
   env:
     INAC_TRACE: ""
 
