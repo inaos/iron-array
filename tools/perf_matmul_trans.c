@@ -167,7 +167,7 @@ int main(int argc, char** argv)
 
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_codec = IARRAY_COMPRESSION_LZ4;
-    config.compression_level = 0;
+    config.compression_level = 5;
     config.max_num_threads = NTHREADS;
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
