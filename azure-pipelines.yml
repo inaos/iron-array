@@ -123,13 +123,10 @@ steps:
 
 - bash: |
     cd cmake-build-$BUILD_CONFIGURATION
-    if [ "$AGENT_OS" == "Darwin" ] && [ "$BUILD_CONFIGURATION" == "Debug" ]
-      then
-        echo "Tests for Darwin in Debug mode currently not executed"
-    else
-        ./tests
-    fi
+    ./tests
   displayName: Execute tests
+  condition:
+    eq( variables['BUILD_CONFIGURATION'], 'Release' )
   env:
     INAC_TRACE: ""
 
