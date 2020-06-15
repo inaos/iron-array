@@ -56,17 +56,20 @@ int main(int argc, char** argv)
     double cbytes_mb = 0;
 
     int64_t shape_x[] = {4000, 6000};
-    int64_t pshape_x[] = {4000, 6000};
-    int64_t bshape_x[] = {4000, 6000};
+    int64_t pshape_x[] = {2000, 4000};
+    int64_t bshape_x[] = {200, 200};
+    int64_t blockshape_x[] = {2000, 3000};
 
     int64_t size_x = shape_x[0] * shape_x[1];
     int64_t shape_y[] = {6000};
-    int64_t pshape_y[] = {6000};
-    int64_t bshape_y [] = {6000};
+    int64_t pshape_y[] = {3000};
+    int64_t bshape_y[] = {1500};
+    int64_t blockshape_y [] = {3000};
     int64_t size_y = shape_y[0];
 
     int64_t shape_out[] = {shape_x[0]};
-    int64_t pshape_out[] = {bshape_x[0]};
+    int64_t pshape_out[] = {blockshape_x[0]};
+    int64_t bshape_out[] = {500};
 
     int64_t size_out = shape_out[0];
     int64_t flops = (2 * shape_x[1] - 1) * shape_x[0];
@@ -98,22 +101,29 @@ int main(int argc, char** argv)
     }
 
 
-    iarray_store_properties_t mat_x_prop = {
+    iarray_storage_t mat_x_prop = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
         .filename = mat_x_name
     };
-    iarray_store_properties_t mat_y_prop = {
+    iarray_storage_t mat_y_prop = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
         .filename = mat_y_name
     };
-    iarray_store_properties_t mat_out_prop = {
+    iarray_storage_t mat_out_prop = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
         .filename = mat_out_name
     };
-
+    for (int i = 0; i < 2; ++i) {
+        mat_x_prop.pshape[i] = pshape_x[i];
+        mat_x_prop.bshape[i] = bshape_x[i];
+        mat_y_prop.pshape[i] = pshape_y[i];
+        mat_y_prop.bshape[i] = bshape_y[i];
+        mat_out_prop.pshape[i] = pshape_out[i];
+        mat_out_prop.bshape[i] = bshape_out[i];
+    }
 
     printf("\n");
     printf("Measuring time for multiplying matrices X and vector Y\n");
@@ -182,7 +192,6 @@ int main(int argc, char** argv)
         xdtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
         for (int i = 0; i < xdtshape.ndim; ++i) {
             xdtshape.shape[i] = shape_x[i];
-            xdtshape.pshape[i] = pshape_x[i];
         }
 
         iarray_dtshape_t ydtshape;
@@ -190,12 +199,11 @@ int main(int argc, char** argv)
         ydtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
         for (int i = 0; i < ydtshape.ndim; ++i) {
             ydtshape.shape[i] = shape_y[i];
-            ydtshape.pshape[i] = pshape_y[i];
         }
 
         INA_STOPWATCH_START(w);
-        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &xdtshape, mat_x, size_x, &mat_x_prop, flags, &con_x));
-        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &ydtshape, mat_y, size_y, &mat_y_prop, flags, &con_y));
+        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &xdtshape, mat_x, sizeof(double) * size_x, &mat_x_prop, flags, &con_x));
+        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &ydtshape, mat_y, sizeof(double) * size_y, &mat_y_prop, flags, &con_y));
         INA_STOPWATCH_STOP(w);
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
@@ -233,14 +241,13 @@ int main(int argc, char** argv)
     outdtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     for (int i = 0; i < outdtshape.ndim; ++i) {
         outdtshape.shape[i] = shape_out[i];
-        outdtshape.pshape[i] = pshape_out[i];
     }
 
     iarray_container_t *con_out;
     iarray_container_new(ctx, &outdtshape, &mat_out_prop, 0, &con_out);
 
     INA_STOPWATCH_START(w);
-    iarray_linalg_matmul(ctx, con_x, con_y, con_out, bshape_x, bshape_y, IARRAY_OPERATOR_GENERAL); /* FIXME: error handling */
+    iarray_linalg_matmul(ctx, con_x, con_y, con_out, blockshape_x, blockshape_y, IARRAY_OPERATOR_GENERAL); /* FIXME: error handling */
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 

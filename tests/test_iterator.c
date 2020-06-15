@@ -14,7 +14,7 @@
 
 
 static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, int32_t type_size, int8_t ndim,
-                              const int64_t *shape, const int64_t *pshape) {
+                              const int64_t *shape, const int64_t *pshape, const int64_t *bshape) {
 
     // Create dtshape
     iarray_dtshape_t xdtshape;
@@ -23,14 +23,18 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        if (pshape)
-            xdtshape.pshape[i] = pshape[i];
     }
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     store.enforce_frame = false;
     store.filename = NULL;
+    if (pshape != NULL) {
+        for (int i = 0; i < ndim; ++i) {
+            store.pshape[i] = pshape[i];
+            store.bshape[i] = bshape[i];
+        }
+    }
 
     iarray_container_t *c_x;
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, &store, 0, &c_x));
@@ -103,8 +107,9 @@ INA_TEST_FIXTURE(iterator, 2_d_p) {
     int8_t ndim = 2;
     int64_t shape[] = {4, 6};
     int64_t *pshape = NULL;
+    int64_t *bshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
+    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, bshape));
 }
 
 
@@ -114,9 +119,10 @@ INA_TEST_FIXTURE(iterator, 2_f) {
 
     int8_t ndim = 2;
     int64_t shape[] = {445, 321};
-    int64_t pshape[] = {21, 17};
+    int64_t pshape[] = {201, 17};
+    int64_t bshape[] = {12, 8};
 
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
+    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, bshape));
 }
 
 
@@ -127,8 +133,9 @@ INA_TEST_FIXTURE(iterator, 3_d) {
     int8_t ndim = 3;
     int64_t shape[] = {20, 53, 17};
     int64_t pshape[] = {12, 12, 2};
+    int64_t bshape[] = {5, 5, 1};
 
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
+    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, bshape));
 }
 
 
@@ -139,8 +146,9 @@ INA_TEST_FIXTURE(iterator, 4_f_p) {
     int8_t ndim = 4;
     int64_t shape[] = {15, 18, 14, 13};
     int64_t *pshape = NULL;
+    int64_t *bshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
+    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, bshape));
 }
 
 INA_TEST_FIXTURE(iterator, 5_d_p) {
@@ -150,8 +158,9 @@ INA_TEST_FIXTURE(iterator, 5_d_p) {
     int8_t ndim = 5;
     int64_t shape[] = {15, 18, 17, 13, 13};
     int64_t *pshape = NULL;
+    int64_t *bshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
+    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, bshape));
 }
 
 INA_TEST_FIXTURE(iterator, 6_f) {
@@ -161,8 +170,9 @@ INA_TEST_FIXTURE(iterator, 6_f) {
     int8_t ndim = 6;
     int64_t shape[] = {5, 7, 8, 9, 6, 5};
     int64_t pshape[] = {3, 3, 5, 5, 3, 5};
+    int64_t bshape[] = {2, 2, 2, 2, 2, 2};
 
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
+    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, bshape));
 }
 
 INA_TEST_FIXTURE(iterator, 7_d) {
@@ -172,8 +182,9 @@ INA_TEST_FIXTURE(iterator, 7_d) {
     int8_t ndim = 7;
     int64_t shape[] = {5, 7, 8, 9, 6, 5, 4};
     int64_t pshape[] = {2, 5, 3, 4, 3, 2, 2};
+    int64_t bshape[] = {2, 2, 1, 2, 1, 2, 2};
 
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
+    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, bshape));
 }
 
 INA_TEST_FIXTURE(iterator, 8_f_p) {
@@ -183,6 +194,7 @@ INA_TEST_FIXTURE(iterator, 8_f_p) {
     int8_t ndim = 8;
     int64_t shape[] = {5, 7, 8, 9, 6, 5, 3, 5};
     int64_t *pshape = NULL;
+    int64_t *bshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape));
+    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, pshape, bshape));
 }

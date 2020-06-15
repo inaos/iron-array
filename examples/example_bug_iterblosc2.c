@@ -29,13 +29,13 @@ int main(void)
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int8_t ndim = 3;
-    int64_t shape[] = {7, 8, 7};
-    int64_t pshape[] = {5, 3, 2};
+    int64_t shape[] = {70, 80, 70};
+    int64_t pshape[] = {50, 30, 20};
+    int64_t bshape[] = {12, 7, 12};
 
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2 | (IARRAY_EVAL_ENGINE_COMPILER << 3);
-    cfg.blocksize = 0;
     cfg.max_num_threads = 1;
     iarray_context_new(&cfg, &ctx);
 
@@ -45,16 +45,17 @@ int main(void)
     int64_t nelem = 1;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
-        dtshape.pshape[i] = pshape[i];
         nelem *= shape[i];
     }
 
-
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;
-
+    for (int i = 0; i < ndim; ++i) {
+        store.pshape[i] = pshape[i];
+        store.bshape[i] = bshape[i];
+    }
     iarray_container_t* c_x;
     iarray_container_t* c_y;
     iarray_arange(ctx, &dtshape, 0, (double) nelem, 1, &store, 0, &c_x);

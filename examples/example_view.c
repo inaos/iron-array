@@ -18,8 +18,9 @@ int main(void)
 {
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int64_t shape[] = {10, 10};
-    int64_t pshape[] = {2, 3};
+    int64_t shape[] = {100, 100};
+    int64_t pshape[] = {20, 30};
+    int64_t bshape[] = {7, 7};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_t *ctx;
@@ -30,13 +31,16 @@ int main(void)
     dtshape.dtype = dtype;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
-        dtshape.pshape[i] = pshape[i];
     }
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;
+    for (int i = 0; i < ndim; ++i) {
+        store.pshape[i] = pshape[i];
+        store.bshape[i] = bshape[i];
+    }
 
     iarray_container_t *cont;
     IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape, &store, 0, &cont));
@@ -55,8 +59,11 @@ int main(void)
     int64_t start[] = {2, 3};
     int64_t stop[] = {9, 7};
 
+    iarray_storage_t store_out;
+    store_out.backend = IARRAY_STORAGE_PLAINBUFFER;
+
     iarray_container_t *cout;
-    iarray_get_slice(ctx, cont, start, stop, true, pshape, &store, 0, &cout);
+    iarray_get_slice(ctx, cont, start, stop, true, &store_out, 0, &cout);
     
     int64_t cout_size = 1;
     for (int i = 0; i < cout->dtshape->ndim; ++i) {
