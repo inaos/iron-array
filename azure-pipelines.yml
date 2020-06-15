@@ -123,30 +123,26 @@ steps:
 
 - bash: |
     cd cmake-build-$BUILD_CONFIGURATION
-    if [ "$AGENT_OS" == "Darwin" ] && [ "$BUILD_CONFIGURATION" == "Debug" ]
-      then
-        echo "Tests for Darwin in Debug mode currently not executed"
-    else
-        ./tests
-    fi
+    ./tests
   displayName: Execute tests
+  condition:
+    eq( variables['BUILD_CONFIGURATION'], 'RelWithDebInfo' )
   env:
     INAC_TRACE: ""
 
 - bash: |
     cd cmake-build-$BUILD_CONFIGURATION
-    if [ "$AGENT_OS" == "Darwin" ] && [ "$BUILD_CONFIGURATION" == "Debug" ]
+    if [ "$AGENT_OS" == "Windows_NT" ]
       then
-        echo "Examples for Darwin in Debug mode currently not executed"
+        for EX in $(ls example_*.exe); do ./$EX; done
     else
-      if [ "$AGENT_OS" == "Windows_NT" ]
-        then
-          for EX in $(ls example_*.exe); do ./$EX; done
-      else
-        for EX in $(ls example_*); do ./$EX; done
-      fi
+      for EX in $(ls example_*); do ./$EX; done
     fi
   displayName: Execute examples
+  condition:
+    eq( variables['BUILD_CONFIGURATION'], 'RelWithDebInfo' )
+  env:
+    INAC_TRACE: ""
 
 
 - bash: |
