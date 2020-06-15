@@ -36,16 +36,17 @@ int main(void)
         xdtshape.shape[i] = xshape[i];
     }
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;
     
-    if (INA_FAILED(iarray_partition_advice(ctx, &xdtshape, 16 * 1024, 128 * 1024))) {
+    if (INA_FAILED(iarray_partition_advice(ctx, &xdtshape, &store, 16 * 1024, 128 * 1024))) {
         printf("Error in getting advice for pshape: %s\n", ina_err_strerror(ina_err_get_rc()));
         exit(1);
     }
-    printf("pshape: %d %d %d\n", (int)xdtshape.pshape[0], (int)xdtshape.pshape[1], (int)xdtshape.pshape[2]);
+    printf("pshape: %d %d %d\n", (int)store.pshape[0], (int)store.pshape[1], (int)store.pshape[2]);
+    printf("bshape: %d %d %d\n", (int)store.bshape[0], (int)store.bshape[1], (int)store.bshape[2]);
 
     printf("Initializing c_x container...\n");
     printf("- c_x shape: ");
@@ -60,7 +61,17 @@ int main(void)
     int8_t outndim = 3;
     int64_t start[] = {10, 20, 30};
     int64_t stop[] = {40, 21, 80};
-    int64_t outpshape[] = {5, 1, 20};
+    int64_t outpshape[] = {12, 1, 20};
+    int64_t outbshape[] = {5, 1, 10};
+
+    iarray_storage_t store_out;
+    store_out.backend = IARRAY_STORAGE_BLOSC;
+    store_out.enforce_frame = false;
+    store_out.filename = NULL;
+    for (int i = 0; i < outndim; ++i) {
+        store_out.pshape[i] = outpshape[i];
+        store_out.bshape[i] = outbshape[i];
+    }
 
     printf("Defining start and stop for slicing...\n");
     printf("- start: ");
@@ -76,7 +87,7 @@ int main(void)
 
     // Slicing c_x into c_out
     printf("Slicing c_x into c_out container...\n");
-    IARRAY_FAIL_IF_ERROR(iarray_get_slice(ctx, c_x, start, stop, false, outpshape, &store, 0, &c_out));
+    IARRAY_FAIL_IF_ERROR(iarray_get_slice(ctx, c_x, start, stop, false, &store_out, 0, &c_out));
     iarray_dtshape_t out_dtshape;
     IARRAY_FAIL_IF_ERROR(iarray_get_dtshape(ctx, c_out, &out_dtshape));
 

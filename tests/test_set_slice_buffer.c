@@ -60,11 +60,10 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx,
     xdtshape.ndim = ndim;
     for (int j = 0; j < xdtshape.ndim; ++j) {
         xdtshape.shape[j] = shape[j];
-        if (pshape)
-            xdtshape.pshape[j] = pshape[j];
+
     }
 
-    iarray_store_properties_t xstore;
+    iarray_storage_t xstore;
     xstore.backend = pshape? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.enforce_frame = false;
     xstore.filename = NULL;
