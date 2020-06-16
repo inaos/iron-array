@@ -148,7 +148,7 @@ typedef struct iarray_iter_read_s {
     int64_t cur_block_size; // The current block size
     int64_t *cur_block_shape; // The current block shape
 
-    int64_t *block_shape; // The desired block shape (it will be the shape or the pshape)
+    int64_t *block_shape; // The desired block shape (it will be the shape or the chunkshape)
     int64_t cont_size; // The container size
 
     int64_t *elem_index; // The elem index in coord

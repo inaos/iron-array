@@ -34,8 +34,8 @@ static ina_rc_t test_zeros(iarray_context_t *ctx,
     store.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
         if (pshape != NULL) {
-            store.pshape[i] = pshape[i];
-            store.bshape[i] = bshape[i];
+            store.chunkshape[i] = pshape[i];
+            store.blockshape[i] = bshape[i];
         }
     }
 

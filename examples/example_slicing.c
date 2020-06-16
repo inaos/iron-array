@@ -42,11 +42,11 @@ int main(void)
     store.filename = NULL;
     
     if (INA_FAILED(iarray_partition_advice(ctx, &xdtshape, &store, 16 * 1024, 128 * 1024))) {
-        printf("Error in getting advice for pshape: %s\n", ina_err_strerror(ina_err_get_rc()));
+        printf("Error in getting advice for chunkshape: %s\n", ina_err_strerror(ina_err_get_rc()));
         exit(1);
     }
-    printf("pshape: %d %d %d\n", (int)store.pshape[0], (int)store.pshape[1], (int)store.pshape[2]);
-    printf("bshape: %d %d %d\n", (int)store.bshape[0], (int)store.bshape[1], (int)store.bshape[2]);
+    printf("chunkshape: %d %d %d\n", (int)store.chunkshape[0], (int)store.chunkshape[1], (int)store.chunkshape[2]);
+    printf("bshape: %d %d %d\n", (int)store.blockshape[0], (int)store.blockshape[1], (int)store.blockshape[2]);
 
     printf("Initializing c_x container...\n");
     printf("- c_x shape: ");
@@ -69,8 +69,8 @@ int main(void)
     store_out.enforce_frame = false;
     store_out.filename = NULL;
     for (int i = 0; i < outndim; ++i) {
-        store_out.pshape[i] = outpshape[i];
-        store_out.bshape[i] = outbshape[i];
+        store_out.chunkshape[i] = outpshape[i];
+        store_out.blockshape[i] = outbshape[i];
     }
 
     printf("Defining start and stop for slicing...\n");

@@ -117,12 +117,12 @@ int main(int argc, char** argv)
         .filename = mat_out_name
     };
     for (int i = 0; i < 2; ++i) {
-        mat_x_prop.pshape[i] = pshape_x[i];
-        mat_x_prop.bshape[i] = bshape_x[i];
-        mat_y_prop.pshape[i] = pshape_y[i];
-        mat_y_prop.bshape[i] = bshape_y[i];
-        mat_out_prop.pshape[i] = pshape_out[i];
-        mat_out_prop.bshape[i] = bshape_out[i];
+        mat_x_prop.chunkshape[i] = pshape_x[i];
+        mat_x_prop.blockshape[i] = bshape_x[i];
+        mat_y_prop.chunkshape[i] = pshape_y[i];
+        mat_y_prop.blockshape[i] = bshape_y[i];
+        mat_out_prop.chunkshape[i] = pshape_out[i];
+        mat_out_prop.blockshape[i] = bshape_out[i];
     }
 
     printf("\n");

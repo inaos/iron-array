@@ -203,8 +203,8 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename, b
     (*container)->storage->backend = IARRAY_STORAGE_BLOSC;
     (*container)->storage->enforce_frame = enforce_frame;
     for (int i = 0; i < catarr->ndim; ++i) {
-        (*container)->storage->pshape[i] = catarr->chunkshape[i];
-        (*container)->storage->bshape[i] = catarr->blockshape[i];
+        (*container)->storage->chunkshape[i] = catarr->chunkshape[i];
+        (*container)->storage->blockshape[i] = catarr->blockshape[i];
     }
 
     (*container)->transposed = transposed;  // TODO: complete this
@@ -217,10 +217,10 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename, b
             (*container)->dtshape->shape[i] = aux[(*container)->dtshape->ndim - 1 - i];
         }
         for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
-            aux[i] = (*container)->storage->pshape[i];
+            aux[i] = (*container)->storage->chunkshape[i];
         }
         for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
-            (*container)->storage->pshape[i] = aux[(*container)->dtshape->ndim - 1 - i];
+            (*container)->storage->chunkshape[i] = aux[(*container)->dtshape->ndim - 1 - i];
         }
     }
     (*container)->view = false;
@@ -279,9 +279,9 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
             IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
         }
         if (!view) {
-            if (storage->backend == IARRAY_STORAGE_BLOSC && storage->pshape[i] > stop_[i] - start_[i]) {
-                IARRAY_TRACE1(iarray.error, "The pshape is bigger than shape");
-                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_PSHAPE));
+            if (storage->backend == IARRAY_STORAGE_BLOSC && storage->chunkshape[i] > stop_[i] - start_[i]) {
+                IARRAY_TRACE1(iarray.error, "The chunkshape is bigger than shape");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE));
             }
         }
     }
@@ -908,8 +908,8 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
                     inc += 1;
                 }
                 container->dtshape->shape[i] = container->catarr->shape[i];
-                container->storage->pshape[i] = container->catarr->chunkshape[i];
-                container->storage->bshape[i] = container->catarr->blockshape[i];
+                container->storage->chunkshape[i] = container->catarr->chunkshape[i];
+                container->storage->blockshape[i] = container->catarr->blockshape[i];
                 container->auxshape->shape_wos[i] = container->catarr->shape[i];
                 container->auxshape->pshape_wos[i] = container->catarr->chunkshape[i];
                 container->auxshape->bshape_wos[i] = container->catarr->blockshape[i];
@@ -923,8 +923,8 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
                 inc ++;
             } else {
                 container->dtshape->shape[i - inc] = container->dtshape->shape[i];
-                container->storage->pshape[i - inc] = container->storage->pshape[i];
-                container->storage->bshape[i - inc] = container->storage->bshape[i];
+                container->storage->chunkshape[i - inc] = container->storage->chunkshape[i];
+                container->storage->blockshape[i - inc] = container->storage->blockshape[i];
                 container->auxshape->index[i - inc] = (uint8_t) i;
             }
         }
@@ -995,7 +995,7 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     // For the blocksize, choose the maximum of the partition shapes
     int64_t blocksize[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ndim; ++i) {
-        blocksize[i] = INA_MAX(a->storage->pshape[i], b->storage->pshape[i]);
+        blocksize[i] = INA_MAX(a->storage->chunkshape[i], b->storage->chunkshape[i]);
     }
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;

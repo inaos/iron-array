@@ -67,8 +67,8 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     }
     if (storage->backend == IARRAY_STORAGE_BLOSC) {
         for (int i = 0; i < dtshape->ndim; ++i) {
-            if (dtshape->shape[i] < storage->pshape[i]) {
-                IARRAY_TRACE1(iarray.error, "The pshape is larger than the shape");
+            if (dtshape->shape[i] < storage->chunkshape[i]) {
+                IARRAY_TRACE1(iarray.error, "The chunkshape is larger than the shape");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
             }
         }
@@ -89,16 +89,16 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
 
     if (storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
         for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
-            storage->pshape[i] = dtshape->shape[i];
-            storage->bshape[i] = dtshape->shape[i];
+            storage->chunkshape[i] = dtshape->shape[i];
+            storage->blockshape[i] = dtshape->shape[i];
         }
     }
 
     iarray_auxshape_t auxshape;
     for (int i = 0; i < dtshape->ndim; ++i) {
         auxshape.shape_wos[i] = dtshape->shape[i];
-        auxshape.pshape_wos[i] = storage->pshape[i];
-        auxshape.bshape_wos[i] = storage->bshape[i];
+        auxshape.pshape_wos[i] = storage->chunkshape[i];
+        auxshape.bshape_wos[i] = storage->blockshape[i];
         auxshape.offset[i] = 0;
         auxshape.index[i] = (uint8_t) i;
     }
@@ -200,8 +200,8 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     iarray_auxshape_t auxshape;
     for (int i = 0; i < dtshape->ndim; ++i) {
         auxshape.shape_wos[i] = dtshape->shape[i];
-        auxshape.pshape_wos[i] = pred->storage->pshape[i];
-        auxshape.bshape_wos[i] = pred->storage->bshape[i];
+        auxshape.pshape_wos[i] = pred->storage->chunkshape[i];
+        auxshape.bshape_wos[i] = pred->storage->blockshape[i];
         auxshape.offset[i] = offset[i];
         auxshape.index[i] = (uint8_t) i;
     }

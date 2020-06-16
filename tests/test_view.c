@@ -55,8 +55,8 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     xstore.filename = NULL;
     if (pshape != NULL) {
         for (int i = 0; i < ndim; ++i) {
-            xstore.pshape[i] = pshape[i];
-            xstore.bshape[i] = bshape[i];
+            xstore.chunkshape[i] = pshape[i];
+            xstore.blockshape[i] = bshape[i];
         }
     }
     iarray_container_t *c_x;

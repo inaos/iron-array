@@ -32,8 +32,8 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     xstorage.enforce_frame = false;
     xstorage.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
-        xstorage.pshape[i] = pshape ? pshape[i] : 0;
-        xstorage.bshape[i] = bshape ? bshape[i] : 0;
+        xstorage.chunkshape[i] = pshape ? pshape[i] : 0;
+        xstorage.blockshape[i] = bshape ? bshape[i] : 0;
     }
 
     iarray_container_t *c_x;
@@ -265,8 +265,8 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
     xstore.filename = NULL;
     if (pshape != NULL) {
         for (int i = 0; i < ndim; ++i) {
-            xstore.pshape[i] = pshape[i];
-            xstore.bshape[i] = bshape[i];
+            xstore.chunkshape[i] = pshape[i];
+            xstore.blockshape[i] = bshape[i];
         }
     }
     iarray_container_t *c_x;
@@ -294,7 +294,7 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
         if (c_x->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
             partsize_x *= (int32_t) c_x->dtshape->shape[i];
         } else {
-            partsize_x *= (int32_t) c_x->storage->pshape[i];
+            partsize_x *= (int32_t) c_x->storage->chunkshape[i];
         }
     }
 
@@ -547,8 +547,8 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
     xstore.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
         if (pshape != NULL) {
-            xstore.pshape[i] = pshape[i];
-            xstore.bshape[i] = bshape[i];
+            xstore.chunkshape[i] = pshape[i];
+            xstore.blockshape[i] = bshape[i];
         }
     }
 

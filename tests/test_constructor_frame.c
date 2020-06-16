@@ -37,8 +37,8 @@ static ina_rc_t test_constructor_frame(iarray_context_t *ctx, iarray_data_type_t
     } else {
         xstore.backend = IARRAY_STORAGE_BLOSC;
         for (int i = 0; i < ndim; ++i) {
-            xstore.pshape[i] = pshape[i];
-            xstore.bshape[i] = bshape[i];
+            xstore.chunkshape[i] = pshape[i];
+            xstore.blockshape[i] = bshape[i];
         }
     }
 

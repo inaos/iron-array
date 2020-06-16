@@ -187,7 +187,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
                 }
                 if (equal_pshape) {
                     for (int j = 0; j < c->dtshape->ndim; ++j) {
-                        if (c->storage->pshape[j] != e->out_store_properties->pshape[j]) {
+                        if (c->storage->chunkshape[j] != e->out_store_properties->chunkshape[j]) {
                             equal_pshape = false;
                             break;
                         }
@@ -195,7 +195,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
                 }
                 if (equal_bshape) {
                     for (int j = 0; j < c->dtshape->ndim; ++j) {
-                        if (c->storage->bshape[j] != e->out_store_properties->bshape[j]) {
+                        if (c->storage->blockshape[j] != e->out_store_properties->blockshape[j]) {
                             equal_bshape = false;
                             break;
                         }
@@ -279,7 +279,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
     }
 
     // Create temporaries for initial variables.
-    // We don't need the temporaries to be conformant with pshape; only the buffer
+    // We don't need the temporaries to be conformant with chunkshape; only the buffer
     // size needs to the same.
     iarray_dtshape_t dtshape_var = {0};  // initialize to 0s
     dtshape_var.ndim = 1;
@@ -828,7 +828,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
 
     int64_t out_pshape[IARRAY_DIMENSION_MAX];
     if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        // Compute a decent pshape for a plainbuffer output
+        // Compute a decent chunkshape for a plainbuffer output
         int32_t nelems = e->chunksize / e->typesize;
         for (int i = ret->dtshape->ndim - 1; i >= 0; i--) {
             int32_t pshapei = nelems < ret->dtshape->shape[i] ? nelems : (int32_t) ret->dtshape->shape[i];
@@ -837,7 +837,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
         }
     } else {
         for (int i = 0; i < ret->dtshape->ndim; ++i) {
-            out_pshape[i] = ret->storage->pshape[i];
+            out_pshape[i] = ret->storage->chunkshape[i];
         }
     }
 
