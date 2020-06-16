@@ -20,7 +20,7 @@ else()
     set(CMAKE_C_FLAGS "-Wall -Wextra")
 endif()
 option(MULTITHREADING "Use multithreaded iarray" OFF)
-option(DISABLE_LLVM_CONFIG "Disable the use of llvm-config for finding libraris" OFF)
+option(DISABLE_LLVM_CONFIG "Disable the use of llvm-config for finding libraries" ON)
 
 # Disable weird MSVC warnings
 if (MSVC)
