@@ -486,11 +486,11 @@ static ina_rc_t _iarray_operator_elwise_a(
 
     iarray_iter_read_block_t *iter_read;
     iarray_iter_read_block_value_t val_read;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &iter_read, a, result->storage->pshape, &val_read, false));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &iter_read, a, result->storage->chunkshape, &val_read, false));
 
     iarray_iter_write_block_t *iter_write;
     iarray_iter_write_block_value_t val_write;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &iter_write, result, result->storage->pshape, &val_write, false));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &iter_write, result, result->storage->chunkshape, &val_write, false));
 
     int typesize = result->catarr->itemsize;
 
@@ -542,22 +542,22 @@ static ina_rc_t _iarray_operator_elwise_ab(
     for (int i = 0; i < a->catarr->ndim; ++i) {
         if (a->catarr->chunkshape[i] != b->catarr->chunkshape[i]) {
             IARRAY_TRACE1(iarray.error, "The pshapes must be equals");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_PSHAPE));
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE));
         }
         psize *= a->catarr->chunkshape[i];
     }
 
     iarray_iter_read_block_t *iter_read;
     iarray_iter_read_block_value_t val_read;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &iter_read, a, result->storage->pshape, &val_read, false));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &iter_read, a, result->storage->chunkshape, &val_read, false));
 
     iarray_iter_read_block_t *iter_read2;
     iarray_iter_read_block_value_t val_read2;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &iter_read2, b, result->storage->pshape, &val_read2, false));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &iter_read2, b, result->storage->chunkshape, &val_read2, false));
 
     iarray_iter_write_block_t *iter_write;
     iarray_iter_write_block_value_t val_write;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &iter_write, result, result->storage->pshape, &val_write, false));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &iter_write, result, result->storage->chunkshape, &val_write, false));
 
     while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_write)) &&
            INA_SUCCEED(iarray_iter_read_block_has_next(iter_read)) &&
@@ -628,10 +628,10 @@ INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_containe
         a->dtshape->shape[i] = aux[a->dtshape->ndim - 1 - i];
     }
     for (int i = 0; i < a->dtshape->ndim; ++i) {
-        aux[i] = a->storage->pshape[i];
+        aux[i] = a->storage->chunkshape[i];
     }
     for (int i = 0; i < a->dtshape->ndim; ++i) {
-        a->storage->pshape[i] = aux[a->dtshape->ndim - 1 - i];
+        a->storage->chunkshape[i] = aux[a->dtshape->ndim - 1 - i];
     }
     return INA_SUCCESS;
 }
@@ -651,13 +651,13 @@ INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_containe
  *
  * The `c` container must be an iarray container whose dimensions are equal to the `b` container.
  *
- * `bshape_a` indicates indicates the block size with which the container `a` will be iterated when
- *  performing block multiplication. The pshape[0] of `c` must be equal to bshape_a[0].
+ * `blockshape_a` indicates indicates the block size with which the container `a` will be iterated when
+ *  performing block multiplication. The chunkshape[0] of `c` must be equal to blockshape_a[0].
  *
- * `bshape_b` indicates indicates the block size with which the container `b` will be iterated when
- *  performing block multiplication. The pshape[1] of `c` must be equal to bshape_a[1].
+ * `blockshape_b` indicates indicates the block size with which the container `b` will be iterated when
+ *  performing block multiplication. The chunkshape[1] of `c` must be equal to blockshape_a[1].
  *
- *  In addition, in order to perform the multiplication correctly bshape_a[1] = bshape_b[0].
+ *  In addition, in order to perform the multiplication correctly blockshape_a[1] = blockshape_b[0].
  *
  *  It is also supported the multiplication between containers with different structures
  *
@@ -668,8 +668,8 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
                                        iarray_container_t *a,
                                        iarray_container_t *b,
                                        iarray_container_t *c,
-                                       int64_t *bshape_a,
-                                       int64_t *bshape_b,
+                                       int64_t *blockshape_a,
+                                       int64_t *blockshape_b,
                                        iarray_operator_hint_t hint)
 {
     INA_UNUSED(hint);
@@ -699,35 +699,35 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
         return INA_ERROR(IARRAY_ERR_INVALID_SHAPE);
     }
 
-    if (bshape_a == NULL) {
-        bshape_a = a->dtshape->shape;
+    if (blockshape_a == NULL) {
+        blockshape_a = a->dtshape->shape;
     }
-    if (bshape_b == NULL) {
-        bshape_b = b->dtshape->shape;
+    if (blockshape_b == NULL) {
+        blockshape_b = b->dtshape->shape;
     }
 
-    if (bshape_a[1] != bshape_b[0]) {
+    if (blockshape_a[1] != blockshape_b[0]) {
         IARRAY_TRACE1(iarray.error, "The second dimension of the first bshape must be"
                                     "equal to the first dimension of the second bshape");
-        return INA_ERROR(IARRAY_ERR_INVALID_BSHAPE);
+        return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
     }
 
-    if (bshape_a[0] != c->storage->pshape[0]){
+    if (blockshape_a[0] != c->storage->chunkshape[0]){
         IARRAY_TRACE1(iarray.error, "The first dimension of the first bshape must be"
-                                    "equal to the first dimension of the output container pshape");
-        return INA_ERROR(IARRAY_ERR_INVALID_BSHAPE);
+                                    "equal to the first dimension of the output container chunkshape");
+        return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
     }
 
     if (b->dtshape->ndim == 1) {
-        return _iarray_gemv(ctx, a, b, c, bshape_a, bshape_b);
+        return _iarray_gemv(ctx, a, b, c, blockshape_a, blockshape_b);
     }
     else if (b->dtshape->ndim == 2) {
-        if (bshape_b[1] != c->storage->pshape[1]) {
+        if (blockshape_b[1] != c->storage->chunkshape[1]) {
             IARRAY_TRACE1(iarray.error, "The second dimension of the second bshape must be"
-                                        "equal to the second dimension of the output container pshape");
-            return INA_ERROR(IARRAY_ERR_INVALID_BSHAPE);
+                                        "equal to the second dimension of the output container chunkshape");
+            return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
         }
-        return _iarray_gemm(ctx, a, b, c, bshape_a, bshape_b);
+        return _iarray_gemm(ctx, a, b, c, blockshape_a, blockshape_b);
     }
     else {
         return INA_ERROR(INA_ERR_NOT_IMPLEMENTED);

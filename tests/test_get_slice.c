@@ -55,8 +55,8 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     store.filename = NULL;
     for (int j = 0; j < xdtshape.ndim; ++j) {
         if (pshape != NULL) {
-            store.pshape[j] = pshape[j];
-            store.bshape[j] = bshape[j];
+            store.chunkshape[j] = pshape[j];
+            store.blockshape[j] = bshape[j];
         }
     }
 
@@ -75,8 +75,8 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     store_dest.filename = NULL;
     for (int j = 0; j < xdtshape.ndim; ++j) {
         if (pshape_dest != NULL) {
-            store_dest.pshape[j] = pshape_dest[j];
-            store_dest.bshape[j] = bshape_dest[j];
+            store_dest.chunkshape[j] = pshape_dest[j];
+            store_dest.blockshape[j] = bshape_dest[j];
         }
     }
 

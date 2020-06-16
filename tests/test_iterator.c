@@ -31,8 +31,8 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
     store.filename = NULL;
     if (pshape != NULL) {
         for (int i = 0; i < ndim; ++i) {
-            store.pshape[i] = pshape[i];
-            store.bshape[i] = bshape[i];
+            store.chunkshape[i] = pshape[i];
+            store.blockshape[i] = bshape[i];
         }
     }
 

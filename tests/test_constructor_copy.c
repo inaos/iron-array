@@ -42,8 +42,8 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
     store.enforce_frame = (ndim % 2 == 0) ? false : true;
     for (int i = 0; i < ndim; ++i) {
         if (pshape != NULL) {
-            store.pshape[i] = pshape[i];
-            store.bshape[i] = bshape[i];
+            store.chunkshape[i] = pshape[i];
+            store.blockshape[i] = bshape[i];
         }
     }
     double step = (stop - start) / size;

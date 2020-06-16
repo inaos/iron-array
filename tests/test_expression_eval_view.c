@@ -71,8 +71,8 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
     store.filename = NULL;
     if (!plain_buffer) {
         for (int i = 0; i < ndim; ++i) {
-            store.pshape[i] = pshape[i];
-            store.bshape[i] = bshape[i];
+            store.chunkshape[i] = pshape[i];
+            store.blockshape[i] = bshape[i];
         }
     }
 

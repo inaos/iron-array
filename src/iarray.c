@@ -100,7 +100,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     iarray_data_type_t dtype = dtshape->dtype;
     int ndim = dtshape->ndim;
     int64_t *shape = dtshape->shape;
-    int64_t *pshape = storage->pshape;
+    int64_t *pshape = storage->chunkshape;
     int itemsize = 0;
     switch (dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
@@ -138,7 +138,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         }
     } while (psize > high);
 
-    // Lastly, if some pshape axis is too close to the original shape, split it again
+    // Lastly, if some chunkshape axis is too close to the original shape, split it again
     if (psize > low) {
         for (int i = 0; i < ndim; i++) {
             if (((float) (shape[i] - pshape[i]) / (float) pshape[i]) < 0.1) {
@@ -154,11 +154,11 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         }
     }
     for (int i = 0; i < ndim; ++i) {
-        storage->bshape[i] = storage->pshape[i];
+        storage->blockshape[i] = storage->chunkshape[i];
     }
     if (psize > INT32_MAX) {
         INA_TRACE1(iarray.error, "The partition size can not be larger than 2 GB");
-        return INA_ERROR(IARRAY_ERR_INVALID_PSHAPE);
+        return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
     return INA_SUCCESS;
 }
@@ -171,8 +171,8 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
                                        iarray_container_t *a,
                                        iarray_container_t *b,
                                        iarray_container_t *c,
-                                       int64_t *bshape_a,
-                                       int64_t *bshape_b,
+                                       int64_t *blockshape_a,
+                                       int64_t *blockshape_b,
                                        int64_t low,
                                        int64_t high)
 {
@@ -180,8 +180,8 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(a);
     INA_VERIFY_NOT_NULL(b);
     INA_VERIFY_NOT_NULL(c);
-    INA_VERIFY_NOT_NULL(bshape_a);
-    INA_VERIFY_NOT_NULL(bshape_b);
+    INA_VERIFY_NOT_NULL(blockshape_a);
+    INA_VERIFY_NOT_NULL(blockshape_b);
 
     if (high == 0) {
         size_t L3;
@@ -216,8 +216,8 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
     // First, the m and n values *have* to be the same for the partition of the output
-    int64_t m_dim = c->storage->pshape[0];
-    int64_t n_dim = c->storage->pshape[1];
+    int64_t m_dim = c->storage->chunkshape[0];
+    int64_t n_dim = c->storage->chunkshape[1];
 
     // Now that we have a hint for M and K, get a guess of the N
     int64_t k_dim_guess1 = high / (m_dim * itemsize);
@@ -258,10 +258,10 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     }
 
     // We are done.  Fill the block shapes and return.
-    bshape_a[0] = m_dim;
-    bshape_a[1] = k_dim;
-    bshape_b[0] = k_dim;
-    bshape_b[1] = n_dim;
+    blockshape_a[0] = m_dim;
+    blockshape_a[1] = k_dim;
+    blockshape_b[0] = k_dim;
+    blockshape_b[1] = n_dim;
 
     return INA_SUCCESS;
 }
@@ -386,8 +386,8 @@ ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage
             cat_storage->properties.blosc.enforceframe = storage->enforce_frame;
             cat_storage->properties.blosc.filename = storage->filename;
             for (int i = 0; i < dtshape->ndim; ++i) {
-                cat_storage->properties.blosc.chunkshape[i] = (int32_t) storage->pshape[i];
-                cat_storage->properties.blosc.blockshape[i] = (int32_t) storage->bshape[i];
+                cat_storage->properties.blosc.chunkshape[i] = (int32_t) storage->chunkshape[i];
+                cat_storage->properties.blosc.blockshape[i] = (int32_t) storage->blockshape[i];
             }
             break;
         case CATERVA_STORAGE_PLAINBUFFER:

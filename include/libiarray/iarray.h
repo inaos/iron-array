@@ -26,7 +26,7 @@
 #define IARRAY_ES_CONTAINER (INA_ES_USER_DEFINED + 1)
 #define IARRAY_ES_DTSHAPE (INA_ES_USER_DEFINED + 2)
 #define IARRAY_ES_SHAPE (INA_ES_USER_DEFINED + 3)
-#define IARRAY_ES_PSHAPE (INA_ES_USER_DEFINED + 4)
+#define IARRAY_ES_CHUNKSHAPE (INA_ES_USER_DEFINED + 4)
 #define IARRAY_ES_NDIM (INA_ES_USER_DEFINED + 5)
 #define IARRAY_ES_DTYPE (INA_ES_USER_DEFINED + 6)
 #define IARRAY_ES_STORAGE (INA_ES_USER_DEFINED + 7)
@@ -35,7 +35,7 @@
 #define IARRAY_ES_CATERVA (INA_ES_USER_DEFINED + 10)
 #define IARRAY_ES_BLOSC (INA_ES_USER_DEFINED + 11)
 #define IARRAY_ES_ASSERTION (INA_ES_USER_DEFINED + 12)
-#define IARRAY_ES_BSHAPE (INA_ES_USER_DEFINED + 13)
+#define IARRAY_ES_BLOCKSHAPE (INA_ES_USER_DEFINED + 13)
 #define IARRAY_ES_RNG_METHOD (INA_ES_USER_DEFINED + 14)
 #define IARRAY_ES_RAND_METHOD (INA_ES_USER_DEFINED + 15)
 #define IARRAY_ES_RAND_PARAM (INA_ES_USER_DEFINED + 16)
@@ -51,8 +51,8 @@
 
 #define IARRAY_ERR_INVALID_DTYPE (INA_ERR_INVALID | IARRAY_ES_DTYPE)
 #define IARRAY_ERR_INVALID_SHAPE (INA_ERR_INVALID | IARRAY_ES_SHAPE)
-#define IARRAY_ERR_INVALID_PSHAPE (INA_ERR_INVALID | IARRAY_ES_PSHAPE)
-#define IARRAY_ERR_INVALID_BSHAPE (INA_ERR_INVALID | IARRAY_ES_BSHAPE)
+#define IARRAY_ERR_INVALID_CHUNKSHAPE (INA_ERR_INVALID | IARRAY_ES_CHUNKSHAPE)
+#define IARRAY_ERR_INVALID_BLOCKSHAPE (INA_ERR_INVALID | IARRAY_ES_BLOCKSHAPE)
 #define IARRAY_ERR_INVALID_NDIM (INA_ERR_INVALID | IARRAY_ES_NDIM)
 
 #define IARRAY_ERR_INVALID_RNG_METHOD (INA_ERR_INVALID | IARRAY_ES_RNG_METHOD)
@@ -207,8 +207,8 @@ typedef struct iarray_storage_s {
     iarray_storage_type_t backend;
     char *filename;
     bool enforce_frame;
-    int64_t pshape[IARRAY_DIMENSION_MAX]; /* partition shape */
-    int64_t bshape[IARRAY_DIMENSION_MAX]; /* block shape */
+    int64_t chunkshape[IARRAY_DIMENSION_MAX]; /* partition shape */
+    int64_t blockshape[IARRAY_DIMENSION_MAX]; /* block shape */
 } iarray_storage_t;
 
 typedef struct iarray_iter_write_value_s {
@@ -242,11 +242,6 @@ typedef struct iarray_iter_read_block_value_s {
     int64_t block_size;
 } iarray_iter_read_block_value_t;
 
-typedef struct iarray_slice_param_s {
-    int axis;
-    int idx;
-} iarray_slice_param_t;
-
 typedef struct iarray_random_ctx_s iarray_random_ctx_t;
 
 static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
@@ -276,9 +271,9 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx);
 /*
  *  Provide advice for the partition shape of a `dtshape`.
  *
- *  If success, dtshape.pshape will contain the advice.
+ *  If success, storage->chunkshape and storage->blockshape will contain the advice.
  *
- *  `low` and `high` contain low and high values for the partition size.  If `low` is 0, it defaults
+ *  `low` and `high` contain low and high values for the chunksize.  If `low` is 0, it defaults
  *  to a fraction of L2 cache size.  If `high` is 0, it defaults to a fraction of L3 cache size.
  */
 INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
@@ -291,28 +286,33 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
  * `c` is supposed to have a partition size of (m, n)
  * The hint for the block shapes are going to be (m, k) and (k, n) respectively
  *
- * The hints will be stored in `bshape_a` and `bshape_b`, which needs to be provided by the user.
+ * The hints will be stored in `blockshape_a` and `blockshape_b`, which needs to be provided by the user.
  * The number of components for the block shapes is 2.
  *
  *  `low` and `high` contain low and high values for the partition size.  If `low` is 0, it defaults
  *  to a fraction of L2 cache size.  If `high` is 0, it defaults to a fraction of L3 cache size.
  *
  * Note: When performing matrix-*vector* operations, just pass the N dimension as 1.  The `k` hint
- * will be valid for this case too.  In this case, always pass `bshape_a` and `bshape_b` with
- * 2-components too (even if `bshape_b` only has a dimension in this case).
+ * will be valid for this case too.  In this case, always pass `blockshape_a` and `blockshape_b` with
+ * 2-components too (even if `blockshape_b` only has a dimension in this case).
  *
  */
 INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
-                                       iarray_container_t *a, iarray_container_t *b, iarray_container_t *c,
-                                       int64_t *bshape_a, int64_t *bshape_b,
-                                       int64_t low, int64_t high);
+                                       iarray_container_t *a,
+                                       iarray_container_t *b,
+                                       iarray_container_t *c,
+                                       int64_t *blockshape_a,
+                                       int64_t *blockshape_b,
+                                       int64_t low,
+                                       int64_t high);
 
 INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
                                         uint32_t seed,
                                         iarray_random_rng_t rng,
                                         iarray_random_ctx_t **rng_ctx);
 
-INA_API(void) iarray_random_ctx_free(iarray_context_t *ctx, iarray_random_ctx_t **rng_ctx);
+INA_API(void) iarray_random_ctx_free(iarray_context_t *ctx,
+                                     iarray_random_ctx_t **rng_ctx);
 
 INA_API(ina_rc_t) iarray_random_dist_set_param_float(iarray_random_ctx_t *ctx,
                                                      iarray_random_dist_parameter_t key,
@@ -534,8 +534,14 @@ INA_API(ina_rc_t) iarray_container_is_triangular(iarray_container_t *a);
 /* linear algebra */
 INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a);
 INA_API(ina_rc_t) iarray_linalg_inverse(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result,
-                                       int64_t *bshape_a, int64_t *bshape_b, iarray_operator_hint_t hint);
+INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
+                                       iarray_container_t *a,
+                                       iarray_container_t *b,
+                                       iarray_container_t *result,
+                                       int64_t *blockshape_a,
+                                       int64_t *blockshape_b,
+                                       iarray_operator_hint_t hint);
+
 INA_API(ina_rc_t) iarray_linalg_dot(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result, iarray_operator_hint_t hint);
 INA_API(ina_rc_t) iarray_linalg_det(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 INA_API(ina_rc_t) iarray_linalg_eigen(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);

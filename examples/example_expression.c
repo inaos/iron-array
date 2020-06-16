@@ -35,8 +35,8 @@ int main(void)
     store.backend = IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;
-    store.pshape[0] = 128 * 1024;
-    store.bshape[0] = 16 * 1024;
+    store.chunkshape[0] = 128 * 1024;
+    store.blockshape[0] = 16 * 1024;
     iarray_container_t* c_x;
     iarray_container_t* c_y;
     iarray_linspace(ctx, &shape, nelem, 2.1, .1, &store, 0, &c_x);

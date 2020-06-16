@@ -55,8 +55,8 @@ static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, 
         flags = IARRAY_CONTAINER_PERSIST;
     }
     for (int i = 0; i < ndim; ++i) {
-        store.pshape[i] = pshape[i];
-        store.bshape[i] = bshape[i];
+        store.chunkshape[i] = pshape[i];
+        store.blockshape[i] = bshape[i];
         size *= shape[i];
     }
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, flags, &c_x));

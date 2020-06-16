@@ -37,8 +37,8 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     xstore.enforce_frame = false;
     if (xpshape != NULL) {
         for (int i = 0; i < xdtshape.ndim; ++i) {
-            xstore.pshape[i] = xpshape[i];
-            xstore.bshape[i] = xbshape[i];
+            xstore.chunkshape[i] = xpshape[i];
+            xstore.blockshape[i] = xbshape[i];
         }
     }
     iarray_container_t *c_x;
@@ -70,8 +70,8 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     ystore.enforce_frame = false;
     if (ypshape != NULL) {
         for (int i = 0; i < ydtshape.ndim; ++i) {
-            ystore.pshape[i] = ypshape[i];
-            ystore.bshape[i] = ybshape[i];
+            ystore.chunkshape[i] = ypshape[i];
+            ystore.blockshape[i] = ybshape[i];
         }
     }
 
@@ -126,8 +126,8 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     zstore.enforce_frame = false;
     if (zpshape != NULL) {
         for (int i = 0; i < zdtshape.ndim; ++i) {
-            zstore.pshape[i] = zpshape[i];
-            zstore.bshape[i] = zbshape[i];
+            zstore.chunkshape[i] = zpshape[i];
+            zstore.blockshape[i] = zbshape[i];
         }
     }
     iarray_container_t *c_z;
