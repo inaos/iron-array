@@ -35,8 +35,8 @@ static ina_rc_t test_partition_advice(iarray_context_t *ctx,
     INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape, &storage, low, high));
 
     for (int i = 0; i < ndim; i++) {
-        INA_TEST_ASSERT_EQUAL_INT64(pshape[i], storage.pshape[i]);
-        INA_TEST_ASSERT_EQUAL_INT64(pshape[i], storage.bshape[i]);
+        INA_TEST_ASSERT_EQUAL_INT64(pshape[i], storage.chunkshape[i]);
+        INA_TEST_ASSERT_EQUAL_INT64(pshape[i], storage.blockshape[i]);
     }
 
     return INA_SUCCESS;

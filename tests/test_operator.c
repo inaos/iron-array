@@ -90,8 +90,8 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
     store.filename = NULL;
     store.enforce_frame = false;
     for (int i = 0; i < shape.ndim; ++i) {
-        store.pshape[i] = p;
-        store.bshape[i] = b;
+        store.chunkshape[i] = p;
+        store.blockshape[i] = b;
     }
     
     iarray_container_t *c_x;
@@ -165,8 +165,8 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
     store.filename = NULL;
     store.enforce_frame = false;
     for (int i = 0; i < shape.ndim; ++i) {
-        store.pshape[i] = p;
-        store.bshape[i] = b;
+        store.chunkshape[i] = p;
+        store.blockshape[i] = b;
     }
     iarray_container_t *c_x;
     iarray_container_t *c_y;

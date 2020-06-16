@@ -33,8 +33,8 @@ static ina_rc_t test_cfg(iarray_context_t *ctx,
     xstore.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
         if (pshape != NULL) {
-            xstore.pshape[i] = pshape[i];
-            xstore.bshape[i] = bshape[i];
+            xstore.chunkshape[i] = pshape[i];
+            xstore.blockshape[i] = bshape[i];
         }
     }
 

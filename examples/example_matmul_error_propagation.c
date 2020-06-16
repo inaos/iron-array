@@ -94,8 +94,8 @@ int main(void)
     store_x.enforce_frame = false;
     store_x.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
-        store_x.pshape[i] = pshape_a[i];
-        store_x.bshape[i] = pshape_a[i];
+        store_x.chunkshape[i] = pshape_a[i];
+        store_x.blockshape[i] = pshape_a[i];
     }
     iarray_container_t *cont_a = NULL;
     IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, size_a, -100, 100, &store_x, 0, &cont_a));
@@ -111,8 +111,8 @@ int main(void)
     store_y.enforce_frame = false;
     store_y.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
-        store_y.pshape[i] = pshape_b[i];
-        store_y.bshape[i] = pshape_b[i];
+        store_y.chunkshape[i] = pshape_b[i];
+        store_y.blockshape[i] = pshape_b[i];
     }
     iarray_container_t *cont_b = NULL;
     IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, size_b, -100, 100, &store_y, 0, &cont_b));
@@ -128,8 +128,8 @@ int main(void)
     store_z.enforce_frame = false;
     store_z.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
-        store_z.pshape[i] = pshape_c[i];
-        store_z.bshape[i] = pshape_c[i];
+        store_z.chunkshape[i] = pshape_c[i];
+        store_z.blockshape[i] = pshape_c[i];
     }
     iarray_container_t *cont_c = NULL;
     IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, &store_z, 0, &cont_c));

@@ -117,11 +117,11 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
 
     int64_t max_part_size = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {
-        max_part_size *= container->storage->pshape[i];
+        max_part_size *= container->storage->chunkshape[i];
     }
     void *buffer_mem = ina_mem_alloc(max_part_size * sizeof(double));
 
-    IARRAY_FAIL_IF_ERROR(iarray_iter_write_block_new(ctx, &iter, container, container->storage->pshape, &val, false));
+    IARRAY_FAIL_IF_ERROR(iarray_iter_write_block_new(ctx, &iter, container, container->storage->chunkshape, &val, false));
 
     while (INA_SUCCEED(iarray_iter_write_block_has_next(iter))) {
         IARRAY_FAIL_IF_ERROR(iarray_iter_write_block_next(iter, NULL, 0));

@@ -54,8 +54,8 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     store.filename = NULL;
     if (pshape != NULL) {
         for (int j = 0; j < xdtshape.ndim; ++j) {
-            store.pshape[j] = pshape[j];
-            store.bshape[j] = bshape[j];
+            store.chunkshape[j] = pshape[j];
+            store.blockshape[j] = bshape[j];
         }
     }
     int64_t bufdes_size = 1;

@@ -119,8 +119,8 @@ int main(int argc, char** argv)
         .filename = mat_x_name
     };
     if (!INA_SUCCEED(ina_opt_isset("P"))) {
-        mat_x.pshape[0] = pshape[0];
-        mat_x.bshape[0] = bshape[0];
+        mat_x.chunkshape[0] = pshape[0];
+        mat_x.blockshape[0] = bshape[0];
     }
     iarray_storage_t mat_y = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
@@ -128,8 +128,8 @@ int main(int argc, char** argv)
         .filename = mat_y_name
     };
     if (!INA_SUCCEED(ina_opt_isset("P"))) {
-        mat_y.pshape[0] = pshape[0];
-        mat_y.bshape[0] = bshape[0];
+        mat_y.chunkshape[0] = pshape[0];
+        mat_y.blockshape[0] = bshape[0];
     }
     iarray_storage_t mat_out = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
@@ -137,8 +137,8 @@ int main(int argc, char** argv)
         .filename = mat_out_name
     };
     if (!INA_SUCCEED(ina_opt_isset("P"))) {
-        mat_out.pshape[0] = pshape[0];
-        mat_out.bshape[0] = bshape[0];
+        mat_out.chunkshape[0] = pshape[0];
+        mat_out.blockshape[0] = bshape[0];
     }
     int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
 
@@ -304,7 +304,7 @@ int main(int argc, char** argv)
             iarray_container_new(ctx, &dtshape, &mat_y, flags, &con_y);
             iarray_iter_write_block_t *I;
             iarray_iter_write_block_value_t val;
-            iarray_iter_write_block_new(ctx, &I, con_y, mat_y.pshape, &val, false);
+            iarray_iter_write_block_new(ctx, &I, con_y, mat_y.chunkshape, &val, false);
             double incx = XMAX / NELEM;
             while (iarray_iter_write_block_has_next(I)) {
                 iarray_iter_write_block_next(I, NULL, 0);
