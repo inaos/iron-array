@@ -31,8 +31,8 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        store->pshape[i] = pshape[i];
-        store->bshape[i] = bshape[i];
+        store->chunkshape[i] = pshape[i];
+        store->blockshape[i] = bshape[i];
     }
 
 
@@ -179,8 +179,8 @@ static ina_rc_t test_persistency_transposed(iarray_context_t *ctx, iarray_data_t
     int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        store->pshape[i] = pshape[i];
-        store->bshape[i] = bshape[i];
+        store->chunkshape[i] = pshape[i];
+        store->blockshape[i] = bshape[i];
         size *= shape[i];
     }
 

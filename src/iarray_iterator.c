@@ -87,13 +87,13 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
     for (int i = 0; i < c1->dtshape->ndim; ++i) {
         if (c1->dtshape->shape[i] < bshape_a[i]) {
             IARRAY_TRACE1(iarray.error, "The blockshape is larger than the container shape");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_BSHAPE));
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE));
         }
     }
     for (int i = 0; i < c2->dtshape->ndim; ++i) {
         if (c2->dtshape->shape[i] < bshape_b[i]) {
             IARRAY_TRACE1(iarray.error, "The blockshape is larger than the container shape");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_BSHAPE));
+            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE));
         }
     }
 
@@ -582,9 +582,9 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
     if (cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
         for (int i = 0; i < cont->dtshape->ndim; ++i) {
-            if (blockshape[i] != cont->storage->pshape[i]) {
-                IARRAY_TRACE1(iarray.error, "The blockshape must be equal to the container pshape");
-                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_BSHAPE));
+            if (blockshape[i] != cont->storage->chunkshape[i]) {
+                IARRAY_TRACE1(iarray.error, "The blockshape must be equal to the container chunkshape");
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE));
             }
         }
     }
@@ -888,7 +888,7 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
 
     int64_t block_size = 1;
     for (int i = 0; i < cont->dtshape->ndim; ++i) {
-        (*itr)->block_shape[i] = cont->storage->pshape[i];
+        (*itr)->block_shape[i] = cont->storage->chunkshape[i];
         block_size *= (*itr)->block_shape[i];
     }
 

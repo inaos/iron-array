@@ -102,8 +102,8 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx,
     sstore.filename = NULL;
     if (pshape_slice != NULL) {
         for (int i = 0; i < sdtshape.ndim; ++i) {
-            sstore.pshape[i] = pshape_slice[i];
-            sstore.bshape[i] = bshape_slice[i];
+            sstore.chunkshape[i] = pshape_slice[i];
+            sstore.blockshape[i] = bshape_slice[i];
         }
     }
     iarray_container_t *slice;

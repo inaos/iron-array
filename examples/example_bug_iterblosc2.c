@@ -53,8 +53,8 @@ int main(void)
     store.enforce_frame = false;
     store.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
-        store.pshape[i] = pshape[i];
-        store.bshape[i] = bshape[i];
+        store.chunkshape[i] = pshape[i];
+        store.blockshape[i] = bshape[i];
     }
     iarray_container_t* c_x;
     iarray_container_t* c_y;

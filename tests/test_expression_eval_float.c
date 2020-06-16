@@ -61,8 +61,8 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
     store.filename = NULL;
     if (!plain_buffer) {
         for (int i = 0; i < ndim; ++i) {
-            store.pshape[i] = pshape[i];
-            store.bshape[i] = bshape[i];
+            store.chunkshape[i] = pshape[i];
+            store.blockshape[i] = bshape[i];
         }
     }
     float *buffer_x = (float *) ina_mem_alloc(nelem * sizeof(float));
@@ -180,9 +180,9 @@ INA_TEST_FIXTURE(expression_eval_float, iterchunk_superchunk)
 //
 //    int8_t ndim = 3;
 //    int64_t shape[] = {121, 121, 123};
-//    int64_t pshape[] = {0, 0, 0};
+//    int64_t chunkshape[] = {0, 0, 0};
 //
-//    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, true, data->func, data->expr_str));
+//    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, chunkshape, true, data->func, data->expr_str));
 //}
 
 static float expr5(const float x)
