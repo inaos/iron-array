@@ -952,6 +952,17 @@ INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
+INA_API(ina_rc_t) iarray_get_storage(iarray_context_t *ctx,
+                                     iarray_container_t *c,
+                                     iarray_storage_t *storage)
+{
+    INA_UNUSED(ctx);
+    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(storage);
+    ina_mem_cpy(storage, c->storage, sizeof(iarray_storage_t));
+    return INA_SUCCESS;
+}
+
 INA_API(ina_rc_t) iarray_container_info(iarray_container_t *container, int64_t *nbytes, int64_t *cbytes)
 {
     INA_VERIFY_NOT_NULL(container);
