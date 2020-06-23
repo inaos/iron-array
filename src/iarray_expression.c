@@ -66,9 +66,9 @@ typedef struct iarray_eval_pparams_s {
     int32_t out_size;  // the size of output buffer (in bytes)
     int32_t out_typesize;  // the typesize of output
     int8_t ndim;  // the number of dimensions for inputs / output arrays
-    int64_t *window_shape;  // the shape of the window for the input arrays (NULL if not available)
+    int32_t *window_shape;  // the shape of the window for the input arrays (NULL if not available)
     int64_t *window_start; // the start coordinates for the window shape (NULL if not available)
-    int64_t *window_strides; // the strides for the window shape (NULL if not available)
+    int32_t *window_strides; // the strides for the window shape (NULL if not available)
 } iarray_eval_pparams_t;
 
 typedef int (*iarray_eval_fn)(iarray_eval_pparams_t *params);
@@ -413,22 +413,21 @@ int prefilter_func(blosc2_prefilter_params *pparams)
 
     int8_t ndim = e->out->dtshape->ndim;
 
-    int64_t nblock = pparams->out_offset / pparams->out_size;
-
-    int64_t strides[IARRAY_DIMENSION_MAX];
+    int32_t strides[IARRAY_DIMENSION_MAX];
     strides[ndim - 1] = 1;
     for (int i = ndim - 2; i >= 0 ; --i) {
         strides[i] = strides[i+1] * e->out->catarr->blockshape[i];
     }
 
-    int64_t strides_block[IARRAY_DIMENSION_MAX];
+    int32_t strides_block[IARRAY_DIMENSION_MAX];
     strides_block[ndim - 1] = 1;
-    // strides[ndim - 1] = typesize;
     for (int i = ndim - 2; i >= 0 ; --i) {
         strides_block[i] = strides_block[i+1] * e->out->catarr->extchunkshape[i] / e->out->catarr->blockshape[i];
     }
 
-    int64_t nblock_ndim[IARRAY_DIMENSION_MAX];
+    int32_t nblock = pparams->out_offset / pparams->out_size;
+
+    int32_t nblock_ndim[IARRAY_DIMENSION_MAX];
     for (int i = ndim - 1; i >= 0; --i) {
         if (i != 0) {
             nblock_ndim[i] = (nblock % strides_block[i-1]) / strides_block[i];
@@ -437,28 +436,47 @@ int prefilter_func(blosc2_prefilter_params *pparams)
         }
     }
 
-    int64_t start[IARRAY_DIMENSION_MAX];
+    int64_t start_in_chunk[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ndim; ++i) {
-        start[i] = nblock_ndim[i] * e->out->catarr->blockshape[i];
+        start_in_chunk[i] = nblock_ndim[i] * e->out->catarr->blockshape[i];
     }
 
-    int64_t shape[IARRAY_DIMENSION_MAX];
+    int64_t start_in_container[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ndim; ++i) {
-        if (start[i] + e->out->catarr->blockshape[i] > e->out->catarr->chunkshape[i]) {
-            shape[i] = e->out->catarr->chunkshape[i] - start[i];
+        start_in_container[i] = start_in_chunk[i] + expr_pparams->out_value.block_index[i] * e->out->catarr->chunkshape[i];
+    }
+
+    bool out_of_bounds = false;
+    for (int i = 0; i < ndim; ++i) {
+        if (start_in_container[i] > e->out->catarr->shape[i]) {
+            out_of_bounds = true;
+            break;
+        }
+    }
+
+    int32_t shape[IARRAY_DIMENSION_MAX];
+    for (int i = 0; i < ndim; ++i) {
+        if (out_of_bounds) {
+            shape[i] = 0;
+        } else if (start_in_container[i] + e->out->catarr->blockshape[i] > e->out->catarr->shape[i]) {
+            shape[i] = e->out->catarr->shape[i] - start_in_container[i];
+        } else if (start_in_chunk[i] + e->out->catarr->blockshape[i] > e->out->catarr->chunkshape[i]) {
+            shape[i] = e->out->catarr->chunkshape[i] - start_in_chunk[i];
         } else {
             shape[i] = e->out->catarr->blockshape[i];
         }
     }
 
+    // Strides using bytes
     for (int i = 0; i < ndim; ++i) {
         strides[i] *= typesize;
     }
+
     unsigned int eval_method = e->ctx->cfg->eval_flags & 0x7u;
     if (eval_method != IARRAY_EVAL_METHOD_ITERCHUNK) {
         // We can only set the visible shape of the output for the ITERBLOSC eval method.
-        eval_pparams.window_shape = expr_pparams->out_value.block_shape;
-        eval_pparams.window_start = expr_pparams->out_value.elem_index;
+        eval_pparams.window_shape = shape;
+        eval_pparams.window_start = start_in_container;
         eval_pparams.window_strides = strides;
     } else {
         // eval_pparams is initialized to {0} above, but better be explicit.
