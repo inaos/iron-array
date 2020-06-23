@@ -413,20 +413,24 @@ int prefilter_func(blosc2_prefilter_params *pparams)
 
     int8_t ndim = e->out->dtshape->ndim;
 
+    // Element strides (in elements)
     int32_t strides[IARRAY_DIMENSION_MAX];
     strides[ndim - 1] = 1;
     for (int i = ndim - 2; i >= 0 ; --i) {
         strides[i] = strides[i+1] * e->out->catarr->blockshape[i];
     }
 
+    // Block strides (in blocks)
     int32_t strides_block[IARRAY_DIMENSION_MAX];
     strides_block[ndim - 1] = 1;
     for (int i = ndim - 2; i >= 0 ; --i) {
         strides_block[i] = strides_block[i+1] * e->out->catarr->extchunkshape[i] / e->out->catarr->blockshape[i];
     }
 
+    // Flattened block number
     int32_t nblock = pparams->out_offset / pparams->out_size;
 
+    // Multidimensional block number
     int32_t nblock_ndim[IARRAY_DIMENSION_MAX];
     for (int i = ndim - 1; i >= 0; --i) {
         if (i != 0) {
@@ -436,16 +440,19 @@ int prefilter_func(blosc2_prefilter_params *pparams)
         }
     }
 
+    // Position of the first element of the block (inside current chunk)
     int64_t start_in_chunk[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ndim; ++i) {
         start_in_chunk[i] = nblock_ndim[i] * e->out->catarr->blockshape[i];
     }
 
+    // Position of the first element of the block (inside container)
     int64_t start_in_container[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ndim; ++i) {
         start_in_container[i] = start_in_chunk[i] + expr_pparams->out_value.block_index[i] * e->out->catarr->chunkshape[i];
     }
 
+    // Check if the block is out of bounds
     bool out_of_bounds = false;
     for (int i = 0; i < ndim; ++i) {
         if (start_in_container[i] > e->out->catarr->shape[i]) {
@@ -454,6 +461,7 @@ int prefilter_func(blosc2_prefilter_params *pparams)
         }
     }
 
+    // Shape of the current block
     int32_t shape[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ndim; ++i) {
         if (out_of_bounds) {
@@ -467,7 +475,7 @@ int prefilter_func(blosc2_prefilter_params *pparams)
         }
     }
 
-    // Strides using bytes
+    // Element strides (using bytes)
     for (int i = 0; i < ndim; ++i) {
         strides[i] *= typesize;
     }
