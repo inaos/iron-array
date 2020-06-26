@@ -94,6 +94,21 @@ other packager of your preference).
          cmake -DCMAKE_BUILD_TYPE=Debug ..
          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 
+### Tracing
+
+Sometimes it is useful to activate the tracing mechanism for debugging purposes.  Example:
+
+```
+$ env INAC_TRACE='*' ./perf_vector_expression  -e 1 -E 2 -M 3 -t 10 -l 0 -c 9 -f 2
+Time for computing and filling X values: 0.0523 s, 2918.5 MB/s
+Time for compressing and *storing* X values: 0.106 s, 1434.1 MB/s
+Compression for X values: 152.6 MB -> 11.2 MB (13.6x)
+Time for computing and filling Y values: 0.0665 s, 2296.2 MB/s
+Time for compressing and *storing* Y values: 0.135 s, 1130.3 MB/s
+Compression for Y values: 152.6 MB -> 152.6 MB (1.0x)
+[iarray.error] - Error compressing a blosc chunk /Users/faltet/inaos/iron-array/src/iarray_expression.c:853
+Error during evaluation.  Giving up...
+```
 
 ### Expressions
 
