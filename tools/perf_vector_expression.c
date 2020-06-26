@@ -106,6 +106,7 @@ int main(int argc, char** argv)
              INA_OPT_INT("n", "eval-niter", 1, "Number of times to evaluate (default 1)"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
+             INA_OPT_INT("f", "filter", 1, "SHUFFLE = 1, BITSHUFFLE = 2"),
              INA_OPT_INT("t", "nthreads", 1, "Use number of threads for the evaluation"),
              INA_OPT_INT("m", "mantissa-bits", 0, "The number of significant bits in mantissa (0 means no truncation"),
              INA_OPT_FLAG("d", "dict", "Use dictionary (only for Zstd (codec 5))"),
@@ -133,6 +134,8 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_opt_get_int("c", &clevel));
     int codec;
     INA_MUST_SUCCEED(ina_opt_get_int("l", &codec));
+    int filter;
+    INA_MUST_SUCCEED(ina_opt_get_int("f", &filter));
     int nthreads;
     INA_MUST_SUCCEED(ina_opt_get_int("t", &nthreads));
     int mantissa_bits;
@@ -184,12 +187,12 @@ int main(int argc, char** argv)
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_level = clevel;
     config.compression_codec = codec;
+    config.filter_flags = filter;
     if (clevel == 0) {
         // If there is no compression, there is no point in using filters.
         config.filter_flags = 0;
     }
     else {
-        config.filter_flags = IARRAY_COMP_SHUFFLE;
         if (mantissa_bits >  0) {
             config.filter_flags |= IARRAY_COMP_TRUNC_PREC;
             config.fp_mantissa_bits = mantissa_bits;
