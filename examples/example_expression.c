@@ -17,7 +17,7 @@ int main(void)
 {
     iarray_init();
 
-    char *expr = "(cos(x) - 1.35) * (sin(x) - 4.45) * tan(x - 8.5)";
+    char *expr = "2*x+1";
 
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -57,24 +57,24 @@ int main(void)
     // Print some values of the outcome
     size_t buf_len = sizeof(double) * nelem;
     double *buff_x = malloc(buf_len);
-    iarray_to_buffer(ctx, c_x, buff_x, buf_len);
+    // iarray_to_buffer(ctx, c_x, buff_x, buf_len);
     double *buff_y = malloc(buf_len);
-    iarray_to_buffer(ctx, c_y, buff_y, buf_len);
+    // iarray_to_buffer(ctx, c_y, buff_y, buf_len);
     double *buff_out = malloc(buf_len);
-    iarray_to_buffer(ctx, c_out, buff_out, buf_len);
+    // iarray_to_buffer(ctx, c_out, buff_out, buf_len);
 
-    bool success = true;
-    for (int64_t i = 0; i < nelem; i++) {
-        if (buff_out[i] != (buff_x[i] + 2 * buff_y[i])) {
-            printf("ERROR in pos %" PRId64 "\n", i);
-            success = false;
-            break;
-        }
-    }
-    if (success) {
-      printf("Evaluation of '%s' expression is correct!\n", expr);
-    }
-    printf("\n");
+    // bool success = true;
+    // for (int64_t i = 0; i < nelem; i++) {
+    //     if (buff_out[i] != (buff_x[i] + 2 * buff_y[i])) {
+    //         printf("ERROR in pos %" PRId64 "\n", i);
+    //         success = false;
+    //         break;
+    //     }
+    // }
+    // if (success) {
+    //   printf("Evaluation of '%s' expression is correct!\n", expr);
+    // }
+    // printf("\n");
 
     iarray_expr_free(ctx, &e);
     iarray_container_free(ctx, &c_out);
