@@ -17,26 +17,27 @@ int main(void)
 {
     iarray_init();
 
-    char *expr = "x + 2*y";
-    //char *expr = "sin(x) + 2*y";
+    char *expr = "(cos(x) - 1.35) * (sin(x) - 4.45) * tan(x - 8.5)";
+
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2;
+    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
     cfg.max_num_threads = 1;
     iarray_context_new(&cfg, &ctx);
 
     iarray_dtshape_t shape;
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     shape.ndim = 1;
-    shape.shape[0] = 1024 * 1024; // shape.shape[1] = 2000;
+    shape.shape[0] = 1000;
     int64_t nelem = shape.shape[0]; // * shape.shape[1];
 
     iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;
-    store.chunkshape[0] = 128 * 1024;
-    store.blockshape[0] = 16 * 1024;
+    store.chunkshape[0] = 100;
+    store.blockshape[0] = 30;
+
     iarray_container_t* c_x;
     iarray_container_t* c_y;
     iarray_linspace(ctx, &shape, nelem, 2.1, .1, &store, 0, &c_x);
