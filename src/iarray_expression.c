@@ -698,7 +698,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     iarray_iter_write_block_t *iter_out;
     iarray_iter_write_block_value_t out_value;
 
-    int32_t external_buffer_size = ret->catarr->extchunksize * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD;
+    int32_t external_buffer_size = ret->catarr->extchunknitems * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD;
     void *external_buffer = NULL;  // for informing the iterator that we are passing an external buffer
 
     if (INA_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, true))) {
