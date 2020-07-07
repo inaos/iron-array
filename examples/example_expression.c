@@ -17,26 +17,27 @@ int main(void)
 {
     iarray_init();
 
-    char *expr = "x + 2*y";
-    //char *expr = "sin(x) + 2*y";
+    char *expr = "2*x+1";
+
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2;
+    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
     cfg.max_num_threads = 1;
     iarray_context_new(&cfg, &ctx);
 
     iarray_dtshape_t shape;
     shape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     shape.ndim = 1;
-    shape.shape[0] = 1024 * 1024; // shape.shape[1] = 2000;
+    shape.shape[0] = 1000;
     int64_t nelem = shape.shape[0]; // * shape.shape[1];
 
     iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;
-    store.chunkshape[0] = 128 * 1024;
-    store.blockshape[0] = 16 * 1024;
+    store.chunkshape[0] = 100;
+    store.blockshape[0] = 30;
+
     iarray_container_t* c_x;
     iarray_container_t* c_y;
     iarray_linspace(ctx, &shape, nelem, 2.1, .1, &store, 0, &c_x);
@@ -56,24 +57,24 @@ int main(void)
     // Print some values of the outcome
     size_t buf_len = sizeof(double) * nelem;
     double *buff_x = malloc(buf_len);
-    iarray_to_buffer(ctx, c_x, buff_x, buf_len);
+    // iarray_to_buffer(ctx, c_x, buff_x, buf_len);
     double *buff_y = malloc(buf_len);
-    iarray_to_buffer(ctx, c_y, buff_y, buf_len);
+    // iarray_to_buffer(ctx, c_y, buff_y, buf_len);
     double *buff_out = malloc(buf_len);
-    iarray_to_buffer(ctx, c_out, buff_out, buf_len);
+    // iarray_to_buffer(ctx, c_out, buff_out, buf_len);
 
-    bool success = true;
-    for (int64_t i = 0; i < nelem; i++) {
-        if (buff_out[i] != (buff_x[i] + 2 * buff_y[i])) {
-            printf("ERROR in pos %" PRId64 "\n", i);
-            success = false;
-            break;
-        }
-    }
-    if (success) {
-      printf("Evaluation of '%s' expression is correct!\n", expr);
-    }
-    printf("\n");
+    // bool success = true;
+    // for (int64_t i = 0; i < nelem; i++) {
+    //     if (buff_out[i] != (buff_x[i] + 2 * buff_y[i])) {
+    //         printf("ERROR in pos %" PRId64 "\n", i);
+    //         success = false;
+    //         break;
+    //     }
+    // }
+    // if (success) {
+    //   printf("Evaluation of '%s' expression is correct!\n", expr);
+    // }
+    // printf("\n");
 
     iarray_expr_free(ctx, &e);
     iarray_container_free(ctx, &c_out);
