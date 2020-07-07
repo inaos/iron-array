@@ -54,7 +54,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(c);
 
     ina_rc_t rc;
-    int blosc_filter_idx = 0;
 
     /* validation */
     if (dtshape->ndim > CATERVA_MAX_DIM) {

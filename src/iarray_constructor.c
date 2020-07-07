@@ -358,13 +358,13 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
     switch ((*container)->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            if ((* container)->catarr->size * (int64_t) sizeof(double) > buflen) {
+            if ((* container)->catarr->nitems * (int64_t) sizeof(double) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The size of the buffer is not enough");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             }
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            if ((* container)->catarr->size * (int64_t) sizeof(float) > buflen) {
+            if ((* container)->catarr->nitems * (int64_t) sizeof(float) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The size of the buffer is not enough");
                 IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER));
             }
