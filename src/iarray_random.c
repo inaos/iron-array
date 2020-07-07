@@ -635,8 +635,8 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
                                        bool *res)
 {
 
-    IARRAY_FAIL_IF(container1->catarr->size != container2->catarr->size);
-    int64_t size = container1->catarr->size;
+    IARRAY_FAIL_IF(container1->catarr->nitems != container2->catarr->nitems);
+    int64_t size = container1->catarr->nitems;
 
     int nbins = 100;
     double bins[100];

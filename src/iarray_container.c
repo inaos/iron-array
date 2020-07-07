@@ -381,7 +381,7 @@ INA_API(ina_rc_t) iarray_set_slice(iarray_context_t *ctx,
     }
 
     int typesize = slice->catarr->itemsize;
-    int64_t buflen = slice->catarr->size;
+    int64_t buflen = slice->catarr->nitems;
 
     if (slice->catarr->storage == CATERVA_STORAGE_BLOSC) {
         buffer = ina_mem_alloc(buflen * typesize);
@@ -1002,7 +1002,7 @@ INA_API(ina_rc_t) iarray_container_info(iarray_container_t *container, int64_t *
     INA_VERIFY_NOT_NULL(cbytes);
 
     if (container->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        *nbytes = container->catarr->size * container->catarr->itemsize;
+        *nbytes = container->catarr->nitems * container->catarr->itemsize;
         *cbytes = *nbytes;
     }
     else {

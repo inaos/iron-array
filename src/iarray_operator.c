@@ -492,7 +492,6 @@ static ina_rc_t _iarray_operator_elwise_a(
     iarray_iter_write_block_value_t val_write;
     INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &iter_write, result, result->storage->chunkshape, &val_write, false));
 
-    int typesize = result->catarr->itemsize;
 
     while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_write)) && INA_SUCCEED(iarray_iter_read_block_has_next(iter_read))) {
         INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(iter_write, NULL, 0));

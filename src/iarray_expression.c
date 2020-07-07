@@ -436,7 +436,7 @@ int prefilter_func(blosc2_prefilter_params *pparams)
         if (i != 0) {
             nblock_ndim[i] = (nblock % strides_block[i-1]) / strides_block[i];
         } else {
-            nblock_ndim[i] = (nblock % (e->out->catarr->extchunksize / e->out->catarr->blocksize)) / strides_block[i];
+            nblock_ndim[i] = (nblock % (e->out->catarr->extchunknitems / e->out->catarr->blocknitems)) / strides_block[i];
         }
     }
 
@@ -698,7 +698,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     iarray_iter_write_block_t *iter_out;
     iarray_iter_write_block_value_t out_value;
 
-    int32_t external_buffer_size = ret->catarr->chunksize * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD;
+    int32_t external_buffer_size = ret->catarr->chunknitems * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD;
     void *external_buffer;  // for informing the iterator that we are passing an external buffer
 
     if (INA_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, true))) {
@@ -706,7 +706,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     }
     uint8_t **external_buffers = ina_mem_alloc(nvars * sizeof(void *));
     for (int i = 0; i < nvars; ++i) {
-        external_buffers[i] = ina_mem_alloc(ret->catarr->extchunksize * ret->catarr->itemsize);
+        external_buffers[i] = ina_mem_alloc(ret->catarr->extchunknitems * ret->catarr->itemsize);
     }
 
     // Evaluate the expression for all the chunks in variables
@@ -729,9 +729,9 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
                 goto fail;
             }
             caterva_blosc_array_repart_chunk((int8_t *) external_buffers[nvar],
-                              ret->catarr->extchunksize * ret->catarr->itemsize,
+                              ret->catarr->extchunknitems * ret->catarr->itemsize,
                                              iter_value[nvar].block_pointer,
-                                             ret->catarr->chunksize * ret->catarr->itemsize,
+                                             ret->catarr->chunknitems * ret->catarr->itemsize,
                                              ret->catarr);
             e->temp_vars[nvar]->data = external_buffers[nvar];
             expr_pparams.inputs[nvar] = external_buffers[nvar];
@@ -741,11 +741,11 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         expr_pparams.out_value = out_value;  // useful for the prefilter function
         blosc2_cparams cparams = {0};
         iarray_create_blosc_cparams(&cparams, ctx, ret->catarr->itemsize,
-                                    ret->catarr->itemsize * ret->catarr->blocksize);
+                                    ret->catarr->itemsize * ret->catarr->blocknitems);
         blosc2_context *cctx = blosc2_create_cctx(cparams);  // we need it here to propagate pparams.inputs
-        int csize = blosc2_compress_ctx(cctx, ret->catarr->extchunksize * e->typesize,
+        int csize = blosc2_compress_ctx(cctx, ret->catarr->extchunknitems * e->typesize,
                                         NULL, out_value.block_pointer,
-                                        ret->catarr->extchunksize * e->typesize + BLOSC_MAX_OVERHEAD);
+                                        ret->catarr->extchunknitems * e->typesize + BLOSC_MAX_OVERHEAD);
         blosc2_free_ctx(cctx);
         if (csize <= 0) {
             IARRAY_TRACE1(iarray.error, "Error compressing a blosc chunk");
@@ -813,7 +813,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
 
     iarray_iter_write_block_t *iter_out;
     iarray_iter_write_block_value_t out_value;
-    int32_t external_buffer_size = ret->catarr->extchunksize * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD;
+    int32_t external_buffer_size = ret->catarr->extchunknitems * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD;
     void *external_buffer = NULL;  // to inform the iterator that we are passing an external buffer
     INA_FAIL_IF_ERROR(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, true));
 
@@ -844,11 +844,11 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
         expr_pparams.out_value = out_value;  // useful for the prefilter function
         blosc2_cparams cparams = {0};
         iarray_create_blosc_cparams(&cparams, ctx, ret->catarr->itemsize,
-                                    ret->catarr->itemsize * ret->catarr->blocksize);
+                                    ret->catarr->itemsize * ret->catarr->blocknitems);
         blosc2_context *cctx = blosc2_create_cctx(cparams);  // we need it here to propagate pparams.inputs
-        int csize = blosc2_compress_ctx(cctx, ret->catarr->extchunksize * e->typesize,
+        int csize = blosc2_compress_ctx(cctx, ret->catarr->extchunknitems * e->typesize,
                                         NULL, out_value.block_pointer,
-                                        ret->catarr->extchunksize * e->typesize + BLOSC_MAX_OVERHEAD);
+                                        ret->catarr->extchunknitems * e->typesize + BLOSC_MAX_OVERHEAD);
         if (csize <= 0) {
             IARRAY_TRACE1(iarray.error, "Error compressing a blosc chunk");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_BLOSC_FAILED));
