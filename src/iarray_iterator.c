@@ -346,12 +346,12 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     if (cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
         switch (cont->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                cont->catarr->part_cache.data =
-                    ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->chunksize * sizeof(double));
+                cont->catarr->chunk_cache.data =
+                    ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->chunknitems * sizeof(double));
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                cont->catarr->part_cache.data =
-                    ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->chunksize * sizeof(float));
+                cont->catarr->chunk_cache.data =
+                    ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->chunknitems * sizeof(float));
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "The data type is invalid");
@@ -377,8 +377,8 @@ INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t **itr)
     }
 
     // Invalidate caches and get rid of memory pool
-    (*itr)->cont->catarr->part_cache.data = NULL;
-    (*itr)->cont->catarr->part_cache.nchunk = -1;
+    (*itr)->cont->catarr->chunk_cache.data = NULL;
+    (*itr)->cont->catarr->chunk_cache.nchunk = -1;
     ina_mempool_reset((*itr)->ctx->mp_part_cache);
 
     INA_MEM_FREE_SAFE((*itr)->aux);
@@ -609,7 +609,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &(*itr)->cat_ctx));
 
     if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
-        memset(cont->catarr->buf, 0, cont->catarr->size * typesize);
+        memset(cont->catarr->buf, 0, cont->catarr->nitems * typesize);
         if (cont->catarr->buf == NULL) {
             IARRAY_TRACE1(iarray.error, "Error allocating the caterva buffer where data is stored");
             IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));
@@ -1015,7 +1015,7 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
 INA_API(ina_rc_t) iarray_iter_write_has_next(iarray_iter_write_t *itr)
 {
     int64_t typesize = itr->container->catarr->itemsize;
-    if (itr->nelem == itr->container->catarr->size) {
+    if (itr->nelem == itr->container->catarr->nitems) {
         if (itr->container->catarr->storage == CATERVA_STORAGE_BLOSC) {
             caterva_array_append(itr->cat_ctx, itr->container->catarr, itr->part, itr->cur_block_size * typesize);
         } else {
@@ -1023,7 +1023,7 @@ INA_API(ina_rc_t) iarray_iter_write_has_next(iarray_iter_write_t *itr)
         }
     }
 
-    if (itr->nelem < itr->container->catarr->size) {
+    if (itr->nelem < itr->container->catarr->nitems) {
         return INA_SUCCESS;
     }
     return INA_ERROR(IARRAY_ERR_END_ITER);
@@ -1061,7 +1061,7 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
     if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
         (*itr)->part = cont->catarr->buf;
     } else {
-        (*itr)->part = (uint8_t *) ina_mem_alloc((size_t)cont->catarr->chunksize * cont->catarr->itemsize);
+        (*itr)->part = (uint8_t *) ina_mem_alloc((size_t)cont->catarr->chunknitems * cont->catarr->itemsize);
     }
     IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
 
@@ -1083,7 +1083,7 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
         }
         (*itr)->cur_block_size *= (*itr)->cur_block_shape[i];
     }
-    memset((*itr)->part, 0, cont->catarr->chunksize * cont->catarr->itemsize);
+    memset((*itr)->part, 0, cont->catarr->chunknitems * cont->catarr->itemsize);
 
     caterva_config_t cat_cfg;
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cat_cfg);

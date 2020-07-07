@@ -69,8 +69,8 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     
     INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
-    uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
-    INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));
+    uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->nitems * type_size);
+    INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->nitems * type_size));
 
     if (c_x->dtshape->ndim == 2) {
         switch (c_x->dtshape->dtype) {
@@ -92,7 +92,7 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     }
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->size * type_size, &xstorage, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->nitems * type_size, &xstorage, 0, &c_y));
 
     if (ndim == 2) {
         INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x));
@@ -330,8 +330,8 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
     INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
 
-    uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
-    INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));
+    uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->nitems * type_size);
+    INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->nitems * type_size));
 
 
     if (c_x->dtshape->ndim == 2) {
@@ -354,7 +354,7 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
     }
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->size * type_size, &xstore, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->nitems * type_size, &xstore, 0, &c_y));
 
     //Testing
 
@@ -374,10 +374,10 @@ static ina_rc_t test_block_iterator_ext_part(iarray_context_t *ctx, iarray_data_
     int32_t partsize_y = 0;
     switch (c_y->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            partsize_y = c_y->catarr->chunksize * sizeof(double);
+            partsize_y = c_y->catarr->chunknitems * sizeof(double);
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            partsize_y = c_y->catarr->chunksize * sizeof(float);
+            partsize_y = c_y->catarr->chunknitems * sizeof(float);
             break;
         default:
             break;
@@ -584,8 +584,8 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
     INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
 
-    uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->size * type_size);
-    INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->size * type_size));
+    uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->nitems * type_size);
+    INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->nitems * type_size));
 
     if (c_x->dtshape->ndim == 2) {
         switch (c_x->dtshape->dtype) {
@@ -607,7 +607,7 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
     }
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->size * type_size, &xstore, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->nitems * type_size, &xstore, 0, &c_y));
 
     if (ndim == 2) {
         INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x));
