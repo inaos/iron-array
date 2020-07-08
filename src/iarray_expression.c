@@ -695,6 +695,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         if (INA_FAILED(iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false))) {
             goto fail;
         }
+        iter_var[nvar]->padding = true;
         expr_pparams.input_typesizes[nvar] = var->catarr->sc->typesize;
     }
 
