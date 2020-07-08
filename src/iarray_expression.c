@@ -729,8 +729,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
             if (INA_FAILED(iarray_iter_read_block_next(iter_var[nvar], NULL, 0))) {
                 goto fail;
             }
-            memset((int8_t *) external_buffers[nvar], 0,
-                              ret->catarr->extchunknitems * ret->catarr->itemsize);
             caterva_blosc_array_repart_chunk((int8_t *) external_buffers[nvar],
                               ret->catarr->extchunknitems * ret->catarr->itemsize,
                                              iter_value[nvar].block_pointer,
