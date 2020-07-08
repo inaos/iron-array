@@ -203,9 +203,15 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr, voi
                                                               (int64_t *) stop_, (void **) &itr->block,
                                                                actual_block_size * typesize));
     } else {
-        IARRAY_FAIL_IF_ERROR(iarray_get_slice_buffer(itr->ctx, itr->cont, (int64_t *) start_,
-                                                     (int64_t *) stop_, itr->block,
-                                                     actual_block_size * typesize));
+        if (!itr->padding) {
+            IARRAY_FAIL_IF_ERROR(iarray_get_slice_buffer(itr->ctx, itr->cont, (int64_t *) start_,
+                                                         (int64_t *) stop_, itr->block,
+                                                         actual_block_size * typesize));
+        } else {
+                IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(itr->ctx, itr->cont, (int64_t *) start_,
+                                                              (int64_t *) stop_, itr->block_shape, itr->block,
+                                                              itr->block_shape_size * typesize));
+            }
     }
 
     // Update the structure that user can see
@@ -278,7 +284,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     (*itr)->cur_block_shape = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
     (*itr)->cur_block_index = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
     (*itr)->cur_elem_index = (int64_t *) ina_mem_alloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
-
+    (*itr)->padding = false;
     // Create a buffer where data is stored to pass it to the user
     (*itr)->block_shape_size = 1;
     for (int i = 0; i < cont->dtshape->ndim; ++i) {
