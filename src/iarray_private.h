@@ -200,6 +200,7 @@ typedef struct iarray_iter_read_block_s {
     int64_t nblock; // The block counter
     bool contiguous; // Flag to avoid copies using plainbuffer
     bool external_buffer; // Flag to indicate if a external part is passed
+    bool padding; // Iterate using padding or not
 } iarray_iter_read_block_t;
 
 static const iarray_iter_read_block_t IARRAY_ITER_READ_BLOCK_EMPTY = {0};
