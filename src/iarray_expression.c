@@ -523,10 +523,6 @@ int prefilter_func(blosc2_prefilter_params *pparams)
         }
         else {
             eval_pparams.inputs[i] = expr_pparams->inputs[i] + pparams->out_offset;
-            for (int j = 0; j < bsize / typesize; j++) {
-                printf(" %f ", ((double *) eval_pparams.inputs[i])[j]);
-            }
-            printf("\n");
         }
     }
 
