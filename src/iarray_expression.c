@@ -417,14 +417,14 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     int32_t strides[IARRAY_DIMENSION_MAX];
     strides[ndim - 1] = 1;
     for (int i = ndim - 2; i >= 0 ; --i) {
-        strides[i] = strides[i+1] * e->out->catarr->blockshape[i];
+        strides[i] = strides[i+1] * e->out->catarr->blockshape[i+1];
     }
 
     // Block strides (in blocks)
     int32_t strides_block[IARRAY_DIMENSION_MAX];
     strides_block[ndim - 1] = 1;
     for (int i = ndim - 2; i >= 0 ; --i) {
-        strides_block[i] = strides_block[i+1] * e->out->catarr->extchunkshape[i] / e->out->catarr->blockshape[i];
+        strides_block[i] = strides_block[i+1] * e->out->catarr->extchunkshape[i+1] / e->out->catarr->blockshape[i+1];
     }
 
     // Flattened block number
@@ -691,6 +691,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         if (INA_FAILED(iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar], false))) {
             goto fail;
         }
+        iter_var[nvar]->padding = true;
         expr_pparams.input_typesizes[nvar] = var->catarr->sc->typesize;
     }
 
