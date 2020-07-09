@@ -304,6 +304,7 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx)
     ina_mempool_free(&(*ctx)->mp);
     INA_MEM_FREE_SAFE((*ctx)->cfg);
     INA_MEM_FREE_SAFE(*ctx);
+    *ctx = NULL;
 }
 ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams,
                                      iarray_context_t *ctx,
