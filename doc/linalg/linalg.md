@@ -8,20 +8,22 @@ Our goal should be to implement most of the algorithms available in dask.
 
 ## Algorithms
 
-Except in the matrix multiplication algorithm, the chunks (if the algorithm is implemented
-at the chunk level) or the blocks (if it is implemented at the block level) must be square.
+Except for the matrix multiplication algorithm, the chunks (if the algorithm is implemented
+at the chunk level) or the blocks (if it is implemented at the block level) must be squared.
 
 ### Matrix multiplication
 
 The algorithm is described at https://en.wikipedia.org/wiki/Block_matrix#Block_matrix_multiplication.
+
+![Matrix multiplication at the block level](mult.png)
 
 As you can see, this algorithm can be implemented at the block level and
 therefore use compression parallelism.
 
 #### Complete intermediate matrix in expressions
 
-f we want to introduce matrix multiplication within the expression evaluator,
-we either have to redo many calculations (less performace) or we have to
+If we want to introduce matrix multiplication within the expression evaluator,
+we either have to redo many calculations (less performance) or we have to
 calculate intermediate matrices (more memory).
 
 ![Expression with a matrix multiplication](matrix-expression.png)
@@ -54,6 +56,6 @@ The algorithm is described at https://en.wikipedia.org/wiki/LU_decomposition#Inv
 
 1. Implement the matrix multiplication at the block level.
 2. Allow ironArray (at Caterva level?) to append disordered chunks.
-3. Implement LU (also Chloselsky and QR?) decomposition.
+3. Implement LU (also Cholesky and QR?) decomposition.
 4. Implement the triangular and general solver.
 5. Implement the matrix inverse.
