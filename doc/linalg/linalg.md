@@ -1,7 +1,10 @@
 # Linear algebra in ironArray
 
 The intention of this document is to collect some ideas on how to implement
-linear algebra algorithms using chunked (tiled) data (See https://docs.dask.org/en/latest/array-api.html#linear-algebra).
+linear algebra algorithms using chunked (tiled) data.
+
+Our goal should be to implement most of the algorithms available in dask.
+(See https://docs.dask.org/en/latest/array-api.html#linear-algebra)
 
 ## Algorithms
 
@@ -21,7 +24,8 @@ disorderly way since they are not calculated sequentially.
 
 ### Solve triangular matrix
 
-The algorithm to solve the equation $Ax=b$, assuming $a$ is a triangular matrix with $vchunks \times hchunks$ blocks, is:
+The algorithm to solve the equation $Ax=b$, assuming $a$ is a triangular matrix with
+$vchunks \times hchunks$ blocks, is:
 
     for j in range(vchunks):
         x[j] = solve( A[j,j], b[j] - sum( matmul([A[j,i], x[i]) for i in range(j) ) ) 
@@ -34,3 +38,11 @@ algorithms. It can be found at https://en.wikipedia.org/wiki/LU_decomposition#So
 ### Matrix inverse
 
 The algorithm is described at https://en.wikipedia.org/wiki/LU_decomposition#Inverting_a_matrix.
+
+## Roadmap
+
+1. Implement the matrix multiplication at the block level.
+2. Allow ironArray (at Caterva level?) to append disordered chunks.
+3. Implement LU (also Chloselsky and QR?) decomposition.
+4. Implement the triangular and general solver.
+5. Implement the matrix inverse.
