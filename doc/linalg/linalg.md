@@ -19,7 +19,16 @@ disorderly way since they are not calculated sequentially.
 
 ## Solve triangular matrix
 
-The algorithm to solve the equation $Ax=b$, assuming $a$ is a triangular matrix with $j\times j$ blocks, is:
+The algorithm to solve the equation $Ax=b$, assuming $a$ is a triangular matrix with $vchunks \times hchunks$ blocks, is:
 
-    x[j] = SOLVE(A[j,j], b[j] - sum(matmul([A[j,i], x[i]) for i in range(j)) ) 
+    for j in range(vchunks):
+        x[j] = solve( A[j,j], b[j] - sum( matmul([A[j,i], x[i]) for i in range(j) ) ) 
 
+## Solve general matrix
+
+The algorithm is based in the LU decomposition and the solve triangular matrix
+algorithms. It can be found at https://en.wikipedia.org/wiki/LU_decomposition#Solving_linear_equations,
+
+## Matrix inverse
+
+The algorithm is described at https://en.wikipedia.org/wiki/LU_decomposition#Inverting_a_matrix.
