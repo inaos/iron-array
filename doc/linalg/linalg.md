@@ -24,7 +24,7 @@ f we want to introduce matrix multiplication within the expression evaluator,
 we either have to redo many calculations (less performace) or we have to
 calculate intermediate matrices (more memory).
 
-![Expression](.linalg.md)
+![Expression with a matrix multiplication](linalg.md)
 
 ### Cholesky, LU and QR decompositions
 
