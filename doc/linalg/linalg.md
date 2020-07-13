@@ -18,6 +18,8 @@ The algorithm is described at https://en.wikipedia.org/wiki/Block_matrix#Block_m
 As you can see, this algorithm can be implemented at the block level and
 therefore use compression parallelism.
 
+
+
 ### Cholesky, LU and QR decompositions
 
 The chunked algorithms for these decompositions can be found at https://arxiv.org/pdf/0709.1272.pdf.
