@@ -123,18 +123,31 @@ INA_TEST_TEARDOWN(expression_eval_float)
 //}
 //
 //
-//static float expr1(const float x)
-//{
-//    return (x - 1.35) + sin(.45);  // TODO: fix evaluation of func(constant)
-//}
+static float expr1(const float x)
+{
+    return (x - 1.35) + sinf(.45);  // TODO: fix evaluation of func(constant)
+}
 
+INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk1)
+{
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC | (IARRAY_EVAL_ENGINE_INTERPRETER << 3);
+    data->func = expr1;
+    data->expr_str = "(x - 1.35) + sin(.45)";
+
+    int8_t ndim = 1;
+    int64_t shape[] = {20000};
+    int64_t pshape[] = {3456};
+    int64_t bshape[] = {456};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
+}
 
 static float expr2(const float x)
 {
     return sinhf(x) + (coshf(x) - 1.35f) - tanhf(x + .2f);
 }
 
-INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
+INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk2)
 {
     data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC | (IARRAY_EVAL_ENGINE_INTERPRETER << 3);
     data->func = expr2;
@@ -179,10 +192,11 @@ INA_TEST_FIXTURE(expression_eval_float, iterchunk_superchunk)
 //    data->expr_str = "expf(x) + (logf(x) - 1.35f) - log10f(x + .2f)";
 //
 //    int8_t ndim = 3;
-//    int64_t shape[] = {121, 121, 123};
-//    int64_t chunkshape[] = {0, 0, 0};
+//    int64_t shape[] = {100, 230, 121};
+//    int64_t pshape[] = {31, 32, 17};
+//    int64_t bshape[] = {7, 7, 7};
 //
-//    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, chunkshape, true, data->func, data->expr_str));
+//    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, true, data->func, data->expr_str));
 //}
 
 static float expr5(const float x)

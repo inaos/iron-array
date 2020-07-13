@@ -160,10 +160,24 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc2_superchunk)
 //    return (fabs(-x) - 1.35) * ceil(x) * floor(x - 8.5);
 //}
 //
-//// TODO: make a test for testing the evaluation of a func(constant)
+
 //static double expr1(const double x)
 //{
 //    return (x - 1.35) + sin(.45);
+//}
+//
+//INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk1)
+//{
+//    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
+//    data->func = expr1;
+//    data->expr_str = "(x - 1.35) + sin(.45)";
+//
+//    int8_t ndim = 2;
+//    int64_t shape[] = {100, 100};
+//    int64_t pshape[] = {25, 25};
+//    int64_t bshape[] = {10, 10};
+//
+//    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
 //}
 
 static double expr2(const double x)
@@ -171,7 +185,7 @@ static double expr2(const double x)
     return sinh(x) + (cosh(x) - 1.35) - tanh(x + .2);
 }
 
-INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk)
+INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk2)
 {
     data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
     data->func = expr2;
@@ -190,7 +204,7 @@ static double expr3(const double x)
     return asin(x) + (acos(x) - 1.35) - atan(x + .2);
 }
 
-INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk2)
+INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk3)
 {
     data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
     data->func = expr3;
