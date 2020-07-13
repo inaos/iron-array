@@ -19,5 +19,7 @@ disorderly way since they are not calculated sequentially.
 
 ## Solve triangular matrix
 
-The algorithm to solve the equation $AX=B$ assuming $a$ is a triangular matrix is:
+The algorithm to solve the equation $Ax=b$, assuming $a$ is a triangular matrix with $j\times j$ blocks, is:
+
+    x[j] = SOLVE(A[j,j], b[j] - sum([b[i]x[i] for i in range(j)) ) 
 
