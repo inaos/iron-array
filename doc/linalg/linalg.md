@@ -8,8 +8,8 @@ Our goal should be to implement most of the algorithms available in dask.
 
 ## Algorithms
 
-In these algorithms, the chunks (if the algorithm is implemented at the chunk level) or the blocks
-(if it is implmented at the block level) must be square.
+Except in the matrix multiplication algorithm, the chunks (if the algorithm is implemented
+at the chunk level) or the blocks (if it is implemented at the block level) must be square.
 
 ### Matrix multiplication
 
@@ -17,6 +17,12 @@ The algorithm is described at https://en.wikipedia.org/wiki/Block_matrix#Block_m
 
 As you can see, this algorithm can be implemented at the block level and
 therefore use compression parallelism.
+
+#### Complete intermediate matrix in expressions
+
+f we want to introduce matrix multiplication within the expression evaluator,
+we either have to redo many calculations (less performace) or we have to
+calculate intermediate matrices (more memory).
 
 
 
