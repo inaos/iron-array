@@ -25,7 +25,6 @@ we either have to redo many calculations (less performace) or we have to
 calculate intermediate matrices (more memory).
 
 
-
 ### Cholesky, LU and QR decompositions
 
 The chunked algorithms for these decompositions can be found at https://arxiv.org/pdf/0709.1272.pdf.
