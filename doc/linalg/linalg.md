@@ -8,6 +8,9 @@ Our goal should be to implement most of the algorithms available in dask.
 
 ## Algorithms
 
+In these algorithms, the chunks (if the algorithm is implemented at the chunk level) or the blocks
+(if it is implmented at the block level) must be square.
+
 ### Matrix multiplication
 
 The algorithm is described at https://en.wikipedia.org/wiki/Block_matrix#Block_matrix_multiplication.
