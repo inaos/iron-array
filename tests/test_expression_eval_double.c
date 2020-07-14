@@ -160,17 +160,12 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc2_superchunk)
 //    return (fabs(-x) - 1.35) * ceil(x) * floor(x - 8.5);
 //}
 //
-
-//static double expr1(const double x)
-//{
-//    return (x - 1.35) + sin(.45);
-//}
 //
-//INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk1)
+//INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk0)
 //{
-//    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
-//    data->func = expr1;
-//    data->expr_str = "(x - 1.35) + sin(.45)";
+//    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+//    data->func = expr0;
+//    data->expr_str = "abs(-x) - 1.35) * ceil(x) * floor(x - 8.5)";
 //
 //    int8_t ndim = 2;
 //    int64_t shape[] = {100, 100};
@@ -179,6 +174,26 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc2_superchunk)
 //
 //    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
 //}
+
+static double expr1(const double x)
+{
+    return (x - 1.35) + sin(.45);
+}
+
+INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk1)
+{
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr1;
+    // eval of constants is not supported with the interpreter engine
+    data->expr_str = "(x - 1.35) + sin(.45)";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {100, 100};
+    int64_t pshape[] = {25, 25};
+    int64_t bshape[] = {10, 10};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
+}
 
 static double expr2(const double x)
 {
