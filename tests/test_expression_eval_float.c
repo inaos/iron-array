@@ -117,11 +117,24 @@ INA_TEST_TEARDOWN(expression_eval_float)
     iarray_destroy();
 }
 
-//static float expr0(const float x)
-//{
-//    return (fabsf(-x) - 1.35f) * ceilf(x) * floorf(x - 8.5f);
-//}
+static float expr0(const float x)
+{
+    return (fabsf(-x) - 1.35f) * ceilf(x) * floorf(x - 8.5f);
+}
 
+INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk0)
+{
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr0;
+    data->expr_str = "(abs(-x) - 1.35) * ceil(x) * floor(x - 8.5)";
+
+    int8_t ndim = 1;
+    int64_t shape[] = {20000};
+    int64_t pshape[] = {3456};
+    int64_t bshape[] = {456};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
+}
 
 static float expr1(const float x)
 {
