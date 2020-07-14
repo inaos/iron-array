@@ -29,11 +29,6 @@ For a^b^c = (a^b)^c and -a^b = (-a)^b do nothing.
 For a^b^c = a^(b^c) and -a^b = -(a^b) uncomment the next line.*/
 /* #define TE_POW_FROM_RIGHT */
 
-/* Logarithms
-For log = base 10 log do nothing
-For log = natural log uncomment the next line. */
-/* #define TE_NAT_LOG */
-
 #include <minjugg.h>
 #include "tinyexpr.h"
 #include <stdlib.h>
@@ -161,13 +156,8 @@ static const jug_te_variable functions[] = {
     {"exp", EXPR_TYPE_EXP,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"fac", EXPR_TYPE_FAC,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"floor", EXPR_TYPE_FLOOR,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
-    {"ln", EXPR_TYPE_LN,       TE_FUNCTION1 | TE_FLAG_PURE, 0},
-#ifdef TE_NAT_LOG
-    {"log", log,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
-#else
     {"log", EXPR_TYPE_LOG,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
-#endif
-    {"log10", EXPR_TYPE_LOG,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"log10", EXPR_TYPE_LOG10,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"ncr", EXPR_TYPE_NCR,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"npr", EXPR_TYPE_NPR,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"pi", EXPR_TYPE_PI,        TE_FUNCTION0 | TE_FLAG_PURE, 0},
