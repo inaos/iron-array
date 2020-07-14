@@ -139,19 +139,19 @@ static LLVMValueRef _jug_build_fun_call(jug_expression_t *e, const char *name, i
                 INA_ASSERT_TRUE(0);
         }
     }
-    
+
     /* build call */
     LLVMValueRef ret;
     {
         INA_ASSERT_NOT_NULL(fun_decl);
-        ret = LLVMBuildCall(e->builder, fun_decl, args, num_args, name); 
+        ret = LLVMBuildCall(e->builder, fun_decl, args, num_args, name);
     }
 
     /* cleanup - if required */
     if (param_types != NULL) {
         ina_mem_free(param_types);
     }
-    
+
     return ret;
 }
 
@@ -419,7 +419,7 @@ static LLVMValueRef _jug_expr_compile_function(
         for (int i = 0; i < var_len; ++i) {
             LLVMValueRef stack_var = LLVMBuildLoad(e->builder, local_inputs[i], "load_stackvar");
             LLVMValueRef addr = LLVMBuildGEP(e->builder, stack_var, &index, 1, "buffer[index]");
-            
+
             /* Load scalar value */
             LLVMValueRef val = LLVMBuildLoad(e->builder, addr, "value");
             LLVMSetMetadata(val, LLVMInstructionValueKind, md_access);
@@ -686,6 +686,8 @@ INA_API(ina_rc_t) jug_expression_compile(
     uint64_t *function_addr)
 {
     int parse_error = 0;
+    e->dtype = typesize == 4 ? _JUG_EXPRESSION_DTYPE_FLOAT : _JUG_EXPRESSION_DTYPE_DOUBLE;
+
     jug_te_variable *te_vars = (jug_te_variable*)vars;
     jug_te_expr *expression = jug_te_compile(expr_str, te_vars, num_vars, &parse_error);
     if (parse_error) {
