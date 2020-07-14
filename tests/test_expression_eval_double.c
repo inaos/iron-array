@@ -154,26 +154,24 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc2_superchunk)
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
 }
 
-//// TODO: make a test for testing these special functions
-//static double expr0(const double x)
-//{
-//    return (fabs(-x) - 1.35) * ceil(x) * floor(x - 8.5);
-//}
-//
-//
-//INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk0)
-//{
-//    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
-//    data->func = expr0;
-//    data->expr_str = "abs(-x) - 1.35) * ceil(x) * floor(x - 8.5)";
-//
-//    int8_t ndim = 2;
-//    int64_t shape[] = {100, 100};
-//    int64_t pshape[] = {25, 25};
-//    int64_t bshape[] = {10, 10};
-//
-//    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
-//}
+static double expr0(const double x)
+{
+    return (fabs(-x) - 1.35) * ceil(x) * floor(x - 8.5);
+}
+
+INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk0)
+{
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr0;
+    data->expr_str = "(abs(-x) - 1.35) * ceil(x) * floor(x - 8.5)";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {100, 100};
+    int64_t pshape[] = {25, 25};
+    int64_t bshape[] = {10, 10};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
+}
 
 static double expr1(const double x)
 {
@@ -235,7 +233,7 @@ INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk3)
 
 INA_TEST_FIXTURE(expression_eval_double, default_superchunk2)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_AUTO | (IARRAY_EVAL_ENGINE_COMPILER << 3);
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_AUTO;
     data->func = expr3;
     data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
 
@@ -254,7 +252,7 @@ static double expr4(const double x)
 
 INA_TEST_FIXTURE(expression_eval_double, llvm_dup_trans)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_AUTO | (IARRAY_EVAL_ENGINE_COMPILER << 3);
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_AUTO;
     data->func = expr4;
     data->expr_str = "sin(x) * sin(x) + cos(x) * cos(x)";
 
