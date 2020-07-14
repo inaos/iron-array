@@ -54,8 +54,8 @@ typedef enum te_expr_type_e {
     EXPR_TYPE_EXP,
     EXPR_TYPE_FAC,
     EXPR_TYPE_FLOOR,
-    EXPR_TYPE_LN,
     EXPR_TYPE_LOG,
+    EXPR_TYPE_LOG10,
     EXPR_TYPE_NCR,
     EXPR_TYPE_NPR,
     EXPR_TYPE_PI,
@@ -68,6 +68,7 @@ typedef enum te_expr_type_e {
     EXPR_TYPE_FMOD,
     EXPR_TYPE_CUSTOM
 } te_expr_type_t;
+
 typedef struct jug_te_variable {
     const char *name;
     te_expr_type_t address;
