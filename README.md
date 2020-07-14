@@ -89,10 +89,10 @@ other packager of your preference).
          cmake -DCMAKE_BUILD_TYPE=Debug ..
          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 
-* If one wants to use the multithreaded version, then add next flag:
+* Some Linux machines (ClearLinux, Gentoo?) require the use of `llvm-config` utility.  You can enforce its use with `-DDISABLE_LLVM_CONFIG=False`::
 
-         cmake -DCMAKE_BUILD_TYPE=Debug ..
-         cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+         cmake -DCMAKE_BUILD_TYPE=Debug -DDISABLE_LLVM_CONFIG=False ..
+         cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDISABLE_LLVM_CONFIG=False ..
 
 ### Tracing
 
