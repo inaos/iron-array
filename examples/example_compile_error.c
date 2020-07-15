@@ -16,7 +16,8 @@
 
 int main(void)
 {
-    iarray_init();
+    // The initialization is commented out on purpose to trigger a compilation issue
+    // iarray_init();
 
     int8_t ndim = 1;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
@@ -29,7 +30,7 @@ int main(void)
     cfg.compression_level = 5;
     cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
     cfg.max_num_threads = 1;
-    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2 | (IARRAY_EVAL_ENGINE_COMPILER << 3);
+    cfg.eval_flags = IARRAY_EVAL_METHOD_AUTO;
     iarray_context_t *ctx;
     IARRAY_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
 
@@ -79,9 +80,12 @@ int main(void)
 
     rc = INA_SUCCESS;
     goto cleanup;
-    fail:
+fail:
     rc = ina_err_get_rc();
-    cleanup:
+    const char* str = ina_err_strerror(rc);
+    printf("%s\n", str);
+    return EXIT_FAILURE;
+cleanup:
     iarray_iter_read_block_free(&iter);
     iarray_container_free(ctx, &data);
     iarray_context_free(&ctx);

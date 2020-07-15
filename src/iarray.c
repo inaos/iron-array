@@ -269,6 +269,10 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx)
 {
     ina_rc_t rc;
+    if (!_ina_inited) {
+        INA_TRACE1(iarray.error, "The iarray library has not been initialized with iarray_init()!");
+        return INA_ERROR(INA_ES_API | INA_ERR_NOT_INITIALIZED);
+    }
 
     INA_VERIFY_NOT_NULL(ctx);
     *ctx = ina_mem_alloc(sizeof(iarray_context_t));
