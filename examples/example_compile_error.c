@@ -16,11 +16,13 @@
 
 int main(void)
 {
+    iarray_init();
+
     int8_t ndim = 1;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int64_t shape[] = {1000};
-    int64_t pshape[] = {500};
-    int64_t bshape[] = {250};
+    int64_t shape[] = {400 * 1000};
+    int64_t pshape[] = {200 * 1000};
+    int64_t bshape[] = {16 * 1000};
     ina_rc_t rc;
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -62,13 +64,14 @@ int main(void)
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &dtshape, &store, 0, &res1));
     iarray_eval(e, &res1);
 
+
     iarray_iter_read_block_t *iter;
     iarray_iter_read_block_value_t val;
     IARRAY_FAIL_IF(iarray_iter_read_block_new(ctx, &iter, data, pshape, &val, false));
     while (INA_SUCCEED(iarray_iter_read_block_has_next(iter))) {
         IARRAY_FAIL_IF(iarray_iter_read_block_next(iter, NULL, 0));
         for (int64_t i = 0; i < val.block_size; ++i) {
-            printf("Next\n");
+            //printf("Next\n");
         }
     }
     iarray_iter_read_block_free(&iter);
