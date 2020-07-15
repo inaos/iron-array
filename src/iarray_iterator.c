@@ -352,12 +352,14 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     if (cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
         switch (cont->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                cont->catarr->chunk_cache.data =
-                    ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->chunknitems * sizeof(double));
+                    cont->catarr->chunk_cache.data =
+                            ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->extchunknitems * sizeof(double));
+
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                cont->catarr->chunk_cache.data =
-                    ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->chunknitems * sizeof(float));
+                    cont->catarr->chunk_cache.data =
+                            ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->extchunknitems * sizeof(float));
+
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "The data type is invalid");
