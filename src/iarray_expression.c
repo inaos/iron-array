@@ -125,7 +125,11 @@ INA_API(ina_rc_t) iarray_expr_bind_out_properties(iarray_expression_t *e, iarray
 
     e->out_store_properties = ina_mem_alloc(sizeof(iarray_storage_t));
     memcpy(e->out_store_properties, store, sizeof(iarray_storage_t));
-
+    if (store->filename != NULL) {
+        e->out_store_properties->filename = strdup(store->filename);
+    } else {
+        e->out_store_properties->filename = NULL;
+    }
     return INA_SUCCESS;
 }
 
