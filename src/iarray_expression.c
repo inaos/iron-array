@@ -479,11 +479,6 @@ int prefilter_func(blosc2_prefilter_params *pparams)
         }
     }
 
-    // Element strides (using bytes)
-    for (int i = 0; i < ndim; ++i) {
-        strides[i] *= typesize;
-    }
-
     unsigned int eval_method = e->ctx->cfg->eval_flags & 0x7u;
     if (eval_method != IARRAY_EVAL_METHOD_ITERCHUNK) {
         // We can only set the visible shape of the output for the ITERBLOSC eval method.
