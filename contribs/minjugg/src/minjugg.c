@@ -533,7 +533,8 @@ static LLVMBool _jug_prepare_module(jug_expression_t *e, bool reload)
 #endif
 
     // Create execution engine
-    error = LLVMCreateExecutionEngineForModule(&e->engine, e->mod, &message);
+    error = jug_utils_create_execution_engine(e->mod, &e->engine);
+    //error = LLVMCreateExecutionEngineForModule(&e->engine, e->mod, &message);
     if (error) {
         fprintf(stderr, "LLVM execution engine creation error: '%s'\n", message);
         goto exit;
@@ -574,9 +575,9 @@ INA_API(ina_rc_t) jug_init()
         return INA_ERR_FATAL;
     }
 
+    const char *cpu = jug_utils_get_cpu_string();
     _jug_tm_ref =
-        // LLVMCreateTargetMachine(target_ref, _jug_def_triple, "", "+avx2",
-        LLVMCreateTargetMachine(target_ref, _jug_def_triple, "", "",
+        LLVMCreateTargetMachine(target_ref, _jug_def_triple, cpu, "",
             LLVMCodeGenLevelDefault,
             LLVMRelocDefault,
             LLVMCodeModelJITDefault);
