@@ -1,3 +1,9 @@
+"""
+This file generates all the persistent containers needed to execute the random tests.
+To run it, you need to have the iarray library (python wrapper).
+"""
+
+
 import iarray as ia
 import numpy as np
 
