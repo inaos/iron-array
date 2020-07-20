@@ -412,8 +412,6 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     eval_pparams.ndim = expr_pparams->e->out_dtshape->ndim;
     int32_t bsize = pparams->out_size;
     int32_t typesize = pparams->out_typesize;
-    int64_t nitems = bsize / typesize;
-    int64_t offset_index = pparams->out_offset / typesize;
 
     int8_t ndim = e->out->dtshape->ndim;
 
@@ -501,7 +499,13 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     int ninputs_malloced = 0;
     for (int i = 0; i < ninputs; i++) {
         if (expr_pparams->compressed_inputs) {
-            if (false && (used_space + bsize) <= avail_space) {
+            bool memcpyed = *(expr_pparams->inputs[i] + 2) & (uint8_t)BLOSC_MEMCPYED;
+            if (memcpyed) {
+                // Buffer is just a pure memcpy.  Avoid copies and just use offsets.
+                eval_pparams.inputs[i] = expr_pparams->inputs[i] + BLOSC_EXTENDED_HEADER_LENGTH + pparams->out_offset;
+                continue;
+            }
+            else if (false && (used_space + bsize) <= avail_space) {
                 // Unfortunately, we cannot re-use temporaries in threads because SVML refuse to vectorize operations
                 // We have an available ttmp block that can be used for this operand
                 eval_pparams.inputs[i] = pparams->ttmp + used_space;
@@ -514,6 +518,8 @@ int prefilter_func(blosc2_prefilter_params *pparams)
                 eval_pparams.inputs[i] = ina_mem_alloc_aligned(64, bsize);
                 ninputs_malloced++;
             }
+            int64_t nitems = bsize / typesize;
+            int64_t offset_index = pparams->out_offset / typesize;
             int64_t rbytes = blosc_getitem(expr_pparams->inputs[i], (int) offset_index, (int) nitems, eval_pparams.inputs[i]);
             if (rbytes != bsize) {
                 fprintf(stderr, "Read from inputs failed inside pipeline\n");
