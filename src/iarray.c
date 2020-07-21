@@ -309,7 +309,7 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx)
 ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams,
                                      iarray_context_t *ctx,
                                      int8_t typesize,
-                                     int64_t blocksize) {
+                                     int32_t blocksize) {
     cparams->pparams = ctx->prefilter_params;
     cparams->prefilter = ctx->prefilter_fn;
     int blosc_filter_idx = 0;

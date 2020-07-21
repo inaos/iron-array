@@ -331,7 +331,7 @@ INA_API(ina_rc_t) iarray_operator_expint1(iarray_context_t *ctx, iarray_containe
 INA_API(ina_rc_t) iarray_operator_cumsum(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 
 /* Blosc private functions */
-ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams, iarray_context_t *ctx, int8_t typesize, int64_t blocksize);
+ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams, iarray_context_t *ctx, int8_t typesize, int32_t blocksize);
 
 /* Caterva private functions */
 ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t), void (*free)(void *), caterva_config_t *cat_cfg);
