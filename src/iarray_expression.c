@@ -469,9 +469,9 @@ int prefilter_func(blosc2_prefilter_params *pparams)
         if (out_of_bounds) {
             shape[i] = 0;
         } else if (start_in_container[i] + e->out->catarr->blockshape[i] > e->out->catarr->shape[i]) {
-            shape[i] = (int32_t) e->out->catarr->shape[i] - start_in_container[i];
+            shape[i] = (int32_t) (e->out->catarr->shape[i] - start_in_container[i]);
         } else if (start_in_chunk[i] + e->out->catarr->blockshape[i] > e->out->catarr->chunkshape[i]) {
-            shape[i] = (int32_t) e->out->catarr->chunkshape[i] - start_in_chunk[i];
+            shape[i] = (int32_t) (e->out->catarr->chunkshape[i] - start_in_chunk[i]);
         } else {
             shape[i] = e->out->catarr->blockshape[i];
         }
@@ -704,7 +704,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     iarray_iter_write_block_t *iter_out;
     iarray_iter_write_block_value_t out_value;
 
-    int64_t external_buffer_size = ret->catarr->extchunknitems * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD;
+    int32_t external_buffer_size = (int32_t) (ret->catarr->extchunknitems * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD);
     void *external_buffer = NULL;  // for informing the iterator that we are passing an external buffer
 
     if (INA_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, true))) {
@@ -819,7 +819,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
 
     iarray_iter_write_block_t *iter_out;
     iarray_iter_write_block_value_t out_value;
-    int64_t external_buffer_size = ret->catarr->extchunknitems * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD;
+    int32_t external_buffer_size = (int32_t) (ret->catarr->extchunknitems * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD);
     void *external_buffer = NULL;  // to inform the iterator that we are passing an external buffer
     INA_FAIL_IF_ERROR(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, true));
 
