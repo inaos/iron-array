@@ -24,7 +24,7 @@ typedef struct LLVMOpaqueExecutionEngine *LLVMExecutionEngineRef;
 int jug_util_set_svml_vector_library(void);
 int jug_utils_enable_loop_vectorize(LLVMPassManagerBuilderRef PMB);
 int jug_utils_create_execution_engine(LLVMModuleRef mod, LLVMExecutionEngineRef *ee);
-const char * jug_utils_get_cpu_string();
+const char * jug_utils_get_cpu_string(void);
 
 #ifdef __cplusplus
 }

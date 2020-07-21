@@ -426,7 +426,7 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     int32_t strides_block[IARRAY_DIMENSION_MAX];
     strides_block[ndim - 1] = 1;
     for (int i = ndim - 2; i >= 0 ; --i) {
-        strides_block[i] = strides_block[i+1] * e->out->catarr->extchunkshape[i+1] / e->out->catarr->blockshape[i+1];
+        strides_block[i] = strides_block[i+1] * (int32_t) (e->out->catarr->extchunkshape[i+1] / e->out->catarr->blockshape[i+1]);
     }
 
     // Flattened block number
@@ -469,9 +469,9 @@ int prefilter_func(blosc2_prefilter_params *pparams)
         if (out_of_bounds) {
             shape[i] = 0;
         } else if (start_in_container[i] + e->out->catarr->blockshape[i] > e->out->catarr->shape[i]) {
-            shape[i] = e->out->catarr->shape[i] - start_in_container[i];
+            shape[i] = (int32_t) e->out->catarr->shape[i] - start_in_container[i];
         } else if (start_in_chunk[i] + e->out->catarr->blockshape[i] > e->out->catarr->chunkshape[i]) {
-            shape[i] = e->out->catarr->chunkshape[i] - start_in_chunk[i];
+            shape[i] = (int32_t) e->out->catarr->chunkshape[i] - start_in_chunk[i];
         } else {
             shape[i] = e->out->catarr->blockshape[i];
         }
@@ -493,7 +493,7 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     // The code below only works for the case where inputs and output have the same typesize.
     // More love is needed in the future, where we would want to allow mixed types in expressions.
 
-    int avail_space = pparams->ttmp_nbytes;
+    int avail_space = (int) pparams->ttmp_nbytes;
     INA_UNUSED(avail_space);  // Fix build warning
     int used_space = 0;
     int ninputs_malloced = 0;
@@ -704,7 +704,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     iarray_iter_write_block_t *iter_out;
     iarray_iter_write_block_value_t out_value;
 
-    int32_t external_buffer_size = ret->catarr->extchunknitems * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD;
+    int64_t external_buffer_size = ret->catarr->extchunknitems * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD;
     void *external_buffer = NULL;  // for informing the iterator that we are passing an external buffer
 
     if (INA_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, true))) {
@@ -735,7 +735,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
                 goto fail;
             }
             caterva_blosc_array_repart_chunk((int8_t *) external_buffers[nvar],
-                              ret->catarr->extchunknitems * ret->catarr->itemsize,
+                                   ret->catarr->extchunknitems * ret->catarr->itemsize,
                                              iter_value[nvar].block_pointer,
                                              ret->catarr->chunknitems * ret->catarr->itemsize,
                                              ret->catarr);
@@ -819,7 +819,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
 
     iarray_iter_write_block_t *iter_out;
     iarray_iter_write_block_value_t out_value;
-    int32_t external_buffer_size = ret->catarr->extchunknitems * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD;
+    int64_t external_buffer_size = ret->catarr->extchunknitems * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD;
     void *external_buffer = NULL;  // to inform the iterator that we are passing an external buffer
     INA_FAIL_IF_ERROR(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, true));
 

@@ -195,7 +195,7 @@ int main(int argc, char** argv)
     else {
         if (mantissa_bits >  0) {
             config.filter_flags |= IARRAY_COMP_TRUNC_PREC;
-            config.fp_mantissa_bits = mantissa_bits;
+            config.fp_mantissa_bits = (uint8_t) mantissa_bits;
         }
     }
     config.use_dict = INA_SUCCEED(ina_opt_isset("d")) ? 1 : 0;
@@ -384,6 +384,7 @@ int main(int argc, char** argv)
                         break;
                     default:
                         printf("Wrong expr-type value!\n");
+                        return 1;
                 }
                 memcpy(val.elem_pointer, &value, sizeof(double));
             }

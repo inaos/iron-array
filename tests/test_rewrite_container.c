@@ -68,11 +68,6 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
 
     iarray_iter_write_block_free(&I);
 
-    iarray_storage_t ystore;
-    ystore.backend = IARRAY_STORAGE_PLAINBUFFER;
-    ystore.enforce_frame = false;
-    ystore.filename = NULL;
-
 
     // Start Iterator
     ina_rc_t err = iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, false);
