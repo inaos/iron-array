@@ -1015,8 +1015,6 @@ INA_API(ina_rc_t) iarray_container_info(iarray_container_t *container, int64_t *
 
 INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_container_t *b, double tol)
 {
-    ina_rc_t rc;
-
     if (a->dtshape->dtype != b->dtshape->dtype){
         IARRAY_TRACE1(iarray.error, "The data types are not equals");
         IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
@@ -1084,16 +1082,16 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     }
 
     IARRAY_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+    ina_err_reset();
 
-    rc = INA_SUCCESS;
-    goto cleanup;
-    fail:
-    rc = ina_err_get_rc();
-    cleanup:
     iarray_iter_read_block_free(&iter_a);
     iarray_iter_read_block_free(&iter_b);
     iarray_context_free(&ctx);
-    return rc;
+
+    return INA_SUCCESS;
+
+    fail:
+    return ina_err_get_rc();
 }
 
 

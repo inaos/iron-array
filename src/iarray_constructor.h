@@ -58,7 +58,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     /* validation */
     if (dtshape->ndim > CATERVA_MAX_DIM) {
         IARRAY_TRACE1(iarray.error, "The container dimension is larger than caterva maximum dimension");
-        IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
+        IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_NDIM));
     }
     if (flags & IARRAY_CONTAINER_PERSIST && storage->filename == NULL) {
         IARRAY_TRACE1(iarray.error, "Error with persistency flags");
@@ -68,7 +68,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
         for (int i = 0; i < dtshape->ndim; ++i) {
             if (dtshape->shape[i] < storage->chunkshape[i]) {
                 IARRAY_TRACE1(iarray.error, "The chunkshape is larger than the shape");
-                IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_INVALID_ARGUMENT));
+                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE));
             }
         }
     }
@@ -156,7 +156,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     rc = INA_SUCCESS;
     goto cleanup;
     fail:
-    iarray_container_free(ctx, c);
     rc = ina_err_get_rc();
     cleanup:
     return rc;

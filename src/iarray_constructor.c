@@ -200,7 +200,6 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
     rc = INA_SUCCESS;
     goto cleanup;
     fail:
-        iarray_container_free(ctx, container);
         rc = ina_err_get_rc();
     cleanup:
         iarray_iter_write_free(&I);

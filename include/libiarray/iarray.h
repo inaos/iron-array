@@ -71,6 +71,7 @@
 
 #define IARRAY_ERR_CATERVA_FAILED (INA_ERR_FAILED | IARRAY_ES_CATERVA)
 #define IARRAY_ERR_BLOSC_FAILED (INA_ERR_FAILED | IARRAY_ES_BLOSC)
+
 #define IARRAY_ERR_RAND_METHOD_FAILED (IARRAY_ES_RAND_METHOD | INA_ERR_FAILED)
 #define IARRAY_ERR_ASSERTION_FAILED (IARRAY_ES_ASSERTION | INA_ERR_FAILED)
 
@@ -83,6 +84,8 @@
 #define IARRAY_TRACE3(cat, fmt) INA_TRACE3(cat, fmt " %s:%d", __FILE__, __LINE__)
 #define IARRAY_FAIL_IF(cond) do { if ((cond)) {IARRAY_TRACE2(iarray.error, "Tracing: "); goto fail;}} while(0)
 #define IARRAY_FAIL_IF_ERROR(rc) IARRAY_FAIL_IF(INA_FAILED((rc)))
+
+#define IARRAY_RETURN_IF_FAILED(rc) do { if (INA_FAILED(rc)) {IARRAY_TRACE2(iarray.error, "Tracing: "); return ina_err_get_rc(); } } while(0)
 
 typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;
