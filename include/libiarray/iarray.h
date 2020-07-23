@@ -76,8 +76,7 @@
 #define IARRAY_ERR_ASSERTION_FAILED (IARRAY_ES_ASSERTION | INA_ERR_FAILED)
 
 #define IARRAY_ERR_END_ITER (IARRAY_ES_ITER | INA_ERR_COMPLETE)
-
-#define IARRAY_ERR_CATERVA(rc) do {if (rc != CATERVA_SUCCEED) {IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));}} while(0)
+#define IARRAY_ERR_NOT_END_ITER (IARRAY_ES_ITER | INA_ERR_NOT_COMPLETE)
 
 #define IARRAY_TRACE1(cat, fmt) INA_TRACE1(cat, fmt " %s:%d", __FILE__, __LINE__)
 #define IARRAY_TRACE2(cat, fmt) INA_TRACE2(cat, fmt " %s:%d", __FILE__, __LINE__)
@@ -86,7 +85,10 @@
 #define IARRAY_FAIL_IF_ERROR(rc) IARRAY_FAIL_IF(INA_FAILED((rc)))
 
 #define IARRAY_RETURN_IF_FAILED(rc) do { if (INA_FAILED(rc)) {IARRAY_TRACE2(iarray.error, "Tracing: "); return ina_err_get_rc(); } } while(0)
+#define IARRAY_ERR_CATERVA(rc) do {if (rc != CATERVA_SUCCEED) {IARRAY_RETURN_IF_FAILED(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));}} while(0)
 
+#define IARRAY_ITER_FINISH() do { if (ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0)) { \
+    return INA_ERROR(IARRAY_ERR_NOT_END_ITER); } else { ina_err_reset();}} while(0)
 typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;
 

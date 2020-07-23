@@ -317,8 +317,6 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx)
 {
-    ina_rc_t rc;
-
     INA_VERIFY_NOT_NULL(ctx);
     *ctx = ina_mem_alloc(sizeof(iarray_context_t));
 
