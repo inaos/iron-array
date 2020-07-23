@@ -434,7 +434,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     INA_UNUSED(flags);
 
     caterva_config_t cfg = {0};
-    iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+    IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
     caterva_context_t *cat_ctx;
     IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
@@ -468,10 +468,10 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
         (*dest)->catarr = src->catarr;
     } else {
         caterva_params_t params = {0};
-        iarray_create_caterva_params(src->dtshape, &params);
+        IARRAY_RETURN_IF_FAILED(iarray_create_caterva_params(src->dtshape, &params));
 
         caterva_storage_t cat_storage = {0};
-        iarray_create_caterva_storage(src->dtshape, storage, &cat_storage);
+        IARRAY_RETURN_IF_FAILED(iarray_create_caterva_storage(src->dtshape, storage, &cat_storage));
 
         if (src->view) {
             int64_t *start = src->auxshape->offset;
@@ -487,7 +487,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
         }
     }
 
-    caterva_context_free(&cat_ctx);
+    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
 
     return INA_SUCCESS;
 }
