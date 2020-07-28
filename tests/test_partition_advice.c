@@ -18,26 +18,25 @@ static ina_rc_t test_partition_advice(iarray_context_t *ctx,
                                       const int64_t *shape,
                                       const int64_t *pshape)
 {
-    int64_t _pshape[IARRAY_DIMENSION_MAX];
     iarray_dtshape_t dtshape;
     dtshape.dtype = dtype;
     dtshape.ndim = ndim;
     for (int i = 0; i < ndim; i++) {
         dtshape.shape[i] = shape[i];
-        dtshape.pshape[i] = 0;
-        _pshape[i] = pshape[i];
     }
     // We want to specify a [low, high] range explicitly, because L3 size is CPU-dependent
     int64_t low = 128 * 1024;
     int64_t high = 1024 * 1024;
-    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape, low, high));
 
-//    for (int i = 0; i < ndim; i++) {
-//        printf("pshapes: %lld, %lld\n", _pshape[i], dtshape.pshape[i]);
-//    }
+    iarray_storage_t storage = {0};
+    storage.backend = IARRAY_STORAGE_BLOSC;
+    storage.enforce_frame = false;
+    storage.filename = NULL;
+    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape, &storage, low, high));
 
     for (int i = 0; i < ndim; i++) {
-        INA_TEST_ASSERT_EQUAL_INT(_pshape[i], dtshape.pshape[i]);
+        INA_TEST_ASSERT_EQUAL_INT64(pshape[i], storage.chunkshape[i]);
+        INA_TEST_ASSERT_EQUAL_INT64(pshape[i], storage.blockshape[i]);
     }
 
     return INA_SUCCESS;

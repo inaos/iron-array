@@ -14,13 +14,14 @@
 
 
 double eval_expr(double x, double y) {
+    INA_UNUSED(y);
     double out = sinh(x) + (cosh(x) - 1.35) - tanh(x + .2);
     //printf("Out: %f\n", out);
     return out;
 }
 
 
-int main()
+int main(void)
 {
     iarray_init();
 
@@ -28,13 +29,13 @@ int main()
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int8_t ndim = 3;
-    int64_t shape[] = {7, 8, 7};
-    int64_t pshape[] = {5, 3, 2};
+    int64_t shape[] = {70, 80, 70};
+    int64_t pshape[] = {50, 30, 20};
+    int64_t bshape[] = {12, 7, 12};
 
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2 | (IARRAY_EXPR_EVAL_ENGINE_JUGGERNAUT << 3);
-    cfg.blocksize = 0;
+    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2 | (IARRAY_EVAL_ENGINE_COMPILER << 3);
     cfg.max_num_threads = 1;
     iarray_context_new(&cfg, &ctx);
 
@@ -44,19 +45,20 @@ int main()
     int64_t nelem = 1;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
-        dtshape.pshape[i] = pshape[i];
         nelem *= shape[i];
     }
 
-
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;
-
+    for (int i = 0; i < ndim; ++i) {
+        store.chunkshape[i] = pshape[i];
+        store.blockshape[i] = bshape[i];
+    }
     iarray_container_t* c_x;
     iarray_container_t* c_y;
-    iarray_arange(ctx, &dtshape, 0, nelem, 1, &store, 0, &c_x);
+    iarray_arange(ctx, &dtshape, 0, (double) nelem, 1, &store, 0, &c_x);
     iarray_linspace(ctx, &dtshape, nelem, 0.1, .1, &store, 0, &c_y);
 
     iarray_expression_t* e;
@@ -83,7 +85,7 @@ int main()
     bool success = true;
     for (int64_t i = 0; i < nelem; i++) {
         if (buff_out[i] != eval_expr(buff_x[i], buff_y[i])) {
-            printf("ERROR in pos %lld\n", i);
+            printf("ERROR in pos %"PRId64"\n", i);
             success = false;
             break;
         }

@@ -18,6 +18,7 @@ static ina_rc_t test_fill(iarray_context_t *ctx,
                           int8_t ndim,
                           const int64_t *shape,
                           const int64_t *pshape,
+                          const int64_t *bshape,
                           void *value)
 {
     iarray_dtshape_t xdtshape;
@@ -26,14 +27,18 @@ static ina_rc_t test_fill(iarray_context_t *ctx,
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        if (pshape)
-            xdtshape.pshape[i] = pshape[i];
     }
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     store.enforce_frame = false;
     store.filename = NULL;
+    for (int i = 0; i < ndim; ++i) {
+        if (pshape != NULL) {
+            store.chunkshape[i] = pshape[i];
+            store.blockshape[i] = bshape[i];
+        }
+    }
 
     int64_t buf_size = 1;
     for (int j = 0; j < ndim; ++j) {
@@ -64,6 +69,9 @@ static ina_rc_t test_fill(iarray_context_t *ctx,
         }
     }
 
+    iarray_container_free(ctx, &c_x);
+    free(buf_dest);
+
     return INA_SUCCESS;
 }
 
@@ -91,11 +99,12 @@ INA_TEST_FIXTURE(constructor_fill, 2_d)
     size_t type_size = sizeof(double);
 
     int8_t ndim = 2;
-    int64_t shape[] = {10, 12};
-    int64_t pshape[] = {3, 3};
+    int64_t shape[] = {100, 312};
+    int64_t pshape[] = {35, 101};
+    int64_t bshape[] = {12, 12};
     double value = 3.1416;
 
-    INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, pshape, &value));
+    INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, pshape, bshape, &value));
 }
 
 INA_TEST_FIXTURE(constructor_fill, 4_f_p)
@@ -106,9 +115,10 @@ INA_TEST_FIXTURE(constructor_fill, 4_f_p)
     int8_t ndim = 4;
     int64_t shape[] = {10, 5, 5, 10};
     int64_t *pshape = NULL;
+    int64_t *bshape = NULL;
     float value = 0.1416f;
 
-    INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, pshape, &value));
+    INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, pshape, bshape, &value));
 }
 
 INA_TEST_FIXTURE(constructor_fill, 5_d_p)
@@ -119,9 +129,10 @@ INA_TEST_FIXTURE(constructor_fill, 5_d_p)
     int8_t ndim = 5;
     int64_t shape[] = {7, 10, 12, 11, 10};
     int64_t *pshape = NULL;
+    int64_t *bshape = NULL;
     double value = 3.1416;
 
-    INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, pshape, &value));
+    INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, pshape, bshape, &value));
 }
 
 INA_TEST_FIXTURE(constructor_fill, 7_f)
@@ -132,7 +143,8 @@ INA_TEST_FIXTURE(constructor_fill, 7_f)
     int8_t ndim = 7;
     int64_t shape[] = {12, 11, 6, 5, 12, 6, 8};
     int64_t pshape[] = {11, 3, 3, 3, 3, 5, 3};
+    int64_t bshape[] = {5, 2, 2, 2, 1, 2, 2};
     float value = -116.f;
 
-    INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, pshape, &value));
+    INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, pshape, bshape, &value));
 }

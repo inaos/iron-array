@@ -15,23 +15,26 @@
 
 
 static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, int8_t ndim,
-                                 const int64_t *shape, const int64_t *pshape, iarray_store_properties_t *store)
+                                 const int64_t *shape, const int64_t *pshape, const int64_t *bshape,
+                                 iarray_storage_t *store)
 {
-    // For some reason, this test does not pass in Azure CI, so disable it temporarily (see #189)
-    char* envvar;
-    envvar = getenv("AGENT_OS");
-    if (envvar != NULL && strncmp(envvar, "Darwin", sizeof("Darwin")) == 0) {
-        printf("Skipping test on Azure CI (Darwin)...");
-        return INA_SUCCESS;
-    }
+//    // For some reason, this test does not pass in Azure CI, so disable it temporarily (see #189)
+//    char* envvar;
+//    envvar = getenv("AGENT_OS");
+//    if (envvar != NULL && strncmp(envvar, "Darwin", sizeof("Darwin")) == 0) {
+//        printf("Skipping test on Azure CI (Darwin)...");
+//        return INA_SUCCESS;
+//    }
 
     iarray_dtshape_t xdtshape;
     xdtshape.dtype = dtype;
     xdtshape.ndim = ndim;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        xdtshape.pshape[i] = pshape[i];
+        store->chunkshape[i] = pshape[i];
+        store->blockshape[i] = bshape[i];
     }
+
 
     iarray_container_t *c_x;
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, store, IARRAY_CONTAINER_PERSIST, &c_x));
@@ -83,7 +86,7 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
 
 INA_TEST_DATA(persistency) {
     iarray_context_t *ctx;
-    iarray_store_properties_t store;
+    iarray_storage_t store;
 };
 
 INA_TEST_SETUP(persistency) {
@@ -115,9 +118,11 @@ INA_TEST_FIXTURE(persistency, double_2) {
     int8_t ndim = 2;
     int64_t shape[] = {125, 157};
     int64_t pshape[] = {12, 13};
+    int64_t bshape[] = {7, 7};
 
-    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, pshape, &data->store));
+    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, pshape, bshape, &data->store));
 }
+
 
 INA_TEST_FIXTURE(persistency, float_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -126,8 +131,9 @@ INA_TEST_FIXTURE(persistency, float_2) {
     int8_t ndim = 2;
     int64_t shape[] = {445, 321};
     int64_t pshape[] = {21, 17};
+    int64_t bshape[] = {8, 9};
 
-    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, pshape, &data->store));
+    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, pshape, bshape, &data->store));
 }
 
 INA_TEST_FIXTURE(persistency, double_5) {
@@ -137,8 +143,9 @@ INA_TEST_FIXTURE(persistency, double_5) {
     int8_t ndim = 5;
     int64_t shape[] = {20, 25, 27, 4, 46};
     int64_t pshape[] = {12, 24, 19, 3, 13};
+    int64_t bshape[] = {2, 5, 4, 3, 3};
 
-    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, pshape, &data->store));
+    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, pshape, bshape, &data->store));
 }
 
 INA_TEST_FIXTURE(persistency, float_7) {
@@ -148,20 +155,23 @@ INA_TEST_FIXTURE(persistency, float_7) {
     int8_t ndim = 7;
     int64_t shape[] = {10, 12, 8, 9, 1, 7, 7};
     int64_t pshape[] = {2, 5, 3, 4, 1, 3, 3};
+    int64_t bshape[] = {2, 2, 2, 4, 1, 2, 1};
 
-    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, pshape, &data->store));
+    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, pshape, bshape, &data->store));
 }
 
+
 static ina_rc_t test_persistency_transposed(iarray_context_t *ctx, iarray_data_type_t dtype, size_t type_size, int8_t ndim,
-                                            const int64_t *shape, const int64_t *pshape, iarray_store_properties_t *store)
+                                            const int64_t *shape, const int64_t *pshape, const int64_t *bshape,
+                                            iarray_storage_t *store)
 {
-    // For some reason, this test does not pass in Azure CI, so disable it temporarily (see #189)
-    char* envvar;
-    envvar = getenv("AGENT_OS");
-    if (envvar != NULL && strncmp(envvar, "Darwin", sizeof("Darwin")) == 0) {
-        printf("Skipping test on Azure CI (Darwin)...");
-        return INA_SUCCESS;
-    }
+//    // For some reason, this test does not pass in Azure CI, so disable it temporarily (see #189)
+//    char* envvar;
+//    envvar = getenv("AGENT_OS");
+//    if (envvar != NULL && strncmp(envvar, "Darwin", sizeof("Darwin")) == 0) {
+//        printf("Skipping test on Azure CI (Darwin)...");
+//        return INA_SUCCESS;
+//    }
 
     iarray_dtshape_t xdtshape;
     xdtshape.dtype = dtype;
@@ -169,7 +179,8 @@ static ina_rc_t test_persistency_transposed(iarray_context_t *ctx, iarray_data_t
     int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        xdtshape.pshape[i] = pshape[i];
+        store->chunkshape[i] = pshape[i];
+        store->blockshape[i] = bshape[i];
         size *= shape[i];
     }
 
@@ -231,7 +242,7 @@ static ina_rc_t test_persistency_transposed(iarray_context_t *ctx, iarray_data_t
 
 INA_TEST_DATA(persistency_trans) {
     iarray_context_t *ctx;
-    iarray_store_properties_t store;
+    iarray_storage_t store;
 };
 
 INA_TEST_SETUP(persistency_trans) {
@@ -261,10 +272,11 @@ INA_TEST_FIXTURE(persistency_trans, double_2) {
     size_t type_size = sizeof(double);
 
     int8_t ndim = 2;
-    int64_t shape[] = {10, 20};
-    int64_t pshape[] = {4, 3};
+    int64_t shape[] = {230, 430};
+    int64_t pshape[] = {123, 67};
+    int64_t bshape[] = {3, 21};
 
-    INA_TEST_ASSERT_SUCCEED(test_persistency_transposed(data->ctx, dtype, type_size, ndim, shape, pshape, &data->store));
+    INA_TEST_ASSERT_SUCCEED(test_persistency_transposed(data->ctx, dtype, type_size, ndim, shape, pshape, bshape, &data->store));
 }
 
 INA_TEST_FIXTURE(persistency_trans, float_2) {
@@ -273,7 +285,8 @@ INA_TEST_FIXTURE(persistency_trans, float_2) {
 
     int8_t ndim = 2;
     int64_t shape[] = {445, 321};
-    int64_t pshape[] = {21, 17};
+    int64_t pshape[] = {121, 17};
+    int64_t bshape[] = {12, 5};
 
-    INA_TEST_ASSERT_SUCCEED(test_persistency_transposed(data->ctx, dtype, type_size, ndim, shape, pshape, &data->store));
+    INA_TEST_ASSERT_SUCCEED(test_persistency_transposed(data->ctx, dtype, type_size, ndim, shape, pshape, bshape, &data->store));
 }

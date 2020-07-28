@@ -71,12 +71,15 @@ int64_t get_nearest_power2(int64_t value)
 }
 
 // Given a shape, offer advice on the partition size
-INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape,
+INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
                                           int64_t low, int64_t high)
 {
     INA_UNUSED(ctx);  // we could use context in the future
     INA_VERIFY_NOT_NULL(dtshape);
-
+    INA_VERIFY_NOT_NULL(storage);
+    if (storage->backend != IARRAY_STORAGE_BLOSC) {
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+    }
     if (high == 0) {
         size_t L3;
         ina_cpu_get_l3_cache_size(&L3);
@@ -97,7 +100,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     iarray_data_type_t dtype = dtshape->dtype;
     int ndim = dtshape->ndim;
     int64_t *shape = dtshape->shape;
-    int64_t *pshape = dtshape->pshape;
+    int64_t *pshape = storage->chunkshape;
     int itemsize = 0;
     switch (dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
@@ -135,7 +138,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         }
     } while (psize > high);
 
-    // Lastly, if some pshape axis is too close to the original shape, split it again
+    // Lastly, if some chunkshape axis is too close to the original shape, split it again
     if (psize > low) {
         for (int i = 0; i < ndim; i++) {
             if (((float) (shape[i] - pshape[i]) / (float) pshape[i]) < 0.1) {
@@ -150,12 +153,13 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
             }
         }
     }
-
+    for (int i = 0; i < ndim; ++i) {
+        storage->blockshape[i] = storage->chunkshape[i];
+    }
     if (psize > INT32_MAX) {
         INA_TRACE1(iarray.error, "The partition size can not be larger than 2 GB");
-        return INA_ERROR(IARRAY_ERR_INVALID_PSHAPE);
+        return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
-
     return INA_SUCCESS;
 }
 
@@ -167,8 +171,8 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
                                        iarray_container_t *a,
                                        iarray_container_t *b,
                                        iarray_container_t *c,
-                                       int64_t *bshape_a,
-                                       int64_t *bshape_b,
+                                       int64_t *blockshape_a,
+                                       int64_t *blockshape_b,
                                        int64_t low,
                                        int64_t high)
 {
@@ -176,13 +180,13 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(a);
     INA_VERIFY_NOT_NULL(b);
     INA_VERIFY_NOT_NULL(c);
-    INA_VERIFY_NOT_NULL(bshape_a);
-    INA_VERIFY_NOT_NULL(bshape_b);
+    INA_VERIFY_NOT_NULL(blockshape_a);
+    INA_VERIFY_NOT_NULL(blockshape_b);
 
     if (high == 0) {
         size_t L3;
         ina_rc_t rc = ina_cpu_get_l3_cache_size(&L3);
-        printf("%llu\n", rc);
+        printf("%"PRId64"\n", rc);
         // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
         high = L3 / 4;
     }
@@ -212,8 +216,8 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
     // First, the m and n values *have* to be the same for the partition of the output
-    int64_t m_dim = c->dtshape->pshape[0];
-    int64_t n_dim = c->dtshape->pshape[1];
+    int64_t m_dim = c->storage->chunkshape[0];
+    int64_t n_dim = c->storage->chunkshape[1];
 
     // Now that we have a hint for M and K, get a guess of the N
     int64_t k_dim_guess1 = high / (m_dim * itemsize);
@@ -254,10 +258,10 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     }
 
     // We are done.  Fill the block shapes and return.
-    bshape_a[0] = m_dim;
-    bshape_a[1] = k_dim;
-    bshape_b[0] = k_dim;
-    bshape_b[1] = n_dim;
+    blockshape_a[0] = m_dim;
+    blockshape_a[1] = k_dim;
+    blockshape_b[0] = k_dim;
+    blockshape_b[1] = n_dim;
 
     return INA_SUCCESS;
 }
@@ -279,6 +283,8 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
     IARRAY_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_OP_CHUNKS, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_op));
     IARRAY_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL_TMP, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_tmp_out));
 
+    (*ctx)->prefilter_fn = NULL;
+    (*ctx)->prefilter_params = NULL;
     rc = INA_SUCCESS;
     goto cleanup;
 
@@ -298,4 +304,95 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx)
     ina_mempool_free(&(*ctx)->mp);
     INA_MEM_FREE_SAFE((*ctx)->cfg);
     INA_MEM_FREE_SAFE(*ctx);
+    *ctx = NULL;
+}
+ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams,
+                                     iarray_context_t *ctx,
+                                     int8_t typesize,
+                                     int32_t blocksize) {
+    cparams->pparams = ctx->prefilter_params;
+    cparams->prefilter = ctx->prefilter_fn;
+    int blosc_filter_idx = 0;
+    cparams->compcode = ctx->cfg->compression_codec;
+    cparams->use_dict = ctx->cfg->use_dict;
+    cparams->clevel = (uint8_t)ctx->cfg->compression_level; /* Since its just a mapping, we know the cast is ok */
+    cparams->blocksize = blocksize;
+    cparams->typesize = typesize;
+    cparams->nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
+    if ((ctx->cfg->filter_flags & IARRAY_COMP_TRUNC_PREC)) {
+        cparams->filters[blosc_filter_idx] = BLOSC_TRUNC_PREC;
+        cparams->filters_meta[blosc_filter_idx] = ctx->cfg->fp_mantissa_bits;
+        blosc_filter_idx++;
+    }
+    if (ctx->cfg->filter_flags & IARRAY_COMP_BITSHUFFLE) {
+        cparams->filters[blosc_filter_idx] = BLOSC_BITSHUFFLE;
+        blosc_filter_idx++;
+    }
+    if (ctx->cfg->filter_flags & IARRAY_COMP_SHUFFLE) {
+        cparams->filters[blosc_filter_idx] = BLOSC_SHUFFLE;
+        blosc_filter_idx++;
+    }
+    if (ctx->cfg->filter_flags & IARRAY_COMP_DELTA) {
+        cparams->filters[blosc_filter_idx] = BLOSC_DELTA;
+        blosc_filter_idx++;
+    }
+    return INA_SUCCESS;
+}
+ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t), void (*free)(void *), caterva_config_t *cat_cfg) {
+    cat_cfg->alloc = alloc;
+    cat_cfg->free = free;
+
+    cat_cfg->nthreads = cfg->max_num_threads;
+    cat_cfg->compcodec = cfg->compression_codec;
+    cat_cfg->complevel = cfg->compression_level;
+    cat_cfg->usedict = cfg->use_dict;
+    cat_cfg->prefilter = NULL;
+    cat_cfg->pparams = NULL;
+
+    int blosc_filter_idx = 0;
+    if ((cfg->filter_flags & IARRAY_COMP_TRUNC_PREC)) {
+        cat_cfg->filters[blosc_filter_idx] = BLOSC_TRUNC_PREC;
+        cat_cfg->filtersmeta[blosc_filter_idx] = cfg->fp_mantissa_bits;
+        blosc_filter_idx++;
+    }
+    if (cfg->filter_flags & IARRAY_COMP_BITSHUFFLE) {
+        cat_cfg->filters[blosc_filter_idx] = BLOSC_BITSHUFFLE;
+        blosc_filter_idx++;
+    }
+    if (cfg->filter_flags & IARRAY_COMP_SHUFFLE) {
+        cat_cfg->filters[blosc_filter_idx] = BLOSC_SHUFFLE;
+        blosc_filter_idx++;
+    }
+    if (cfg->filter_flags & IARRAY_COMP_DELTA) {
+        cat_cfg->filters[blosc_filter_idx] = BLOSC_DELTA;
+    }
+    return INA_SUCCESS;
+}
+
+
+ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_t *cat_params) {
+    cat_params->ndim = dtshape->ndim;
+    cat_params->itemsize = dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ? sizeof(double) : sizeof(float);
+    for (int i = 0; i < cat_params->ndim; ++i) {
+        cat_params->shape[i] = dtshape->shape[i];
+    }
+    return INA_SUCCESS;
+}
+
+
+ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage_t *storage, caterva_storage_t *cat_storage) {
+    cat_storage->backend = storage->backend == IARRAY_STORAGE_BLOSC ? CATERVA_STORAGE_BLOSC : CATERVA_STORAGE_PLAINBUFFER;
+    switch (cat_storage->backend) {
+        case CATERVA_STORAGE_BLOSC:
+            cat_storage->properties.blosc.enforceframe = storage->enforce_frame;
+            cat_storage->properties.blosc.filename = storage->filename;
+            for (int i = 0; i < dtshape->ndim; ++i) {
+                cat_storage->properties.blosc.chunkshape[i] = (int32_t) storage->chunkshape[i];
+                cat_storage->properties.blosc.blockshape[i] = (int32_t) storage->blockshape[i];
+            }
+            break;
+        case CATERVA_STORAGE_PLAINBUFFER:
+            break;
+    }
+    return INA_SUCCESS;
 }

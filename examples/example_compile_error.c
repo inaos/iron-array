@@ -16,14 +16,20 @@
 
 int main(void)
 {
-    int8_t ndim = 2;
+    iarray_init();
+
+    int8_t ndim = 1;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int64_t shape[] = {100, 100};
-    int64_t pshape[] = {20, 20};
-    int64_t bshape[] = {2, 9};
+    int64_t shape[] = {400 * 1000};
+    int64_t pshape[] = {200 * 1000};
+    int64_t bshape[] = {16 * 1000};
     ina_rc_t rc;
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
+    cfg.compression_level = 5;
+    cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
+    cfg.max_num_threads = 1;
+    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2 | (IARRAY_EVAL_ENGINE_COMPILER << 3);
     iarray_context_t *ctx;
     IARRAY_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
 
@@ -42,31 +48,31 @@ int main(void)
         store.chunkshape[i] = pshape[i];
         store.blockshape[i] = bshape[i];
     }
-    iarray_container_t *cont;
-    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape, &store, 0, &cont));
 
+    iarray_container_t *data;
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape, shape[0], 0, 1, &store, 0, &data));
 
-    iarray_iter_write_t *iter_w;
-    iarray_iter_write_value_t val_w;
-    IARRAY_FAIL_IF_ERROR(iarray_iter_write_new(ctx, &iter_w, cont, &val_w));
+    iarray_expression_t* e;
+    iarray_expr_new(ctx, &e);
 
-    while (INA_SUCCEED(iarray_iter_write_has_next(iter_w))) {
-        IARRAY_FAIL_IF_ERROR(iarray_iter_write_next(iter_w));
-        ((double *) val_w.elem_pointer)[0] = (double) val_w.elem_flat_index;
-    }
-    iarray_iter_write_free(&iter_w);
-    IARRAY_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+    iarray_expr_bind(e, "x", data);
+    iarray_expr_bind_out_properties(e, &dtshape, &store);
+    char* expr_str = "(sin(x) - 3.2) * (cos(x) + 1.2)";
+    iarray_expr_compile(e, expr_str);
+
+    iarray_container_t* res1;
+    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &dtshape, &store, 0, &res1));
+    iarray_eval(e, &res1);
+
 
     iarray_iter_read_block_t *iter;
     iarray_iter_read_block_value_t val;
-    IARRAY_FAIL_IF(iarray_iter_read_block_new(ctx, &iter, cont, bshape, &val, false));
+    IARRAY_FAIL_IF(iarray_iter_read_block_new(ctx, &iter, data, pshape, &val, false));
     while (INA_SUCCEED(iarray_iter_read_block_has_next(iter))) {
         IARRAY_FAIL_IF(iarray_iter_read_block_next(iter, NULL, 0));
         for (int64_t i = 0; i < val.block_size; ++i) {
-            double value = ((double *) val.block_pointer)[i];
-            printf("%f - ", value);
+            //printf("Next\n");
         }
-        printf("\n");
     }
     iarray_iter_read_block_free(&iter);
     IARRAY_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
@@ -76,9 +82,8 @@ int main(void)
     fail:
     rc = ina_err_get_rc();
     cleanup:
-    iarray_iter_write_free(&iter_w);
     iarray_iter_read_block_free(&iter);
-    iarray_container_free(ctx, &cont);
+    iarray_container_free(ctx, &data);
     iarray_context_free(&ctx);
 
     return rc;

@@ -80,6 +80,8 @@ struct iarray_context_s {
     ina_mempool_t *mp_part_cache;
     ina_mempool_t *mp_op;
     ina_mempool_t *mp_tmp_out;
+    blosc2_prefilter_fn prefilter_fn;
+    blosc2_prefilter_params *prefilter_params;
     /* FIXME: track expressions -> list */
 };
 
@@ -91,16 +93,15 @@ typedef struct iarray_auxshape_s {
     int64_t offset[IARRAY_DIMENSION_MAX];
     int64_t shape_wos[IARRAY_DIMENSION_MAX];
     int64_t pshape_wos[IARRAY_DIMENSION_MAX];
+    int64_t bshape_wos[IARRAY_DIMENSION_MAX];
     int8_t index[IARRAY_DIMENSION_MAX];
 } iarray_auxshape_t;
 
 struct iarray_container_s {
     iarray_dtshape_t *dtshape;
     iarray_auxshape_t *auxshape;
-    blosc2_cparams *cparams;
-    blosc2_dparams *dparams;
     caterva_array_t *catarr;
-    iarray_store_properties_t *store;
+    iarray_storage_t *storage;
     bool transposed;
     bool view;
     union {
@@ -127,6 +128,7 @@ typedef struct iarray_iter_write_s {
     int64_t *elem_index; // The elem index in coord
     int64_t elem_flat_index; // The elem index if the container will be flatten
 
+    caterva_context_t *cat_ctx;
 } iarray_iter_write_t;
 
 static const iarray_iter_write_t IARRAY_ITER_WRITE_EMPTY = {0};
@@ -146,7 +148,7 @@ typedef struct iarray_iter_read_s {
     int64_t cur_block_size; // The current block size
     int64_t *cur_block_shape; // The current block shape
 
-    int64_t *block_shape; // The desired block shape (it will be the shape or the pshape)
+    int64_t *block_shape; // The desired block shape (it will be the shape or the chunkshape)
     int64_t cont_size; // The container size
 
     int64_t *elem_index; // The elem index in coord
@@ -175,6 +177,8 @@ typedef struct iarray_iter_write_block_s {
     bool contiguous; // Flag to avoid copies using plainbuffer
     bool compressed_chunk_buffer;  // Flag to append an already compressed buffer
     bool external_buffer; // Flag to indicate if a external part is passed
+
+    caterva_context_t *cat_ctx;
 } iarray_iter_write_block_t;
 
 static const iarray_iter_write_block_t IARRAY_ITER_WRITE_BLOCK_EMPTY = {0};
@@ -196,6 +200,7 @@ typedef struct iarray_iter_read_block_s {
     int64_t nblock; // The block counter
     bool contiguous; // Flag to avoid copies using plainbuffer
     bool external_buffer; // Flag to indicate if a external part is passed
+    bool padding; // Iterate using padding or not
 } iarray_iter_read_block_t;
 
 static const iarray_iter_read_block_t IARRAY_ITER_READ_BLOCK_EMPTY = {0};
@@ -264,10 +269,10 @@ void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr);
 int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr);
 
 // Utilities
-bool _iarray_file_exists(const char * filename);
+bool _iarray_file_exists(const char *filename);
 
 ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
-                                  iarray_container_t *c,
+                                  iarray_container_t *container,
                                   int64_t *start,
                                   int64_t *stop,
                                   int64_t *pshape,
@@ -275,15 +280,12 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
                                   int64_t buflen);
 
 INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
-                                                   iarray_container_t *c,
+                                                   iarray_container_t *container,
                                                    int64_t *start,
                                                    int64_t *stop,
                                                    void **buffer,
                                                    int64_t buflen);
 
-/* Serialized views */
-INA_API(ina_rc_t) iarray_to_sview(iarray_context_t *ctx, iarray_container_t *c, uint8_t **sview, int64_t *sview_len);
-INA_API(ina_rc_t) iarray_from_sview(iarray_context_t *ctx, uint8_t *sview, int64_t sview_len, iarray_container_t **c);
 
 /* Logical operators -> not supported yet as we only support float and double and return would be int8 */
 INA_API(ina_rc_t) iarray_operator_and(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
@@ -328,5 +330,12 @@ INA_API(ina_rc_t) iarray_operator_tgamma(iarray_context_t *ctx, iarray_container
 INA_API(ina_rc_t) iarray_operator_expint1(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 INA_API(ina_rc_t) iarray_operator_cumsum(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 
+/* Blosc private functions */
+ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams, iarray_context_t *ctx, int8_t typesize, int32_t blocksize);
+
+/* Caterva private functions */
+ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t), void (*free)(void *), caterva_config_t *cat_cfg);
+ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_t *cat_params);
+ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage_t *storage, caterva_storage_t *cat_storage);
 
 #endif

@@ -20,7 +20,7 @@
 
 
 /* Compute and fill X values in a buffer */
-static int _fill_x(float* x, int nelem)
+static int _fill_x(float* x, int64_t nelem)
 {
     /* Fill even values between 0. and 1. */
     float incx = 1.f / nelem;
@@ -31,14 +31,14 @@ static int _fill_x(float* x, int nelem)
 }
 
 /* Compute and fill Y values in a buffer */
-static void _fill_y(const float* x, float* y, int nelem, float (func)(float))
+static void _fill_y(const float* x, float* y, int64_t nelem, float (func)(float))
 {
     for (int i = 0; i < nelem; i++) {
         y[i] = func(x[i]);
     }
 }
 
-static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t *shape, int64_t *pshape,
+static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t *shape, int64_t *pshape, int64_t *bshape,
                                      bool plain_buffer, float (func)(float), char* expr_str)
 {
     iarray_context_t *ctx;
@@ -52,15 +52,19 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
     int64_t nelem = 1;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
-        dtshape.pshape[i] = plain_buffer ? 0 : pshape[i];
         nelem *= shape[i];
     }
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;
-
+    if (!plain_buffer) {
+        for (int i = 0; i < ndim; ++i) {
+            store.chunkshape[i] = pshape[i];
+            store.blockshape[i] = bshape[i];
+        }
+    }
     float *buffer_x = (float *) ina_mem_alloc(nelem * sizeof(float));
     float *buffer_y = (float *) ina_mem_alloc(nelem * sizeof(float));
 
@@ -109,6 +113,7 @@ INA_TEST_SETUP(expression_eval_float)
 
 INA_TEST_TEARDOWN(expression_eval_float)
 {
+    INA_UNUSED(data);
     iarray_destroy();
 }
 
@@ -117,30 +122,56 @@ static float expr0(const float x)
     return (fabsf(-x) - 1.35f) * ceilf(x) * floorf(x - 8.5f);
 }
 
+INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk0)
+{
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr0;
+    data->expr_str = "(abs(-x) - 1.35) * ceil(x) * floor(x - 8.5)";
+
+    int8_t ndim = 1;
+    int64_t shape[] = {20000};
+    int64_t pshape[] = {3456};
+    int64_t bshape[] = {456};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
+}
 
 static float expr1(const float x)
 {
-    return (cosf(x) - 1.35f) * tanf(x) * sinf(x - 8.5f);
-    //return (x - 1.35) + sin(.45);  // TODO: fix evaluation of func(constant)
+    return (x - 1.35f) + sinf(.45f);
 }
 
+INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk1)
+{
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr1;
+    data->expr_str = "(x - 1.35) + sin(.45)";
+
+    int8_t ndim = 1;
+    int64_t shape[] = {20000};
+    int64_t pshape[] = {3456};
+    int64_t bshape[] = {456};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
+}
 
 static float expr2(const float x)
 {
     return sinhf(x) + (coshf(x) - 1.35f) - tanhf(x + .2f);
 }
 
-INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
+INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk2)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERBLOSC | (IARRAY_EXPR_EVAL_ENGINE_TINYEXPR << 3);
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr2;
     data->expr_str = "sinh(x) + (cosh(x) - 1.35) - tanh(x + .2)";
 
     int8_t ndim = 1;
     int64_t shape[] = {20000};
     int64_t pshape[] = {3456};
+    int64_t bshape[] = {456};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
 }
 
 static float expr3(const float x)
@@ -148,22 +179,37 @@ static float expr3(const float x)
     return asinf(x) + (acosf(x) - 1.35f) - atanf(x + .2f);
 }
 
-INA_TEST_FIXTURE(expression_eval_float, iterchunk_superchunk)
+INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK;
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr3;
     data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
 
     int8_t ndim = 3;
     int64_t shape[] = {100, 230, 121};
     int64_t pshape[] = {31, 32, 17};
+    int64_t bshape[] = {7, 7, 7};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
 }
 
 static float expr4(const float x)
 {
     return expf(x) + (logf(x) - 1.35f) - log10f(x + .2f);
+}
+
+INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk_4)
+{
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr4;
+    data->expr_str = "exp(x) + (log(x) - 1.35) - log10(x + .2)";
+
+    int8_t ndim = 3;
+    int64_t shape[] = {100, 230, 121};
+    int64_t pshape[] = {31, 32, 17};
+    int64_t bshape[] = {7, 7, 7};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
 }
 
 static float expr5(const float x)
@@ -173,13 +219,14 @@ static float expr5(const float x)
 
 INA_TEST_FIXTURE(expression_eval_float, iterchunk_plainbuffer)
 {
-    data->cfg.eval_flags = IARRAY_EXPR_EVAL_METHOD_ITERCHUNK;
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
     data->func = expr5;
     data->expr_str = "sqrt(x) + atan2(x, x) + pow(x, x)";
 
     int8_t ndim = 3;
     int64_t shape[] = {121, 2, 123};
     int64_t pshape[] = {0, 0, 0};
+    int64_t bshape[] = {0, 0, 0};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, true, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, true, data->func, data->expr_str));
 }
