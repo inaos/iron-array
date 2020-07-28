@@ -12,7 +12,7 @@ cmake_minimum_required (VERSION 3.12)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0091 NEW)
 
-project(iarray VERSION 0.1.5)
+project(iarray VERSION 0.1.6)
 
 if (MSVC)
     set(CMAKE_C_FLAGS "/W4")
