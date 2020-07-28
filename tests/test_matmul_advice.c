@@ -25,7 +25,7 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     int64_t low = 128 * 1024;
     int64_t high = 1024 * 1024;
 
-    int ndim = 2;
+    int8_t ndim = 2;
 
     // Build array A
     iarray_dtshape_t dtshape_a;
@@ -33,15 +33,14 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     dtshape_a.ndim = ndim;
     for (int i = 0; i < ndim; i++) {
         dtshape_a.shape[i] = shape_a[i];
-        dtshape_a.pshape[i] = 0;
     }
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.filename = NULL;
     store.enforce_frame = false;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_a, low, high));
+    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_a, &store, low, high));
     iarray_container_t *c_a;
     INA_TEST_ASSERT_SUCCEED(iarray_ones(ctx, &dtshape_a, &store, 0, &c_a));
 
@@ -51,9 +50,8 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     dtshape_b.ndim = ndim;
     for (int i = 0; i < ndim; i++) {
         dtshape_b.shape[i] = shape_b[i];
-        dtshape_b.pshape[i] = 0;
     }
-    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_b, low, high));
+    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_b, &store, low, high));
     iarray_container_t *c_b;
     INA_TEST_ASSERT_SUCCEED(iarray_ones(ctx, &dtshape_b, &store, 0, &c_b));
 
@@ -63,13 +61,13 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     dtshape_c.ndim = ndim;
     dtshape_c.shape[0] = shape_a[0];
     dtshape_c.shape[1] = shape_b[1];
-    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_c, low, high));
+    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_c, &store, low, high));
     iarray_container_t *c_c;
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &dtshape_c, &store, 0, &c_c));
 
-//    printf("pshape_a: (%lld, %lld)\n", c_a->dtshape->pshape[0], c_a->dtshape->pshape[1]);
-//    printf("pshape_b: (%lld, %lld)\n", c_b->dtshape->pshape[0], c_b->dtshape->pshape[1]);
-//    printf("pshape_c: (%lld, %lld)\n", c_c->dtshape->pshape[0], c_c->dtshape->pshape[1]);
+//    printf("pshape_a: (%lld, %lld)\n", c_a->dtshape->chunkshape[0], c_a->dtshape->chunkshape[1]);
+//    printf("pshape_b: (%lld, %lld)\n", c_b->dtshape->chunkshape[0], c_b->dtshape->chunkshape[1]);
+//    printf("pshape_c: (%lld, %lld)\n", c_c->dtshape->chunkshape[0], c_c->dtshape->chunkshape[1]);
 
     // Get the advice for matmul itself
     int64_t _bshape_a[2];
@@ -89,8 +87,8 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
 //    printf("\n");
 
     for (int i = 0; i < ndim; i++) {
-        INA_TEST_ASSERT_EQUAL_INT(_bshape_a[i], bshape_a[i]);
-        INA_TEST_ASSERT_EQUAL_INT(_bshape_b[i], bshape_b[i]);
+        INA_TEST_ASSERT_EQUAL_INT64(_bshape_a[i], bshape_a[i]);
+        INA_TEST_ASSERT_EQUAL_INT64(_bshape_b[i], bshape_b[i]);
     }
 
     if (INA_FAILED(iarray_linalg_matmul(ctx, c_a, c_b ,c_c, _bshape_a, _bshape_b, IARRAY_OPERATOR_GENERAL))) {
@@ -102,7 +100,7 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     double *buffer_c = (double *) malloc(size_c * sizeof(double));
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_c, buffer_c, size_c * sizeof(double)));
 
-    double mult_value = dtshape_a.shape[1];
+    double mult_value = (double) dtshape_a.shape[1];
     for (int i = 0; i < size_c; ++i) {
         if (fabs((buffer_c[i] - mult_value) / buffer_c[i]) > 1e-8) {
             printf("%f - %f = %f\n", buffer_c[i], mult_value, buffer_c[i] - mult_value);

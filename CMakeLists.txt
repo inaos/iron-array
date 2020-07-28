@@ -9,13 +9,25 @@
 # Information and shall use it only in accordance with the terms of the license agreement.
 #
 cmake_minimum_required (VERSION 3.12)
-project(iarray VERSION 0.1.4)
+cmake_policy(SET CMP0048 NEW)
+cmake_policy(SET CMP0091 NEW)
 
+project(iarray VERSION 0.1.5)
+
+if (MSVC)
+    set(CMAKE_C_FLAGS "/W4")
+else()
+    set(CMAKE_C_FLAGS "-Wall -Wextra")
+endif()
 option(MULTITHREADING "Use multithreaded iarray" OFF)
+option(DISABLE_LLVM_CONFIG "Disable the use of llvm-config for finding libraries" ON)
 
 # Disable weird MSVC warnings
 if (MSVC)
-add_compile_options(/wd4204)
+    add_compile_options(/wd4204)
+    add_compile_options(/wd4201)  # TODO: gix this (warning C4201: nonstandard extension used: nameless struct/union)
+    add_compile_options(/wd4232)  # TODO: fix this (warning C4232: nonstandard extension used)
+    add_compile_options(/wd4127)  # TODO: fix this (warning C4127: conditional expression is constant)
 endif()
 
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
@@ -45,11 +57,18 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 add_definitions(${LLVM_DEFINITIONS})
 include_directories(${LLVM_INCLUDE_DIRS})
 
+set(BUILD_TESTS OFF)
+set(BUILD_BENCHMARKS OFF)
+set(BUILD_EXAMPLES OFF)
 add_subdirectory(contribs/c-blosc2)
 include_directories(contribs/c-blosc2/blosc)
-set(BLOSC_LIB blosc2_static) # required for caterva tests
+set(BLOSC_LIB blosc2_static) # required for caterva
+
+set(CATERVA_BUILD_TESTS OFF)
+set(CATERVA_BUILD_EXAMPLES OFF)
 add_subdirectory(contribs/caterva)
 include_directories(contribs/caterva/caterva)
+
 add_subdirectory(contribs/minjugg)
 include_directories(contribs/minjugg/include)
 
@@ -63,16 +82,20 @@ if (MULTITHREADING)
     find_package(OMP)
 endif()
 find_package(SVML)
-
+# For some reason, this is needed for building wheels (TODO: check this out again after wheels are building)
+if (UNIX)
+	set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} -lz)
+endif()
+	
 # Find the libraries that correspond to the LLVM components
 # that we wish to use
 llvm_map_components_to_libnames(llvm_libs support core irreader executionengine
    bitwriter passes vectorize mcjit asmprinter x86info x86codegen)
-# The next should work for all LLVM installations, but seems to have problems with Azure CI
-if (CLEARLINUX)
+if (UNIX AND NOT APPLE AND NOT DISABLE_LLVM_CONFIG)
+    # The next should be the canonical way, but for now only Linux and some llvm distros seems safe
     execute_process(COMMAND ${LLVM_TOOLS_BINARY_DIR}/llvm-config --libs OUTPUT_VARIABLE llvm_libs
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif()
+endif(UNIX AND NOT APPLE AND NOT DISABLE_LLVM_CONFIG)
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${IPP_LIBRARIES} ${llvm_libs})
 
 set(SRC ${CMAKE_SOURCE_DIR}/src)

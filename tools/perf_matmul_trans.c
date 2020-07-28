@@ -45,9 +45,9 @@ int main(int argc, char** argv)
 {
     ina_stopwatch_t *w = NULL;
     iarray_context_t *ctx = NULL;
-    const char *mat_x_name = NULL;
-    const char *mat_y_name = NULL;
-    const char *mat_out_name = NULL;
+    char *mat_x_name = NULL;
+    char *mat_y_name = NULL;
+    char *mat_out_name = NULL;
 
     int64_t nbytes = 0;
     int64_t cbytes = 0;
@@ -56,16 +56,19 @@ int main(int argc, char** argv)
 
     int64_t xshape[] = {3000, 2000};
     int64_t xpshape[] = {1000, 1000};
+    int64_t xbshape[] = {128, 128};
 
-    int64_t xbshape[] = {500, 500};
+    int64_t xblockshape[] = {500, 500};
 
     int64_t yshape[] = {2000, 3500};
     int64_t ypshape[] = {1000, 1000};
+    int64_t ybshape[] = {128, 128};
 
-    int64_t ybshape[] = {500, 500};
+    int64_t yblockshape[] = {500, 500};
 
     int64_t oshape[] = {xshape[0], yshape[1]};
-    int64_t opshape[] = {xbshape[0], ybshape[1]};
+    int64_t opshape[] = {xblockshape[0], yblockshape[1]};
+    int64_t obshape[] = {128, 128};
 
     bool xtrans = false;
     if (argc > 1) {
@@ -124,21 +127,29 @@ int main(int argc, char** argv)
         printf("Storage for iarray matrices: *memory*\n");
     }
 
-    iarray_store_properties_t mat_x_prop = {
+    iarray_storage_t mat_x_prop = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
         .filename = mat_x_name
     };
-    iarray_store_properties_t mat_y_prop = {
+    iarray_storage_t mat_y_prop = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
         .filename = mat_y_name
     };
-    iarray_store_properties_t mat_out_prop = {
+    iarray_storage_t mat_out_prop = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
         .filename = mat_out_name
     };
+    for (int i = 0; i < 2; ++i) {
+        mat_x_prop.chunkshape[i] = xpshape[i];
+        mat_x_prop.blockshape[i] = xbshape[i];
+        mat_y_prop.chunkshape[i] = ypshape[i];
+        mat_y_prop.blockshape[i] = ybshape[i];
+        mat_out_prop.chunkshape[i] = opshape[i];
+        mat_out_prop.blockshape[i] = obshape[i];
+    }
 
     printf("\n");
     printf("Measuring time for multiplying matrices X and Y\n");
@@ -156,7 +167,7 @@ int main(int argc, char** argv)
 
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_codec = IARRAY_COMPRESSION_LZ4;
-    config.compression_level = 0;
+    config.compression_level = 5;
     config.max_num_threads = NTHREADS;
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
@@ -188,7 +199,6 @@ int main(int argc, char** argv)
         xdtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
         for (int i = 0; i < xdtshape.ndim; ++i) {
             xdtshape.shape[i] = xshape[i];
-            xdtshape.pshape[i] = xpshape[i];
         }
 
         iarray_dtshape_t ydtshape;
@@ -196,7 +206,6 @@ int main(int argc, char** argv)
         ydtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
         for (int i = 0; i < ydtshape.ndim; ++i) {
             ydtshape.shape[i] = yshape[i];
-            ydtshape.pshape[i] = ypshape[i];
         }
 
 
@@ -256,14 +265,13 @@ int main(int argc, char** argv)
     outdtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     for (int i = 0; i < outdtshape.ndim; ++i) {
         outdtshape.shape[i] = oshape[i];
-        outdtshape.pshape[i] = opshape[i];
     }
 
     iarray_container_t *con_out;
     iarray_container_new(ctx, &outdtshape, &mat_out_prop, 0, &con_out);
 
     INA_STOPWATCH_START(w);
-    INA_MUST_SUCCEED(iarray_linalg_matmul(ctx, con_x, con_y, con_out, xbshape, ybshape, IARRAY_OPERATOR_GENERAL)); /* FIXME: error handling */
+    INA_MUST_SUCCEED(iarray_linalg_matmul(ctx, con_x, con_y, con_out, xblockshape, yblockshape, IARRAY_OPERATOR_GENERAL)); /* FIXME: error handling */
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     printf("\n");

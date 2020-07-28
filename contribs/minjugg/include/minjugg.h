@@ -20,8 +20,8 @@ typedef struct jug_context_s jug_context_t;
 typedef struct jug_expression_s jug_expression_t;
 typedef struct jug_udf_s jug_udf_t;
 
-INA_API(ina_rc_t) jug_init();
-INA_API(void) jug_destroy();
+INA_API(ina_rc_t) jug_init(void);
+INA_API(void) jug_destroy(void);
 
 INA_API(ina_rc_t) jug_expression_new(jug_expression_t **expr);
 INA_API(void) jug_expression_free(jug_expression_t **expr);
@@ -54,8 +54,8 @@ typedef enum te_expr_type_e {
     EXPR_TYPE_EXP,
     EXPR_TYPE_FAC,
     EXPR_TYPE_FLOOR,
-    EXPR_TYPE_LN,
     EXPR_TYPE_LOG,
+    EXPR_TYPE_LOG10,
     EXPR_TYPE_NCR,
     EXPR_TYPE_NPR,
     EXPR_TYPE_PI,
@@ -68,6 +68,7 @@ typedef enum te_expr_type_e {
     EXPR_TYPE_FMOD,
     EXPR_TYPE_CUSTOM
 } te_expr_type_t;
+
 typedef struct jug_te_variable {
     const char *name;
     te_expr_type_t address;

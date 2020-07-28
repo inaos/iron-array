@@ -14,13 +14,13 @@
 #include <iarray_private.h>
 
 
-int main()
+int main(void)
 {
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int64_t shape[] = {10, 10};
-    int64_t pshape[] = {2, 2};
-    int64_t bshape[] = {2, 10};
+    int64_t shape[] = {100, 100};
+    int64_t pshape[] = {20, 20};
+    int64_t bshape[] = {2, 9};
     ina_rc_t rc;
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -32,14 +32,16 @@ int main()
     dtshape.dtype = dtype;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
-        dtshape.pshape[i] = pshape[i];
     }
 
-    iarray_store_properties_t store;
+    iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
     store.filename = NULL;
-    
+    for (int i = 0; i < ndim; ++i) {
+        store.chunkshape[i] = pshape[i];
+        store.blockshape[i] = bshape[i];
+    }
     iarray_container_t *cont;
     IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape, &store, 0, &cont));
 

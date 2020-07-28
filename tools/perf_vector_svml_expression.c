@@ -16,6 +16,8 @@
 
 #define NELEM (20 * 1000 * 1000)  // multiple of NITEMS_CHUNK for now
 #define NITEMS_CHUNK (4000 * 1000)
+#define NITEMS_BLOCK (16000)
+
 #define XMAX 10.
 
 static double _poly(const double x)
@@ -61,19 +63,19 @@ int main(int argc, char** argv)
 {
     int64_t shape[] = {NELEM};
     int64_t pshape[] = {NITEMS_CHUNK};
+    int64_t bshape[] = {NITEMS_BLOCK};
     int8_t ndim = 1;
     ina_stopwatch_t *w;
     iarray_context_t *ctx = NULL;
-    const char *mat_x_name = NULL;
-    const char *mat_y_name = NULL;
-    const char *mat_out_name = NULL;
-    const char *eval_method = NULL;
+    char *mat_x_name = NULL;
+    char *mat_y_name = NULL;
+    char *mat_out_name = NULL;
+    char *eval_method = NULL;
 
     INA_OPTS(opt,
              INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOCK = 2, EVAL_ITERBLOSC = 3"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
-             INA_OPT_INT("b", "blocksize", 0, "Use blocksize for chunks (0 means automatic)"),
              INA_OPT_INT("t", "nthreads", 1, "Use number of threads for the evaluation"),
              INA_OPT_INT("m", "mantissa-bits", 0, "The number of significant bits in mantissa (0 means no truncation"),
              INA_OPT_FLAG("d", "dict", "Use dictionary (only for Zstd (codec 5))"),
@@ -95,8 +97,6 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_opt_get_int("c", &clevel));
     int codec;
     INA_MUST_SUCCEED(ina_opt_get_int("l", &codec));
-    int blocksize;
-    INA_MUST_SUCCEED(ina_opt_get_int("b", &blocksize));
     int nthreads;
     INA_MUST_SUCCEED(ina_opt_get_int("t", &nthreads));
     int mantissa_bits;
@@ -113,22 +113,33 @@ int main(int argc, char** argv)
         }
     }
 
-    iarray_store_properties_t mat_x = {
+    iarray_storage_t mat_x = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
         .filename = mat_x_name
     };
-    iarray_store_properties_t mat_y = {
+    if (!INA_SUCCEED(ina_opt_isset("P"))) {
+        mat_x.chunkshape[0] = pshape[0];
+        mat_x.blockshape[0] = bshape[0];
+    }
+    iarray_storage_t mat_y = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
         .filename = mat_y_name
     };
-    iarray_store_properties_t mat_out = {
+    if (!INA_SUCCEED(ina_opt_isset("P"))) {
+        mat_y.chunkshape[0] = pshape[0];
+        mat_y.blockshape[0] = bshape[0];
+    }
+    iarray_storage_t mat_out = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
         .filename = mat_out_name
     };
-
+    if (!INA_SUCCEED(ina_opt_isset("P"))) {
+        mat_out.chunkshape[0] = pshape[0];
+        mat_out.blockshape[0] = bshape[0];
+    }
     int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
 
     INA_MUST_SUCCEED(iarray_init());
@@ -143,21 +154,20 @@ int main(int argc, char** argv)
     else {
         config.filter_flags = IARRAY_COMP_SHUFFLE;
         if (mantissa_bits > 0) {
-            config.filter_flags |= IARRAY_COMP_TRUNC_PREC;
-            config.fp_mantissa_bits = mantissa_bits;
+            config.filter_flags |= (int) IARRAY_COMP_TRUNC_PREC;
+            config.fp_mantissa_bits = (uint8_t) mantissa_bits;
         }
     }
     config.use_dict = INA_SUCCEED(ina_opt_isset("d")) ? 1 : 0;
-    config.blocksize = blocksize;
     config.max_num_threads = nthreads;
     config.eval_flags = eval_flags;
-    if (eval_flags == IARRAY_EXPR_EVAL_METHOD_ITERCHUNK) {
+    if (eval_flags == IARRAY_EVAL_METHOD_ITERCHUNK) {
         eval_method = "EVAL_ITERCHUNK";
     }
-    else if (eval_flags == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC) {
+    else if (eval_flags == IARRAY_EVAL_METHOD_ITERBLOSC) {
         eval_method = "EVAL_ITERBLOSC";
     }
-    else if (eval_flags == IARRAY_EXPR_EVAL_METHOD_ITERBLOSC2) {
+    else if (eval_flags == IARRAY_EVAL_METHOD_ITERBLOSC2) {
         eval_method = "EVAL_ITERBLOSC2";
     }
     else {
@@ -178,7 +188,6 @@ int main(int argc, char** argv)
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
-        dtshape.pshape[i] = INA_SUCCEED(ina_opt_isset("P")) ? 0 : pshape[i];
     }
 
     int64_t nbytes = 0;
@@ -295,7 +304,7 @@ int main(int argc, char** argv)
             iarray_container_new(ctx, &dtshape, &mat_y, flags, &con_y);
             iarray_iter_write_block_t *I;
             iarray_iter_write_block_value_t val;
-            iarray_iter_write_block_new(ctx, &I, con_y, dtshape.pshape, &val, false);
+            iarray_iter_write_block_new(ctx, &I, con_y, mat_y.chunkshape, &val, false);
             double incx = XMAX / NELEM;
             while (iarray_iter_write_block_has_next(I)) {
                 iarray_iter_write_block_next(I, NULL, 0);
