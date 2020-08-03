@@ -692,13 +692,15 @@ INA_API(ina_rc_t) jug_expression_compile(
     jug_te_variable *te_vars = (jug_te_variable*)vars;
     jug_te_expr *expression = jug_te_compile(expr_str, te_vars, num_vars, &parse_error);
     if (parse_error) {
-        return INA_ERR_INVALID_ARGUMENT;
+        IARRAY_TRACE1(iarray.error, "Error parsing the expression with juggernaut");
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
     _jug_expr_compile_function(e, "expr_func", expression, typesize, num_vars, te_vars);
     jug_te_free(expression);
 
     if (_jug_prepare_module(e, true)) {
-        return INA_ERR_FAILED;
+        IARRAY_TRACE1(iarray.error, "Error preparing LLVM module");
+        return INA_ERROR(INA_ERR_FAILED);
     }
 
     *function_addr = LLVMGetFunctionAddress(e->engine, "expr_func");
