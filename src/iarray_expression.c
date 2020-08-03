@@ -870,14 +870,18 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
     switch (eval_method) {
         case IARRAY_EVAL_METHOD_ITERCHUNK:
             IARRAY_RETURN_IF_FAILED( iarray_eval_iterchunk(e, ret, out_pshape));
+            break;
         case IARRAY_EVAL_METHOD_ITERBLOSC:
             IARRAY_RETURN_IF_FAILED( iarray_eval_iterblosc(e, ret, out_pshape));
+            break;
         case IARRAY_EVAL_METHOD_ITERBLOSC2:
             IARRAY_RETURN_IF_FAILED( iarray_eval_iterblosc2(e, ret, out_pshape));
+            break;
         default:
             IARRAY_TRACE1(iarray.error, "Invalid eval method");
             return INA_ERROR(IARRAY_ERR_INVALID_EVAL_METHOD);
     }
+    return INA_SUCCESS;
 }
 
 
