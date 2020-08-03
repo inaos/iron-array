@@ -24,8 +24,6 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     INA_VERIFY_NOT_NULL(bshape_a);
     INA_VERIFY_NOT_NULL(bshape_b);
 
-    ina_rc_t rc;
-
     int64_t typesize = a->catarr->itemsize;
 
     /* Check if the block is equal to the shape */
@@ -118,7 +116,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     // Start a iterator that returns the index matrix blocks
     iarray_iter_matmul_t *iter;
-    IARRAY_FAIL_IF_ERROR(_iarray_iter_matmul_new(ctx, a, b, bshape_a, bshape_b, &iter));
+    IARRAY_RETURN_IF_FAILED(_iarray_iter_matmul_new(ctx, a, b, bshape_a, bshape_b, &iter));
     for (_iarray_iter_matmul_init(iter); !_iarray_iter_matmul_finished(iter); _iarray_iter_matmul_next(iter)) {
         int64_t start_a[IARRAY_DIMENSION_MAX];
         int64_t stop_a[IARRAY_DIMENSION_MAX];
@@ -169,14 +167,14 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
         // Obtain desired blocks from iarray containers
         if (!a_copy) {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
+            IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
         } else {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, cbshape_a, a_block, csize_a));
+            IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, cbshape_a, a_block, csize_a));
         }
         if (!b_copy) {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
+            IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
         } else {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, cbshape_b, b_block, csize_b));
+            IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, cbshape_b, b_block, csize_b));
         }
 
         int64_t cB0 = cbshape_a[0];
@@ -206,7 +204,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "The data type is invalid");
-                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
         }
 
 
@@ -222,15 +220,10 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
             }
         }
     }
+    _iarray_iter_matmul_free(&iter);
+
     IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
     c->catarr->filled = true;
-    rc = INA_SUCCESS;
-    goto cleanup;
-
-    fail:
-    rc = ina_err_get_rc();
-    cleanup:
-    _iarray_iter_matmul_free(&iter);
 
     if (a_copy) {
         INA_MEM_FREE_SAFE(a_block);
@@ -243,7 +236,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         INA_MEM_FREE_SAFE(c_block);
     }
 
-    return rc;
+    return INA_SUCCESS;
 }
 
 static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c,
@@ -255,8 +248,6 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     INA_VERIFY_NOT_NULL(c);
     INA_VERIFY_NOT_NULL(bshape_a);
     INA_VERIFY_NOT_NULL(bshape_b);
-
-    ina_rc_t rc;
 
     int64_t typesize = a->catarr->itemsize;
 
@@ -347,7 +338,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     // Start a iterator that returns the index matrix blocks
     iarray_iter_matmul_t *iter;
-    IARRAY_FAIL_IF_ERROR(_iarray_iter_matmul_new(ctx, a, b, bshape_a, bshape_b, &iter));
+    IARRAY_RETURN_IF_FAILED(_iarray_iter_matmul_new(ctx, a, b, bshape_a, bshape_b, &iter));
 
     for (_iarray_iter_matmul_init(iter); !_iarray_iter_matmul_finished(iter); _iarray_iter_matmul_next(iter)) {
 
@@ -407,14 +398,14 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
 
         if (!a_copy) {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
+            IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
         } else {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, cbshape_a, a_block, csize_a));
+            IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, cbshape_a, a_block, csize_a));
         }
         if (!b_copy) {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
+            IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer_no_copy(ctx, b, start_b, stop_b, (void **) &b_block, b_size));
         } else {
-            IARRAY_FAIL_IF_ERROR(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, cbshape_b, b_block, csize_b));
+            IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, cbshape_b, b_block, csize_b));
         }
 
         // Make blocks multiplication
@@ -429,7 +420,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "The data type is invalid");
-                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+                return (INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
 
         if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
@@ -445,14 +436,10 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
     }
 
+    _iarray_iter_matmul_free(&iter);
+
     IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
     c->catarr->filled = true;
-    rc = INA_SUCCESS;
-    goto cleanup;
-    fail:
-    rc = ina_err_get_rc();
-    cleanup:
-    _iarray_iter_matmul_free(&iter);
 
     if (a_copy) {
         INA_MEM_FREE_SAFE(a_block);
@@ -464,8 +451,9 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     if (c->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
         INA_MEM_FREE_SAFE(c_block);
     }
-    return rc;
+    return INA_SUCCESS;
 }
+
 
 static ina_rc_t _iarray_operator_elwise_a(
     iarray_context_t *ctx,
@@ -488,16 +476,16 @@ static ina_rc_t _iarray_operator_elwise_a(
 
     iarray_iter_read_block_t *iter_read;
     iarray_iter_read_block_value_t val_read;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &iter_read, a, result->storage->chunkshape, &val_read, false));
+    IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_new(ctx, &iter_read, a, result->storage->chunkshape, &val_read, false));
 
     iarray_iter_write_block_t *iter_write;
     iarray_iter_write_block_value_t val_write;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &iter_write, result, result->storage->chunkshape, &val_write, false));
+    IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter_write, result, result->storage->chunkshape, &val_write, false));
 
 
     while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_write)) && INA_SUCCEED(iarray_iter_read_block_has_next(iter_read))) {
-        INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(iter_write, NULL, 0));
-        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(iter_read, NULL, 0));
+        IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter_write, NULL, 0));
+        IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_next(iter_read, NULL, 0));
         switch (a->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 mkl_fun_d((const int)(iter_read->cur_block_size), (const double *) *iter_read->block_pointer, (double *) *iter_write->block_pointer);
@@ -507,20 +495,17 @@ static ina_rc_t _iarray_operator_elwise_a(
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "The data type is invalid");
-                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+                return (INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
     }
     iarray_iter_read_block_free(&iter_read);
     iarray_iter_write_block_free(&iter_write);
 
-    INA_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
-    INA_FAIL_IF_ERROR(ina_err_set_rc(INA_SUCCESS));
+    IARRAY_ITER_FINISH();
 
     return INA_SUCCESS;
-
-fail:
-    return ina_err_get_rc();
 }
+
 
 static ina_rc_t _iarray_operator_elwise_ab(
         iarray_context_t *ctx,
@@ -537,35 +522,35 @@ static ina_rc_t _iarray_operator_elwise_ab(
     INA_VERIFY_NOT_NULL(mkl_fun_d);
     INA_VERIFY_NOT_NULL(mkl_fun_s);
 
-    IARRAY_FAIL_IF_ERROR(iarray_container_dtshape_equal(a->dtshape, b->dtshape));
+    IARRAY_RETURN_IF_FAILED(iarray_container_dtshape_equal(a->dtshape, b->dtshape));
 
     size_t psize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {
         if (a->catarr->chunkshape[i] != b->catarr->chunkshape[i]) {
             IARRAY_TRACE1(iarray.error, "The pshapes must be equals");
-            IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE));
+            return (INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE));
         }
         psize *= a->catarr->chunkshape[i];
     }
 
     iarray_iter_read_block_t *iter_read;
     iarray_iter_read_block_value_t val_read;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &iter_read, a, result->storage->chunkshape, &val_read, false));
+    IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_new(ctx, &iter_read, a, result->storage->chunkshape, &val_read, false));
 
     iarray_iter_read_block_t *iter_read2;
     iarray_iter_read_block_value_t val_read2;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &iter_read2, b, result->storage->chunkshape, &val_read2, false));
+    IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_new(ctx, &iter_read2, b, result->storage->chunkshape, &val_read2, false));
 
     iarray_iter_write_block_t *iter_write;
     iarray_iter_write_block_value_t val_write;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &iter_write, result, result->storage->chunkshape, &val_write, false));
+    IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter_write, result, result->storage->chunkshape, &val_write, false));
 
     while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_write)) &&
            INA_SUCCEED(iarray_iter_read_block_has_next(iter_read)) &&
             INA_SUCCEED(iarray_iter_read_block_has_next(iter_read2))) {
-        INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(iter_write, NULL, 0));
-        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(iter_read, NULL, 0));
-        INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_next(iter_read2, NULL, 0));
+        IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter_write, NULL, 0));
+        IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_next(iter_read, NULL, 0));
+        IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_next(iter_read2, NULL, 0));
         switch (a->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 mkl_fun_d((const int)(iter_read->cur_block_size), (const double *) *iter_read->block_pointer,
@@ -577,22 +562,16 @@ static ina_rc_t _iarray_operator_elwise_ab(
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "The data type is invalid");
-                IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+                return (INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
         }
     }
     iarray_iter_read_block_free(&iter_read);
     iarray_iter_read_block_free(&iter_read2);
     iarray_iter_write_block_free(&iter_write);
 
-    INA_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
-    INA_FAIL_IF_ERROR(ina_err_set_rc(INA_SUCCESS));
+    IARRAY_ITER_FINISH();
 
     return INA_SUCCESS;
-
-fail:
-    ina_mempool_reset(ctx->mp_op);
-    /* FIXME: error handling */
-    return ina_err_get_rc();
 }
 
 
@@ -681,7 +660,7 @@ INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
 
     if (c->catarr->filled) {
         IARRAY_TRACE1(iarray.error, "The output container must be empty");
-        INA_ERROR(IARRAY_ERR_FULL_CONTAINER);
+        return INA_ERROR(IARRAY_ERR_FULL_CONTAINER);
     }
 
     if (a->dtshape->dtype != b->dtshape->dtype) {
