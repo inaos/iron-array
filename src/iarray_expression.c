@@ -552,6 +552,165 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     return 0;
 }
 
+int prefilter_func2(blosc2_prefilter_params *pparams)
+{
+    iarray_expr_pparams_t *expr_pparams = (iarray_expr_pparams_t*)pparams->user_data;
+    struct iarray_expression_s *e = expr_pparams->e;
+    int ninputs = expr_pparams->ninputs;
+
+    // Populate the eval_pparams
+    iarray_eval_pparams_t eval_pparams = {0};
+    eval_pparams.ninputs = ninputs;
+    memcpy(eval_pparams.input_typesizes, expr_pparams->input_typesizes, ninputs * sizeof(int32_t));
+    eval_pparams.user_data = expr_pparams;
+    eval_pparams.out = pparams->out;
+    eval_pparams.out_size = pparams->out_size;
+    eval_pparams.out_typesize = pparams->out_typesize;
+    eval_pparams.ndim = expr_pparams->e->out_dtshape->ndim;
+    int32_t bsize = pparams->out_size;
+    int32_t typesize = pparams->out_typesize;
+
+    int8_t ndim = e->out->dtshape->ndim;
+
+    // Element strides (in elements)
+    int32_t strides[IARRAY_DIMENSION_MAX];
+    strides[ndim - 1] = 1;
+    for (int i = ndim - 2; i >= 0 ; --i) {
+        strides[i] = strides[i+1] * e->out->catarr->blockshape[i+1];
+    }
+
+    // Block strides (in blocks)
+    int32_t strides_block[IARRAY_DIMENSION_MAX];
+    strides_block[ndim - 1] = 1;
+    for (int i = ndim - 2; i >= 0 ; --i) {
+        strides_block[i] = strides_block[i+1] * (int32_t) (e->out->catarr->extchunkshape[i+1] / e->out->catarr->blockshape[i+1]);
+    }
+
+    // Flattened block number
+    int32_t nblock = pparams->out_offset / pparams->out_size;
+
+    // Multidimensional block number
+    int32_t nblock_ndim[IARRAY_DIMENSION_MAX];
+    for (int i = ndim - 1; i >= 0; --i) {
+        if (i != 0) {
+            nblock_ndim[i] = (nblock % strides_block[i-1]) / strides_block[i];
+        } else {
+            nblock_ndim[i] = (nblock % (e->out->catarr->extchunknitems / e->out->catarr->blocknitems)) / strides_block[i];
+        }
+    }
+
+    // Position of the first element of the block (inside current chunk)
+    int64_t start_in_chunk[IARRAY_DIMENSION_MAX];
+    for (int i = 0; i < ndim; ++i) {
+        start_in_chunk[i] = nblock_ndim[i] * e->out->catarr->blockshape[i];
+    }
+
+    // Position of the first element of the block (inside container)
+    int64_t start_in_container[IARRAY_DIMENSION_MAX];
+    for (int i = 0; i < ndim; ++i) {
+        start_in_container[i] = start_in_chunk[i] + expr_pparams->out_value.block_index[i] * e->out->catarr->chunkshape[i];
+    }
+
+    // Check if the block is out of bounds
+    bool out_of_bounds = false;
+    for (int i = 0; i < ndim; ++i) {
+        if (start_in_container[i] > e->out->catarr->shape[i]) {
+            out_of_bounds = true;
+            break;
+        }
+    }
+
+    // Shape of the current block
+    int32_t shape[IARRAY_DIMENSION_MAX];
+    for (int i = 0; i < ndim; ++i) {
+        if (out_of_bounds) {
+            shape[i] = 0;
+        } else if (start_in_container[i] + e->out->catarr->blockshape[i] > e->out->catarr->shape[i]) {
+            shape[i] = (int32_t) (e->out->catarr->shape[i] - start_in_container[i]);
+        } else if (start_in_chunk[i] + e->out->catarr->blockshape[i] > e->out->catarr->chunkshape[i]) {
+            shape[i] = (int32_t) (e->out->catarr->chunkshape[i] - start_in_chunk[i]);
+        } else {
+            shape[i] = e->out->catarr->blockshape[i];
+        }
+    }
+
+    unsigned int eval_method = e->ctx->cfg->eval_flags & 0x7u;
+    if (eval_method != IARRAY_EVAL_METHOD_ITERCHUNK) {
+        // We can only set the visible shape of the output for the ITERBLOSC eval method.
+        eval_pparams.window_shape = shape;
+        eval_pparams.window_start = start_in_container;
+        eval_pparams.window_strides = strides;
+    } else {
+        // eval_pparams is initialized to {0} above, but better be explicit.
+        eval_pparams.window_shape = NULL;
+        eval_pparams.window_start = NULL;
+        eval_pparams.window_strides = NULL;
+    }
+
+    // The code below only works for the case where inputs and output have the same typesize.
+    // More love is needed in the future, where we would want to allow mixed types in expressions.
+
+
+    iarray_container_t *out = e->out;
+
+    for (int i = 0; i < ninputs; i++) {
+        iarray_container_t *c = e->vars[i].c;
+
+        eval_pparams.inputs[i] = ina_mem_alloc_aligned(64, bsize);
+        int64_t start[IARRAY_DIMENSION_MAX];
+        int64_t stop[IARRAY_DIMENSION_MAX];
+        int64_t blockshape[IARRAY_DIMENSION_MAX];
+        for (int j = 0; j < ndim; ++j) {
+            start[j] = start_in_container[j];
+            stop[j] = start[j] + shape[j];
+            blockshape[j] = out->storage->blockshape[j];
+        }
+        iarray_config_t cfg = IARRAY_CONFIG_NO_COMPRESSION;
+        cfg.max_num_threads = 1;
+        iarray_context_t *ctx;
+        iarray_context_new(&cfg, &ctx);
+        _iarray_get_slice_buffer(ctx, c, start, stop, blockshape, eval_pparams.inputs[i], bsize);
+    }
+
+    for (int i = 0; i < ninputs; i++) {
+        e->temp_vars[i]->data = eval_pparams.inputs[i];
+    }
+
+    // Eval the expression for this block
+    int ret;
+    uint32_t eval_engine = (e->ctx->cfg->eval_flags & 0x38u) >> 3u;
+    switch (eval_engine) {
+        case IARRAY_EVAL_ENGINE_INTERPRETER:
+            e->max_out_len = pparams->out_size / pparams->out_typesize;  // so as to prevent operating beyond the limits
+            const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
+            memcpy(pparams->out, (uint8_t*)expr_out->data, pparams->out_size);
+            break;
+        case IARRAY_EVAL_ENGINE_COMPILER:
+            ret = ((iarray_eval_fn)e->jug_expr_func)(&eval_pparams);
+            switch (ret) {
+                case 0:
+                    // 0 means success
+                    break;
+                case 1:
+                    IARRAY_TRACE1(iarray.error, "Out of bounds in LLVM eval engine");
+                    return -2;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Error in executing LLVM eval engine");
+                    return -3;
+            }
+            break;
+        default:
+            IARRAY_TRACE1(iarray.error, "Invalid eval engine");
+            return -4;
+    }
+
+    for (int i = 0; i < ninputs; i++) {
+        INA_MEM_FREE_SAFE(eval_pparams.inputs[i]);
+    }
+
+    return 0;
+}
+
 
 ina_rc_t iarray_eval_cleanup(iarray_expression_t *e, int64_t nitems_written)
 {
@@ -772,7 +931,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
 
     // Write iterator for output
     iarray_context_t *ctx = e->ctx;
-    ctx->prefilter_fn = (blosc2_prefilter_fn)prefilter_func;
+    ctx->prefilter_fn = (blosc2_prefilter_fn)prefilter_func2;
     ctx->prefilter_params = &pparams;
 
     iarray_iter_write_block_t *iter_out;
