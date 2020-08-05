@@ -26,6 +26,14 @@ typedef struct _iarray_tinyexpr_var_s {
     iarray_container_t *c;
 } _iarray_tinyexpr_var_t;
 
+
+typedef enum iarray_expr_input_class_e {
+    IARRAY_EXPR_EQ = 0u,
+    IARRAY_EXPR_EQ_NCOMP = 1u,
+    IARRAY_EXPR_NEQ = 2u
+} iarray_expr_input_class_t;
+
+
 struct iarray_expression_s {
     iarray_context_t *ctx;
     ina_str_t expr;
@@ -48,8 +56,9 @@ struct iarray_expression_s {
 
 // Struct to be used as info container for dealing with the expression
 typedef struct iarray_expr_pparams_s {
-    bool compressed_inputs;  // whether the inputs are compressed or not (should be the first to avoid crashes, WTF??)
+    bool compressed_inputs;
     int ninputs;  // number of data inputs
+    iarray_expr_input_class_t input_class[IARRAY_EXPR_OPERANDS_MAX];  // whether the inputs are compressed or not
     uint8_t* inputs[IARRAY_EXPR_OPERANDS_MAX];  // the data inputs
     int32_t input_typesizes[IARRAY_EXPR_OPERANDS_MAX];  // the typesizes for data inputs
     iarray_expression_t *e;
@@ -475,38 +484,29 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     int avail_space = (int) pparams->ttmp_nbytes;
     INA_UNUSED(avail_space);  // Fix build warning
     int used_space = 0;
-    int ninputs_malloced = 0;
+    bool inputs_malloced[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ninputs; i++) {
-        if (expr_pparams->compressed_inputs) {
-            bool memcpyed = *(expr_pparams->inputs[i] + 2) & (uint8_t)BLOSC_MEMCPYED;
-            if (memcpyed) {
-                // Buffer is just a pure memcpy.  Avoid copies and just use offsets.
+        inputs_malloced[i] = false;
+        switch (expr_pparams->input_class[i]) {
+            case IARRAY_EXPR_EQ_NCOMP:
                 eval_pparams.inputs[i] = expr_pparams->inputs[i] + BLOSC_EXTENDED_HEADER_LENGTH + pparams->out_offset;
-                continue;
-            }
-            else if (false && (used_space + bsize) <= avail_space) {
-                // Unfortunately, we cannot re-use temporaries in threads because SVML refuse to vectorize operations
-                // We have an available ttmp block that can be used for this operand
-                eval_pparams.inputs[i] = pparams->ttmp + used_space;
-                used_space += bsize;
-            }
-            else {
-                // eval_pparams.inputs[i] = malloc(bsize);
-                // ina_mem_alloc_aligned has the same performance than regular malloc, but allows to specify alignment
-                // and alignment can be important for e.g. AVX-512 (64 bytes)
+                break;
+            case IARRAY_EXPR_EQ:
                 eval_pparams.inputs[i] = ina_mem_alloc_aligned(64, bsize);
-                ninputs_malloced++;
-            }
-            int64_t nitems = bsize / typesize;
-            int64_t offset_index = pparams->out_offset / typesize;
-            int64_t rbytes = blosc_getitem(expr_pparams->inputs[i], (int) offset_index, (int) nitems, eval_pparams.inputs[i]);
-            if (rbytes != bsize) {
-                fprintf(stderr, "Read from inputs failed inside pipeline\n");
+                inputs_malloced[i] = true;
+                int64_t nitems = bsize / typesize;
+                int64_t offset_index = pparams->out_offset / typesize;
+                int64_t rbytes = blosc_getitem(expr_pparams->inputs[i], (int) offset_index, (int) nitems, eval_pparams.inputs[i]);
+                if (rbytes != bsize) {
+                    fprintf(stderr, "Read from inputs failed inside pipeline\n");
+                    return -1;
+                }
+                break;
+            case IARRAY_EXPR_NEQ:
+                eval_pparams.inputs[i] = expr_pparams->inputs[i] + pparams->out_offset;
+                break;
+            default:
                 return -1;
-            }
-        }
-        else {
-            eval_pparams.inputs[i] = expr_pparams->inputs[i] + pparams->out_offset;
         }
     }
 
@@ -542,9 +542,8 @@ int prefilter_func(blosc2_prefilter_params *pparams)
             return -4;
     }
 
-    if (expr_pparams->compressed_inputs) {
-        for (int i = (ninputs - ninputs_malloced); i < ninputs; i++) {
-            // free(eval_pparams.inputs[i]);
+    for (int i = 0; i < ninputs; i++) {
+        if (inputs_malloced[i]) {
             INA_MEM_FREE_SAFE(eval_pparams.inputs[i]);
         }
     }
@@ -664,6 +663,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
 
         iter_var[nvar]->padding = true;
         expr_pparams.input_typesizes[nvar] = var->catarr->sc->typesize;
+        expr_pparams.input_class[nvar] = IARRAY_EXPR_NEQ;
     }
 
     // Write iterator for output
@@ -759,7 +759,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
     iarray_expr_pparams_t expr_pparams = {0};
     expr_pparams.e = e;
     expr_pparams.ninputs = nvars;
-    expr_pparams.compressed_inputs = true;
     pparams.user_data = (void *) &expr_pparams;
 
     // Initialize the typesize for each variable
@@ -767,11 +766,50 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
         iarray_container_t *var = e->vars[nvar].c;
         expr_pparams.input_typesizes[nvar] = var->catarr->sc->typesize;
     }
+
+    // Determine the class of each container
+    iarray_container_t *out = e->out;
+    for (int nvar = 0; nvar < nvars; ++nvar) {
+        iarray_container_t *var = e->vars[nvar].c;
+        bool eq = true;
+        for (int i = 0; i < var->dtshape->ndim; ++i) {
+            if (out->storage->chunkshape[i] != var->storage->chunkshape[i]) {
+                eq = false;
+                break;
+            }
+            if (out->storage->blockshape[i] != var->storage->blockshape[i]) {
+                eq = false;
+                break;
+            }
+        }
+        if (eq == false) {
+            expr_pparams.input_class[nvar] = IARRAY_EXPR_NEQ;
+        } else {
+            expr_pparams.input_class[nvar] = IARRAY_EXPR_EQ;
+        }
+    }
+    iarray_context_t *ctx = e->ctx;
+
+    // Need for not compatible containers
+    iarray_iter_read_block_t **iter_var = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_t));
+    iarray_iter_read_block_value_t *iter_value = ina_mem_alloc(nvars * sizeof(iarray_iter_read_block_value_t));
+    uint8_t **external_buffers = ina_mem_alloc(nvars * sizeof(void *));
+    for (int nvar = 0; nvar < nvars; nvar++) {
+        if (expr_pparams.input_class[nvar] == IARRAY_EXPR_NEQ) {
+            iarray_container_t *var = e->vars[nvar].c;
+            IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar],
+                                                               false));
+            external_buffers[nvar] = ina_mem_alloc(ret->catarr->extchunknitems * ret->catarr->itemsize);
+            iter_var[nvar]->padding = true;
+        }
+    }
+
+    // Need for compatible containers
     uint8_t **var_chunks = malloc(nvars * sizeof(void*));
     bool *var_needs_free = malloc(nvars * sizeof(bool));
 
+
     // Write iterator for output
-    iarray_context_t *ctx = e->ctx;
     ctx->prefilter_fn = (blosc2_prefilter_fn)prefilter_func;
     ctx->prefilter_params = &pparams;
 
@@ -793,15 +831,31 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
 
         int32_t out_items = (int32_t)(iter_out->cur_block_size);  // TODO: add a protection against cur_block_size > 2**31
 
-        // Get the uncompressed chunks for each variable
+        // Get the chunk for each variable
         for (int nvar = 0; nvar < nvars; nvar++) {
-            blosc2_schunk *schunk = e->vars[nvar].c->catarr->sc;
-            int csize = blosc2_schunk_get_chunk(schunk, nchunk, &var_chunks[nvar], &var_needs_free[nvar]);
-            if (csize < 0) {
-                IARRAY_TRACE1(iarray.error, "Error in retrieving chunk from schunk");
-                return INA_ERROR(INA_ERR_NOT_SUPPORTED);
+            if (expr_pparams.input_class[nvar] == IARRAY_EXPR_EQ) {
+                blosc2_schunk *schunk = e->vars[nvar].c->catarr->sc;
+                int csize = blosc2_schunk_get_chunk(schunk, nchunk, &var_chunks[nvar], &var_needs_free[nvar]);
+                if (csize < 0) {
+                    IARRAY_TRACE1(iarray.error, "Error in retrieving chunk from schunk");
+                    return INA_ERROR(INA_ERR_NOT_SUPPORTED);
+                }
+                bool memcpyed = *(var_chunks[nvar] + 2) & (uint8_t)BLOSC_MEMCPYED;
+                if (memcpyed) {
+                    expr_pparams.input_class[nvar] = IARRAY_EXPR_EQ_NCOMP;
+                }
+                expr_pparams.inputs[nvar] = var_chunks[nvar];
+            } else {
+                IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_next(iter_var[nvar], NULL, 0));
+                IARRAY_ERR_CATERVA(caterva_blosc_array_repart_chunk((int8_t *) external_buffers[nvar],
+                                                                    ret->catarr->extchunknitems * ret->catarr->itemsize,
+                                                                    iter_value[nvar].block_pointer,
+                                                                    ret->catarr->chunknitems * ret->catarr->itemsize,
+                                                                    ret->catarr));
+
+                e->temp_vars[nvar]->data = external_buffers[nvar];
+                expr_pparams.inputs[nvar] = external_buffers[nvar];
             }
-            expr_pparams.inputs[nvar] = var_chunks[nvar];
         }
 
         // Eval the expression for this chunk
@@ -832,6 +886,13 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
 
     IARRAY_ITER_FINISH();
     iarray_iter_write_block_free(&iter_out);
+
+    for (int nvar = 0; nvar < nvars; ++nvar) {
+        if (expr_pparams.input_class[nvar] == IARRAY_EXPR_NEQ) {
+            ina_mem_free(external_buffers[nvar]);
+        }
+    }
+    ina_mem_free(external_buffers);
 
     free(var_chunks);
     free(var_needs_free);
