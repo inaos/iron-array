@@ -22,7 +22,7 @@ int main(void)
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2;
-    cfg.max_num_threads = 2;
+    cfg.max_num_threads = 4;
     iarray_context_new(&cfg, &ctx);
 
 
@@ -74,6 +74,7 @@ int main(void)
     iarray_expr_bind_out_properties(e, &dtshape, &xstorage);
 
     iarray_expr_compile(e, expr);
+
 
     iarray_container_t* c_out;
     iarray_eval(e, &c_out);
