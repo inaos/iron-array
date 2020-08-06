@@ -26,7 +26,7 @@ int main(void)
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.compression_level = 0;
-    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2;
+    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2 | (IARRAY_EVAL_ENGINE_INTERPRETER << 3u);
     cfg.max_num_threads = 4;
     iarray_context_new(&cfg, &ctx);
 
@@ -70,7 +70,7 @@ int main(void)
     iarray_container_t* c_x;
     iarray_container_t* c_y;
     iarray_linspace(ctx, &dtshape, nelem, 2.1, .1, &xstorage, 0, &c_x);
-    iarray_linspace(ctx, &dtshape, nelem, 0.1, .1, &xstorage, 0, &c_y);
+    iarray_linspace(ctx, &dtshape, nelem, 0.1, .1, &ystorage, 0, &c_y);
 
     iarray_expression_t* e;
     iarray_expr_new(ctx, &e);
