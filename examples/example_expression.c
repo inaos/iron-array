@@ -16,6 +16,10 @@
 int main(void)
 {
     iarray_init();
+    ina_stopwatch_t *w;
+
+    double elapsed_sec = 0;
+    INA_STOPWATCH_NEW(-1, -1, &w);
 
     char *expr = "2*x+1";
 
@@ -27,7 +31,7 @@ int main(void)
     iarray_context_new(&cfg, &ctx);
 
 
-    int64_t shape[] = {1000, 1000};
+    int64_t shape[] = {4000, 4000};
     int8_t ndim = 2;
     int8_t typesize = sizeof(double);
 
@@ -41,8 +45,8 @@ int main(void)
         nelem *= shape[i];
     }
 
-    int32_t xchunkshape[] = {500, 300};
-    int32_t xblockshape[] = {200, 200};
+    int32_t xchunkshape[] = {500, 500};
+    int32_t xblockshape[] = {200, 100};
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
     xstorage.enforce_frame = false;
@@ -52,8 +56,8 @@ int main(void)
         xstorage.blockshape[i] = xblockshape[i];
     }
 
-    int32_t ychunkshape[] = {400, 200};
-    int32_t yblockshape[] = {200, 10};
+    int32_t ychunkshape[] = {400, 800};
+    int32_t yblockshape[] = {100, 150};
     iarray_storage_t ystorage;
     ystorage.backend = IARRAY_STORAGE_BLOSC;
     ystorage.enforce_frame = false;
@@ -78,14 +82,24 @@ int main(void)
 
 
     iarray_container_t* c_out;
-    iarray_eval(e, &c_out);
 
+    INA_STOPWATCH_START(w);
+    IARRAY_RETURN_IF_FAILED(iarray_eval(e, &c_out));
+    INA_STOPWATCH_STOP(w);
+    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+
+    int64_t nbytes = nelem * typesize;
+
+    printf("Time for eval expression: %.3g s, %.1f GB/s\n",
+           elapsed_sec, nbytes / (elapsed_sec * (1u << 20u)));
 
     iarray_expr_free(ctx, &e);
     iarray_container_free(ctx, &c_out);
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
     iarray_context_free(&ctx);
+
+    INA_STOPWATCH_FREE(&w);
 
     return 0;
 }
