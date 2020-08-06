@@ -186,99 +186,58 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
     uint32_t eval_engine = (e->ctx->cfg->eval_flags & 0x38u) >> 3u;
 
     if (eval_method == IARRAY_EVAL_METHOD_AUTO) {
-        iarray_storage_type_t backend = IARRAY_STORAGE_BLOSC;
-
         if (e->out_store_properties->backend == IARRAY_STORAGE_PLAINBUFFER) {
-            backend = IARRAY_STORAGE_PLAINBUFFER;
             eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;
         } else {
             eval_method = IARRAY_EVAL_METHOD_ITERBLOSC2;
         }
     }
-
-    if (eval_engine == IARRAY_EVAL_ENGINE_AUTO) {
-        if (eval_method == IARRAY_EVAL_METHOD_ITERCHUNK) {
-            eval_engine = IARRAY_EVAL_ENGINE_INTERPRETER;
-        } else {
-            eval_engine = IARRAY_EVAL_ENGINE_COMPILER;
-        }
-    }
-
+    eval_engine = IARRAY_EVAL_ENGINE_COMPILER;
     e->ctx->cfg->eval_flags = eval_method | (eval_engine << 3u);
 
-    e->temp_vars = ina_mem_alloc(e->nvars * sizeof(iarray_temporary_t *));
     caterva_array_t *catarr = e->vars[0].c->catarr;
-
     e->typesize = catarr->itemsize;
     int64_t size = 1;
     for (int i = 0; i < e->vars[0].c->dtshape->ndim; ++i) {
         size *= e->vars[0].c->dtshape->shape[i];
     }
-
     e->nbytes = size * e->typesize;
+
     if (catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
         // Somewhat arbitrary values follows
         e->blocksize = 1024 * e->typesize;
         e->chunksize = 16 * e->blocksize;
     }
-    else {
+    else if (eval_method == IARRAY_EVAL_METHOD_ITERBLOSC2) {
         blosc2_schunk *schunk = catarr->sc;
-        if (eval_method == IARRAY_EVAL_METHOD_ITERBLOSC2) {
-            uint8_t *chunk;
-            bool needs_free;
-            int retcode = blosc2_schunk_get_chunk(schunk, 0, &chunk, &needs_free);
-            if (retcode < 0) {
-                if (chunk != NULL) {
-                    free(chunk);
-                }
-                IARRAY_TRACE1(iarray.error, "Error getting  chunk from a blosc schunk");
-                return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
-            }
 
-            size_t chunksize, cbytes, blocksize;
-            blosc_cbuffer_sizes(chunk, &chunksize, &cbytes, &blocksize);
-            if (needs_free) {
+        uint8_t *chunk;
+        bool needs_free;
+        int retcode = blosc2_schunk_get_chunk(schunk, 0, &chunk, &needs_free);
+        if (retcode < 0) {
+            if (chunk != NULL) {
                 free(chunk);
             }
-            e->chunksize = (int32_t) chunksize;
-            e->blocksize = (int32_t) blocksize;
+            IARRAY_TRACE1(iarray.error, "Error getting  chunk from a blosc schunk");
+            return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
         }
-        else if (eval_method == IARRAY_EVAL_METHOD_ITERCHUNK) {
-            e->chunksize = schunk->chunksize;
+
+        size_t chunksize, cbytes, blocksize;
+        blosc_cbuffer_sizes(chunk, &chunksize, &cbytes, &blocksize);
+        if (needs_free) {
+            free(chunk);
         }
-        else {
-            IARRAY_TRACE1(iarray.error, "Flag is not supported in evaluator");
-            return INA_ERROR(INA_ERR_NOT_SUPPORTED);
-        }
+        e->chunksize = (int32_t) chunksize;
+        e->blocksize = (int32_t) blocksize;
+
+    } else {
+        IARRAY_TRACE1(iarray.error, "Flag is not supported in evaluator");
+        return INA_ERROR(INA_ERR_NOT_SUPPORTED);
     }
 
     e->nchunks = (int32_t)(e->nbytes / e->chunksize);
     if (e->nchunks * e->chunksize < e->nbytes) {
         e->nchunks += 1;
-    }
-
-    // Create temporaries for initial variables.
-    // We don't need the temporaries to be conformant with chunkshape; only the buffer
-    // size needs to the same.
-    iarray_dtshape_t dtshape_var = {0};  // initialize to 0s
-    dtshape_var.ndim = 1;
-    int32_t temp_var_dim0 = 0;
-    if (eval_method == IARRAY_EVAL_METHOD_ITERBLOSC2) {
-        temp_var_dim0 = e->blocksize / e->typesize;
-    } else if (eval_method == IARRAY_EVAL_METHOD_ITERCHUNK ||
-               eval_method == IARRAY_EVAL_METHOD_ITERBLOSC) {
-        temp_var_dim0 = e->chunksize / e->typesize;
-        e->blocksize = 0;
-    } else {
-        IARRAY_TRACE1(iarray.error, "Flag is not supported in evaluator");
-        return INA_ERROR(INA_ERR_NOT_SUPPORTED);
-    }
-    dtshape_var.shape[0] = temp_var_dim0;
-    dtshape_var.dtype = e->vars[0].c->dtshape->dtype;
-
-    for (int nvar = 0; nvar < e->nvars; nvar++) {
-        // Allocate different buffers for each thread too
-        IARRAY_RETURN_IF_FAILED(iarray_temporary_new(e, e->vars[nvar].c, &dtshape_var, &e->temp_vars[nvar]));
     }
 
     return INA_SUCCESS;
@@ -312,34 +271,14 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 
     IARRAY_RETURN_IF_FAILED(_iarray_expr_prepare(e));
 
-    te_variable *te_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(te_variable));
     jug_te_variable *jug_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(jug_te_variable));
     memset(jug_vars, 0, e->nvars * sizeof(jug_te_variable));
     for (int nvar = 0; nvar < e->nvars; nvar++) {
-        te_vars[nvar].name = e->vars[nvar].var;
-        te_vars[nvar].type = TE_VARIABLE;
-        te_vars[nvar].context = NULL;
         jug_vars[nvar].name = e->vars[nvar].var;
-
-        // Allocate different buffers for each thread too
-        te_vars[nvar].address = *(e->temp_vars + nvar);
     }
 
-    int err = 0;
     uint32_t eval_engine = (e->ctx->cfg->eval_flags & 0x38u) >> 3u;
-    if (eval_engine == IARRAY_EVAL_ENGINE_INTERPRETER) {
-        if (e->ctx->cfg->max_num_threads > 1) {
-            // tinyexpr engine does not support multi-threading, so disable it silently
-            IARRAY_TRACE1(iarray.warning, "tinyexpr does not support multithreading: fall back to use 1 thread");
-            e->ctx->cfg->max_num_threads = 1;
-        }
-        e->texpr = te_compile(e, ina_str_cstr(e->expr), te_vars, e->nvars, &err);
-        if (e->texpr == 0) {
-            IARRAY_TRACE1(iarray.error, "Error compiling the expression with tinyexpr");
-            return INA_ERROR(IARRAY_ERR_EVAL_ENGINE_NOT_COMPILED);
-        }
-    }
-    else if (eval_engine == IARRAY_EVAL_ENGINE_COMPILER) {
+    if (eval_engine == IARRAY_EVAL_ENGINE_COMPILER) {
         IARRAY_RETURN_IF_FAILED(jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars,
                                               jug_vars, e->typesize, &e->jug_expr_func));
     }
@@ -430,25 +369,14 @@ int prefilter_func(blosc2_prefilter_params *pparams)
         }
     }
 
-    unsigned int eval_method = e->ctx->cfg->eval_flags & 0x7u;
-    if (eval_method != IARRAY_EVAL_METHOD_ITERCHUNK) {
-        // We can only set the visible shape of the output for the ITERBLOSC eval method.
-        eval_pparams.window_shape = shape;
-        eval_pparams.window_start = start_in_container;
-        eval_pparams.window_strides = strides;
-    } else {
-        // eval_pparams is initialized to {0} above, but better be explicit.
-        eval_pparams.window_shape = NULL;
-        eval_pparams.window_start = NULL;
-        eval_pparams.window_strides = NULL;
-    }
+    // We can only set the visible shape of the output for the ITERBLOSC eval method.
+    eval_pparams.window_shape = shape;
+    eval_pparams.window_start = start_in_container;
+    eval_pparams.window_strides = strides;
 
     // The code below only works for the case where inputs and output have the same typesize.
     // More love is needed in the future, where we would want to allow mixed types in expressions.
 
-    int avail_space = (int) pparams->ttmp_nbytes;
-    INA_UNUSED(avail_space);  // Fix build warning
-    int used_space = 0;
     bool inputs_malloced[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ninputs; i++) {
         inputs_malloced[i] = false;
@@ -475,36 +403,25 @@ int prefilter_func(blosc2_prefilter_params *pparams)
         }
     }
 
-    for (int i = 0; i < ninputs; i++) {
-        e->temp_vars[i]->data = eval_pparams.inputs[i];
-    }
-
     // Eval the expression for this chunk
     int ret;
     uint32_t eval_engine = (e->ctx->cfg->eval_flags & 0x38u) >> 3u;
-    switch (eval_engine) {
-        case IARRAY_EVAL_ENGINE_INTERPRETER:
-            e->max_out_len = pparams->out_size / pparams->out_typesize;  // so as to prevent operating beyond the limits
-            const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
-            memcpy(pparams->out, (uint8_t*)expr_out->data, pparams->out_size);
-            break;
-        case IARRAY_EVAL_ENGINE_COMPILER:
-            ret = ((iarray_eval_fn)e->jug_expr_func)(&eval_pparams);
-            switch (ret) {
-                case 0:
-                    // 0 means success
-                    break;
-                case 1:
-                    IARRAY_TRACE1(iarray.error, "Out of bounds in LLVM eval engine");
-                    return -2;
-                default:
-                    IARRAY_TRACE1(iarray.error, "Error in executing LLVM eval engine");
-                    return -3;
-            }
-            break;
-        default:
-            IARRAY_TRACE1(iarray.error, "Invalid eval engine");
-            return -4;
+    if (eval_engine == IARRAY_EVAL_ENGINE_COMPILER) {
+        ret = ((iarray_eval_fn) e->jug_expr_func)(&eval_pparams);
+        switch (ret) {
+            case 0:
+                // 0 means success
+                break;
+            case 1:
+                IARRAY_TRACE1(iarray.error, "Out of bounds in LLVM eval engine");
+                return -2;
+            default:
+                IARRAY_TRACE1(iarray.error, "Error in executing LLVM eval engine");
+                return -3;
+        }
+    } else {
+        IARRAY_TRACE1(iarray.error, "Invalid eval engine");
+        return -4;
     }
 
     for (int i = 0; i < ninputs; i++) {
@@ -706,7 +623,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
                                                                     ret->catarr->chunknitems * ret->catarr->itemsize,
                                                                     ret->catarr));
 
-                e->temp_vars[nvar]->data = external_buffers[nvar];
                 expr_pparams.inputs[nvar] = external_buffers[nvar];
             }
         }
