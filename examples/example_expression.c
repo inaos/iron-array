@@ -21,6 +21,7 @@ int main(void)
 
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
+    cfg.compression_level = 0;
     cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2;
     cfg.max_num_threads = 4;
     iarray_context_new(&cfg, &ctx);

@@ -833,7 +833,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
 
         // Get the chunk for each variable
         for (int nvar = 0; nvar < nvars; nvar++) {
-            if (expr_pparams.input_class[nvar] == IARRAY_EXPR_EQ) {
+            if (expr_pparams.input_class[nvar] != IARRAY_EXPR_NEQ) {
                 blosc2_schunk *schunk = e->vars[nvar].c->catarr->sc;
                 int csize = blosc2_schunk_get_chunk(schunk, nchunk, &var_chunks[nvar], &var_needs_free[nvar]);
                 if (csize < 0) {
