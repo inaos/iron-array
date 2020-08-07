@@ -109,7 +109,6 @@ INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
     ina_mempool_reset(ctx->mp);  // FIXME: should be ina_mempool_free(), but it currently crashes
     ina_mempool_reset(ctx->mp_op);  // FIXME: ditto
     ina_mempool_reset(ctx->mp_tmp_out);  // FIXME: ditto
-    INA_MEM_FREE_SAFE((*e)->temp_vars);
     ina_str_free((*e)->expr);
     INA_MEM_FREE_SAFE(*e);
 }
@@ -195,40 +194,35 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
     eval_engine = IARRAY_EVAL_ENGINE_COMPILER;
     e->ctx->cfg->eval_flags = eval_method | (eval_engine << 3u);
 
-    caterva_array_t *catarr = e->vars[0].c->catarr;
-    e->typesize = catarr->itemsize;
+    switch (e->out_dtshape->dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            e->typesize = sizeof(double);
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            e->typesize = sizeof(float);
+            break;
+        default:
+            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+    }
+
     int64_t size = 1;
-    for (int i = 0; i < e->vars[0].c->dtshape->ndim; ++i) {
-        size *= e->vars[0].c->dtshape->shape[i];
+    for (int i = 0; i < e->out_dtshape->ndim; ++i) {
+        size *= e->out_dtshape->shape[i];
     }
     e->nbytes = size * e->typesize;
 
-    if (catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
+    if (eval_method == IARRAY_EVAL_METHOD_ITERCHUNK) {
         // Somewhat arbitrary values follows
         e->blocksize = 1024 * e->typesize;
         e->chunksize = 16 * e->blocksize;
     }
     else if (eval_method == IARRAY_EVAL_METHOD_ITERBLOSC2) {
-        blosc2_schunk *schunk = catarr->sc;
-
-        uint8_t *chunk;
-        bool needs_free;
-        int retcode = blosc2_schunk_get_chunk(schunk, 0, &chunk, &needs_free);
-        if (retcode < 0) {
-            if (chunk != NULL) {
-                free(chunk);
-            }
-            IARRAY_TRACE1(iarray.error, "Error getting  chunk from a blosc schunk");
-            return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+        e->chunksize = e->typesize;
+        e->blocksize = e->typesize;
+        for (int i = 0; i < e->out_dtshape->ndim; ++i) {
+            e->chunksize *= e->out_store_properties->chunkshape[i];
+            e->blocksize *= e->out_store_properties->blockshape[i];
         }
-
-        size_t chunksize, cbytes, blocksize;
-        blosc_cbuffer_sizes(chunk, &chunksize, &cbytes, &blocksize);
-        if (needs_free) {
-            free(chunk);
-        }
-        e->chunksize = (int32_t) chunksize;
-        e->blocksize = (int32_t) blocksize;
 
     } else {
         IARRAY_TRACE1(iarray.error, "Flag is not supported in evaluator");
@@ -454,6 +448,7 @@ INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container
     int nvars = e->nvars;
     int64_t nitems_written = 0;
 
+
     // Create and initialize an iterator per variable
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_t *ctx = NULL;
@@ -472,6 +467,23 @@ INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container
     iarray_iter_write_block_value_t out_value;
     IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, false));
 
+    // Create expr pparams
+    iarray_expr_pparams_t expr_pparams = {0};
+    expr_pparams.e = e;
+    expr_pparams.ninputs = nvars;
+
+    // Create eval pparams
+    iarray_eval_pparams_t eval_pparams = {0};
+    eval_pparams.ninputs = nvars;
+    eval_pparams.out_typesize = e->out->catarr->itemsize;
+    eval_pparams.ndim = e->out->dtshape->ndim;
+    eval_pparams.user_data = &expr_pparams;
+    for (int i = 0; i < nvars; ++i) {
+        eval_pparams.input_typesizes[i] = e->vars[i].c->catarr->itemsize;
+        expr_pparams.input_typesizes[i] = e->vars[i].c->catarr->itemsize;
+        expr_pparams.input_class[i] = IARRAY_EXPR_NEQ;
+    }
+
     // Evaluate the expression for all the chunks in variables
     while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_out))) {
         IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter_out, NULL, 0));
@@ -482,20 +494,19 @@ INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container
         for (int nvar = 0; nvar < nvars; nvar++) {
             IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_next(iter_var[nvar], NULL, 0));
 
-            e->temp_vars[nvar]->data = iter_value[nvar].block_pointer;
+            eval_pparams.inputs[nvar] = iter_value[nvar].block_pointer;
+            expr_pparams.inputs[nvar] = iter_value[nvar].block_pointer;
         }
 
         // Eval the expression for this chunk
-        uint32_t eval_engine = (e->ctx->cfg->eval_flags & 0x38u) >> 3u;
-        if (eval_engine == IARRAY_EVAL_ENGINE_COMPILER) {
-            IARRAY_TRACE1(iarray.error, "LLVM engine cannot be used with iterchunk");
-            return INA_ERROR(IARRAY_ERR_INVALID_EVAL_ENGINE);
-        }
         e->max_out_len = out_items;  // so as to prevent operating beyond the limits
-        const iarray_temporary_t *expr_out = te_eval(e, e->texpr);
-        memcpy((char*)out_value.block_pointer, (uint8_t*)expr_out->data, out_items * e->typesize);
+        eval_pparams.out = out_value.block_pointer;
+        eval_pparams.out_size = out_value.block_size * e->typesize;
+        expr_pparams.out_value = out_value;
+
+        int err = ((iarray_eval_fn) e->jug_expr_func)(&eval_pparams);
+
         nitems_written += out_items;
-        ina_mempool_reset(e->ctx->mp_tmp_out);
     }
 
     IARRAY_ITER_FINISH();

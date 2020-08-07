@@ -127,7 +127,7 @@ static double expr_(const double x)
 
 INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2;
     data->func = expr_;
     data->expr_str = "(x - 2.3) * (x - 1.35) * (x + 4.2)";
 
@@ -161,7 +161,7 @@ static double expr0(const double x)
 
 INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk0)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2;
     data->func = expr0;
     data->expr_str = "(abs(-x) - 1.35) * ceil(x) * floor(x - 8.5)";
 
@@ -180,7 +180,7 @@ static double expr1(const double x)
 
 INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk1)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2;
     data->func = expr1;
     // eval of constants is not supported with the interpreter engine
     data->expr_str = "(x - 1.35) + sin(.45)";
