@@ -139,15 +139,8 @@ typedef enum iarray_eval_method_e {
     IARRAY_EVAL_METHOD_AUTO = 0u,
     IARRAY_EVAL_METHOD_ITERCHUNK = 1u,
     IARRAY_EVAL_METHOD_ITERBLOSC = 2u,
-    IARRAY_EVAL_METHOD_ITERBLOSC2 = 3u,
 } iarray_eval_method_t;
 
-// The next 3 bits (3, 4, 5) of eval_flags are reserved for the eval engine
-typedef enum iarray_eval_engine_e {
-    IARRAY_EVAL_ENGINE_AUTO = 0u,
-    IARRAY_EVAL_ENGINE_INTERPRETER = 1u,
-    IARRAY_EVAL_ENGINE_COMPILER = 2u,
-} iarray_eval_engine_t;
 
 typedef enum iarray_filter_flags_e {
     IARRAY_COMP_SHUFFLE    = 0x1,
@@ -254,7 +247,7 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .compression_level=5,
     .use_dict=0,
     .filter_flags=IARRAY_COMP_SHUFFLE,
-    .eval_flags=IARRAY_EVAL_METHOD_ITERCHUNK | IARRAY_EVAL_ENGINE_INTERPRETER << 3,
+    .eval_flags=IARRAY_EVAL_METHOD_ITERCHUNK,
     .max_num_threads=1,
     .fp_mantissa_bits=0};
 

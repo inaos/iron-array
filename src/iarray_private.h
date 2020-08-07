@@ -246,7 +246,7 @@ typedef void(*_iarray_vml_fun_s_a)(const MKL_INT n, const float a[], float r[]);
 
 ina_rc_t iarray_temporary_new(iarray_expression_t *expr, iarray_container_t *c, iarray_dtshape_t *dtshape, iarray_temporary_t **temp);
 
-ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size);
+ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, uint64_t *size);
 
 /* FIXME: since we want to keep the changes to tinyexpr as little as possible we deviate from our usual function decls */
 iarray_temporary_t* _iarray_func(iarray_expression_t *expr, iarray_temporary_t *operand1,

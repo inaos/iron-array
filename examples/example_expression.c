@@ -26,7 +26,7 @@ int main(void)
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.compression_level = 0;
-    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
+    cfg.eval_flags = IARRAY_EVAL_METHOD_AUTO;
     cfg.max_num_threads = 4;
     iarray_context_new(&cfg, &ctx);
 
@@ -45,8 +45,8 @@ int main(void)
         nelem *= shape[i];
     }
 
-    int32_t xchunkshape[] = {500, 500};
-    int32_t xblockshape[] = {200, 100};
+    int32_t xchunkshape[] = {400, 800};
+    int32_t xblockshape[] = {100, 150};
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
     xstorage.enforce_frame = false;
@@ -70,7 +70,7 @@ int main(void)
     int32_t outchunkshape[] = {400, 800};
     int32_t outblockshape[] = {100, 150};
     iarray_storage_t outstorage;
-    outstorage.backend = IARRAY_STORAGE_PLAINBUFFER;
+    outstorage.backend = IARRAY_STORAGE_BLOSC;
     outstorage.enforce_frame = false;
     outstorage.filename = NULL;
     for (int i = 0; i < ndim; ++i) {

@@ -159,14 +159,14 @@ static double expr2(const double x)
 
 INA_TEST_FIXTURE(expression_eval_view, iterblosc_superchunk_2)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC | (IARRAY_EVAL_ENGINE_COMPILER << 3);
+    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr2;
     data->expr_str = "sinh(x) + (cosh(x) - 1.35) - tanh(x + .2)";
 
-    int8_t ndim = 1;
-    int64_t shape[] = {20000};
-    int64_t pshape[] = {3456};
-    int64_t bshape[] = {236};
+    int8_t ndim = 2;
+    int64_t shape[] = {100, 1000};
+    int64_t pshape[] = {50, 200};
+    int64_t bshape[] = {25, 100};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, pshape, bshape, false, data->func, data->expr_str));
 }
