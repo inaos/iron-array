@@ -228,7 +228,7 @@ int main(int argc, char** argv)
         eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
     }
     else {
-        printf("eval_method must be 1, 2, 3\n");
+        printf("eval_method must be 1, 2\n");
         return EXIT_FAILURE;
     }
 
