@@ -551,6 +551,8 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
                                                                false));
             external_buffers[nvar] = ina_mem_alloc(ret->catarr->extchunknitems * ret->catarr->itemsize);
             iter_var[nvar]->padding = true;
+        } else {
+            iter_var[nvar]->padding = false;
         }
     }
 
@@ -623,7 +625,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
         }
         blosc2_free_ctx(cctx);
         for (int nvar = 0; nvar < e->nvars; nvar++) {
-            if (var_needs_free[nvar]) {
+            if (var_needs_free[nvar] && expr_pparams.input_class[nvar] != IARRAY_EXPR_NEQ) {
                 free(var_chunks[nvar]);
             }
         }
@@ -635,16 +637,19 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
 
     IARRAY_ITER_FINISH();
     iarray_iter_write_block_free(&iter_out);
-
+ 
     for (int nvar = 0; nvar < nvars; ++nvar) {
         if (expr_pparams.input_class[nvar] == IARRAY_EXPR_NEQ) {
+            iarray_iter_read_block_free(&iter_var[nvar]);
             ina_mem_free(external_buffers[nvar]);
         }
     }
     ina_mem_free(external_buffers);
-
     free(var_chunks);
     free(var_needs_free);
+
+    INA_MEM_FREE_SAFE(iter_var);
+    INA_MEM_FREE_SAFE(iter_value);
 
     return INA_SUCCESS;
 }
