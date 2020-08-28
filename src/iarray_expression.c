@@ -551,8 +551,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
                                                                false));
             external_buffers[nvar] = ina_mem_alloc(ret->catarr->extchunknitems * ret->catarr->itemsize);
             iter_var[nvar]->padding = true;
-        } else {
-            iter_var[nvar]->padding = false;
         }
     }
 
