@@ -121,7 +121,7 @@ static float expr0(const float x)
     return (fabsf(-x) - 1.35f) * ceilf(x) * floorf(x - 8.5f);
 }
 
-INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk0)
+INA_TEST_FIXTURE_SKIP(expression_eval_float, iterblosc_superchunk0)
 {
     data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr0;
@@ -140,7 +140,7 @@ static float expr1(const float x)
     return (x - 1.35f) + sinf(.45f);
 }
 
-INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk1)
+INA_TEST_FIXTURE_SKIP(expression_eval_float, iterblosc_superchunk1)
 {
     data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr1;
@@ -159,7 +159,7 @@ static float expr2(const float x)
     return sinhf(x) + (coshf(x) - 1.35f) - tanhf(x + .2f);
 }
 
-INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk2)
+INA_TEST_FIXTURE_SKIP(expression_eval_float, iterblosc_superchunk2)
 {
     data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr2;
@@ -178,7 +178,7 @@ static float expr3(const float x)
     return asinf(x) + (acosf(x) - 1.35f) - atanf(x + .2f);
 }
 
-INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
+INA_TEST_FIXTURE_SKIP(expression_eval_float, iterblosc_superchunk)
 {
     data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr3;
@@ -197,7 +197,7 @@ static float expr4(const float x)
     return expf(x) + (logf(x) - 1.35f) - log10f(x + .2f);
 }
 
-INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk_4)
+INA_TEST_FIXTURE_SKIP(expression_eval_float, iterblosc_superchunk_4)
 {
     data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr4;
@@ -216,7 +216,7 @@ static float expr5(const float x)
     return sqrtf(x) + atan2f(x, x) + powf(x, x);
 }
 
-INA_TEST_FIXTURE(expression_eval_float, iterchunk_plainbuffer)
+INA_TEST_FIXTURE_SKIP(expression_eval_float, iterchunk_plainbuffer)
 {
     data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
     data->func = expr5;
