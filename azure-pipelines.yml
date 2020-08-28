@@ -24,7 +24,7 @@ strategy:
     mac-release:
       imageName: 'macos-10.14'
       BUILD_CONFIGURATION: RelWithDebInfo
-     MULTITHREADING: False
+      MULTITHREADING: False
       DISABLE_LLVM_CONFIG: True
     windows-debug:
       imageName: 'vs2017-win2016'
