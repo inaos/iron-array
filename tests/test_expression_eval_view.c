@@ -97,8 +97,6 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
 
     _fill_y(buffer_x, buffer_y, nelem2, func);
 
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &dtshape2, &store, 0, &c_out));
-
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x2));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind_out_properties(e, &dtshape2, &store));
