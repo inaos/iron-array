@@ -6,45 +6,44 @@ variables:
 
 strategy:
   matrix:
-   linux-debug:
-     imageName: 'ubuntu-18.04'
-     BUILD_CONFIGURATION: Debug
-     MULTITHREADING: False
-     DISABLE_LLVM_CONFIG: True
+    linux-debug:
+      imageName: 'ubuntu-18.04'
+      BUILD_CONFIGURATION: Debug
+      MULTITHREADING: False
+      DISABLE_LLVM_CONFIG: True
     linux-release:
       imageName: 'ubuntu-18.04'
       BUILD_CONFIGURATION: RelWithDebInfo
       MULTITHREADING: False
       DISABLE_LLVM_CONFIG: True
-   mac-debug:
-     imageName: 'macos-10.14'
-     BUILD_CONFIGURATION: Debug
+    mac-debug:
+      imageName: 'macos-10.14'
+      BUILD_CONFIGURATION: Debug
+      MULTITHREADING: False
+      DISABLE_LLVM_CONFIG: True
+    mac-release:
+      imageName: 'macos-10.14'
+      BUILD_CONFIGURATION: RelWithDebInfo
      MULTITHREADING: False
-     DISABLE_LLVM_CONFIG: True
-   mac-release:
-     imageName: 'macos-10.14'
-     BUILD_CONFIGURATION: RelWithDebInfo
-     MULTITHREADING: False
-     DISABLE_LLVM_CONFIG: True
-   windows-debug:
-     imageName: 'vs2017-win2016'
-     BUILD_CONFIGURATION: Debug
-     MULTITHREADING: False
-     BUILD_ARCH: x86_64
-     VSINSTALL: "Microsoft Visual Studio\\2017\\Enterprise\\VC\\Auxiliary\\Build"
-     MSVC_PLATFORM: amd64
-     LLVM_PKG_NAME: 'llvm-windows_vs17-x86_64-debug'
-     LLVM_PKG_VERSION: '10.0.0'
-   windows-release:
-     imageName: 'vs2017-win2016'
-     BUILD_CONFIGURATION: RelWithDebInfo
-     MULTITHREADING: False
-     BUILD_ARCH: x86_64
-     VSINSTALL: "Microsoft Visual Studio\\2017\\Enterprise\\VC\\Auxiliary\\Build"
-     MSVC_PLATFORM: amd64
-     LLVM_PKG_NAME: 'llvm-windows_vs17-x86_64-relwithdebinfo'
-     LLVM_PKG_VERSION: '10.0.0'
-
+      DISABLE_LLVM_CONFIG: True
+    windows-debug:
+      imageName: 'vs2017-win2016'
+      BUILD_CONFIGURATION: Debug
+      MULTITHREADING: False
+      BUILD_ARCH: x86_64
+      VSINSTALL: "Microsoft Visual Studio\\2017\\Enterprise\\VC\\Auxiliary\\Build"
+      MSVC_PLATFORM: amd64
+      LLVM_PKG_NAME: 'llvm-windows_vs17-x86_64-debug'
+      LLVM_PKG_VERSION: '10.0.0'
+    windows-release:
+      imageName: 'vs2017-win2016'
+      BUILD_CONFIGURATION: RelWithDebInfo
+      MULTITHREADING: False
+      BUILD_ARCH: x86_64
+      VSINSTALL: "Microsoft Visual Studio\\2017\\Enterprise\\VC\\Auxiliary\\Build"
+      MSVC_PLATFORM: amd64
+      LLVM_PKG_NAME: 'llvm-windows_vs17-x86_64-relwithdebinfo'
+      LLVM_PKG_VERSION: '10.0.0'
 
 pool:
   vmImage: $(imageName)
