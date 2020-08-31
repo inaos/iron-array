@@ -369,7 +369,7 @@ int prefilter_func(blosc2_prefilter_params *pparams)
 
     // Eval the expression for this chunk
     int ret;
-    uint32_t eval_engine = (e->ctx->cfg->eval_flags & 0x38u) >> 3u;
+
     ret = ((iarray_eval_fn) e->jug_expr_func)(&eval_pparams);
     switch (ret) {
         case 0:
@@ -440,12 +440,12 @@ INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container
     // Create eval pparams
     iarray_eval_pparams_t eval_pparams = {0};
     eval_pparams.ninputs = nvars;
-    eval_pparams.out_typesize = e->out->catarr->itemsize;
+    eval_pparams.out_typesize = (int32_t) e->out->catarr->itemsize;
     eval_pparams.ndim = e->out->dtshape->ndim;
     eval_pparams.user_data = &expr_pparams;
     for (int i = 0; i < nvars; ++i) {
-        eval_pparams.input_typesizes[i] = e->vars[i].c->catarr->itemsize;
-        expr_pparams.input_typesizes[i] = e->vars[i].c->catarr->itemsize;
+        eval_pparams.input_typesizes[i] = (int32_t) e->vars[i].c->catarr->itemsize;
+        expr_pparams.input_typesizes[i] = (int32_t) e->vars[i].c->catarr->itemsize;
         expr_pparams.input_class[i] = IARRAY_EXPR_NEQ;
     }
 
@@ -470,7 +470,9 @@ INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container
         expr_pparams.out_value = out_value;
 
         int err = ((iarray_eval_fn) e->jug_expr_func)(&eval_pparams);
-
+        if (err != 0) {
+            return INA_ERROR(IARRAY_ERR_EVAL_ENGINE_FAILED);
+        }
         nitems_written += out_items;
     }
 
