@@ -624,7 +624,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         }
         blosc2_free_ctx(cctx);
 
-        // Free temporal chunks
+        // Free temporary chunks
         for (int nvar = 0; nvar < e->nvars; nvar++) {
             if (var_needs_free[nvar] && expr_pparams.input_class[nvar] != IARRAY_EXPR_NEQ) {
                 free(var_chunks[nvar]);
