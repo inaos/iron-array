@@ -27,9 +27,9 @@ typedef struct _iarray_jug_var_s {
 
 
 typedef enum iarray_expr_input_class_e {
-    IARRAY_EXPR_EQ = 0u,
-    IARRAY_EXPR_EQ_NCOMP = 1u,
-    IARRAY_EXPR_NEQ = 2u
+    IARRAY_EXPR_EQ = 0u,  // Same chunkshape/blockshape
+    IARRAY_EXPR_EQ_NCOMP = 1u, // Same chunkshape/blockshape and no-compressed data
+    IARRAY_EXPR_NEQ = 2u  // Different chunkshape/blockshape
 } iarray_expr_input_class_t;
 
 
@@ -491,13 +491,13 @@ INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container
 }
 
 
-INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_container_t *ret, int64_t *out_pshape)
+INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container_t *ret, int64_t *out_pshape)
 {
     int64_t nitems_written = 0;
     int nvars = e->nvars;
 
     if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        IARRAY_TRACE1(iarray.error, "ITERBLOSC2 eval can't be used with a plainbuffer output container");
+        IARRAY_TRACE1(iarray.error, "ITERBLOSC eval can't be used with a plainbuffer output container");
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
 
@@ -623,6 +623,8 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
         }
         blosc2_free_ctx(cctx);
+
+        // Free temporal chunks
         for (int nvar = 0; nvar < e->nvars; nvar++) {
             if (var_needs_free[nvar] && expr_pparams.input_class[nvar] != IARRAY_EXPR_NEQ) {
                 free(var_chunks[nvar]);
@@ -636,7 +638,8 @@ INA_API(ina_rc_t) iarray_eval_iterblosc2(iarray_expression_t *e, iarray_containe
 
     IARRAY_ITER_FINISH();
     iarray_iter_write_block_free(&iter_out);
- 
+
+    // Free initialized iterators
     for (int nvar = 0; nvar < nvars; ++nvar) {
         if (expr_pparams.input_class[nvar] == IARRAY_EXPR_NEQ) {
             iarray_iter_read_block_free(&iter_var[nvar]);
@@ -685,7 +688,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
             IARRAY_RETURN_IF_FAILED( iarray_eval_iterchunk(e, ret, out_pshape));
             break;
         case IARRAY_EVAL_METHOD_ITERBLOSC:
-            IARRAY_RETURN_IF_FAILED( iarray_eval_iterblosc2(e, ret, out_pshape));
+            IARRAY_RETURN_IF_FAILED(iarray_eval_iterblosc(e, ret, out_pshape));
             break;
         default:
             IARRAY_TRACE1(iarray.error, "Invalid eval method");
