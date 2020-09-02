@@ -12,7 +12,6 @@
 
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
-#include <contribs/tinyexpr/tinyexpr.h>
 #include <minjugg.h>
 #include <caterva_blosc.h>
 
