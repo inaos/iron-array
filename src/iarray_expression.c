@@ -203,7 +203,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
 
-    uint64_t size;
+    size_t size;
     IARRAY_RETURN_IF_FAILED(iarray_shape_size(e->out_dtshape, &size));
     e->nbytes = size * e->typesize;
 
@@ -246,7 +246,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     }
 
     IARRAY_RETURN_IF_FAILED(jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars,
-                                              jug_vars, e->typesize, &e->jug_expr_func));
+                                                      jug_vars, e->typesize, &e->jug_expr_func));
 
     return INA_SUCCESS;
 }
@@ -698,7 +698,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
 }
 
 
-ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, uint64_t *size)
+ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)
 {
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(size);
