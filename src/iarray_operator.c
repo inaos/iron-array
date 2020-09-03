@@ -211,6 +211,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
             if((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
                 c->catarr->buf = c_block;
+                c->catarr->empty = false;
             }
         } else {
             // Append it to a new iarray container
