@@ -73,7 +73,7 @@ int main(int argc, char** argv)
     char *eval_method = NULL;
 
     INA_OPTS(opt,
-             INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOCK = 2, EVAL_ITERBLOSC = 3"),
+             INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOSC = 2"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
              INA_OPT_INT("t", "nthreads", 1, "Use number of threads for the evaluation"),
@@ -167,11 +167,8 @@ int main(int argc, char** argv)
     else if (eval_flags == IARRAY_EVAL_METHOD_ITERBLOSC) {
         eval_method = "EVAL_ITERBLOSC";
     }
-    else if (eval_flags == IARRAY_EVAL_METHOD_ITERBLOSC2) {
-        eval_method = "EVAL_ITERBLOSC2";
-    }
     else {
-        printf("eval_flags must be 1, 2, 3, 4\n");
+        printf("eval_flags must be 1, 2\n");
         return EXIT_FAILURE;
     }
     //config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions

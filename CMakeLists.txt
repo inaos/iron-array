@@ -48,8 +48,6 @@ include("${CMAKE_BINARY_DIR}/inac.cmake")
 
 inac_add_dependency(inac "1.0.7")
 
-inac_add_contrib_lib(tinyexpr)
-
 find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")

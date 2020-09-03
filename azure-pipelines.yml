@@ -45,7 +45,6 @@ strategy:
       LLVM_PKG_NAME: 'llvm-windows_vs17-x86_64-relwithdebinfo'
       LLVM_PKG_VERSION: '10.0.0'
 
-
 pool:
   vmImage: $(imageName)
 

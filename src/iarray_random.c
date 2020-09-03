@@ -105,8 +105,6 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(random_ctx);
     INA_VERIFY_NOT_NULL(container);
 
-    ina_rc_t rc;
-
     int status = VSL_ERROR_OK;
     iarray_iter_write_block_t *iter;
     iarray_iter_write_block_value_t val;

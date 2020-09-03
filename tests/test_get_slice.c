@@ -110,7 +110,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     iarray_container_free(ctx, &c_out);
 
     ina_mem_free(buffer_x);
-
+    ina_mem_free(bufdes);
     return INA_SUCCESS;
 }
 

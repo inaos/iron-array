@@ -622,7 +622,7 @@ INA_API(void) jug_expression_free(jug_expression_t **expr)
     if ((*expr)->fun_map != NULL) {
         ina_hashtable_free(&(*expr)->fun_map);
     }
-    if ((*expr)->fun_map != NULL) {
+    if ((*expr)->decl_cache != NULL) {
         ina_hashtable_free(&(*expr)->decl_cache);
     }
     if ((*expr)->fun_map_te != NULL) {
