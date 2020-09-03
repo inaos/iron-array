@@ -14,8 +14,8 @@
 #include <math.h>
 
 
-double fexpr(double x, double y) {
-    return sin(x) * sin(y) + cos(x) * cos(y);
+double fexpr(double x, double y, double z) {
+    return sin(x) * sin(y) + cos(z);
 }
 
 
@@ -26,12 +26,13 @@ int main(void) {
     double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
 
-    char *expr = "sin(x) * sin(y) + cos(x) * cos(y)";
+    char *expr = "sin(x) * sin(y) + cos(z)";
 
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    cfg.compression_level = 9;
-    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2;
+    cfg.compression_level = 0;
+    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+
     cfg.max_num_threads = 4;
     iarray_context_new(&cfg, &ctx);
 
@@ -51,7 +52,8 @@ int main(void) {
     }
 
     int32_t xchunkshape[] = {4000 * 1000};
-    int32_t xblockshape[] = {16 * 1000};
+    int32_t xblockshape[] = {32 * 1000};
+
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
     xstorage.enforce_frame = false;
@@ -62,7 +64,8 @@ int main(void) {
     }
 
     int32_t ychunkshape[] = {4000 * 1000};
-    int32_t yblockshape[] = {16 * 1000};
+    int32_t yblockshape[] = {32 * 1000};
+
     iarray_storage_t ystorage;
     ystorage.backend = IARRAY_STORAGE_BLOSC;
     ystorage.enforce_frame = false;
@@ -72,8 +75,20 @@ int main(void) {
         ystorage.blockshape[i] = yblockshape[i];
     }
 
+    int32_t zchunkshape[] = {4000 * 1000};
+    int32_t zblockshape[] = {32 * 1000};
+    iarray_storage_t zstorage;
+    zstorage.backend = IARRAY_STORAGE_BLOSC;
+    zstorage.enforce_frame = false;
+    zstorage.filename = NULL;
+    for (int i = 0; i < ndim; ++i) {
+        zstorage.chunkshape[i] = zchunkshape[i];
+        zstorage.blockshape[i] = zblockshape[i];
+    }
+
     int32_t outchunkshape[] = {4000 * 1000};
-    int32_t outblockshape[] = {16 * 1000};
+    int32_t outblockshape[] = {32 * 1000};
+
     iarray_storage_t outstorage;
     outstorage.backend = IARRAY_STORAGE_BLOSC;
     outstorage.enforce_frame = false;
@@ -85,14 +100,19 @@ int main(void) {
 
     iarray_container_t *c_x;
     iarray_container_t *c_y;
+    iarray_container_t *c_z;
 
     iarray_linspace(ctx, &dtshape, nelem, 0, 1, &xstorage, 0, &c_x);
     iarray_linspace(ctx, &dtshape, nelem, 0, 1, &ystorage, 0, &c_y);
+    iarray_linspace(ctx, &dtshape, nelem, 0, 1, &zstorage, 0, &c_z);
+
 
     iarray_expression_t *e;
     iarray_expr_new(ctx, &e);
     iarray_expr_bind(e, "x", c_x);
     iarray_expr_bind(e, "y", c_y);
+    iarray_expr_bind(e, "z", c_z);
+
     iarray_expr_bind_out_properties(e, &dtshape, &outstorage);
 
     iarray_expr_compile(e, expr);
@@ -116,15 +136,22 @@ int main(void) {
     uint64_t b_size = nelem * typesize;
     uint8_t *b_x = ina_mem_alloc(b_size);
     uint8_t *b_y = ina_mem_alloc(b_size);
+    uint8_t *b_z = ina_mem_alloc(b_size);
+
     uint8_t *b_out = ina_mem_alloc(b_size);
 
     IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_x, b_x, b_size));
     IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_y, b_y, b_size));
+    IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_z, b_z, b_size));
+
     IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_out, b_out, b_size));
 
     for (int i = 1; i < nelem; ++i) {
         double d1 = ((double *) b_out)[i];
-        double d2 = fexpr(((double *) b_x)[i], ((double *) b_y)[i]);
+        double d2 = fexpr(((double *) b_x)[i],
+                          ((double *) b_y)[i],
+                          ((double *) b_z)[i]);
+
 
         double rerr = fabs((d1 - d2) / d1);
         if (rerr > 1e-15) {
@@ -141,6 +168,8 @@ int main(void) {
 
     INA_MEM_FREE_SAFE(b_x);
     INA_MEM_FREE_SAFE(b_y);
+    INA_MEM_FREE_SAFE(b_z);
+
     INA_MEM_FREE_SAFE(b_out);
 
     INA_STOPWATCH_FREE(&w);
