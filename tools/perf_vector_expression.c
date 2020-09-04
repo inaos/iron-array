@@ -218,7 +218,7 @@ int main(int argc, char** argv)
     }
 
     const char *eval_method_str = NULL;
-    unsigned eval_method;
+
     if (eval_method == 1) {
         eval_method_str = "ITERCHUNK";
         eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;

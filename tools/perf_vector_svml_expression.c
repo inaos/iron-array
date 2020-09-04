@@ -70,7 +70,7 @@ int main(int argc, char** argv)
     char *mat_x_name = NULL;
     char *mat_y_name = NULL;
     char *mat_out_name = NULL;
-    char *eval_method = NULL;
+    char *eval_method_str = NULL;
 
     INA_OPTS(opt,
              INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOSC = 2"),
@@ -162,10 +162,10 @@ int main(int argc, char** argv)
     config.max_num_threads = nthreads;
     config.eval_method = eval_method;
     if (eval_method == IARRAY_EVAL_METHOD_ITERCHUNK) {
-        eval_method = "EVAL_ITERCHUNK";
+        eval_method_str = "EVAL_ITERCHUNK";
     }
     else if (eval_method == IARRAY_EVAL_METHOD_ITERBLOSC) {
-        eval_method = "EVAL_ITERBLOSC";
+        eval_method_str = "EVAL_ITERBLOSC";
     }
     else {
         printf("eval_method must be 1, 2\n");
@@ -364,7 +364,7 @@ int main(int argc, char** argv)
     iarray_container_info(con_out, &nbytes, &cbytes);
     printf("\n");
     printf("Time for computing and filling OUT values using iarray (%s):  %.3g s, %.1f MB/s\n",
-           eval_method, elapsed_sec, nbytes / (elapsed_sec * _IARRAY_SIZE_MB));
+           eval_method_str, elapsed_sec, nbytes / (elapsed_sec * _IARRAY_SIZE_MB));
     nbytes_mb = ((double)nbytes / (double)_IARRAY_SIZE_MB);
     cbytes_mb = ((double)cbytes / (double)_IARRAY_SIZE_MB);
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
