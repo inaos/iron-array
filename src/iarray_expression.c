@@ -175,7 +175,7 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
 
 static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
 {
-    uint32_t eval_method = e->ctx->cfg->eval_flags & 0x3u;
+    uint32_t eval_method = e->ctx->cfg->eval_method & 0x3u;
 
     if (eval_method == IARRAY_EVAL_METHOD_ITERBLOSC) {
         if (e->out_store_properties->backend == IARRAY_STORAGE_PLAINBUFFER) {
@@ -190,7 +190,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
         }
     }
 
-    e->ctx->cfg->eval_flags = eval_method;
+    e->ctx->cfg->eval_method = eval_method;
 
     switch (e->out_dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
@@ -681,7 +681,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
         }
     }
 
-    uint32_t eval_method = e->ctx->cfg->eval_flags & 0x3u;
+    uint32_t eval_method = e->ctx->cfg->eval_method & 0x3u;
 
     switch (eval_method) {
         case IARRAY_EVAL_METHOD_ITERCHUNK:

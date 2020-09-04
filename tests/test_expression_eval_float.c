@@ -123,7 +123,7 @@ static float expr0(const float x)
 
 INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk0)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr0;
     data->expr_str = "(abs(-x) - 1.35) * ceil(x) * floor(x - 8.5)";
 
@@ -142,7 +142,7 @@ static float expr1(const float x)
 
 INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk1)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr1;
     data->expr_str = "(x - 1.35) + sin(.45)";
 
@@ -161,7 +161,7 @@ static float expr2(const float x)
 
 INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk2)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr2;
     data->expr_str = "sinh(x) + (cosh(x) - 1.35) - tanh(x + .2)";
 
@@ -180,7 +180,7 @@ static float expr3(const float x)
 
 INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr3;
     data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
 
@@ -199,7 +199,7 @@ static float expr4(const float x)
 
 INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk_4)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr4;
     data->expr_str = "exp(x) + (log(x) - 1.35) - log10(x + .2)";
 
@@ -218,7 +218,7 @@ static float expr5(const float x)
 
 INA_TEST_FIXTURE(expression_eval_float, iterchunk_plainbuffer)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;
     data->func = expr5;
     data->expr_str = "sqrt(x) + atan2(x, x) + pow(x, x)";
 

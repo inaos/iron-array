@@ -218,21 +218,21 @@ int main(int argc, char** argv)
     }
 
     const char *eval_method_str = NULL;
-    unsigned eval_flags;
+
     if (eval_method == 1) {
         eval_method_str = "ITERCHUNK";
-        eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
+        eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;
     }
     else if (eval_method == 2) {
         eval_method_str = "ITERBLOSC";
-        eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+        eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
     }
     else {
         printf("eval_method must be 1, 2\n");
         return EXIT_FAILURE;
     }
 
-    config.eval_flags = eval_flags;
+    config.eval_method = eval_method;
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
 

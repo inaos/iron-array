@@ -134,7 +134,7 @@ typedef enum iarray_storage_type_e {
     IARRAY_STORAGE_BLOSC = 1,
 } iarray_storage_type_t;
 
-// The first 3 bits (0, 1, 2) of eval_flags are reserved for the eval method
+// The first 3 bits (0, 1, 2) of eval_method are reserved for the eval method
 typedef enum iarray_eval_method_e {
     IARRAY_EVAL_METHOD_AUTO = 0u,
     IARRAY_EVAL_METHOD_ITERCHUNK = 1u,
@@ -190,7 +190,7 @@ typedef struct iarray_config_s {
     int compression_level;
     int use_dict;
     int filter_flags;
-    unsigned int eval_flags;
+    unsigned int eval_method;
     int max_num_threads; /* Maximum number of threads to use */
     uint8_t fp_mantissa_bits; /* Only useful together with flag: IARRAY_COMP_TRUNC_PREC */
 } iarray_config_t;
@@ -247,7 +247,7 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .compression_level=5,
     .use_dict=0,
     .filter_flags=IARRAY_COMP_SHUFFLE,
-    .eval_flags=IARRAY_EVAL_METHOD_ITERCHUNK,
+    .eval_method=IARRAY_EVAL_METHOD_ITERCHUNK,
     .max_num_threads=1,
     .fp_mantissa_bits=0};
 
@@ -256,7 +256,7 @@ static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = {
     .compression_level=0,
     .use_dict=0,
     .filter_flags=0,
-    .eval_flags=0,
+    .eval_method=0,
     .max_num_threads=1,
     .fp_mantissa_bits=0};
 
