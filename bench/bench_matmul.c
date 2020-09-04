@@ -189,7 +189,7 @@ INA_BENCH_SETUP(matmul)
     data->config.compression_codec = IARRAY_COMPRESSION_LZ4;
     data->config.compression_level = 5;
     data->config.max_num_threads = NTHREADS;
-    data->config.eval_flags = IARRAY_EXPR_EVAL_CHUNK;
+    data->config.eval_method = IARRAY_EXPR_EVAL_CHUNK;
 
     INA_BENCH_MSG("Measuring time for multiplying matrices X and Y");
 }

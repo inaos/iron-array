@@ -91,8 +91,8 @@ int main(int argc, char** argv)
     }
     ina_set_cleanup_handler(ina_cleanup_handler);
 
-    int eval_flags;
-    INA_MUST_SUCCEED(ina_opt_get_int("e", &eval_flags));
+    int eval_method;
+    INA_MUST_SUCCEED(ina_opt_get_int("e", &eval_method));
     int clevel;
     INA_MUST_SUCCEED(ina_opt_get_int("c", &clevel));
     int codec;
@@ -160,15 +160,15 @@ int main(int argc, char** argv)
     }
     config.use_dict = INA_SUCCEED(ina_opt_isset("d")) ? 1 : 0;
     config.max_num_threads = nthreads;
-    config.eval_flags = eval_flags;
-    if (eval_flags == IARRAY_EVAL_METHOD_ITERCHUNK) {
+    config.eval_method = eval_method;
+    if (eval_method == IARRAY_EVAL_METHOD_ITERCHUNK) {
         eval_method = "EVAL_ITERCHUNK";
     }
-    else if (eval_flags == IARRAY_EVAL_METHOD_ITERBLOSC) {
+    else if (eval_method == IARRAY_EVAL_METHOD_ITERBLOSC) {
         eval_method = "EVAL_ITERBLOSC";
     }
     else {
-        printf("eval_flags must be 1, 2\n");
+        printf("eval_method must be 1, 2\n");
         return EXIT_FAILURE;
     }
     //config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions

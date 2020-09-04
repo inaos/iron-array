@@ -159,7 +159,7 @@ static double expr2(const double x)
 
 INA_TEST_FIXTURE(expression_eval_view, iterblosc_superchunk_2)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr2;
     data->expr_str = "sinh(x) + (cosh(x) - 1.35) - tanh(x + .2)";
 
@@ -178,7 +178,7 @@ static double expr3(const double x)
 
 INA_TEST_FIXTURE(expression_eval_view, iterchunk_superchunk_3)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;
     data->func = expr3;
     data->expr_str = "asin(x + 2) + (acos(x) - 1.35) - atan(x + .2)";
 
@@ -197,7 +197,7 @@ static double expr4(const double x)
 
 INA_TEST_FIXTURE(expression_eval_view, iterchunk_plainbuffer_4)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;
     data->func = expr4;
     data->expr_str = "exp(x) + (log(x) - 1.35) - log10(x + .2)";
 
@@ -216,7 +216,7 @@ static double expr5(const double x)
 
 INA_TEST_FIXTURE(expression_eval_view, iterchunk_plainbuffer_5)
 {
-    data->cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;
     data->func = expr5;
     data->expr_str = "sqrt(x) + atan2(x, x) + pow(x, x)";
 
