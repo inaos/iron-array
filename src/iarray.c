@@ -11,6 +11,7 @@
  */
 
 #include <libiarray/iarray.h>
+#include <stdlib.h>
 
 #include <iarray_private.h>
 
@@ -317,6 +318,11 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx)
 {
+    if (!_ina_inited) {
+        fprintf(stderr, "Error.  You need to call `iarray_init()` prior to any other iarray function call.");
+        exit(1);
+    }
+
     INA_VERIFY_NOT_NULL(ctx);
     *ctx = ina_mem_alloc(sizeof(iarray_context_t));
 
@@ -325,7 +331,6 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
 
     ina_mem_cpy((*ctx)->cfg, cfg, sizeof(iarray_config_t));
 
-    
     IARRAY_RETURN_IF_FAILED(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp));
     IARRAY_RETURN_IF_FAILED(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_chunk_cache));
     IARRAY_RETURN_IF_FAILED(ina_mempool_new(_IARRAY_MEMPOOL_OP_CHUNKS, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_op));

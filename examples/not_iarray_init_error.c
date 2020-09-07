@@ -16,7 +16,8 @@
 
 int main(void)
 {
-    iarray_init();
+    // The initialization is commented out on purpose to trigger a compilation issue
+    // iarray_init();
 
     int8_t ndim = 1;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
@@ -29,9 +30,11 @@ int main(void)
     cfg.compression_level = 5;
     cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
     cfg.max_num_threads = 1;
-    cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    cfg.eval_method = IARRAY_EVAL_METHOD_AUTO;
     iarray_context_t *ctx;
-    IARRAY_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
+    //IARRAY_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
+    // Call iarray_context_new without any protection to make this crash heavyly.
+    iarray_context_new(&cfg, &ctx);
 
     iarray_dtshape_t dtshape;
     dtshape.ndim = ndim;
@@ -64,27 +67,27 @@ int main(void)
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &dtshape, &store, 0, &res1));
     iarray_eval(e, &res1);
 
-
     iarray_iter_read_block_t *iter;
     iarray_iter_read_block_value_t val;
     IARRAY_FAIL_IF(iarray_iter_read_block_new(ctx, &iter, data, cshape, &val, false));
     while (INA_SUCCEED(iarray_iter_read_block_has_next(iter))) {
         IARRAY_FAIL_IF(iarray_iter_read_block_next(iter, NULL, 0));
         for (int64_t i = 0; i < val.block_size; ++i) {
-            //printf("Next\n");
+            printf("Next\n");
         }
     }
     iarray_iter_read_block_free(&iter);
     IARRAY_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     rc = INA_SUCCESS;
-    goto cleanup;
-    fail:
-    rc = ina_err_get_rc();
-    cleanup:
+
     iarray_iter_read_block_free(&iter);
     iarray_container_free(ctx, &data);
     iarray_context_free(&ctx);
 
     return rc;
+
+fail:
+    printf("%s\n", ina_err_strerror(ina_err_get_rc()));
+    return EXIT_FAILURE;
 }

@@ -495,7 +495,7 @@ int main(int argc, char** argv)
     fflush(stdout);
     bool not_equal = false;
     INA_STOPWATCH_START(w);
-    INA_FAIL_IF_ERROR(iarray_container_almost_equal(con_y, con_out, 1e-05));
+    IARRAY_FAIL_IF_ERROR(iarray_container_almost_equal(con_y, con_out, 1e-05));
     printf(" Yes!\n");
     goto success;
   fail:
