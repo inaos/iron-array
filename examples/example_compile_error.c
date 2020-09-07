@@ -30,7 +30,7 @@ int main(void)
     cfg.compression_level = 5;
     cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
     cfg.max_num_threads = 1;
-    cfg.eval_flags = IARRAY_EVAL_METHOD_AUTO;
+    cfg.eval_method = IARRAY_EVAL_METHOD_AUTO;
     iarray_context_t *ctx;
     IARRAY_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
 
