@@ -274,8 +274,8 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx);
  *  `low` and `high` contain low and high values for the chunksize.  If `low` is 0, it defaults
  *  to a fraction of L2 cache size.  If `high` is 0, it defaults to a fraction of L3 cache size.
  */
-INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
-                                          int64_t low, int64_t high);
+INA_API(ina_rc_t) iarray_chunk_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
+                                      int64_t low, int64_t high);
 
 /*
  * Provide advice for the block shapes for performing a matrix-matrix multiplication.

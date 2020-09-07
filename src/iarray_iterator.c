@@ -21,8 +21,8 @@
 void _iarray_iter_matmul_init(iarray_iter_matmul_t *itr)
 {
     itr->cont = 0;
-    itr->npart1 = 0;
-    itr->npart2 = 0;
+    itr->nchunk1 = 0;
+    itr->nchunk2 = 0;
 }
 
 void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr)
@@ -42,16 +42,16 @@ void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr)
         m = itr->cont / ((K/B1)) % (M/B0);
         k = itr->cont % (K/B1);
 
-        itr->npart1 = (m * (K/B1) + k);
-        itr->npart2 = k;
+        itr->nchunk1 = (m * (K / B1) + k);
+        itr->nchunk2 = k;
 
     } else {
         m = itr->cont / ((K/B1) * (N/B2)) % (M/B0);
         k = itr->cont % (K/B1);
         n = itr->cont / ((K/B1)) % (N/B2);
 
-        itr->npart1 = (m * (K/B1) + k);
-        itr->npart2 = (k * (N/B2) + n);
+        itr->nchunk1 = (m * (K / B1) + k);
+        itr->nchunk2 = (k * (N / B2) + n);
     }
 }
 
@@ -340,12 +340,12 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
         switch (cont->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                     cont->catarr->chunk_cache.data =
-                            ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->extchunknitems * sizeof(double));
+                            ina_mempool_dalloc(ctx->mp_chunk_cache, (size_t) cont->catarr->extchunknitems * sizeof(double));
 
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                     cont->catarr->chunk_cache.data =
-                            ina_mempool_dalloc(ctx->mp_part_cache, (size_t) cont->catarr->extchunknitems * sizeof(float));
+                            ina_mempool_dalloc(ctx->mp_chunk_cache, (size_t) cont->catarr->extchunknitems * sizeof(float));
 
                 break;
             default:
@@ -368,7 +368,7 @@ INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t **itr)
     // Invalidate caches and get rid of memory pool
     (*itr)->cont->catarr->chunk_cache.data = NULL;
     (*itr)->cont->catarr->chunk_cache.nchunk = -1;
-    ina_mempool_reset((*itr)->ctx->mp_part_cache);
+    ina_mempool_reset((*itr)->ctx->mp_chunk_cache);
 
     INA_MEM_FREE_SAFE((*itr)->aux);
     INA_MEM_FREE_SAFE((*itr)->block_shape);
@@ -514,7 +514,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                 }
             }
         } else {
-            // check if the part should be padded with 0s
+            // check if the chunk should be padded with 0s
             if (itr->compressed_chunk_buffer) {
                 int err = blosc2_schunk_append_chunk(catarr->sc, itr->block, false);
                 if (err < 0) {
@@ -645,7 +645,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
     if (!(*itr)->contiguous) {
         if (!external_buffer) {
-            // We may want to use the output partition for hosting a compressed buffer, so we need space for the overhead.
+            // We may want to use the output chunk for hosting a compressed buffer, so we need space for the overhead.
             // TODO: the overhead is only useful for the prefilter approach, so think if there is a better option.
             (*itr)->external_buffer = false;
             (*itr)->block = (uint8_t *) ina_mem_alloc((size_t) block_size + BLOSC_MAX_OVERHEAD);
@@ -771,14 +771,14 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
                                                                   itr->cont,
                                                                   (int64_t *) start_,
                                                                   (int64_t *) stop_,
-                                                                  (void **) &itr->part,
+                                                                  (void **) &itr->chunk,
                                                                   buflen * typesize));
         } else {
             IARRAY_RETURN_IF_FAILED(iarray_get_slice_buffer(itr->ctx,
                                                          itr->cont,
                                                          (int64_t *) start_,
                                                          (int64_t *) stop_,
-                                                         itr->part,
+                                                         itr->chunk,
                                                          buflen * typesize));
         }
 
@@ -791,19 +791,19 @@ INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
     }
 
     int64_t *c_shape = itr->cont->dtshape->shape;
-    int64_t ind_part_elem[IARRAY_DIMENSION_MAX];
+    int64_t ind_chunk_elem[IARRAY_DIMENSION_MAX];
     int64_t inc = 1;
     int64_t inc_s = 1;
 
     itr->elem_flat_index = 0;
     for (int i = ndim - 1; i >= 0; --i) {
-        ind_part_elem[i] = itr->nelem_block % (inc * itr->cur_block_shape[i]) / inc;
-        itr->elem_index[i] = ind_part_elem[i] + itr->cur_block_index[i] * itr->block_shape[i];
+        ind_chunk_elem[i] = itr->nelem_block % (inc * itr->cur_block_shape[i]) / inc;
+        itr->elem_index[i] = ind_chunk_elem[i] + itr->cur_block_index[i] * itr->block_shape[i];
         itr->elem_flat_index += itr->elem_index[i] * inc_s;
         inc_s *= c_shape[i];
         inc *= itr->cur_block_shape[i];
     }
-    itr->pointer = (void *)&(itr->part)[itr->nelem_block * typesize];
+    itr->pointer = (void *)&(itr->chunk)[itr->nelem_block * typesize];
 
     itr->val->elem_pointer = itr->pointer;
     itr->val->elem_index = itr->elem_index;
@@ -864,7 +864,7 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
     }
 
     if (cont->catarr->storage == CATERVA_STORAGE_BLOSC || cont->view) {
-        (*itr)->part = (uint8_t *) ina_mem_alloc((size_t) block_size * cont->catarr->itemsize);
+        (*itr)->chunk = (uint8_t *) ina_mem_alloc((size_t) block_size * cont->catarr->itemsize);
     }
 
     (*itr)->val = val;
@@ -894,7 +894,7 @@ INA_API(void) iarray_iter_read_free(iarray_iter_read_t **itr)
 
     INA_MEM_FREE_SAFE((*itr)->elem_index);
     if ((*itr)->cont->catarr->storage != CATERVA_STORAGE_PLAINBUFFER || (*itr)->cont->view) {
-        INA_MEM_FREE_SAFE((*itr)->part);
+        INA_MEM_FREE_SAFE((*itr)->chunk);
     }
     INA_MEM_FREE_SAFE((*itr)->block_shape);
     INA_MEM_FREE_SAFE((*itr)->cur_block_shape);
@@ -915,10 +915,10 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
     int ndim = catarr->ndim;
     int64_t typesize = itr->container->catarr->itemsize;
 
-    // check if a part is filled totally and append it
+    // check if a chunk is filled totally and append it
     if (itr->nelem_block == itr->cur_block_size - 1) {
         if (itr->container->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-            int err = caterva_array_append(itr->cat_ctx, itr->container->catarr, itr->part, itr->cur_block_size * typesize);
+            int err = caterva_array_append(itr->cat_ctx, itr->container->catarr, itr->chunk, itr->cur_block_size * typesize);
             if (err < 0) {
                 IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
                 return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
@@ -946,7 +946,7 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
     }
 
     // jump to the next element
-    int64_t ind_part_elem[IARRAY_DIMENSION_MAX];
+    int64_t ind_chunk_elem[IARRAY_DIMENSION_MAX];
     int64_t cont_pointer = 0;
 
     int64_t inc = 1;
@@ -956,15 +956,15 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
     itr->elem_flat_index = 0;
 
     for (int i = ndim - 1; i >= 0; --i) {
-        ind_part_elem[i] = itr->nelem_block % (inc * itr->cur_block_shape[i]) / inc;
-        cont_pointer += ind_part_elem[i] * inc_p;
-        itr->elem_index[i] = ind_part_elem[i] + itr->cur_block_index[i] * catarr->chunkshape[i];
+        ind_chunk_elem[i] = itr->nelem_block % (inc * itr->cur_block_shape[i]) / inc;
+        cont_pointer += ind_chunk_elem[i] * inc_p;
+        itr->elem_index[i] = ind_chunk_elem[i] + itr->cur_block_index[i] * catarr->chunkshape[i];
         itr->elem_flat_index += itr->elem_index[i] * inc_s;
         inc *= itr->cur_block_shape[i];
         inc_p *= itr->cur_block_shape[i];
         inc_s *= catarr->shape[i];
     }
-    itr->pointer = (void *)&(itr->part)[cont_pointer * typesize];
+    itr->pointer = (void *)&(itr->chunk)[cont_pointer * typesize];
 
     itr->val->elem_pointer = itr->pointer;
     itr->val->elem_index = itr->elem_index;
@@ -980,7 +980,7 @@ INA_API(ina_rc_t) iarray_iter_write_has_next(iarray_iter_write_t *itr)
     int64_t typesize = itr->container->catarr->itemsize;
     if (itr->nelem == itr->container->catarr->nitems) {
         if (itr->container->catarr->storage == CATERVA_STORAGE_BLOSC) {
-            caterva_array_append(itr->cat_ctx, itr->container->catarr, itr->part, itr->cur_block_size * typesize);
+            caterva_array_append(itr->cat_ctx, itr->container->catarr, itr->chunk, itr->cur_block_size * typesize);
         } else {
             itr->container->catarr->filled = true;
         }
@@ -1020,9 +1020,9 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
     IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
     if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
-        (*itr)->part = cont->catarr->buf;
+        (*itr)->chunk = cont->catarr->buf;
     } else {
-        (*itr)->part = (uint8_t *) ina_mem_alloc((size_t)cont->catarr->chunknitems * cont->catarr->itemsize);
+        (*itr)->chunk = (uint8_t *) ina_mem_alloc((size_t)cont->catarr->chunknitems * cont->catarr->itemsize);
     }
     IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
 
@@ -1044,7 +1044,7 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
         }
         (*itr)->cur_block_size *= (*itr)->cur_block_shape[i];
     }
-    memset((*itr)->part, 0, cont->catarr->chunknitems * cont->catarr->itemsize);
+    memset((*itr)->chunk, 0, cont->catarr->chunknitems * cont->catarr->itemsize);
 
     caterva_config_t cat_cfg;
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cat_cfg);
@@ -1060,7 +1060,7 @@ INA_API(void) iarray_iter_write_free(iarray_iter_write_t **itr)
 
     INA_MEM_FREE_SAFE((*itr)->elem_index);
     if ((*itr)->container->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-        INA_MEM_FREE_SAFE((*itr)->part);
+        INA_MEM_FREE_SAFE((*itr)->chunk);
     }
 
     INA_MEM_FREE_SAFE((*itr)->cur_block_index);

@@ -17,7 +17,7 @@ static ina_rc_t test_ones(iarray_context_t *ctx,
                           size_t type_size,
                           int8_t ndim,
                           const int64_t *shape,
-                          const int64_t *pshape,
+                          const int64_t *cshape,
                           const int64_t *bshape)
 {
     iarray_dtshape_t xdtshape;
@@ -29,12 +29,12 @@ static ina_rc_t test_ones(iarray_context_t *ctx,
     }
 
     iarray_storage_t store;
-    store.backend = pshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
+    store.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     store.enforce_frame = false;
     store.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
-        if (pshape != NULL) {
-            store.chunkshape[i] = pshape[i];
+        if (cshape != NULL) {
+            store.chunkshape[i] = cshape[i];
             store.blockshape[i] = bshape[i];
         }
     }
@@ -95,10 +95,10 @@ INA_TEST_FIXTURE(constructor_ones, 2_d)
 
     int8_t ndim = 2;
     int64_t shape[] = {120, 100};
-    int64_t pshape[] = {30, 40};
+    int64_t cshape[] = {30, 40};
     int64_t bshape[] = {13, 14};
 
-    INA_TEST_ASSERT_SUCCEED(test_ones(data->ctx, dtype, type_size, ndim, shape, pshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_ones(data->ctx, dtype, type_size, ndim, shape, cshape, bshape));
 }
 
 INA_TEST_FIXTURE(constructor_ones, 4_f_p)
@@ -108,10 +108,10 @@ INA_TEST_FIXTURE(constructor_ones, 4_f_p)
 
     int8_t ndim = 4;
     int64_t shape[] = {10, 21, 10, 21};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t *bshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_ones(data->ctx, dtype, type_size, ndim, shape, pshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_ones(data->ctx, dtype, type_size, ndim, shape, cshape, bshape));
 }
 
 INA_TEST_FIXTURE(constructor_ones, 5_d)
@@ -121,10 +121,10 @@ INA_TEST_FIXTURE(constructor_ones, 5_d)
 
     int8_t ndim = 5;
     int64_t shape[] = {10, 14, 12, 16, 10};
-    int64_t pshape[] = {3, 4, 6, 8, 3};
+    int64_t cshape[] = {3, 4, 6, 8, 3};
     int64_t bshape[] = {2, 2, 2, 2, 2};
 
-    INA_TEST_ASSERT_SUCCEED(test_ones(data->ctx, dtype, type_size, ndim, shape, pshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_ones(data->ctx, dtype, type_size, ndim, shape, cshape, bshape));
 }
 
 INA_TEST_FIXTURE(constructor_ones, 7_f_p)
@@ -134,8 +134,8 @@ INA_TEST_FIXTURE(constructor_ones, 7_f_p)
 
     int8_t ndim = 7;
     int64_t shape[] = {8, 5, 4, 5, 7, 8, 4};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t *bshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_ones(data->ctx, dtype, type_size, ndim, shape, pshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_ones(data->ctx, dtype, type_size, ndim, shape, cshape, bshape));
 }

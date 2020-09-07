@@ -109,11 +109,11 @@ static ina_rc_t _iarray_rand_internal(iarray_context_t *ctx,
     iarray_iter_write_block_t *iter;
     iarray_iter_write_block_value_t val;
 
-    int64_t max_part_size = 1;
+    int64_t max_chunk_size = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {
-        max_part_size *= container->storage->chunkshape[i];
+        max_chunk_size *= container->storage->chunkshape[i];
     }
-    void *buffer_mem = ina_mem_alloc(max_part_size * sizeof(double));
+    void *buffer_mem = ina_mem_alloc(max_chunk_size * sizeof(double));
 
     IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter, container, container->storage->chunkshape, &val,
             false));
