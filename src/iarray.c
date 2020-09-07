@@ -119,6 +119,23 @@ int64_t get_nearest_power2(int64_t value)
     return power2;
 }
 
+
+// Return the number of cores in CPU
+INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores)
+{
+    *ncores = 1;
+#ifdef INA_OS_OSX
+    *ncores = (int)sysconf(_SC_NPROCESSORS_ONLN);
+#else
+    ina_cpu_get_core_count(ncores);
+#endif
+    if ((max_ncores > 0) && (*ncores > max_ncores)) {
+        *ncores = max_ncores;
+    }
+    return INA_SUCCESS;
+}
+
+
 // Given a shape, offer advice on the partition size
 INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
                                           int64_t low, int64_t high)

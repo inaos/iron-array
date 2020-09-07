@@ -267,12 +267,21 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
 INA_API(void) iarray_context_free(iarray_context_t **ctx);
 
 /*
+ *  Get the number of cores (`ncores`) in the system.
+ *
+ *  `ncores` won't be larger than `max_ncores`.  If `max_ncores` is 0, there is not a maximum cap.
+ *
+ */
+INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores);
+
+/*
  *  Provide advice for the partition shape of a `dtshape`.
  *
  *  If success, storage->chunkshape and storage->blockshape will contain the advice.
  *
  *  `low` and `high` contain low and high values for the chunksize.  If `low` is 0, it defaults
  *  to a fraction of L2 cache size.  If `high` is 0, it defaults to a fraction of L3 cache size.
+ *
  */
 INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
                                           int64_t low, int64_t high);
