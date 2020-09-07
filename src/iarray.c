@@ -11,6 +11,7 @@
  */
 
 #include <libiarray/iarray.h>
+#include <stdlib.h>
 
 #include <iarray_private.h>
 
@@ -318,8 +319,8 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx)
 {
     if (!_ina_inited) {
-        INA_TRACE1(iarray.error, "The iarray library has not been initialized with iarray_init()!");
-        return INA_ERROR(INA_ES_API | INA_ERR_NOT_INITIALIZED);
+        fprintf(stderr, "Error.  You need to call `iarray_init() prior to any iarray call.");
+        exit(1);
     }
 
     INA_VERIFY_NOT_NULL(ctx);
