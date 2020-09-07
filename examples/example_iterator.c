@@ -16,6 +16,8 @@
 
 int main(void)
 {
+    iarray_init();
+
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int64_t shape[] = {100, 100};
@@ -80,6 +82,7 @@ int main(void)
     iarray_iter_read_block_free(&iter);
     iarray_container_free(ctx, &cont);
     iarray_context_free(&ctx);
+    iarray_destroy();
 
     return rc;
 }
