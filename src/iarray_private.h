@@ -77,7 +77,7 @@ typedef enum iarray_blas_type_e {
 struct iarray_context_s {
     iarray_config_t *cfg;
     ina_mempool_t *mp;
-    ina_mempool_t *mp_part_cache;
+    ina_mempool_t *mp_chunk_cache;
     ina_mempool_t *mp_op;
     ina_mempool_t *mp_tmp_out;
     blosc2_prefilter_fn prefilter_fn;
@@ -92,8 +92,8 @@ typedef struct _iarray_container_store_s {
 typedef struct iarray_auxshape_s {
     int64_t offset[IARRAY_DIMENSION_MAX];
     int64_t shape_wos[IARRAY_DIMENSION_MAX];
-    int64_t pshape_wos[IARRAY_DIMENSION_MAX];
-    int64_t bshape_wos[IARRAY_DIMENSION_MAX];
+    int64_t chunkshape_wos[IARRAY_DIMENSION_MAX];
+    int64_t blockshape_wos[IARRAY_DIMENSION_MAX];
     int8_t index[IARRAY_DIMENSION_MAX];
 } iarray_auxshape_t;
 
@@ -114,7 +114,7 @@ typedef struct iarray_iter_write_s {
     iarray_context_t *ctx;
     iarray_container_t *container;
     iarray_iter_write_value_t *val;
-    uint8_t *part;
+    uint8_t *chunk;
     void *pointer;
 
     int64_t nelem;
@@ -137,7 +137,7 @@ typedef struct iarray_iter_read_s {
     iarray_context_t *ctx;
     iarray_container_t *cont;
     iarray_iter_read_value_t *val;
-    uint8_t *part;
+    uint8_t *chunk;
     void *pointer;
 
     int64_t nelem; // The element counter in container
@@ -176,7 +176,7 @@ typedef struct iarray_iter_write_block_s {
     int64_t nblock; // The block counter
     bool contiguous; // Flag to avoid copies using plainbuffer
     bool compressed_chunk_buffer;  // Flag to append an already compressed buffer
-    bool external_buffer; // Flag to indicate if a external part is passed
+    bool external_buffer; // Flag to indicate if a external chunk is passed
 
     caterva_context_t *cat_ctx;
 } iarray_iter_write_block_t;
@@ -199,7 +199,7 @@ typedef struct iarray_iter_read_block_s {
     int64_t *cur_elem_index; // The position of the first element of the block in the container
     int64_t nblock; // The block counter
     bool contiguous; // Flag to avoid copies using plainbuffer
-    bool external_buffer; // Flag to indicate if a external part is passed
+    bool external_buffer; // Flag to indicate if a external chunk is passed
     bool padding; // Iterate using padding or not
 } iarray_iter_read_block_t;
 
@@ -215,8 +215,8 @@ typedef struct iarray_iter_matmul_s {
     int64_t M;
     int64_t K;
     int64_t N;
-    int64_t npart1;
-    int64_t npart2;
+    int64_t nchunk1;
+    int64_t nchunk2;
     int64_t cont;
 } iarray_iter_matmul_t;
 
@@ -275,7 +275,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
                                   iarray_container_t *container,
                                   int64_t *start,
                                   int64_t *stop,
-                                  int64_t *pshape,
+                                  int64_t *chunkshape,
                                   void *buffer,
                                   int64_t buflen);
 

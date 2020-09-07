@@ -32,7 +32,7 @@ static ina_rc_t test_partition_advice(iarray_context_t *ctx,
     storage.backend = IARRAY_STORAGE_BLOSC;
     storage.enforce_frame = false;
     storage.filename = NULL;
-    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape, &storage, low, high));
+    INA_TEST_ASSERT_SUCCEED(iarray_chunk_advice(ctx, &dtshape, &storage, low, high));
 
     for (int i = 0; i < ndim; i++) {
         INA_TEST_ASSERT_EQUAL_INT64(pshape[i], storage.chunkshape[i]);

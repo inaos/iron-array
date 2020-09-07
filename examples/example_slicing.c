@@ -41,7 +41,7 @@ int main(void)
     store.enforce_frame = false;
     store.filename = NULL;
     
-    if (INA_FAILED(iarray_partition_advice(ctx, &xdtshape, &store, 16 * 1024, 128 * 1024))) {
+    if (INA_FAILED(iarray_chunk_advice(ctx, &xdtshape, &store, 16 * 1024, 128 * 1024))) {
         printf("Error in getting advice for chunkshape: %s\n", ina_err_strerror(ina_err_get_rc()));
         exit(1);
     }
