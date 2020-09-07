@@ -76,12 +76,12 @@ typedef struct state {
 
 static jug_te_expr *new_expr(const int type, const jug_te_expr *parameters[]) {
     const int arity = ARITY(type);
-    const int psize = sizeof(void*) * arity;
-    const int size = (sizeof(jug_te_expr) - sizeof(void*)) + psize + (IS_CLOSURE(type) ? sizeof(void*) : 0);
+    const int csize = sizeof(void*) * arity;
+    const int size = (sizeof(jug_te_expr) - sizeof(void*)) + csize + (IS_CLOSURE(type) ? sizeof(void*) : 0);
     jug_te_expr *ret = malloc(size);
     memset(ret, 0, size);
     if (arity && parameters) {
-        memcpy(ret->parameters, parameters, psize);
+        memcpy(ret->parameters, parameters, csize);
     }
     ret->type = type;
     ret->bound = 0;

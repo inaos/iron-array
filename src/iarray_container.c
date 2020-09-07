@@ -176,8 +176,8 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename, b
         auxshape->index[i] = i;
         auxshape->offset[i] = 0;
         auxshape->shape_wos[i] = catarr->shape[i];
-        auxshape->pshape_wos[i] = catarr->chunkshape[i];
-        auxshape->bshape_wos[i] = catarr->blockshape[i];
+        auxshape->chunkshape_wos[i] = catarr->chunkshape[i];
+        auxshape->blockshape_wos[i] = catarr->blockshape[i];
     }
 
     (*container)->storage = ina_mem_alloc(sizeof(iarray_storage_t));
@@ -429,20 +429,20 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
         }
     }
 
-    int64_t pshape[IARRAY_DIMENSION_MAX];
-    int64_t psize = 1;
+    int64_t chunkshape[IARRAY_DIMENSION_MAX];
+    int64_t chunksize = 1;
     for (int i = 0; i < container->catarr->ndim; ++i) {
-        pshape[i] = stop_[i] - start_[i];
-        psize *= pshape[i];
+        chunkshape[i] = stop_[i] - start_[i];
+        chunksize *= chunkshape[i];
     }
 
     if (container->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        if (psize * (int64_t)sizeof(double) > buflen) {
+        if (chunksize * (int64_t)sizeof(double) > buflen) {
             IARRAY_TRACE1(iarray.error, "The buffer size is not enough\n");
             return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
         }
     } else {
-        if (psize * (int64_t)sizeof(float) > buflen) {
+        if (chunksize * (int64_t)sizeof(float) > buflen) {
             IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
             return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
         }
@@ -453,7 +453,7 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
     caterva_context_t *cat_ctx;
     IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
-    IARRAY_ERR_CATERVA(caterva_array_get_slice_buffer(cat_ctx, container->catarr, start_, stop_, pshape, buffer, buflen));
+    IARRAY_ERR_CATERVA(caterva_array_get_slice_buffer(cat_ctx, container->catarr, start_, stop_, chunkshape, buffer, buflen));
 
     IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
 
@@ -568,20 +568,20 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
         }
     }
 
-    int64_t psize = 1;
+    int64_t chunksize = 1;
     for (int i = 0; i < container->catarr->ndim; ++i) {
-        psize *= stop_[i] - start_[i];
+        chunksize *= stop_[i] - start_[i];
     }
 
     switch (container->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            if (psize * (int64_t)sizeof(double) > buflen) {
+            if (chunksize * (int64_t)sizeof(double) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
                 return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
             }
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            if (psize * (int64_t)sizeof(float) > buflen) {
+            if (chunksize * (int64_t)sizeof(float) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
                 return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
             }
@@ -604,8 +604,8 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
 
 
 int _caterva_get_slice_buffer_no_copy(void **dest, caterva_array_t *src, int64_t *start,
-                                      int64_t *stop, int64_t *d_pshape) {
-    CATERVA_UNUSED_PARAM(d_pshape);
+                                      int64_t *stop, int64_t *chunkshape) {
+    CATERVA_UNUSED_PARAM(chunkshape);
     CATERVA_UNUSED_PARAM(stop);
     int64_t start_[CATERVA_MAX_DIM];
     // int64_t stop_[CATERVA_MAX_DIM];
@@ -687,22 +687,22 @@ INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
         }
     }
 
-    int64_t pshape[IARRAY_DIMENSION_MAX];
-    int64_t psize = 1;
+    int64_t chunkshape[IARRAY_DIMENSION_MAX];
+    int64_t chunksize = 1;
     for (int i = 0; i < container->catarr->ndim; ++i) {
-        pshape[i] = stop_[i] - start_[i];
-        psize *= pshape[i];
+        chunkshape[i] = stop_[i] - start_[i];
+        chunksize *= chunkshape[i];
     }
 
     switch (container->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            if (psize * (int64_t)sizeof(double) > buflen) {
+            if (chunksize * (int64_t)sizeof(double) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
                 return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
             }
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            if (psize * (int64_t)sizeof(float) > buflen) {
+            if (chunksize * (int64_t)sizeof(float) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
                 return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
             }
@@ -714,7 +714,7 @@ INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
 
 
 
-    IARRAY_ERR_CATERVA(_caterva_get_slice_buffer_no_copy(buffer, container->catarr, start_, stop_, pshape));
+    IARRAY_ERR_CATERVA(_caterva_get_slice_buffer_no_copy(buffer, container->catarr, start_, stop_, chunkshape));
 
     return INA_SUCCESS;
 }
@@ -723,14 +723,14 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
                                   iarray_container_t *container,
                                   int64_t *start,
                                   int64_t *stop,
-                                  int64_t *pshape,
+                                  int64_t *chunkshape,
                                   void *buffer,
                                   int64_t buflen)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
-    INA_VERIFY_NOT_NULL(pshape);
+    INA_VERIFY_NOT_NULL(chunkshape);
 
     int8_t ndim = container->dtshape->ndim;
     int64_t *offset = container->auxshape->offset;
@@ -738,16 +738,16 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
 
     int64_t start_[IARRAY_DIMENSION_MAX];
     int64_t stop_[IARRAY_DIMENSION_MAX];
-    int64_t pshape_[IARRAY_DIMENSION_MAX];
+    int64_t chunkshape_[IARRAY_DIMENSION_MAX];
 
     for (int i = 0; i < container->catarr->ndim; ++i) {
         start_[i] = 0 + offset[i];
         stop_[i] = 1 + offset[i];
-        pshape_[i] = 1;
+        chunkshape_[i] = 1;
     }
 
     for (int i = 0; i < ndim; ++i) {
-        pshape_[i] = pshape[i];
+        chunkshape_[i] = chunkshape[i];
         if (start[i] < 0) {
             start_[index[i]] += start[i] + container->dtshape->shape[i];
         } else{
@@ -763,35 +763,35 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
     if (container->transposed) {
         int64_t aux_stop[IARRAY_DIMENSION_MAX];
         int64_t aux_start[IARRAY_DIMENSION_MAX];
-        int64_t aux_pshape[IARRAY_DIMENSION_MAX];
+        int64_t aux_chunkshape[IARRAY_DIMENSION_MAX];
 
         for (int i = 0; i < container->catarr->ndim; ++i) {
             aux_start[i] = start_[i];
             aux_stop[i] = stop_[i];
-            aux_pshape[i] = pshape_[i];
+            aux_chunkshape[i] = chunkshape_[i];
         }
 
         for (int i = 0; i < container->catarr->ndim; ++i) {
             start_[i] = aux_start[container->catarr->ndim - 1 - i];
             stop_[i] = aux_stop[container->catarr->ndim - 1 - i];
-            pshape_[i] = aux_pshape[container->catarr->ndim - 1 - i];
+            chunkshape_[i] = aux_chunkshape[container->catarr->ndim - 1 - i];
         }
     }
 
-    int64_t psize = 1;
+    int64_t chunksize = 1;
     for (int i = 0; i < ndim; ++i) {
-        psize *= pshape[i];
+        chunksize *= chunkshape[i];
     }
 
     switch (container->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            if (psize * (int64_t)sizeof(double) > buflen) {
+            if (chunksize * (int64_t)sizeof(double) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
                 return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
             }
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            if (psize * (int64_t)sizeof(float) > buflen) {
+            if (chunksize * (int64_t)sizeof(float) > buflen) {
                 IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
                 return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
             }
@@ -810,7 +810,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
     caterva_context_t *cat_ctx;
     IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
-    IARRAY_ERR_CATERVA(caterva_array_get_slice_buffer(cat_ctx, container->catarr, start_, stop_, pshape_, buffer, buflen));
+    IARRAY_ERR_CATERVA(caterva_array_get_slice_buffer(cat_ctx, container->catarr, start_, stop_, chunkshape_, buffer, buflen));
 
     IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
 
@@ -845,8 +845,8 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
                 container->storage->chunkshape[i] = container->catarr->chunkshape[i];
                 container->storage->blockshape[i] = container->catarr->blockshape[i];
                 container->auxshape->shape_wos[i] = container->catarr->shape[i];
-                container->auxshape->pshape_wos[i] = container->catarr->chunkshape[i];
-                container->auxshape->bshape_wos[i] = container->catarr->blockshape[i];
+                container->auxshape->chunkshape_wos[i] = container->catarr->chunkshape[i];
+                container->auxshape->blockshape_wos[i] = container->catarr->blockshape[i];
                 container->auxshape->offset[i] = container->auxshape->offset[i + inc];
             }
         }

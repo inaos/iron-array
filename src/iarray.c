@@ -119,9 +119,9 @@ int64_t get_nearest_power2(int64_t value)
     return power2;
 }
 
-// Given a shape, offer advice on the partition size
-INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
-                                          int64_t low, int64_t high)
+// Given a shape, offer advice on the chunk size
+INA_API(ina_rc_t) iarray_chunk_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
+                                      int64_t low, int64_t high)
 {
     INA_UNUSED(ctx);  // we could use context in the future
     INA_VERIFY_NOT_NULL(dtshape);
@@ -150,7 +150,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     iarray_data_type_t dtype = dtshape->dtype;
     int ndim = dtshape->ndim;
     int64_t *shape = dtshape->shape;
-    int64_t *pshape = storage->chunkshape;
+    int64_t *chunkshape = storage->chunkshape;
     int itemsize = 0;
     switch (dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
@@ -165,40 +165,40 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     }
 
     for (int i = 0; i < ndim; i++) {
-        pshape[i] = get_nearest_power2(shape[i]);
+        chunkshape[i] = get_nearest_power2(shape[i]);
     }
 
-    // Shrink partition until we get its size into the [low, high] boundaries
-    int64_t psize = 0;
+    // Shrink chunk until we get its size into the [low, high] boundaries
+    int64_t chunksize = 0;
     do {
         for (int i = 0; i < ndim; i++) {
-            // The size of the partition so far
-            psize = itemsize;
+            // The size of the chunk so far
+            chunksize = itemsize;
             for (int j = 0; j < ndim; j++) {
-                psize *= pshape[j];
+                chunksize *= chunkshape[j];
             }
-            if (psize <= high) {
+            if (chunksize <= high) {
                 break;
             }
-            else if (psize < low) {
-                pshape[i] = shape[i];
+            else if (chunksize < low) {
+                chunkshape[i] = shape[i];
                 break;
             }
-            pshape[i] /= 2;
+            chunkshape[i] /= 2;
         }
-    } while (psize > high);
+    } while (chunksize > high);
 
     // Lastly, if some chunkshape axis is too close to the original shape, split it again
-    if (psize > low) {
+    if (chunksize > low) {
         for (int i = 0; i < ndim; i++) {
-            if (((float) (shape[i] - pshape[i]) / (float) pshape[i]) < 0.1) {
-                pshape[i] = pshape[i] / 2;
+            if (((float) (shape[i] - chunkshape[i]) / (float) chunkshape[i]) < 0.1) {
+                chunkshape[i] = chunkshape[i] / 2;
             }
-            psize = itemsize;
+            chunksize = itemsize;
             for (int j = 0; j < ndim; j++) {
-                psize *= pshape[j];
+                chunksize *= chunkshape[j];
             }
-            if (psize < low) {
+            if (chunksize < low) {
                 break;
             }
         }
@@ -206,7 +206,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     for (int i = 0; i < ndim; ++i) {
         storage->blockshape[i] = storage->chunkshape[i];
     }
-    if (psize > INT32_MAX) {
+    if (chunksize > INT32_MAX) {
         INA_TRACE1(iarray.error, "The chunk size can not be larger than 2 GB");
         return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
@@ -215,7 +215,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
 
 // Given a matmul operation (C = A * B), provide advice on the blocks for iteration A and B
 // A and B are supposed to have (M, K) and (K, N) dimensions respectively
-// C is supposed to have a partition size of (m, n)
+// C is supposed to have a chunk size of (m, n)
 // The hint for the blockshapes are going to be (m, k) and (k, n) respectively
 INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
                                        iarray_container_t *a,
@@ -264,7 +264,7 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
             INA_TRACE1(iarray.error, "The data type is invalid");
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
-    // First, the m and n values *have* to be the same for the partition of the output
+    // First, the m and n values *have* to be the same for the chunk of the output
     int64_t m_dim = c->storage->chunkshape[0];
     int64_t n_dim = c->storage->chunkshape[1];
 
@@ -332,7 +332,7 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
     ina_mem_cpy((*ctx)->cfg, cfg, sizeof(iarray_config_t));
 
     IARRAY_RETURN_IF_FAILED(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp));
-    IARRAY_RETURN_IF_FAILED(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_part_cache));
+    IARRAY_RETURN_IF_FAILED(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_chunk_cache));
     IARRAY_RETURN_IF_FAILED(ina_mempool_new(_IARRAY_MEMPOOL_OP_CHUNKS, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_op));
     IARRAY_RETURN_IF_FAILED(ina_mempool_new(_IARRAY_MEMPOOL_EVAL_TMP, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_tmp_out));
 
@@ -348,7 +348,7 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx)
     INA_VERIFY_FREE(ctx);
     ina_mempool_free(&(*ctx)->mp_tmp_out);
     ina_mempool_free(&(*ctx)->mp_op);
-    ina_mempool_free(&(*ctx)->mp_part_cache);
+    ina_mempool_free(&(*ctx)->mp_chunk_cache);
     ina_mempool_free(&(*ctx)->mp);
     INA_MEM_FREE_SAFE((*ctx)->cfg);
     INA_MEM_FREE_SAFE(*ctx);

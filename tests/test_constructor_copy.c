@@ -14,17 +14,9 @@
 #include <src/iarray_private.h>
 
 static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim,
-                           const int64_t *shape, const int64_t *pshape, const int64_t *bshape, double start,
+                           const int64_t *shape, const int64_t *cshape, const int64_t *bshape, double start,
                            double stop, int64_t *stop_view, bool src_view, bool dest_view)
 {
-//    For some reason, this test does not pass in Azure CI, so disable it temporarily (see #189)
-//    char* envvar;
-//    envvar = getenv("AGENT_OS");
-//    if (envvar != NULL && strncmp(envvar, "Darwin", sizeof("Darwin")) == 0) {
-//        printf("Skipping test on Azure CI (Darwin)...");
-//        return INA_SUCCESS;
-//    }
-
     // Create dtshape
     iarray_dtshape_t xdtshape;
 
@@ -37,12 +29,12 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
     }
 
     iarray_storage_t store;
-    store.backend = (pshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
+    store.backend = (cshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     store.filename = NULL;
     store.enforce_frame = (ndim % 2 == 0) ? false : true;
     for (int i = 0; i < ndim; ++i) {
-        if (pshape != NULL) {
-            store.chunkshape[i] = pshape[i];
+        if (cshape != NULL) {
+            store.chunkshape[i] = cshape[i];
             store.blockshape[i] = bshape[i];
         }
     }
@@ -107,13 +99,13 @@ INA_TEST_FIXTURE(constructor_copy, 1_f_p_n_n) {
 
     int8_t ndim = 1;
     int64_t shape[] = {1000};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t *bshape = NULL;
     int64_t stop_view[] = {431};
     double start = 0;
     double stop = 1;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, false, false));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, false));
 }
 
 
@@ -122,13 +114,13 @@ INA_TEST_FIXTURE(constructor_copy, 2_f_p_v_n) {
 
     int8_t ndim = 2;
     int64_t shape[] = {10, 200};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t *bshape = NULL;
     int64_t stop_view[] = {1, 121};
     double start = - 0.1;
     double stop = - 0.2;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, true, false));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, true, false));
 }
 
 INA_TEST_FIXTURE(constructor_copy, 3_f_p_n_v) {
@@ -136,13 +128,13 @@ INA_TEST_FIXTURE(constructor_copy, 3_f_p_n_v) {
 
     int8_t ndim = 3;
     int64_t shape[] = {10, 20, 10};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t *bshape = NULL;
     int64_t stop_view[] = {2, 5, 6};
     double start = 1;
     double stop = 25;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, false, true));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, true));
 }
 
 INA_TEST_FIXTURE(constructor_copy, 4_f_p_v_v) {
@@ -150,13 +142,13 @@ INA_TEST_FIXTURE(constructor_copy, 4_f_p_v_v) {
 
     int8_t ndim = 4;
     int64_t shape[] = {10, 1, 1, 33};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t *bshape = NULL;
     int64_t stop_view[] = {5, 1, 1, 12};
     double start = - 5;
     double stop = 101010;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, true, true));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, true, true));
 }
 
 
@@ -165,13 +157,13 @@ INA_TEST_FIXTURE(constructor_copy, 5_d_p_n_n) {
 
     int8_t ndim = 5;
     int64_t shape[] = {2, 3, 4, 5, 6};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t *bshape = NULL;
     int64_t stop_view[] = {2, 2, 2, 2, 2};
     double start = - 0.1;
     double stop = - 0.25;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, false, false));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, false));
 }
 
 
@@ -180,14 +172,14 @@ INA_TEST_FIXTURE(constructor_copy, 6_d_p_v_n) {
 
     int8_t ndim = 6;
     int64_t shape[] = {6, 3, 6, 3, 6, 3};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t *bshape = NULL;
     int64_t stop_view[] = {4, 3, 2, 3, 4, 3};
 
     double start = 1000;
     double stop = 2000;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, true, false));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, true, false));
 }
 
 INA_TEST_FIXTURE(constructor_copy, 7_d_p_n_v) {
@@ -195,14 +187,14 @@ INA_TEST_FIXTURE(constructor_copy, 7_d_p_n_v) {
 
     int8_t ndim = 7;
     int64_t shape[] = {2, 4, 6, 8, 6, 4, 2};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t *bshape = NULL;
     int64_t stop_view[] = {2, 3, 5, 2, 2, 2};
 
     double start = 0;
     double stop = 0.000001;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, false, true));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, true));
 }
 
 INA_TEST_FIXTURE(constructor_copy, 8_d_p_v_v) {
@@ -210,13 +202,13 @@ INA_TEST_FIXTURE(constructor_copy, 8_d_p_v_v) {
 
     int8_t ndim = 8;
     int64_t shape[] = {2, 9, 3, 8, 4, 7, 5, 6};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t *bshape = NULL;
     int64_t stop_view[] = {2, 2, 2, 2, 2, 2, 2, 2};
     double start = -1;
     double stop = 1;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, true, true));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, true, true));
 }
 
 
@@ -226,13 +218,13 @@ INA_TEST_FIXTURE(constructor_copy, 8_f_n_n) {
 
     int8_t ndim = 8;
     int64_t shape[] = {5, 4, 7, 5, 4, 6, 2, 3};
-    int64_t pshape[] = {2, 1, 2, 2, 2, 1, 1, 2};
+    int64_t cshape[] = {2, 1, 2, 2, 2, 1, 1, 2};
     int64_t bshape[] = {2, 1, 2, 2, 2, 1, 1, 2};
     int64_t stop_view[] = {2, 2, 2, 2, 2, 2, 2, 2};
     double start = 0;
     double stop = 1;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, false, false));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, false));
 }
 
 
@@ -241,14 +233,14 @@ INA_TEST_FIXTURE(constructor_copy, 7_f_v_n) {
 
     int8_t ndim = 7;
     int64_t shape[] = {7, 4, 8, 4, 5, 8, 4};
-    int64_t pshape[] = {2, 2, 2, 3, 3, 2, 2};
+    int64_t cshape[] = {2, 2, 2, 3, 3, 2, 2};
     int64_t bshape[] = {2, 2, 1, 2, 2, 1, 2};
     int64_t stop_view[] = {3, 3, 3, 3, 3, 3, 3};
 
     double start = 0;
     double stop = 5;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, true, false));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, true, false));
 }
 
 
@@ -257,13 +249,13 @@ INA_TEST_FIXTURE(constructor_copy, 6_f_n_v) {
 
     int8_t ndim = 6;
     int64_t shape[] = {5, 7, 10, 12, 13, 6};
-    int64_t pshape[] = {2, 1, 4, 5, 6, 4};
+    int64_t cshape[] = {2, 1, 4, 5, 6, 4};
     int64_t bshape[] = {2, 1, 2, 3, 2, 3};
     int64_t stop_view[] = {4, 4, 5, 11, 12, 4};
     double start = -0.112;
     double stop = 51;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, false, true));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, true));
 }
 
 INA_TEST_FIXTURE(constructor_copy, 5_f_v_v) {
@@ -271,14 +263,14 @@ INA_TEST_FIXTURE(constructor_copy, 5_f_v_v) {
 
     int8_t ndim = 5;
     int64_t shape[] = {31, 21, 11, 5, 11};
-    int64_t pshape[] = {10, 11, 3, 2, 4};
+    int64_t cshape[] = {10, 11, 3, 2, 4};
     int64_t bshape[] = {4, 5, 1, 2, 2};
     int64_t stop_view[] = {21, 10, 3, 3, 8};
 
     double start = 1;
     double stop = -1;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, true, true));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, true, true));
 }
 
 INA_TEST_FIXTURE(constructor_copy, 4_d_n_n) {
@@ -286,14 +278,14 @@ INA_TEST_FIXTURE(constructor_copy, 4_d_n_n) {
 
     int8_t ndim = 4;
     int64_t shape[] = {12, 31, 54, 12};
-    int64_t pshape[] = {2, 3, 23, 5};
+    int64_t cshape[] = {2, 3, 23, 5};
     int64_t bshape[] = {1, 2, 10, 2};
     int64_t stop_view[] = {8, 8, 8, 3};
 
     double start = 0.1;
     double stop = 0.9;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, false, false));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, false));
 }
 
 INA_TEST_FIXTURE(constructor_copy, 3_d_v_n) {
@@ -301,14 +293,14 @@ INA_TEST_FIXTURE(constructor_copy, 3_d_v_n) {
 
     int8_t ndim = 3;
     int64_t shape[] = {31, 45, 23};
-    int64_t pshape[] = {10, 12, 13};
+    int64_t cshape[] = {10, 12, 13};
     int64_t bshape[] = {7, 8, 10};
     int64_t stop_view[] = {21, 17, 15};
 
     double start = 0.00001;
     double stop = 0.00002;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, true, false));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, true, false));
 }
 
 INA_TEST_FIXTURE(constructor_copy, 2_d_n_v) {
@@ -316,14 +308,14 @@ INA_TEST_FIXTURE(constructor_copy, 2_d_n_v) {
 
     int8_t ndim = 2;
     int64_t shape[] = {54, 66};
-    int64_t pshape[] = {21, 17};
+    int64_t cshape[] = {21, 17};
     int64_t bshape[] = {9, 5};
     int64_t stop_view[] = {22, 31};
 
     double start = 3123;
     double stop = 45654;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, false, true));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, true));
 }
 
 INA_TEST_FIXTURE(constructor_copy, 1_d_v_v) {
@@ -331,11 +323,11 @@ INA_TEST_FIXTURE(constructor_copy, 1_d_v_v) {
 
     int8_t ndim = 1;
     int64_t shape[] = {445};
-    int64_t pshape[] = {132};
+    int64_t cshape[] = {132};
     int64_t bshape[] = {21};
     int64_t stop_view[] = {121};
     double start = -0.1;
     double stop = 0.1;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, pshape, bshape, start, stop, stop_view, true, true));
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, true, true));
 }

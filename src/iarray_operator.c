@@ -131,14 +131,14 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         int64_t inc_b = 1;
 
         // the block coords are calculated from the index
-        int64_t part_ind_a[IARRAY_DIMENSION_MAX];
-        int64_t part_ind_b[IARRAY_DIMENSION_MAX];
+        int64_t chunk_ind_a[IARRAY_DIMENSION_MAX];
+        int64_t chunk_ind_b[IARRAY_DIMENSION_MAX];
 
         for (int i = a->dtshape->ndim - 1; i >= 0; --i) {
-            part_ind_a[i] = iter->npart1 % (inc_a * (eshape_a[i] / bshape_a[i])) / inc_a;
+            chunk_ind_a[i] = iter->nchunk1 % (inc_a * (eshape_a[i] / bshape_a[i])) / inc_a;
             inc_a *= (eshape_a[i] / bshape_a[i]);
 
-            part_ind_b[i] = iter->npart2 % (inc_b * (eshape_b[i] / bshape_b[i])) / inc_b;
+            chunk_ind_b[i] = iter->nchunk2 % (inc_b * (eshape_b[i] / bshape_b[i])) / inc_b;
             inc_b *= (eshape_b[i] / bshape_b[i]);
         }
 
@@ -146,8 +146,8 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         csize_a = typesize;
         csize_b = typesize;
         for (int i = 0; i < a->dtshape->ndim; ++i) {
-            start_a[i] = part_ind_a[i] * bshape_a[i];
-            start_b[i] = part_ind_b[i] * bshape_b[i];
+            start_a[i] = chunk_ind_a[i] * bshape_a[i];
+            start_b[i] = chunk_ind_b[i] * bshape_b[i];
             if (start_a[i] + bshape_a[i] > a->dtshape->shape[i]) {
                 stop_a[i] = a->dtshape->shape[i];
             } else {
@@ -354,21 +354,21 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
         int64_t inc_a = 1;
 
-        int64_t part_ind_a[IARRAY_DIMENSION_MAX];
-        int64_t part_ind_b[IARRAY_DIMENSION_MAX];
+        int64_t chunk_ind_a[IARRAY_DIMENSION_MAX];
+        int64_t chunk_ind_b[IARRAY_DIMENSION_MAX];
 
         // the block coords are calculated from the index
         for (int i = a->dtshape->ndim - 1; i >= 0; --i) {
-            part_ind_a[i] = iter->npart1 % (inc_a * (eshape_a[i] / bshape_a[i])) / inc_a;
+            chunk_ind_a[i] = iter->nchunk1 % (inc_a * (eshape_a[i] / bshape_a[i])) / inc_a;
             inc_a *= (eshape_a[i] / bshape_a[i]);
         }
-        part_ind_b[0] = iter->npart2 % ( (eshape_b[0] / bshape_b[0]));
+        chunk_ind_b[0] = iter->nchunk2 % ( (eshape_b[0] / bshape_b[0]));
 
 
         // a start and a stop are calculated from the block coords
         csize_a = typesize;
         for (int i = 0; i < a->dtshape->ndim; ++i) {
-            start_a[i] = part_ind_a[i] * bshape_a[i];
+            start_a[i] = chunk_ind_a[i] * bshape_a[i];
             if (start_a[i] + bshape_a[i] > a->dtshape->shape[i]) {
                 stop_a[i] = a->dtshape->shape[i];
             } else {
@@ -379,7 +379,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         }
 
         csize_b = typesize;
-        start_b[0] = part_ind_b[0] * bshape_b[0];
+        start_b[0] = chunk_ind_b[0] * bshape_b[0];
         if (start_b[0] + bshape_b[0] > b->dtshape->shape[0]) {
             stop_b[0] = b->dtshape->shape[0];
         } else {
@@ -470,9 +470,9 @@ static ina_rc_t _iarray_operator_elwise_a(
     INA_VERIFY_NOT_NULL(mkl_fun_s);
 
 
-    size_t psize = (size_t)a->catarr->sc->typesize;
+    size_t chunksize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {
-        psize *= a->catarr->chunkshape[i];
+        chunksize *= a->catarr->chunkshape[i];
     }
 
     iarray_iter_read_block_t *iter_read;
@@ -525,13 +525,13 @@ static ina_rc_t _iarray_operator_elwise_ab(
 
     IARRAY_RETURN_IF_FAILED(iarray_container_dtshape_equal(a->dtshape, b->dtshape));
 
-    size_t psize = (size_t)a->catarr->sc->typesize;
+    size_t chunksize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {
         if (a->catarr->chunkshape[i] != b->catarr->chunkshape[i]) {
-            IARRAY_TRACE1(iarray.error, "The pshapes must be equals");
+            IARRAY_TRACE1(iarray.error, "The chunkshapes must be equals");
             return (INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE));
         }
-        psize *= a->catarr->chunkshape[i];
+        chunksize *= a->catarr->chunkshape[i];
     }
 
     iarray_iter_read_block_t *iter_read;
