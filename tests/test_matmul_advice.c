@@ -65,9 +65,9 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     iarray_container_t *c_c;
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &dtshape_c, &store, 0, &c_c));
 
-//    printf("pshape_a: (%lld, %lld)\n", c_a->dtshape->chunkshape[0], c_a->dtshape->chunkshape[1]);
-//    printf("pshape_b: (%lld, %lld)\n", c_b->dtshape->chunkshape[0], c_b->dtshape->chunkshape[1]);
-//    printf("pshape_c: (%lld, %lld)\n", c_c->dtshape->chunkshape[0], c_c->dtshape->chunkshape[1]);
+//    printf("cshape_a: (%lld, %lld)\n", c_a->dtshape->chunkshape[0], c_a->dtshape->chunkshape[1]);
+//    printf("cshape_b: (%lld, %lld)\n", c_b->dtshape->chunkshape[0], c_b->dtshape->chunkshape[1]);
+//    printf("cshape_c: (%lld, %lld)\n", c_c->dtshape->chunkshape[0], c_c->dtshape->chunkshape[1]);
 
     // Get the advice for matmul itself
     int64_t _bshape_a[2];
