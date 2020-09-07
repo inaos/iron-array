@@ -61,7 +61,7 @@ int main(void)
     int8_t outndim = 3;
     int64_t start[] = {10, 20, 30};
     int64_t stop[] = {40, 21, 80};
-    int64_t outpshape[] = {12, 1, 20};
+    int64_t outcshape[] = {12, 1, 20};
     int64_t outbshape[] = {5, 1, 10};
 
     iarray_storage_t store_out;
@@ -69,7 +69,7 @@ int main(void)
     store_out.enforce_frame = false;
     store_out.filename = NULL;
     for (int i = 0; i < outndim; ++i) {
-        store_out.chunkshape[i] = outpshape[i];
+        store_out.chunkshape[i] = outcshape[i];
         store_out.blockshape[i] = outbshape[i];
     }
 

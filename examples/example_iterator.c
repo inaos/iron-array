@@ -19,7 +19,7 @@ int main(void)
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int64_t shape[] = {100, 100};
-    int64_t pshape[] = {20, 20};
+    int64_t cshape[] = {20, 20};
     int64_t bshape[] = {2, 9};
     ina_rc_t rc;
 
@@ -39,7 +39,7 @@ int main(void)
     store.enforce_frame = false;
     store.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
-        store.chunkshape[i] = pshape[i];
+        store.chunkshape[i] = cshape[i];
         store.blockshape[i] = bshape[i];
     }
     iarray_container_t *cont;

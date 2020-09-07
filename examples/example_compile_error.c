@@ -21,7 +21,7 @@ int main(void)
     int8_t ndim = 1;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int64_t shape[] = {400 * 1000};
-    int64_t pshape[] = {200 * 1000};
+    int64_t cshape[] = {200 * 1000};
     int64_t bshape[] = {16 * 1000};
     ina_rc_t rc;
 
@@ -45,7 +45,7 @@ int main(void)
     store.enforce_frame = false;
     store.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
-        store.chunkshape[i] = pshape[i];
+        store.chunkshape[i] = cshape[i];
         store.blockshape[i] = bshape[i];
     }
 
@@ -67,7 +67,7 @@ int main(void)
 
     iarray_iter_read_block_t *iter;
     iarray_iter_read_block_value_t val;
-    IARRAY_FAIL_IF(iarray_iter_read_block_new(ctx, &iter, data, pshape, &val, false));
+    IARRAY_FAIL_IF(iarray_iter_read_block_new(ctx, &iter, data, cshape, &val, false));
     while (INA_SUCCEED(iarray_iter_read_block_has_next(iter))) {
         IARRAY_FAIL_IF(iarray_iter_read_block_next(iter, NULL, 0));
         for (int64_t i = 0; i < val.block_size; ++i) {
