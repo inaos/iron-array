@@ -53,8 +53,8 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
                                            iarray_data_type_t dtype,
                                            int32_t type_size,
                                            int64_t n,
-                                           int64_t p,
-                                           int64_t b)
+                                           int64_t csize,
+                                           int64_t bsize)
 {
     void *buffer_x;
     void *buffer_r;
@@ -90,8 +90,8 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
     store.filename = NULL;
     store.enforce_frame = false;
     for (int i = 0; i < shape.ndim; ++i) {
-        store.chunkshape[i] = p;
-        store.blockshape[i] = b;
+        store.chunkshape[i] = csize;
+        store.blockshape[i] = bsize;
     }
     
     iarray_container_t *c_x;
@@ -121,8 +121,8 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
                                             iarray_data_type_t dtype,
                                             int32_t type_size,
                                             int64_t n,
-                                            int64_t p,
-                                            int64_t b)
+                                            int64_t csize,
+                                            int64_t bsize)
 {
     void *buffer_x;
     void *buffer_y;
@@ -165,8 +165,8 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
     store.filename = NULL;
     store.enforce_frame = false;
     for (int i = 0; i < shape.ndim; ++i) {
-        store.chunkshape[i] = p;
-        store.blockshape[i] = b;
+        store.chunkshape[i] = csize;
+        store.blockshape[i] = bsize;
     }
     iarray_container_t *c_x;
     iarray_container_t *c_y;

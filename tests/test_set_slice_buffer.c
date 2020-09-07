@@ -34,7 +34,7 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx,
                                           int64_t type_size,
                                           int8_t ndim,
                                           const int64_t *shape,
-                                          const int64_t *pshape,
+                                          const int64_t *cshape,
                                           int64_t *start,
                                           int64_t *stop,
                                           int transposed) {
@@ -64,7 +64,7 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx,
     }
 
     iarray_storage_t xstore;
-    xstore.backend = pshape? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
+    xstore.backend = cshape? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.enforce_frame = false;
     xstore.filename = NULL;
 
@@ -141,12 +141,12 @@ INA_TEST_FIXTURE(set_slice_buffer, 2_f) {
 
     const int8_t ndim = 2;
     int64_t shape[] = {100, 100};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t start[] = {21, 17};
     int64_t stop[] = {-21, 55};
     bool transposed = true;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, pshape,
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, cshape,
                                                       start, stop, transposed));
 }
 
@@ -156,12 +156,12 @@ INA_TEST_FIXTURE(set_slice_buffer, 2_d_t) {
 
     const int8_t ndim = 2;
     int64_t shape[] = {10, 10};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t start[] = {0, 0};
     int64_t stop[] = {-5, 5};
     bool transposed = true;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, pshape,
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, cshape,
                                                       start, stop, transposed));
 }
 
@@ -171,12 +171,12 @@ INA_TEST_FIXTURE(set_slice_buffer, 2_f_t) {
 
     const int8_t ndim = 2;
     int64_t shape[] = {20, 14};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t start[] = {3, 1};
     int64_t stop[] = {-2, 5};
     bool transposed = true;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, pshape,
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, cshape,
                                                       start, stop, transposed));
 }
 
@@ -186,12 +186,12 @@ INA_TEST_FIXTURE(set_slice_buffer, 3_f) {
 
     const int8_t ndim = 3;
     int64_t shape[] = {100, 123, 234};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t start[] = {23, 31, 22};
     int64_t stop[] = {54, 78, 76};
     bool transposed = false;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, pshape,
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, cshape,
                                                       start, stop, transposed));
 }
 
@@ -201,13 +201,13 @@ INA_TEST_FIXTURE(set_slice_buffer, 4_d) {
 
     const int8_t ndim = 4;
     int64_t shape[] = {60, 80, 80, 15};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t start[] = {23, 31, 22, 1};
     int64_t stop[] = {54, 78, 76, 2};
     bool transposed = false;
 
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, pshape,
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, cshape,
                                                       start, stop, transposed));
 }
 
@@ -217,13 +217,13 @@ INA_TEST_FIXTURE(set_slice_buffer, 5_f) {
 
     const int8_t ndim = 5;
     int64_t shape[] = {10, 12, 32, 14, 14};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t start[] = {1, 2, 4, 5, 6};
     int64_t stop[] = {8, 9, 11, 12, 13};
     bool transposed = false;
 
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, pshape,
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, cshape,
                                                       start, stop, transposed));
 }
 
@@ -233,12 +233,12 @@ INA_TEST_FIXTURE(set_slice_buffer, 6_f) {
 
     const int8_t ndim = 6;
     int64_t shape[] = {8, 7, 6, 7, 8, 5};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t start[] = {1, 2, 3, 4, 5, 2};
     int64_t stop[] = {3, 4, 4, 7, 7, 4};
     bool transposed = false;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, pshape,
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, cshape,
                                                       start, stop, transposed));
 }
 
@@ -248,11 +248,11 @@ INA_TEST_FIXTURE(set_slice_buffer, 7_d) {
 
     const int8_t ndim = 7;
     int64_t shape[] = {5, 7, 6, 4, 8, 6, 5};
-    int64_t *pshape = NULL;
+    int64_t *cshape = NULL;
     int64_t start[] = {1, 2, 1, 2, 0, 2, 1};
     int64_t stop[] = {5, 4, 4, 3, 6, 3, 4};
     bool transposed = false;
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, pshape,
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape, cshape,
                                                       start, stop, transposed));
 }

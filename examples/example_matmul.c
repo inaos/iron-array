@@ -34,9 +34,9 @@ int main(void)
     int64_t size_z = 2000 * 1500;
 
 
-    int64_t pshape_x[] = {200, 200};
-    int64_t pshape_y[] = {200, 200};
-    int64_t pshape_z[] = {200, 200};
+    int64_t cshape_x[] = {200, 200};
+    int64_t cshape_y[] = {200, 200};
+    int64_t cshape_z[] = {200, 200};
     
     int64_t bshape_x[] = {20, 15};
     int64_t bshape_y[] = {31, 17};
@@ -59,7 +59,7 @@ int main(void)
     store_x.enforce_frame = false;
     store_x.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
-        store_x.chunkshape[i] = pshape_x[i];
+        store_x.chunkshape[i] = cshape_x[i];
         store_x.blockshape[i] = bshape_x[i];
     }
     iarray_container_t *c_x;
@@ -76,7 +76,7 @@ int main(void)
     store_y.enforce_frame = false;
     store_y.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
-        store_y.chunkshape[i] = pshape_y[i];
+        store_y.chunkshape[i] = cshape_y[i];
         store_y.blockshape[i] = bshape_y[i];
     }
     iarray_container_t *c_y;
@@ -93,7 +93,7 @@ int main(void)
     store_z.enforce_frame = false;
     store_z.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
-        store_z.chunkshape[i] = pshape_z[i];
+        store_z.chunkshape[i] = cshape_z[i];
         store_z.blockshape[i] = bshape_z[i];
     }
     iarray_container_t *c_z;

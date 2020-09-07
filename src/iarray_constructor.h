@@ -94,8 +94,8 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     iarray_auxshape_t auxshape;
     for (int i = 0; i < dtshape->ndim; ++i) {
         auxshape.shape_wos[i] = dtshape->shape[i];
-        auxshape.pshape_wos[i] = storage->chunkshape[i];
-        auxshape.bshape_wos[i] = storage->blockshape[i];
+        auxshape.chunkshape_wos[i] = storage->chunkshape[i];
+        auxshape.blockshape_wos[i] = storage->blockshape[i];
         auxshape.offset[i] = 0;
         auxshape.index[i] = (uint8_t) i;
     }
@@ -189,8 +189,8 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     iarray_auxshape_t auxshape;
     for (int i = 0; i < dtshape->ndim; ++i) {
         auxshape.shape_wos[i] = dtshape->shape[i];
-        auxshape.pshape_wos[i] = pred->storage->chunkshape[i];
-        auxshape.bshape_wos[i] = pred->storage->blockshape[i];
+        auxshape.chunkshape_wos[i] = pred->storage->chunkshape[i];
+        auxshape.blockshape_wos[i] = pred->storage->blockshape[i];
         auxshape.offset[i] = offset[i];
         auxshape.index[i] = (uint8_t) i;
     }
