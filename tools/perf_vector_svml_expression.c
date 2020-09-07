@@ -62,7 +62,7 @@ static double *y = NULL;
 int main(int argc, char** argv)
 {
     int64_t shape[] = {NELEM};
-    int64_t pshape[] = {NITEMS_CHUNK};
+    int64_t cshape[] = {NITEMS_CHUNK};
     int64_t bshape[] = {NITEMS_BLOCK};
     int8_t ndim = 1;
     ina_stopwatch_t *w;
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
              INA_OPT_FLAG("d", "dict", "Use dictionary (only for Zstd (codec 5))"),
              INA_OPT_FLAG("P", "plainbuffer", "Use plain buffer arrays"),
              INA_OPT_FLAG("i", "iter", "Use iterator for filling values"),
-             INA_OPT_FLAG("I", "iter-part", "Use partition iterator for filling values"),
+             INA_OPT_FLAG("I", "iter-chunk", "Use chunk iterator for filling values"),
              INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
              INA_OPT_FLAG("r", "remove", "Remove the previous persistent containers (only valid w/ -p)")
     );
@@ -119,7 +119,7 @@ int main(int argc, char** argv)
         .filename = mat_x_name
     };
     if (!INA_SUCCEED(ina_opt_isset("P"))) {
-        mat_x.chunkshape[0] = pshape[0];
+        mat_x.chunkshape[0] = cshape[0];
         mat_x.blockshape[0] = bshape[0];
     }
     iarray_storage_t mat_y = {
@@ -128,7 +128,7 @@ int main(int argc, char** argv)
         .filename = mat_y_name
     };
     if (!INA_SUCCEED(ina_opt_isset("P"))) {
-        mat_y.chunkshape[0] = pshape[0];
+        mat_y.chunkshape[0] = cshape[0];
         mat_y.blockshape[0] = bshape[0];
     }
     iarray_storage_t mat_out = {
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
         .filename = mat_out_name
     };
     if (!INA_SUCCEED(ina_opt_isset("P"))) {
-        mat_out.chunkshape[0] = pshape[0];
+        mat_out.chunkshape[0] = cshape[0];
         mat_out.blockshape[0] = bshape[0];
     }
     int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
@@ -233,15 +233,15 @@ int main(int argc, char** argv)
             double incx = XMAX / NELEM;
             while (iarray_iter_write_block_has_next(I)) {
                 iarray_iter_write_block_next(I, NULL, 0);
-                int64_t part_size = val.block_size;  // 1-dim vector
-                for (int64_t i = 0; i < part_size; ++i) {
-                    ((double *) val.block_pointer)[i] = incx * (double) (i + val.nblock * part_size);
+                int64_t chunk_size = val.block_size;  // 1-dim vector
+                for (int64_t i = 0; i < chunk_size; ++i) {
+                    ((double *) val.block_pointer)[i] = incx * (double) (i + val.nblock * chunk_size);
                 }
             }
             iarray_iter_write_block_free(&I);
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
-            printf("Time for computing and filling X values via partition iterator: %.3g s, %.1f MB/s\n",
+            printf("Time for computing and filling X values via chunk iterator: %.3g s, %.1f MB/s\n",
                    elapsed_sec, buffer_len / (elapsed_sec * _IARRAY_SIZE_MB));
         }
         else {
@@ -305,9 +305,9 @@ int main(int argc, char** argv)
             double incx = XMAX / NELEM;
             while (iarray_iter_write_block_has_next(I)) {
                 iarray_iter_write_block_next(I, NULL, 0);
-                int64_t part_size = val.block_size;
-                for (int64_t i = 0; i < part_size; ++i) {
-                    ((double *) val.block_pointer)[i] = _poly(incx * (double) (i + val.nblock * part_size));
+                int64_t chunk_size = val.block_size;
+                for (int64_t i = 0; i < chunk_size; ++i) {
+                    ((double *) val.block_pointer)[i] = _poly(incx * (double) (i + val.nblock * chunk_size));
                 }
             }
             iarray_iter_write_block_free(&I);

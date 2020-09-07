@@ -55,19 +55,19 @@ int main(int argc, char** argv)
     double cbytes_mb = 0;
 
     int64_t xshape[] = {3000, 2000};
-    int64_t xpshape[] = {1000, 1000};
+    int64_t xcshape[] = {1000, 1000};
     int64_t xbshape[] = {128, 128};
 
     int64_t xblockshape[] = {500, 500};
 
     int64_t yshape[] = {2000, 3500};
-    int64_t ypshape[] = {1000, 1000};
+    int64_t ycshape[] = {1000, 1000};
     int64_t ybshape[] = {128, 128};
 
     int64_t yblockshape[] = {500, 500};
 
     int64_t oshape[] = {xshape[0], yshape[1]};
-    int64_t opshape[] = {xblockshape[0], yblockshape[1]};
+    int64_t ocshape[] = {xblockshape[0], yblockshape[1]};
     int64_t obshape[] = {128, 128};
 
     bool xtrans = false;
@@ -143,11 +143,11 @@ int main(int argc, char** argv)
         .filename = mat_out_name
     };
     for (int i = 0; i < 2; ++i) {
-        mat_x_prop.chunkshape[i] = xpshape[i];
+        mat_x_prop.chunkshape[i] = xcshape[i];
         mat_x_prop.blockshape[i] = xbshape[i];
-        mat_y_prop.chunkshape[i] = ypshape[i];
+        mat_y_prop.chunkshape[i] = ycshape[i];
         mat_y_prop.blockshape[i] = ybshape[i];
-        mat_out_prop.chunkshape[i] = opshape[i];
+        mat_out_prop.chunkshape[i] = ocshape[i];
         mat_out_prop.blockshape[i] = obshape[i];
     }
 
@@ -155,10 +155,10 @@ int main(int argc, char** argv)
     printf("Measuring time for multiplying matrices X and Y\n");
 
     printf("\n");
-    printf("Matrix X has a shape of (%ld, %ld) with a partition of (%ld, %ld) \n",
-           (long)xshape[0], (long)xshape[1], (long)xpshape[0], (long)xpshape[1]);
-    printf("Matrix Y has a shape of (%ld, %ld) with a partition of (%ld, %ld) \n",
-           (long)yshape[0], (long)yshape[1], (long)ypshape[0], (long)ypshape[1]);
+    printf("Matrix X has a shape of (%ld, %ld) with a chunk of (%ld, %ld) \n",
+           (long)xshape[0], (long)xshape[1], (long)xcshape[0], (long)xcshape[1]);
+    printf("Matrix Y has a shape of (%ld, %ld) with a chunk of (%ld, %ld) \n",
+           (long)yshape[0], (long)yshape[1], (long)ycshape[0], (long)ycshape[1]);
 
     printf("\n");
     printf("Working set for the 4 uncompressed matrices: %.1f MB\n", (xsize + ysize + osize * 2) * sizeof(double) / (double)_IARRAY_SIZE_MB);
