@@ -14,7 +14,7 @@
 
 int main(void) {
 
-    INA_FAIL_IF_ERROR(iarray_init());
+    IARRAY_FAIL_IF_ERROR(iarray_init());
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
 
@@ -42,7 +42,7 @@ int main(void) {
     }
 
     iarray_container_t *container;
-    INA_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape, 1024 * 1024, 0, 1, &storage, 0, &container));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape, 1024 * 1024, 0, 1, &storage, 0, &container));
 
     iarray_container_free(ctx, &container);
     iarray_context_free(&ctx);
