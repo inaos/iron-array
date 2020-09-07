@@ -110,7 +110,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     iarray_container_free(ctx, &c_out);
 
     ina_mem_free(buffer_x);
-
+    ina_mem_free(bufdes);
     return INA_SUCCESS;
 }
 
@@ -123,7 +123,7 @@ INA_TEST_SETUP(get_slice) {
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
-    cfg.eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
+    cfg.eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;
 
     iarray_context_new(&cfg, &data->ctx);
 }

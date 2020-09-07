@@ -16,7 +16,9 @@ find_path(SVML_ROOT_DIR
     PATHS
         $ENV{SVMLROOT}
         $ENV{CONDA_PREFIX}/lib  # conda environments are accessible here (including base)
-        $ENV{CONDA}/envs/iArrayEnv/lib  # not sure why this would be needed (old conda on azure?)
+        $ENV{CONDA}/Library/bin
+		$ENV{CONDA}/Library/lib
+		$ENV{CONDA}/envs/iArrayEnv/lib  # not sure why this would be needed (old conda on azure?)
         $ENV{CONDA}/envs/iArrayEnv/Library/bin  # Win (very weird to me)
         /opt/intel/compilers_and_libraries/linux/lib/intel64_lin  # Intel ICC on Linux
 	    /opt/intel/compilers_and_libraries/mac/lib/intel64_lin  # Intel ICC on MacOS
@@ -46,7 +48,7 @@ endforeach()
 if (NOT WIN32)
 	# This is necessary at least on Linux and MacOS
 	string(REPLACE "svml" "intlc" INTLC_LIBRARY ${SVML_LIBRARY})
-        string(REPLACE ".so" ".so.5" INTLC_LIBRARY ${INTLC_LIBRARY})
+    string(REPLACE ".so" ".so.5" INTLC_LIBRARY ${INTLC_LIBRARY})
 endif()
 
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${SVML_LIBRARY} ${INTLC_LIBRARY})
@@ -54,5 +56,7 @@ if(WIN32)
     set(INAC_DEPENDENCY_BINS ${SVM_LIBRARY_DLL})
 else()
     set(INAC_DEPENDENCY_BINS ${SVML_LIBRARY} ${INTLC_LIBRARY})
+	file(COPY "${SVML_LIBRARY}" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+	file(COPY "${INTLC_LIBRARY}" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 

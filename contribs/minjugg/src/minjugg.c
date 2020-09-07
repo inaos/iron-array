@@ -533,7 +533,8 @@ static LLVMBool _jug_prepare_module(jug_expression_t *e, bool reload)
 #endif
 
     // Create execution engine
-    error = LLVMCreateExecutionEngineForModule(&e->engine, e->mod, &message);
+    error = jug_utils_create_execution_engine(e->mod, &e->engine);
+    //error = LLVMCreateExecutionEngineForModule(&e->engine, e->mod, &message);
     if (error) {
         fprintf(stderr, "LLVM execution engine creation error: '%s'\n", message);
         goto exit;
@@ -574,9 +575,9 @@ INA_API(ina_rc_t) jug_init()
         return INA_ERR_FATAL;
     }
 
+    const char *cpu = jug_utils_get_cpu_string();
     _jug_tm_ref =
-        // LLVMCreateTargetMachine(target_ref, _jug_def_triple, "", "+avx2",
-        LLVMCreateTargetMachine(target_ref, _jug_def_triple, "", "",
+        LLVMCreateTargetMachine(target_ref, _jug_def_triple, cpu, "",
             LLVMCodeGenLevelDefault,
             LLVMRelocDefault,
             LLVMCodeModelJITDefault);
@@ -621,7 +622,7 @@ INA_API(void) jug_expression_free(jug_expression_t **expr)
     if ((*expr)->fun_map != NULL) {
         ina_hashtable_free(&(*expr)->fun_map);
     }
-    if ((*expr)->fun_map != NULL) {
+    if ((*expr)->decl_cache != NULL) {
         ina_hashtable_free(&(*expr)->decl_cache);
     }
     if ((*expr)->fun_map_te != NULL) {
@@ -691,13 +692,15 @@ INA_API(ina_rc_t) jug_expression_compile(
     jug_te_variable *te_vars = (jug_te_variable*)vars;
     jug_te_expr *expression = jug_te_compile(expr_str, te_vars, num_vars, &parse_error);
     if (parse_error) {
-        return INA_ERR_INVALID_ARGUMENT;
+        IARRAY_TRACE1(iarray.error, "Error parsing the expression with juggernaut");
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
     _jug_expr_compile_function(e, "expr_func", expression, typesize, num_vars, te_vars);
     jug_te_free(expression);
 
     if (_jug_prepare_module(e, true)) {
-        return INA_ERR_FAILED;
+        IARRAY_TRACE1(iarray.error, "Error preparing LLVM module");
+        return INA_ERROR(INA_ERR_FAILED);
     }
 
     *function_addr = LLVMGetFunctionAddress(e->engine, "expr_func");

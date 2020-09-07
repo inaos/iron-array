@@ -12,7 +12,7 @@ cmake_minimum_required (VERSION 3.12)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0091 NEW)
 
-project(iarray VERSION 0.1.5)
+project(iarray VERSION 0.1.6)
 
 if (MSVC)
     set(CMAKE_C_FLAGS "/W4")
@@ -48,8 +48,6 @@ include("${CMAKE_BINARY_DIR}/inac.cmake")
 
 inac_add_dependency(inac "1.0.7")
 
-inac_add_contrib_lib(tinyexpr)
-
 find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
@@ -83,8 +81,10 @@ if (MULTITHREADING)
 endif()
 find_package(SVML)
 # For some reason, this is needed for building wheels (TODO: check this out again after wheels are building)
-set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} -lz)
-
+if (UNIX)
+	set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} -lz)
+endif()
+	
 # Find the libraries that correspond to the LLVM components
 # that we wish to use
 llvm_map_components_to_libnames(llvm_libs support core irreader executionengine
@@ -139,7 +139,7 @@ endif()
 inac_add_tools(iarrays)
 inac_add_examples(iarrays)
 
-inac_enable_trace(${CMAKE_BUILD_TYPE} 1)
+inac_enable_trace(${CMAKE_BUILD_TYPE} 3)
 
 # Playing with OpenMP (available mainly on GCC)
 #if (UNIX AND NOT CMAKE_C_COMPILER_ID STREQUAL Clang)

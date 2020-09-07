@@ -70,10 +70,10 @@ int main(int argc, char** argv)
     char *mat_x_name = NULL;
     char *mat_y_name = NULL;
     char *mat_out_name = NULL;
-    char *eval_method = NULL;
+    char *eval_method_str = NULL;
 
     INA_OPTS(opt,
-             INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOCK = 2, EVAL_ITERBLOSC = 3"),
+             INA_OPT_INT("e", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOSC = 2"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
              INA_OPT_INT("t", "nthreads", 1, "Use number of threads for the evaluation"),
@@ -91,8 +91,8 @@ int main(int argc, char** argv)
     }
     ina_set_cleanup_handler(ina_cleanup_handler);
 
-    int eval_flags;
-    INA_MUST_SUCCEED(ina_opt_get_int("e", &eval_flags));
+    int eval_method;
+    INA_MUST_SUCCEED(ina_opt_get_int("e", &eval_method));
     int clevel;
     INA_MUST_SUCCEED(ina_opt_get_int("c", &clevel));
     int codec;
@@ -155,23 +155,20 @@ int main(int argc, char** argv)
         config.filter_flags = IARRAY_COMP_SHUFFLE;
         if (mantissa_bits > 0) {
             config.filter_flags |= (int) IARRAY_COMP_TRUNC_PREC;
-            config.fp_mantissa_bits = mantissa_bits;
+            config.fp_mantissa_bits = (uint8_t) mantissa_bits;
         }
     }
     config.use_dict = INA_SUCCEED(ina_opt_isset("d")) ? 1 : 0;
     config.max_num_threads = nthreads;
-    config.eval_flags = eval_flags;
-    if (eval_flags == IARRAY_EVAL_METHOD_ITERCHUNK) {
-        eval_method = "EVAL_ITERCHUNK";
+    config.eval_method = eval_method;
+    if (eval_method == IARRAY_EVAL_METHOD_ITERCHUNK) {
+        eval_method_str = "EVAL_ITERCHUNK";
     }
-    else if (eval_flags == IARRAY_EVAL_METHOD_ITERBLOSC) {
-        eval_method = "EVAL_ITERBLOSC";
-    }
-    else if (eval_flags == IARRAY_EVAL_METHOD_ITERBLOSC2) {
-        eval_method = "EVAL_ITERBLOSC2";
+    else if (eval_method == IARRAY_EVAL_METHOD_ITERBLOSC) {
+        eval_method_str = "EVAL_ITERBLOSC";
     }
     else {
-        printf("eval_flags must be 1, 2, 3, 4\n");
+        printf("eval_method must be 1, 2\n");
         return EXIT_FAILURE;
     }
     //config.blocksize = 16 * _IARRAY_SIZE_KB;  // 16 KB seems optimal for evaluating expressions
@@ -367,7 +364,7 @@ int main(int argc, char** argv)
     iarray_container_info(con_out, &nbytes, &cbytes);
     printf("\n");
     printf("Time for computing and filling OUT values using iarray (%s):  %.3g s, %.1f MB/s\n",
-           eval_method, elapsed_sec, nbytes / (elapsed_sec * _IARRAY_SIZE_MB));
+           eval_method_str, elapsed_sec, nbytes / (elapsed_sec * _IARRAY_SIZE_MB));
     nbytes_mb = ((double)nbytes / (double)_IARRAY_SIZE_MB);
     cbytes_mb = ((double)cbytes / (double)_IARRAY_SIZE_MB);
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",

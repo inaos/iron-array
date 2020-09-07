@@ -71,12 +71,12 @@
 
 #define IARRAY_ERR_CATERVA_FAILED (INA_ERR_FAILED | IARRAY_ES_CATERVA)
 #define IARRAY_ERR_BLOSC_FAILED (INA_ERR_FAILED | IARRAY_ES_BLOSC)
+
 #define IARRAY_ERR_RAND_METHOD_FAILED (IARRAY_ES_RAND_METHOD | INA_ERR_FAILED)
 #define IARRAY_ERR_ASSERTION_FAILED (IARRAY_ES_ASSERTION | INA_ERR_FAILED)
 
 #define IARRAY_ERR_END_ITER (IARRAY_ES_ITER | INA_ERR_COMPLETE)
-
-#define IARRAY_ERR_CATERVA(rc) do {if (rc != CATERVA_SUCCEED) {IARRAY_FAIL_IF_ERROR(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));}} while(0)
+#define IARRAY_ERR_NOT_END_ITER (IARRAY_ES_ITER | INA_ERR_NOT_COMPLETE)
 
 #define IARRAY_TRACE1(cat, fmt) INA_TRACE1(cat, fmt " %s:%d", __FILE__, __LINE__)
 #define IARRAY_TRACE2(cat, fmt) INA_TRACE2(cat, fmt " %s:%d", __FILE__, __LINE__)
@@ -84,6 +84,11 @@
 #define IARRAY_FAIL_IF(cond) do { if ((cond)) {IARRAY_TRACE2(iarray.error, "Tracing: "); goto fail;}} while(0)
 #define IARRAY_FAIL_IF_ERROR(rc) IARRAY_FAIL_IF(INA_FAILED((rc)))
 
+#define IARRAY_RETURN_IF_FAILED(rc) do { if (INA_FAILED(rc)) {IARRAY_TRACE2(iarray.error, "Tracing: "); return ina_err_get_rc(); } } while(0)
+#define IARRAY_ERR_CATERVA(rc) do {if (rc != CATERVA_SUCCEED) {IARRAY_RETURN_IF_FAILED(INA_ERROR(IARRAY_ERR_CATERVA_FAILED));}} while(0)
+
+#define IARRAY_ITER_FINISH() do { if (ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0)) { \
+    return INA_ERROR(IARRAY_ERR_NOT_END_ITER); } else { ina_err_reset();}} while(0)
 typedef struct iarray_context_s iarray_context_t;
 typedef struct iarray_container_s iarray_container_t;
 
@@ -129,20 +134,13 @@ typedef enum iarray_storage_type_e {
     IARRAY_STORAGE_BLOSC = 1,
 } iarray_storage_type_t;
 
-// The first 3 bits (0, 1, 2) of eval_flags are reserved for the eval method
+// The first 3 bits (0, 1, 2) of eval_method are reserved for the eval method
 typedef enum iarray_eval_method_e {
     IARRAY_EVAL_METHOD_AUTO = 0u,
     IARRAY_EVAL_METHOD_ITERCHUNK = 1u,
     IARRAY_EVAL_METHOD_ITERBLOSC = 2u,
-    IARRAY_EVAL_METHOD_ITERBLOSC2 = 3u,
 } iarray_eval_method_t;
 
-// The next 3 bits (3, 4, 5) of eval_flags are reserved for the eval engine
-typedef enum iarray_eval_engine_e {
-    IARRAY_EVAL_ENGINE_AUTO = 0u,
-    IARRAY_EVAL_ENGINE_INTERPRETER = 1u,
-    IARRAY_EVAL_ENGINE_COMPILER = 2u,
-} iarray_eval_engine_t;
 
 typedef enum iarray_filter_flags_e {
     IARRAY_COMP_SHUFFLE    = 0x1,
@@ -192,7 +190,7 @@ typedef struct iarray_config_s {
     int compression_level;
     int use_dict;
     int filter_flags;
-    unsigned int eval_flags;
+    unsigned int eval_method;
     int max_num_threads; /* Maximum number of threads to use */
     uint8_t fp_mantissa_bits; /* Only useful together with flag: IARRAY_COMP_TRUNC_PREC */
 } iarray_config_t;
@@ -249,7 +247,7 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .compression_level=5,
     .use_dict=0,
     .filter_flags=IARRAY_COMP_SHUFFLE,
-    .eval_flags=IARRAY_EVAL_METHOD_ITERCHUNK | IARRAY_EVAL_ENGINE_INTERPRETER << 3,
+    .eval_method=IARRAY_EVAL_METHOD_ITERCHUNK,
     .max_num_threads=1,
     .fp_mantissa_bits=0};
 
@@ -258,7 +256,7 @@ static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = {
     .compression_level=0,
     .use_dict=0,
     .filter_flags=0,
-    .eval_flags=0,
+    .eval_method=0,
     .max_num_threads=1,
     .fp_mantissa_bits=0};
 

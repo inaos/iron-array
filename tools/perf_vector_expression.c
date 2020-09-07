@@ -126,8 +126,6 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_opt_get_int("e", &expr_type));
     int eval_method;
     INA_MUST_SUCCEED(ina_opt_get_int("M", &eval_method));
-    int eval_engine;
-    INA_MUST_SUCCEED(ina_opt_get_int("E", &eval_engine));
     int eval_niter;
     INA_MUST_SUCCEED(ina_opt_get_int("n", &eval_niter));
     int clevel;
@@ -195,7 +193,7 @@ int main(int argc, char** argv)
     else {
         if (mantissa_bits >  0) {
             config.filter_flags |= IARRAY_COMP_TRUNC_PREC;
-            config.fp_mantissa_bits = mantissa_bits;
+            config.fp_mantissa_bits = (uint8_t) mantissa_bits;
         }
     }
     config.use_dict = INA_SUCCEED(ina_opt_isset("d")) ? 1 : 0;
@@ -220,38 +218,21 @@ int main(int argc, char** argv)
     }
 
     const char *eval_method_str = NULL;
-    unsigned eval_flags;
+
     if (eval_method == 1) {
         eval_method_str = "ITERCHUNK";
-        eval_flags = IARRAY_EVAL_METHOD_ITERCHUNK;
+        eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;
     }
     else if (eval_method == 2) {
         eval_method_str = "ITERBLOSC";
-        eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC;
-    }
-    else if (eval_method == 3) {
-        eval_method_str = "ITERBLOSC2";
-        eval_flags = IARRAY_EVAL_METHOD_ITERBLOSC2;
+        eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
     }
     else {
-        printf("eval_method must be 1, 2, 3\n");
+        printf("eval_method must be 1, 2\n");
         return EXIT_FAILURE;
     }
 
-    const char *eval_engine_str = NULL;
-    if (eval_engine == 1) {
-        eval_engine_str = "INTERPRETER";
-        eval_flags |= IARRAY_EVAL_ENGINE_INTERPRETER << 3;
-    }
-    else if (eval_engine == 2) {
-        eval_engine_str = "COMPILER";
-        eval_flags |= IARRAY_EVAL_ENGINE_COMPILER << 3;
-    }
-    else {
-        printf("eval_engine must be 1, 2\n");
-        return EXIT_FAILURE;
-    }
-    config.eval_flags = eval_flags;
+    config.eval_method = eval_method;
 
     INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
 
@@ -384,6 +365,7 @@ int main(int argc, char** argv)
                         break;
                     default:
                         printf("Wrong expr-type value!\n");
+                        return 1;
                 }
                 memcpy(val.elem_pointer, &value, sizeof(double));
             }
@@ -500,8 +482,8 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
     iarray_container_info(con_out, &nbytes, &cbytes);
     printf("\n");
-    printf("Time for computing and filling OUT values using iarray (%s, %s, %s):  %.3g s, %.1f MB/s\n",
-           expr_type_str, eval_method_str, eval_engine_str, elapsed_sec, (nbytes * eval_niter) / (elapsed_sec * _IARRAY_SIZE_MB));
+    printf("Time for computing and filling OUT values using iarray (%s, %s):  %.3g s, %.1f MB/s\n",
+           expr_type_str, eval_method_str, elapsed_sec, (nbytes * eval_niter) / (elapsed_sec * _IARRAY_SIZE_MB));
     nbytes_mb = ((double)nbytes / (double)_IARRAY_SIZE_MB);
     cbytes_mb = ((double)cbytes / (double)_IARRAY_SIZE_MB);
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",

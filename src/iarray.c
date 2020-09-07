@@ -25,6 +25,52 @@ static int _ina_inited = 0;
 static int _blosc_inited = 0;
 static int _jug_inited = 0;
 
+
+static const char* __get_err_getsubject(int id) {
+    switch (id) {
+        case IARRAY_ES_CONTAINER:
+            return "CONTAINER";
+        case IARRAY_ES_DTSHAPE:
+            return "DTSHAPE";
+        case IARRAY_ES_SHAPE:
+            return "SHAPE";
+        case IARRAY_ES_CHUNKSHAPE:
+            return "CHUNK SHAPE";
+        case IARRAY_ES_NDIM:
+            return "NUMBER OF DIMENSIONS";
+        case IARRAY_ES_DTYPE:
+            return "DATA TYPE";
+        case IARRAY_ES_STORAGE:
+            return "STORAGE";
+        case IARRAY_ES_PERSISTENCY:
+            return "PERSISTENCY";
+        case IARRAY_ES_BUFFER:
+            return "BUFFER";
+        case IARRAY_ES_CATERVA:
+            return "CATERVA";
+        case IARRAY_ES_BLOSC:
+            return "BLOSC";
+        case IARRAY_ES_ASSERTION:
+            return "ASSERTION";
+        case IARRAY_ES_BLOCKSHAPE:
+            return "BLOCK SHAPE";
+        case IARRAY_ES_RNG_METHOD:
+            return "RANDOM GENERATOR METHOD";
+        case IARRAY_ES_RAND_METHOD:
+            return "RANDOM METHOD";
+        case IARRAY_ES_RAND_PARAM:
+            return "RANDOM PARAM";
+        case IARRAY_ES_ITER:
+            return "ITERATOR";
+        case IARRAY_ES_EVAL_METHOD:
+            return "EVALUATION METHOD";
+        case IARRAY_ES_EVAL_ENGINE:
+            return "EVALUATION ENGINE";
+        default:
+            return "";
+    }
+}
+
 INA_API(ina_rc_t) iarray_init()
 {
     if (!_ina_inited) {
@@ -39,6 +85,8 @@ INA_API(ina_rc_t) iarray_init()
         jug_init();
         _jug_inited = 1;
     }
+
+    ina_err_register_dict(__get_err_getsubject);
 
 #if __linux__
     int nprocs = get_nprocs();
@@ -77,18 +125,19 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     INA_UNUSED(ctx);  // we could use context in the future
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(storage);
+
     if (storage->backend != IARRAY_STORAGE_BLOSC) {
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
     if (high == 0) {
         size_t L3;
-        ina_cpu_get_l3_cache_size(&L3);
+        IARRAY_RETURN_IF_FAILED(ina_cpu_get_l3_cache_size(&L3));
         // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
         high = L3 / 4;
     }
     if (low == 0) {
         size_t L2;
-        ina_cpu_get_l2_cache_size(&L2);
+        IARRAY_RETURN_IF_FAILED(ina_cpu_get_l2_cache_size(&L2));
         low = L2 / 2;
     }
 
@@ -157,7 +206,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         storage->blockshape[i] = storage->chunkshape[i];
     }
     if (psize > INT32_MAX) {
-        INA_TRACE1(iarray.error, "The partition size can not be larger than 2 GB");
+        INA_TRACE1(iarray.error, "The chunk size can not be larger than 2 GB");
         return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
     return INA_SUCCESS;
@@ -185,14 +234,13 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
 
     if (high == 0) {
         size_t L3;
-        ina_rc_t rc = ina_cpu_get_l3_cache_size(&L3);
-        printf("%"PRId64"\n", rc);
+        IARRAY_RETURN_IF_FAILED(ina_cpu_get_l3_cache_size(&L3));
         // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
         high = L3 / 4;
     }
     if (low == 0) {
         size_t L2;
-        ina_cpu_get_l2_cache_size(&L2);
+        IARRAY_RETURN_IF_FAILED(ina_cpu_get_l2_cache_size(&L2));
         low = L2 / 2;
     }
 
@@ -203,7 +251,7 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
 
     // Take the dtype of the first array (we don't support mixing data types yet)
     iarray_data_type_t dtype = a->dtshape->dtype;
-    int itemsize = 0;
+    int itemsize;
     switch (dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
             itemsize = 8;
@@ -266,9 +314,9 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
+
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx)
 {
-    ina_rc_t rc;
     if (!_ina_inited) {
         INA_TRACE1(iarray.error, "The iarray library has not been initialized with iarray_init()!");
         return INA_ERROR(INA_ES_API | INA_ERR_NOT_INITIALIZED);
@@ -282,22 +330,17 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
 
     ina_mem_cpy((*ctx)->cfg, cfg, sizeof(iarray_config_t));
 
-    IARRAY_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp));
-    IARRAY_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_part_cache));
-    IARRAY_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_OP_CHUNKS, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_op));
-    IARRAY_FAIL_IF_ERROR(ina_mempool_new(_IARRAY_MEMPOOL_EVAL_TMP, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_tmp_out));
+    IARRAY_RETURN_IF_FAILED(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp));
+    IARRAY_RETURN_IF_FAILED(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_part_cache));
+    IARRAY_RETURN_IF_FAILED(ina_mempool_new(_IARRAY_MEMPOOL_OP_CHUNKS, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_op));
+    IARRAY_RETURN_IF_FAILED(ina_mempool_new(_IARRAY_MEMPOOL_EVAL_TMP, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_tmp_out));
 
     (*ctx)->prefilter_fn = NULL;
     (*ctx)->prefilter_params = NULL;
-    rc = INA_SUCCESS;
-    goto cleanup;
 
-    fail:
-        iarray_context_free(ctx);
-        rc = ina_err_get_rc();
-    cleanup:
-        return rc;
+    return INA_SUCCESS;
 }
+
 
 INA_API(void) iarray_context_free(iarray_context_t **ctx)
 {
@@ -310,10 +353,13 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx)
     INA_MEM_FREE_SAFE(*ctx);
     *ctx = NULL;
 }
+
+
 ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams,
                                      iarray_context_t *ctx,
                                      int8_t typesize,
-                                     int64_t blocksize) {
+                                     int32_t blocksize)
+{
     cparams->pparams = ctx->prefilter_params;
     cparams->prefilter = ctx->prefilter_fn;
     int blosc_filter_idx = 0;
@@ -342,6 +388,8 @@ ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams,
     }
     return INA_SUCCESS;
 }
+
+
 ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t), void (*free)(void *), caterva_config_t *cat_cfg) {
     cat_cfg->alloc = alloc;
     cat_cfg->free = free;

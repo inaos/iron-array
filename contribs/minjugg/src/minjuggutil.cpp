@@ -5,7 +5,7 @@
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Support/CommandLine.h"
-
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
 
 using namespace llvm;
 
@@ -28,5 +28,19 @@ extern "C" int jug_utils_enable_loop_vectorize(LLVMPassManagerBuilderRef PMB)
 {
     llvm::PassManagerBuilder *pmb = unwrap(PMB);
     pmb->LoopVectorize = 1;
+    return 0;
+}
+
+extern "C" const char * jug_utils_get_cpu_string()
+{
+    return sys::getHostCPUName().data();
+}
+
+extern "C" int jug_utils_create_execution_engine(LLVMModuleRef mod, LLVMExecutionEngineRef *ee)
+{
+    llvm::EngineBuilder b(std::unique_ptr<llvm::Module>(unwrap(mod)));
+    b.setEngineKind(EngineKind::JIT);
+    b.setMCPU(sys::getHostCPUName().data());
+    *ee = wrap(b.create());
     return 0;
 }
