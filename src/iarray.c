@@ -317,6 +317,11 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx)
 {
+    if (!_ina_inited) {
+        INA_TRACE1(iarray.error, "The iarray library has not been initialized with iarray_init()!");
+        return INA_ERROR(INA_ES_API | INA_ERR_NOT_INITIALIZED);
+    }
+
     INA_VERIFY_NOT_NULL(ctx);
     *ctx = ina_mem_alloc(sizeof(iarray_context_t));
 
@@ -325,7 +330,6 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
 
     ina_mem_cpy((*ctx)->cfg, cfg, sizeof(iarray_config_t));
 
-    
     IARRAY_RETURN_IF_FAILED(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp));
     IARRAY_RETURN_IF_FAILED(ina_mempool_new(_IARRAY_MEMPOOL_EVAL, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_part_cache));
     IARRAY_RETURN_IF_FAILED(ina_mempool_new(_IARRAY_MEMPOOL_OP_CHUNKS, NULL, INA_MEM_DYNAMIC, &(*ctx)->mp_op));
