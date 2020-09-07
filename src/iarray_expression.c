@@ -265,7 +265,7 @@ int prefilter_func(blosc2_prefilter_params *pparams)
     eval_pparams.out_size = pparams->out_size;
     eval_pparams.out_typesize = pparams->out_typesize;
     eval_pparams.ndim = expr_pparams->e->out_dtshape->ndim;
-    int32_t bsize = pparams->out_size;
+    int32_t blocksize = pparams->out_size;
     int32_t typesize = pparams->out_typesize;
 
     int8_t ndim = e->out->dtshape->ndim;
@@ -348,12 +348,12 @@ int prefilter_func(blosc2_prefilter_params *pparams)
                 eval_pparams.inputs[i] = expr_pparams->inputs[i] + BLOSC_EXTENDED_HEADER_LENGTH + pparams->out_offset;
                 break;
             case IARRAY_EXPR_EQ:
-                eval_pparams.inputs[i] = ina_mem_alloc_aligned(64, bsize);
+                eval_pparams.inputs[i] = ina_mem_alloc_aligned(64, blocksize);
                 inputs_malloced[i] = true;
-                int64_t nitems = bsize / typesize;
+                int64_t nitems = blocksize / typesize;
                 int64_t offset_index = pparams->out_offset / typesize;
                 int64_t rbytes = blosc_getitem(expr_pparams->inputs[i], (int) offset_index, (int) nitems, eval_pparams.inputs[i]);
-                if (rbytes != bsize) {
+                if (rbytes != blocksize) {
                     fprintf(stderr, "Read from inputs failed inside pipeline\n");
                     return -1;
                 }
@@ -407,7 +407,7 @@ ina_rc_t iarray_eval_cleanup(iarray_expression_t *e, int64_t nitems_written)
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container_t *ret, int64_t *out_pshape)
+INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container_t *ret, int64_t *out_chunkshape)
 {
     int nvars = e->nvars;
     int64_t nitems_written = 0;
@@ -422,14 +422,14 @@ INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container
 
     for (int nvar = 0; nvar < nvars; nvar++) {
         iarray_container_t *var = e->vars[nvar].c;
-        IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar],
-                false));
+        IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_chunkshape, &iter_value[nvar],
+                                                           false));
     }
 
     // Write iterator for output
     iarray_iter_write_block_t *iter_out;
     iarray_iter_write_block_value_t out_value;
-    IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, false));
+    IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_chunkshape, &out_value, false));
 
     // Create expr pparams
     iarray_expr_pparams_t expr_pparams = {0};
@@ -491,7 +491,7 @@ INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container
 }
 
 
-INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container_t *ret, int64_t *out_pshape)
+INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container_t *ret, int64_t *out_chunkshape)
 {
     int64_t nitems_written = 0;
     int nvars = e->nvars;
@@ -548,7 +548,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     for (int nvar = 0; nvar < nvars; nvar++) {
         if (expr_pparams.input_class[nvar] == IARRAY_EXPR_NEQ) {
             iarray_container_t *var = e->vars[nvar].c;
-            IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_pshape, &iter_value[nvar],
+            IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_new(ctx, &iter_var[nvar], var, out_chunkshape, &iter_value[nvar],
                                                                false));
             external_buffers[nvar] = ina_mem_alloc(ret->catarr->extchunknitems * ret->catarr->itemsize);
             iter_var[nvar]->padding = true;
@@ -568,7 +568,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     iarray_iter_write_block_value_t out_value;
     int32_t external_buffer_size = (int32_t) (ret->catarr->extchunknitems * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD);
     void *external_buffer = NULL;  // to inform the iterator that we are passing an external buffer
-    IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_pshape, &out_value, true));
+    IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_chunkshape, &out_value, true));
 
     // Evaluate the expression for all the chunks in variables
     int32_t nchunk = 0;
@@ -667,17 +667,17 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
     e->out = *container;
     iarray_container_t *ret = *container;
 
-    int64_t out_pshape[IARRAY_DIMENSION_MAX];
+    int64_t out_chunkshape[IARRAY_DIMENSION_MAX];
     if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
         int32_t nelems = e->out->catarr->chunknitems;
         for (int i = ret->dtshape->ndim - 1; i >= 0; i--) {
-            int32_t pshapei = nelems < ret->dtshape->shape[i] ? nelems : (int32_t) ret->dtshape->shape[i];
-            out_pshape[i] = pshapei;
-            nelems = nelems / pshapei;
+            int32_t chunkshapei = nelems < ret->dtshape->shape[i] ? nelems : (int32_t) ret->dtshape->shape[i];
+            out_chunkshape[i] = chunkshapei;
+            nelems = nelems / chunkshapei;
         }
     } else {
         for (int i = 0; i < ret->dtshape->ndim; ++i) {
-            out_pshape[i] = ret->storage->chunkshape[i];
+            out_chunkshape[i] = ret->storage->chunkshape[i];
         }
     }
 
@@ -685,10 +685,10 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
 
     switch (eval_method) {
         case IARRAY_EVAL_METHOD_ITERCHUNK:
-            IARRAY_RETURN_IF_FAILED( iarray_eval_iterchunk(e, ret, out_pshape));
+            IARRAY_RETURN_IF_FAILED( iarray_eval_iterchunk(e, ret, out_chunkshape));
             break;
         case IARRAY_EVAL_METHOD_ITERBLOSC:
-            IARRAY_RETURN_IF_FAILED(iarray_eval_iterblosc(e, ret, out_pshape));
+            IARRAY_RETURN_IF_FAILED(iarray_eval_iterblosc(e, ret, out_chunkshape));
             break;
         default:
             IARRAY_TRACE1(iarray.error, "Invalid eval method");

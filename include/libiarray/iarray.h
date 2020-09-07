@@ -283,8 +283,8 @@ INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores);
  *  to a fraction of L2 cache size.  If `high` is 0, it defaults to a fraction of L3 cache size.
  *
  */
-INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
-                                          int64_t low, int64_t high);
+INA_API(ina_rc_t) iarray_chunk_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
+                                      int64_t low, int64_t high);
 
 /*
  * Provide advice for the block shapes for performing a matrix-matrix multiplication.
