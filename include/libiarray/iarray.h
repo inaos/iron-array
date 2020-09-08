@@ -267,7 +267,7 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
 INA_API(void) iarray_context_free(iarray_context_t **ctx);
 
 /*
- *  Get the number of cores (`ncores`) in the system.
+ *  Get the number of (logical) cores (`ncores`) in the system.
  *
  *  `ncores` won't be larger than `max_ncores`.  If `max_ncores` is 0, there is not a maximum cap.
  *
