@@ -69,15 +69,15 @@ int main(void)
 
     iarray_iter_read_block_t *iter;
     iarray_iter_read_block_value_t val;
-    IARRAY_FAIL_IF(iarray_iter_read_block_new(ctx, &iter, data, cshape, &val, false));
+    IARRAY_FAIL_IF_ERROR(iarray_iter_read_block_new(ctx, &iter, data, cshape, &val, false));
     while (INA_SUCCEED(iarray_iter_read_block_has_next(iter))) {
-        IARRAY_FAIL_IF(iarray_iter_read_block_next(iter, NULL, 0));
+        IARRAY_FAIL_IF_ERROR(iarray_iter_read_block_next(iter, NULL, 0));
         for (int64_t i = 0; i < val.block_size; ++i) {
             printf("Next\n");
         }
     }
     iarray_iter_read_block_free(&iter);
-    IARRAY_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+    IARRAY_ITER_FINISH();
 
     rc = INA_SUCCESS;
 

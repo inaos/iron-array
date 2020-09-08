@@ -67,6 +67,8 @@ static const char* __get_err_getsubject(int id) {
             return "EVALUATION METHOD";
         case IARRAY_ES_EVAL_ENGINE:
             return "EVALUATION ENGINE";
+        case IARRAY_ES_NCORES:
+            return "NUMBER OF CORES";
         default:
             return "";
     }
@@ -126,12 +128,16 @@ INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores)
 #ifdef INA_OS_OSX
     *ncores = (int)sysconf(_SC_NPROCESSORS_ONLN);
 #else
-    ina_cpu_get_total_logical_count(ncores);
+    IARRAY_FAIL_IF_ERROR(ina_cpu_get_total_logical_count(ncores));
 #endif
     if ((max_ncores > 0) && (*ncores > max_ncores)) {
         *ncores = max_ncores;
     }
+
     return INA_SUCCESS;
+fail:
+    INA_TRACE1(iarray.error, "Cannot get the number of cores");
+    return INA_ERROR(IARRAY_ERR_GET_NCORES);
 }
 
 
