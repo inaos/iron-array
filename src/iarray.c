@@ -119,14 +119,14 @@ int64_t get_nearest_power2(int64_t value)
     return power2;
 }
 
-// Return the number of cores in CPU
+// Return the number of (logical) cores in CPU
 INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores)
 {
     *ncores = 1;
 #ifdef INA_OS_OSX
     *ncores = (int)sysconf(_SC_NPROCESSORS_ONLN);
 #else
-    ina_cpu_get_core_count(ncores);
+    ina_cpu_get_total_logical_count(ncores);
 #endif
     if ((max_ncores > 0) && (*ncores > max_ncores)) {
         *ncores = max_ncores;
