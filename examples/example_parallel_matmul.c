@@ -26,8 +26,8 @@ int main(void)
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
-    int64_t shape_x[] = {4000, 4000};
-    int64_t shape_y[] = {4000, 4000};
+    int64_t shape_x[] = {200, 200};
+    int64_t shape_y[] = {200, 200};
 
     int64_t size_x = 1;
     int64_t size_y = 1;
@@ -36,13 +36,13 @@ int main(void)
         size_y *= shape_y[i];
     }
 
-    int64_t cshape_x[] = {1000, 1000};
-    int64_t cshape_y[] = {1000, 1000};
-    int64_t cshape_z[] = {1000, 1000};
+    int64_t cshape_x[] = {100, 100};
+    int64_t cshape_y[] = {100, 100};
+    int64_t cshape_z[] = {100, 100};
     
-    int64_t bshape_x[] = {250, 250};
-    int64_t bshape_y[] = {250, 250};
-    int64_t bshape_z[] = {250, 250};
+    int64_t bshape_x[] = {50, 50};
+    int64_t bshape_y[] = {50, 50};
+    int64_t bshape_z[] = {50, 50};
 
     // Create context
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -114,7 +114,7 @@ int main(void)
     int64_t buffer_size = c_size * c_z->catarr->itemsize;
     double *buffer = ina_mem_alloc(buffer_size);
 
-    IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_z, buffer, buffer_size));
+    // IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_z, buffer, buffer_size));
 
     for (int i = 0; i < c_size; ++i) {
         // printf("%f - ", buffer[i]);

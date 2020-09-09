@@ -712,6 +712,8 @@ INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t **itr)
     INA_MEM_FREE_SAFE((*itr)->cur_elem_index);
     INA_MEM_FREE_SAFE((*itr)->cont_eshape);
 
+    caterva_context_free(&(*itr)->cat_ctx);
+
     INA_MEM_FREE_SAFE(*itr);
 }
 
@@ -1065,6 +1067,8 @@ INA_API(void) iarray_iter_write_free(iarray_iter_write_t **itr)
 
     INA_MEM_FREE_SAFE((*itr)->cur_block_index);
     INA_MEM_FREE_SAFE((*itr)->cur_block_shape);
+
+    caterva_context_free(&(*itr)->cat_ctx);
 
     INA_MEM_FREE_SAFE(*itr);
 }

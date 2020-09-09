@@ -132,8 +132,10 @@ int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
 
     int64_t buffer_a_size = shape_a[0] * shape_a[1] * a->catarr->itemsize;
     void* buffer_a = ina_mem_alloc(buffer_a_size);
-    iarray_get_slice_buffer(st_ctx, a, start_a, stop_a, buffer_a, buffer_a_size);
-
+    if (INA_FAILED(iarray_get_slice_buffer(st_ctx, a, start_a, stop_a, buffer_a, buffer_a_size))) {
+        printf("Error getting slice\n");
+        return -1;
+    }
     // Extract desired slide from b
     int64_t start_b[2] = {0};
     start_b[0] = 0;
@@ -150,7 +152,10 @@ int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
     int64_t buffer_b_size = shape_b[0] * shape_b[1] * b->catarr->itemsize;
     void* buffer_b = ina_mem_alloc(buffer_b_size);
 
-    iarray_get_slice_buffer(st_ctx, b, start_b, stop_b, buffer_b, buffer_b_size);
+    if (INA_FAILED(iarray_get_slice_buffer(st_ctx, b, start_b, stop_b, buffer_b, buffer_b_size))) {
+        printf("Error getting slice\n");
+        return -1;
+    }
 
     int cB0 = shape_a[0];
     int cB1 = shape_a[1];
