@@ -20,7 +20,7 @@
 
 
 /* Compute and fill X values in a buffer */
-static int _fill_x(float* x, int64_t nelem)
+static int ffill_x(float* x, int64_t nelem)
 {
     /* Fill even values between 0. and 1. */
     float incx = 1.f / nelem;
@@ -31,14 +31,15 @@ static int _fill_x(float* x, int64_t nelem)
 }
 
 /* Compute and fill Y values in a buffer */
-static void _fill_y(const float* x, float* y, int64_t nelem, float (func)(float))
+static void ffill_y(const float* x, float* y, int64_t nelem, float (func)(float))
 {
     for (int i = 0; i < nelem; i++) {
         y[i] = func(x[i]);
     }
 }
 
-static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t *shape, int64_t *cshape, int64_t *bshape,
+static ina_rc_t fexecute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape,
+                                     const int64_t *cshape, const int64_t *bshape,
                                      bool plain_buffer, float (func)(float), char* expr_str)
 {
     iarray_context_t *ctx;
@@ -68,8 +69,8 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
     float *buffer_x = (float *) ina_mem_alloc(nelem * sizeof(float));
     float *buffer_y = (float *) ina_mem_alloc(nelem * sizeof(float));
 
-    _fill_x(buffer_x, nelem);
-    _fill_y(buffer_x, buffer_y, nelem, func);
+    ffill_x(buffer_x, nelem);
+    ffill_y(buffer_x, buffer_y, nelem, func);
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
 
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void*)buffer_x, nelem * sizeof(float), &store, 0, &c_x));
@@ -81,7 +82,7 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
     INA_TEST_ASSERT_SUCCEED(iarray_eval(e, &c_out));
 
     // We use a quite low tolerance as MKL functions always differ from those in OS math libraries
-    INA_TEST_ASSERT_SUCCEED(_iarray_test_container_flt_buffer_cmp(ctx, c_out, buffer_y, nelem * sizeof(float), 5e-3));
+    INA_TEST_ASSERT_SUCCEED(test_float_buffer_cmp(ctx, c_out, buffer_y, nelem * sizeof(float), 5e-3, 1e-5));
 
     iarray_expr_free(ctx, &e);
     ina_mem_free(buffer_x);
@@ -132,7 +133,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk0)
     int64_t cshape[] = {3456};
     int64_t bshape[] = {456};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
 }
 
 static float expr1(const float x)
@@ -151,7 +152,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk1)
     int64_t cshape[] = {3456};
     int64_t bshape[] = {456};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
 }
 
 static float expr2(const float x)
@@ -170,7 +171,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk2)
     int64_t cshape[] = {3456};
     int64_t bshape[] = {456};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
 }
 
 static float expr3(const float x)
@@ -189,7 +190,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
     int64_t cshape[] = {31, 32, 17};
     int64_t bshape[] = {7, 7, 7};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
 }
 
 static float expr4(const float x)
@@ -208,7 +209,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk_4)
     int64_t cshape[] = {31, 32, 17};
     int64_t bshape[] = {7, 7, 7};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
 }
 
 static float expr5(const float x)
@@ -227,5 +228,5 @@ INA_TEST_FIXTURE(expression_eval_float, iterchunk_plainbuffer)
     int64_t cshape[] = {0, 0, 0};
     int64_t bshape[] = {0, 0, 0};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, true, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, true, data->func, data->expr_str));
 }
