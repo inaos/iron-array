@@ -164,8 +164,8 @@ int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
     int ld_b = shape_b[1];
     int ld_c = shape_b[1];
 
-    // cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) cB0, (int) cB2, (int) cB1,
-    //            1.0, (double *)buffer_a, ld_a, (double *)buffer_b, ld_b, 0.0, (double *)pparams->out, ld_c);
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) cB0, (int) cB2, (int) cB1,
+                1.0, (double *)buffer_a, ld_a, (double *)buffer_b, ld_b, 0.0, (double *)pparams->out, ld_c);
 
     INA_MEM_FREE_SAFE(buffer_a);
     INA_MEM_FREE_SAFE(buffer_b);

@@ -15,7 +15,9 @@
 
 int main(void)
 {
-    int n_threads = 4;
+    int n_threads = 8;
+
+    printf("Nthreads: %d\n", n_threads);
 
     iarray_init();
     ina_stopwatch_t *w = NULL;
@@ -26,8 +28,8 @@ int main(void)
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
-    int64_t shape_x[] = {200, 200};
-    int64_t shape_y[] = {200, 200};
+    int64_t shape_x[] = {2000, 2000};
+    int64_t shape_y[] = {2000, 2000};
 
     int64_t size_x = 1;
     int64_t size_y = 1;
@@ -36,13 +38,13 @@ int main(void)
         size_y *= shape_y[i];
     }
 
-    int64_t cshape_x[] = {100, 100};
-    int64_t cshape_y[] = {100, 100};
-    int64_t cshape_z[] = {100, 100};
+    int64_t cshape_x[] = {1000, 1000};
+    int64_t cshape_y[] = {1000, 1000};
+    int64_t cshape_z[] = {1000, 1000};
     
-    int64_t bshape_x[] = {50, 50};
-    int64_t bshape_y[] = {50, 50};
-    int64_t bshape_z[] = {50, 50};
+    int64_t bshape_x[] = {250, 250};
+    int64_t bshape_y[] = {250, 250};
+    int64_t bshape_z[] = {250, 250};
 
     // Create context
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
