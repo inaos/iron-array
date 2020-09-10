@@ -34,9 +34,8 @@ inline static void dfill_buf(double *x, size_t nitems)
     }
 }
 
-inline static ina_rc_t _iarray_test_container_dbl_buffer_cmp(
-    iarray_context_t *ctx, iarray_container_t *c, const double *buffer, size_t buffer_len, double atol)
-{
+inline static ina_rc_t test_double_buffer_cmp(iarray_context_t *ctx, iarray_container_t *c, const double *buffer,
+                                              size_t buffer_len, double atol, double rtol) {
     double *bufcmp = ina_mem_alloc(buffer_len);
 
     INA_RETURN_IF_FAILED(iarray_to_buffer(ctx, c, bufcmp, buffer_len));
@@ -45,9 +44,9 @@ inline static ina_rc_t _iarray_test_container_dbl_buffer_cmp(
     for (size_t i = 0; i < len; ++i) {
         double a = buffer[i];
         double b = bufcmp[i];
-        double vdiff = fabs((a - b) / a);
-        if (vdiff > atol) {
-            INA_TEST_MSG("Values differ in (%d nelem) (diff: %g) (%f - %f)\n", i, vdiff, a, b);
+        double adiff = fabs(a - b);
+        if (adiff > atol + (rtol * fabs(b)) ) {
+            INA_TEST_MSG("Values differ in (%d nelem) (diff: %g) (%g - %g)\n", i, adiff, a, b);
             IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FALSE));
         }
     }
@@ -59,9 +58,8 @@ fail:
     return ina_err_get_rc();
 }
 
-inline static ina_rc_t _iarray_test_container_flt_buffer_cmp(
-    iarray_context_t *ctx, iarray_container_t *c, const float *buffer, size_t buffer_len, double atol)
-{
+inline static ina_rc_t test_float_buffer_cmp(iarray_context_t *ctx, iarray_container_t *c, const float *buffer,
+                                             size_t buffer_len, double atol, double rtol) {
     float *bufcmp = ina_mem_alloc(buffer_len);
 
     INA_RETURN_IF_FAILED(iarray_to_buffer(ctx, c, bufcmp, buffer_len));
@@ -70,9 +68,9 @@ inline static ina_rc_t _iarray_test_container_flt_buffer_cmp(
     for (size_t i = 0; i < len; ++i) {
         double a = buffer[i];
         double b = bufcmp[i];
-        double vdiff = fabs(a - b);
-        if (vdiff > atol) {
-            INA_TEST_MSG("Values differ in (%d nelem) (diff: %g)\n", i, vdiff);
+        double adiff = fabs(a - b);
+        if (adiff > atol + (rtol * fabs(b))) {
+            INA_TEST_MSG("Values differ in (%d nelem) (diff: %g)(%g - %g)\n", i, adiff, a, b);
             IARRAY_FAIL_IF_ERROR(INA_ERROR(INA_ERR_FALSE));
         }
     }
