@@ -20,7 +20,7 @@
 
 
 /* Compute and fill X values in a buffer */
-static int _fill_x(double* x, int64_t nelem)
+static int fill_x(double* x, int64_t nelem)
 {
     /* Fill even values between 0. and 1. */
     double incx = 1. / nelem;
@@ -31,28 +31,32 @@ static int _fill_x(double* x, int64_t nelem)
 }
 
 /* Compute and fill Y values in a buffer */
-static void _fill_y(const double* x, double* y, int64_t nelem, double (func)(double))
+static void fill_y(const double* x, double* y, int64_t nelem, double (func)(double))
 {
     for (int i = 0; i < nelem; i++) {
         y[i] = func(x[i]);
     }
 }
 
-static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t *shape, int64_t *cshape,
-                                     int64_t *bshape, bool plain_buffer, double (func)(double), char* expr_str)
+static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, const int64_t *cshape,
+                                    const int64_t *bshape, double (func)(double), char* expr_str)
 {
     iarray_context_t *ctx;
     iarray_expression_t* e;
     iarray_container_t* c_x;
     iarray_container_t* c_out;
-
     iarray_dtshape_t dtshape;
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     dtshape.ndim = ndim;
     int64_t nelem = 1;
+
+    bool plain_buffer = true;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
         nelem *= shape[i];
+        if (cshape[i] != 0) {
+            plain_buffer = false;
+        }
     }
 
     iarray_storage_t store;
@@ -69,8 +73,8 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
     double *buffer_x = (double *) ina_mem_alloc(nelem * sizeof(double));
     double *buffer_y = (double *) ina_mem_alloc(nelem * sizeof(double));
 
-    _fill_x(buffer_x, nelem);
-    _fill_y(buffer_x, buffer_y, nelem, func);
+    fill_x(buffer_x, nelem);
+    fill_y(buffer_x, buffer_y, nelem, func);
 
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
 
@@ -84,7 +88,7 @@ static ina_rc_t _execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, int64_t 
 
 
     // We use a quite low tolerance as MKL functions always differ from those in OS math libraries
-    // INA_TEST_ASSERT_SUCCEED(_iarray_test_container_dbl_buffer_cmp(ctx, c_out, buffer_y, nelem * sizeof(double), 5e-12));
+    INA_TEST_ASSERT_SUCCEED(test_double_buffer_cmp(ctx, c_out, buffer_y, nelem * sizeof(double), 5e-15, 5e-14));
     
     iarray_expr_free(ctx, &e);
 
@@ -137,7 +141,7 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk)
     int64_t cshape[] = {50, 20};
     int64_t bshape[] = {15, 20};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str));
 }
 
 
@@ -152,7 +156,7 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc2_superchunk)
     int64_t cshape[] = {31, 32, 17};
     int64_t bshape[] = {7, 12, 5};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str));
 }
 
 static double expr0(const double x)
@@ -171,7 +175,7 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk0)
     int64_t cshape[] = {25, 25};
     int64_t bshape[] = {10, 10};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str));
 }
 
 static double expr1(const double x)
@@ -191,7 +195,7 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk1)
     int64_t cshape[] = {25, 25};
     int64_t bshape[] = {10, 10};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str));
 }
 
 static double expr2(const double x)
@@ -210,7 +214,7 @@ INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk2)
     int64_t cshape[] = {25, 25};
     int64_t bshape[] = {10, 10};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str));
 }
 
 static double expr3(const double x)
@@ -229,7 +233,7 @@ INA_TEST_FIXTURE(expression_eval_double, iterchunk_superchunk3)
     int64_t cshape[] = {2, 5, 2, 8, 7, 3};
     int64_t bshape[] = {2, 3, 2, 2, 2, 3};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str));
 }
 
 INA_TEST_FIXTURE(expression_eval_double, default_superchunk2)
@@ -243,7 +247,7 @@ INA_TEST_FIXTURE(expression_eval_double, default_superchunk2)
     int64_t cshape[] = {5, 7, 11, 19};
     int64_t bshape[] = {5, 7, 5, 2};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str));
 }
 
 static double expr4(const double x)
@@ -262,7 +266,7 @@ INA_TEST_FIXTURE(expression_eval_double, llvm_dup_trans)
     int64_t cshape[] = {12, 7, 11, 19};
     int64_t bshape[] = {5, 2, 1, 7};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str));
 }
 
 static double expr5(const double x)
@@ -281,9 +285,8 @@ INA_TEST_FIXTURE(expression_eval_double, iterchunk_plainbuffer)
     int64_t cshape[] = {0};
     int64_t bshape[] = {0};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, true, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str));
 }
-
 
 INA_TEST_FIXTURE(expression_eval_double, default_plainbuffer)
 {
@@ -296,6 +299,62 @@ INA_TEST_FIXTURE(expression_eval_double, default_plainbuffer)
     int64_t cshape[] = {0, 0, 0};
     int64_t bshape[] = {0, 0, 0};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, true, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str));
 }
 
+static double expr_atan2(const double x)
+{
+    return atan2(x, 2);
+}
+
+INA_TEST_FIXTURE(expression_eval_double, iterchunk_atan2)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;
+    data->func = expr_atan2;
+    data->expr_str = "atan2(x, 2)";
+
+    int8_t ndim = 1;
+    int64_t shape[] = {20000};
+    int64_t cshape[] = {2000};
+    int64_t bshape[] = {200};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str));
+}
+
+static double expr_pow2(const double x)
+{
+    return pow(x, 2);
+}
+
+INA_TEST_FIXTURE(expression_eval_double, iterblosc_pow2)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr_pow2;
+    data->expr_str = "pow(x, 2)";
+
+    int8_t ndim = 1;
+    int64_t shape[] = {20000};
+    int64_t cshape[] = {2000};
+    int64_t bshape[] = {200};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str));
+}
+
+static double expr_pow_pi(const double x)
+{
+    return pow(x, 3.141592);
+}
+
+INA_TEST_FIXTURE(expression_eval_double, iterblosc_pow_pi)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr_pow_pi;
+    data->expr_str = "pow(x, 3.141592)";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {100, 40};
+    int64_t cshape[] = {50, 20};
+    int64_t bshape[] = {15, 20};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str));
+}
