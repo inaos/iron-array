@@ -13,6 +13,7 @@
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
 
+
 int main(void)
 {
     int n_threads = 8;
@@ -28,8 +29,8 @@ int main(void)
     int8_t ndim = 2;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
-    int64_t shape_x[] = {2000, 2000};
-    int64_t shape_y[] = {2000, 2000};
+    int64_t shape_x[] = {3000, 4000};
+    int64_t shape_y[] = {4000, 4500};
 
     int64_t size_x = 1;
     int64_t size_y = 1;
@@ -38,13 +39,13 @@ int main(void)
         size_y *= shape_y[i];
     }
 
-    int64_t cshape_x[] = {1000, 1000};
-    int64_t cshape_y[] = {1000, 1000};
-    int64_t cshape_z[] = {1000, 1000};
+    int64_t cshape_x[] = {1900, 1500};
+    int64_t cshape_y[] = {1550, 1700};
+    int64_t cshape_z[] = {1345, 2015};
     
-    int64_t bshape_x[] = {250, 250};
-    int64_t bshape_y[] = {250, 250};
-    int64_t bshape_z[] = {250, 250};
+    int64_t bshape_x[] = {575, 535};
+    int64_t bshape_y[] = {545, 425};
+    int64_t bshape_z[] = {425, 450};
 
     // Create context
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -98,37 +99,41 @@ int main(void)
         store_z.chunkshape[i] = cshape_z[i];
         store_z.blockshape[i] = bshape_z[i];
     }
-    iarray_container_t *c_z;
+    iarray_container_t *c_z_parallel;
 
     INA_STOPWATCH_START(w);
-    IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul(ctx, c_x, c_y, &store_z, &c_z));
+    IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul(ctx, c_x, c_y, &store_z, &c_z_parallel));
     INA_STOPWATCH_STOP(w);
     IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
 
-    printf("Time mkl (C): %.4f\n", elapsed_sec);
+    printf("Time parallel version: %.4f\n", elapsed_sec);
+
+    iarray_container_t *c_z_old;
+    iarray_dtshape_t dtshape_z = {0};
+    dtshape_z.ndim = ndim;
+    dtshape_z.dtype = dtype;
+    dtshape_z.shape[0] = shape_x[0];
+    dtshape_z.shape[1] = shape_y[1];
+
+    INA_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape_z, &store_z, 0, &c_z_old));
+
+    int64_t bshape_a[2] = {cshape_z[0], 35};
+    int64_t bshape_b[2] = {35, cshape_z[1]};
+    INA_STOPWATCH_START(w);
+    IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul(ctx, c_x, c_y, c_z_old, bshape_a, bshape_b, IARRAY_OPERATOR_GENERAL));
+    INA_STOPWATCH_STOP(w);
+    IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
+
+    printf("Time single-thread version: %.4f\n", elapsed_sec);
 
     // Testing
-    int64_t c_size = 1;
-    for (int i = 0; i < c_z->dtshape->ndim; ++i) {
-        c_size *= c_z->dtshape->shape[i];
-    }
-
-    int64_t buffer_size = c_size * c_z->catarr->itemsize;
-    double *buffer = ina_mem_alloc(buffer_size);
-
-    // IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_z, buffer, buffer_size));
-
-    for (int i = 0; i < c_size; ++i) {
-        // printf("%f - ", buffer[i]);
-    }
-
-    INA_MEM_FREE_SAFE(buffer);
-
+    IARRAY_RETURN_IF_FAILED(iarray_container_almost_equal(ctx, c_z_parallel, c_z_old));
 
     // Free allocated memory
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
-    iarray_container_free(ctx, &c_z);
+    iarray_container_free(ctx, &c_z_parallel);
+    iarray_container_free(ctx, &c_z_old);
     iarray_context_free(&ctx);
     INA_STOPWATCH_FREE(&w);
 

@@ -20,14 +20,6 @@ static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, 
 
     char *filename = "test_load_save.iarray";
 
-    // For some reason, this test does not pass in Azure CI, so disable it temporarily (see #189)
-//    char* envvar;
-//    envvar = getenv("AGENT_OS");
-//    if (envvar != NULL && strncmp(envvar, "Darwin", sizeof("Darwin")) == 0) {
-//        printf("Skipping test on Azure CI (Darwin)...");
-//        return INA_SUCCESS;
-//    }
-
     // Create dtshape
     iarray_dtshape_t xdtshape;
 
@@ -70,7 +62,7 @@ static ina_rc_t test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, 
     iarray_container_t *c_y;
     INA_TEST_ASSERT_SUCCEED(iarray_container_load(ctx, filename, true, &c_y));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_container_almost_equal(c_x, c_y, 1e-12));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_almost_equal(ctx, c_x, c_y));
 
     
     iarray_container_free(ctx, &c_x);

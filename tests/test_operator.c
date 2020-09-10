@@ -27,11 +27,10 @@ static ina_rc_t _test_operator_x(iarray_context_t *ctx,
                                  iarray_container_t *c_x,
                                  iarray_container_t * c_out,
                                  iarray_container_t * c_res,
-                                 _test_operator_elwise_x test_fun,
-                                 double tol)
+                                 _test_operator_elwise_x test_fun)
 {
     INA_TEST_ASSERT_SUCCEED(test_fun(ctx, c_x, c_out));
-    return iarray_container_almost_equal(c_out, c_res, tol);
+    return iarray_container_almost_equal(ctx, c_out, c_res);
 }
 
 static ina_rc_t _test_operator_xy(iarray_context_t *ctx,
@@ -39,11 +38,10 @@ static ina_rc_t _test_operator_xy(iarray_context_t *ctx,
                                   iarray_container_t * c_y,
                                   iarray_container_t * c_out,
                                   iarray_container_t * c_res,
-                                  _test_operator_elwise_xy test_fun,
-                                  double tol)
+                                  _test_operator_elwise_xy test_fun)
 {
     INA_TEST_ASSERT_SUCCEED(test_fun(ctx, c_x, c_y, c_out));
-    return iarray_container_almost_equal(c_out, c_res, tol);
+    return iarray_container_almost_equal(ctx, c_out, c_res);
 }
 
 static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
@@ -60,7 +58,6 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
     void *buffer_r;
     size_t buffer_x_len;
     size_t buffer_r_len;
-    double tol;
 
     buffer_x_len = (size_t)(type_size * n * n);
     buffer_r_len = (size_t)(type_size * n * n);
@@ -68,12 +65,10 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
     buffer_r = ina_mem_alloc(buffer_r_len);
 
     if (type_size == sizeof(float)) {
-        tol = 1e-06;
         ffill_buf((float*)buffer_x, (size_t)(n * n));
         vml_fun_s((const int)(n * n), buffer_x, buffer_r);
     }
     else {
-        tol = 1e-14;
         dfill_buf((double*)buffer_x, (size_t)(n * n));
         vml_fun_d((const int)(n * n), buffer_x, buffer_r);
     }
@@ -102,7 +97,7 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_r, buffer_r_len, &store, 0, &c_res));
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &shape, &store, 0, &c_out));
 
-    INA_TEST_ASSERT_SUCCEED(_test_operator_x(ctx, c_x, c_out, c_res, test_fun, tol));
+    INA_TEST_ASSERT_SUCCEED(_test_operator_x(ctx, c_x, c_out, c_res, test_fun));
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_out);
@@ -130,7 +125,6 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
     size_t buffer_x_len;
     size_t buffer_y_len;
     size_t buffer_r_len;
-    double tol;
 
     buffer_x_len = (size_t)type_size * n * n;
     buffer_y_len = (size_t)type_size * n * n;
@@ -140,13 +134,11 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
     buffer_r = ina_mem_alloc(buffer_r_len);
 
     if (type_size == sizeof(float)) {
-        tol = 1e-06;
         ffill_buf((float*)buffer_x, (size_t)(n * n));
         ffill_buf((float*)buffer_y, (size_t)(n * n));
         vml_fun_s((const int)(n * n), buffer_x, buffer_y, buffer_r);
     }
     else {
-        tol = 1e-14;
         dfill_buf((double*)buffer_x, (size_t)(n * n));
         dfill_buf((double*)buffer_y, (size_t)(n * n));
         vml_fun_d((const int)(n * n), buffer_x, buffer_y, buffer_r);
@@ -178,7 +170,7 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_r, buffer_r_len, &store, 0, &c_res));
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &shape, &store, 0, &c_out));
 
-    INA_TEST_ASSERT_SUCCEED(_test_operator_xy(ctx, c_x, c_y, c_out, c_res, test_fun, tol));
+    INA_TEST_ASSERT_SUCCEED(_test_operator_xy(ctx, c_x, c_y, c_out, c_res, test_fun));
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);

@@ -111,6 +111,12 @@ int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
                                  shape,
                                  strides);
 
+    if (shape[0] == 0 || shape[1] == 0) {
+        // All block elements are padding
+        memset(pparams->out, 0, pparams->out_size);
+        return 0;
+    }
+
     // Create single-thread context
     iarray_config_t st_cfg = IARRAY_CONFIG_DEFAULTS;
     st_cfg.max_num_threads = 1;
@@ -124,47 +130,50 @@ int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
 
     int64_t stop_a[2] = {0};
     stop_a[0] = start[0] + shape[0];
-    stop_a[1] = c->dtshape->shape[1];
+    stop_a[1] = a->dtshape->shape[1];
 
     int64_t shape_a[2] = {0};
-    shape_a[0] = stop_a[0] - start_a[0];
-    shape_a[1] = stop_a[1] - start_a[1];
+    shape_a[0] = c->storage->blockshape[0];
+    shape_a[1] = a->dtshape->shape[1];
 
     int64_t buffer_a_size = shape_a[0] * shape_a[1] * a->catarr->itemsize;
     void* buffer_a = ina_mem_alloc(buffer_a_size);
-    if (INA_FAILED(iarray_get_slice_buffer(st_ctx, a, start_a, stop_a, buffer_a, buffer_a_size))) {
+
+    if (INA_FAILED(_iarray_get_slice_buffer(st_ctx, a, start_a, stop_a, shape_a, buffer_a, buffer_a_size))) {
         printf("Error getting slice\n");
         return -1;
     }
+
     // Extract desired slide from b
     int64_t start_b[2] = {0};
     start_b[0] = 0;
     start_b[1] = start[1];
 
     int64_t stop_b[2] = {0};
-    stop_b[0] = c->dtshape->shape[0];
+    stop_b[0] = b->dtshape->shape[0];
     stop_b[1] = start[1] + shape[1];
 
     int64_t shape_b[2] = {0};
-    shape_b[0] = stop_b[0] - start_b[0];
-    shape_b[1] = stop_b[1] - start_b[1];
+    shape_b[0] = b->dtshape->shape[0];
+    shape_b[1] = c->storage->blockshape[1];
 
     int64_t buffer_b_size = shape_b[0] * shape_b[1] * b->catarr->itemsize;
     void* buffer_b = ina_mem_alloc(buffer_b_size);
 
-    if (INA_FAILED(iarray_get_slice_buffer(st_ctx, b, start_b, stop_b, buffer_b, buffer_b_size))) {
+    if (INA_FAILED(_iarray_get_slice_buffer(st_ctx, b, start_b, stop_b, shape_b, buffer_b, buffer_b_size))) {
         printf("Error getting slice\n");
         return -1;
     }
 
-    int cB0 = shape_a[0];
-    int cB1 = shape_a[1];
-    int cB2 = shape_b[1];
-    int ld_a = shape_a[1];
-    int ld_b = shape_b[1];
-    int ld_c = shape_b[1];
+    int m = shape_a[0];
+    int k = shape_a[1];
+    int n = shape_b[1];
 
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) cB0, (int) cB2, (int) cB1,
+    int ld_a = k;
+    int ld_b = n;
+    int ld_c = n;
+
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) m, (int) n, (int) k,
                 1.0, (double *)buffer_a, ld_a, (double *)buffer_b, ld_b, 0.0, (double *)pparams->out, ld_c);
 
     INA_MEM_FREE_SAFE(buffer_a);

@@ -548,7 +548,7 @@ INA_API(ina_rc_t) iarray_container_gte(iarray_context_t *ctx, iarray_container_t
 INA_API(ina_rc_t) iarray_container_lte(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
 INA_API(ina_rc_t) iarray_container_eq(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
 
-INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_container_t *b, double tol);
+INA_API(ina_rc_t) iarray_container_almost_equal(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b);
 
 INA_API(ina_rc_t) iarray_container_is_symmetric(iarray_container_t *a);
 INA_API(ina_rc_t) iarray_container_is_triangular(iarray_container_t *a);

@@ -945,8 +945,11 @@ INA_API(ina_rc_t) iarray_container_info(iarray_container_t *container, int64_t *
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_container_t *b, double tol)
-{
+INA_API(ina_rc_t) iarray_container_almost_equal(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b) {
+    INA_ASSERT_NOT_NULL(ctx);
+    INA_ASSERT_NOT_NULL(a);
+    INA_ASSERT_NOT_NULL(b);
+
     if (a->dtshape->dtype != b->dtshape->dtype){
         IARRAY_TRACE1(iarray.error, "The data types are not equals");
         return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
@@ -963,61 +966,45 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     }
 
     int dtype = a->dtshape->dtype;
-    int ndim = a->dtshape->ndim;
 
-    // For the blocksize, choose the maximum of the partition shapes
-    int64_t blocksize[IARRAY_DIMENSION_MAX];
-    for (int i = 0; i < ndim; ++i) {
-        blocksize[i] = INA_MAX(a->storage->chunkshape[i], b->storage->chunkshape[i]);
-    }
+    iarray_iter_read_t *a_iter;
+    iarray_iter_read_value_t a_value;
+    IARRAY_RETURN_IF_FAILED(iarray_iter_read_new(ctx, &a_iter, a, &a_value));
 
-    iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    iarray_context_t *ctx = NULL;
-    IARRAY_RETURN_IF_FAILED(iarray_context_new(&cfg, &ctx));
-    iarray_iter_read_block_t *iter_a;
-    iarray_iter_read_block_value_t val_a;
-    IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_new(ctx, &iter_a, a, blocksize, &val_a, false));
-    iarray_iter_read_block_t *iter_b;
-    iarray_iter_read_block_value_t val_b;
-    IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_new(ctx, &iter_b, b, blocksize, &val_b, false));
+    iarray_iter_read_t *b_iter;
+    iarray_iter_read_value_t b_value;
+    IARRAY_RETURN_IF_FAILED(iarray_iter_read_new(ctx, &b_iter, b, &b_value));
 
-    while (INA_SUCCEED(iarray_iter_read_block_has_next(iter_a))) {
-        IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_next(iter_a, NULL, 0));
-        IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_next(iter_b, NULL, 0));
-
+    while (INA_SUCCEED(iarray_iter_read_has_next(a_iter)) && INA_SUCCEED(iarray_iter_read_has_next(b_iter))) {
+        IARRAY_RETURN_IF_FAILED(iarray_iter_read_next(a_iter));
+        IARRAY_RETURN_IF_FAILED(iarray_iter_read_next(b_iter));
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            for (int64_t i = 0; i < val_a.block_size; ++i) {
-                double adiff = fabs(((double *)val_a.block_pointer)[i] - ((double *)val_b.block_pointer)[i]);
-                double rdiff = fabs(((double *)val_a.block_pointer)[i] - ((double *)val_b.block_pointer)[i]) /
-                    ((double *)val_a.block_pointer)[i];
-                if (rdiff > tol) {
-                    printf("%f, %f (adiff: %f, rdiff: %f)\n", ((double *)val_a.block_pointer)[i],
-                        ((double *)val_b.block_pointer)[i], adiff, rdiff);
-                    IARRAY_TRACE1(iarray.error, "Values are different");
-                    return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
-                }
+            double a_elem = ((double *) a_value.elem_pointer)[0];
+            double b_elem = ((double *) b_value.elem_pointer)[0];
+            double atol = 1e-16;
+            double rtol = 1e-14;
+            if (fabs(a_elem - b_elem) > (atol + rtol * fabs(b_elem))) {
+                printf("%f - %f \n", a_elem, b_elem);
+                IARRAY_TRACE1(iarray.error, "Values are different");
+                return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
             }
         }
         else {
-            for (int64_t i = 0; i < val_a.block_size; ++i) {
-                float adiff = fabsf(((float *)val_a.block_pointer)[i] - ((float *)val_b.block_pointer)[i]);
-                float rdiff = fabsf(((float *)val_a.block_pointer)[i] - ((float *)val_b.block_pointer)[i]) /
-                    ((float *)val_a.block_pointer)[i];
-                if (rdiff > tol) {
-                    printf("%f, %f (adiff: %f, rdiff: %f)\n", ((float *)val_a.block_pointer)[i],
-                           ((float *)val_b.block_pointer)[i], adiff, rdiff);
-                    IARRAY_TRACE1(iarray.error, "Values are different");
-                    return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
-                }
+            double a_elem = (double) ((float *) a_value.elem_pointer)[0];
+            double b_elem = (double) ((float *) b_value.elem_pointer)[0];
+            double atol = 1e-8;
+            double rtol = 1e-6;
+            if (fabs(a_elem - b_elem) > (atol + rtol * fabs(b_elem))) {
+                printf("%f - %f \n", a_elem, b_elem);
+                IARRAY_TRACE1(iarray.error, "Values are different");
+                return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
             }
         }
     }
 
     IARRAY_ITER_FINISH();
-    iarray_iter_read_block_free(&iter_a);
-    iarray_iter_read_block_free(&iter_b);
-
-    iarray_context_free(&ctx);
+    iarray_iter_read_free(&a_iter);
+    iarray_iter_read_free(&b_iter);
 
     return INA_SUCCESS;
 }
