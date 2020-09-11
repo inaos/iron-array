@@ -173,8 +173,13 @@ int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
     int ld_b = n;
     int ld_c = n;
 
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) m, (int) n, (int) k,
-                1.0, (double *)buffer_a, ld_a, (double *)buffer_b, ld_b, 0.0, (double *)pparams->out, ld_c);
+    if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) m, (int) n, (int) k,
+                    1.0, (double *) buffer_a, ld_a, (double *) buffer_b, ld_b, 0.0, (double *) pparams->out, ld_c);
+    } else {
+        cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) m, (int) n, (int) k,
+                    1.0f, (float *) buffer_a, ld_a, (float *) buffer_b, ld_b, 0.0f, (float *) pparams->out, ld_c);
+    }
 
     INA_MEM_FREE_SAFE(buffer_a);
     INA_MEM_FREE_SAFE(buffer_b);
@@ -184,41 +189,11 @@ int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
 }
 
 
-INA_API(ina_rc_t) iarray_linalg_parallel_matmul(iarray_context_t *ctx,
-                                                iarray_container_t *a,
-                                                iarray_container_t *b,
-                                                iarray_storage_t *storage,
-                                                iarray_container_t **c) {
-
-    INA_ASSERT_NOT_NULL(ctx);
-    INA_ASSERT_NOT_NULL(a);
-    INA_ASSERT_NOT_NULL(b);
-    INA_ASSERT_NOT_NULL(storage);
-    INA_ASSERT_NOT_NULL(c);
-
-    // Inputs checking
-    if (a->dtshape->shape[1] != b->dtshape->shape[0]) {
-        return INA_ERROR(IARRAY_ERR_INVALID_SHAPE);
-    }
-    if (a->dtshape->dtype != b->dtshape->dtype) {
-        return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-    }
-
-    iarray_dtshape_t dtshape = {0};
-    dtshape.dtype = a->dtshape->dtype;
-    dtshape.ndim = 2;
-    dtshape.shape[0] = a->dtshape->shape[0];
-    dtshape.shape[1] = b->dtshape->shape[1];
-
-    for (int i = 0; i < dtshape.ndim; ++i) {
-        if (dtshape.shape[i] < storage->chunkshape[i]) {
-            return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
-        }
-    }
-
-    // Create output array
-    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape, storage, 0, c));
-    iarray_container_t *out = *c;
+INA_API(ina_rc_t) iarray_linalg_matmul_blosc(iarray_context_t *ctx,
+                                             iarray_container_t *a,
+                                             iarray_container_t *b,
+                                             iarray_container_t *c) {
+    iarray_container_t *out = c;
 
     // Set up prefilter
     iarray_context_t *prefilter_ctx = ina_mem_alloc(sizeof(iarray_context_t));
@@ -235,10 +210,9 @@ INA_API(ina_rc_t) iarray_linalg_parallel_matmul(iarray_context_t *ctx,
     // Write array using an iterator
     iarray_iter_write_block_t *iter;
     iarray_iter_write_block_value_t iter_value;
-    IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter, out, storage->chunkshape, &iter_value,
+    IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter, out, out->storage->chunkshape, &iter_value,
                                                         true));
 
-    int nchunk = 0;
     size_t external_buffer_size = out->catarr->extchunknitems * out->catarr->itemsize + BLOSC_MAX_OVERHEAD;
     void *external_buffer = NULL;
 
@@ -262,14 +236,101 @@ INA_API(ina_rc_t) iarray_linalg_parallel_matmul(iarray_context_t *ctx,
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
         }
         blosc2_free_ctx(cctx);
-
-        // printf("N. chunk: %d\n", nchunk++);
-
+        
         iter->compressed_chunk_buffer = true;
     }
-    INA_MEM_FREE_SAFE(prefilter_ctx);
-
+    IARRAY_ITER_FINISH();
     iarray_iter_write_block_free(&iter);
 
+    INA_MEM_FREE_SAFE(prefilter_ctx);
+
+    return INA_SUCCESS;
+}
+
+ina_rc_t iarray_linalg_matmul_plainbuffer(iarray_context_t *ctx,
+                                          iarray_container_t *a,
+                                          iarray_container_t *b,
+                                          iarray_container_t *c) {
+
+    // Write array using an iterator
+    iarray_iter_write_block_t *iter;
+    iarray_iter_write_block_value_t iter_value;
+    IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter, c, c->dtshape->shape, &iter_value, false));
+
+    // Only one iteration is done
+    while (INA_SUCCEED(iarray_iter_write_block_has_next(iter))) {
+        IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter, NULL, 0));
+
+        size_t size_a = a->catarr->nitems * a->catarr->itemsize;
+        uint8_t *buffer_a = malloc(size_a);
+        IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, a, buffer_a, size_a));
+        size_t size_b = b->catarr->nitems * b->catarr->itemsize;
+        uint8_t *buffer_b = malloc(size_b);
+        IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, b, buffer_b, size_b));
+
+        int m = a->dtshape->shape[0];
+        int k = a->dtshape->shape[1];
+        int n = b->dtshape->shape[1];
+
+        int ld_a = k;
+        int ld_b = n;
+        int ld_c = n;
+
+        if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
+            cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) m, (int) n, (int) k,
+                        1.0, (double *) buffer_a, ld_a, (double *) buffer_b, ld_b, 0.0, (double *) iter_value.block_pointer,
+                        ld_c);
+        } else {
+            cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) m, (int) n, (int) k,
+                        1.0f, (float *) buffer_a, ld_a, (float *) buffer_b, ld_b, 0.0f, (float *) iter_value.block_pointer, ld_c);
+        }
+
+    }
+    IARRAY_ITER_FINISH();
+    iarray_iter_write_block_free(&iter);
+
+    return INA_SUCCESS;
+}
+
+
+INA_API(ina_rc_t) iarray_linalg_parallel_matmul(iarray_context_t *ctx,
+                                                iarray_container_t *a,
+                                                iarray_container_t *b,
+                                                iarray_storage_t *storage,
+                                                iarray_container_t **c) {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(a);
+    INA_VERIFY_NOT_NULL(b);
+    INA_VERIFY_NOT_NULL(storage);
+    INA_VERIFY_NOT_NULL(c);
+    
+    // Inputs checking
+    if (a->dtshape->shape[1] != b->dtshape->shape[0]) {
+        return INA_ERROR(IARRAY_ERR_INVALID_SHAPE);
+    }
+    if (a->dtshape->dtype != b->dtshape->dtype) {
+        return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+    }
+
+    iarray_dtshape_t dtshape = {0};
+    dtshape.dtype = a->dtshape->dtype;
+    dtshape.ndim = 2;
+    dtshape.shape[0] = a->dtshape->shape[0];
+    dtshape.shape[1] = b->dtshape->shape[1];
+
+    for (int i = 0; i < dtshape.ndim; ++i) {
+        if (dtshape.shape[i] < storage->chunkshape[i]) {
+            return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
+        }
+    }
+
+    // Create output array
+    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape, storage, 0, c));
+
+    if ((*c)->storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
+        IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul_plainbuffer(ctx, a, b, *c));
+    } else {
+        IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul_blosc(ctx, a, b, *c));
+    }
     return INA_SUCCESS;
 }

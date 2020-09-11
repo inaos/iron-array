@@ -27,7 +27,8 @@ int main(void)
 
     // Define example parameters
     int8_t ndim = 2;
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    iarray_storage_type_t storage_format = IARRAY_STORAGE_PLAINBUFFER;
 
     int64_t shape_x[] = {3000, 4000};
     int64_t shape_y[] = {4000, 4500};
@@ -39,13 +40,13 @@ int main(void)
         size_y *= shape_y[i];
     }
 
-    int64_t cshape_x[] = {1900, 1500};
-    int64_t cshape_y[] = {1550, 1700};
-    int64_t cshape_z[] = {1345, 2015};
-    
-    int64_t bshape_x[] = {575, 535};
-    int64_t bshape_y[] = {545, 425};
-    int64_t bshape_z[] = {425, 450};
+    int64_t cshape_x[] = {0, 0};
+    int64_t cshape_y[] = {0, 0};
+    int64_t cshape_z[] = {3000, 4500};
+
+    int64_t bshape_x[] = {0, 0};
+    int64_t bshape_y[] = {0, 0};
+    int64_t bshape_z[] = {0, 0};
 
     // Create context
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -62,7 +63,7 @@ int main(void)
     }
 
     iarray_storage_t store_x;
-    store_x.backend = IARRAY_STORAGE_BLOSC;
+    store_x.backend = storage_format;
     store_x.enforce_frame = false;
     store_x.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
@@ -80,7 +81,7 @@ int main(void)
         dtshape_y.shape[i] = shape_y[i];
     }
     iarray_storage_t store_y;
-    store_y.backend = IARRAY_STORAGE_BLOSC;
+    store_y.backend = storage_format;
     store_y.enforce_frame = false;
     store_y.filename = NULL;
     for (int i = 0; i < ndim; ++i) {
@@ -92,7 +93,7 @@ int main(void)
 
 
     iarray_storage_t store_z;
-    store_z.backend = IARRAY_STORAGE_BLOSC;
+    store_z.backend = storage_format;
     store_z.enforce_frame = false;
     store_z.filename = NULL;
     for (int i = 0; i < ndim; ++i) {

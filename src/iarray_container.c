@@ -981,8 +981,8 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_context_t *ctx, iarray_co
         if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
             double a_elem = ((double *) a_value.elem_pointer)[0];
             double b_elem = ((double *) b_value.elem_pointer)[0];
-            double atol = 1e-16;
-            double rtol = 1e-14;
+            double atol = 1e-15;
+            double rtol = 1e-13;
             if (fabs(a_elem - b_elem) > (atol + rtol * fabs(b_elem))) {
                 printf("%f - %f \n", a_elem, b_elem);
                 IARRAY_TRACE1(iarray.error, "Values are different");
@@ -990,11 +990,11 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_context_t *ctx, iarray_co
             }
         }
         else {
-            double a_elem = (double) ((float *) a_value.elem_pointer)[0];
-            double b_elem = (double) ((float *) b_value.elem_pointer)[0];
-            double atol = 1e-8;
-            double rtol = 1e-6;
-            if (fabs(a_elem - b_elem) > (atol + rtol * fabs(b_elem))) {
+            float a_elem = ((float *) a_value.elem_pointer)[0];
+            float b_elem = ((float *) b_value.elem_pointer)[0];
+            double atol = 1e-7;
+            double rtol = 1e-5;
+            if (fabsf(a_elem - b_elem) > (atol + rtol * fabsf(b_elem))) {
                 printf("%f - %f \n", a_elem, b_elem);
                 IARRAY_TRACE1(iarray.error, "Values are different");
                 return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
