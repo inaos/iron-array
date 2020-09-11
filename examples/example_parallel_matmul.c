@@ -14,9 +14,12 @@
 #include <iarray_private.h>
 
 
-int main(void)
+int main(int argc, char** argv)
 {
-    int n_threads = 4;
+    int n_threads = 1;
+    if (argc != 1) {
+        n_threads = atoi(argv[0]);
+    }
 
     printf("Nthreads: %d\n", n_threads);
 
