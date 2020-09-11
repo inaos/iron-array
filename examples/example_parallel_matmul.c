@@ -18,7 +18,7 @@ int main(int argc, char** argv)
 {
     int n_threads = 1;
     if (argc != 1) {
-        n_threads = atoi(argv[0]);
+        n_threads = atoi(argv[1]);
     }
 
     printf("Nthreads: %d\n", n_threads);
