@@ -113,6 +113,18 @@ int main(int argc, char** argv)
 
     printf("Time parallel version: %.4f\n", elapsed_sec);
 
+    iarray_container_t *c_z_parallel2;
+
+    INA_STOPWATCH_START(w);
+    IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul2(ctx, c_x, c_y, &store_z, &c_z_parallel2));
+    INA_STOPWATCH_STOP(w);
+    IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
+
+    printf("Time parallel version 2: %.4f\n", elapsed_sec);
+
+    // Testing
+    IARRAY_RETURN_IF_FAILED(iarray_container_almost_equal(ctx, c_z_parallel, c_z_parallel2));
+
     iarray_container_t *c_z_old;
     iarray_dtshape_t dtshape_z = {0};
     dtshape_z.ndim = ndim;
@@ -122,8 +134,8 @@ int main(int argc, char** argv)
 
     INA_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape_z, &store_z, 0, &c_z_old));
 
-    int64_t bshape_a[2] = {cshape_z[0], 350};
-    int64_t bshape_b[2] = {350, cshape_z[1]};
+    int64_t bshape_a[2] = {cshape_z[0], cshape_x[1]};
+    int64_t bshape_b[2] = {cshape_x[1], cshape_z[1]};
     INA_STOPWATCH_START(w);
     IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul(ctx, c_x, c_y, c_z_old, bshape_a, bshape_b, IARRAY_OPERATOR_GENERAL));
     INA_STOPWATCH_STOP(w);
@@ -169,14 +181,12 @@ int main(int argc, char** argv)
 
     printf("Time MKL version: %.4f\n", elapsed_sec);
 
-    // Testing
-    IARRAY_RETURN_IF_FAILED(iarray_container_almost_equal(ctx, c_z_parallel, c_z_old));
-
 
     // Free allocated memory
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_z_parallel);
+    iarray_container_free(ctx, &c_z_parallel2);
     iarray_container_free(ctx, &c_z_old);
     iarray_context_free(&ctx);
     INA_STOPWATCH_FREE(&w);

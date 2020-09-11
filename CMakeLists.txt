@@ -106,7 +106,7 @@ set_target_properties(
         COMPILE_DEFINITIONS INA_LIB=1)
 
 include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac"
-        "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src" "${CMAKE_SOURCE_DIR}/src/linalg")
+        "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
 
 
 if (DO_COVERAGE)
