@@ -16,7 +16,7 @@
 
 int main(void)
 {
-    int n_threads = 8;
+    int n_threads = 4;
 
     printf("Nthreads: %d\n", n_threads);
 
@@ -27,11 +27,12 @@ int main(void)
 
     // Define example parameters
     int8_t ndim = 2;
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    iarray_storage_type_t storage_format = IARRAY_STORAGE_PLAINBUFFER;
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    iarray_storage_type_t storage_format = IARRAY_STORAGE_BLOSC;
 
-    int64_t shape_x[] = {3000, 4000};
-    int64_t shape_y[] = {4000, 4500};
+
+    int64_t shape_x[] = {8192, 8192};
+    int64_t shape_y[] = {8192, 8192};
 
     int64_t size_x = 1;
     int64_t size_y = 1;
@@ -40,13 +41,13 @@ int main(void)
         size_y *= shape_y[i];
     }
 
-    int64_t cshape_x[] = {0, 0};
-    int64_t cshape_y[] = {0, 0};
-    int64_t cshape_z[] = {3000, 4500};
+    int64_t cshape_x[] = {4096, 4096};
+    int64_t cshape_y[] = {4096, 4096};
+    int64_t cshape_z[] = {4096, 4096};
 
-    int64_t bshape_x[] = {0, 0};
-    int64_t bshape_y[] = {0, 0};
-    int64_t bshape_z[] = {0, 0};
+    int64_t bshape_x[] = {1024, 1024};
+    int64_t bshape_y[] = {1024, 1024};
+    int64_t bshape_z[] = {1024, 1024};
 
     // Create context
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -118,8 +119,8 @@ int main(void)
 
     INA_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape_z, &store_z, 0, &c_z_old));
 
-    int64_t bshape_a[2] = {cshape_z[0], 35};
-    int64_t bshape_b[2] = {35, cshape_z[1]};
+    int64_t bshape_a[2] = {cshape_z[0], 350};
+    int64_t bshape_b[2] = {350, cshape_z[1]};
     INA_STOPWATCH_START(w);
     IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul(ctx, c_x, c_y, c_z_old, bshape_a, bshape_b, IARRAY_OPERATOR_GENERAL));
     INA_STOPWATCH_STOP(w);
@@ -127,8 +128,47 @@ int main(void)
 
     printf("Time single-thread version: %.4f\n", elapsed_sec);
 
+    // MKL dgemm
+    iarray_container_t *a = c_x;
+    size_t size_a = a->catarr->nitems * a->catarr->itemsize;
+    uint8_t *buffer_a = malloc(size_a);
+    IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, a, buffer_a, size_a));
+
+    iarray_container_t *b = c_y;
+    size_t size_b = b->catarr->nitems * b->catarr->itemsize;
+    uint8_t *buffer_b = malloc(size_b);
+    IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, b, buffer_b, size_b));
+
+    int m = a->dtshape->shape[0];
+    int k = a->dtshape->shape[1];
+    int n = b->dtshape->shape[1];
+
+    int ld_a = k;
+    int ld_b = n;
+    int ld_c = n;
+
+    iarray_container_t *c = c_z_parallel;
+    size_t size_c = c->catarr->nitems * c->catarr->itemsize;
+    uint8_t *buffer_c = malloc(size_c);
+
+    INA_STOPWATCH_START(w);
+    if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) m, (int) n, (int) k,
+                    1.0, (double *) buffer_a, ld_a, (double *) buffer_b, ld_b, 0.0, (double *) buffer_c,
+                    ld_c);
+    } else {
+        cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) m, (int) n, (int) k,
+                    1.0f, (float *) buffer_a, ld_a, (float *) buffer_b, ld_b, 0.0f, (float *) buffer_c,
+                    ld_c);
+    }
+    INA_STOPWATCH_STOP(w);
+    IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
+
+    printf("Time MKL version: %.4f\n", elapsed_sec);
+
     // Testing
     IARRAY_RETURN_IF_FAILED(iarray_container_almost_equal(ctx, c_z_parallel, c_z_old));
+
 
     // Free allocated memory
     iarray_container_free(ctx, &c_x);

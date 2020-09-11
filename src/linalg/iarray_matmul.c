@@ -165,19 +165,22 @@ int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
         return -1;
     }
 
+    int trans_a = a->transposed ? CblasTrans : CblasNoTrans;
+    int trans_b = b->transposed ? CblasTrans : CblasNoTrans;
+
     int m = shape_a[0];
     int k = shape_a[1];
     int n = shape_b[1];
 
-    int ld_a = k;
-    int ld_b = n;
+    int ld_a = a->transposed ? m : k;
+    int ld_b = b->transposed ? k : n;
     int ld_c = n;
 
     if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) m, (int) n, (int) k,
+        cblas_dgemm(CblasRowMajor, trans_a, trans_b, (int) m, (int) n, (int) k,
                     1.0, (double *) buffer_a, ld_a, (double *) buffer_b, ld_b, 0.0, (double *) pparams->out, ld_c);
     } else {
-        cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) m, (int) n, (int) k,
+        cblas_sgemm(CblasRowMajor, trans_a, trans_b, (int) m, (int) n, (int) k,
                     1.0f, (float *) buffer_a, ld_a, (float *) buffer_b, ld_b, 0.0f, (float *) pparams->out, ld_c);
     }
 
@@ -282,7 +285,8 @@ ina_rc_t iarray_linalg_matmul_plainbuffer(iarray_context_t *ctx,
                         ld_c);
         } else {
             cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) m, (int) n, (int) k,
-                        1.0f, (float *) buffer_a, ld_a, (float *) buffer_b, ld_b, 0.0f, (float *) iter_value.block_pointer, ld_c);
+                        1.0f, (float *) buffer_a, ld_a, (float *) buffer_b, ld_b, 0.0f, (float *) iter_value.block_pointer,
+                        ld_c);
         }
 
     }
