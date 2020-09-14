@@ -135,15 +135,49 @@ INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores)
     }
 
     return INA_SUCCESS;
+
+#ifndef INA_OS_OSX
 fail:
     INA_TRACE1(iarray.error, "Cannot get the number of cores");
     return INA_ERROR(IARRAY_ERR_GET_NCORES);
+#endif
+
 }
 
+// Partition optimized for C access
+int32_t c_optim_partition(int64_t low, int64_t high, int ndim, const int64_t *shape, int64_t *partshape,
+                          int itemsize) {
+    for (int i = 0; i < ndim; i++) {
+        partshape[i] = get_nearest_power2(shape[i]);
+    }
 
-// Given a shape, offer advice on the chunk size
-INA_API(ina_rc_t) iarray_chunk_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
-                                      int64_t low, int64_t high)
+    // Shrink chunk until we get its size into the [low, high] boundaries
+    int64_t partsize = 0;
+    do {
+        for (int i = 0; i < ndim; i++) {
+            // The size of the chunk so far
+            partsize = itemsize;
+            for (int j = 0; j < ndim; j++) {
+                partsize *= partshape[j];
+            }
+            if (partsize <= high) {
+                break;
+            }
+            else if (partsize < low) {
+                partshape[i] = shape[i];
+                break;
+            }
+            partshape[i] /= 2;
+        }
+    }
+    while (partsize > high);
+
+    return partsize;
+}
+
+// Given a shape, offer advice on the partition shapes (chunkshape and blockshape)
+INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
+                                          int64_t low, int64_t high)
 {
     INA_UNUSED(ctx);  // we could use context in the future
     INA_VERIFY_NOT_NULL(dtshape);
@@ -173,7 +207,8 @@ INA_API(ina_rc_t) iarray_chunk_advice(iarray_context_t *ctx, iarray_dtshape_t *d
     int ndim = dtshape->ndim;
     int64_t *shape = dtshape->shape;
     int64_t *chunkshape = storage->chunkshape;
-    int itemsize = 0;
+    int64_t *blockshape = storage->blockshape;
+    int itemsize;
     switch (dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
             itemsize = 8;
@@ -186,52 +221,18 @@ INA_API(ina_rc_t) iarray_chunk_advice(iarray_context_t *ctx, iarray_dtshape_t *d
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
 
-    for (int i = 0; i < ndim; i++) {
-        chunkshape[i] = get_nearest_power2(shape[i]);
-    }
-
-    // Shrink chunk until we get its size into the [low, high] boundaries
-    int64_t chunksize = 0;
-    do {
-        for (int i = 0; i < ndim; i++) {
-            // The size of the chunk so far
-            chunksize = itemsize;
-            for (int j = 0; j < ndim; j++) {
-                chunksize *= chunkshape[j];
-            }
-            if (chunksize <= high) {
-                break;
-            }
-            else if (chunksize < low) {
-                chunkshape[i] = shape[i];
-                break;
-            }
-            chunkshape[i] /= 2;
-        }
-    } while (chunksize > high);
-
-    // Lastly, if some chunkshape axis is too close to the original shape, split it again
-    if (chunksize > low) {
-        for (int i = 0; i < ndim; i++) {
-            if (((float) (shape[i] - chunkshape[i]) / (float) chunkshape[i]) < 0.1) {
-                chunkshape[i] = chunkshape[i] / 2;
-            }
-            chunksize = itemsize;
-            for (int j = 0; j < ndim; j++) {
-                chunksize *= chunkshape[j];
-            }
-            if (chunksize < low) {
-                break;
-            }
-        }
-    }
-    for (int i = 0; i < ndim; ++i) {
-        storage->blockshape[i] = storage->chunkshape[i];
-    }
+    int64_t chunksize = c_optim_partition(low, high, ndim, shape, chunkshape, itemsize);
     if (chunksize > INT32_MAX) {
         INA_TRACE1(iarray.error, "The chunk size can not be larger than 2 GB");
         return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
+
+    int64_t blocksize = c_optim_partition(low, high, ndim, shape, blockshape, itemsize);
+    if (blocksize > INT32_MAX) {
+        INA_TRACE1(iarray.error, "The block size can not be larger than 2 GB");
+        return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
+    }
+
     return INA_SUCCESS;
 }
 
