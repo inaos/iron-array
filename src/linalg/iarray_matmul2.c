@@ -138,6 +138,11 @@ static int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
     int64_t iterations = a->dtshape->shape[1] / k_max;
     if (a->dtshape->shape[1] % k_max != 0) iterations++;
 
+    size_t buffer_a_size = shape[0] * k_max * c->catarr->itemsize;
+    void* buffer_a = ina_mem_alloc(buffer_a_size);
+    size_t buffer_b_size = k_max * shape[1] * c->catarr->itemsize;
+    void* buffer_b = ina_mem_alloc(buffer_b_size);
+
     for (int i = 0; i < iterations; ++i) {
         int64_t k0 = k_max * i;
         int64_t k1 = k_max * (i+1);
@@ -158,9 +163,6 @@ static int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
         shape_a[0] = c->storage->blockshape[0];
         shape_a[1] = k1 - k0;
 
-        int64_t buffer_a_size = shape_a[0] * shape_a[1] * a->catarr->itemsize;
-        void* buffer_a = ina_mem_alloc(buffer_a_size);
-
         if (INA_FAILED(_iarray_get_slice_buffer(st_ctx, a, start_a, stop_a, shape_a, buffer_a, buffer_a_size))) {
             printf("Error getting slice\n");
             return -1;
@@ -178,9 +180,6 @@ static int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
         int64_t shape_b[2] = {0};
         shape_b[0] = k1 - k0;
         shape_b[1] = c->storage->blockshape[1];
-
-        int64_t buffer_b_size = shape_b[0] * shape_b[1] * b->catarr->itemsize;
-        void* buffer_b = ina_mem_alloc(buffer_b_size);
 
         if (INA_FAILED(_iarray_get_slice_buffer(st_ctx, b, start_b, stop_b, shape_b, buffer_b, buffer_b_size))) {
             printf("Error getting slice\n");
@@ -205,10 +204,9 @@ static int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
             cblas_sgemm(CblasRowMajor, trans_a, trans_b, (int) m, (int) n, (int) k,
                         1.0f, (float *) buffer_a, ld_a, (float *) buffer_b, ld_b, 1.0f, (float *) pparams->out, ld_c);
         }
-
-        INA_MEM_FREE_SAFE(buffer_a);
-        INA_MEM_FREE_SAFE(buffer_b);
     }
+    INA_MEM_FREE_SAFE(buffer_a);
+    INA_MEM_FREE_SAFE(buffer_b);
 
     iarray_context_free(&st_ctx);
 
