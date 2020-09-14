@@ -91,7 +91,8 @@ typedef struct iarray_parallel_matmul_params_s {
     iarray_container_t *a;
     iarray_container_t *b;
     iarray_container_t *c;
-    uint64_t nthreads;
+    uint8_t nthreads;
+    int64_t max_cache;
     int64_t *chunk_index;
 } iarray_parallel_matmul_params_t;
 
@@ -125,11 +126,14 @@ static int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
     iarray_context_t *st_ctx;
     iarray_context_new(&st_cfg, &st_ctx);
 
-    double maxsize = 4 * 1024 * 1024; // Cache size
+    double maxsize = matmul_params->max_cache; // Cache size
     maxsize /= c->catarr->itemsize;
     maxsize /= matmul_params->nthreads;
     maxsize /= (double) (shape[0] + shape[1]);
     int64_t k_max = (uint64_t) ceil(maxsize);
+    if (k_max > a->dtshape->shape[1]) {
+        k_max = a->dtshape->shape[1];
+    }
 
     int64_t iterations = a->dtshape->shape[1] / k_max;
     if (a->dtshape->shape[1] % k_max != 0) iterations++;
@@ -215,6 +219,7 @@ static int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
 static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
                                              iarray_container_t *a,
                                              iarray_container_t *b,
+                                             int64_t max_cache,
                                              iarray_container_t *c) {
     iarray_container_t *out = c;
 
@@ -226,6 +231,7 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
     matmul_params.a = a;
     matmul_params.b = b;
     matmul_params.c = out;
+    matmul_params.max_cache = max_cache;
     matmul_params.nthreads = ctx->cfg->max_num_threads;
 
     blosc2_prefilter_params pparams = {0};
@@ -322,6 +328,7 @@ static ina_rc_t iarray_linalg_matmul_plainbuffer(iarray_context_t *ctx,
 INA_API(ina_rc_t) iarray_linalg_parallel_matmul2(iarray_context_t *ctx,
                                                 iarray_container_t *a,
                                                 iarray_container_t *b,
+                                                int64_t max_cache,
                                                 iarray_storage_t *storage,
                                                 iarray_container_t **c) {
     INA_VERIFY_NOT_NULL(ctx);
@@ -356,7 +363,7 @@ INA_API(ina_rc_t) iarray_linalg_parallel_matmul2(iarray_context_t *ctx,
     if ((*c)->storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
         IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul_plainbuffer(ctx, a, b, *c));
     } else {
-        IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul_blosc(ctx, a, b, *c));
+        IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul_blosc(ctx, a, b, max_cache, *c));
     }
     return INA_SUCCESS;
 }

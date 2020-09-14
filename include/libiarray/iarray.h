@@ -574,6 +574,7 @@ INA_API(ina_rc_t) iarray_linalg_parallel_matmul(iarray_context_t *ctx,
 INA_API(ina_rc_t) iarray_linalg_parallel_matmul2(iarray_context_t *ctx,
                                                 iarray_container_t *a,
                                                 iarray_container_t *b,
+                                                int64_t max_cache,
                                                 iarray_storage_t *storage,
                                                 iarray_container_t **c);
 

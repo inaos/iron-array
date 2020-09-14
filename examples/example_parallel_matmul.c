@@ -115,8 +115,9 @@ int main(int argc, char** argv)
 
     iarray_container_t *c_z_parallel2;
 
+    int64_t max_cache = 64  * 1024 * 1024;
     INA_STOPWATCH_START(w);
-    IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul2(ctx, c_x, c_y, &store_z, &c_z_parallel2));
+    IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul2(ctx, c_x, c_y, max_cache, &store_z, &c_z_parallel2));
     INA_STOPWATCH_STOP(w);
     IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
 
