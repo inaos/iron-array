@@ -984,7 +984,7 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_context_t *ctx, iarray_co
             double atol = 1e-15;
             double rtol = 1e-13;
             if (fabs(a_elem - b_elem) > (atol + rtol * fabs(b_elem))) {
-                printf("%f - %f \n", a_elem, b_elem);
+                printf("%f - %f (pos %lld)\n", a_elem, b_elem, a_value.elem_flat_index);
                 IARRAY_TRACE1(iarray.error, "Values are different");
                 return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
             }
@@ -995,7 +995,7 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_context_t *ctx, iarray_co
             double atol = 1e-7;
             double rtol = 1e-5;
             if (fabsf(a_elem - b_elem) > (atol + rtol * fabsf(b_elem))) {
-                printf("%f - %f \n", a_elem, b_elem);
+                printf("%f - %f (pos %lld)\n", a_elem, b_elem, a_value.elem_flat_index);
                 IARRAY_TRACE1(iarray.error, "Values are different");
                 return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
             }

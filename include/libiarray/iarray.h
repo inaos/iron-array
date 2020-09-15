@@ -578,6 +578,12 @@ INA_API(ina_rc_t) iarray_linalg_parallel_matmul2(iarray_context_t *ctx,
                                                 iarray_storage_t *storage,
                                                 iarray_container_t **c);
 
+INA_API(ina_rc_t) iarray_linalg_parallel_matmul3(iarray_context_t *ctx,
+                                                iarray_container_t *a,
+                                                iarray_container_t *b,
+                                                iarray_storage_t *storage,
+                                                iarray_container_t **c);
+
 INA_API(ina_rc_t) iarray_linalg_dot(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result, iarray_operator_hint_t hint);
 INA_API(ina_rc_t) iarray_linalg_det(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 INA_API(ina_rc_t) iarray_linalg_eigen(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
