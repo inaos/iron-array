@@ -208,8 +208,8 @@ typedef struct iarray_storage_s {
     iarray_storage_type_t backend;
     char *filename;
     bool enforce_frame;
-    int64_t chunkshape[IARRAY_DIMENSION_MAX]; /* partition shape */
-    int64_t blockshape[IARRAY_DIMENSION_MAX]; /* block shape */
+    int64_t chunkshape[IARRAY_DIMENSION_MAX];
+    int64_t blockshape[IARRAY_DIMENSION_MAX];
 } iarray_storage_t;
 
 typedef struct iarray_iter_write_value_s {
@@ -288,7 +288,8 @@ INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores);
  */
 INA_API(ina_rc_t)
 iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
-                                      int64_t low, int64_t high);
+                        int64_t min_chunksize, int64_t max_chunksize,
+                        int64_t min_blocksize, int64_t max_blocksize);
 
 /*
  * Provide advice for the block shapes for performing a matrix-matrix multiplication.

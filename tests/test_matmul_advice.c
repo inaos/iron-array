@@ -21,9 +21,9 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
                                    const int64_t *bshape_a,
                                    const int64_t *bshape_b)
 {
-    // We want to specify a [low, high] range explicitly, because L3 size is CPU-dependent
-    int64_t low = 128 * 1024;
-    int64_t high = 1024 * 1024;
+    // We want to specify max for chunskize, blocksize explicitly, because L2/L3 size is CPU-dependent
+    int64_t max_chunksize = 1024 * 1024;
+    int64_t max_blocksize = 128 * 1024;
 
     int8_t ndim = 2;
 
@@ -40,7 +40,7 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     store.filename = NULL;
     store.enforce_frame = false;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_a, &store, low, high));
+    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_a, &store, 0, max_chunksize, 0, max_blocksize));
     iarray_container_t *c_a;
     INA_TEST_ASSERT_SUCCEED(iarray_ones(ctx, &dtshape_a, &store, 0, &c_a));
 
@@ -51,7 +51,7 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     for (int i = 0; i < ndim; i++) {
         dtshape_b.shape[i] = shape_b[i];
     }
-    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_b, &store, low, high));
+    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_b, &store, 0, max_chunksize, 0, max_blocksize));
     iarray_container_t *c_b;
     INA_TEST_ASSERT_SUCCEED(iarray_ones(ctx, &dtshape_b, &store, 0, &c_b));
 
@@ -61,7 +61,7 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     dtshape_c.ndim = ndim;
     dtshape_c.shape[0] = shape_a[0];
     dtshape_c.shape[1] = shape_b[1];
-    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_c, &store, low, high));
+    INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape_c, &store, 0, max_chunksize, 0, max_blocksize));
     iarray_container_t *c_c;
     INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &dtshape_c, &store, 0, &c_c));
 
@@ -72,7 +72,7 @@ static ina_rc_t test_matmul_advice(iarray_context_t *ctx,
     // Get the advice for matmul itself
     int64_t _bshape_a[2];
     int64_t _bshape_b[2];
-    INA_TEST_ASSERT_SUCCEED(iarray_matmul_advice(ctx, c_a, c_b, c_c, _bshape_a, _bshape_b, low, high));
+    INA_TEST_ASSERT_SUCCEED(iarray_matmul_advice(ctx, c_a, c_b, c_c, _bshape_a, _bshape_b, max_chunksize, max_blocksize));  // TODO
 
 //    printf("bshape_a: ");
 //    for (int i = 0; i < ndim; i++) {
