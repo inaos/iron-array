@@ -176,6 +176,7 @@ int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
     int ld_b = b->transposed ? k : n;
     int ld_c = n;
 
+
     if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
         cblas_dgemm(CblasRowMajor, trans_a, trans_b, (int) m, (int) n, (int) k,
                     1.0, (double *) buffer_a, ld_a, (double *) buffer_b, ld_b, 0.0, (double *) pparams->out, ld_c);

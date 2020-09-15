@@ -121,15 +121,16 @@ static int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
     uint8_t* buffer_b = &matmul_params->cache_b[start[1] * b->dtshape->shape[0] * b->catarr->itemsize];
 
     int trans_a = a->transposed ? CblasTrans : CblasNoTrans;
-    int trans_b = b->transposed ? CblasNoTrans : CblasTrans;
+    int trans_b = b->transposed ? CblasTrans : CblasNoTrans;
 
     int m = c->storage->blockshape[0];
     int k = a->dtshape->shape[1];
     int n = c->storage->blockshape[1];
 
     int ld_a = a->transposed ? m : k;
-    int ld_b = b->transposed ? n : k;
+    int ld_b = b->transposed ? k : n;
     int ld_c = n;
+
 
     if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
         cblas_dgemm(CblasRowMajor, trans_a, trans_b, (int) m, (int) n, (int) k,
@@ -212,8 +213,20 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
         shape_b[0] = b->dtshape->shape[0];
         shape_b[1] = c->catarr->extchunkshape[1];
 
-        _iarray_get_slice_buffer(ctx, b, start_b, stop_b, shape_b, cache_b, cache_size_b);
-        mkl_dimatcopy('R', 'T', shape_b[0], shape_b[1], 1.0, (double *) cache_b, shape_b[1], shape_b[0]);
+        int64_t nind = shape_b[1] / c->storage->blockshape[1];
+
+        for (int i = 0; i < nind; ++i) {
+            start_b[1] = i * c->storage->blockshape[1] + iter_value.elem_index[1];
+            stop_b[1] = (i + 1) * c->storage->blockshape[1] + iter_value.elem_index[1];
+            if (stop_b[1] > iter_value.elem_index[1] + iter_value.block_shape[1]) {
+                stop_b[1] = iter_value.elem_index[1] + iter_value.block_shape[1];
+            }
+            shape_b[1] = c->catarr->blockshape[1];
+            int64_t cache_size_aux_b = b->dtshape->shape[0] * c->catarr->blockshape[1] * b->catarr->itemsize;
+            _iarray_get_slice_buffer(ctx, b, start_b, stop_b, shape_b, &cache_b[i * cache_size_aux_b], cache_size_aux_b);
+        }
+        // _iarray_get_slice_buffer(ctx, b, start_b, stop_b, shape_b, cache_b, cache_size_b);
+        // mkl_dimatcopy('R', 'T', shape_b[0], shape_b[1], 1.0, (double *) cache_b, shape_b[1], shape_b[0]);
 
         blosc2_context *cctx = blosc2_create_cctx(cparams);
         int csize = blosc2_compress_ctx(cctx, out->catarr->extchunknitems * out->catarr->itemsize,
