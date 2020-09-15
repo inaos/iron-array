@@ -59,11 +59,6 @@ other packager of your preference).
          cmake -DCMAKE_BUILD_TYPE=Debug ..
          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 
-* If one wants to use the multithreaded version, then add next flag:
-
-         cmake -DCMAKE_BUILD_TYPE=Debug ..
-         cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
-
 
 ### Linux
 
@@ -112,6 +107,6 @@ Error during evaluation.  Giving up...
 
 ### Expressions
 
-* For now only element-wise operations are supported in expression.
+* For now only element-wise operations are supported in expressions.
 
-* The iron-array library supports disabling SVML optimization by setting a `DISABLE_SVML` environment variable to *any* value.  This can be useful for debugging purposes.
+* The iron-array library supports disabling the SVML optimization by setting a `DISABLE_SVML` environment variable to *any* value.  This can be useful for debugging purposes.
