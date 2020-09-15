@@ -33,9 +33,11 @@ int main(int argc, char** argv)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     iarray_storage_type_t storage_format = IARRAY_STORAGE_BLOSC;
 
-
-    int64_t shape_x[] = {8192, 8192};
-    int64_t shape_y[] = {8192, 8192};
+    int64_t sh = 256;
+    int64_t cs = 128;
+    int64_t bs = 64;
+    int64_t shape_x[] = {sh, sh};
+    int64_t shape_y[] = {sh, sh};
 
     int64_t size_x = 1;
     int64_t size_y = 1;
@@ -44,13 +46,13 @@ int main(int argc, char** argv)
         size_y *= shape_y[i];
     }
 
-    int64_t cshape_x[] = {4096, 4096};
-    int64_t cshape_y[] = {4096, 4096};
-    int64_t cshape_z[] = {4096, 4096};
+    int64_t cshape_x[] = {cs, cs};
+    int64_t cshape_y[] = {cs, cs};
+    int64_t cshape_z[] = {cs, cs};
 
-    int64_t bshape_x[] = {1024, 1024};
-    int64_t bshape_y[] = {1024, 1024};
-    int64_t bshape_z[] = {1024, 1024};
+    int64_t bshape_x[] = {bs, bs};
+    int64_t bshape_y[] = {bs, bs};
+    int64_t bshape_z[] = {bs, bs};
 
     // Create context
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -184,6 +186,10 @@ int main(int argc, char** argv)
 
 
     // Free allocated memory
+    free(buffer_a);
+    free(buffer_b);
+    free(buffer_c);
+
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_z_parallel);
