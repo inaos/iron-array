@@ -146,8 +146,8 @@ int64_t get_nearest_power2(int64_t value)
 }
 
 
-// Return partition shapes whose elements are a power of 2, if possible, and as cubic as possible
-ina_rc_t cubic_optim_partition(int ndim, const int64_t *shape, int64_t *partshape, int itemsize,
+// Return partition shapes whose elements are a power of 2, if possible, and as squared box as possible
+ina_rc_t boxed_optim_partition(int ndim, const int64_t *shape, int64_t *partshape, int itemsize,
                                int64_t minsize, int64_t maxsize) {
     for (int i = 0; i < ndim; i++) {
         partshape[i] = get_nearest_power2(shape[i]);
@@ -176,18 +176,18 @@ ina_rc_t cubic_optim_partition(int ndim, const int64_t *shape, int64_t *partshap
 
     // Lastly, if some chunkshape axis is too close to the original shape, split it again
     for (int i = 0; i < ndim; i++) {
-        if (partshape[i] == 1) {
-            continue;
-        }
-        if (((float) (shape[i] - partshape[i]) / (float) partshape[i]) < 0.1) {
-            partshape[i] = partshape[i] / 2;
-        }
+//        if (partshape[i] == 1) {
+//            continue;
+//        }
         partsize = itemsize;
         for (int j = 0; j < ndim; j++) {
             partsize *= partshape[j];
         }
         if (partsize < minsize) {
             break;
+        }
+        if (((float) (shape[i] - partshape[i]) / (float) partshape[i]) < 0.1) {
+            partshape[i] = partshape[i] / 2;
         }
     }
 
@@ -198,6 +198,7 @@ ina_rc_t cubic_optim_partition(int ndim, const int64_t *shape, int64_t *partshap
 
     return INA_SUCCESS;
 }
+
 
 // Given a shape, offer advice on the partition shapes (chunkshape and blockshape)
 INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
@@ -253,7 +254,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     }
 
     // Compute the chunkshape
-    IARRAY_RETURN_IF_FAILED(cubic_optim_partition(ndim, shape, chunkshape, itemsize, min_chunksize, max_chunksize));
+    IARRAY_RETURN_IF_FAILED(boxed_optim_partition(ndim, shape, chunkshape, itemsize, min_chunksize, max_chunksize));
     int32_t chunksize = itemsize;
     for (int i = 0; i < ndim; i++) {
         chunksize *= chunkshape[i];
@@ -263,10 +264,11 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     if (chunksize < max_blocksize) {
         max_blocksize = chunksize;
     }
-    IARRAY_RETURN_IF_FAILED(cubic_optim_partition(ndim, chunkshape, blockshape, itemsize, min_blocksize, max_blocksize));
+    IARRAY_RETURN_IF_FAILED(boxed_optim_partition(ndim, chunkshape, blockshape, itemsize, min_blocksize, max_blocksize));
 
     return INA_SUCCESS;
 }
+
 
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx)
 {
