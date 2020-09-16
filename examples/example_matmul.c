@@ -15,7 +15,6 @@
 
 int main(void)
 {
-    bool success;
     iarray_init();
     ina_stopwatch_t *w = NULL;
     double elapsed_sec = 0;
@@ -33,11 +32,13 @@ int main(void)
     int64_t size_y = 1000 * 1500;
     int64_t size_z = 2000 * 1500;
 
-
     int64_t cshape_x[] = {200, 200};
     int64_t cshape_y[] = {200, 200};
     int64_t cshape_z[] = {200, 200};
-    
+
+    int64_t blockshape_x[2] = {200, 200};
+    int64_t blockshape_y[2] = {200, 200};
+
     int64_t bshape_x[] = {20, 15};
     int64_t bshape_y[] = {31, 17};
     int64_t bshape_z[] = {45, 77};
@@ -117,22 +118,6 @@ int main(void)
 
     printf("Time mkl (C): %.4f\n", elapsed_sec);
 
-    // int64_t bshape_x[] = {2000, 1000};
-    // int64_t bshape_y[] = {1000, 1500};
-
-    //TODO: When the matmul advice is used, the iarray_linalg_matmul() does not work well (issue #205)
-
-    int64_t blockshape_x[2];
-    int64_t blockshape_y[2];
-
-    if (INA_FAILED(iarray_matmul_advice(ctx, c_x, c_y, c_z, blockshape_x, blockshape_y, 16 * 1024, 128 * 1024))) {
-        printf("Error in getting advice for matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
-        exit(1);
-    }
-
-    printf("bshape_x: (%d, %d)\n", (int)blockshape_x[0], (int)blockshape_x[1]);
-    printf("bshape_y: (%d, %d)\n", (int)blockshape_y[0], (int)blockshape_y[1]);
-
     INA_STOPWATCH_START(w);
     if (INA_FAILED(iarray_linalg_matmul(ctx, c_x, c_y ,c_z, blockshape_x, blockshape_y, IARRAY_OPERATOR_GENERAL))) {
         fprintf(stderr, "Error in linalg_matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
@@ -153,11 +138,6 @@ int main(void)
         }
     }
 
-    success = true;
-    goto cleanup;
-    fail:
-    return ina_err_get_rc();
-    cleanup:
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_z);
@@ -170,9 +150,7 @@ int main(void)
     INA_STOPWATCH_FREE(&w);
     iarray_destroy();
 
-    if (success) {
-        return INA_SUCCESS;
-    } else {
-        return ina_err_get_rc();
-    }
+    return INA_SUCCESS;
+    fail:
+    return ina_err_get_rc();
 }
