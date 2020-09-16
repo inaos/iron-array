@@ -101,8 +101,8 @@ INA_TEST_FIXTURE(partition_advice, 2_d_near_bounds)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int8_t ndim = 2;
     int64_t shape[] = {513, 257};
-    int64_t cshape[] = {256, 128};
-    int64_t bshape[] = {128, 64};
+    int64_t cshape[] = {256, 256};
+    int64_t bshape[] = {64, 128};
 
     INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, cshape, bshape));
 }
