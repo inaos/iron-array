@@ -163,25 +163,25 @@ ina_rc_t boxed_optim_partition(int ndim, const int64_t *shape, int64_t *partshap
                 partsize *= partshape[j];
             }
             if (partsize <= maxsize) {
-                break;
+                goto out;
             }
-            else if (partsize < minsize) {
-                partshape[i] = shape[i];
-                break;
+            if (partsize < minsize) {
+                goto out;
             }
             partshape[i] /= 2;
         }
     }
-    while (partsize > maxsize);
+    while (true);
 
+out:
     // Lastly, if some chunkshape axis is too close to the original shape, split it again
     for (int i = 0; i < ndim; i++) {
-//        if (partshape[i] == 1) {
-//            continue;
-//        }
         partsize = itemsize;
         for (int j = 0; j < ndim; j++) {
             partsize *= partshape[j];
+        }
+        if (partsize <= maxsize / 2) {
+            break;
         }
         if (partsize < minsize) {
             break;
@@ -260,7 +260,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         chunksize *= chunkshape[i];
     }
 
-    // Compute the blocksshape
+    // Compute the blockshape
     if (chunksize < max_blocksize) {
         max_blocksize = chunksize;
     }
