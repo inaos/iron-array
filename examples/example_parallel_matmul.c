@@ -33,9 +33,9 @@ int main(int argc, char** argv)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     iarray_storage_type_t storage_format = IARRAY_STORAGE_BLOSC;
 
-    int64_t sh = 256;
-    int64_t cs = 128;
-    int64_t bs = 64;
+    int64_t sh = 4096;
+    int64_t cs = 1024;
+    int64_t bs = 128;
     int64_t shape_x[] = {sh, sh};
     int64_t shape_y[] = {sh, sh};
 
@@ -57,6 +57,7 @@ int main(int argc, char** argv)
     // Create context
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = n_threads;
+    cfg.compression_level = 0;
     iarray_context_t *ctx;
     IARRAY_RETURN_IF_FAILED(iarray_context_new(&cfg, &ctx));
 
@@ -109,92 +110,15 @@ int main(int argc, char** argv)
     iarray_container_t *c_z_parallel;
 
     INA_STOPWATCH_START(w);
-    IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul(ctx, c_x, c_y, &store_z, &c_z_parallel));
+    IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul3(ctx, c_x, c_y, &store_z, &c_z_parallel));
     INA_STOPWATCH_STOP(w);
     IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
-
     printf("Time parallel version: %.4f\n", elapsed_sec);
 
-    iarray_container_t *c_z_parallel2;
-
-    int64_t max_cache = 64  * 1024 * 1024;
-    INA_STOPWATCH_START(w);
-    IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul2(ctx, c_x, c_y, max_cache, &store_z, &c_z_parallel2));
-    INA_STOPWATCH_STOP(w);
-    IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
-
-    printf("Time parallel version 2: %.4f\n", elapsed_sec);
-
-    // Testing
-    IARRAY_RETURN_IF_FAILED(iarray_container_almost_equal(ctx, c_z_parallel, c_z_parallel2));
-
-    iarray_container_t *c_z_old;
-    iarray_dtshape_t dtshape_z = {0};
-    dtshape_z.ndim = ndim;
-    dtshape_z.dtype = dtype;
-    dtshape_z.shape[0] = shape_x[0];
-    dtshape_z.shape[1] = shape_y[1];
-
-    INA_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape_z, &store_z, 0, &c_z_old));
-
-    int64_t bshape_a[2] = {cshape_z[0], cshape_x[1]};
-    int64_t bshape_b[2] = {cshape_x[1], cshape_z[1]};
-    INA_STOPWATCH_START(w);
-    IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul(ctx, c_x, c_y, c_z_old, bshape_a, bshape_b, IARRAY_OPERATOR_GENERAL));
-    INA_STOPWATCH_STOP(w);
-    IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
-
-    printf("Time single-thread version: %.4f\n", elapsed_sec);
-
-    // MKL dgemm
-    iarray_container_t *a = c_x;
-    size_t size_a = a->catarr->nitems * a->catarr->itemsize;
-    uint8_t *buffer_a = malloc(size_a);
-    IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, a, buffer_a, size_a));
-
-    iarray_container_t *b = c_y;
-    size_t size_b = b->catarr->nitems * b->catarr->itemsize;
-    uint8_t *buffer_b = malloc(size_b);
-    IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, b, buffer_b, size_b));
-
-    int m = a->dtshape->shape[0];
-    int k = a->dtshape->shape[1];
-    int n = b->dtshape->shape[1];
-
-    int ld_a = k;
-    int ld_b = n;
-    int ld_c = n;
-
-    iarray_container_t *c = c_z_parallel;
-    size_t size_c = c->catarr->nitems * c->catarr->itemsize;
-    uint8_t *buffer_c = malloc(size_c);
-
-    INA_STOPWATCH_START(w);
-    if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) m, (int) n, (int) k,
-                    1.0, (double *) buffer_a, ld_a, (double *) buffer_b, ld_b, 0.0, (double *) buffer_c,
-                    ld_c);
-    } else {
-        cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, (int) m, (int) n, (int) k,
-                    1.0f, (float *) buffer_a, ld_a, (float *) buffer_b, ld_b, 0.0f, (float *) buffer_c,
-                    ld_c);
-    }
-    INA_STOPWATCH_STOP(w);
-    IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
-
-    printf("Time MKL version: %.4f\n", elapsed_sec);
-
-
-    // Free allocated memory
-    free(buffer_a);
-    free(buffer_b);
-    free(buffer_c);
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_z_parallel);
-    iarray_container_free(ctx, &c_z_parallel2);
-    iarray_container_free(ctx, &c_z_old);
     iarray_context_free(&ctx);
     INA_STOPWATCH_FREE(&w);
 

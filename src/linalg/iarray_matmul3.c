@@ -100,6 +100,16 @@ typedef struct iarray_parallel_matmul_params_s {
     int64_t *chunk_index;
 } iarray_parallel_matmul_params_t;
 
+void _c_matmul(double *a, double *b, double *c, int64_t M, int64_t N, int64_t K) {
+    for (int i = 0; i < M; ++i) {
+        for (int j = 0; j < N; ++j) {
+            c[i * N + j] = 0;
+            for (int k = 0; k < K; ++k) {
+                c[i * N + j] += a[i * K + k] * b[k * N + j];
+            }
+        }
+    }
+}
 
 static int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
 
@@ -131,6 +141,7 @@ static int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
     int ld_b = b->transposed ? k : n;
     int ld_c = n;
 
+    // _c_matmul((double *) buffer_a, (double *) buffer_b, (double *) pparams->out, m, n, k);
 
     if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
         cblas_dgemm(CblasRowMajor, trans_a, trans_b, (int) m, (int) n, (int) k,
@@ -139,6 +150,7 @@ static int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
         cblas_sgemm(CblasRowMajor, trans_a, trans_b, (int) m, (int) n, (int) k,
                     1.0f, (float *) buffer_a, ld_a, (float *) buffer_b, ld_b, 0.0f, (float *) pparams->out, ld_c);
     }
+
 
     return 0;
 }
@@ -180,6 +192,8 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
     matmul_params.cache_a = cache_a;
     matmul_params.cache_b = cache_b;
 
+    int64_t chunk_row = -1;
+
     while (INA_SUCCEED(iarray_iter_write_block_has_next(iter))) {
         external_buffer = malloc(external_buffer_size);
         IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter, external_buffer, external_buffer_size));
@@ -190,18 +204,20 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
 
         matmul_params.chunk_index = iter_value.block_index;
 
-        int64_t start_a[2] = {0};
-        start_a[0] = iter_value.elem_index[0];
-        start_a[1] = 0;
-        int64_t stop_a[2] = {0};
-        stop_a[0] = iter_value.elem_index[0] + iter_value.block_shape[0];
-        stop_a[1] = a->dtshape->shape[0];
+        if (chunk_row != iter_value.block_index[0]) {
+            int64_t start_a[2] = {0};
+            start_a[0] = iter_value.elem_index[0];
+            start_a[1] = 0;
+            int64_t stop_a[2] = {0};
+            stop_a[0] = iter_value.elem_index[0] + iter_value.block_shape[0];
+            stop_a[1] = a->dtshape->shape[0];
 
-        int64_t shape_a[2] = {0};
-        shape_a[0] = c->catarr->extchunkshape[0];
-        shape_a[1] = a->dtshape->shape[1];
-        _iarray_get_slice_buffer(ctx, a, start_a, stop_a, shape_a, cache_a, cache_size_a);
+            int64_t shape_a[2] = {0};
+            shape_a[0] = c->catarr->extchunkshape[0];
+            shape_a[1] = a->dtshape->shape[1];
 
+            _iarray_get_slice_buffer(ctx, a, start_a, stop_a, shape_a, cache_a, cache_size_a);
+        }
         int64_t start_b[2] = {0};
         start_b[0] = 0;
         start_b[1] = iter_value.elem_index[1];

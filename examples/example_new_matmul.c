@@ -16,7 +16,7 @@
 
 int main(int argc, char** argv)
 {
-    int n_threads = 4;
+    int n_threads = 1;
     if (argc != 1) {
         n_threads = atoi(argv[1]);
     }
@@ -33,9 +33,9 @@ int main(int argc, char** argv)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     iarray_storage_type_t storage_format = IARRAY_STORAGE_BLOSC;
 
-    int64_t sh = 8192;
-    int64_t cs = 2048;
-    int64_t bs = 512;
+    int64_t sh = 1024;
+    int64_t cs = 256;
+    int64_t bs = 64;
     int64_t shape_x[] = {sh, sh};
     int64_t shape_y[] = {sh, sh};
 
