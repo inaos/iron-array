@@ -166,7 +166,7 @@ ina_rc_t boxed_optim_partition(int ndim, const int64_t *shape, int64_t *partshap
                 goto out;
             }
             if (partsize < minsize) {
-                goto out;
+                goto out2;
             }
             partshape[i] /= 2;
         }
@@ -191,6 +191,7 @@ out:
         }
     }
 
+out2:
     if (partsize > INT32_MAX) {
         INA_TRACE1(iarray.error, "A chunk or block can not be larger than 2 GB");
         return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
@@ -253,18 +254,21 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
 
-    // Compute the chunkshape
-    IARRAY_RETURN_IF_FAILED(boxed_optim_partition(ndim, shape, chunkshape, itemsize, min_chunksize, max_chunksize));
+    // Compute the chunkshape.
+    // TODO: Only boxed partition algorithm is implement, but a C and Fortran order could be useful too
+    IARRAY_RETURN_IF_FAILED(boxed_optim_partition(ndim, shape, chunkshape, itemsize,
+                                                     min_chunksize, max_chunksize));
+
+    // Compute the blockshape
     int32_t chunksize = itemsize;
     for (int i = 0; i < ndim; i++) {
         chunksize *= chunkshape[i];
     }
-
-    // Compute the blockshape
     if (chunksize < max_blocksize) {
         max_blocksize = chunksize;
     }
-    IARRAY_RETURN_IF_FAILED(boxed_optim_partition(ndim, chunkshape, blockshape, itemsize, min_blocksize, max_blocksize));
+    IARRAY_RETURN_IF_FAILED(boxed_optim_partition(ndim, chunkshape, blockshape, itemsize,
+                                                     min_blocksize, max_blocksize));
 
     return INA_SUCCESS;
 }
