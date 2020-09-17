@@ -111,16 +111,6 @@ INA_API(void) iarray_destroy()
     _blosc_inited = 0;
 }
 
-int64_t get_nearest_power2(int64_t value)
-{
-    int64_t power2 = 2;
-    while (power2 <= value && power2 < INT32_MAX) {
-        power2 *= 2;
-    }
-    power2 /= 2;
-    return power2;
-}
-
 // Return the number of (logical) cores in CPU
 INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores)
 {
@@ -135,15 +125,86 @@ INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores)
     }
 
     return INA_SUCCESS;
+
+#ifndef INA_OS_OSX
 fail:
     INA_TRACE1(iarray.error, "Cannot get the number of cores");
     return INA_ERROR(IARRAY_ERR_GET_NCORES);
+#endif
+
 }
 
 
-// Given a shape, offer advice on the chunk size
-INA_API(ina_rc_t) iarray_chunk_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
-                                      int64_t low, int64_t high)
+int64_t get_nearest_power2(int64_t value)
+{
+    int64_t power2 = 2;
+    while (power2 <= value && power2 < INT64_MAX) {
+        power2 *= 2;
+    }
+    power2 /= 2;
+    return power2;
+}
+
+
+// Return partition shapes whose elements are a power of 2, if possible, and as squared box as possible
+ina_rc_t boxed_optim_partition(int ndim, const int64_t *shape, int64_t *partshape, int itemsize,
+                               int64_t minsize, int64_t maxsize) {
+    for (int i = 0; i < ndim; i++) {
+        partshape[i] = get_nearest_power2(shape[i]);
+    }
+
+    // Shrink partition dimensions in succession until we get its size fitting into maxsize
+    int64_t partsize;
+    do {
+        for (int i = 0; i < ndim; i++) {
+            // The size of the partition so far
+            partsize = itemsize;
+            for (int j = 0; j < ndim; j++) {
+                partsize *= partshape[j];
+            }
+            if (partsize <= maxsize) {
+                goto out;
+            }
+            if (partsize < minsize) {
+                goto out2;
+            }
+            partshape[i] /= 2;
+        }
+    }
+    while (true);
+
+out:
+    // Lastly, if some chunkshape axis is too close to the original shape, split it again
+    for (int i = 0; i < ndim; i++) {
+        partsize = itemsize;
+        for (int j = 0; j < ndim; j++) {
+            partsize *= partshape[j];
+        }
+        if (partsize <= maxsize / 2) {
+            break;
+        }
+        if (partsize < minsize) {
+            break;
+        }
+        if (((float) (shape[i] - partshape[i]) / (float) partshape[i]) < 0.1) {
+            partshape[i] = partshape[i] / 2;
+        }
+    }
+
+out2:
+    if (partsize > INT32_MAX) {
+        INA_TRACE1(iarray.error, "A chunk or block can not be larger than 2 GB");
+        return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
+    }
+
+    return INA_SUCCESS;
+}
+
+
+// Given a shape, offer advice on the partition shapes (chunkshape and blockshape)
+INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
+                                          int64_t min_chunksize, int64_t max_chunksize,
+                                          int64_t min_blocksize, int64_t max_blocksize)
 {
     INA_UNUSED(ctx);  // we could use context in the future
     INA_VERIFY_NOT_NULL(dtshape);
@@ -152,128 +213,34 @@ INA_API(ina_rc_t) iarray_chunk_advice(iarray_context_t *ctx, iarray_dtshape_t *d
     if (storage->backend != IARRAY_STORAGE_BLOSC) {
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
-    if (high == 0) {
+
+    // Get reasonable defaults for max and mins for chunk and block sizes
+    if (max_chunksize == 0) {
         size_t L3;
         IARRAY_RETURN_IF_FAILED(ina_cpu_get_l3_cache_size(&L3));
-        // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
-        high = L3 / 4;
+        // Should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
+        max_chunksize = L3 / 4;
     }
-    if (low == 0) {
+    if (min_chunksize == 0) {
+        // 256 KB for chunksize sounds like a good minimum
+        min_chunksize = 256 * 1024;
+    }
+    if (max_blocksize == 0) {
         size_t L2;
         IARRAY_RETURN_IF_FAILED(ina_cpu_get_l2_cache_size(&L2));
-        low = L2 / 2;
+        // Should allow to hold (2x operand, 1x temporary, 1x reserve) in L2
+        max_blocksize = L2 / 4;
     }
-
-    if (low > high) {
-        INA_TRACE1(iarray.error, "The low limit is greater than the high limit");
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    if (min_blocksize == 0) {
+        // 1 KB for blocksize sounds like a good minimum
+        min_blocksize = 1024;
     }
 
     iarray_data_type_t dtype = dtshape->dtype;
-    int ndim = dtshape->ndim;
+    int8_t ndim = dtshape->ndim;
     int64_t *shape = dtshape->shape;
     int64_t *chunkshape = storage->chunkshape;
-    int itemsize = 0;
-    switch (dtype) {
-        case IARRAY_DATA_TYPE_DOUBLE:
-            itemsize = 8;
-            break;
-        case IARRAY_DATA_TYPE_FLOAT:
-            itemsize = 4;
-            break;
-        default:
-            INA_TRACE1(iarray.error, "The data type is invalid");
-            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-    }
-
-    for (int i = 0; i < ndim; i++) {
-        chunkshape[i] = get_nearest_power2(shape[i]);
-    }
-
-    // Shrink chunk until we get its size into the [low, high] boundaries
-    int64_t chunksize = 0;
-    do {
-        for (int i = 0; i < ndim; i++) {
-            // The size of the chunk so far
-            chunksize = itemsize;
-            for (int j = 0; j < ndim; j++) {
-                chunksize *= chunkshape[j];
-            }
-            if (chunksize <= high) {
-                break;
-            }
-            else if (chunksize < low) {
-                chunkshape[i] = shape[i];
-                break;
-            }
-            chunkshape[i] /= 2;
-        }
-    } while (chunksize > high);
-
-    // Lastly, if some chunkshape axis is too close to the original shape, split it again
-    if (chunksize > low) {
-        for (int i = 0; i < ndim; i++) {
-            if (((float) (shape[i] - chunkshape[i]) / (float) chunkshape[i]) < 0.1) {
-                chunkshape[i] = chunkshape[i] / 2;
-            }
-            chunksize = itemsize;
-            for (int j = 0; j < ndim; j++) {
-                chunksize *= chunkshape[j];
-            }
-            if (chunksize < low) {
-                break;
-            }
-        }
-    }
-    for (int i = 0; i < ndim; ++i) {
-        storage->blockshape[i] = storage->chunkshape[i];
-    }
-    if (chunksize > INT32_MAX) {
-        INA_TRACE1(iarray.error, "The chunk size can not be larger than 2 GB");
-        return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
-    }
-    return INA_SUCCESS;
-}
-
-// Given a matmul operation (C = A * B), provide advice on the blocks for iteration A and B
-// A and B are supposed to have (M, K) and (K, N) dimensions respectively
-// C is supposed to have a chunk size of (m, n)
-// The hint for the blockshapes are going to be (m, k) and (k, n) respectively
-INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
-                                       iarray_container_t *a,
-                                       iarray_container_t *b,
-                                       iarray_container_t *c,
-                                       int64_t *blockshape_a,
-                                       int64_t *blockshape_b,
-                                       int64_t low,
-                                       int64_t high)
-{
-    INA_UNUSED(ctx);  // we could use context in the future
-    INA_VERIFY_NOT_NULL(a);
-    INA_VERIFY_NOT_NULL(b);
-    INA_VERIFY_NOT_NULL(c);
-    INA_VERIFY_NOT_NULL(blockshape_a);
-    INA_VERIFY_NOT_NULL(blockshape_b);
-
-    if (high == 0) {
-        size_t L3;
-        IARRAY_RETURN_IF_FAILED(ina_cpu_get_l3_cache_size(&L3));
-        // High value should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
-        high = L3 / 4;
-    }
-    if (low == 0) {
-        size_t L2;
-        IARRAY_RETURN_IF_FAILED(ina_cpu_get_l2_cache_size(&L2));
-        low = L2 / 2;
-    }
-
-    if (low > high) {
-        INA_TRACE1(iarray.error, "The low limit is grater than the high limit");
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
-    }
-
-    // Take the dtype of the first array (we don't support mixing data types yet)
-    iarray_data_type_t dtype = a->dtshape->dtype;
+    int64_t *blockshape = storage->blockshape;
     int itemsize;
     switch (dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
@@ -286,53 +253,22 @@ INA_API(ina_rc_t) iarray_matmul_advice(iarray_context_t *ctx,
             INA_TRACE1(iarray.error, "The data type is invalid");
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
-    // First, the m and n values *have* to be the same for the chunk of the output
-    int64_t m_dim = c->storage->chunkshape[0];
-    int64_t n_dim = c->storage->chunkshape[1];
 
-    // Now that we have a hint for M and K, get a guess of the N
-    int64_t k_dim_guess1 = high / (m_dim * itemsize);
-    k_dim_guess1 = get_nearest_power2(k_dim_guess1);
-    int64_t k_dim_guess2 = high / (n_dim * itemsize);
-    k_dim_guess2 = get_nearest_power2(k_dim_guess2);
+    // Compute the chunkshape.
+    // TODO: Only boxed partition algorithm is implement, but a C and Fortran order could be useful too
+    IARRAY_RETURN_IF_FAILED(boxed_optim_partition(ndim, shape, chunkshape, itemsize,
+                                                     min_chunksize, max_chunksize));
 
-    // Get the mean value and nearest power of 2
-    int64_t k_dim = (k_dim_guess1 + k_dim_guess2) / 2;
-    k_dim = get_nearest_power2(k_dim);
-
-    if (k_dim > a->dtshape->shape[1]) {
-        k_dim = get_nearest_power2(a->dtshape->shape[1]);
+    // Compute the blockshape
+    int32_t chunksize = itemsize;
+    for (int i = 0; i < ndim; i++) {
+        chunksize *= chunkshape[i];
     }
-    if (k_dim > b->dtshape->shape[0]) {
-        k_dim = get_nearest_power2(b->dtshape->shape[0]);
+    if (chunksize < max_blocksize) {
+        max_blocksize = chunksize;
     }
-
-    // Correct the blocksize in case it is too small for one of the matrices
-    while (((m_dim * k_dim * itemsize) < low) || (((k_dim * n_dim * itemsize) < low))) {
-        k_dim *= 2;
-    }
-
-    // Correct the blocksize in case it is too large for one of the matrices
-    while (((m_dim * k_dim * itemsize) > high) || (((k_dim * n_dim * itemsize) > high))) {
-        k_dim /= 2;
-    }
-
-    // The block shape cannot be larger than the shape
-    if (m_dim > a->dtshape->shape[0]) {
-        m_dim = a->dtshape->shape[0];
-    }
-    if (k_dim > a->dtshape->shape[1]) {
-        k_dim = a->dtshape->shape[1];
-    }
-    if (n_dim > b->dtshape->shape[1]) {
-        n_dim = b->dtshape->shape[1];
-    }
-
-    // We are done.  Fill the block shapes and return.
-    blockshape_a[0] = m_dim;
-    blockshape_a[1] = k_dim;
-    blockshape_b[0] = k_dim;
-    blockshape_b[1] = n_dim;
+    IARRAY_RETURN_IF_FAILED(boxed_optim_partition(ndim, chunkshape, blockshape, itemsize,
+                                                     min_blocksize, max_blocksize));
 
     return INA_SUCCESS;
 }
