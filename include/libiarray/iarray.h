@@ -282,8 +282,8 @@ INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores);
  *
  *  If success, storage->chunkshape and storage->blockshape will contain the advice.
  *
- *  `low` and `high` contain low and high values for the chunksize.  If `low` is 0, it defaults
- *  to a fraction of L2 cache size.  If `high` is 0, it defaults to a fraction of L3 cache size.
+ *  `min_` and `max_` contain minimum and maximum values for chunksize and blocksize.
+ *  If `min_` or `max_` are 0, they default to sensible values (fractions of CPU caches).
  *
  */
 INA_API(ina_rc_t)
