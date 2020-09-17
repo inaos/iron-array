@@ -205,6 +205,7 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
         matmul_params.chunk_index = iter_value.block_index;
 
         if (chunk_row != iter_value.block_index[0]) {
+            chunk_row = iter_value.block_index[0];
             int64_t start_a[2] = {0};
             start_a[0] = iter_value.elem_index[0];
             start_a[1] = 0;
@@ -218,6 +219,7 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
 
             _iarray_get_slice_buffer(ctx, a, start_a, stop_a, shape_a, cache_a, cache_size_a);
         }
+
         int64_t start_b[2] = {0};
         start_b[0] = 0;
         start_b[1] = iter_value.elem_index[1];
