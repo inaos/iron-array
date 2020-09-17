@@ -16,7 +16,7 @@
 
 int main(int argc, char** argv)
 {
-    int n_threads = 1;
+    int n_threads = 4;
     if (argc != 1) {
         n_threads = atoi(argv[1]);
     }
@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 
     int64_t sh = 1024;
     int64_t cs = 256;
-    int64_t bs = 64;
+    int64_t bs = 16;
     int64_t shape_x[] = {sh, sh};
     int64_t shape_y[] = {sh, sh};
 
@@ -77,7 +77,7 @@ int main(int argc, char** argv)
         store_x.blockshape[i] = bshape_x[i];
     }
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_linspace(ctx, &dtshape_x, size_x, 0, 1, &store_x, 0, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_arange(ctx, &dtshape_x, 0, size_x, 1, &store_x, 0, &c_x));
 
 
     iarray_dtshape_t dtshape_y;
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
         store_y.blockshape[i] = bshape_y[i];
     }
     iarray_container_t *c_y;
-    IARRAY_RETURN_IF_FAILED(iarray_linspace(ctx, &dtshape_y, size_y, 0, 1, &store_y, 0, &c_y));
+    IARRAY_RETURN_IF_FAILED(iarray_arange(ctx, &dtshape_y, 0, size_y, 1, &store_y, 0, &c_y));
 
 
     iarray_storage_t store_z;
