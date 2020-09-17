@@ -249,20 +249,25 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
 
     int64_t cache_size_b = b->dtshape->shape[0] * c->catarr->extchunkshape[1] * c->catarr->itemsize;
     uint8_t *cache_b = ina_mem_alloc(cache_size_b);
-    uint8_t *cache_aux_b = ina_mem_alloc(cache_size_b);
-
 
 
     int64_t chunk_row = -1;
 
     matmul_params.cache_a = NULL;
-    matmul_params.cache_b = NULL;
+    matmul_params.cache_b = cache_b;
 
     while (INA_SUCCEED(iarray_iter_write_block_has_next(iter))) {
         external_buffer = malloc(external_buffer_size);
         IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter, external_buffer, external_buffer_size));
 
         matmul_params.chunk_index = iter_value.block_index;
+        int64_t max_l2 = 128 * 1024;
+        int64_t k = ceil(((double) max_l2) / ((c->catarr->blockshape[0] + c->catarr->blockshape[1]) * c->catarr->itemsize * ctx->cfg->max_num_threads));
+
+        if (k > a->dtshape->shape[1]) k = a->dtshape->shape[1];
+        if (k < 4) k = 4;
+
+        matmul_params.k = k;
 
         if (chunk_row != iter_value.block_index[0]) {
             chunk_row = iter_value.block_index[0];
@@ -278,6 +283,9 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
             shape_a[1] = a->dtshape->shape[1];
 
             _iarray_get_slice_buffer(ctx, a, start_a, stop_a, shape_a, cache_a, cache_size_a);
+            _iarray_repart_caches(ctx, c->catarr->extchunkshape[0], a->dtshape->shape[1], k, c->catarr->itemsize,
+                                  c->catarr->blockshape[0], cache_a, cache_aux_a);
+            matmul_params.cache_a = cache_aux_a;
         }
 
         int64_t start_b[2] = {0};
@@ -303,32 +311,6 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
             int64_t cache_size_aux_b = b->dtshape->shape[0] * c->catarr->blockshape[1] * b->catarr->itemsize;
             _iarray_get_slice_buffer(ctx, b, start_b, stop_b, shape_b, &cache_b[i * cache_size_aux_b], cache_size_aux_b);
         }
-        // _iarray_get_slice_buffer(ctx, b, start_b, stop_b, shape_b, cache_b, cache_size_b);
-        // mkl_dimatcopy('R', 'T', shape_b[0], shape_b[1], 1.0, (double *) cache_b, shape_b[1], shape_b[0]);
-
-        int64_t max_l2 = 256 * 1024;
-        int64_t k = ceil(((double) max_l2) / (c->catarr->blocknitems * c->catarr->itemsize * 2 * ctx->cfg->max_num_threads));
-        // printf("K: %lld\n", k);
-        // k = a->dtshape->shape[1];
-        if (k > a->dtshape->shape[1]) k = a->dtshape->shape[1];
-
-        matmul_params.k = k;
-
-        _iarray_repart_caches(ctx, c->catarr->extchunkshape[0], a->dtshape->shape[1], k, c->catarr->itemsize,
-                              c->catarr->blockshape[0], cache_a, cache_aux_a);
-        matmul_params.cache_a = cache_aux_a;
-        /*for (int i = 0; i < c->catarr->extchunkshape[0] * b->dtshape->shape[1]; ++i) {
-            printf("%f - ", ((double *) cache_a)[i]);
-        }
-        printf("\n");
-        for (int i = 0; i < c->catarr->extchunkshape[0] * b->dtshape->shape[1]; ++i) {
-            printf("%f - ", ((double *) cache_aux_a)[i]);
-        }
-        printf("\n");*/
-
-        // _iarray_repart_caches(ctx, c->catarr->extchunkshape[1], b->dtshape->shape[0], k, c->catarr->itemsize,
-        //                      cache_b, cache_aux_b);
-        matmul_params.cache_b = cache_b;
 
         blosc2_cparams cparams = {0};
         IARRAY_RETURN_IF_FAILED(iarray_create_blosc_cparams(&cparams, prefilter_ctx, out->catarr->itemsize,
@@ -353,7 +335,6 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
     INA_MEM_FREE_SAFE(cache_a);
     INA_MEM_FREE_SAFE(cache_b);
     INA_MEM_FREE_SAFE(cache_aux_a);
-    INA_MEM_FREE_SAFE(cache_aux_b);
 
     INA_MEM_FREE_SAFE(prefilter_ctx);
 
