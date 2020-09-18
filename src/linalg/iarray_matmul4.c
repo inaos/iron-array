@@ -16,16 +16,16 @@
 
 
 static void _iarray_prefilter_block_info(iarray_container_t *c,
-                                         int64_t *chunk_index,
-                                         int32_t offset,
-                                         int32_t size,
-                                         int32_t *start,
-                                         int32_t *shape,
-                                         int32_t *strides
-) {
+                                  int64_t *chunk_index,
+                                  int32_t offset,
+                                  int32_t size,
+                                  int32_t *start,
+                                  int32_t *shape,
+                                  int32_t *strides
+                                  ) {
 
     int8_t ndim = c->dtshape->ndim;
-
+    
     // Element strides (in elements)
     strides[ndim - 1] = 1;
     for (int i = ndim - 2; i >= 0 ; --i) {
@@ -36,8 +36,8 @@ static void _iarray_prefilter_block_info(iarray_container_t *c,
     int32_t strides_block[IARRAY_DIMENSION_MAX];
     strides_block[ndim - 1] = 1;
     for (int i = ndim - 2; i >= 0 ; --i) {
-        strides_block[i] = strides_block[i+1] * (int32_t) (c->catarr->extchunkshape[i+1] /
-                                                           c->catarr->blockshape[i+1]);
+        strides_block[i] = strides_block[i+1] * (int32_t) (c->catarr->extchunkshape[i+1] / 
+                c->catarr->blockshape[i+1]);
     }
 
     // Flattened block number
@@ -95,21 +95,12 @@ typedef struct iarray_parallel_matmul_params_s {
     iarray_container_t *a;
     iarray_container_t *b;
     iarray_container_t *c;
+    int64_t k;
     uint8_t *cache_a;
     uint8_t *cache_b;
     int64_t *chunk_index;
 } iarray_parallel_matmul_params_t;
 
-void _c_matmul(double *a, double *b, double *c, int64_t M, int64_t N, int64_t K) {
-    for (int i = 0; i < M; ++i) {
-        for (int j = 0; j < N; ++j) {
-            c[i * N + j] = 0;
-            for (int k = 0; k < K; ++k) {
-                c[i * N + j] += a[i * K + k] * b[k * N + j];
-            }
-        }
-    }
-}
 
 static int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
 
@@ -126,12 +117,12 @@ static int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
                                  start,
                                  shape,
                                  strides);
-
-    uint8_t* buffer_a = &matmul_params->cache_a[start[0] * a->dtshape->shape[1] * a->catarr->itemsize];
-    uint8_t* buffer_b = &matmul_params->cache_b[start[1] * b->dtshape->shape[0] * b->catarr->itemsize];
-
     int trans_a = a->transposed ? CblasTrans : CblasNoTrans;
     int trans_b = b->transposed ? CblasTrans : CblasNoTrans;
+
+    /*
+    uint8_t* buffer_a = &matmul_params->cache_a[start[0] * a->dtshape->shape[1] * a->catarr->itemsize];
+    uint8_t* buffer_b = &matmul_params->cache_b[start[1] * b->dtshape->shape[0] * b->catarr->itemsize];
 
     int m = c->storage->blockshape[0];
     int k = a->dtshape->shape[1];
@@ -140,26 +131,86 @@ static int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
     int ld_a = a->transposed ? m : k;
     int ld_b = b->transposed ? k : n;
     int ld_c = n;
+    */
 
     // _c_matmul((double *) buffer_a, (double *) buffer_b, (double *) pparams->out, m, n, k);
 
-    if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        cblas_dgemm(CblasRowMajor, trans_a, trans_b, (int) m, (int) n, (int) k,
-                    1.0, (double *) buffer_a, ld_a, (double *) buffer_b, ld_b, 0.0, (double *) pparams->out, ld_c);
-    } else {
-        cblas_sgemm(CblasRowMajor, trans_a, trans_b, (int) m, (int) n, (int) k,
-                    1.0f, (float *) buffer_a, ld_a, (float *) buffer_b, ld_b, 0.0f, (float *) pparams->out, ld_c);
+    memset(pparams->out, 0, pparams->out_size);
+    uint8_t* buffer_a;
+    uint8_t* buffer_b;
+
+    int64_t nblock = 0;
+    int64_t inc = matmul_params->k;
+    while (nblock * matmul_params->k < a->dtshape->shape[1]) {
+        inc = (nblock+1) * matmul_params->k > a->dtshape->shape[1] ? a->dtshape->shape[1] - nblock * matmul_params->k : matmul_params->k;
+        int64_t blocksize_a = nblock * matmul_params->k * c->storage->blockshape[0] * c->catarr->itemsize;
+        int64_t inc_a = start[0] * a->dtshape->shape[1] * c->catarr->itemsize;
+        buffer_a = &matmul_params->cache_a[blocksize_a + inc_a];
+
+        int64_t blocksize_b = nblock * matmul_params->k * c->storage->blockshape[0] * c->catarr->itemsize;
+        int64_t inc_b = start[1] * a->dtshape->shape[0] * c->catarr->itemsize;
+        buffer_b = &matmul_params->cache_b[blocksize_b + inc_b];
+
+        int m = c->storage->blockshape[0];
+        int k = inc;
+        int n = c->storage->blockshape[1];
+
+        int ld_a = a->transposed ? m : k;
+        int ld_b = b->transposed ? k : n;
+        int ld_c = n;
+        if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
+            cblas_dgemm(CblasRowMajor, trans_a, trans_b, (int) m, (int) n, (int) k,
+                        1.0, (double *) buffer_a, ld_a, (double *) buffer_b, ld_b, 1.0, (double *) pparams->out, ld_c);
+        } else {
+            cblas_sgemm(CblasRowMajor, trans_a, trans_b, (int) m, (int) n, (int) k,
+                        1.0f, (float *) buffer_a, ld_a, (float *) buffer_b, ld_b, 1.0f, (float *) pparams->out, ld_c);
+        }
+        nblock++;
     }
 
+    /*
+    if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
+        cblas_dgemm(CblasRowMajor, trans_a, trans_b, (int) m, (int) n, (int) k,
+                    1.0, (double *) buffer_a, ld_a, (double *) buffer_b, ld_b, 1.0, (double *) pparams->out, ld_c);
+    } else {
+        cblas_sgemm(CblasRowMajor, trans_a, trans_b, (int) m, (int) n, (int) k,
+                    1.0f, (float *) buffer_a, ld_a, (float *) buffer_b, ld_b, 1.0f, (float *) pparams->out, ld_c);
+    }
+    */
 
     return 0;
 }
 
+static ina_rc_t _iarray_repart_caches(iarray_context_t *ctx,
+                                      int64_t m,
+                                      int64_t n,
+                                      int64_t k,
+                                      int8_t isize,
+                                      int32_t bm,
+                                      uint8_t *cache,
+                                      uint8_t *cache_aux) {
+
+    int64_t cache_aux_pointer = 0;
+    int64_t inc;
+    for (int nblock = 0; nblock < m / bm; ++nblock) {
+        int64_t start = 0;
+        while (start < n) {
+            inc = start + k > n ? n - start : k;
+            for (int i = nblock * bm; i < (nblock + 1) * bm; ++i) {
+                memcpy(&cache_aux[cache_aux_pointer * isize], &cache[(i * n + start) * isize], inc * isize);
+                cache_aux_pointer += inc;
+            }
+            start += inc;
+        }
+    }
+    return INA_SUCCESS;
+}
 
 static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
-                                           iarray_container_t *a,
-                                           iarray_container_t *b,
-                                           iarray_container_t *c) {
+                                             iarray_container_t *a,
+                                             iarray_container_t *b,
+                                             iarray_container_t *c,
+                                             int64_t max_cache) {
     iarray_container_t *out = c;
 
     // Set up prefilter
@@ -183,26 +234,32 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
     size_t external_buffer_size = out->catarr->extchunknitems * out->catarr->itemsize + BLOSC_MAX_OVERHEAD;
     void *external_buffer = NULL;
 
-    int64_t cache_size_a = c->catarr->chunkshape[0] * a->dtshape->shape[1] * c->catarr->itemsize;
+    int64_t cache_size_a = c->catarr->extchunkshape[0] * a->dtshape->shape[1] * c->catarr->itemsize;
     uint8_t *cache_a = ina_mem_alloc(cache_size_a);
+    uint8_t *cache_aux_a = ina_mem_alloc(cache_size_a);
 
-    int64_t cache_size_b = b->dtshape->shape[0] * c->catarr->chunkshape[1] * c->catarr->itemsize;
+    int64_t cache_size_b = b->dtshape->shape[0] * c->catarr->extchunkshape[1] * c->catarr->itemsize;
     uint8_t *cache_b = ina_mem_alloc(cache_size_b);
 
-    matmul_params.cache_a = cache_a;
-    matmul_params.cache_b = cache_b;
 
     int64_t chunk_row = -1;
+
+    matmul_params.cache_a = NULL;
+    matmul_params.cache_b = cache_b;
 
     while (INA_SUCCEED(iarray_iter_write_block_has_next(iter))) {
         external_buffer = malloc(external_buffer_size);
         IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter, external_buffer, external_buffer_size));
 
-        blosc2_cparams cparams = {0};
-        IARRAY_RETURN_IF_FAILED(iarray_create_blosc_cparams(&cparams, prefilter_ctx, out->catarr->itemsize,
-                                                            out->catarr->blocknitems * out->catarr->itemsize));
-
         matmul_params.chunk_index = iter_value.block_index;
+        int64_t max_l2 = max_cache;
+        int64_t k = floor(((double) max_l2) / ((c->catarr->blockshape[0] + c->catarr->blockshape[1]) *
+                c->catarr->itemsize * ctx->cfg->max_num_threads));
+
+        if (k > a->dtshape->shape[1]) k = a->dtshape->shape[1];
+        if (k < 4) k = 4;
+
+        matmul_params.k = k;
 
         if (chunk_row != iter_value.block_index[0]) {
             chunk_row = iter_value.block_index[0];
@@ -218,6 +275,9 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
             shape_a[1] = a->dtshape->shape[1];
 
             _iarray_get_slice_buffer(ctx, a, start_a, stop_a, shape_a, cache_a, cache_size_a);
+            _iarray_repart_caches(ctx, c->catarr->extchunkshape[0], a->dtshape->shape[1], k, c->catarr->itemsize,
+                                  c->catarr->blockshape[0], cache_a, cache_aux_a);
+            matmul_params.cache_a = cache_aux_a;
         }
 
         int64_t start_b[2] = {0};
@@ -243,10 +303,12 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
             int64_t cache_size_aux_b = b->dtshape->shape[0] * c->catarr->blockshape[1] * b->catarr->itemsize;
             _iarray_get_slice_buffer(ctx, b, start_b, stop_b, shape_b, &cache_b[i * cache_size_aux_b], cache_size_aux_b);
         }
-        // _iarray_get_slice_buffer(ctx, b, start_b, stop_b, shape_b, cache_b, cache_size_b);
-        // mkl_dimatcopy('R', 'T', shape_b[0], shape_b[1], 1.0, (double *) cache_b, shape_b[1], shape_b[0]);
 
+        blosc2_cparams cparams = {0};
+        IARRAY_RETURN_IF_FAILED(iarray_create_blosc_cparams(&cparams, prefilter_ctx, out->catarr->itemsize,
+                                                            out->catarr->blocknitems * out->catarr->itemsize));
         blosc2_context *cctx = blosc2_create_cctx(cparams);
+
         int csize = blosc2_compress_ctx(cctx, out->catarr->extchunknitems * out->catarr->itemsize,
                                         NULL, iter_value.block_pointer,
                                         out->catarr->extchunknitems * out->catarr->itemsize +
@@ -256,11 +318,15 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
         }
         blosc2_free_ctx(cctx);
-
+        
         iter->compressed_chunk_buffer = true;
     }
     IARRAY_ITER_FINISH();
     iarray_iter_write_block_free(&iter);
+
+    INA_MEM_FREE_SAFE(cache_a);
+    INA_MEM_FREE_SAFE(cache_b);
+    INA_MEM_FREE_SAFE(cache_aux_a);
 
     INA_MEM_FREE_SAFE(prefilter_ctx);
 
@@ -268,9 +334,9 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
 }
 
 static ina_rc_t iarray_linalg_matmul_plainbuffer(iarray_context_t *ctx,
-                                                 iarray_container_t *a,
-                                                 iarray_container_t *b,
-                                                 iarray_container_t *c) {
+                                          iarray_container_t *a,
+                                          iarray_container_t *b,
+                                          iarray_container_t *c) {
 
     // Write array using an iterator
     iarray_iter_write_block_t *iter;
@@ -314,17 +380,18 @@ static ina_rc_t iarray_linalg_matmul_plainbuffer(iarray_context_t *ctx,
 }
 
 
-INA_API(ina_rc_t) iarray_linalg_parallel_matmul3(iarray_context_t *ctx,
-                                                 iarray_container_t *a,
-                                                 iarray_container_t *b,
-                                                 iarray_storage_t *storage,
-                                                 iarray_container_t **c) {
+INA_API(ina_rc_t) iarray_linalg_parallel_matmul4(iarray_context_t *ctx,
+                                                iarray_container_t *a,
+                                                iarray_container_t *b,
+                                                int64_t max_cache,
+                                                iarray_storage_t *storage,
+                                                iarray_container_t **c) {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(a);
     INA_VERIFY_NOT_NULL(b);
     INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(c);
-
+    
     // Inputs checking
     if (a->dtshape->shape[1] != b->dtshape->shape[0]) {
         return INA_ERROR(IARRAY_ERR_INVALID_SHAPE);
@@ -351,7 +418,7 @@ INA_API(ina_rc_t) iarray_linalg_parallel_matmul3(iarray_context_t *ctx,
     if ((*c)->storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
         IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul_plainbuffer(ctx, a, b, *c));
     } else {
-        IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul_blosc(ctx, a, b, *c));
+        IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul_blosc(ctx, a, b, *c, max_cache));
     }
     return INA_SUCCESS;
 }

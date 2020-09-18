@@ -16,7 +16,7 @@
 
 int main(int argc, char** argv)
 {
-    int n_threads = 4;
+    int n_threads = 1;
     if (argc != 1) {
         n_threads = atoi(argv[1]);
     }
@@ -33,9 +33,11 @@ int main(int argc, char** argv)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     iarray_storage_type_t storage_format = IARRAY_STORAGE_BLOSC;
 
+    int64_t max_cache = 64  * 1024 * 1024;
+
     int64_t sh = 1024;
     int64_t cs = 256;
-    int64_t bs = 16;
+    int64_t bs = 64;
     int64_t shape_x[] = {sh, sh};
     int64_t shape_y[] = {sh, sh};
 
@@ -117,7 +119,6 @@ int main(int argc, char** argv)
 
     iarray_container_t *c_z_parallel2;
 
-    int64_t max_cache = 64  * 1024 * 1024;
     INA_STOPWATCH_START(w);
     IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul2(ctx, c_x, c_y, max_cache, &store_z, &c_z_parallel2));
     INA_STOPWATCH_STOP(w);
@@ -134,13 +135,25 @@ int main(int argc, char** argv)
 
     printf("Time parallel version 3: %.4f\n", elapsed_sec);
 
-    iarray_container_almost_equal(ctx, c_z_parallel, c_z_parallel3);
+    iarray_container_t *c_z_parallel4;
+
+    INA_STOPWATCH_START(w);
+    IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul4(ctx, c_x, c_y, max_cache, &store_z, &c_z_parallel4));
+    INA_STOPWATCH_STOP(w);
+    IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
+
+    printf("Time parallel version 4: %.4f\n", elapsed_sec);
+
+    iarray_container_almost_equal(ctx, c_z_parallel, c_z_parallel2);
+    iarray_container_almost_equal(ctx, c_z_parallel2, c_z_parallel3);
+    iarray_container_almost_equal(ctx, c_z_parallel3, c_z_parallel4);
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_z_parallel);
     iarray_container_free(ctx, &c_z_parallel2);
     iarray_container_free(ctx, &c_z_parallel3);
+    iarray_container_free(ctx, &c_z_parallel4);
     iarray_context_free(&ctx);
     INA_STOPWATCH_FREE(&w);
 
