@@ -168,7 +168,10 @@ ina_rc_t boxed_optim_partition(int ndim, const int64_t *shape, int64_t *partshap
             if (partsize < minsize) {
                 goto out2;
             }
-            partshape[i] /= 2;
+            // Dimension 1 cannot be splitted anymore
+            if (partshape[i] > 1) {
+                partshape[i] /= 2;
+            }
         }
     }
     while (true);
