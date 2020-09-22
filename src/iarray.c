@@ -169,9 +169,10 @@ ina_rc_t boxed_optim_partition(int ndim, const int64_t *shape, int64_t *partshap
                 goto out2;
             }
             // Dimension 1 cannot be splitted anymore
-            if (partshape[i] > 1) {
-                partshape[i] /= 2;
+            if (partshape[i] == 1) {
+                continue;
             }
+            partshape[i] /= 2;
         }
     }
     while (true);
@@ -189,6 +190,9 @@ out:
         if (partsize < minsize) {
             break;
         }
+        if (partshape[i] == 1) {
+            continue;
+        }
         if (((float) (shape[i] - partshape[i]) / (float) partshape[i]) < 0.1) {
             partshape[i] = partshape[i] / 2;
         }
@@ -197,6 +201,10 @@ out:
 out2:
     if (partsize > INT32_MAX) {
         INA_TRACE1(iarray.error, "A chunk or block can not be larger than 2 GB");
+        return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
+    }
+    if (partsize <= 0) {
+        INA_TRACE1(iarray.error, "A chunk or block can not be less or equal than 0");
         return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
 
@@ -220,7 +228,10 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     // Get reasonable defaults for max and mins for chunk and block sizes
     if (max_chunksize == 0) {
         size_t L3;
-        IARRAY_RETURN_IF_FAILED(ina_cpu_get_l3_cache_size(&L3));
+        // Workaround for bug #205.  8 MB is a good L3 default for modern CPUs.
+        // IARRAY_RETURN_IF_FAILED(ina_cpu_get_l3_cache_size(&L3));
+        // TODO: revert this when #205 would be fixed.
+        L3 = 8 * 1024 * 1024;
         // Should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
         max_chunksize = L3 / 4;
     }
@@ -230,7 +241,10 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     }
     if (max_blocksize == 0) {
         size_t L2;
-        IARRAY_RETURN_IF_FAILED(ina_cpu_get_l2_cache_size(&L2));
+        // Workaround for bug #205.  256 KB is a good L2 default for modern CPUs.
+        // IARRAY_RETURN_IF_FAILED(ina_cpu_get_l2_cache_size(&L2));
+        // TODO: revert this when #205 would be fixed.
+        L2 = 256 * 1024;
         // Should allow to hold (2x operand, 1x temporary, 1x reserve) in L2
         max_blocksize = L2 / 4;
     }
@@ -262,7 +276,6 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     IARRAY_RETURN_IF_FAILED(boxed_optim_partition(ndim, shape, chunkshape, itemsize,
                                                      min_chunksize, max_chunksize));
 
-    // Compute the blockshape
     int32_t chunksize = itemsize;
     for (int i = 0; i < ndim; i++) {
         chunksize *= chunkshape[i];
@@ -270,6 +283,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     if (chunksize < max_blocksize) {
         max_blocksize = chunksize;
     }
+    // Compute the blockshape
     IARRAY_RETURN_IF_FAILED(boxed_optim_partition(ndim, chunkshape, blockshape, itemsize,
                                                      min_blocksize, max_blocksize));
 
