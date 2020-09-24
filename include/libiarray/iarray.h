@@ -43,6 +43,7 @@
 #define IARRAY_ES_EVAL_METHOD (INA_ES_USER_DEFINED + 18)
 #define IARRAY_ES_EVAL_ENGINE (INA_ES_USER_DEFINED + 19)
 #define IARRAY_ES_NCORES (INA_ES_USER_DEFINED + 20)
+#define IARRAY_ES_ITERSHAPE (INA_ES_USER_DEFINED + 21)
 
 
 #define IARRAY_ERR_EMPTY_CONTAINER (INA_ERR_EMPTY | IARRAY_ES_CONTAINER)
@@ -54,6 +55,7 @@
 #define IARRAY_ERR_INVALID_SHAPE (INA_ERR_INVALID | IARRAY_ES_SHAPE)
 #define IARRAY_ERR_INVALID_CHUNKSHAPE (INA_ERR_INVALID | IARRAY_ES_CHUNKSHAPE)
 #define IARRAY_ERR_INVALID_BLOCKSHAPE (INA_ERR_INVALID | IARRAY_ES_BLOCKSHAPE)
+#define IARRAY_ERR_INVALID_ITERSHAPE (INA_ERR_INVALID | IARRAY_ES_ITERSHAPE)
 #define IARRAY_ERR_INVALID_NDIM (INA_ERR_INVALID | IARRAY_ES_NDIM)
 
 #define IARRAY_ERR_INVALID_RNG_METHOD (INA_ERR_INVALID | IARRAY_ES_RNG_METHOD)
@@ -605,7 +607,7 @@ INA_API(ina_rc_t) iarray_iter_read_has_next(iarray_iter_read_t *itr);
 INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_iter_read_block_t **itr,
                                              iarray_container_t *cont,
-                                             const int64_t *blockshape,
+                                             const int64_t *iter_blockshape,
                                              iarray_iter_read_block_value_t *value,
                                              bool external_buffer);
 
@@ -616,7 +618,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_has_next(iarray_iter_read_block_t *itr)
 INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_iter_write_block_t **itr,
                                               iarray_container_t *cont,
-                                              const int64_t *blockshape,
+                                              const int64_t *iter_blockshape,
                                               iarray_iter_write_block_value_t *value,
                                               bool external_buffer);
 

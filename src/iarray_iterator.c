@@ -72,26 +72,26 @@ int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr)
 }
 
 ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, iarray_container_t *c2,
-                                 int64_t *bshape_a, int64_t *bshape_b, iarray_iter_matmul_t **itr)
+                                 int64_t *ishape_a, int64_t *ishape_b, iarray_iter_matmul_t **itr)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(c1);
     INA_VERIFY_NOT_NULL(c2);
-    INA_VERIFY_NOT_NULL(bshape_a);
-    INA_VERIFY_NOT_NULL(bshape_b);
+    INA_VERIFY_NOT_NULL(ishape_a);
+    INA_VERIFY_NOT_NULL(ishape_b);
     INA_VERIFY_NOT_NULL(itr);
 
     // Verify that block shape is < than container shapes
     for (int i = 0; i < c1->dtshape->ndim; ++i) {
-        if (c1->dtshape->shape[i] < bshape_a[i]) {
-            IARRAY_TRACE1(iarray.error, "The blockshape is larger than the container shape");
-            return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
+        if (c1->dtshape->shape[i] < ishape_a[i]) {
+            IARRAY_TRACE1(iarray.error, "The iterator blockshape is larger than the first array shape");
+            return INA_ERROR(IARRAY_ERR_INVALID_ITERSHAPE);
         }
     }
     for (int i = 0; i < c2->dtshape->ndim; ++i) {
-        if (c2->dtshape->shape[i] < bshape_b[i]) {
-            IARRAY_TRACE1(iarray.error, "The blockshape is larger than the container shape");
-            return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
+        if (c2->dtshape->shape[i] < ishape_b[i]) {
+            IARRAY_TRACE1(iarray.error, "The iterator blockshape is larger than the second array shape");
+            return INA_ERROR(IARRAY_ERR_INVALID_ITERSHAPE);
         }
     }
 
@@ -104,28 +104,28 @@ ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, 
     (*itr)->ctx = ctx;
     (*itr)->container1 = c1;
     (*itr)->container2 = c2;
-    (*itr)->B0 = bshape_a[0];
-    (*itr)->B1 = bshape_a[1];
-    (*itr)->B2 = bshape_b[1];
+    (*itr)->B0 = ishape_a[0];
+    (*itr)->B1 = ishape_a[1];
+    (*itr)->B2 = ishape_b[1];
 
     // Calculate the ext shape from the block shape
-    if (c1->dtshape->shape[0] % bshape_a[0] == 0) {
+    if (c1->dtshape->shape[0] % ishape_a[0] == 0) {
         (*itr)->M = c1->dtshape->shape[0];
     } else {
-        (*itr)->M = (c1->dtshape->shape[0] / bshape_a[0] + 1) * bshape_a[0];
+        (*itr)->M = (c1->dtshape->shape[0] / ishape_a[0] + 1) * ishape_a[0];
     }
 
-    if (c1->dtshape->shape[1] % bshape_a[1] == 0) {
+    if (c1->dtshape->shape[1] % ishape_a[1] == 0) {
         (*itr)->K = c1->dtshape->shape[1];
     } else {
-        (*itr)->K = (c1->dtshape->shape[1] / bshape_a[1] + 1) * bshape_a[1];
+        (*itr)->K = (c1->dtshape->shape[1] / ishape_a[1] + 1) * ishape_a[1];
     }
 
     if (c2->dtshape->ndim == 2) {
-        if (c2->dtshape->shape[1] % bshape_b[1] == 0) {
+        if (c2->dtshape->shape[1] % ishape_b[1] == 0) {
             (*itr)->N = c2->dtshape->shape[1];
         } else {
-            (*itr)->N = (c2->dtshape->shape[1] / bshape_b[1] + 1) * bshape_b[1];
+            (*itr)->N = (c2->dtshape->shape[1] / ishape_b[1] + 1) * ishape_b[1];
         }
     }
 
@@ -233,7 +233,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_has_next(iarray_iter_read_block_t *itr)
 INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
                                              iarray_iter_read_block_t **itr,
                                              iarray_container_t *cont,
-                                             const int64_t *blockshape,
+                                             const int64_t *iter_blockshape,
                                              iarray_iter_read_block_value_t *value,
                                              bool external_buffer)
 {
@@ -247,9 +247,9 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
-    if (blockshape == NULL) {
-        IARRAY_TRACE1(iarray.error, "The blockshape can not be NULL");
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    if (iter_blockshape == NULL) {
+        IARRAY_TRACE1(iarray.error, "The iter_blockshape can not be NULL");
+        return INA_ERROR(IARRAY_ERR_INVALID_ITERSHAPE);
     }
 
     INA_VERIFY_NOT_NULL(itr);
@@ -275,7 +275,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     // Create a buffer where data is stored to pass it to the user
     (*itr)->block_shape_size = 1;
     for (int i = 0; i < cont->dtshape->ndim; ++i) {
-        (*itr)->block_shape[i] = blockshape[i];
+        (*itr)->block_shape[i] = iter_blockshape[i];
         (*itr)->block_shape_size *= (*itr)->block_shape[i];
     }
     int64_t block_size = typesize * (*itr)->block_shape_size;
@@ -288,11 +288,11 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     if ((*itr)->contiguous) {
         bool before_is_one = true;
         for (int i = 0; i < cont->dtshape->ndim; ++i) {
-            if (blockshape[i] != cont->dtshape->shape[i] && !before_is_one) {
+            if (iter_blockshape[i] != cont->dtshape->shape[i] && !before_is_one) {
                 (*itr)->contiguous = false;
                 break;
             }
-            before_is_one = (blockshape[i] == 1)? true: false;
+            before_is_one = (iter_blockshape[i] == 1)? true: false;
         }
     }
 
@@ -544,7 +544,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
 INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
                                               iarray_iter_write_block_t **itr,
                                               iarray_container_t *cont,
-                                              const int64_t *blockshape,
+                                              const int64_t *iter_blockshape,
                                               iarray_iter_write_block_value_t *value,
                                               bool external_buffer)
 {
@@ -557,16 +557,17 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         return INA_ERROR(IARRAY_ERR_FULL_CONTAINER); //TODO: Should we allow a rewrite a non-empty iarray cont
     }
 
-    if (blockshape == NULL) {
-        IARRAY_TRACE1(iarray.error, "The blockshape can not be NULL");
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    if (iter_blockshape == NULL) {
+        IARRAY_TRACE1(iarray.error, "The iter_blockshape can not be NULL");
+        return INA_ERROR(IARRAY_ERR_INVALID_ITERSHAPE);
     }
 
     if (cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
         for (int i = 0; i < cont->dtshape->ndim; ++i) {
-            if (blockshape[i] != cont->storage->chunkshape[i]) {
-                IARRAY_TRACE1(iarray.error, "The blockshape must be equal to the container chunkshape");
-                return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
+            if (iter_blockshape[i] != cont->storage->chunkshape[i]) {
+                IARRAY_TRACE1(iarray.error,
+                              "The iterator iter_blockshape must be equal to the container chunkshape");
+                return INA_ERROR(IARRAY_ERR_INVALID_ITERSHAPE);
             }
         }
     }
@@ -612,12 +613,12 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     (*itr)->block_shape_size = 1;
     int64_t size = typesize;
     for (int i = 0; i < (*itr)->cont->dtshape->ndim; ++i) {
-        (*itr)->block_shape[i] = blockshape[i];
+        (*itr)->block_shape[i] = iter_blockshape[i];
         size *= (*itr)->block_shape[i];
-        if (cont->catarr->extshape[i] % blockshape[i] == 0) {
-            (*itr)->cont_eshape[i] = (cont->catarr->extshape[i] / blockshape[i]) * blockshape[i];
+        if (cont->catarr->extshape[i] % iter_blockshape[i] == 0) {
+            (*itr)->cont_eshape[i] = (cont->catarr->extshape[i] / iter_blockshape[i]) * iter_blockshape[i];
         } else {
-            (*itr)->cont_eshape[i] = (cont->catarr->extshape[i] / blockshape[i] + 1) * blockshape[i];
+            (*itr)->cont_eshape[i] = (cont->catarr->extshape[i] / iter_blockshape[i] + 1) * iter_blockshape[i];
 
         }
         (*itr)->cont_esize *= (*itr)->cont_eshape[i];
@@ -626,7 +627,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
     int64_t block_size = typesize;
     for (int i = 0; i < cont->dtshape->ndim; ++i) {
-        (*itr)->block_shape[i] = blockshape[i];
+        (*itr)->block_shape[i] = iter_blockshape[i];
         block_size *= (*itr)->block_shape[i];
     }
 
@@ -635,11 +636,11 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     if ((*itr)->contiguous) {
         bool before_is_one = true;
         for (int i = 0; i < cont->dtshape->ndim; ++i) {
-            if (blockshape[i] != cont->dtshape->shape[i] && !before_is_one) {
+            if (iter_blockshape[i] != cont->dtshape->shape[i] && !before_is_one) {
                 (*itr)->contiguous = false;
                 break;
             }
-            before_is_one = (blockshape[i] == 1)? true: false;
+            before_is_one = (iter_blockshape[i] == 1)? true: false;
         }
     }
 
