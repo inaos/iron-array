@@ -11,8 +11,8 @@
 */
 
 #include <libiarray/iarray.h>
-#include <iarray_private.h>
 #include <math.h>
+#include "src/iarray_private.h"
 
 #define NELEM (20 * 1000 * 1000)  // multiple of NITEMS_CHUNK for now
 #define NITEMS_CHUNK (4000 * 1000)

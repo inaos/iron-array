@@ -10,8 +10,8 @@
  *
  */
 
+#include "iarray_private.h"
 #include <libiarray/iarray.h>
-#include <iarray_private.h>
 
 
 static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *c,

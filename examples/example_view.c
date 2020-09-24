@@ -11,7 +11,6 @@
  */
 
 #include <libiarray/iarray.h>
-#include <iarray_private.h>
 
 
 int main(void)
@@ -66,11 +65,6 @@ int main(void)
 
     iarray_container_t *cout;
     iarray_get_slice(ctx, cont, start, stop, true, &store_out, 0, &cout);
-    
-    int64_t cout_size = 1;
-    for (int i = 0; i < cout->dtshape->ndim; ++i) {
-        cout_size *= cout->dtshape->shape[i];
-    }
     
     iarray_iter_read_t *iter;
     iarray_iter_read_value_t val;

@@ -10,8 +10,8 @@
  *
  */
 
+#include "src/iarray_private.h"
 #include <libiarray/iarray.h>
-#include <iarray_private.h>
 
 
 static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize,

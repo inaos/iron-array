@@ -10,8 +10,8 @@
  *
  */
 
+#include "iarray_private.h"
 #include <libiarray/iarray.h>
-#include <iarray_private.h>
 #include "iarray_constructor.h"
 
 

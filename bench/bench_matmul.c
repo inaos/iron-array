@@ -10,8 +10,8 @@
  *
  */
 
+#include "src/iarray_private.h"
 #include <libiarray/iarray.h>
-#include <iarray_private.h>
 
 #define NTHREADS 1
 #define NELEM_BYTES(nelem) (nelem * sizeof(double))
