@@ -11,8 +11,8 @@
  */
 
 #include <libiarray/iarray.h>
-#include <iarray_private.h>
-#include <tests/iarray_test.h>
+#include "src/iarray_private.h"
+#include "tests/iarray_test.h"
 
 typedef ina_rc_t(*_test_operator_elwise_x)(iarray_context_t *ctx,
                                            iarray_container_t *x,

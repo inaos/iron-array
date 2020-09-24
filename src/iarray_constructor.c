@@ -10,10 +10,8 @@
  *
  */
 
+#include "iarray_private.h"
 #include <libiarray/iarray.h>
-
-#include <iarray_private.h>
-
 
 
 static ina_rc_t _iarray_container_fill_float(iarray_context_t *ctx, iarray_container_t *c, float value)

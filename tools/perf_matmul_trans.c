@@ -11,7 +11,7 @@
 
 #include <stdbool.h>
 #include <libiarray/iarray.h>
-#include <iarray_private.h>
+#include "src/iarray_private.h"
 
 #define NELEM_BYTES(nelem) (nelem * sizeof(double))
 #define NTHREADS 1

@@ -13,9 +13,8 @@
 #ifndef _IARRAY_CONSTRUCTOR_H_
 #define _IARRAY_CONSTRUCTOR_H_
 
+#include "iarray_private.h"
 #include <libiarray/iarray.h>
-
-#include <iarray_private.h>
 
 
 static int32_t serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)

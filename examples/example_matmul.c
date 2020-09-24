@@ -11,7 +11,8 @@
  */
 
 #include <libiarray/iarray.h>
-#include <iarray_private.h>
+#include <mkl.h>
+
 
 int main(void)
 {

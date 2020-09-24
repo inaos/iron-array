@@ -11,7 +11,6 @@
  */
 
 #include <libiarray/iarray.h>
-#include <iarray_private.h>
 
 /*
  * Idea of this benchmark is to compare different implementations of the cblosc2 frames
