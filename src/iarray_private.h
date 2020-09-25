@@ -261,8 +261,8 @@ iarray_temporary_t* _iarray_op_divide(iarray_expression_t *expr, iarray_temporar
 
 // Iterators
 ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *container1,
-                                 iarray_container_t *container2, int64_t *bshape_a,
-                                 int64_t *bshape_b, iarray_iter_matmul_t **itr);
+                                 iarray_container_t *container2, int64_t *ishape_a,
+                                 int64_t *ishape_b, iarray_iter_matmul_t **itr);
 void _iarray_iter_matmul_free(iarray_iter_matmul_t **itr);
 void _iarray_iter_matmul_init(iarray_iter_matmul_t *itr);
 void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr);
