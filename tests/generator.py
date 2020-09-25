@@ -33,11 +33,7 @@ def create_files(method, dtype, **kwargs):
     else:
         c = dtype(method(size))
 
-    storage = ia.StorageProperties("blosc",
-                                   chunkshape,
-                                   blockshape,
-                                   True,
-                                   create_filename(method, dtype, **kwargs))
+    storage = ia.StorageProperties(chunkshape, blockshape, create_filename(method, dtype, **kwargs))
 
     ia.numpy2iarray(c, storage=storage, **cparams)
 
