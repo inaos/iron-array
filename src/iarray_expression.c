@@ -468,6 +468,21 @@ INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container
         eval_pparams.out_size = out_value.block_size * e->typesize;
         expr_pparams.out_value = out_value;
 
+        int32_t shape[IARRAY_DIMENSION_MAX];
+        int64_t start[IARRAY_DIMENSION_MAX];
+        int32_t strides[IARRAY_DIMENSION_MAX];
+
+        strides[ret->dtshape->ndim - 1] = 1;
+        for (int i = ret->dtshape->ndim - 1; i >= 0; --i) {
+            shape[i] = out_value.block_shape[i];
+            start[i] = out_value.elem_index[i];
+            if (i != ret->dtshape->ndim - 1)
+                strides[i] = strides[i+1] * shape[i+1];
+        }
+        eval_pparams.window_shape = shape;
+        eval_pparams.window_start = start;
+        eval_pparams.window_strides = strides;
+
         int err = ((iarray_eval_fn) e->jug_expr_func)(&eval_pparams);
         if (err != 0) {
             return INA_ERROR(IARRAY_ERR_EVAL_ENGINE_FAILED);
@@ -663,7 +678,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
     INA_VERIFY_NOT_NULL(container);
 
     int flags = e->out_store_properties->filename ? IARRAY_CONTAINER_PERSIST : 0;
-    iarray_container_new(e->ctx, e->out_dtshape, e->out_store_properties, flags, container);
+    IARRAY_RETURN_IF_FAILED(iarray_container_new(e->ctx, e->out_dtshape, e->out_store_properties, flags, container));
     e->out = *container;
     iarray_container_t *ret = *container;
 
