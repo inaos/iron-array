@@ -247,8 +247,8 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
         // mkl_dimatcopy('R', 'T', shape_b[0], shape_b[1], 1.0, (double *) cache_b, shape_b[1], shape_b[0]);
 
         blosc2_context *cctx = blosc2_create_cctx(cparams);
-        int csize = blosc2_compress_ctx(cctx, out->catarr->extchunknitems * out->catarr->itemsize,
-                                        NULL, iter_value.block_pointer,
+        int csize = blosc2_compress_ctx(cctx, NULL,out->catarr->extchunknitems * out->catarr->itemsize,
+                                        iter_value.block_pointer,
                                         out->catarr->extchunknitems * out->catarr->itemsize +
                                         BLOSC_MAX_OVERHEAD);
         if (csize <= 0) {
