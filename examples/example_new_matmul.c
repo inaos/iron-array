@@ -35,11 +35,16 @@ int main(int argc, char** argv)
 
     int64_t max_cache = 64  * 1024 * 1024;
 
-    int64_t sh = 1024;
-    int64_t cs = 256;
+    int64_t sh_in = 4096;
+    int64_t cs_in = 1000;
+    int64_t bs_in = 512;
+
+    int64_t sh = 4096;
+    int64_t cs = 512;
     int64_t bs = 64;
-    int64_t shape_x[] = {sh, sh};
-    int64_t shape_y[] = {sh, sh};
+
+    int64_t shape_x[] = {sh_in, sh_in};
+    int64_t shape_y[] = {sh_in, sh_in};
 
     int64_t size_x = 1;
     int64_t size_y = 1;
@@ -48,12 +53,12 @@ int main(int argc, char** argv)
         size_y *= shape_y[i];
     }
 
-    int64_t cshape_x[] = {cs, cs};
-    int64_t cshape_y[] = {cs, cs};
+    int64_t cshape_x[] = {cs_in, cs_in};
+    int64_t cshape_y[] = {cs_in, cs_in};
     int64_t cshape_z[] = {cs, cs};
 
-    int64_t bshape_x[] = {bs, bs};
-    int64_t bshape_y[] = {bs, bs};
+    int64_t bshape_x[] = {bs_in, bs_in};
+    int64_t bshape_y[] = {bs_in, bs_in};
     int64_t bshape_z[] = {bs, bs};
 
     // Create context
@@ -111,7 +116,7 @@ int main(int argc, char** argv)
     iarray_container_t *c_z_parallel;
 
     INA_STOPWATCH_START(w);
-    IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul(ctx, c_x, c_y, &store_z, &c_z_parallel));
+    // IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul(ctx, c_x, c_y, &store_z, &c_z_parallel));
     INA_STOPWATCH_STOP(w);
     IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
 
@@ -120,7 +125,7 @@ int main(int argc, char** argv)
     iarray_container_t *c_z_parallel2;
 
     INA_STOPWATCH_START(w);
-    IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul2(ctx, c_x, c_y, max_cache, &store_z, &c_z_parallel2));
+    // IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul2(ctx, c_x, c_y, max_cache, &store_z, &c_z_parallel2));
     INA_STOPWATCH_STOP(w);
     IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
 
@@ -129,7 +134,7 @@ int main(int argc, char** argv)
     iarray_container_t *c_z_parallel3;
 
     INA_STOPWATCH_START(w);
-    IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul3(ctx, c_x, c_y, &store_z, &c_z_parallel3));
+    // IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul3(ctx, c_x, c_y, &store_z, &c_z_parallel3));
     INA_STOPWATCH_STOP(w);
     IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
 
@@ -144,16 +149,27 @@ int main(int argc, char** argv)
 
     printf("Time parallel version 4: %.4f\n", elapsed_sec);
 
-    iarray_container_almost_equal(ctx, c_z_parallel, c_z_parallel2);
-    iarray_container_almost_equal(ctx, c_z_parallel2, c_z_parallel3);
-    iarray_container_almost_equal(ctx, c_z_parallel3, c_z_parallel4);
+    iarray_container_t *c_z_parallel5;
+
+    INA_STOPWATCH_START(w);
+    IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul5(ctx, c_x, c_y, &store_z, &c_z_parallel5));
+    INA_STOPWATCH_STOP(w);
+    IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
+
+    printf("Time parallel version 5: %.4f\n", elapsed_sec);
+
+    // iarray_container_almost_equal(ctx, c_z_parallel, c_z_parallel3);
+    // iarray_container_almost_equal(ctx, c_z_parallel2, c_z_parallel3);
+    // iarray_container_almost_equal(ctx, c_z_parallel3, c_z_parallel4);
+    iarray_container_almost_equal(ctx, c_z_parallel4, c_z_parallel5);
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
-    iarray_container_free(ctx, &c_z_parallel);
-    iarray_container_free(ctx, &c_z_parallel2);
-    iarray_container_free(ctx, &c_z_parallel3);
+    // iarray_container_free(ctx, &c_z_parallel);
+    // iarray_container_free(ctx, &c_z_parallel2);
+    // iarray_container_free(ctx, &c_z_parallel3);
     iarray_container_free(ctx, &c_z_parallel4);
+    iarray_container_free(ctx, &c_z_parallel5);
     iarray_context_free(&ctx);
     INA_STOPWATCH_FREE(&w);
 
