@@ -259,6 +259,7 @@ static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
                                            iarray_container_t *b,
                                            iarray_container_t *c) {
     iarray_container_t *out = c;
+    mkl_set_num_threads(1);
 
     // Set up prefilter
     iarray_context_t *prefilter_ctx = ina_mem_alloc(sizeof(iarray_context_t));
