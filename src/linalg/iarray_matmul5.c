@@ -116,7 +116,6 @@ static int _iarray_matmul_prefilter(blosc2_prefilter_params *pparams) {
                     1.0f, (float *) buffer_a, ld_a, (float *) buffer_b, ld_b, 0.0f, (float *) pparams->out, ld_c);
     }
 
-
     return 0;
 }
 
@@ -138,10 +137,10 @@ static ina_rc_t iarray_linalg_matmul_blosc2(iarray_context_t *ctx,
     prefilter_ctx->prefilter_params = &pparams;
 
     // Init caches
-    int64_t cache_size_a = c->catarr->chunkshape[0] * a->dtshape->shape[1] * c->catarr->itemsize;
+    int64_t cache_size_a = c->catarr->extchunkshape[0] * a->dtshape->shape[1] * c->catarr->itemsize;
     uint8_t *cache_a = ina_mem_alloc(cache_size_a);
 
-    int64_t cache_size_b = b->dtshape->shape[0] * c->catarr->chunkshape[1] * c->catarr->itemsize;
+    int64_t cache_size_b = b->dtshape->shape[0] * c->catarr->extchunkshape[1] * c->catarr->itemsize;
     uint8_t *cache_b = ina_mem_alloc(cache_size_b);
 
     matmul_params.cache_a = cache_a;
@@ -164,7 +163,7 @@ static ina_rc_t iarray_linalg_matmul_blosc2(iarray_context_t *ctx,
             if (elem_index[i] + c->catarr->chunkshape[i] <= c->catarr->shape[i]) {
                 chunk_shape[i] = c->catarr->chunkshape[i];
             } else {
-                chunk_shape[i] = c->catarr->shape[i] - (elem_index[i] + c->catarr->chunkshape[i]);
+                chunk_shape[i] = c->catarr->shape[i] - elem_index[i];
             }
         }
 
@@ -183,16 +182,22 @@ static ina_rc_t iarray_linalg_matmul_blosc2(iarray_context_t *ctx,
             shape_b[1] = c->catarr->extchunkshape[1];
 
             int64_t nind = shape_b[1] / c->storage->blockshape[1];
+            int64_t cache_size_aux_b = b->dtshape->shape[0] * c->catarr->blockshape[1] * b->catarr->itemsize;
 
             for (int i = 0; i < nind; ++i) {
                 start_b[1] = i * c->storage->blockshape[1] + elem_index[1];
+                if (start_b[1] > c->dtshape->shape[1]) {
+                    memset(&cache_b[i * cache_size_aux_b], 0, cache_size_aux_b);
+                    continue;
+                }
                 stop_b[1] = (i + 1) * c->storage->blockshape[1] + elem_index[1];
                 if (stop_b[1] > elem_index[1] + chunk_shape[1]) {
                     stop_b[1] = elem_index[1] + chunk_shape[1];
                 }
                 shape_b[1] = c->catarr->blockshape[1];
-                int64_t cache_size_aux_b = b->dtshape->shape[0] * c->catarr->blockshape[1] * b->catarr->itemsize;
-                _iarray_get_slice_buffer(ctx, b, start_b, stop_b, shape_b, &cache_b[i * cache_size_aux_b], cache_size_aux_b);
+
+                IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, shape_b, &cache_b[i *
+                cache_size_aux_b], cache_size_aux_b));
             }
 
         }
@@ -202,13 +207,13 @@ static ina_rc_t iarray_linalg_matmul_blosc2(iarray_context_t *ctx,
         start_a[1] = 0;
         int64_t stop_a[2] = {0};
         stop_a[0] = elem_index[0] + chunk_shape[0];
-        stop_a[1] = a->dtshape->shape[0];
+        stop_a[1] = a->dtshape->shape[1];
 
         int64_t shape_a[2] = {0};
         shape_a[0] = c->catarr->extchunkshape[0];
         shape_a[1] = a->dtshape->shape[1];
 
-        _iarray_get_slice_buffer(ctx, a, start_a, stop_a, shape_a, cache_a, cache_size_a);
+        IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, shape_a, cache_a, cache_size_a));
 
         // Compress data
         blosc2_cparams cparams = {0};
@@ -230,8 +235,10 @@ static ina_rc_t iarray_linalg_matmul_blosc2(iarray_context_t *ctx,
         // Append to schunk
         blosc2_schunk_append_chunk(c->catarr->sc, chunk, false);
 
-        chunk_order[nchunk] = chunk_index[1] + chunk_index[0] * (c->catarr->extshape[1] / c->catarr->chunkshape[1]);
+        int new_position = chunk_index[1] + chunk_index[0] * (c->catarr->extshape[1] / c->catarr->chunkshape[1]);
+        chunk_order[new_position] = nchunk;
         nchunk++;
+
         chunk_index[0] = nchunk % (c->catarr->extshape[0] / c->catarr->chunkshape[0]);
         chunk_index[1] = nchunk / (c->catarr->extshape[0] / c->catarr->chunkshape[0]);
     }
