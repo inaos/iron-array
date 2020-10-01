@@ -45,13 +45,13 @@ int main(int argc, char** argv)
         size_y *= shape_y[i];
     }
 
-    int64_t cshape_x[] = {245, 823};
-    int64_t cshape_y[] = {512, 635};
-    int64_t cshape_z[] = {499, 400};
+    int64_t cshape_x[] = {2000, 1000};
+    int64_t cshape_y[] = {1000, 1000};
+    int64_t cshape_z[] = {1000, 1000};
 
-    int64_t bshape_x[] = {34, 400};
-    int64_t bshape_y[] = {78, 61};
-    int64_t bshape_z[] = {46, 66};
+    int64_t bshape_x[] = {400, 400};
+    int64_t bshape_y[] = {400, 400};
+    int64_t bshape_z[] = {50, 50};
 
     // Create context
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -108,7 +108,7 @@ int main(int argc, char** argv)
     iarray_container_t *c_z_parallel;
 
     INA_STOPWATCH_START(w);
-    IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul(ctx, c_x, c_y, &store_z, &c_z_parallel));
+    // IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul(ctx, c_x, c_y, &store_z, &c_z_parallel));
     INA_STOPWATCH_STOP(w);
     IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
 
@@ -150,18 +150,30 @@ int main(int argc, char** argv)
 
     printf("Time parallel version 5: %.4f\n", elapsed_sec);
 
+    iarray_container_t *c_z_parallel6;
+
+    INA_STOPWATCH_START(w);
+    IARRAY_RETURN_IF_FAILED(iarray_linalg_parallel_matmul6(ctx, c_x, c_y, &store_z, &c_z_parallel6));
+    INA_STOPWATCH_STOP(w);
+    IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
+
+    printf("Time parallel version 6: %.4f\n", elapsed_sec);
+
     // iarray_container_almost_equal(ctx, c_z_parallel, c_z_parallel3);
     // iarray_container_almost_equal(ctx, c_z_parallel2, c_z_parallel3);
     // iarray_container_almost_equal(ctx, c_z_parallel3, c_z_parallel4);
-    iarray_container_almost_equal(ctx, c_z_parallel, c_z_parallel5);
+    // iarray_container_almost_equal(ctx, c_z_parallel4, c_z_parallel5);
+    iarray_container_almost_equal(ctx, c_z_parallel5, c_z_parallel6);
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
-    iarray_container_free(ctx, &c_z_parallel);
+    // iarray_container_free(ctx, &c_z_parallel);
     // iarray_container_free(ctx, &c_z_parallel2);
     // iarray_container_free(ctx, &c_z_parallel3);
     // iarray_container_free(ctx, &c_z_parallel4);
     iarray_container_free(ctx, &c_z_parallel5);
+    iarray_container_free(ctx, &c_z_parallel6);
+
     iarray_context_free(&ctx);
     INA_STOPWATCH_FREE(&w);
 
