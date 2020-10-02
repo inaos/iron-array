@@ -141,7 +141,7 @@ static ina_rc_t _iarray_repart_caches(iarray_context_t *ctx,
 }
 
 
-static ina_rc_t iarray_linalg_matmul_blosc2(iarray_context_t *ctx,
+static ina_rc_t iarray_linalg_matmul_blosc(iarray_context_t *ctx,
                                            iarray_container_t *a,
                                            iarray_container_t *b,
                                            iarray_container_t *c) {
@@ -159,12 +159,15 @@ static ina_rc_t iarray_linalg_matmul_blosc2(iarray_context_t *ctx,
     prefilter_ctx->prefilter_params = &pparams;
 
     // Init caches
-    int64_t cache_size_a = c->catarr->extchunkshape[0] * a->dtshape->shape[1] * c->catarr->itemsize;
-    uint8_t *cache_a = ina_mem_alloc(cache_size_a);
 
     int64_t cache_size_b = b->dtshape->shape[0] * c->catarr->extchunkshape[1] * c->catarr->itemsize;
     uint8_t *cache_b = ina_mem_alloc(cache_size_b);
-    uint8_t *cache_aux_b = ina_mem_alloc(cache_size_b);
+
+    int64_t cache_size_a = c->catarr->extchunkshape[0] * a->dtshape->shape[1] * c->catarr->itemsize;
+    int64_t cache_alloc_size = cache_size_a > cache_size_b ? cache_size_a : cache_size_b;
+
+    uint8_t *cache_a = ina_mem_alloc(cache_alloc_size);
+    uint8_t *cache_aux_b = cache_a;
 
     matmul_params.cache_a = cache_a;
     matmul_params.cache_b = cache_b;
@@ -257,7 +260,6 @@ static ina_rc_t iarray_linalg_matmul_blosc2(iarray_context_t *ctx,
 
     INA_MEM_FREE_SAFE(cache_a);
     INA_MEM_FREE_SAFE(cache_b);
-    INA_MEM_FREE_SAFE(cache_aux_b);
 
     return INA_SUCCESS;
 }
@@ -346,7 +348,7 @@ INA_API(ina_rc_t) iarray_linalg_parallel_matmul6(iarray_context_t *ctx,
     if ((*c)->storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
         IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul_plainbuffer(ctx, a, b, *c));
     } else {
-        IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul_blosc2(ctx, a, b, *c));
+        IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul_blosc(ctx, a, b, *c));
     }
     return INA_SUCCESS;
 }
