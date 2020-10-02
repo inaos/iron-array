@@ -311,11 +311,11 @@ static ina_rc_t iarray_linalg_matmul_plainbuffer(iarray_context_t *ctx,
 }
 
 
-INA_API(ina_rc_t) iarray_linalg_parallel_matmul6(iarray_context_t *ctx,
-                                                 iarray_container_t *a,
-                                                 iarray_container_t *b,
-                                                 iarray_storage_t *storage,
-                                                 iarray_container_t **c) {
+INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
+                                       iarray_container_t *a,
+                                       iarray_container_t *b,
+                                       iarray_storage_t *storage,
+                                       iarray_container_t **c) {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(a);
     INA_VERIFY_NOT_NULL(b);
@@ -330,6 +330,15 @@ INA_API(ina_rc_t) iarray_linalg_parallel_matmul6(iarray_context_t *ctx,
         return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
 
+    if (a->dtshape->ndim != 2) {
+        return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
+    }
+    if (b->dtshape->ndim != 2) {
+        IARRAY_TRACE1(iarray.error, "Error: container dimension is not 2");
+        return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
+    }
+
+    // C parameters
     iarray_dtshape_t dtshape = {0};
     dtshape.dtype = a->dtshape->dtype;
     dtshape.ndim = 2;
@@ -348,7 +357,10 @@ INA_API(ina_rc_t) iarray_linalg_parallel_matmul6(iarray_context_t *ctx,
     if ((*c)->storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
         IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul_plainbuffer(ctx, a, b, *c));
     } else {
+        int nthreads = mkl_get_max_threads();
+        mkl_set_num_threads(1);
         IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul_blosc(ctx, a, b, *c));
+        mkl_set_num_threads(nthreads);
     }
     return INA_SUCCESS;
 }

@@ -553,55 +553,15 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_context_t *ctx, iarray_co
 INA_API(ina_rc_t) iarray_container_is_symmetric(iarray_container_t *a);
 INA_API(ina_rc_t) iarray_container_is_triangular(iarray_container_t *a);
 
+
 /* linear algebra */
 INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a);
-INA_API(ina_rc_t) iarray_linalg_inverse(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
-
 INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
                                        iarray_container_t *a,
                                        iarray_container_t *b,
-                                       iarray_container_t *result,
-                                       int64_t *blockshape_a,
-                                       int64_t *blockshape_b,
-                                       iarray_operator_hint_t hint);
+                                       iarray_storage_t *storage,
+                                       iarray_container_t **c);
 
-INA_API(ina_rc_t) iarray_linalg_parallel_matmul(iarray_context_t *ctx,
-                                                iarray_container_t *a,
-                                                iarray_container_t *b,
-                                                iarray_storage_t *storage,
-                                                iarray_container_t **c);
-
-INA_API(ina_rc_t) iarray_linalg_parallel_matmul2(iarray_context_t *ctx,
-                                                iarray_container_t *a,
-                                                iarray_container_t *b,
-                                                int64_t max_cache,
-                                                iarray_storage_t *storage,
-                                                iarray_container_t **c);
-
-INA_API(ina_rc_t) iarray_linalg_parallel_matmul3(iarray_context_t *ctx,
-                                                iarray_container_t *a,
-                                                iarray_container_t *b,
-                                                iarray_storage_t *storage,
-                                                iarray_container_t **c);
-
-INA_API(ina_rc_t) iarray_linalg_parallel_matmul4(iarray_context_t *ctx,
-                                                iarray_container_t *a,
-                                                iarray_container_t *b,
-                                                int64_t max_cache,
-                                                iarray_storage_t *storage,
-                                                iarray_container_t **c);
-
-INA_API(ina_rc_t) iarray_linalg_parallel_matmul5(iarray_context_t *ctx,
-                                                 iarray_container_t *a,
-                                                 iarray_container_t *b,
-                                                 iarray_storage_t *storage,
-                                                 iarray_container_t **c);
-
-INA_API(ina_rc_t) iarray_linalg_parallel_matmul6(iarray_context_t *ctx,
-                                                 iarray_container_t *a,
-                                                 iarray_container_t *b,
-                                                 iarray_storage_t *storage,
-                                                 iarray_container_t **c);
 
 INA_API(ina_rc_t) iarray_linalg_dot(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result, iarray_operator_hint_t hint);
 INA_API(ina_rc_t) iarray_linalg_det(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
@@ -613,6 +573,7 @@ INA_API(ina_rc_t) iarray_linalg_svd(iarray_context_t *ctx, iarray_container_t *a
 INA_API(ina_rc_t) iarray_linalg_qr(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result); // Not clear to which MKL function we need to map
 INA_API(ina_rc_t) iarray_linalg_lu(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result); // ?getrf (MKL) - Not clear to which MKL function we need to map
 INA_API(ina_rc_t) iarray_linalg_cholesky(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
+INA_API(ina_rc_t) iarray_linalg_inverse(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);
 
 /* Reductions */
 INA_API(ina_rc_t) iarray_reduction_sum(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *result);

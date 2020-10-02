@@ -44,6 +44,8 @@ static void ina_cleanup_handler(int error, int *exitcode)
 
 int main(int argc, char** argv)
 {
+    IARRAY_RETURN_IF_FAILED(iarray_init());
+
     ina_stopwatch_t *w = NULL;
     iarray_context_t *ctx = NULL;
     char *mat_x_name = NULL;
@@ -79,9 +81,7 @@ int main(int argc, char** argv)
         INA_OPT_FLAG("r", "remove", "Remove the previous persistent containers (only valid w/ -p)")
     );
 
-    if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
-        return EXIT_FAILURE;
-    }
+    IARRAY_RETURN_IF_FAILED(ina_app_init(argc, argv, opt));
     ina_set_cleanup_handler(ina_cleanup_handler);
 
     if (INA_SUCCEED(ina_opt_isset("p"))) {
@@ -137,14 +137,13 @@ int main(int argc, char** argv)
     printf("\n");
     printf("Working set for the 4 uncompressed matrices: %.1f MB\n", (size_x + size_y + size_out * 2) * sizeof(double) / (double)_IARRAY_SIZE_MB);
 
-    INA_MUST_SUCCEED(iarray_init());
 
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_codec = IARRAY_COMPRESSION_LZ4;
     config.compression_level = 5;
     config.max_num_threads = NTHREADS;
 
-    INA_MUST_SUCCEED(iarray_context_new(&config, &ctx));
+    IARRAY_RETURN_IF_FAILED(iarray_context_new(&config, &ctx));
 
     double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
@@ -158,14 +157,14 @@ int main(int argc, char** argv)
 
     mat_x = (double *) ina_mem_alloc((sizeof(double) * size_x));
     mat_y = (double *) ina_mem_alloc((sizeof(double) * size_y));
-
     printf("\n");
+
     if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_x_prop.filename) && _iarray_file_exists(mat_y_prop.filename)) {
         INA_STOPWATCH_START(w);
-        INA_MUST_SUCCEED(iarray_container_load(ctx, mat_x_prop.filename, false, &con_x));
-        INA_MUST_SUCCEED(iarray_container_load(ctx, mat_y_prop.filename, false, &con_y));
+        IARRAY_RETURN_IF_FAILED(iarray_container_load(ctx, mat_x_prop.filename, false, &con_x));
+        IARRAY_RETURN_IF_FAILED(iarray_container_load(ctx, mat_y_prop.filename, false, &con_y));
         INA_STOPWATCH_STOP(w);
-        INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+        IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
         printf("Time for *opening* X and Y values: %.3g s, %.1f MB/s\n",
                elapsed_sec, NELEM_BYTES(size_x + size_y) / (elapsed_sec * _IARRAY_SIZE_MB));
     } else {
@@ -183,7 +182,7 @@ int main(int argc, char** argv)
         }
         INA_STOPWATCH_STOP(w);
 
-        INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+        IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
         printf("Time for filling X and Y: %.3g s, %.1f MB/s\n",
                elapsed_sec, NELEM_BYTES(size_x + size_y) / (elapsed_sec * _IARRAY_SIZE_MB));
 
@@ -202,10 +201,10 @@ int main(int argc, char** argv)
         }
 
         INA_STOPWATCH_START(w);
-        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &xdtshape, mat_x, sizeof(double) * size_x, &mat_x_prop, flags, &con_x));
-        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &ydtshape, mat_y, sizeof(double) * size_y, &mat_y_prop, flags, &con_y));
+        IARRAY_RETURN_IF_FAILED(iarray_from_buffer(ctx, &xdtshape, mat_x, sizeof(double) * size_x, &mat_x_prop, flags, &con_x));
+        IARRAY_RETURN_IF_FAILED(iarray_from_buffer(ctx, &ydtshape, mat_y, sizeof(double) * size_y, &mat_y_prop, flags, &con_y));
         INA_STOPWATCH_STOP(w);
-        INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+        IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
 
         iarray_container_info(con_x, &nbytes, &cbytes);
         printf("Time for filling X and Y iarray-containers: %.3g s, %.1f MB/s\n",
@@ -217,8 +216,8 @@ int main(int argc, char** argv)
     }
 
     if (allocated == false) {
-        INA_MUST_SUCCEED(iarray_to_buffer(ctx, con_x, mat_x, NELEM_BYTES(size_x)));
-        INA_MUST_SUCCEED(iarray_to_buffer(ctx, con_y, mat_y, NELEM_BYTES(size_y)));
+        IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, con_x, mat_x, NELEM_BYTES(size_x)));
+        IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, con_y, mat_y, NELEM_BYTES(size_y)));
     }
 
     mat_out = (double *) ina_mem_alloc((sizeof(double) * size_out));
@@ -229,25 +228,16 @@ int main(int argc, char** argv)
     cblas_dgemv(CblasRowMajor, CblasNoTrans, (int) shape_x[0], (int) shape_x[1],
         1.0, mat_x, (int) shape_x[1], mat_y, 1, 0.0, mat_res, 1);
     INA_STOPWATCH_STOP(w);
-    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
+    IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
 
     printf("\n");
     printf("Time for multiplying X and Y (pure C): %.3g s, %.1f MFLOPs\n",
         elapsed_sec, flops / (elapsed_sec * 10e6));
 
 
-    iarray_dtshape_t outdtshape;
-    outdtshape.ndim = 1;
-    outdtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
-    for (int i = 0; i < outdtshape.ndim; ++i) {
-        outdtshape.shape[i] = shape_out[i];
-    }
-
     iarray_container_t *con_out;
-    iarray_container_new(ctx, &outdtshape, &mat_out_prop, 0, &con_out);
-
     INA_STOPWATCH_START(w);
-    iarray_linalg_matmul(ctx, con_x, con_y, con_out, blockshape_x, blockshape_y, IARRAY_OPERATOR_GENERAL); /* FIXME: error handling */
+    IARRAY_RETURN_IF_FAILED(iarray_linalg_matmul(ctx, con_x, con_y, &mat_out_prop, &con_out));
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
@@ -263,7 +253,7 @@ int main(int argc, char** argv)
 
     /* Check that we are getting the same results than through manual computation */
     ina_mem_set(mat_out, 0, NELEM_BYTES(size_out));
-    iarray_to_buffer(ctx, con_out, mat_out, NELEM_BYTES(size_out));
+    IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, con_out, mat_out, NELEM_BYTES(size_out)));
 
     if (!test_mat_equal((int) size_out, mat_res, mat_out)) {
         return EXIT_FAILURE; /* FIXME: error-handling */
