@@ -72,31 +72,8 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->nitems * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->nitems * type_size));
 
-    if (c_x->dtshape->ndim == 2) {
-        switch (c_x->dtshape->dtype) {
-            case IARRAY_DATA_TYPE_DOUBLE:
-                mkl_dimatcopy('R', 'T', (size_t)c_x->dtshape->shape[0], (size_t)c_x->dtshape->shape[1], 1.0,
-                              (double *) buf, (size_t)c_x->dtshape->shape[1], (size_t)c_x->dtshape->shape[0]);
-                break;
-            case IARRAY_DATA_TYPE_FLOAT:
-                mkl_simatcopy('R', 'T', (size_t)c_x->dtshape->shape[0], (size_t)c_x->dtshape->shape[1], 1.0f,
-                              (float *) buf, (size_t)c_x->dtshape->shape[1], (size_t)c_x->dtshape->shape[0]);
-                break;
-            default:
-                return INA_ERR_EXCEEDED;
-        }
-
-        int64_t aux = xdtshape.shape[0];
-        xdtshape.shape[0] = xdtshape.shape[1];
-        xdtshape.shape[1] = aux;
-    }
-
     iarray_container_t *c_y;
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->nitems * type_size, &xstorage, 0, &c_y));
-
-    if (ndim == 2) {
-        INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x));
-    }
 
     // Test read iterator
     iarray_iter_read_block_t *I2;
@@ -333,34 +310,8 @@ static ina_rc_t test_block_iterator_ext_chunk(iarray_context_t *ctx, iarray_data
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->nitems * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->nitems * type_size));
 
-
-    if (c_x->dtshape->ndim == 2) {
-        switch (c_x->dtshape->dtype) {
-            case IARRAY_DATA_TYPE_DOUBLE:
-                mkl_dimatcopy('R', 'T', (size_t)c_x->dtshape->shape[0], (size_t)c_x->dtshape->shape[1], 1.0,
-                              (double *) buf, (size_t)c_x->dtshape->shape[1], (size_t)c_x->dtshape->shape[0]);
-                break;
-            case IARRAY_DATA_TYPE_FLOAT:
-                mkl_simatcopy('R', 'T', (size_t)c_x->dtshape->shape[0], (size_t)c_x->dtshape->shape[1], 1.0,
-                              (float *) buf, (size_t)c_x->dtshape->shape[1], (size_t)c_x->dtshape->shape[0]);
-                break;
-            default:
-                return INA_ERR_EXCEEDED;
-        }
-
-        int64_t aux = xdtshape.shape[0];
-        xdtshape.shape[0] = xdtshape.shape[1];
-        xdtshape.shape[1] = aux;
-    }
-
     iarray_container_t *c_y;
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->nitems * type_size, &xstore, 0, &c_y));
-
-    //Testing
-
-    if (ndim == 2) {
-        INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x));
-    }
 
     // Start Iterator
     iarray_iter_read_block_t *I2;
@@ -387,6 +338,7 @@ static ina_rc_t test_block_iterator_ext_chunk(iarray_context_t *ctx, iarray_data
 
     uint8_t *chunk_y1 = (uint8_t *) malloc(csize_y);
     uint8_t *chunk_y2 = (uint8_t *) malloc(csize_y);
+
     INA_TEST_ASSERT_SUCCEED(iarray_iter_read_block_new(ctx, &I3, c_y, blockshape, &val3, true));
 
     while (INA_SUCCEED(iarray_iter_read_block_has_next(I2)) && INA_SUCCEED(iarray_iter_read_block_has_next(I3))) {
@@ -587,31 +539,8 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->nitems * type_size);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf, (size_t)c_x->catarr->nitems * type_size));
 
-    if (c_x->dtshape->ndim == 2) {
-        switch (c_x->dtshape->dtype) {
-            case IARRAY_DATA_TYPE_DOUBLE:
-                mkl_dimatcopy('R', 'T', (size_t)c_x->dtshape->shape[0], (size_t)c_x->dtshape->shape[1], 1.0,
-                              (double *) buf, (size_t)c_x->dtshape->shape[1], (size_t)c_x->dtshape->shape[0]);
-                break;
-            case IARRAY_DATA_TYPE_FLOAT:
-                mkl_simatcopy('R', 'T', (size_t)c_x->dtshape->shape[0], (size_t)c_x->dtshape->shape[1], 1.0,
-                              (float *) buf, (size_t)c_x->dtshape->shape[1], (size_t)c_x->dtshape->shape[0]);
-                break;
-            default:
-                return INA_ERR_EXCEEDED;
-        }
-
-        int64_t aux = xdtshape.shape[0];
-        xdtshape.shape[0] = xdtshape.shape[1];
-        xdtshape.shape[1] = aux;
-    }
-
     iarray_container_t *c_y;
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->nitems * type_size, &xstore, 0, &c_y));
-
-    if (ndim == 2) {
-        INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x));
-    }
 
     // Test read iterator
     iarray_iter_read_block_t *I2;
