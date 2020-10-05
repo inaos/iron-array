@@ -12,30 +12,24 @@
 
 #include <libiarray/iarray.h>
 #include <iarray_private.h>
+#include "iarray_constructor.h"
 
 
-ina_rc_t iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a) {
+ina_rc_t iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t **c) {
     INA_VERIFY_NOT_NULL(ctx);
     if (a->dtshape->ndim != 2) {
         IARRAY_TRACE1(iarray.error, "The container dimension is not 2");
         return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
     }
 
-    if (a->transposed == 0) {
-        a->transposed = 1;
+    int64_t offset[IARRAY_DIMENSION_MAX] = {0};
+    _iarray_view_new(ctx, a, a->dtshape, offset, c);
 
+    if (a->transposed == 0) {
+        (*c)->transposed = 1;
     }
     else {
-        a->transposed = 0;
-    }
-
-    if (a->catarr->storage == CATERVA_STORAGE_BLOSC && blosc2_has_metalayer(a->catarr->sc, "iarray") > 0) {
-        uint8_t *content;
-        uint32_t content_len;
-        blosc2_get_metalayer(a->catarr->sc, "iarray", &content, &content_len);
-        *(content + 2) = *(content + 2) ^ 64ULL;
-        blosc2_update_metalayer(a->catarr->sc, "iarray", content, content_len);
-        free(content);
+        (*c)->transposed = 0;
     }
 
     int64_t aux[IARRAY_DIMENSION_MAX];
