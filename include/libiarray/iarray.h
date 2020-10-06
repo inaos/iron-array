@@ -521,10 +521,6 @@ INA_API(ina_rc_t) iarray_is_view(iarray_context_t *ctx,
                                  iarray_container_t *c,
                                  bool *view);
 
-INA_API(ina_rc_t) iarray_is_transposed(iarray_context_t *ctx,
-                                       iarray_container_t *c,
-                                       bool *transposed);
-
 INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      iarray_dtshape_t *dtshape,
                                      void *buffer,

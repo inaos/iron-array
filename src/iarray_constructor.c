@@ -388,22 +388,6 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
         IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
     }
 
-    if ((!container->view) && (container->transposed == 1)) {
-        switch (container->dtshape->dtype) {
-            case IARRAY_DATA_TYPE_DOUBLE:
-                mkl_dimatcopy('R', 'T', (size_t)container->dtshape->shape[1], (size_t)container->dtshape->shape[0], 1.0,
-                              (double *) buffer, (size_t)container->dtshape->shape[0], (size_t)container->dtshape->shape[1]);
-                break;
-            case IARRAY_DATA_TYPE_FLOAT:
-                mkl_simatcopy('R', 'T', (size_t)container->dtshape->shape[1], (size_t)container->dtshape->shape[0], 1.0f,
-                              (float *) buffer, (size_t)container->dtshape->shape[0], (size_t)container->dtshape->shape[1]);
-                break;
-            default:
-                IARRAY_TRACE1(iarray.error, "The data type is invalid");
-                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-        }
-    }
-
     return INA_SUCCESS;
 }
 
@@ -440,7 +424,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     (*dest)->dtshape = (iarray_dtshape_t *) ina_mem_alloc(sizeof(iarray_dtshape_t));
     ina_mem_cpy((*dest)->dtshape, src->dtshape, sizeof(iarray_dtshape_t));
     (*dest)->view = view;
-    (*dest)->transposed = src->transposed;
+
     if ((*dest)->view) {
         (*dest)->storage = src->storage;
     } else {
