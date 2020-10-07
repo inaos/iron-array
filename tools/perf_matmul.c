@@ -247,7 +247,7 @@ int main(int argc, char** argv)
     iarray_container_new(ctx, &outdtshape, &mat_out_prop, 0, &con_out);
 
     INA_STOPWATCH_START(w);
-    iarray_linalg_matmul(ctx, con_x, con_y, con_out, blockshape_x, blockshape_y, IARRAY_OPERATOR_GENERAL); /* FIXME: error handling */
+    iarray_linalg_matmul(ctx, con_x, con_y, con_out); /* FIXME: error handling */
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 

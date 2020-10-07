@@ -38,7 +38,7 @@ int mult_mkl(const double *a, const double *b, double *c, const int I, const int
 
 int mult_iarray(iarray_context_t *ctx, iarray_container_t *a, int64_t *bshape_a,
     iarray_container_t *b, int64_t *bshape_b, iarray_container_t *c) {
-    iarray_linalg_matmul(ctx, a, b, c, bshape_a, bshape_b, IARRAY_OPERATOR_GENERAL);
+    iarray_linalg_matmul(ctx, a, b, c);
     return 0;
 }
 
