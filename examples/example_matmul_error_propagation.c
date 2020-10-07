@@ -37,8 +37,8 @@ int mult_mkl(const double *a, const double *b, double *c, const int I, const int
 
 
 int mult_iarray(iarray_context_t *ctx, iarray_container_t *a, int64_t *bshape_a,
-    iarray_container_t *b, int64_t *bshape_b, iarray_container_t *c) {
-    iarray_linalg_matmul(ctx, a, b, c);
+    iarray_container_t *b, int64_t *bshape_b, iarray_storage_t *storage, iarray_container_t **c) {
+    iarray_linalg_matmul(ctx, a, b, storage, c);
     return 0;
 }
 
@@ -132,7 +132,6 @@ int main(void)
         store_z.blockshape[i] = cshape_c[i];
     }
     iarray_container_t *cont_c = NULL;
-    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, &store_z, 0, &cont_c));
 
     double *a = (double *) malloc(size_a * sizeof(double));
     double *b = (double *) malloc(size_b * sizeof(double));
@@ -150,7 +149,7 @@ int main(void)
    int64_t bshape_a[] = {10, 10};
    int64_t bshape_b[] = {10, 10};
 
-   mult_iarray(ctx, cont_a, bshape_a, cont_b, bshape_b, cont_c);
+   mult_iarray(ctx, cont_a, bshape_a, cont_b, bshape_b, &store_z, &cont_c);
 
    IARRAY_FAIL_IF_ERROR(iarray_to_buffer(ctx, cont_c, c_iarray, size_c * sizeof(double)));
 
