@@ -534,7 +534,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     for (int nvar = 0; nvar < nvars; ++nvar) {
         iarray_container_t *var = e->vars[nvar].c;
         bool eq = true;
-        if (var->view || var->transposed) {
+        if (var->view) {
             eq = false;
         }else {
             for (int i = 0; i < var->dtshape->ndim; ++i) {
@@ -630,8 +630,8 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
                                 ret->catarr->itemsize * ret->catarr->blocknitems));
 
         blosc2_context *cctx = blosc2_create_cctx(cparams);  // we need it here to propagate pparams.inputs
-        int csize = blosc2_compress_ctx(cctx, ret->catarr->extchunknitems * e->typesize,
-                                        NULL, out_value.block_pointer,
+        int csize = blosc2_compress_ctx(cctx, NULL, ret->catarr->extchunknitems * e->typesize,
+                                        out_value.block_pointer,
                                         ret->catarr->extchunknitems * e->typesize + BLOSC_MAX_OVERHEAD);
         if (csize <= 0) {
             IARRAY_TRACE1(iarray.error, "Error compressing a blosc chunk");
