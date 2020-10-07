@@ -102,7 +102,6 @@ struct iarray_container_s {
     iarray_auxshape_t *auxshape;
     caterva_array_t *catarr;
     iarray_storage_t *storage;
-    bool transposed;
     bool view;
     union {
         float f;

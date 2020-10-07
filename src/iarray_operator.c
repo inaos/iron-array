@@ -59,13 +59,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     int64_t B2 = bshape_b[1];
 
     int flag_a = CblasNoTrans;
-    if (a->transposed == 1) {
-        flag_a = CblasTrans;
-    }
     int flag_b = CblasNoTrans;
-    if (b->transposed == 1) {
-        flag_b = CblasTrans;
-    }
 
     // the extended shape is recalculated from the block shape
     int64_t eshape_a[IARRAY_DIMENSION_MAX];
@@ -182,13 +176,7 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         int64_t cB2 = cbshape_b[1];
 
         int ld_a = (int) cB1;
-        if (a->transposed == 1) {
-            ld_a = (int) cB0;
-        }
         int ld_b = (int) cB2;
-        if (b->transposed == 1) {
-            ld_b = (int) cB1;
-        }
         int ld_c = (int) cB2;
 
         // Make blocks multiplication
@@ -289,9 +277,6 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     size_t c_size = (size_t) B0 * typesize;
 
     int flag_a = CblasNoTrans;
-    if (a->transposed == 1) {
-        flag_a = CblasTrans;
-    }
 
     int64_t eshape_a[2];
     int64_t eshape_b[1];
@@ -392,11 +377,6 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         int64_t cB1 = cbshape_a[1];
 
         int ld_a = (int) cB1;
-        if (a->transposed == 1) {
-            ld_a = (int) cB0;
-            cB0 = cbshape_a[1];
-            cB1 = cbshape_a[0];
-        }
 
         if (!a_copy) {
             IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer_no_copy(ctx, a, start_a, stop_a, (void **) &a_block, a_size));
@@ -575,47 +555,6 @@ static ina_rc_t _iarray_operator_elwise_ab(
     return INA_SUCCESS;
 }
 
-
-INA_API(ina_rc_t) iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a)
-{
-    INA_VERIFY_NOT_NULL(ctx);
-    if (a->dtshape->ndim != 2) {
-        IARRAY_TRACE1(iarray.error, "The container dimension is not 2");
-        return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
-    }
-
-    if (a->transposed == 0) {
-        a->transposed = 1;
-
-    }
-    else {
-        a->transposed = 0;
-    }
-
-    if (a->catarr->storage == CATERVA_STORAGE_BLOSC && blosc2_has_metalayer(a->catarr->sc, "iarray") > 0) {
-        uint8_t *content;
-        uint32_t content_len;
-        blosc2_get_metalayer(a->catarr->sc, "iarray", &content, &content_len);
-        *(content + 2) = *(content + 2) ^ 64ULL;
-        blosc2_update_metalayer(a->catarr->sc, "iarray", content, content_len);
-        free(content);
-    }
-
-    int64_t aux[IARRAY_DIMENSION_MAX];
-    for (int i = 0; i < a->dtshape->ndim; ++i) {
-        aux[i] = a->dtshape->shape[i];
-    }
-    for (int i = 0; i < a->dtshape->ndim; ++i) {
-        a->dtshape->shape[i] = aux[a->dtshape->ndim - 1 - i];
-    }
-    for (int i = 0; i < a->dtshape->ndim; ++i) {
-        aux[i] = a->storage->chunkshape[i];
-    }
-    for (int i = 0; i < a->dtshape->ndim; ++i) {
-        a->storage->chunkshape[i] = aux[a->dtshape->ndim - 1 - i];
-    }
-    return INA_SUCCESS;
-}
 
 /**
  * This function performs a matrix multiplication between iarray containers `a` and `b`and stores it

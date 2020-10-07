@@ -15,11 +15,10 @@
 #include "iarray_constructor.h"
 
 
-static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype, bool *transposed) {
+static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype) {
     INA_UNUSED(smeta_len);
     INA_VERIFY_NOT_NULL(smeta);
     INA_VERIFY_NOT_NULL(dtype);
-    INA_VERIFY_NOT_NULL(transposed);
 
     uint8_t *pmeta = smeta;
 
@@ -32,10 +31,7 @@ static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data
     *dtype = *pmeta;
     pmeta += 1;
 
-    *transposed = false;
-    if ((*pmeta & 64ULL) != 0) {
-        *transposed = true;
-    }
+   // Transpose byte
     pmeta += 1;
 
     assert(pmeta - smeta == smeta_len);
@@ -151,8 +147,8 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename, b
         return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
     }
     iarray_data_type_t dtype;
-    bool transposed;
-    if (deserialize_meta(smeta, smeta_len, &dtype, &transposed) != 0) {
+
+    if (deserialize_meta(smeta, smeta_len, &dtype) != 0) {
         IARRAY_TRACE1(iarray.error, "Error deserializing a sframe");
         return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
     }
@@ -193,22 +189,6 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename, b
         (*container)->storage->blockshape[i] = catarr->blockshape[i];
     }
 
-    (*container)->transposed = transposed;  // TODO: complete this
-    if (transposed) {
-        int64_t aux[IARRAY_DIMENSION_MAX];
-        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
-            aux[i] = (*container)->dtshape->shape[i];
-        }
-        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
-            (*container)->dtshape->shape[i] = aux[(*container)->dtshape->ndim - 1 - i];
-        }
-        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
-            aux[i] = (*container)->storage->chunkshape[i];
-        }
-        for (int i = 0; i < (*container)->dtshape->ndim; ++i) {
-            (*container)->storage->chunkshape[i] = aux[(*container)->dtshape->ndim - 1 - i];
-        }
-    }
     (*container)->view = false;
 
     free(smeta);
@@ -275,9 +255,6 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         IARRAY_RETURN_IF_FAILED(_iarray_view_new(ctx, src, &dtshape, start_, container));
 
         (*container)->view = 1;
-        if (src->transposed == 1) {
-            (*container)->transposed = 1;
-        }
 
     } else {
         iarray_dtshape_t dtshape;
@@ -289,26 +266,6 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
             dtshape.shape[i] = stop_[i] - start_[i];
         }
         IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape, storage, flags, container));
-
-        // Check if matrix is transposed
-        if (src->transposed) {
-            int64_t aux_stop[IARRAY_DIMENSION_MAX];
-            int64_t aux_start[IARRAY_DIMENSION_MAX];
-
-            for (int i = 0; i < src->dtshape->ndim; ++i) {
-                aux_start[i] = start_[i];
-                aux_stop[i] = stop_[i];
-            }
-
-            for (int i = 0; i < src->dtshape->ndim; ++i) {
-                start_[i] = aux_start[src->dtshape->ndim - 1 - i];
-                stop_[i] = aux_stop[src->dtshape->ndim - 1 - i];
-            }
-        }
-
-        if (src->transposed) {
-            (*container)->transposed = true;
-        }
 
         caterva_config_t cfg = {0};
         IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
@@ -414,21 +371,6 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
         }
     }
 
-    if (container->transposed) {
-        int64_t aux_stop[IARRAY_DIMENSION_MAX];
-        int64_t aux_start[IARRAY_DIMENSION_MAX];
-
-        for (int i = 0; i < container->dtshape->ndim; ++i) {
-            aux_start[i] = start_[i];
-            aux_stop[i] = stop_[i];
-        }
-
-        for (int i = 0; i < container->dtshape->ndim; ++i) {
-            start_[i] = aux_start[container->dtshape->ndim - 1 - i];
-            stop_[i] = aux_stop[container->dtshape->ndim - 1 - i];
-        }
-    }
-
     int64_t chunkshape[IARRAY_DIMENSION_MAX];
     int64_t chunksize = 1;
     for (int i = 0; i < container->catarr->ndim; ++i) {
@@ -456,22 +398,6 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
     IARRAY_ERR_CATERVA(caterva_array_get_slice_buffer(cat_ctx, container->catarr, start_, stop_, chunkshape, buffer, buflen));
 
     IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
-
-    size_t rows = (size_t)stop_[0] - start_[0];
-    size_t cols = (size_t)stop_[1] - start_[1];
-    if (container->transposed) {
-        switch (container->dtshape->dtype) {
-            case IARRAY_DATA_TYPE_DOUBLE:
-                mkl_dimatcopy('R', 'T', rows, cols, 1.0, (double *) buffer, cols, rows);
-                break;
-            case IARRAY_DATA_TYPE_FLOAT:
-                mkl_simatcopy('R', 'T', rows, cols, 1.0f, (float *) buffer, cols, rows);
-                break;
-            default:
-                IARRAY_TRACE1(iarray.error, "The data type is invalid");
-                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-        }
-    }
 
     return INA_SUCCESS;
 }
@@ -534,37 +460,6 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
         if (container->catarr->shape[i] < stop_[i]) {
             IARRAY_TRACE1(iarray.error, "Stop is larger than the container shape");
             return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
-        }
-    }
-
-    if (container->transposed) {
-        size_t rows = (size_t)stop_[0] - start_[0];
-        size_t cols = (size_t)stop_[1] - start_[1];
-        switch (container->dtshape->dtype) {
-            case IARRAY_DATA_TYPE_DOUBLE:
-                mkl_dimatcopy('R', 'T', rows, cols, 1.0, (double *) buffer, cols, rows);
-                break;
-            case IARRAY_DATA_TYPE_FLOAT:
-                mkl_simatcopy('R', 'T', rows, cols, 1.0f, (float *) buffer, cols, rows);
-                break;
-            default:
-                IARRAY_TRACE1(iarray.error, "The data type is invalid");
-                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-        }
-    }
-
-    if (container->transposed) {
-        int64_t aux_stop[IARRAY_DIMENSION_MAX];
-        int64_t aux_start[IARRAY_DIMENSION_MAX];
-
-        for (int i = 0; i < container->dtshape->ndim; ++i) {
-            aux_start[i] = start_[i];
-            aux_stop[i] = stop_[i];
-        }
-
-        for (int i = 0; i < container->dtshape->ndim; ++i) {
-            start_[i] = aux_start[container->dtshape->ndim - 1 - i];
-            stop_[i] = aux_stop[container->dtshape->ndim - 1 - i];
         }
     }
 
@@ -672,21 +567,6 @@ INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
         }
     }
 
-    if (container->transposed) {
-        int64_t aux_stop[IARRAY_DIMENSION_MAX];
-        int64_t aux_start[IARRAY_DIMENSION_MAX];
-
-        for (int i = 0; i < container->dtshape->ndim; ++i) {
-            aux_start[i] = start_[i];
-            aux_stop[i] = stop_[i];
-        }
-
-        for (int i = 0; i < container->dtshape->ndim; ++i) {
-            start_[i] = aux_start[container->dtshape->ndim - 1 - i];
-            stop_[i] = aux_stop[container->dtshape->ndim - 1 - i];
-        }
-    }
-
     int64_t chunkshape[IARRAY_DIMENSION_MAX];
     int64_t chunksize = 1;
     for (int i = 0; i < container->catarr->ndim; ++i) {
@@ -757,24 +637,6 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
             stop_[index[i]] += stop[i] + container->dtshape->shape[i] - 1;
         } else {
             stop_[index[i]] += (int64_t) stop[i] - 1;
-        }
-    }
-
-    if (container->transposed) {
-        int64_t aux_stop[IARRAY_DIMENSION_MAX];
-        int64_t aux_start[IARRAY_DIMENSION_MAX];
-        int64_t aux_chunkshape[IARRAY_DIMENSION_MAX];
-
-        for (int i = 0; i < container->catarr->ndim; ++i) {
-            aux_start[i] = start_[i];
-            aux_stop[i] = stop_[i];
-            aux_chunkshape[i] = chunkshape_[i];
-        }
-
-        for (int i = 0; i < container->catarr->ndim; ++i) {
-            start_[i] = aux_start[container->catarr->ndim - 1 - i];
-            stop_[i] = aux_stop[container->catarr->ndim - 1 - i];
-            chunkshape_[i] = aux_chunkshape[container->catarr->ndim - 1 - i];
         }
     }
 
@@ -907,22 +769,6 @@ INA_API(ina_rc_t) iarray_is_view(iarray_context_t *ctx,
         *view = true;
     } else {
         *view = false;
-    }
-    return INA_SUCCESS;
-}
-
-INA_API(ina_rc_t) iarray_is_transposed(iarray_context_t *ctx,
-                                       iarray_container_t *c,
-                                       bool *transposed)
-{
-    INA_UNUSED(ctx);
-    INA_VERIFY_NOT_NULL(c);
-    INA_VERIFY_NOT_NULL(transposed);
-
-    if (c->transposed) {
-        *transposed = true;
-    } else {
-        *transposed = false;
     }
     return INA_SUCCESS;
 }

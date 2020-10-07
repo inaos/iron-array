@@ -25,7 +25,7 @@ static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_x, int64
 
 static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int32_t type_size, int8_t ndim,
                                       const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
-                                      int64_t *start, int64_t *stop, bool transposed) {
+                                      int64_t *start, int64_t *stop) {
     void *buffer_x;
     size_t buffer_x_len;
 
@@ -65,10 +65,6 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     iarray_container_t *c_out;
 
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buffer_x, buffer_x_len * type_size, &xstore, 0, &c_x));
-
-    if (transposed) {
-        INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x));
-    }
 
     INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, NULL, 0, &c_out));
 
@@ -138,7 +134,7 @@ INA_TEST_FIXTURE(view_block_iter, 2_d_p_v) {
     int64_t stop[] = {-1, 10};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-        start, stop, false));
+                                                  start, stop));
 }
 
 INA_TEST_FIXTURE(view_block_iter, 3_f_v) {
@@ -153,7 +149,7 @@ INA_TEST_FIXTURE(view_block_iter, 3_f_v) {
     int64_t stop[] = {-4, -3, 10};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, false));
+                                                  start, stop));
 }
 
 
@@ -169,7 +165,7 @@ INA_TEST_FIXTURE(view_block_iter, 4_d_v) {
     int64_t stop[] = {-1, 6, 10, -3};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, false));
+                                                  start, stop));
 }
 
 INA_TEST_FIXTURE(view_block_iter, 5_f_p_v) {
@@ -184,7 +180,7 @@ INA_TEST_FIXTURE(view_block_iter, 5_f_p_v) {
     int64_t stop[] = {8, 9, -4, -4, 10};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, false));
+                                                  start, stop));
 }
 
 INA_TEST_FIXTURE(view_block_iter, 6_d_p_v) {
@@ -199,7 +195,7 @@ INA_TEST_FIXTURE(view_block_iter, 6_d_p_v) {
     int64_t stop[] = {1, 7, 4, -4, 8, 3};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, false));
+                                                  start, stop));
 }
 
 INA_TEST_FIXTURE(view_block_iter, 7_f_v) {
@@ -214,5 +210,5 @@ INA_TEST_FIXTURE(view_block_iter, 7_f_v) {
     int64_t stop[] = {8, 6, 5, 9, 7, 7, -7};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, false));
+                                                  start, stop));
 }
