@@ -99,7 +99,6 @@ int main(void)
         store_z.blockshape[i] = bshape_z[i];
     }
     iarray_container_t *c_z;
-    IARRAY_FAIL_IF_ERROR(iarray_container_new(ctx, &dtshape_z, &store_z, 0, &c_z));
     mkl_set_num_threads(n_threads);
 
 
@@ -120,7 +119,7 @@ int main(void)
     printf("Time mkl (C): %.4f\n", elapsed_sec);
 
     INA_STOPWATCH_START(w);
-    if (INA_FAILED(iarray_linalg_matmul(ctx, c_x, c_y ,c_z, blockshape_x, blockshape_y, IARRAY_OPERATOR_GENERAL))) {
+    if (INA_FAILED(iarray_linalg_matmul(ctx, c_x, c_y, &store_z, &c_z))) {
         fprintf(stderr, "Error in linalg_matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
         goto fail;
     }

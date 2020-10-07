@@ -124,11 +124,11 @@ test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize, const i
             zstore.blockshape[i] = zbshape[i];
         }
     }
+
     iarray_container_t *c_z;
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &zdtshape, &zstore, 0, &c_z));
 
     // iarray multiplication
-    INA_TEST_ASSERT_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y, c_z, xblockshape, yblockbshape, IARRAY_OPERATOR_GENERAL));
+    INA_TEST_ASSERT_SUCCEED(iarray_linalg_matmul(ctx, c_x, c_y, &zstore, &c_z));
 
     // define z buffer
     uint8_t *zbuffer = ina_mem_alloc(zsize * typesize);
