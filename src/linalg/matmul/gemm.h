@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2018 Francesc Alted, Aleix Alcacer.
- * Copyright (C) 2019-present Blosc Development team <blosc@blosc.org>
+ * Copyright INAOS GmbH, Thalwil, 2018.
+ * Copyright Francesc Alted, 2018.
+ *
  * All rights reserved.
  *
- * This source code is licensed under both the BSD-style license (found in the
- * LICENSE file in the root directory of this source tree) and the GPLv2 (found
- * in the COPYING file in the root directory of this source tree).
- * You may select, at your option, one of the above-listed licenses.
+ * This software is the confidential and proprietary information of INAOS GmbH
+ * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * Information and shall use it only in accordance with the terms of the license agreement.
+ *
  */
 
 #ifndef IARRAY_GEMM_H
