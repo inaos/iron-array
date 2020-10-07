@@ -93,8 +93,6 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
     int ld_b = n;
     int ld_c = n;
 
-    // _c_matmul((double *) buffer_a, (double *) buffer_b, (double *) pparams->out, m, n, k);
-
     if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
         cblas_dgemm(CblasRowMajor, trans_a, trans_b, (int) m, (int) n, (int) k,
                     1.0, (double *) buffer_a, ld_a, (double *) buffer_b, ld_b, 0.0, (double *) pparams->out, ld_c);

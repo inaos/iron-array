@@ -89,8 +89,6 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
 
     int ld_a = n;
 
-    // _c_matmul((double *) buffer_a, (double *) buffer_b, (double *) pparams->out, m, n, k);
-
     if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
         cblas_dgemv(CblasRowMajor, trans_a, (int) m, (int) n,1.0, (double *) buffer_a, ld_a,
                     (double *) buffer_b, 1, 0.0, (double *) pparams->out, 1);
