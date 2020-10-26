@@ -55,17 +55,11 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 add_definitions(${LLVM_DEFINITIONS})
 include_directories(${LLVM_INCLUDE_DIRS})
 
-set(BUILD_TESTS OFF)
-set(BUILD_BENCHMARKS OFF)
-set(BUILD_EXAMPLES OFF)
-add_subdirectory(contribs/c-blosc2)
-include_directories(contribs/c-blosc2/blosc)
-set(BLOSC_LIB blosc2_static) # required for caterva
-
 set(CATERVA_BUILD_TESTS OFF)
 set(CATERVA_BUILD_EXAMPLES OFF)
 add_subdirectory(contribs/caterva)
 include_directories(contribs/caterva/caterva)
+include_directories(contribs/caterva/contribs/c-blosc2/blosc)
 
 add_subdirectory(contribs/minjugg)
 include_directories(contribs/minjugg/include)
