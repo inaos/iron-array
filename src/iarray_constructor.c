@@ -424,6 +424,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     (*dest)->dtshape = (iarray_dtshape_t *) ina_mem_alloc(sizeof(iarray_dtshape_t));
     ina_mem_cpy((*dest)->dtshape, src->dtshape, sizeof(iarray_dtshape_t));
     (*dest)->view = view;
+    (*dest)->transposed = false;
 
     if ((*dest)->view) {
         (*dest)->storage = src->storage;
