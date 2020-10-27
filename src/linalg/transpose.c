@@ -37,7 +37,8 @@ ina_rc_t iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a, b
         for (int i = 0; i < view_dtshape.ndim; ++i) {
             view_dtshape.shape[i] = a->dtshape->shape[(a->dtshape->ndim - 1) - i];
         }
-        _iarray_view_new(ctx, a, a->dtshape, offset, b);
+        _iarray_view_new(ctx, a, &view_dtshape, offset, b);
+        (*b)->transposed = true;
     }
     return INA_SUCCESS;
 }
