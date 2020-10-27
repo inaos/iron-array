@@ -114,7 +114,7 @@ INA_API(void) iarray_destroy()
 INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores)
 {
     *ncores = 1;
-#ifdef INA_OS_OSX
+#ifndef INA_OS_WINDOWS
     *ncores = (int)sysconf(_SC_NPROCESSORS_ONLN);
 #else
     IARRAY_FAIL_IF_ERROR(ina_cpu_get_total_logical_count(ncores));
@@ -125,7 +125,7 @@ INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores)
 
     return INA_SUCCESS;
 
-#ifndef INA_OS_OSX
+#ifdef INA_OS_WINDOWS
 fail:
     INA_TRACE1(iarray.error, "Cannot get the number of cores");
     return INA_ERROR(IARRAY_ERR_GET_NCORES);
