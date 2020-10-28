@@ -415,62 +415,47 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
 
     INA_UNUSED(flags);
 
-    caterva_config_t cfg = {0};
-    IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
-    caterva_context_t *cat_ctx;
-    IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
-
-    (*dest) = (iarray_container_t *) ina_mem_alloc(sizeof(iarray_container_t));
-    (*dest)->dtshape = (iarray_dtshape_t *) ina_mem_alloc(sizeof(iarray_dtshape_t));
-    ina_mem_cpy((*dest)->dtshape, src->dtshape, sizeof(iarray_dtshape_t));
-    (*dest)->view = view;
-    (*dest)->transposed = false;
-
-    if ((*dest)->view) {
-        (*dest)->storage = src->storage;
-    } else {
-        (*dest)->storage = (iarray_storage_t *) ina_mem_alloc(sizeof(iarray_storage_t));
-        ina_mem_cpy((*dest)->storage, storage, sizeof(iarray_storage_t));
+    if (src->view && view) {
+        IARRAY_TRACE1(iarray.error, "IArray can not copy a view into another view");
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
 
-    if (src->view && !view) {
-        (*dest)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
-        for (int i = 0; i < (*dest)->dtshape->ndim; ++i) {
-            (*dest)->auxshape->offset[i] = 0;
-            (*dest)->auxshape->index[i] = (int8_t) i;
-            (*dest)->auxshape->shape_wos[i] = src->dtshape->shape[i];
-            (*dest)->auxshape->chunkshape_wos[i] = storage->chunkshape[i];
-            (*dest)->auxshape->blockshape_wos[i] = storage->blockshape[i];
+    int64_t start[IARRAY_DIMENSION_MAX], stop[IARRAY_DIMENSION_MAX];
+    for (int i = 0; i < src->dtshape->ndim; ++i) {
+        start[i] = 0;
+        stop[i] = src->dtshape->shape[i];
+    }
+    if (src->view) {
+        IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, src->dtshape, storage, flags, dest));
+
+        int64_t iter_blockshape[IARRAY_DIMENSION_MAX];
+        for (int i = 0; i < src->dtshape->ndim; ++i) {
+            iter_blockshape[i] = storage->backend == IARRAY_STORAGE_PLAINBUFFER ?
+                    src->dtshape->shape[i] : storage->chunkshape[i];
         }
-    } else {
-        (*dest)->auxshape = (iarray_auxshape_t *) ina_mem_alloc(sizeof(iarray_auxshape_t));
-        ina_mem_cpy((*dest)->auxshape, src->auxshape, sizeof(iarray_auxshape_t));
-    }
+        iarray_iter_read_block_t *iter_read;
+        iarray_iter_read_block_value_t read_val;
+        iarray_iter_read_block_new(ctx, &iter_read, src, iter_blockshape, &read_val,
+                                   false);
+        iarray_iter_write_block_t *iter_write;
+        iarray_iter_write_block_value_t write_val;
+        iarray_iter_write_block_new(ctx, &iter_write, *dest, iter_blockshape,
+                                    &write_val,
+                                   false);
 
-    if (view) {
-        (*dest)->catarr = src->catarr;
-    } else {
-        caterva_params_t params = {0};
-        IARRAY_RETURN_IF_FAILED(iarray_create_caterva_params(src->dtshape, &params));
-
-        caterva_storage_t cat_storage = {0};
-        IARRAY_RETURN_IF_FAILED(iarray_create_caterva_storage(src->dtshape, storage, &cat_storage));
-
-        if (src->view) {
-            int64_t *start = src->auxshape->offset;
-            int64_t stop[IARRAY_DIMENSION_MAX];
-            for (int i = 0; i < src->catarr->ndim; ++i) {
-                stop[i] = src->auxshape->offset[i] + src->auxshape->shape_wos[i];
-            }
-
-            IARRAY_ERR_CATERVA(caterva_array_get_slice(cat_ctx, src->catarr, start, stop, &cat_storage, &(*dest)->catarr));
-            IARRAY_ERR_CATERVA(caterva_array_squeeze(cat_ctx, (*dest)->catarr));
-        } else {
-            IARRAY_ERR_CATERVA(caterva_array_copy(cat_ctx, src->catarr, &cat_storage, &(*dest)->catarr));
+        while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_write)) &&
+        INA_SUCCEED(iarray_iter_read_block_has_next(iter_read))) {
+            IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_next(iter_read, NULL, 0));
+            IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter_write,NULL, 0));
+            memcpy(write_val.block_pointer, read_val.block_pointer, write_val.block_size *
+            src->catarr->itemsize);
         }
+        iarray_iter_read_block_free(&iter_read);
+        iarray_iter_write_block_free(&iter_write);
+
+    } else {
+        IARRAY_RETURN_IF_FAILED(
+                iarray_get_slice(ctx, src, start, stop, view, storage, flags, dest));
     }
-
-    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
-
     return INA_SUCCESS;
 }

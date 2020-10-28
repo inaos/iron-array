@@ -91,12 +91,8 @@ static ina_rc_t test_block_iterator_transpose(iarray_context_t *ctx, iarray_data
     iarray_container_t *c_trans;
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, true, NULL, &c_trans));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_trans, buf, (size_t)c_x->catarr->nitems *
-    type_size));
-
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &ydtshape, buf, (size_t)c_x->catarr->nitems *
-    type_size, &ystorage, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_trans, false, &ystorage, 0, &c_y));
 
     // Test read iterator
     iarray_iter_read_block_t *I2;
@@ -301,12 +297,8 @@ static ina_rc_t test_block_iterator_transpose_external(iarray_context_t *ctx,
     iarray_container_t *c_trans;
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, true, NULL, &c_trans));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_trans, buf, (size_t)c_x->catarr->nitems *
-                                                                type_size));
-
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &ydtshape, buf, (size_t)c_x->catarr->nitems *
-                                                                    type_size, &ystorage, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_trans, false, &ystorage, 0, &c_y));
 
     // Test read iterator
     iarray_iter_read_block_t *I2;

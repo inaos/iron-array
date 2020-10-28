@@ -214,25 +214,46 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(container);
 
     if (src->view) {
-        IARRAY_TRACE1(iarray.error, "Slicing a view is not supported");
-        return INA_ERR_NOT_SUPPORTED;
+        IARRAY_TRACE1(iarray.error, "Slicing a view into another is not supported");
+        return INA_ERROR(INA_ERR_NOT_SUPPORTED);
     }
+
+    int8_t ndim = src->dtshape->ndim;
+    int64_t *offset = src->auxshape->offset;
+    int8_t *index = src->auxshape->index;
 
     int64_t start_[IARRAY_DIMENSION_MAX];
     int64_t stop_[IARRAY_DIMENSION_MAX];
 
-    int64_t *offset = src->auxshape->offset;
+    for (int i = 0; i < src->catarr->ndim; ++i) {
+        start_[i] = 0 + offset[i];
+        stop_[i] = 1 + offset[i];
+    }
 
-    for (int i = 0; i < src->dtshape->ndim; ++i) {
+    for (int i = 0; i < ndim; ++i) {
         if (start[i] < 0) {
-            start_[i] =  offset[i] + start[i] + src->dtshape->shape[i];
+            start_[index[i]] += start[i] + src->dtshape->shape[i];
         } else{
-            start_[i] = offset[i] + (int64_t) start[i];
+            start_[index[i]] += (int64_t) start[i];
         }
         if (stop[i] < 0) {
-            stop_[i] =  offset[i] + stop[i] + src->dtshape->shape[i];
+            stop_[index[i]] += stop[i] + src->dtshape->shape[i] - 1;
         } else {
-            stop_[i] = offset[i] + (int64_t) stop[i];
+            stop_[index[i]] += (int64_t) stop[i] - 1;
+        }
+    }
+
+    if (src->transposed) {
+        int64_t start_trans[IARRAY_DIMENSION_MAX];
+        int64_t stop_trans[IARRAY_DIMENSION_MAX];
+        int64_t chunkshape_trans[IARRAY_DIMENSION_MAX];
+        for (int i = 0; i < ndim; ++i) {
+            start_trans[i] = start_[ndim - 1 - i];
+            stop_trans[i] = stop_[ndim - 1 - i];
+        }
+        for (int i = 0; i < ndim; ++i) {
+            start_[i] = start_trans[i];
+            stop_[i] = stop_trans[i];
         }
     }
 
