@@ -46,7 +46,7 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
 endif()
 include("${CMAKE_BINARY_DIR}/inac.cmake")
 
-inac_add_dependency(inac "1.0.7")
+inac_add_dependency(inac "1.0.8")
 
 find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
