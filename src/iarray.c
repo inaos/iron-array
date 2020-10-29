@@ -24,6 +24,10 @@
 static int _ina_inited = 0;
 static int _blosc_inited = 0;
 static int _jug_inited = 0;
+static int n_logical_cores = 0;
+static uint64_t L1_size = 0;
+static uint64_t L2_size = 0;
+static uint64_t L3_size = 0;
 
 
 static const char* __get_err_getsubject(int id) {
@@ -100,6 +104,22 @@ INA_API(ina_rc_t) iarray_init()
     sched_setaffinity(0, sizeof(mask), &mask);
 #endif
 
+    // Allocate, initialize, and perform topology detection
+    hwloc_topology_t topology;
+    hwloc_topology_init(&topology);
+    hwloc_topology_load(topology);
+    // Get the number of cores
+    n_logical_cores = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
+    // Get cache sizes
+    hwloc_obj_t L1_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L1CACHE, 0);
+    L1_size = L1_obj->attr->cache.size;
+    hwloc_obj_t L2_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L2CACHE, 0);
+    L2_size = L2_obj->attr->cache.size;
+    hwloc_obj_t L3_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L3CACHE, 0);
+    L3_size = L3_obj->attr->cache.size;
+    // ...and destroy topology
+    hwloc_topology_destroy(topology);
+
     return INA_SUCCESS;
 }
 
@@ -113,15 +133,7 @@ INA_API(void) iarray_destroy()
 // Return the number of (logical) cores in CPU
 INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores)
 {
-    // Allocate, initialize, and perform topology detection
-    hwloc_topology_t topology;
-    hwloc_topology_init(&topology);
-    hwloc_topology_load(topology);
-    // Get the number of cores
-    int depth = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
-    *ncores = (int)hwloc_get_nbobjs_by_depth(topology, depth);
-    // ...and destroy topology
-    hwloc_topology_destroy(topology);
+    *ncores = n_logical_cores;
 
     // See whether cap value should be used
     if ((max_ncores > 0) && (*ncores > max_ncores)) {
@@ -229,20 +241,16 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
 
     // Get reasonable defaults for max and mins for chunk and block sizes
     if (max_chunksize == 0) {
-        hwloc_obj_t L3_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L3CACHE, 0);
-        uint64_t L3 = L3_obj->attr->cache.size;
         // Should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
-        max_chunksize = L3 / 4;
+        max_chunksize = L3_size / 4;
     }
     if (min_chunksize == 0) {
         // 256 KB for chunksize sounds like a good minimum
         min_chunksize = 256 * 1024;
     }
     if (max_blocksize == 0) {
-        hwloc_obj_t L2_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L2CACHE, 0);
-        uint64_t L2 = L2_obj->attr->cache.size;
         // Should allow to hold (2x operand, 1x temporary, 1x reserve) in L2
-        max_blocksize = L2 / 4;
+        max_blocksize = L2_size / 4;
     }
     if (min_blocksize == 0) {
         // 1 KB for blocksize sounds like a good minimum
