@@ -58,7 +58,7 @@ static ina_rc_t test_copy_transpose(iarray_context_t *ctx, iarray_data_type_t dt
 
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, 0, &c_trans));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_trans, true, &store, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_trans, false, &ystore, &c_x));
 
 
     iarray_container_t *c_y;
