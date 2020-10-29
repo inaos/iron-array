@@ -4,6 +4,10 @@
 
 ## Setup
 
+### Clone
+
+    git clone --recurse-submodules git@github.com:inaos/iron-array.git
+
 ### Git commit-hooks
 
 Execute the following commands:
