@@ -21,14 +21,18 @@ static ina_rc_t test_partition_advice(iarray_context_t *ctx,
 {
     iarray_dtshape_t dtshape;
     dtshape.dtype = dtype;
+    int64_t max_chunksize = 0;
+    int64_t max_blocksize = 0;
     dtshape.ndim = ndim;
     for (int i = 0; i < ndim; i++) {
         dtshape.shape[i] = shape[i];
     }
 
-    // We want to specify max for chunskize, blocksize explicitly, because L2/L3 size is CPU-dependent
-    int64_t max_chunksize = 1024 * 1024;
-    int64_t max_blocksize = 64 * 1024;
+    if (cshape[0] > 0) {
+        // We want to specify max for chunskize, blocksize explicitly, because L2/L3 size is CPU-dependent
+        max_chunksize = 1024 * 1024;
+        max_blocksize = 64 * 1024;
+    }
 
     iarray_storage_t storage = {0};
     storage.backend = IARRAY_STORAGE_BLOSC;
@@ -36,14 +40,26 @@ static ina_rc_t test_partition_advice(iarray_context_t *ctx,
     storage.filename = NULL;
     INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape, &storage, 0, max_chunksize, 0, max_blocksize));
 
-    for (int i = 0; i < ndim; i++) {
-        INA_TEST_ASSERT_EQUAL_INT64(cshape[i], storage.chunkshape[i]);
-        INA_TEST_ASSERT_EQUAL_INT64(bshape[i], storage.blockshape[i]);
+    if (max_chunksize > 0) {
+        for (int i = 0; i < ndim; i++) {
+            INA_TEST_ASSERT_EQUAL_INT64(cshape[i], storage.chunkshape[i]);
+            INA_TEST_ASSERT_EQUAL_INT64(bshape[i], storage.blockshape[i]);
+        }
+    }
+    else {
+        for (int i = 0; i < ndim; i++) {
+            INA_TEST_ASSERT(storage.chunkshape[i] > 0);
+            INA_TEST_ASSERT(storage.blockshape[i] > 0);
+            // In automatic mode, we can say at least that chunkshape > blockshape
+            // (at least for the range of values tested here, and for decent values of L3)
+            INA_TEST_ASSERT(storage.chunkshape[i] > storage.blockshape[i]);
+        }
     }
 
     return INA_SUCCESS;
 
 }
+
 
 INA_TEST_DATA(partition_advice) {
     iarray_context_t *ctx;
@@ -96,6 +112,17 @@ INA_TEST_FIXTURE(partition_advice, 2_d)
     INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, cshape, bshape));
 }
 
+INA_TEST_FIXTURE(partition_advice, 2_d_automatic)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    int8_t ndim = 2;
+    int64_t shape[] = {15 * 1000, 1112 * 1000};
+    int64_t cshape[] = {0, 0};
+    int64_t bshape[] = {0, 0};
+
+    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, cshape, bshape));
+}
+
 INA_TEST_FIXTURE(partition_advice, 2_d_near_bounds)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
@@ -125,6 +152,17 @@ INA_TEST_FIXTURE(partition_advice, 4_d)
     int64_t shape[] = {17 * 1000, 3 * 1000, 30 * 1000, 10 * 1000};
     int64_t cshape[] = {32, 4, 32, 32};
     int64_t bshape[] = {16, 2, 16, 16};
+
+    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, cshape, bshape));
+}
+
+INA_TEST_FIXTURE(partition_advice, 4_d_automatic)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    int8_t ndim = 4;
+    int64_t shape[] = {17 * 1000, 3 * 1000, 30 * 1000, 10 * 1000};
+    int64_t cshape[] = {0, 0, 0, 0};
+    int64_t bshape[] = {0, 0, 0, 0};
 
     INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, cshape, bshape));
 }
