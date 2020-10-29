@@ -861,6 +861,9 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
     int64_t block_size = 1;
     for (int i = 0; i < cont->dtshape->ndim; ++i) {
         (*itr)->block_shape[i] = cont->storage->chunkshape[i];
+        if (cont->transposed) {
+            (*itr)->block_shape[i] = cont->storage->chunkshape[cont->dtshape->ndim - 1 - i];
+        }
         block_size *= (*itr)->block_shape[i];
     }
 

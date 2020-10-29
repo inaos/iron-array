@@ -17,66 +17,27 @@
 static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, int32_t type_size, int8_t ndim,
                               const int64_t *shape, const int64_t *cshape, const int64_t *bshape) {
 
-    // Create dtshape
+    int64_t blockshape[IARRAY_DIMENSION_MAX];
+    for (int i = 0; i < ndim; ++i) {
+        blockshape[i] = cshape ? cshape[i] : shape[i];
+    }
     iarray_dtshape_t xdtshape;
-
     xdtshape.dtype = dtype;
     xdtshape.ndim = ndim;
+    int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
+        size *= shape[i];
     }
 
-    iarray_storage_t store;
-    store.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    store.enforce_frame = false;
-    store.filename = NULL;
-    if (cshape != NULL) {
-        for (int i = 0; i < ndim; ++i) {
-            store.chunkshape[i] = cshape[i];
-            store.blockshape[i] = bshape[i];
-        }
+    iarray_storage_t xstorage;
+    xstorage.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
+    xstorage.enforce_frame = false;
+    xstorage.filename = NULL;
+    for (int i = 0; i < ndim; ++i) {
+        xstorage.chunkshape[i] = cshape ? cshape[i] : 0;
+        xstorage.blockshape[i] = bshape ? bshape[i] : 0;
     }
-
-    iarray_container_t *c_trans;
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, &store, 0, &c_trans));
-
-    // Start Iterator
-    // Test write iterator
-    iarray_iter_write_block_t *I;
-    iarray_iter_write_block_value_t val;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_trans,
-                                                        c_trans->storage->chunkshape,
-                                                        &val,
-                                                        false));
-
-    while (INA_SUCCEED(iarray_iter_write_block_has_next(I))) {
-        INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(I, NULL, 0));
-
-        int64_t nelem = 0;
-        int64_t inc = 1;
-        for (int i = ndim - 1; i >= 0; --i) {
-            nelem += val.elem_index[i] * inc;
-            inc *= c_trans->dtshape->shape[i];
-        }
-        if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            for (int64_t i = 0; i < val.block_size; ++i) {
-                ((double *) val.block_pointer)[i] = (double) nelem + i;
-            }
-        } else {
-            for (int64_t i = 0; i < val.block_size; ++i) {
-                ((float *) val.block_pointer)[i] = (float) nelem  + i;
-            }
-        }
-    }
-
-    iarray_iter_write_block_free(&I);
-
-    INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
-
-
-    iarray_container_t *c_x;
-    INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_trans, true, NULL, &c_x));
-
 
     iarray_storage_t ystorage;
     ystorage.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
@@ -87,42 +48,75 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
         ystorage.blockshape[i] = bshape ? bshape[ndim - 1 - i] : 0;
     }
 
+    iarray_container_t *c_x;
+
+    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, &xstorage, 0, &c_x));
+
+    // Test write iterator
+    iarray_iter_write_t *I;
+    iarray_iter_write_value_t val;
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_write_new(ctx, &I, c_x, &val));
+
+    while (INA_SUCCEED(iarray_iter_write_has_next(I))) {
+        INA_TEST_ASSERT_SUCCEED(iarray_iter_write_next(I));
+
+        int64_t nelem = 0;
+        int64_t inc = 1;
+        for (int i = ndim - 1; i >= 0; --i) {
+            nelem += val.elem_index[i] * inc;
+            inc *= c_x->dtshape->shape[i];
+        }
+        if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
+            ((double *) val.elem_pointer)[0] = (double) nelem ;
+        } else {
+            ((float *) val.elem_pointer)[0] = (float) nelem;
+        }
+    }
+    iarray_iter_write_free(&I);
+    INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
+
+    iarray_container_t *c_trans;
+    INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, true, NULL, &c_trans));
+
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_x, false, &ystorage, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_trans, false, &ystorage, 0, &c_y));
 
-
-    // Assert iterator reading it
+    // Test read iterator
     iarray_iter_read_t *I2;
     iarray_iter_read_value_t val2;
-    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_new(ctx, &I2, c_x, &val2));
+    INA_TEST_ASSERT_SUCCEED(iarray_iter_read_new(ctx, &I2, c_trans, &val2));
 
     iarray_iter_read_t *I3;
     iarray_iter_read_value_t val3;
     INA_TEST_ASSERT_SUCCEED(iarray_iter_read_new(ctx, &I3, c_y, &val3));
 
-    while (INA_SUCCEED(iarray_iter_read_has_next(I2)) &&
-           INA_SUCCEED(iarray_iter_read_has_next(I3))) {
+    while (INA_SUCCEED(iarray_iter_read_has_next(I2)) && INA_SUCCEED(iarray_iter_read_has_next(I3))) {
         INA_TEST_ASSERT_SUCCEED(iarray_iter_read_next(I2));
         INA_TEST_ASSERT_SUCCEED(iarray_iter_read_next(I3));
 
-        if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value2 = ((double *) val2.elem_pointer)[0];
-            double value3 = ((double *) val3.elem_pointer)[0];
-            INA_TEST_ASSERT_EQUAL_FLOATING(value2, value3);
-        } else {
-            float value2 = ((float *) val2.elem_pointer)[0];
-            float value3 = ((float *) val3.elem_pointer)[0];
-            INA_TEST_ASSERT_EQUAL_FLOATING(value2, value3);
+        switch (dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                INA_TEST_ASSERT_EQUAL_FLOATING(((double *) val2.elem_pointer)[0],
+                                               ((double *) val3.elem_pointer)[0]);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                INA_TEST_ASSERT_EQUAL_FLOATING(((float *) val2.elem_pointer)[0],
+                                               ((float *) val3.elem_pointer)[0]);
+                break;
+            default:
+                return INA_ERR_EXCEEDED;
         }
     }
 
     iarray_iter_read_free(&I2);
     iarray_iter_read_free(&I3);
+
     INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_trans);
+
     return INA_SUCCESS;
 }
 

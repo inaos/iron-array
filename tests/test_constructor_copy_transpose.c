@@ -38,6 +38,18 @@ static ina_rc_t test_copy_transpose(iarray_context_t *ctx, iarray_data_type_t dt
             store.blockshape[i] = bshape[i];
         }
     }
+
+    iarray_storage_t ystore;
+    ystore.backend = (cshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
+    ystore.filename = NULL;
+    ystore.enforce_frame = (ndim % 2 == 0) ? false : true;
+    for (int i = 0; i < ndim; ++i) {
+        if (cshape != NULL) {
+            ystore.chunkshape[i] = cshape[ndim - 1 - i];
+            ystore.blockshape[i] = bshape[ndim - 1 - i];
+        }
+    }
+
     double step = (stop - start) / size;
 
     iarray_container_t *c_x;
@@ -50,17 +62,6 @@ static ina_rc_t test_copy_transpose(iarray_context_t *ctx, iarray_data_type_t dt
 
 
     iarray_container_t *c_y;
-
-    iarray_storage_t ystore;
-    ystore.backend = (cshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
-    ystore.filename = NULL;
-    ystore.enforce_frame = (ndim % 2 == 0) ? false : true;
-    for (int i = 0; i < ndim; ++i) {
-        if (cshape != NULL) {
-            ystore.chunkshape[i] = cshape[ndim - 1 - i];
-            ystore.blockshape[i] = bshape[ndim - 1 - i];
-        }
-    }
     INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_x, false, &ystore, 0, &c_y));
 
     // Assert iterator reading it

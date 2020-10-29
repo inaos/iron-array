@@ -234,13 +234,6 @@ static ina_rc_t test_block_iterator_transpose_external(iarray_context_t *ctx,
         size *= shape[i];
     }
 
-    iarray_dtshape_t ydtshape;
-    ydtshape.dtype = dtype;
-    ydtshape.ndim = ndim;
-    for (int i = 0; i < ndim; ++i) {
-        ydtshape.shape[i] = shape[ndim - 1 - i];
-    }
-
     iarray_storage_t xstorage;
     xstorage.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstorage.enforce_frame = false;
@@ -292,8 +285,6 @@ static ina_rc_t test_block_iterator_transpose_external(iarray_context_t *ctx,
 
     INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
-    uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->nitems * type_size);
-
     iarray_container_t *c_trans;
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, true, NULL, &c_trans));
 
@@ -339,8 +330,7 @@ static ina_rc_t test_block_iterator_transpose_external(iarray_context_t *ctx,
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
-
-    ina_mem_free(buf);
+    iarray_container_free(ctx, &c_trans);
 
     return INA_SUCCESS;
 }
