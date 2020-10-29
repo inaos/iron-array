@@ -114,7 +114,7 @@ INA_API(void) iarray_destroy()
 INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores)
 {
     // Allocate, initialize, and perform topology detection
-    static hwloc_topology_t topology;
+    hwloc_topology_t topology;
     hwloc_topology_init(&topology);
     hwloc_topology_load(topology);
     // Get the number of cores
@@ -219,7 +219,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     INA_VERIFY_NOT_NULL(storage);
 
     // Allocate, initialize, and perform topology detection
-    static hwloc_topology_t topology;
+    hwloc_topology_t topology;
     hwloc_topology_init(&topology);
     hwloc_topology_load(topology);
 
