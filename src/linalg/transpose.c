@@ -16,8 +16,8 @@
 #include "../iarray_constructor.h"
 
 
-ina_rc_t iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a, bool view,
-                                 iarray_storage_t *storage, iarray_container_t **b) {
+ina_rc_t
+iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t **b) {
     INA_VERIFY_NOT_NULL(a);
     INA_VERIFY_NOT_NULL(b);
 
@@ -31,22 +31,15 @@ ina_rc_t iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a, b
         return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
     }
 
-    if (!view) {
-        INA_VERIFY_NOT_NULL(storage);
-
-        iarray_container_t *c_aux;
-        IARRAY_RETURN_IF_FAILED(iarray_linalg_transpose(ctx, a, true, NULL, &c_aux));
-        IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_aux, false, storage, 0, b));
-    } else {
-        int64_t offset[IARRAY_DIMENSION_MAX] = {0};
-        iarray_dtshape_t view_dtshape = {0};
-        view_dtshape.ndim = a->dtshape->ndim;
-        view_dtshape.dtype = a->dtshape->dtype;
-        for (int i = 0; i < view_dtshape.ndim; ++i) {
-            view_dtshape.shape[i] = a->dtshape->shape[(a->dtshape->ndim - 1) - i];
-        }
-        _iarray_view_new(ctx, a, &view_dtshape, offset, b);
-        (*b)->transposed = true;
+    int64_t offset[IARRAY_DIMENSION_MAX] = {0};
+    iarray_dtshape_t view_dtshape = {0};
+    view_dtshape.ndim = a->dtshape->ndim;
+    view_dtshape.dtype = a->dtshape->dtype;
+    for (int i = 0; i < view_dtshape.ndim; ++i) {
+        view_dtshape.shape[i] = a->dtshape->shape[(a->dtshape->ndim - 1) - i];
     }
+    _iarray_view_new(ctx, a, &view_dtshape, offset, b);
+    (*b)->transposed = true;
+
     return INA_SUCCESS;
 }

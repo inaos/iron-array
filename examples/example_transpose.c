@@ -66,7 +66,7 @@ int main(void) {
 
 
     iarray_container_t *c_out;
-    IARRAY_RETURN_IF_FAILED(iarray_linalg_transpose(ctx, c_x, true, NULL, &c_out));
+    IARRAY_RETURN_IF_FAILED(iarray_linalg_transpose(ctx, c_x, &c_out));
 
     uint64_t b_size = nelem * typesize;
     uint8_t *b_x = ina_mem_alloc(b_size);

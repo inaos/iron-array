@@ -109,7 +109,7 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
         stop[i] = shape[i] / 2 + 10;
     }
 
-    INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_trans, true, NULL, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_trans, &c_x));
 
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buffer_x, nelem * sizeof(double)));
 

@@ -76,7 +76,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
     INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     iarray_container_t *c_trans;
-    INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, true, NULL, &c_trans));
+    INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, &c_trans));
 
     iarray_container_t *c_y;
     INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_trans, false, &ystorage, 0, &c_y));

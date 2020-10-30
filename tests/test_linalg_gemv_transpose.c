@@ -57,7 +57,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &xdtshape, xsize, 0, 10, &xstore, 0, &c_x));
 
     iarray_container_t *c_xtrans;
-    INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, true, &xtransstore, &c_xtrans));
+    INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, &c_xtrans));
 
     // iarray container x to buffer
     uint8_t *xbuffer = ina_mem_alloc(xsize * typesize);

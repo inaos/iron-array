@@ -58,7 +58,7 @@ test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize, const i
     iarray_container_t *c_x;
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, (double) xsize, 1, &xstore, 0, &c_x));
     iarray_container_t *c_xtrans;
-    INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, true, &xtransstore, &c_xtrans));
+    INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, &c_xtrans));
     
     // iarray container x to buffer
     uint8_t *xbuffer = ina_mem_alloc(xsize * typesize);
@@ -99,7 +99,7 @@ test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize, const i
     iarray_container_t *c_y;
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &ydtshape, 0, (double) ysize, 1, &ystore, 0, &c_y));
     iarray_container_t *c_ytrans;
-    INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_y, true, &ytransstore, &c_ytrans));
+    INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_y, &c_ytrans));
 
     // iarray container y to buffer
     uint8_t *ybuffer = ina_mem_alloc(ysize * typesize);
