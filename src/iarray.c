@@ -13,7 +13,7 @@
 #include "iarray_private.h"
 #include <libiarray/iarray.h>
 #include <stdlib.h>
-
+#include <hwloc.h>
 #include <minjugg.h>
 
 #if __linux__
@@ -113,24 +113,22 @@ INA_API(void) iarray_destroy()
 // Return the number of (logical) cores in CPU
 INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores)
 {
-    *ncores = 1;
-#ifdef INA_OS_OSX
-    *ncores = (int)sysconf(_SC_NPROCESSORS_ONLN);
-#else
-    IARRAY_FAIL_IF_ERROR(ina_cpu_get_total_logical_count(ncores));
-#endif
+    // Allocate, initialize, and perform topology detection
+    static hwloc_topology_t topology;
+    hwloc_topology_init(&topology);
+    hwloc_topology_load(topology);
+    // Get the number of cores
+    int depth = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
+    *ncores = (int)hwloc_get_nbobjs_by_depth(topology, depth);
+    // ...and destroy topology
+    hwloc_topology_destroy(topology);
+
+    // See whether cap value should be used
     if ((max_ncores > 0) && (*ncores > max_ncores)) {
         *ncores = max_ncores;
     }
 
     return INA_SUCCESS;
-
-#ifndef INA_OS_OSX
-fail:
-    INA_TRACE1(iarray.error, "Cannot get the number of cores");
-    return INA_ERROR(IARRAY_ERR_GET_NCORES);
-#endif
-
 }
 
 
@@ -220,17 +218,19 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(storage);
 
+    // Allocate, initialize, and perform topology detection
+    static hwloc_topology_t topology;
+    hwloc_topology_init(&topology);
+    hwloc_topology_load(topology);
+
     if (storage->backend != IARRAY_STORAGE_BLOSC) {
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
 
     // Get reasonable defaults for max and mins for chunk and block sizes
     if (max_chunksize == 0) {
-        size_t L3;
-        // Workaround for bug #205.  8 MB is a good L3 default for modern CPUs.
-        // IARRAY_RETURN_IF_FAILED(ina_cpu_get_l3_cache_size(&L3));
-        // TODO: revert this when #205 would be fixed.
-        L3 = 8 * 1024 * 1024;
+        hwloc_obj_t L3_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L3CACHE, 0);
+        uint64_t L3 = L3_obj->attr->cache.size;
         // Should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
         max_chunksize = L3 / 4;
     }
@@ -239,11 +239,8 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         min_chunksize = 256 * 1024;
     }
     if (max_blocksize == 0) {
-        size_t L2;
-        // Workaround for bug #205.  256 KB is a good L2 default for modern CPUs.
-        // IARRAY_RETURN_IF_FAILED(ina_cpu_get_l2_cache_size(&L2));
-        // TODO: revert this when #205 would be fixed.
-        L2 = 256 * 1024;
+        hwloc_obj_t L2_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L2CACHE, 0);
+        uint64_t L2 = L2_obj->attr->cache.size;
         // Should allow to hold (2x operand, 1x temporary, 1x reserve) in L2
         max_blocksize = L2 / 4;
     }
@@ -251,6 +248,8 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         // 1 KB for blocksize sounds like a good minimum
         min_blocksize = 1024;
     }
+    // ...and destroy topology
+    hwloc_topology_destroy(topology);
 
     iarray_data_type_t dtype = dtshape->dtype;
     int8_t ndim = dtshape->ndim;
