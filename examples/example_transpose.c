@@ -60,10 +60,7 @@ int main(void) {
 
 
     iarray_container_t *c_x;
-
     IARRAY_RETURN_IF_FAILED(iarray_arange(ctx, &dtshape, 0, nelem, 1, &xstorage, 0, &c_x));
-
-
 
     iarray_container_t *c_out;
     IARRAY_RETURN_IF_FAILED(iarray_linalg_transpose(ctx, c_x, &c_out));
