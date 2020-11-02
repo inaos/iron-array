@@ -24,6 +24,9 @@ static ina_rc_t test_get_ncores(int max_ncores)
         INA_TEST_ASSERT(ncores == 1);
     }
     else {
+        // The number of detected cores should always be > 1 on modern CPUs
+        // (except maybe on some exotic CI platforms)
+        INA_TEST_ASSERT(ncores > 1);
         INA_TEST_ASSERT(ncores <= max_ncores);
     }
 
