@@ -105,8 +105,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     }
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
 
-    (*c)->view = false;
-
     (*c)->storage = ina_mem_alloc(sizeof(iarray_storage_t));
     if ((*c)->storage == NULL) {
         IARRAY_TRACE1(iarray.error, "Error allocating the store parameters");
@@ -148,6 +146,9 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
         }
         free(smeta);
     }
+
+    (*c)->view = false;
+    (*c)->transposed = false;
 
     return INA_SUCCESS;
 }
@@ -200,6 +201,8 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
 
     (*c)->view = true;
+    (*c)->transposed = false;
+
     (*c)->storage = pred->storage;
     (*c)->catarr = pred->catarr;
 
