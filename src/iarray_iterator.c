@@ -557,6 +557,11 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         return INA_ERROR(IARRAY_ERR_FULL_CONTAINER); //TODO: Should we allow a rewrite a non-empty iarray cont
     }
 
+    if (cont->view) {
+        IARRAY_TRACE1(iarray.error, "A view can not be rewritten");
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+    }
+
     if (iter_blockshape == NULL) {
         IARRAY_TRACE1(iarray.error, "The iter_blockshape can not be NULL");
         return INA_ERROR(IARRAY_ERR_INVALID_ITERSHAPE);
@@ -861,6 +866,9 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
     int64_t block_size = 1;
     for (int i = 0; i < cont->dtshape->ndim; ++i) {
         (*itr)->block_shape[i] = cont->storage->chunkshape[i];
+        if (cont->transposed) {
+            (*itr)->block_shape[i] = cont->storage->chunkshape[cont->dtshape->ndim - 1 - i];
+        }
         block_size *= (*itr)->block_shape[i];
     }
 
