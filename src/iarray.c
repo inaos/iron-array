@@ -68,6 +68,8 @@ static const char* __get_err_getsubject(int id) {
             return "EVALUATION ENGINE";
         case IARRAY_ES_NCORES:
             return "NUMBER OF CORES";
+        case IARRAY_ES_CACHE_SIZES:
+            return "CACHE SIZES";
         default:
             return "";
     }
@@ -119,6 +121,10 @@ INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores)
     hwloc_topology_load(topology);
     // Get the number of cores
     int depth = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
+    if (depth < 0) {
+        IARRAY_TRACE1(iarray.error, "Can not get the number of cores");
+        return INA_ERROR(IARRAY_ERR_GET_NCORES);
+    }
     *ncores = (int)hwloc_get_nbobjs_by_depth(topology, depth);
     // ...and destroy topology
     hwloc_topology_destroy(topology);
@@ -230,6 +236,10 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     // Get reasonable defaults for max and mins for chunk and block sizes
     if (max_chunksize == 0) {
         hwloc_obj_t L3_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L3CACHE, 0);
+        if (L3_obj == NULL) {
+            IARRAY_TRACE1(iarray.error, "Can not get the L3 cache size");
+            return INA_ERROR(IARRAY_ERR_GET_CACHE_SIZES);
+        }
         uint64_t L3_size = L3_obj->attr->cache.size;
         // Should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
         max_chunksize = L3_size / 4;
@@ -240,6 +250,10 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     }
     if (max_blocksize == 0) {
         hwloc_obj_t L2_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L2CACHE, 0);
+        if (L2_obj == NULL) {
+            IARRAY_TRACE1(iarray.error, "Can not get the L2 cache size");
+            return INA_ERROR(IARRAY_ERR_GET_CACHE_SIZES);
+        }
         uint64_t L2_size = L2_obj->attr->cache.size;
         // Should allow to hold (2x operand, 1x temporary, 1x reserve) in L2
         max_blocksize = L2_size / 4;
