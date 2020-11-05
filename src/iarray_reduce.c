@@ -30,7 +30,7 @@ static void index_unidim_to_multidim(int8_t ndim, int64_t *shape, int64_t i, int
 
 
 typedef struct iarray_reduce_params_s {
-    double (*ufunc)(double *, int64_t);
+    void (*ufunc)(uint8_t*, int64_t, uint8_t*);
     iarray_container_t *input;
     iarray_container_t *result;
     uint8_t *data;
@@ -115,8 +115,8 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
          &((double *) rparams->data)[elem_index_u],
          strides[rparams->axis], (double *) vector);
 
-        double red = rparams->ufunc((double *) vector,
-                rparams->data_shape[rparams->axis]);
+        double red;
+        rparams->ufunc(vector, rparams->data_shape[rparams->axis], &red);
         ((double *) pparams->out)[ind] = red;
     }
 
@@ -128,7 +128,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
 
 INA_API(ina_rc_t) iarray_reduce_double(iarray_context_t *ctx,
                                        iarray_container_t *a,
-                                       double (*ufunc)(double *, int64_t),
+                                       void (*ufunc)(uint8_t*, int64_t, uint8_t*),
                                        int8_t axis,
                                        iarray_storage_t *storage,
                                        iarray_container_t **b) {

@@ -14,12 +14,12 @@
 #include <src/iarray_private.h>
 
 
-double add(double *v, int64_t len) {
-    double add = 0;
+void add(uint8_t *v, int64_t len, uint8_t *out) {
+    double *vd = (double *) v;
+    double *outd = (double *) out;
     for (int i = 0; i < len; ++i) {
-        add += v[i];
+        *outd += vd[i];
     }
-    return add;
 }
 
 

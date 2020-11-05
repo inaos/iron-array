@@ -567,7 +567,7 @@ typedef enum iarray_reduce_fun_e {
 
 INA_API(ina_rc_t) iarray_reduce_double(iarray_context_t *ctx,
                                        iarray_container_t *a,
-                                       double (*ufunc)(double *, int64_t),
+                                       void (*ufunc)(uint8_t *, int64_t, uint8_t *),
                                        int8_t axis,
                                        iarray_storage_t *storage,
                                        iarray_container_t **b);
