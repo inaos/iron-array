@@ -14,13 +14,13 @@
 #include <math.h>
 
 
-int64_t min(double *min, double *v, int64_t vlen) {
-    *min = INFINITY;
+double min(double *v, int64_t vlen) {
+    double min = INFINITY;
     for (int i = 0; i < vlen; ++i) {
-        if (v[i] < *min)
-            *min = v[i];
+        if (v[i] < min)
+            min = v[i];
     }
-    return 0;
+    return min;
 }
 
 
