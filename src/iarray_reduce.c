@@ -12,6 +12,7 @@
 
 
 #include "iarray_private.h"
+#include "iarray_reduce_operations.c"
 #include <libiarray/iarray.h>
 
 
@@ -150,12 +151,12 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
 }
 
 
-INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
-                                iarray_container_t *a,
-                                void (*ufunc)(void*, int64_t, void*),
-                                int8_t axis,
-                                iarray_storage_t *storage,
-                                iarray_container_t **b) {
+INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
+                                    iarray_container_t *a,
+                                    void (*ufunc)(void*, int64_t, void*),
+                                    int8_t axis,
+                                    iarray_storage_t *storage,
+                                    iarray_container_t **b) {
 
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(a);
@@ -282,6 +283,51 @@ INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
     }
     c->catarr->empty = false;
     c->catarr->filled = true;
+
+    return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
+                                iarray_container_t *a,
+                                iarray_reduce_func_t func,
+                                int8_t axis,
+                                iarray_storage_t *storage,
+                                iarray_container_t **b) {
+    void *reduce_funtion = NULL;
+
+    switch (func) {
+        case IARRAY_REDUCE_MAX:
+            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
+                             (void (*)(void *, int64_t, void *)) dmax :
+                             (void (*)(void *, int64_t, void *)) smax;
+            break;
+        case IARRAY_REDUCE_MIN:
+            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
+                             (void (*)(void *, int64_t, void *)) dmin :
+                             (void (*)(void *, int64_t, void *)) smin;
+            break;
+        case IARRAY_REDUCE_SUM:
+            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
+                             (void (*)(void *, int64_t, void *)) dsum :
+                             (void (*)(void *, int64_t, void *)) ssum;
+            break;
+        case IARRAY_REDUCE_PROD:
+            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
+                             (void (*)(void *, int64_t, void *)) dprod :
+                             (void (*)(void *, int64_t, void *)) sprod;
+            break;
+        case IARRAY_REDUCE_MEAN:
+            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
+                             (void (*)(void *, int64_t, void *)) dmean :
+                             (void (*)(void *, int64_t, void *)) smean;
+            break;
+        case IARRAY_REDUCE_STD:
+            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
+                             (void (*)(void *, int64_t, void *)) dstd :
+                             (void (*)(void *, int64_t, void *)) sstd;
+            break;
+    }
+    IARRAY_RETURN_IF_FAILED(iarray_reduce_udf(ctx, a, reduce_funtion, axis, storage, b));
 
     return INA_SUCCESS;
 }

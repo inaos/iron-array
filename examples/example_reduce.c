@@ -14,71 +14,6 @@
 #include <math.h>
 
 
-double min(double *v, int64_t vlen) {
-    double min = INFINITY;
-    for (int i = 0; i < vlen; ++i) {
-        if (v[i] < min)
-            min = v[i];
-    }
-    return min;
-}
-
-
-double max(double *v, int64_t vlen) {
-    double max = -INFINITY;
-    for (int i = 0; i < vlen; ++i) {
-        if (v[i] > max)
-            max = v[i];
-    }
-    return max;
-}
-
-
-double sum(double *v, int64_t vlen) {
-    double sum = 0;
-    for (int i = 0; i < vlen; ++i) {
-        sum += v[i];
-    }
-    return sum;
-}
-
-
-double prod(double *v, int64_t vlen) {
-    double prod = 1;
-    for (int i = 0; i < vlen; ++i) {
-        prod *= v[i];
-    }
-    return prod;
-}
-
-
-double mean(double *v, int64_t vlen) {
-    double mean = 0;
-    for (int i = 0; i < vlen; ++i) {
-        mean += v[i];
-    }
-    mean /= vlen;
-    return mean;
-}
-
-
-double std(double *v, int64_t vlen) {
-    double mean = 0;
-    for (int i = 0; i < vlen; ++i) {
-        mean += v[i];
-    }
-    mean /= vlen;
-
-    double std = 0;
-    for (int i = 0; i < vlen; ++i) {
-        std += pow((v[i] - mean),  2);
-    }
-    std /= vlen;
-    std = sqrt(std);
-    return std;
-}
-
-
 int main(void) {
     iarray_init();
     ina_stopwatch_t *w;
@@ -138,7 +73,7 @@ int main(void) {
     }
 
     iarray_container_t *c_out;
-    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, &mean, 0, &outstorage, &c_out));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce_udf(ctx, c_x, &mean, 0, &outstorage, &c_out));
 
     iarray_container_free(ctx, &c_out);
     iarray_container_free(ctx, &c_x);

@@ -14,7 +14,22 @@
 #include <src/iarray_private.h>
 
 
-static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim,
+static void sadd(float *v, int64_t len, float *out) {
+    *out = 0;
+    for (int i = 0; i < len; ++i) {
+        *out += v[i];
+    }
+}
+
+static void dadd(double *v, int64_t len, double *out) {
+    *out = 0;
+    for (int i = 0; i < len; ++i) {
+        *out += v[i];
+    }
+}
+
+
+static ina_rc_t test_reduce_udf(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim,
                                const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
                                int8_t axis)
 {
@@ -83,8 +98,17 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
         storage.blockshape[i] = bshape != NULL ? bshape[i] : shape[i + 1] / 6;
     }
     iarray_container_t *c_z;
-
-    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_y, IARRAY_REDUCE_SUM, axis, &storage, &c_z));
+    switch (c_y->dtshape->dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            IARRAY_RETURN_IF_FAILED(iarray_reduce_udf(ctx, c_y, &dadd, axis, &storage, &c_z));
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            IARRAY_RETURN_IF_FAILED(iarray_reduce_udf(ctx, c_y, &sadd, axis, &storage, &c_z));
+            break;
+        default:
+            IARRAY_TRACE1(iarray.error, "Invalid dtype");
+            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+    }
 
     int64_t buffer_nitems = c_z->catarr->nitems;
     int64_t buffer_size = buffer_nitems * c_z->catarr->itemsize;
@@ -115,11 +139,11 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
     return INA_SUCCESS;
 }
 
-INA_TEST_DATA(reduce) {
+INA_TEST_DATA(reduce_udf) {
     iarray_context_t *ctx;
 };
 
-INA_TEST_SETUP(reduce) {
+INA_TEST_SETUP(reduce_udf) {
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -127,13 +151,13 @@ INA_TEST_SETUP(reduce) {
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
 }
 
-INA_TEST_TEARDOWN(reduce) {
+INA_TEST_TEARDOWN(reduce_udf) {
     iarray_context_free(&data->ctx);
     iarray_destroy();
 }
 
 
-INA_TEST_FIXTURE(reduce, 2_d_1) {
+INA_TEST_FIXTURE(reduce_udf, 2_d_1) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
@@ -142,11 +166,11 @@ INA_TEST_FIXTURE(reduce, 2_d_1) {
     int64_t bshape[] = {31, 2};
     int8_t axis = 1;
 
-    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+    INA_TEST_ASSERT_SUCCEED(test_reduce_udf(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
 }
 
 
-INA_TEST_FIXTURE(reduce, 3_d_2) {
+INA_TEST_FIXTURE(reduce_udf, 3_d_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 3;
@@ -155,10 +179,10 @@ INA_TEST_FIXTURE(reduce, 3_d_2) {
     int64_t bshape[] = {3, 3, 3};
     int8_t axis = 2;
 
-    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+    INA_TEST_ASSERT_SUCCEED(test_reduce_udf(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
 }
 
-INA_TEST_FIXTURE(reduce, 4_d_0) {
+INA_TEST_FIXTURE(reduce_udf, 4_d_0) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 4;
@@ -167,11 +191,11 @@ INA_TEST_FIXTURE(reduce, 4_d_0) {
     int64_t bshape[] = {3, 3, 1, 25};
     int8_t axis = 0;
 
-    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+    INA_TEST_ASSERT_SUCCEED(test_reduce_udf(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
 }
 
 
-INA_TEST_FIXTURE(reduce, 8_d_6) {
+INA_TEST_FIXTURE(reduce_udf, 8_d_6) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 8;
@@ -180,12 +204,12 @@ INA_TEST_FIXTURE(reduce, 8_d_6) {
     int64_t bshape[] = {2, 2, 2, 3, 2, 1, 2, 1};
     int8_t axis = 6;
 
-    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+    INA_TEST_ASSERT_SUCCEED(test_reduce_udf(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
 }
 
 
 
-INA_TEST_FIXTURE(reduce, 2_f_1) {
+INA_TEST_FIXTURE(reduce_udf, 2_f_1) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 2;
@@ -194,11 +218,11 @@ INA_TEST_FIXTURE(reduce, 2_f_1) {
     int64_t bshape[] = {31, 2};
     int8_t axis = 1;
 
-    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+    INA_TEST_ASSERT_SUCCEED(test_reduce_udf(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
 }
 
 
-INA_TEST_FIXTURE(reduce, 3_f_2) {
+INA_TEST_FIXTURE(reduce_udf, 3_f_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 3;
@@ -207,10 +231,10 @@ INA_TEST_FIXTURE(reduce, 3_f_2) {
     int64_t bshape[] = {3, 3, 3};
     int8_t axis = 2;
 
-    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+    INA_TEST_ASSERT_SUCCEED(test_reduce_udf(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
 }
 
-INA_TEST_FIXTURE(reduce, 4_f_0) {
+INA_TEST_FIXTURE(reduce_udf, 4_f_0) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 4;
@@ -219,11 +243,11 @@ INA_TEST_FIXTURE(reduce, 4_f_0) {
     int64_t bshape[] = {3, 3, 1, 25};
     int8_t axis = 0;
 
-    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+    INA_TEST_ASSERT_SUCCEED(test_reduce_udf(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
 }
 
 
-INA_TEST_FIXTURE(reduce, 8_f_6) {
+INA_TEST_FIXTURE(reduce_udf, 8_f_6) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 8;
@@ -232,5 +256,5 @@ INA_TEST_FIXTURE(reduce, 8_f_6) {
     int64_t bshape[] = {2, 2, 2, 3, 2, 1, 2, 1};
     int8_t axis = 6;
 
-    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+    INA_TEST_ASSERT_SUCCEED(test_reduce_udf(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
 }
