@@ -41,18 +41,25 @@ typedef struct iarray_reduce_params_s {
 
 
 static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
-
     iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
 
     // Compute offset
     int64_t offset_u = pparams->out_offset / pparams->out_typesize;
     int64_t offset_n[IARRAY_DIMENSION_MAX] = {0};
 
+    int64_t shape_of_blocks[IARRAY_DIMENSION_MAX] = {0};
+    for (int i = 0; i < rparams->result->catarr->ndim; ++i) {
+        shape_of_blocks[i] = rparams->result->catarr->extchunkshape[i] / rparams->result->catarr
+                ->blockshape[i];
+    }
+    int64_t offset_u_blocks = offset_u / (pparams->out_size / pparams->out_typesize);
     index_unidim_to_multidim(rparams->result->catarr->ndim,
-                             rparams->result->catarr->extchunkshape,
-                             offset_u,
+                             shape_of_blocks,
+                             offset_u_blocks,
                              offset_n);
-
+    for (int i = 0; i < rparams->result->catarr->ndim; ++i) {
+        offset_n[i] *= rparams->result->catarr->blockshape[i];
+    }
     // Compute the strides
     int64_t strides[IARRAY_DIMENSION_MAX] = {0};
     strides[rparams->input->dtshape->ndim - 1] = 1;
@@ -73,6 +80,10 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                                  elem_index_n);
 
         bool empty = false;
+        int64_t elem_index_n2[IARRAY_DIMENSION_MAX];
+        for (int i = 0; i < rparams->result->catarr->ndim; ++i) {
+            elem_index_n2[i] = elem_index_n[i] + offset_n[i];
+        }
         for (int i = 0; i < rparams->result->catarr->ndim; ++i) {
             if (rparams->chunk_shape[i] <= elem_index_n[i] + offset_n[i]) {
                 empty = true;
@@ -104,8 +115,9 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
          &((double *) rparams->data)[elem_index_u],
          strides[rparams->axis], (double *) vector);
 
-        ((double *) pparams->out)[ind] = rparams->ufunc((double *) vector,
+        double red = rparams->ufunc((double *) vector,
                 rparams->data_shape[rparams->axis]);
+        ((double *) pparams->out)[ind] = red;
     }
 
     free(vector);
@@ -179,6 +191,12 @@ INA_API(ina_rc_t) iarray_reduce_double(iarray_context_t *ctx,
     reduce_params.axis = axis;
     reduce_params.ufunc = ufunc;
 
+    // Compute the amount of chunks that there are in each dimension
+    int64_t shape_of_chunks[IARRAY_DIMENSION_MAX]={0};
+    for (int i = 0; i < c->dtshape->ndim; ++i) {
+        shape_of_chunks[i] = c->catarr->extshape[i] / c->catarr->chunkshape[i];
+    }
+
     // Iterate over chunks
     int64_t chunk_index[IARRAY_DIMENSION_MAX] = {0};
     int64_t nchunk = 0;
@@ -240,8 +258,7 @@ INA_API(ina_rc_t) iarray_reduce_double(iarray_context_t *ctx,
         blosc2_schunk_append_chunk(c->catarr->sc, chunk, false);
 
         nchunk++;
-        index_unidim_to_multidim(c->dtshape->ndim, chunk_shape, nchunk, chunk_index);
-
+        index_unidim_to_multidim(c->dtshape->ndim, shape_of_chunks, nchunk, chunk_index);
     }
     c->catarr->empty = false;
     c->catarr->filled = true;
