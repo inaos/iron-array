@@ -12,7 +12,7 @@
 
 
 #include "iarray_private.h"
-#include "iarray_reduce_operations.c"
+#include "iarray_reduce_operations.h"
 #include <libiarray/iarray.h>
 
 
