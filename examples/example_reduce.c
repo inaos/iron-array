@@ -140,22 +140,8 @@ int main(void) {
     iarray_container_t *c_out;
     IARRAY_RETURN_IF_FAILED(iarray_reduce_double(ctx, c_x, &mean, 0, &outstorage, &c_out));
 
-    uint64_t b_size = nelem * typesize;
-    uint8_t *b_x = ina_mem_alloc(b_size);
-    uint8_t *b_out = ina_mem_alloc(b_size);
-
-    IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_x, b_x, b_size));
-    IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_out, b_out, b_size));
-
-    for (int i = 0; i < 100; ++i) {
-        printf(" %f ", ((double *) b_out)[i]);
-    }
-
     iarray_container_free(ctx, &c_out);
     iarray_container_free(ctx, &c_x);
-
-    INA_MEM_FREE_SAFE(b_x);
-    INA_MEM_FREE_SAFE(b_out);
 
     iarray_context_free(&ctx);
 
