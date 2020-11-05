@@ -565,19 +565,13 @@ typedef enum iarray_reduce_fun_e {
 } iarray_reduce_fun_t;
 
 
-INA_API(ina_rc_t) iarray_reduce_double(iarray_context_t *ctx,
-                                       iarray_container_t *a,
-                                       void (*ufunc)(uint8_t *, int64_t, uint8_t *),
-                                       int8_t axis,
-                                       iarray_storage_t *storage,
-                                       iarray_container_t **b);
+INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
+                                iarray_container_t *a,
+                                void (*ufunc)(void *, int64_t, void *),
+                                int8_t axis,
+                                iarray_storage_t *storage,
+                                iarray_container_t **b);
 
-INA_API(ina_rc_t) iarray_reduce_float(iarray_context_t *ctx,
-                                      iarray_container_t *a,
-                                      float (*ufunc)(float *, int64_t),
-                                      int8_t axis,
-                                      iarray_storage_t *storage,
-                                      iarray_container_t **b);
 
 /* linear algebra */
 INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,

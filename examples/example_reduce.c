@@ -138,7 +138,7 @@ int main(void) {
     }
 
     iarray_container_t *c_out;
-    IARRAY_RETURN_IF_FAILED(iarray_reduce_double(ctx, c_x, &mean, 0, &outstorage, &c_out));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, &mean, 0, &outstorage, &c_out));
 
     iarray_container_free(ctx, &c_out);
     iarray_container_free(ctx, &c_x);

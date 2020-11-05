@@ -30,7 +30,7 @@ static void index_unidim_to_multidim(int8_t ndim, int64_t *shape, int64_t i, int
 
 
 typedef struct iarray_reduce_params_s {
-    void (*ufunc)(uint8_t*, int64_t, uint8_t*);
+    void (*ufunc)(void*, int64_t, void*);
     iarray_container_t *input;
     iarray_container_t *result;
     uint8_t *data;
@@ -91,7 +91,17 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
             }
         }
         if (empty) {
-            ((double *) pparams->out)[ind] = 0;
+            switch (rparams->result->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    ((double *) pparams->out)[ind] = 0;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    ((float *) pparams->out)[ind] = 0;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
             continue;
         }
 
@@ -111,13 +121,27 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
             elem_index_u += elem_index_n[i] * strides[i];
         }
 
-        vdPackI(rparams->data_shape[rparams->axis],
-         &((double *) rparams->data)[elem_index_u],
-         strides[rparams->axis], (double *) vector);
-
-        double red;
-        rparams->ufunc(vector, rparams->data_shape[rparams->axis], &red);
-        ((double *) pparams->out)[ind] = red;
+        switch (rparams->result->dtshape->dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                vdPackI(rparams->data_shape[rparams->axis],
+                        &((double *) rparams->data)[elem_index_u],
+                        strides[rparams->axis], (double *) vector);
+                double dred;
+                rparams->ufunc(vector, rparams->data_shape[rparams->axis], &dred);
+                ((double *) pparams->out)[ind] = dred;
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                vsPackI(rparams->data_shape[rparams->axis],
+                        &((float *) rparams->data)[elem_index_u],
+                        strides[rparams->axis], (float *) vector);
+                float fred;
+                rparams->ufunc(vector, rparams->data_shape[rparams->axis], &fred);
+                ((float *) pparams->out)[ind] = fred;
+                break;
+            default:
+                IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+        }
     }
 
     free(vector);
@@ -126,12 +150,12 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
 }
 
 
-INA_API(ina_rc_t) iarray_reduce_double(iarray_context_t *ctx,
-                                       iarray_container_t *a,
-                                       void (*ufunc)(uint8_t*, int64_t, uint8_t*),
-                                       int8_t axis,
-                                       iarray_storage_t *storage,
-                                       iarray_container_t **b) {
+INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
+                                iarray_container_t *a,
+                                void (*ufunc)(void*, int64_t, void*),
+                                int8_t axis,
+                                iarray_storage_t *storage,
+                                iarray_container_t **b) {
 
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(a);
@@ -144,10 +168,6 @@ INA_API(ina_rc_t) iarray_reduce_double(iarray_context_t *ctx,
         return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
     }
 
-    if (a->dtshape->dtype != IARRAY_DATA_TYPE_DOUBLE) {
-        IARRAY_TRACE1(iarray.error, "Reductions are only supported for double data");
-        return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-    }
     iarray_dtshape_t dtshape;
     dtshape.dtype = a->dtshape->dtype;
     dtshape.ndim = a->dtshape->ndim - 1;

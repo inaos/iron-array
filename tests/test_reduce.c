@@ -14,11 +14,17 @@
 #include <src/iarray_private.h>
 
 
-void add(uint8_t *v, int64_t len, uint8_t *out) {
-    double *vd = (double *) v;
-    double *outd = (double *) out;
+void sadd(float *v, int64_t len, float *out) {
+    *out = 0;
     for (int i = 0; i < len; ++i) {
-        *outd += vd[i];
+        *out += v[i];
+    }
+}
+
+void dadd(double *v, int64_t len, double *out) {
+    *out = 0;
+    for (int i = 0; i < len; ++i) {
+        *out += v[i];
     }
 }
 
@@ -58,7 +64,17 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
     while (INA_SUCCEED(iarray_iter_write_block_has_next(iter))) {
         IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter, NULL, 0));
         for (int i = 0; i < iter_value.block_size; ++i) {
-            ((double *) iter_value.block_pointer)[i] = (double) i;
+            switch (c_x->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    ((double *) iter_value.block_pointer)[i] = (double) i;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    ((float *) iter_value.block_pointer)[i] = (float) i;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
         }
     }
     iarray_iter_write_block_free(&iter);
@@ -82,7 +98,17 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
         storage.blockshape[i] = bshape != NULL ? bshape[i] : shape[i + 1] / 6;
     }
     iarray_container_t *c_z;
-    IARRAY_RETURN_IF_FAILED(iarray_reduce_double(ctx, c_y, &add, axis, &storage, &c_z));
+    switch (c_y->dtshape->dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_y, &dadd, axis, &storage, &c_z));
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_y, &sadd, axis, &storage, &c_z));
+            break;
+        default:
+            IARRAY_TRACE1(iarray.error, "Invalid dtype");
+            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+    }
 
     int64_t buffer_nitems = c_z->catarr->nitems;
     int64_t buffer_size = buffer_nitems * c_z->catarr->itemsize;
@@ -93,7 +119,17 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
     double val = shape[axis] * (shape[axis] - 1.) / 2;
     for (int i = 0; i < buffer_nitems; ++i) {
         // printf("%d: %f - %f\n", i, ((double *) buffer)[i], val);
-        INA_TEST_ASSERT_EQUAL_FLOATING(((double *) buffer)[i], val);
+        switch (c_z->dtshape->dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                INA_TEST_ASSERT_EQUAL_FLOATING(((double *) buffer)[i], val);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                INA_TEST_ASSERT_EQUAL_FLOATING(((float *) buffer)[i], val);
+                break;
+            default:
+                IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+        }
     }
 
     iarray_container_free(ctx, &c_z);
@@ -161,6 +197,58 @@ INA_TEST_FIXTURE(reduce, 4_d_0) {
 
 INA_TEST_FIXTURE(reduce, 8_d_6) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+
+    int8_t ndim = 8;
+    int64_t shape[] = {8, 8, 7, 7, 6, 7, 5, 7};
+    int64_t cshape[] = {4, 5, 2, 5, 3, 4, 5, 2};
+    int64_t bshape[] = {2, 2, 2, 3, 2, 1, 2, 1};
+    int8_t axis = 6;
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+}
+
+
+
+INA_TEST_FIXTURE(reduce, 2_f_1) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+
+    int8_t ndim = 2;
+    int64_t shape[] = {120, 1000};
+    int64_t cshape[] = {69, 210};
+    int64_t bshape[] = {31, 2};
+    int8_t axis = 1;
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+}
+
+
+INA_TEST_FIXTURE(reduce, 3_f_2) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+
+    int8_t ndim = 3;
+    int64_t shape[] = {12, 12, 12};
+    int64_t cshape[] = {6, 9, 6};
+    int64_t bshape[] = {3, 3, 3};
+    int8_t axis = 2;
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+}
+
+INA_TEST_FIXTURE(reduce, 4_f_0) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+
+    int8_t ndim = 4;
+    int64_t shape[] = {52, 21, 27, 109};
+    int64_t cshape[] = {16, 3, 1, 109};
+    int64_t bshape[] = {3, 3, 1, 25};
+    int8_t axis = 0;
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+}
+
+
+INA_TEST_FIXTURE(reduce, 8_f_6) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 8;
     int64_t shape[] = {8, 8, 7, 7, 6, 7, 5, 7};
