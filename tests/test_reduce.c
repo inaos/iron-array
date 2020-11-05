@@ -23,7 +23,7 @@ double add(double *v, int64_t len) {
 }
 
 
-static ina_rc_t test_reduction(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim,
+static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim,
                                const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
                                int8_t axis)
 {
@@ -103,11 +103,11 @@ static ina_rc_t test_reduction(iarray_context_t *ctx, iarray_data_type_t dtype, 
     return INA_SUCCESS;
 }
 
-INA_TEST_DATA(reduction) {
+INA_TEST_DATA(reduce) {
     iarray_context_t *ctx;
 };
 
-INA_TEST_SETUP(reduction) {
+INA_TEST_SETUP(reduce) {
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -115,13 +115,13 @@ INA_TEST_SETUP(reduction) {
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
 }
 
-INA_TEST_TEARDOWN(reduction) {
+INA_TEST_TEARDOWN(reduce) {
     iarray_context_free(&data->ctx);
     iarray_destroy();
 }
 
 
-INA_TEST_FIXTURE(reduction, 2_d_1) {
+INA_TEST_FIXTURE(reduce, 2_d_1) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
@@ -130,11 +130,11 @@ INA_TEST_FIXTURE(reduction, 2_d_1) {
     int64_t bshape[] = {31, 2};
     int8_t axis = 1;
 
-    INA_TEST_ASSERT_SUCCEED(test_reduction(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
 }
 
 
-INA_TEST_FIXTURE(reduction, 3_d_2) {
+INA_TEST_FIXTURE(reduce, 3_d_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 3;
@@ -143,10 +143,10 @@ INA_TEST_FIXTURE(reduction, 3_d_2) {
     int64_t bshape[] = {3, 3, 3};
     int8_t axis = 2;
 
-    INA_TEST_ASSERT_SUCCEED(test_reduction(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
 }
 
-INA_TEST_FIXTURE(reduction, 4_d_0) {
+INA_TEST_FIXTURE(reduce, 4_d_0) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 4;
@@ -155,11 +155,11 @@ INA_TEST_FIXTURE(reduction, 4_d_0) {
     int64_t bshape[] = {3, 3, 1, 25};
     int8_t axis = 0;
 
-    INA_TEST_ASSERT_SUCCEED(test_reduction(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
 }
 
 
-INA_TEST_FIXTURE(reduction, 8_d_6) {
+INA_TEST_FIXTURE(reduce, 8_d_6) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 8;
@@ -168,5 +168,5 @@ INA_TEST_FIXTURE(reduction, 8_d_6) {
     int64_t bshape[] = {2, 2, 2, 3, 2, 1, 2, 1};
     int8_t axis = 6;
 
-    INA_TEST_ASSERT_SUCCEED(test_reduction(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis));
 }
