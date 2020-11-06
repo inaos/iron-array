@@ -24,14 +24,14 @@ int main(void) {
 
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    cfg.compression_level = 0;
+    cfg.compression_level = 7;
     cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
 
     cfg.max_num_threads = 1;
     iarray_context_new(&cfg, &ctx);
 
 
-    int64_t shape[] = {200, 100};
+    int64_t shape[] = {10000, 10000};
     int8_t ndim = 2;
     int8_t typesize = sizeof(double);
 
@@ -45,8 +45,8 @@ int main(void) {
         nelem *= shape[i];
     }
 
-    int32_t xchunkshape[] = {30, 15};
-    int32_t xblockshape[] = {12, 7};
+    int32_t xchunkshape[] = {1000, 1000};
+    int32_t xblockshape[] = {256, 256};
 
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
@@ -60,8 +60,8 @@ int main(void) {
     iarray_container_t *c_x;
     IARRAY_RETURN_IF_FAILED(iarray_arange(ctx, &dtshape, 0, nelem, 1, &xstorage, 0, &c_x));
 
-    int32_t outchunkshape[] = {40};
-    int32_t outblockshape[] = {21};
+    int32_t outchunkshape[] = {4000};
+    int32_t outblockshape[] = {1000};
 
     iarray_storage_t outstorage;
     outstorage.backend = IARRAY_STORAGE_BLOSC;

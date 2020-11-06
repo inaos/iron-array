@@ -164,6 +164,10 @@ INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(b);
 
+    if (storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
+        IARRAY_TRACE1(iarray.error, "Reduction can not be stored into a plainbuffer container");
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+    }
     if (a->dtshape->ndim < 2) {
         IARRAY_TRACE1(iarray.error, "The container dimensions must be greater than 1");
         return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
