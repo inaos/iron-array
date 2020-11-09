@@ -43,7 +43,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     memset(pparams->out, 0, pparams->out_size);
     iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
 
-    // Compute chunk offset
+    // Compute result chunk offset
     int64_t chunk_offset_u = rparams->result->catarr->sc->nchunks;
     int64_t chunk_offset_n[IARRAY_DIMENSION_MAX] = {0};
 
@@ -57,8 +57,8 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                              chunk_offset_u,
                              chunk_offset_n);
 
-    // Compute block offset
-    int64_t block_offset_u = pparams->out_offset / pparams->out_typesize;
+    // Compute result block offset
+    int64_t block_offset_u = pparams->out_offset / pparams->out_size;
     int64_t block_offset_n[IARRAY_DIMENSION_MAX] = {0};
 
     int64_t shape_of_blocks[IARRAY_DIMENSION_MAX] = {0};
@@ -66,32 +66,27 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
         shape_of_blocks[i] = rparams->result->catarr->extchunkshape[i] /
                 rparams->result->catarr->blockshape[i];
     }
-    int64_t offset_u_blocks = block_offset_u / (pparams->out_size / pparams->out_typesize);
     index_unidim_to_multidim(rparams->result->catarr->ndim,
                              shape_of_blocks,
-                             offset_u_blocks,
+                             block_offset_u,
                              block_offset_n);
-    for (int i = 0; i < rparams->result->catarr->ndim; ++i) {
-        block_offset_n[i] *= rparams->result->catarr->blockshape[i];
-    }
-    // Compute the strides
+
+
+    // Compute the input strides
     int64_t strides[IARRAY_DIMENSION_MAX] = {0};
     strides[rparams->input->dtshape->ndim - 1] = 1;
     for (int i = rparams->input->dtshape->ndim - 2; i >= 0 ; --i) {
         strides[i] = rparams->input->storage->blockshape[i + 1] * strides[i + 1];
     }
 
-    // Allocate destination
-    uint8_t *block = malloc(rparams->input->catarr->blocknitems * rparams->input->catarr->itemsize);
-
     int64_t nblocks = rparams->input->catarr->extchunkshape[rparams->axis] /
-            rparams->input->catarr->blockshape[rparams->axis];
+                      rparams->input->catarr->blockshape[rparams->axis];
 
     int64_t block_strides[IARRAY_DIMENSION_MAX];
     block_strides[rparams->input->dtshape->ndim - 1] = 1;
     for (int i = rparams->input->dtshape->ndim - 2; i >= 0 ; --i) {
         int64_t nblocks_ = rparams->input->catarr->extchunkshape[i + 1] /
-                          rparams->input->catarr->blockshape[i + 1];
+                           rparams->input->catarr->blockshape[i + 1];
         block_strides[i] = nblocks_ * block_strides[i + 1];
     }
 
@@ -106,13 +101,16 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
         chunk_strides[i] = nchunks_ * chunk_strides[i + 1];
     }
 
+    // Allocate destination
+    uint8_t *block = malloc(rparams->input->catarr->blocknitems * rparams->input->catarr->itemsize);
+
     for (int chunk_ind = 0; chunk_ind < nchunks; ++chunk_ind) {
         int64_t nchunk = chunk_ind * chunk_strides[rparams->axis];
         for (int j = 0; j < rparams->result->catarr->ndim; ++j) {
             if (j < rparams->axis)
                 nchunk += chunk_offset_n[j] * chunk_strides[j];
             else
-                nchunk += chunk_offset_n[j] * chunk_strides[j+1];
+                nchunk += chunk_offset_n[j] * chunk_strides[j + 1];
         }
         uint8_t *chunk;
         bool needs_free;
@@ -120,13 +118,29 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                                 &needs_free);
 
         for (int block_ind = 0; block_ind < nblocks; ++block_ind) {
+            int64_t nblock = block_ind * block_strides[rparams->axis];
+            for (int j = 0; j < rparams->result->catarr->ndim; ++j) {
+                if (j < rparams->axis)
+                    nblock += block_offset_n[j] * block_strides[j];
+                else
+                    nblock += block_offset_n[j] * block_strides[j + 1];
+            }
+            int64_t start = nblock * rparams->input->catarr->blocknitems;
 
-            int64_t nblock = ((block_offset_u / rparams->result->catarr->blocknitems) + block_ind *
-                                                                                        block_strides[rparams->axis]) *
-                             rparams->input->catarr->blocknitems;
 
-            blosc_getitem(chunk, nblock, rparams->input->catarr->blocknitems,
+            blosc_getitem(chunk, start, rparams->input->catarr->blocknitems,
                           block);
+
+            // Check if there are padding in reduction axis
+            int64_t aux = (block_ind + 1) * rparams->result->catarr->blockshape[rparams->axis];
+            aux += chunk_ind * rparams->input->catarr->chunkshape[rparams->axis];
+
+            int64_t vector_nelems;
+            if (aux > rparams->input->catarr->shape[rparams->axis]) {
+                vector_nelems = rparams->input->catarr->shape[rparams->axis] - aux;
+            } else {
+                vector_nelems = rparams->result->catarr->blockshape[rparams->axis];
+            }
 
             for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
 
@@ -140,10 +154,11 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                 bool empty = false;
                 int64_t elem_index_n2[IARRAY_DIMENSION_MAX];
                 for (int i = 0; i < rparams->result->catarr->ndim; ++i) {
-                    elem_index_n2[i] = elem_index_n[i] + block_offset_n[i];
+                    elem_index_n2[i] = elem_index_n[i] + block_offset_n[i] *
+                            rparams->result->catarr->blockshape[i];
                 }
                 for (int i = 0; i < rparams->result->catarr->ndim; ++i) {
-                    if (rparams->chunk_shape[i] <= elem_index_n[i] + block_offset_n[i]) {
+                    if (rparams->chunk_shape[i] <= elem_index_n2[i]) {
                         empty = true;
                         break;
                     }
@@ -179,7 +194,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                     elem_index_u += elem_index_n[i] * strides[i];
                 }
 
-                for (int i = 0; i < rparams->input->storage->blockshape[rparams->axis]; ++i) {
+                for (int i = 0; i < vector_nelems; ++i) {
                     switch (rparams->result->dtshape->dtype) {
                         case IARRAY_DATA_TYPE_DOUBLE:
                             ((double *) pparams->out)[ind] += ((double *) block)[elem_index_u +
