@@ -104,7 +104,8 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
 
         for (int block_ind = 0; block_ind < nblocks; ++block_ind) {
 
-            int64_t nblock = block_ind * block_strides[rparams->axis] *
+            int64_t nblock = ((offset_u / rparams->result->catarr->blocknitems) + block_ind *
+                    block_strides[rparams->axis]) *
                              rparams->input->catarr->blocknitems;
 
             blosc_getitem(chunk, nblock, rparams->input->catarr->blocknitems,
@@ -148,11 +149,11 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                 // Compute index in slice
                 for (int i = rparams->input->dtshape->ndim - 1; i >= 0; --i) {
                     if (i > rparams->axis) {
-                        elem_index_n[i] = elem_index_n[i - 1] + offset_n[i - 1];
+                        elem_index_n[i] = elem_index_n[i - 1];
                     } else if (i == rparams->axis) {
                         elem_index_n[i] = 0;
                     } else {
-                        elem_index_n[i] = elem_index_n[i] + offset_n[i];
+                        elem_index_n[i] = elem_index_n[i];
                     }
                 }
 
