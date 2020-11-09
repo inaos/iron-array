@@ -40,6 +40,7 @@ typedef struct iarray_reduce_params_s {
 
 
 static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
+    memset(pparams->out, 0, pparams->out_size);
     iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
 
     // Compute offset
