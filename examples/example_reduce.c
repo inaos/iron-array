@@ -60,8 +60,8 @@ int main(void) {
     iarray_container_t *c_x;
     IARRAY_RETURN_IF_FAILED(iarray_arange(ctx, &dtshape, 0, nelem, 1, &xstorage, 0, &c_x));
 
-    int32_t outchunkshape[] = {4000};
-    int32_t outblockshape[] = {1000};
+    int32_t outchunkshape[] = {0};
+    int32_t outblockshape[] = {0};
 
     iarray_storage_t outstorage;
     outstorage.backend = IARRAY_STORAGE_BLOSC;
@@ -73,7 +73,7 @@ int main(void) {
     }
 
     iarray_container_t *c_out;
-    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, IARRAY_REDUCE_SUM, 0, &outstorage, &c_out));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, IARRAY_REDUCE_SUM, 1, &outstorage, &c_out));
 
     double *buffer = ina_mem_alloc(100  * 8);
     iarray_to_buffer(ctx, c_out, buffer, 8  * 100);

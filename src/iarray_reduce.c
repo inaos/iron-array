@@ -139,7 +139,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
             if (aux > rparams->input->catarr->shape[rparams->axis]) {
                 vector_nelems = rparams->input->catarr->shape[rparams->axis] - aux;
             } else {
-                vector_nelems = rparams->result->catarr->blockshape[rparams->axis];
+                vector_nelems = rparams->input->catarr->blockshape[rparams->axis];
             }
 
             for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
