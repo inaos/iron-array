@@ -31,7 +31,7 @@ int main(void) {
     iarray_context_new(&cfg, &ctx);
 
 
-    int64_t shape[] = {10000, 10000};
+    int64_t shape[] = {100, 100};
     int8_t ndim = 2;
     int8_t typesize = sizeof(double);
 
@@ -45,8 +45,8 @@ int main(void) {
         nelem *= shape[i];
     }
 
-    int32_t xchunkshape[] = {1000, 1000};
-    int32_t xblockshape[] = {256, 256};
+    int32_t xchunkshape[] = {50, 50};
+    int32_t xblockshape[] = {25, 25};
 
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
@@ -73,7 +73,14 @@ int main(void) {
     }
 
     iarray_container_t *c_out;
-    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, IARRAY_REDUCE_MEAN, 0, &outstorage, &c_out));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, IARRAY_REDUCE_SUM, 0, &outstorage, &c_out));
+
+    double *buffer = ina_mem_alloc(100 * 100 * 8);
+    iarray_to_buffer(ctx, c_out, buffer, 8 * 100 * 100);
+    for (int i = 0; i < 100 * 100; ++i) {
+        printf("%f ", buffer[i]);
+    }
+    INA_MEM_FREE_SAFE(buffer);
 
     iarray_container_free(ctx, &c_out);
     iarray_container_free(ctx, &c_x);
