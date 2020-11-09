@@ -68,7 +68,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
         strides[i] = rparams->data_shape[i + 1] * strides[i + 1];
     }
 
-    // Alloc dest
+    // Allocate destination
     uint8_t *vector = malloc(rparams->data_shape[rparams->axis] * pparams->out_typesize);
 
     for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
@@ -193,7 +193,7 @@ INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
     pparams.user_data = &reduce_params;
     prefilter_ctx->prefilter_params = &pparams;
 
-    // Alloc temporal
+    // Allocate temporary
     int64_t shape[IARRAY_DIMENSION_MAX];
     int64_t cache_size = a->catarr->itemsize;
     for (int i = 0; i < a->dtshape->ndim; ++i) {
@@ -216,7 +216,7 @@ INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
     reduce_params.axis = axis;
     reduce_params.ufunc = ufunc;
 
-    // Compute the amount of chunks that there are in each dimension
+    // Compute the amount of chunks in each dimension
     int64_t shape_of_chunks[IARRAY_DIMENSION_MAX]={0};
     for (int i = 0; i < c->dtshape->ndim; ++i) {
         shape_of_chunks[i] = c->catarr->extshape[i] / c->catarr->chunkshape[i];
@@ -227,7 +227,7 @@ INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
     int64_t nchunk = 0;
     while (nchunk < c->catarr->extnitems / c->catarr->chunknitems) {
 
-        // Conmpute first chunk element and the chunk shape
+        // Compute first chunk element and the chunk shape
         int64_t elem_index[IARRAY_DIMENSION_MAX] = {0};
         for (int i = 0; i < c->dtshape->ndim; ++i) {
             elem_index[i] = chunk_index[i] * c->catarr->chunkshape[i];
@@ -259,7 +259,7 @@ INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
             }
         }
 
-        // Get the slice into cache
+        // Put the slice into cache
         _iarray_get_slice_buffer(ctx, a, start, stop, shape, cache, cache_size);
 
         // Compress data
@@ -279,7 +279,6 @@ INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
         }
         blosc2_free_ctx(cctx);
 
-        // Append to schunk
         blosc2_schunk_append_chunk(c->catarr->sc, chunk, false);
 
         nchunk++;
