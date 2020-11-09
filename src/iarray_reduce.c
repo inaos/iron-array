@@ -162,29 +162,20 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                     elem_index_u += elem_index_n[i] * strides[i];
                 }
 
-                switch (rparams->result->dtshape->dtype) {
-                    case IARRAY_DATA_TYPE_DOUBLE:
-                        vdPackI(rparams->input->storage->blockshape[rparams->axis], //TODO: ADAPT TO
-                                // PADDING
-                                &((double *) block)[elem_index_u],
-                                strides[rparams->axis], (double *) vector);
-                        double dred;
-                        rparams->ufunc(vector, rparams->input->storage->blockshape[rparams->axis],
-                                       &dred);
-                        ((double *) pparams->out)[ind] += dred;
-                        break;
-                    case IARRAY_DATA_TYPE_FLOAT:
-                        vsPackI(rparams->input->storage->blockshape[rparams->axis],
-                                &((float *) block)[elem_index_u],
-                                strides[rparams->axis], (float *) vector);
-                        float fred;
-                        rparams->ufunc(vector, rparams->input->storage->blockshape[rparams->axis],
-                                       &fred);
-                        ((float *) pparams->out)[ind] += fred;
-                        break;
-                    default:
-                        IARRAY_TRACE1(iarray.error, "Invalid dtype");
-                        return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+                for (int i = 0; i < rparams->input->storage->blockshape[rparams->axis]; ++i) {
+                    switch (rparams->result->dtshape->dtype) {
+                        case IARRAY_DATA_TYPE_DOUBLE:
+                            ((double *) pparams->out)[ind] += ((double *) block)[elem_index_u +
+                                                                                 strides[rparams->axis] * i];
+                            break;
+                        case IARRAY_DATA_TYPE_FLOAT:
+                            ((float *) pparams->out)[ind] += ((float *) block)[elem_index_u +
+                                                                                 strides[rparams->axis] * i];
+                            break;
+                        default:
+                            IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+                    }
                 }
             }
         }
