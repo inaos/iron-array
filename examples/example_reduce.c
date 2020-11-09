@@ -73,7 +73,7 @@ int main(void) {
     }
 
     iarray_container_t *c_out;
-    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, IARRAY_REDUCE_SUM, 1, &outstorage, &c_out));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, IARRAY_REDUCE_SUM, 0, &outstorage, &c_out));
 
     double *buffer = ina_mem_alloc(100  * 8);
     iarray_to_buffer(ctx, c_out, buffer, 8  * 100);
