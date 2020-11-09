@@ -555,6 +555,32 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
 INA_API(ina_rc_t) iarray_container_is_symmetric(iarray_container_t *a);
 INA_API(ina_rc_t) iarray_container_is_triangular(iarray_container_t *a);
 
+
+/* Reductions */
+typedef enum iarray_reduce_fun_e {
+    IARRAY_REDUCE_MAX,
+    IARRAY_REDUCE_MIN,
+    IARRAY_REDUCE_SUM,
+    IARRAY_REDUCE_PROD,
+    IARRAY_REDUCE_MEAN,
+    IARRAY_REDUCE_STD
+} iarray_reduce_func_t;
+
+
+INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
+                                    iarray_container_t *a,
+                                    void (*ufunc)(void *, int64_t, void *),
+                                    int8_t axis,
+                                    iarray_storage_t *storage,
+                                    iarray_container_t **b);
+
+INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
+                                iarray_container_t *a,
+                                iarray_reduce_func_t func,
+                                int8_t axis,
+                                iarray_storage_t *storage,
+                                iarray_container_t **b);
+
 /* linear algebra */
 INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
                                        iarray_container_t *a,
