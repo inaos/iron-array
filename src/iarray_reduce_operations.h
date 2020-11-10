@@ -14,7 +14,7 @@
 #include <stdint.h>
 
 // Min
-void dmin(double *v, int64_t vlen, double *out) {
+static void dmin(double *v, int64_t vlen, double *out) {
     double min = INFINITY;
     for (int i = 0; i < vlen; ++i) {
         if (v[i] < min)
@@ -24,7 +24,7 @@ void dmin(double *v, int64_t vlen, double *out) {
     *out = min;
 }
 
-void smin(float *v, int64_t vlen, float *out) {
+static void smin(float *v, int64_t vlen, float *out) {
     float min = INFINITY;
     for (int i = 0; i < vlen; ++i) {
         if (v[i] < min)
@@ -35,7 +35,7 @@ void smin(float *v, int64_t vlen, float *out) {
 }
 
 // Max
-void dmax(double *v, int64_t vlen, double *out) {
+static void dmax(double *v, int64_t vlen, double *out) {
     double max = -INFINITY;
     for (int i = 0; i < vlen; ++i) {
         if (v[i] > max)
@@ -45,7 +45,7 @@ void dmax(double *v, int64_t vlen, double *out) {
     *out = max;
 }
 
-void smax(float *v, int64_t vlen, float *out) {
+static void smax(float *v, int64_t vlen, float *out) {
     float max = -INFINITY;
     for (int i = 0; i < vlen; ++i) {
         if (v[i] > max)
@@ -56,7 +56,7 @@ void smax(float *v, int64_t vlen, float *out) {
 }
 
 // Sum
-void dsum(double *v, int64_t vlen, double *out) {
+static void dsum(double *v, int64_t vlen, double *out) {
     double sum = 0;
     for (int i = 0; i < vlen; ++i) {
         sum += v[i];
@@ -65,7 +65,7 @@ void dsum(double *v, int64_t vlen, double *out) {
     *out = sum;
 }
 
-void ssum(float *v, int64_t vlen, float *out) {
+static void ssum(float *v, int64_t vlen, float *out) {
     float sum = 0;
     for (int i = 0; i < vlen; ++i) {
         sum += v[i];
@@ -75,7 +75,7 @@ void ssum(float *v, int64_t vlen, float *out) {
 }
 
 // Prod
-void dprod(double *v, int64_t vlen, double *out) {
+static void dprod(double *v, int64_t vlen, double *out) {
     double prod = 1;
     for (int i = 0; i < vlen; ++i) {
         prod *= v[i];
@@ -84,7 +84,7 @@ void dprod(double *v, int64_t vlen, double *out) {
     *out = prod;
 }
 
-void sprod(float *v, int64_t vlen, float *out) {
+static void sprod(float *v, int64_t vlen, float *out) {
     float prod = 1;
     for (int i = 0; i < vlen; ++i) {
         prod *= v[i];
@@ -94,7 +94,7 @@ void sprod(float *v, int64_t vlen, float *out) {
 }
 
 // Mean
-void dmean(double *v, int64_t vlen, double *out) {
+static void dmean(double *v, int64_t vlen, double *out) {
     double mean = 0;
     for (int i = 0; i < vlen; ++i) {
         mean += v[i];
@@ -104,7 +104,7 @@ void dmean(double *v, int64_t vlen, double *out) {
     *out = mean;
 }
 
-void smean(float *v, int64_t vlen, float *out) {
+static void smean(float *v, int64_t vlen, float *out) {
     float mean = 0;
     for (int i = 0; i < vlen; ++i) {
         mean += v[i];
@@ -115,7 +115,7 @@ void smean(float *v, int64_t vlen, float *out) {
 }
 
 // STD
-void dstd(double *v, int64_t vlen, double *out) {
+static void dstd(double *v, int64_t vlen, double *out) {
     double mean = 0;
     for (int i = 0; i < vlen; ++i) {
         mean += v[i];
@@ -132,7 +132,7 @@ void dstd(double *v, int64_t vlen, double *out) {
     *out = std;
 }
 
-void sstd(float *v, int64_t vlen, float *out) {
+static void sstd(float *v, int64_t vlen, float *out) {
     float mean = 0;
     for (int i = 0; i < vlen; ++i) {
         mean += v[i];
