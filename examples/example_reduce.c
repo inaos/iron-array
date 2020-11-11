@@ -31,9 +31,10 @@ int main(void) {
     iarray_context_new(&cfg, &ctx);
 
 
-    int64_t shape[] = {100, 100};
+    int64_t shape[] = {103, 110};
     int8_t ndim = 2;
     int8_t typesize = sizeof(double);
+    int8_t axis = 0;
 
     iarray_dtshape_t dtshape;
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
@@ -45,8 +46,8 @@ int main(void) {
         nelem *= shape[i];
     }
 
-    int32_t xchunkshape[] = {50, 50};
-    int32_t xblockshape[] = {25, 25};
+    int32_t xchunkshape[] = {43, 39};
+    int32_t xblockshape[] = {21, 15};
 
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
@@ -73,10 +74,11 @@ int main(void) {
     }
 
     iarray_container_t *c_out;
-    IARRAY_RETURN_IF_FAILED(iarray_reduce2(ctx, c_x, IARRAY_REDUCE_SUM, 1, &c_out));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, IARRAY_REDUCE_SUM, axis, &c_out));
 
-    double *buffer = ina_mem_alloc(100  * 8);
-    iarray_to_buffer(ctx, c_out, buffer, 8  * 100);
+
+    double *buffer = ina_mem_alloc(200  * 8);
+    iarray_to_buffer(ctx, c_out, buffer, 8  * 200);
     for (int i = 0; i < 100; ++i) {
         printf("%f ", buffer[i]);
     }

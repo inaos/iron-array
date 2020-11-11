@@ -132,11 +132,11 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                           block);
 
             // Check if there are padding in reduction axis
-            int64_t aux = (block_ind + 1) * rparams->result->catarr->blockshape[rparams->axis];
+            int64_t aux = block_ind * rparams->result->catarr->blockshape[rparams->axis];
             aux += chunk_ind * rparams->input->catarr->chunkshape[rparams->axis];
 
             int64_t vector_nelems;
-            if (aux > rparams->input->catarr->shape[rparams->axis]) {
+            if (aux + block_ind * rparams->result->catarr->blockshape[rparams->axis] > rparams->input->catarr->shape[rparams->axis]) {
                 vector_nelems = rparams->input->catarr->shape[rparams->axis] - aux;
             } else {
                 vector_nelems = rparams->input->catarr->blockshape[rparams->axis];
@@ -226,13 +226,11 @@ INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
                                     iarray_container_t *a,
                                     void (*ufunc)(void*, int64_t, void*),
                                     int8_t axis,
-                                    iarray_storage_t *storage,
                                     iarray_container_t **b) {
 
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(a);
     INA_VERIFY_NOT_NULL(ufunc);
-    INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(b);
 
     if (a->storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
@@ -344,7 +342,6 @@ INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
                                 iarray_container_t *a,
                                 iarray_reduce_func_t func,
                                 int8_t axis,
-                                iarray_storage_t *storage,
                                 iarray_container_t **b) {
     void *reduce_funtion = NULL;
 
@@ -380,7 +377,7 @@ INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
                              (void (*)(void *, int64_t, void *)) sstd;
             break;
     }
-    IARRAY_RETURN_IF_FAILED(iarray_reduce_udf(ctx, a, reduce_funtion, axis, storage, b));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce_udf(ctx, a, reduce_funtion, axis, b));
 
     return INA_SUCCESS;
 }
