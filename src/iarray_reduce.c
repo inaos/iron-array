@@ -116,7 +116,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
         bool needs_free;
         blosc2_schunk_get_chunk(rparams->input->catarr->sc, nchunk, &chunk,
                                 &needs_free);
-
+        printf("GET CHUNK: {%lld}\n", nchunk);
         for (int block_ind = 0; block_ind < nblocks; ++block_ind) {
             int64_t nblock = block_ind * block_strides[rparams->axis];
             for (int j = 0; j < rparams->result->catarr->ndim; ++j) {

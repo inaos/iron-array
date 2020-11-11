@@ -43,7 +43,6 @@ typedef struct iarray_reduce_params_s {
 
 
 static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
-    memset(pparams->out, 0, pparams->out_size);
     iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
 
     // Compute result block offset
@@ -97,11 +96,12 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
             blosc_getitem(rparams->chunk, start, rparams->input->catarr->blocknitems, block);
 
             // Check if there are padding in reduction axis
-            int64_t aux = (block_ind + 1) * rparams->result->catarr->blockshape[rparams->axis];
+            int64_t aux = block_ind * rparams->result->catarr->blockshape[rparams->axis];
             aux += rparams->chunk_index * rparams->input->catarr->chunkshape[rparams->axis];
 
             int64_t vector_nelems;
-            if (aux > rparams->input->catarr->shape[rparams->axis]) {
+            if (aux + rparams->result->catarr->blockshape[rparams->axis] >
+            rparams->input->catarr->shape[rparams->axis]) {
                 vector_nelems = rparams->input->catarr->shape[rparams->axis] - aux;
             } else {
                 vector_nelems = rparams->input->catarr->blockshape[rparams->axis];
@@ -257,10 +257,6 @@ static ina_rc_t _iarray_reduce_udf(iarray_context_t *ctx,
 
     uint8_t *chunk_out = malloc(c->catarr->extchunknitems * c->catarr->itemsize +
                                 BLOSC_MAX_OVERHEAD);
-    uint8_t *chunk_part = malloc(c->catarr->extchunknitems * c->catarr->itemsize +
-                                 BLOSC_MAX_OVERHEAD);
-    uint8_t *chunk_tmp = malloc(c->catarr->extchunknitems * c->catarr->itemsize +
-                                BLOSC_MAX_OVERHEAD);
     while (nchunk < c->catarr->extnitems / c->catarr->chunknitems) {
         memset(chunk_out, 0, c->catarr->extchunknitems * c->catarr->itemsize +
                              BLOSC_MAX_OVERHEAD);
@@ -309,6 +305,7 @@ static ina_rc_t _iarray_reduce_udf(iarray_context_t *ctx,
             uint8_t *chunk_axis;
             bool needs_free;
             blosc2_schunk_get_chunk(a->catarr->sc, nchunk_axis, &chunk_axis, &needs_free);
+            printf("GET CHUNK: {%lld}\n", nchunk_axis);
 
             reduce_params.chunk = chunk_axis;
             reduce_params.chunk_index = chunk_ind;
@@ -318,11 +315,12 @@ static ina_rc_t _iarray_reduce_udf(iarray_context_t *ctx,
             IARRAY_RETURN_IF_FAILED(
                     iarray_create_blosc_cparams(&cparams, prefilter_ctx, c->catarr->itemsize,
                                                 c->catarr->blocknitems * c->catarr->itemsize));
+            cparams.clevel = 0;
             blosc2_context *cctx = blosc2_create_cctx(cparams);
 
             int csize = blosc2_compress_ctx(cctx, NULL,
                                             c->catarr->extchunknitems * c->catarr->itemsize,
-                                            chunk_tmp,
+                                            chunk_out,
                                             c->catarr->extchunknitems * c->catarr->itemsize +
                                             BLOSC_MAX_OVERHEAD);
             if (csize <= 0) {
@@ -330,29 +328,16 @@ static ina_rc_t _iarray_reduce_udf(iarray_context_t *ctx,
                 return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
             }
 
-            blosc2_dparams dparams = {.nthreads = ctx->cfg->max_num_threads};
-            blosc2_context *dctx = blosc2_create_dctx(dparams);
-
-            blosc2_decompress_ctx(dctx, chunk_tmp,
-                                  c->catarr->extchunknitems * c->catarr->itemsize +
-                                  BLOSC_MAX_OVERHEAD,
-                                  chunk_part,
-                                  c->catarr->extchunknitems * c->catarr->itemsize +
-                                  BLOSC_MAX_OVERHEAD);
-            for (int i = 0; i < c->catarr->extchunknitems; ++i) {
-                ((double *) chunk_out)[i] += ((double *) chunk_part)[i];
-            }
             blosc2_free_ctx(cctx);
         }
 
-        blosc2_schunk_append_buffer(c->catarr->sc, chunk_out, c->catarr->extchunknitems * c->catarr->itemsize);
+        blosc2_schunk_append_buffer(c->catarr->sc, chunk_out + BLOSC_MAX_OVERHEAD,
+                                    c->catarr->extchunknitems * c->catarr->itemsize);
 
         nchunk++;
         index_unidim_to_multidim(c->dtshape->ndim, shape_of_chunks, nchunk, chunk_index);
     }
-    free(chunk_part);
     free(chunk_out);
-    free(chunk_tmp);
     c->catarr->empty = false;
     c->catarr->filled = true;
 

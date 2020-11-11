@@ -24,16 +24,16 @@ int main(void) {
 
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    cfg.compression_level = 7;
-    cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    cfg.compression_level = 9;
+    cfg.fp_mantissa_bits = 10;
+    cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
 
     cfg.max_num_threads = 1;
     iarray_context_new(&cfg, &ctx);
 
 
-    int64_t shape[] = {103, 103};
+    int64_t shape[] = {2000, 16918};
     int8_t ndim = 2;
-    int8_t typesize = sizeof(double);
     int8_t axis = 0;
 
     iarray_dtshape_t dtshape;
@@ -46,47 +46,35 @@ int main(void) {
         nelem *= shape[i];
     }
 
-    int32_t xchunkshape[] = {50, 50};
-    int32_t xblockshape[] = {25, 25};
+    int32_t xchunkshape[] = {2000, 2000};
+    int32_t xblockshape[] = {100, 100};
 
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
-    xstorage.enforce_frame = false;
-    xstorage.filename = NULL;
+    xstorage.filename = "ia_reduce.iarray";
     for (int i = 0; i < ndim; ++i) {
         xstorage.chunkshape[i] = xchunkshape[i];
         xstorage.blockshape[i] = xblockshape[i];
     }
 
+    iarray_random_ctx_t *rnd_ctx;
+    iarray_random_ctx_new(ctx, 0, IARRAY_RANDOM_RNG_MERSENNE_TWISTER, &rnd_ctx);
+
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_arange(ctx, &dtshape, 0, nelem, 1, &xstorage, 0, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rnd_ctx,
+                                                                IARRAY_RANDOM_DIST_PARAM_MU, 0));
+    IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rnd_ctx,
+                                                                IARRAY_RANDOM_DIST_PARAM_SIGMA, 1));
+    IARRAY_RETURN_IF_FAILED(iarray_random_normal(ctx, &dtshape, rnd_ctx, &xstorage, 0, &c_x));
 
-    int32_t outchunkshape[] = {0};
-    int32_t outblockshape[] = {0};
-
-    iarray_storage_t outstorage;
-    outstorage.backend = IARRAY_STORAGE_BLOSC;
-    outstorage.enforce_frame = false;
-    outstorage.filename = NULL;
-    for (int i = 0; i < ndim; ++i) {
-        outstorage.chunkshape[i] = outchunkshape[i];
-        outstorage.blockshape[i] = outblockshape[i];
-    }
 
     iarray_container_t *c_out;
     IARRAY_RETURN_IF_FAILED(iarray_reduce2(ctx, c_x, IARRAY_REDUCE_SUM, axis, &c_out));
 
-
-    double *buffer = ina_mem_alloc(200  * 8);
-    iarray_to_buffer(ctx, c_out, buffer, 8  * 200);
-    for (int i = 0; i < 100; ++i) {
-        printf("%f ", buffer[i]);
-    }
-    INA_MEM_FREE_SAFE(buffer);
-
     iarray_container_free(ctx, &c_out);
     iarray_container_free(ctx, &c_x);
 
+    iarray_random_ctx_free(ctx, &rnd_ctx);
     iarray_context_free(&ctx);
 
     INA_STOPWATCH_FREE(&w);
