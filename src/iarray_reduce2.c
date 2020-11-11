@@ -305,7 +305,7 @@ static ina_rc_t _iarray_reduce_udf(iarray_context_t *ctx,
             uint8_t *chunk_axis;
             bool needs_free;
             blosc2_schunk_get_chunk(a->catarr->sc, nchunk_axis, &chunk_axis, &needs_free);
-            printf("GET CHUNK: {%lld}\n", nchunk_axis);
+            // printf("GET CHUNK: {%lld}\n", nchunk_axis);
 
             reduce_params.chunk = chunk_axis;
             reduce_params.chunk_index = chunk_ind;
