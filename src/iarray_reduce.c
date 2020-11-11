@@ -136,7 +136,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
             aux += chunk_ind * rparams->input->catarr->chunkshape[rparams->axis];
 
             int64_t vector_nelems;
-            if (aux + block_ind * rparams->result->catarr->blockshape[rparams->axis] > rparams->input->catarr->shape[rparams->axis]) {
+            if (aux + rparams->result->catarr->blockshape[rparams->axis] > rparams->input->catarr->shape[rparams->axis]) {
                 vector_nelems = rparams->input->catarr->shape[rparams->axis] - aux;
             } else {
                 vector_nelems = rparams->input->catarr->blockshape[rparams->axis];
