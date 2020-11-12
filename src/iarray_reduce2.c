@@ -343,14 +343,13 @@ static ina_rc_t _iarray_reduce_udf2(iarray_context_t *ctx,
                 return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
             }
 
-            blosc2_schunk_append_chunk(c->catarr->sc, chunk_out, false);
             blosc2_free_ctx(cctx);
 
             if (needs_free) {
                 free(chunk_axis);
             }
         }
-
+        blosc2_schunk_append_chunk(c->catarr->sc, chunk_out, false);
         nchunk++;
         index_unidim_to_multidim(c->dtshape->ndim, shape_of_chunks, nchunk, chunk_index);
     }
