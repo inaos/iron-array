@@ -274,9 +274,10 @@ static ina_rc_t _iarray_reduce_udf2(iarray_context_t *ctx,
     int64_t chunk_index[IARRAY_DIMENSION_MAX] = {0};
     int64_t nchunk = 0;
 
-    uint8_t *chunk_out = malloc(c->catarr->extchunknitems * c->catarr->itemsize +
-                                BLOSC_MAX_OVERHEAD);
+
     while (nchunk < c->catarr->extnitems / c->catarr->chunknitems) {
+        uint8_t *chunk_out = malloc(c->catarr->extchunknitems * c->catarr->itemsize +
+                                    BLOSC_MAX_OVERHEAD);
         memset(chunk_out, 0, c->catarr->extchunknitems * c->catarr->itemsize +
                              BLOSC_MAX_OVERHEAD);
         // Compute result chunk offset
@@ -327,6 +328,9 @@ static ina_rc_t _iarray_reduce_udf2(iarray_context_t *ctx,
                     iarray_create_blosc_cparams(&cparams, prefilter_ctx, c->catarr->itemsize,
                                                 c->catarr->blocknitems * c->catarr->itemsize));
             cparams.clevel = 0;
+            if (chunk_ind == nchunks - 1)
+                cparams.clevel = ctx->cfg->compression_level;
+
             blosc2_context *cctx = blosc2_create_cctx(cparams);
 
             int csize = blosc2_compress_ctx(cctx, NULL,
@@ -339,6 +343,7 @@ static ina_rc_t _iarray_reduce_udf2(iarray_context_t *ctx,
                 return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
             }
 
+            blosc2_schunk_append_chunk(c->catarr->sc, chunk_out, false);
             blosc2_free_ctx(cctx);
 
             if (needs_free) {
@@ -346,13 +351,10 @@ static ina_rc_t _iarray_reduce_udf2(iarray_context_t *ctx,
             }
         }
 
-        blosc2_schunk_append_buffer(c->catarr->sc, chunk_out + BLOSC_MAX_OVERHEAD,
-                                    c->catarr->extchunknitems * c->catarr->itemsize);
-
         nchunk++;
         index_unidim_to_multidim(c->dtshape->ndim, shape_of_chunks, nchunk, chunk_index);
     }
-    free(chunk_out);
+
     c->catarr->empty = false;
     c->catarr->filled = true;
 
