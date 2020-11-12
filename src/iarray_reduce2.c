@@ -327,14 +327,10 @@ static ina_rc_t _iarray_reduce_udf2(iarray_context_t *ctx,
                     iarray_create_blosc_cparams(&cparams, prefilter_ctx, c->catarr->itemsize,
                                                 c->catarr->blocknitems * c->catarr->itemsize));
             cparams.clevel = 0;
-            if (chunk_ind == nchunks - 1)
-                cparams.clevel = ctx->cfg->compression_level;
 
             blosc2_context *cctx = blosc2_create_cctx(cparams);
 
-
             int csize;
-
             csize = blosc2_compress_ctx(cctx, NULL,
                                             c->catarr->extchunknitems * c->catarr->itemsize,
                                             chunk_out,
@@ -351,7 +347,8 @@ static ina_rc_t _iarray_reduce_udf2(iarray_context_t *ctx,
                 free(chunk_axis);
             }
         }
-        blosc2_schunk_append_chunk(c->catarr->sc, chunk_out, false);
+        blosc2_schunk_append_buffer(c->catarr->sc, chunk_out + BLOSC_EXTENDED_HEADER_LENGTH,
+                                    c->catarr->extchunknitems * c->catarr->itemsize);
         nchunk++;
         index_unidim_to_multidim(c->dtshape->ndim, shape_of_chunks, nchunk, chunk_index);
     }

@@ -37,7 +37,7 @@ int main(void) {
     int64_t shape[] = {100, 100};
     int8_t ndim = 2;
     int8_t typesize = sizeof(double);
-    int8_t axis = 0;
+    int8_t axis = 1;
 
     iarray_dtshape_t dtshape;
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
