@@ -12,6 +12,7 @@
 
 #include <libiarray/iarray.h>
 #include <math.h>
+#include "iarray_private.h"
 
 
 int main(void) {
@@ -32,7 +33,7 @@ int main(void) {
     iarray_context_new(&cfg, &ctx);
 
 
-    int64_t shape[] = {2000, 16918};
+    int64_t shape[] = {30000, 30000};
     int8_t ndim = 2;
     int8_t axis = 0;
 
@@ -68,8 +69,13 @@ int main(void) {
     IARRAY_RETURN_IF_FAILED(iarray_random_normal(ctx, &dtshape, rnd_ctx, &xstorage, 0, &c_x));
 
 
+    blosc_timestamp_t t0;
+    blosc_set_timestamp(&t0);
     iarray_container_t *c_out;
     IARRAY_RETURN_IF_FAILED(iarray_reduce2(ctx, c_x, IARRAY_REDUCE_SUM, axis, &c_out));
+    blosc_timestamp_t t1;
+    blosc_set_timestamp(&t1);
+    printf("time: %f s\n", blosc_elapsed_secs(t0, t1));
 
     iarray_container_free(ctx, &c_out);
     iarray_container_free(ctx, &c_x);

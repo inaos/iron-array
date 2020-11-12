@@ -35,27 +35,41 @@ typedef struct iarray_reduce_params_s {
     iarray_container_t *input;
     iarray_container_t *result;
     int8_t axis;
+
     int64_t *chunk_shape;
+    int64_t nchunk;
+
+    int64_t cl_shape[IARRAY_DIMENSION_MAX];
+    int64_t cl_chunkshape[IARRAY_DIMENSION_MAX];
+    int64_t cl_blockshape[IARRAY_DIMENSION_MAX];
+    int64_t cl_extshape[IARRAY_DIMENSION_MAX];
+    int64_t cl_extchunkshape[IARRAY_DIMENSION_MAX];
+    int64_t cl_nitems;
+    int64_t cl_chunknitems;
+    int64_t cl_blocknitems;
+    int64_t cl_extnitems;
+    int64_t cl_extchunknitems;
+
 } iarray_reduce_params_t;
 
 
-static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
+static int _reduce_prefilter3(blosc2_prefilter_params *pparams) {
     memset(pparams->out, 0, pparams->out_size);
     iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
 
     // Compute result chunk offset
-    int64_t chunk_offset_u = rparams->result->catarr->sc->nchunks;
+    int64_t chunk_offset_u = rparams->nchunk;
     int64_t chunk_offset_n[IARRAY_DIMENSION_MAX] = {0};
 
     int64_t shape_of_chunks[IARRAY_DIMENSION_MAX] = {0};
     for (int i = 0; i < rparams->result->catarr->ndim; ++i) {
-        shape_of_chunks[i] = rparams->result->catarr->extshape[i] /
-                rparams->result->catarr->chunkshape[i];
+        shape_of_chunks[i] = rparams->cl_extshape[i] / rparams->cl_chunkshape[i];
     }
     index_unidim_to_multidim(rparams->result->catarr->ndim,
                              shape_of_chunks,
                              chunk_offset_u,
                              chunk_offset_n);
+
 
     // Compute result block offset
     int64_t block_offset_u = pparams->out_offset / pparams->out_size;
@@ -221,8 +235,51 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     return 0;
 }
 
+int8_t _first_divisor(int64_t n) {
+    for (int i = 2; i < ceil(sqrt(n)); ++i)
+        if (n % i == 0)
+            return i;
+    return n;
+}
 
-INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
+
+void _compute_block_cluster(int8_t nthreads,
+                            int8_t ndim,
+                            int64_t *shape,
+                            int64_t *chunkshape,
+                            int64_t *cluster_shape) {
+    int8_t index[IARRAY_DIMENSION_MAX] = {0};
+    for (int i = 0; i < ndim; ++i) {
+        index[i] = i;
+        cluster_shape[i] = 1;
+    }
+
+    // Bubble sort
+    for (int i = 0; i < ndim; ++i) {
+        for (int j = 0; j < ndim - i - 1; ++j) {
+            if (shape[index[j]] < shape[index[j + 1]]) {
+                int8_t temp = index[j];
+                index[j] = index[j + 1];
+                index[j + 1] = temp;
+            }
+        }
+    }
+
+    // Asign threads to each dimension
+    int8_t unused_threads = nthreads;
+    for (int i = 0; i < ndim && unused_threads > 0; ++i) {
+        cluster_shape[index[i]] = (int64_t) unused_threads;
+        while (cluster_shape[index[i]] * chunkshape[index[i]] > shape[index[i]]) {
+            int8_t div = _first_divisor(cluster_shape[index[i]]);
+            cluster_shape[index[i]] = cluster_shape[index[i]] / div;
+        }
+        unused_threads /= cluster_shape[index[i]];
+        cluster_shape[index[i]] *= chunkshape[index[i]];
+    }
+}
+
+
+INA_API(ina_rc_t) iarray_reduce_udf3(iarray_context_t *ctx,
                                     iarray_container_t *a,
                                     void (*ufunc)(void*, int64_t, void*),
                                     int8_t axis,
@@ -267,16 +324,49 @@ INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
 
     iarray_container_t *c = *b;
 
+    // Dummy container parameters
+    int64_t cl_shape[IARRAY_DIMENSION_MAX] = {0};
+    int64_t cl_chunkshape[IARRAY_DIMENSION_MAX] = {0};
+    int64_t cl_blockshape[IARRAY_DIMENSION_MAX] = {0};
+    _compute_block_cluster(ctx->cfg->max_num_threads, dtshape.ndim, c->catarr->shape,
+                           c->catarr->extchunkshape, cl_chunkshape);
+    for (int i = 0; i < dtshape.ndim; ++i) {
+        cl_shape[i] = dtshape.shape[i];
+        cl_blockshape[i] = storage_red.chunkshape[i];
+    }
+
+    int64_t cl_extshape[IARRAY_DIMENSION_MAX] = {0};
+    int64_t cl_extchunkshape[IARRAY_DIMENSION_MAX] = {0};
+    for (int i = 0; i < dtshape.ndim; ++i) {
+        cl_extshape[i] = cl_shape[i] / cl_chunkshape[i];
+        if (cl_shape[i] % cl_chunkshape[i] != 0)
+            cl_extshape[i]++;
+        cl_chunkshape[i] = cl_chunkshape[i] / cl_blockshape[i];
+        if (cl_chunkshape[i] % cl_blockshape[i] != 0)
+            cl_extchunkshape[i]++;
+    }
+
+    int64_t cl_nitems = 1;
+    int64_t cl_chunknitems = 1;
+    int64_t cl_blocknitems = 1;
+    int64_t cl_extnitems = 1;
+    int64_t cl_extchunknitems = 1;
+    for (int i = 0; i < dtshape.ndim; ++i) {
+        cl_nitems *= cl_shape[i];
+        cl_chunknitems *= cl_chunkshape[i];
+        cl_blocknitems *= cl_blockshape[i];
+        cl_extnitems *= cl_extshape[i];
+        cl_extchunknitems *= cl_extchunkshape[i];
+    }
+
     // Set up prefilter
     iarray_context_t *prefilter_ctx = ina_mem_alloc(sizeof(iarray_context_t));
     memcpy(prefilter_ctx, ctx, sizeof(iarray_context_t));
-    prefilter_ctx->prefilter_fn = (blosc2_prefilter_fn) _reduce_prefilter;
+    prefilter_ctx->prefilter_fn = (blosc2_prefilter_fn) _reduce_prefilter3;
     iarray_reduce_params_t reduce_params = {0};
     blosc2_prefilter_params pparams = {0};
     pparams.user_data = &reduce_params;
     prefilter_ctx->prefilter_params = &pparams;
-
-
 
     // Fill prefilter params
     reduce_params.input = a;
@@ -286,26 +376,26 @@ INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
 
     // Compute the amount of chunks in each dimension
     int64_t shape_of_chunks[IARRAY_DIMENSION_MAX]={0};
-    for (int i = 0; i < c->dtshape->ndim; ++i) {
-        shape_of_chunks[i] = c->catarr->extshape[i] / c->catarr->chunkshape[i];
+    for (int i = 0; i < dtshape.ndim; ++i) {
+        shape_of_chunks[i] = cl_extshape[i] / cl_chunkshape[i];
     }
 
     // Iterate over chunks
     int64_t chunk_index[IARRAY_DIMENSION_MAX] = {0};
     int64_t nchunk = 0;
-    while (nchunk < c->catarr->extnitems / c->catarr->chunknitems) {
+    while (nchunk < cl_extnitems / cl_chunknitems) {
 
         // Compute first chunk element and the chunk shape
         int64_t elem_index[IARRAY_DIMENSION_MAX] = {0};
         for (int i = 0; i < c->dtshape->ndim; ++i) {
-            elem_index[i] = chunk_index[i] * c->catarr->chunkshape[i];
+            elem_index[i] = chunk_index[i] * cl_chunkshape[i];
         }
         int64_t chunk_shape[IARRAY_DIMENSION_MAX] = {0};
         for (int i = 0; i < c->dtshape->ndim; ++i) {
-            if (elem_index[i] + c->catarr->chunkshape[i] <= c->catarr->shape[i]) {
-                chunk_shape[i] = c->catarr->chunkshape[i];
+            if (elem_index[i] + cl_chunkshape[i] <= cl_shape[i]) {
+                chunk_shape[i] = cl_chunkshape[i];
             } else {
-                chunk_shape[i] = c->catarr->shape[i] - elem_index[i];
+                chunk_shape[i] = cl_shape[i] - elem_index[i];
             }
         }
         reduce_params.chunk_shape = chunk_shape;
@@ -313,9 +403,10 @@ INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
         // Compress data
         blosc2_cparams cparams = {0};
         IARRAY_RETURN_IF_FAILED(iarray_create_blosc_cparams(&cparams, prefilter_ctx, c->catarr->itemsize,
-                                                            c->catarr->blocknitems * c->catarr->itemsize));
+                                                            cl_blocknitems * c->catarr->itemsize));
+        cparams.clevel = 0;
         blosc2_context *cctx = blosc2_create_cctx(cparams);
-        uint8_t *chunk = malloc(c->catarr->extchunknitems * c->catarr->itemsize +
+        uint8_t *chunk = malloc(cl_extchunknitems * c->catarr->itemsize +
                                 BLOSC_MAX_OVERHEAD);
         int csize = blosc2_compress_ctx(cctx, NULL, c->catarr->extchunknitems * c->catarr->itemsize,
                                         chunk,
@@ -327,6 +418,7 @@ INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
         }
         blosc2_free_ctx(cctx);
 
+        //TODO: Insert the chunks contained into dummy chunk
         blosc2_schunk_append_chunk(c->catarr->sc, chunk, false);
 
         nchunk++;
@@ -338,7 +430,7 @@ INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
+INA_API(ina_rc_t) iarray_reduce3(iarray_context_t *ctx,
                                 iarray_container_t *a,
                                 iarray_reduce_func_t func,
                                 int8_t axis,
@@ -377,7 +469,7 @@ INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
                              (void (*)(void *, int64_t, void *)) sstd;
             break;
     }
-    IARRAY_RETURN_IF_FAILED(iarray_reduce_udf(ctx, a, reduce_funtion, axis, b));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce_udf3(ctx, a, reduce_funtion, axis, b));
 
     return INA_SUCCESS;
 }
