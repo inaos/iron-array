@@ -155,7 +155,6 @@ static int _reduce_prefilter2(blosc2_prefilter_params *pparams) {
             }
         }
     }
-
     free(block);
 
     return 0;
@@ -333,7 +332,10 @@ static ina_rc_t _iarray_reduce_udf2(iarray_context_t *ctx,
 
             blosc2_context *cctx = blosc2_create_cctx(cparams);
 
-            int csize = blosc2_compress_ctx(cctx, NULL,
+
+            int csize;
+
+            csize = blosc2_compress_ctx(cctx, NULL,
                                             c->catarr->extchunknitems * c->catarr->itemsize,
                                             chunk_out,
                                             c->catarr->extchunknitems * c->catarr->itemsize +
