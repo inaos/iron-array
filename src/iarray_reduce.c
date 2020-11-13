@@ -137,13 +137,13 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
         switch (rparams->result->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 if (empty)
-                    continue;
+                    break;
                 else
                     rparams->ufunc->init(dout, &user_data);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 if (empty)
-                    continue;
+                    break;
                 else
                     rparams->ufunc->init(fout, &user_data);
                 break;
