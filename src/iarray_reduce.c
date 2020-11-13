@@ -31,7 +31,7 @@ static void index_unidim_to_multidim(int8_t ndim, int64_t *shape, int64_t i, int
 
 
 typedef struct iarray_reduce_params_s {
-    void (*ufunc)(void*, int64_t, void*);
+    iarray_reduce_function_t *ufunc;
     iarray_container_t *input;
     iarray_container_t *result;
     int8_t axis;
@@ -39,8 +39,50 @@ typedef struct iarray_reduce_params_s {
 } iarray_reduce_params_t;
 
 
+static bool check_padding(int64_t *block_offset_n,
+                          int64_t *elem_index_n,
+                          iarray_reduce_params_t *rparams) {
+    int64_t elem_index_n2[IARRAY_DIMENSION_MAX];
+    for (int i = 0; i < rparams->result->catarr->ndim; ++i) {
+        elem_index_n2[i] = elem_index_n[i] + block_offset_n[i] *
+                                             rparams->result->catarr->blockshape[i];
+    }
+    for (int i = 0; i < rparams->result->catarr->ndim; ++i) {
+        if (rparams->chunk_shape[i] <= elem_index_n2[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+struct iarray_reduce_function_s {
+    void (*init)(void *, void *);
+    void (*reduction)(void *, void *, void *, void *);
+    void (*finish)(void *, void *);
+};
+
+void dsum_init(double *res, void *user_data) {
+    *res = 0;
+}
+
+void dsum_reduction(double *data0, double *data1, double *res, void *user_data) {
+    *res = *data0 + *data1;
+}
+
+void dsum_finish(double *res, void *user_data) {
+    return;
+}
+
+iarray_reduce_function_t DSUM = {
+        .init = dsum_init,
+        .reduction = dsum_reduction,
+        .finish = dsum_finish
+};
+
+
 static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
-    memset(pparams->out, 0, pparams->out_size);
+    // memset(pparams->out, 0, pparams->out_size);
     iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
 
     // Compute result chunk offset
@@ -101,6 +143,40 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
         chunk_strides[i] = nchunks_ * chunk_strides[i + 1];
     }
 
+    // Init reduction
+    double *dout = (double *) pparams->out;
+    float *fout = (float *) pparams->out;
+    for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
+        // Compute index in dest
+        int64_t elem_index_n[IARRAY_DIMENSION_MAX] = {0};
+        index_unidim_to_multidim(rparams->result->catarr->ndim,
+                                 rparams->result->storage->blockshape,
+                                 ind,
+                                 elem_index_n);
+
+        bool empty = check_padding(block_offset_n, elem_index_n, rparams);
+
+        switch (rparams->result->dtshape->dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                if (empty)
+                    *dout = 0;
+                else
+                    rparams->ufunc->init(dout, NULL);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                if (empty)
+                    *fout = 0;
+                else
+                    rparams->ufunc->init(fout, NULL);
+                break;
+            default:
+                IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+        }
+        dout++;
+        fout++;
+    }
+
     // Allocate destination
     uint8_t *block = malloc(rparams->input->catarr->blocknitems * rparams->input->catarr->itemsize);
 
@@ -142,8 +218,10 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                 vector_nelems = rparams->input->catarr->blockshape[rparams->axis];
             }
 
-            for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
+            double *dout = (double *) pparams->out;
+            float *fout = (float *) pparams->out;
 
+            for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
                 // Compute index in dest
                 int64_t elem_index_n[IARRAY_DIMENSION_MAX] = {0};
                 index_unidim_to_multidim(rparams->result->catarr->ndim,
@@ -151,30 +229,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                                          ind,
                                          elem_index_n);
 
-                bool empty = false;
-                int64_t elem_index_n2[IARRAY_DIMENSION_MAX];
-                for (int i = 0; i < rparams->result->catarr->ndim; ++i) {
-                    elem_index_n2[i] = elem_index_n[i] + block_offset_n[i] *
-                            rparams->result->catarr->blockshape[i];
-                }
-                for (int i = 0; i < rparams->result->catarr->ndim; ++i) {
-                    if (rparams->chunk_shape[i] <= elem_index_n2[i]) {
-                        empty = true;
-                        break;
-                    }
-                }
-                if (empty) {
-                    switch (rparams->result->dtshape->dtype) {
-                        case IARRAY_DATA_TYPE_DOUBLE:
-                            ((double *) pparams->out)[ind] = 0;
-                            break;
-                        case IARRAY_DATA_TYPE_FLOAT:
-                            ((float *) pparams->out)[ind] = 0;
-                            break;
-                        default:
-                            IARRAY_TRACE1(iarray.error, "Invalid dtype");
-                            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-                    }
+                if (check_padding(block_offset_n, elem_index_n, rparams)) {
                     continue;
                 }
 
@@ -194,26 +249,68 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                     elem_index_u += elem_index_n[i] * strides[i];
                 }
 
-                for (int i = 0; i < vector_nelems; ++i) {
-                    switch (rparams->result->dtshape->dtype) {
-                        case IARRAY_DATA_TYPE_DOUBLE:
-                            ((double *) pparams->out)[ind] += ((double *) block)[elem_index_u +
-                                                                                 strides[rparams->axis] * i];
-                            break;
-                        case IARRAY_DATA_TYPE_FLOAT:
-                            ((float *) pparams->out)[ind] += ((float *) block)[elem_index_u +
-                                                                                 strides[rparams->axis] * i];
-                            break;
-                        default:
-                            IARRAY_TRACE1(iarray.error, "Invalid dtype");
-                            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-                    }
+                double *dblock = ((double *) block) + elem_index_u;
+                float *fblock = ((float *) block) + elem_index_u;
+
+                switch (rparams->result->dtshape->dtype) {
+                    case IARRAY_DATA_TYPE_DOUBLE:
+                        for (int i = 0; i < vector_nelems; ++i) {
+                            rparams->ufunc->reduction(dout, dblock, dout, NULL);
+                            dblock += strides[rparams->axis];
+                        }
+                        break;
+                    case IARRAY_DATA_TYPE_FLOAT:
+                        for (int i = 0; i < vector_nelems; ++i) {
+                            rparams->ufunc->reduction(fout, fblock, fout, NULL);
+                            fblock += strides[rparams->axis];
+                        }
+                        break;
+                    default:
+                        IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                        return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+
                 }
+                dout++;
+                fout++;
             }
         }
         if (needs_free) {
             free(chunk);
         }
+    }
+
+    // Finish reduction
+    dout = (double *) pparams->out;
+    fout = (float *) pparams->out;
+    for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
+        // Compute index in dest
+        int64_t elem_index_n[IARRAY_DIMENSION_MAX] = {0};
+        index_unidim_to_multidim(rparams->result->catarr->ndim,
+                                 rparams->result->storage->blockshape,
+                                 ind,
+                                 elem_index_n);
+
+        bool empty = check_padding(block_offset_n, elem_index_n, rparams);
+
+        switch (rparams->result->dtshape->dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                if (empty)
+                    *dout = 0;
+                else
+                    rparams->ufunc->finish(dout, NULL);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                if (empty)
+                    *fout = 0;
+                else
+                    rparams->ufunc->finish(fout, NULL);
+                break;
+            default:
+                IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+        }
+        dout++;
+        fout++;
     }
 
     free(block);
@@ -224,7 +321,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
 
 INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
                                     iarray_container_t *a,
-                                    void (*ufunc)(void*, int64_t, void*),
+                                    iarray_reduce_function_t *ufunc,
                                     int8_t axis,
                                     iarray_container_t **b) {
 
@@ -357,9 +454,7 @@ INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
                              (void (*)(void *, int64_t, void *)) smin;
             break;
         case IARRAY_REDUCE_SUM:
-            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
-                             (void (*)(void *, int64_t, void *)) dsum :
-                             (void (*)(void *, int64_t, void *)) ssum;
+            reduce_funtion = &DSUM;
             break;
         case IARRAY_REDUCE_PROD:
             reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?

@@ -30,11 +30,11 @@ int main(void) {
     cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
     cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
 
-    cfg.max_num_threads = 1;
+    cfg.max_num_threads = 8;
     iarray_context_new(&cfg, &ctx);
 
 
-    int64_t shape[] = {100, 100};
+    int64_t shape[] = {16000, 16000};
     int8_t ndim = 2;
     int8_t typesize = sizeof(double);
     int8_t axis = 1;
@@ -49,8 +49,8 @@ int main(void) {
         nelem *= shape[i];
     }
 
-    int32_t xchunkshape[] = {50, 50};
-    int32_t xblockshape[] = {25, 25};
+    int32_t xchunkshape[] = {2000, 2000};
+    int32_t xblockshape[] = {100, 100};
 
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;

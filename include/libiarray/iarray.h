@@ -566,10 +566,11 @@ typedef enum iarray_reduce_fun_e {
     IARRAY_REDUCE_STD
 } iarray_reduce_func_t;
 
+typedef struct iarray_reduce_function_s iarray_reduce_function_t;
 
 INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
                                     iarray_container_t *a,
-                                    void (*ufunc)(void *, int64_t, void *),
+                                    iarray_reduce_function_t *ufunc,
                                     int8_t axis,
                                     iarray_container_t **b);
 
