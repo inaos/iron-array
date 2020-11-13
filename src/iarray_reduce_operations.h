@@ -124,8 +124,9 @@ static iarray_reduce_function_t FPROD = {
 #define MAX_R \
     INA_UNUSED(user_data); \
     for (int i = 0; i < nelem; ++i) { \
-        if (*data1 > *data0) \
+        if (*data1 > *data0) { \
             *data0 = *data1; \
+        } \
         data0 += strides0; \
         data1 += strides1; \
     }
@@ -164,8 +165,9 @@ static iarray_reduce_function_t FMAX = {
 #define MIN_R \
     INA_UNUSED(user_data); \
     for (int i = 0; i < nelem; ++i) { \
-        if (*data1 < *data0) \
+        if (*data1 < *data0) {    \
             *data0 = *data1; \
+        } \
         data0 += strides0; \
         data1 += strides1; \
     }

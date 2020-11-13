@@ -186,14 +186,30 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                           block);
 
             // Check if there are padding in reduction axis
-            int64_t aux = block_ind * rparams->result->catarr->blockshape[rparams->axis];
+            int64_t aux = block_ind * rparams->input->catarr->blockshape[rparams->axis];
             aux += chunk_ind * rparams->input->catarr->chunkshape[rparams->axis];
 
             int64_t vector_nelems;
-            if (aux + rparams->result->catarr->blockshape[rparams->axis] > rparams->input->catarr->shape[rparams->axis]) {
+            if (aux + rparams->input->catarr->blockshape[rparams->axis] >
+            rparams->input->catarr->shape[rparams->axis]) {
                 vector_nelems = rparams->input->catarr->shape[rparams->axis] - aux;
             } else {
                 vector_nelems = rparams->input->catarr->blockshape[rparams->axis];
+            }
+
+            // Check if there are padding in reduction axis
+            aux = block_ind * rparams->input->catarr->blockshape[rparams->axis];
+
+            int64_t vector_nelems2;
+            if (aux + rparams->input->catarr->blockshape[rparams->axis] >
+                rparams->input->catarr->chunkshape[rparams->axis]) {
+                vector_nelems2 = rparams->input->catarr->chunkshape[rparams->axis] - aux;
+            } else {
+                vector_nelems2 = rparams->input->catarr->blockshape[rparams->axis];
+            }
+
+            if (vector_nelems2 < vector_nelems) {
+                vector_nelems = vector_nelems2;
             }
 
             dout = (double *) pparams->out;
