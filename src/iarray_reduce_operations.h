@@ -25,9 +25,11 @@ struct iarray_reduce_function_s {
 #define CAST_F (void (*)(void *, void *))
 
 #define DPARAMS_I double *res, void *user_data
+
 #define DPARAMS_R double *data0, int64_t strides0, \
                   double *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
+
 #define DPARAMS_F double *res, void *user_data
 
 #define FPARAMS_I float *res, void *user_data
@@ -61,7 +63,7 @@ static void dsum_fin(DPARAMS_F) { SUM_F }
 
 static iarray_reduce_function_t DSUM = {
         .init = CAST_I dsum_ini,
-        .reduction =  CAST_R dsum_red,
+        .reduction = CAST_R dsum_red,
         .finish = CAST_F dsum_fin
 };
 
@@ -71,7 +73,7 @@ static void fsum_fin(FPARAMS_F) { SUM_F }
 
 static iarray_reduce_function_t FSUM = {
         .init = CAST_I fsum_ini,
-        .reduction =  CAST_R fsum_red,
+        .reduction = CAST_R fsum_red,
         .finish = CAST_F fsum_fin
 };
 
@@ -100,7 +102,7 @@ static void dprod_fin(DPARAMS_F) { PROD_F }
 
 static iarray_reduce_function_t DPROD = {
         .init = CAST_I dprod_ini,
-        .reduction =  CAST_R dprod_red,
+        .reduction = CAST_R dprod_red,
         .finish = CAST_F dprod_fin
 };
 
@@ -110,7 +112,7 @@ static void fprod_fin(FPARAMS_F) { PROD_F }
 
 static iarray_reduce_function_t FPROD = {
         .init = CAST_I fprod_ini,
-        .reduction =  CAST_R fprod_red,
+        .reduction = CAST_R fprod_red,
         .finish = CAST_F fprod_fin
 };
 
@@ -141,7 +143,7 @@ static void dmax_fin(DPARAMS_F) { MAX_F }
 
 static iarray_reduce_function_t DMAX = {
         .init = CAST_I dmax_ini,
-        .reduction =  CAST_R dmax_red,
+        .reduction = CAST_R dmax_red,
         .finish = CAST_F dmax_fin
 };
 
@@ -151,7 +153,7 @@ static void fmax_fin(FPARAMS_F) { MAX_F }
 
 static iarray_reduce_function_t FMAX = {
         .init = CAST_I fmax_ini,
-        .reduction =  CAST_R fmax_red,
+        .reduction = CAST_R fmax_red,
         .finish = CAST_F fmax_fin
 };
 
@@ -182,7 +184,7 @@ static void dmin_fin(DPARAMS_F) { MIN_F }
 
 static iarray_reduce_function_t DMIN = {
         .init = CAST_I dmin_ini,
-        .reduction =  CAST_R dmin_red,
+        .reduction = CAST_R dmin_red,
         .finish = CAST_F dmin_fin
 };
 
@@ -225,7 +227,7 @@ static void dmean_fin(DPARAMS_F) { MEAN_F }
 
 static iarray_reduce_function_t DMEAN = {
         .init = CAST_I dmean_ini,
-        .reduction =  CAST_R dmean_red,
+        .reduction = CAST_R dmean_red,
         .finish = CAST_F dmean_fin
 };
 
@@ -235,6 +237,6 @@ static void fmean_fin(FPARAMS_F) { MEAN_F }
 
 static iarray_reduce_function_t FMEAN = {
         .init = CAST_I fmean_ini,
-        .reduction =  CAST_R fmean_red,
+        .reduction = CAST_R fmean_red,
         .finish = CAST_F fmean_fin
 };
