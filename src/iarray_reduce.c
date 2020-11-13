@@ -56,34 +56,12 @@ static bool check_padding(int64_t *block_offset_n,
 }
 
 
-struct iarray_reduce_function_s {
-    void (*init)(void *, void *);
-    void (*reduction)(void *, void *, void *, void *);
-    void (*finish)(void *, void *);
-};
-
-void dsum_init(double *res, void *user_data) {
-    *res = 0;
-}
-
-void dsum_reduction(double *data0, double *data1, double *res, void *user_data) {
-    *res = *data0 + *data1;
-}
-
-void dsum_finish(double *res, void *user_data) {
-    return;
-}
-
-iarray_reduce_function_t DSUM = {
-        .init = dsum_init,
-        .reduction = dsum_reduction,
-        .finish = dsum_finish
-};
 
 
 static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
-    // memset(pparams->out, 0, pparams->out_size);
     iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
+    user_data_t user_data = {0};
+    user_data.nelem = rparams->input->dtshape->shape[rparams->axis];
 
     // Compute result chunk offset
     int64_t chunk_offset_u = rparams->result->catarr->sc->nchunks;
@@ -161,13 +139,13 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                 if (empty)
                     continue;
                 else
-                    rparams->ufunc->init(dout, NULL);
+                    rparams->ufunc->init(dout, &user_data);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 if (empty)
                     continue;
                 else
-                    rparams->ufunc->init(fout, NULL);
+                    rparams->ufunc->init(fout, &user_data);
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "Invalid dtype");
@@ -254,16 +232,12 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
 
                 switch (rparams->result->dtshape->dtype) {
                     case IARRAY_DATA_TYPE_DOUBLE:
-                        for (int i = 0; i < vector_nelems; ++i) {
-                            rparams->ufunc->reduction(dout, dblock, dout, NULL);
-                            dblock += strides[rparams->axis];
-                        }
+                        rparams->ufunc->reduction(dout, 0, dblock, strides[rparams->axis],
+                                                  vector_nelems, &user_data);
                         break;
                     case IARRAY_DATA_TYPE_FLOAT:
-                        for (int i = 0; i < vector_nelems; ++i) {
-                            rparams->ufunc->reduction(fout, fblock, fout, NULL);
-                            fblock += strides[rparams->axis];
-                        }
+                        rparams->ufunc->reduction(fout, 0, fblock, strides[rparams->axis],
+                                                  vector_nelems, &user_data);
                         break;
                     default:
                         IARRAY_TRACE1(iarray.error, "Invalid dtype");
@@ -290,20 +264,20 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                                  ind,
                                  elem_index_n);
 
-        bool empty = check_padding(block_offset_n, elem_index_n, rparams);
+        bool padding = check_padding(block_offset_n, elem_index_n, rparams);
 
         switch (rparams->result->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                if (empty)
+                if (padding)
                     *dout = 0;
                 else
-                    rparams->ufunc->finish(dout, NULL);
+                    rparams->ufunc->finish(dout, &user_data);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                if (empty)
+                if (padding)
                     *fout = 0;
                 else
-                    rparams->ufunc->finish(fout, NULL);
+                    rparams->ufunc->finish(fout, &user_data);
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "Invalid dtype");
@@ -443,33 +417,30 @@ INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
     void *reduce_funtion = NULL;
 
     switch (func) {
-        case IARRAY_REDUCE_MAX:
-            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
-                             (void (*)(void *, int64_t, void *)) dmax :
-                             (void (*)(void *, int64_t, void *)) smax;
-            break;
-        case IARRAY_REDUCE_MIN:
-            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
-                             (void (*)(void *, int64_t, void *)) dmin :
-                             (void (*)(void *, int64_t, void *)) smin;
-            break;
         case IARRAY_REDUCE_SUM:
-            reduce_funtion = &DSUM;
+            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
+                    &DSUM :
+                    &FSUM;
             break;
         case IARRAY_REDUCE_PROD:
             reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
-                             (void (*)(void *, int64_t, void *)) dprod :
-                             (void (*)(void *, int64_t, void *)) sprod;
+                             &DPROD :
+                             &FPROD;
+            break;
+        case IARRAY_REDUCE_MAX:
+            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
+                             &DMAX :
+                             &FMAX;
+            break;
+        case IARRAY_REDUCE_MIN:
+            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
+                             &DMIN :
+                             &FMIN;
             break;
         case IARRAY_REDUCE_MEAN:
             reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
-                             (void (*)(void *, int64_t, void *)) dmean :
-                             (void (*)(void *, int64_t, void *)) smean;
-            break;
-        case IARRAY_REDUCE_STD:
-            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
-                             (void (*)(void *, int64_t, void *)) dstd :
-                             (void (*)(void *, int64_t, void *)) sstd;
+                             &DMEAN :
+                             &FMEAN;
             break;
     }
     IARRAY_RETURN_IF_FAILED(iarray_reduce_udf(ctx, a, reduce_funtion, axis, b));

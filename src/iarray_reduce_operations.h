@@ -13,138 +13,226 @@
 #include <math.h>
 #include <stdint.h>
 
-// Min
-static void dmin(double *v, int64_t vlen, double *out) {
-    double min = INFINITY;
-    for (int i = 0; i < vlen; ++i) {
-        if (v[i] < min)
-            min = v[i];
+
+struct iarray_reduce_function_s {
+    void (*init)(void *, void *);
+    void (*reduction)(void *, int64_t, void *, int64_t, int64_t, void *);
+    void (*finish)(void *, void *);
+};
+
+#define CAST_I (void (*)(void *, void *))
+#define CAST_R (void (*)(void *, int64_t, void *, int64_t, int64_t, void *))
+#define CAST_F (void (*)(void *, void *))
+
+#define DPARAMS_I double *res, void *user_data
+#define DPARAMS_R double *data0, int64_t strides0, \
+                  double *data1, int64_t strides1, \
+                  int64_t nelem, void *user_data
+#define DPARAMS_F double *res, void *user_data
+
+#define FPARAMS_I float *res, void *user_data
+#define FPARAMS_R float *data0, int64_t strides0, \
+                  float *data1, int64_t strides1, \
+                  int64_t nelem, void *user_data
+#define FPARAMS_F float *res, void *user_data
+
+
+/* SUM REDUCTION */
+
+#define SUM_I \
+        INA_UNUSED(user_data); \
+        *res = 0;
+
+#define SUM_R \
+    INA_UNUSED(user_data); \
+    for (int i = 0; i < nelem; ++i) { \
+        *data0 = *data0 + *data1; \
+        data0 += strides0; \
+        data1 += strides1; \
     }
 
-    *out = min;
-}
+#define SUM_F \
+    INA_UNUSED(user_data); \
+    ;
 
-static void smin(float *v, int64_t vlen, float *out) {
-    float min = INFINITY;
-    for (int i = 0; i < vlen; ++i) {
-        if (v[i] < min)
-            min = v[i];
+static void dsum_ini(DPARAMS_I) { SUM_I }
+static void dsum_red(DPARAMS_R) { SUM_R }
+static void dsum_fin(DPARAMS_F) { SUM_F }
+
+static iarray_reduce_function_t DSUM = {
+        .init = CAST_I dsum_ini,
+        .reduction =  CAST_R dsum_red,
+        .finish = CAST_F dsum_fin
+};
+
+static void fsum_ini(FPARAMS_I) { SUM_I }
+static void fsum_red(FPARAMS_R) { SUM_R }
+static void fsum_fin(FPARAMS_F) { SUM_F }
+
+static iarray_reduce_function_t FSUM = {
+        .init = CAST_I fsum_ini,
+        .reduction =  CAST_R fsum_red,
+        .finish = CAST_F fsum_fin
+};
+
+
+/* PROD REDUCTION */
+
+#define PROD_I \
+    INA_UNUSED(user_data); \
+    *res = 1;
+
+#define PROD_R \
+    INA_UNUSED(user_data); \
+    for (int i = 0; i < nelem; ++i) { \
+        *data0 = *data0 * *data1; \
+        data0 += strides0; \
+        data1 += strides1; \
     }
 
-    *out = min;
-}
+#define PROD_F \
+    INA_UNUSED(user_data); \
+    ;
 
-// Max
-static void dmax(double *v, int64_t vlen, double *out) {
-    double max = -INFINITY;
-    for (int i = 0; i < vlen; ++i) {
-        if (v[i] > max)
-            max = v[i];
+static void dprod_ini(DPARAMS_I) { PROD_I }
+static void dprod_red(DPARAMS_R) { PROD_R }
+static void dprod_fin(DPARAMS_F) { PROD_F }
+
+static iarray_reduce_function_t DPROD = {
+        .init = CAST_I dprod_ini,
+        .reduction =  CAST_R dprod_red,
+        .finish = CAST_F dprod_fin
+};
+
+static void fprod_ini(FPARAMS_I) { PROD_I }
+static void fprod_red(FPARAMS_R) { PROD_R }
+static void fprod_fin(FPARAMS_F) { PROD_F }
+
+static iarray_reduce_function_t FPROD = {
+        .init = CAST_I fprod_ini,
+        .reduction =  CAST_R fprod_red,
+        .finish = CAST_F fprod_fin
+};
+
+
+/* MAX REDUCTION */
+
+#define MAX_I \
+    INA_UNUSED(user_data); \
+    *res = -INFINITY;
+
+#define MAX_R \
+    INA_UNUSED(user_data); \
+    for (int i = 0; i < nelem; ++i) { \
+        if (*data1 > *data0) \
+            *data0 = *data1; \
+        data0 += strides0; \
+        data1 += strides1; \
     }
 
-    *out = max;
-}
+#define MAX_F \
+    INA_UNUSED(user_data); \
+    ;
 
-static void smax(float *v, int64_t vlen, float *out) {
-    float max = -INFINITY;
-    for (int i = 0; i < vlen; ++i) {
-        if (v[i] > max)
-            max = v[i];
+static void dmax_ini(DPARAMS_I) { MAX_I }
+static void dmax_red(DPARAMS_R) { MAX_R }
+static void dmax_fin(DPARAMS_F) { MAX_F }
+
+static iarray_reduce_function_t DMAX = {
+        .init = CAST_I dmax_ini,
+        .reduction =  CAST_R dmax_red,
+        .finish = CAST_F dmax_fin
+};
+
+static void fmax_ini(FPARAMS_I) { MAX_I }
+static void fmax_red(FPARAMS_R) { MAX_R }
+static void fmax_fin(FPARAMS_F) { MAX_F }
+
+static iarray_reduce_function_t FMAX = {
+        .init = CAST_I fmax_ini,
+        .reduction =  CAST_R fmax_red,
+        .finish = CAST_F fmax_fin
+};
+
+
+/* MIN REDUCTION */
+
+#define MIN_I \
+    INA_UNUSED(user_data); \
+    *res = INFINITY;
+
+#define MIN_R \
+    INA_UNUSED(user_data); \
+    for (int i = 0; i < nelem; ++i) { \
+        if (*data1 < *data0) \
+            *data0 = *data1; \
+        data0 += strides0; \
+        data1 += strides1; \
     }
 
-    *out = max;
-}
+#define MIN_F \
+    INA_UNUSED(user_data); \
+    ;
 
-// Sum
-static void dsum(double *v, int64_t vlen, double *out) {
-    double sum = 0;
-    for (int i = 0; i < vlen; ++i) {
-        sum += v[i];
+static void dmin_ini(DPARAMS_I) { MIN_I }
+static void dmin_red(DPARAMS_R) { MIN_R }
+static void dmin_fin(DPARAMS_F) { MIN_F }
+
+static iarray_reduce_function_t DMIN = {
+        .init = CAST_I dmin_ini,
+        .reduction =  CAST_R dmin_red,
+        .finish = CAST_F dmin_fin
+};
+
+static void fmin_ini(FPARAMS_I) { MIN_I }
+static void fmin_red(FPARAMS_R) { MIN_R }
+static void fmin_fin(FPARAMS_F) { MIN_F }
+
+static iarray_reduce_function_t FMIN = {
+        .init = CAST_I fmin_ini,
+        .reduction =  CAST_R fmin_red,
+        .finish = CAST_F fmin_fin
+};
+
+/* MEAN REDUCTION */
+
+#define MEAN_I \
+    INA_UNUSED(user_data); \
+    *res = 0;
+
+#define MEAN_R \
+    INA_UNUSED(user_data); \
+     for (int i = 0; i < nelem; ++i) { \
+        *data0 = *data0 + *data1; \
+        data0 += strides0; \
+        data1 += strides1; \
     }
 
-    *out = sum;
-}
+typedef struct user_data_s {
+    int64_t nelem;
+} user_data_t;
 
-static void ssum(float *v, int64_t vlen, float *out) {
-    float sum = 0;
-    for (int i = 0; i < vlen; ++i) {
-        sum += v[i];
-    }
+#define MEAN_F \
+    INA_UNUSED(user_data); \
+    user_data_t *u_data = (user_data_t *) user_data; \
+    *res = *res / u_data->nelem;
 
-    *out = sum;
-}
+static void dmean_ini(DPARAMS_I) { MEAN_I }
+static void dmean_red(DPARAMS_R) { MEAN_R }
+static void dmean_fin(DPARAMS_F) { MEAN_F }
 
-// Prod
-static void dprod(double *v, int64_t vlen, double *out) {
-    double prod = 1;
-    for (int i = 0; i < vlen; ++i) {
-        prod *= v[i];
-    }
+static iarray_reduce_function_t DMEAN = {
+        .init = CAST_I dmean_ini,
+        .reduction =  CAST_R dmean_red,
+        .finish = CAST_F dmean_fin
+};
 
-    *out = prod;
-}
+static void fmean_ini(FPARAMS_I) { MEAN_I }
+static void fmean_red(FPARAMS_R) { MEAN_R }
+static void fmean_fin(FPARAMS_F) { MEAN_F }
 
-static void sprod(float *v, int64_t vlen, float *out) {
-    float prod = 1;
-    for (int i = 0; i < vlen; ++i) {
-        prod *= v[i];
-    }
-
-    *out = prod;
-}
-
-// Mean
-static void dmean(double *v, int64_t vlen, double *out) {
-    double mean = 0;
-    for (int i = 0; i < vlen; ++i) {
-        mean += v[i];
-    }
-    mean /= vlen;
-
-    *out = mean;
-}
-
-static void smean(float *v, int64_t vlen, float *out) {
-    float mean = 0;
-    for (int i = 0; i < vlen; ++i) {
-        mean += v[i];
-    }
-    mean /= vlen;
-
-    *out = mean;
-}
-
-// STD
-static void dstd(double *v, int64_t vlen, double *out) {
-    double mean = 0;
-    for (int i = 0; i < vlen; ++i) {
-        mean += v[i];
-    }
-    mean /= vlen;
-
-    double std = 0;
-    for (int i = 0; i < vlen; ++i) {
-        std += pow((v[i] - mean),  2);
-    }
-    std /= vlen;
-    std = sqrt(std);
-
-    *out = std;
-}
-
-static void sstd(float *v, int64_t vlen, float *out) {
-    float mean = 0;
-    for (int i = 0; i < vlen; ++i) {
-        mean += v[i];
-    }
-    mean /= vlen;
-
-    float std = 0;
-    for (int i = 0; i < vlen; ++i) {
-        std += powf((v[i] - mean),  2);
-    }
-    std /= vlen;
-    std = sqrtf(std);
-
-    *out = std;
-}
+static iarray_reduce_function_t FMEAN = {
+        .init = CAST_I fmean_ini,
+        .reduction =  CAST_R fmean_red,
+        .finish = CAST_F fmean_fin
+};

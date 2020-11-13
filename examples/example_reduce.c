@@ -34,10 +34,9 @@ int main(void) {
     iarray_context_new(&cfg, &ctx);
 
 
-    int64_t shape[] = {26000, 26000};
+    int64_t shape[] = {4000, 4000};
     int8_t ndim = 2;
-    int8_t typesize = sizeof(double);
-    int8_t axis = 1;
+    int8_t axis = 0;
 
     iarray_dtshape_t dtshape;
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
@@ -49,7 +48,7 @@ int main(void) {
         nelem *= shape[i];
     }
 
-    int32_t xchunkshape[] = {4000, 4000};
+    int32_t xchunkshape[] = {2000, 2000};
     int32_t xblockshape[] = {100, 100};
 
     iarray_storage_t xstorage;
@@ -94,7 +93,7 @@ int main(void) {
     iarray_container_free(ctx, &c_out);
 
     blosc_set_timestamp(&t0);
-    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, IARRAY_REDUCE_SUM, axis, &c_out));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, IARRAY_REDUCE_MEAN, axis, &c_out));
     blosc_set_timestamp(&t1);
     printf("time 1: %f \n", blosc_elapsed_secs(t0, t1));
     buff = (double *) malloc(c_out->catarr->nitems * c_out->catarr->itemsize);

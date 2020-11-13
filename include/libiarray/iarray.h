@@ -563,29 +563,16 @@ typedef enum iarray_reduce_fun_e {
     IARRAY_REDUCE_SUM,
     IARRAY_REDUCE_PROD,
     IARRAY_REDUCE_MEAN,
-    IARRAY_REDUCE_STD
 } iarray_reduce_func_t;
 
 typedef struct iarray_reduce_function_s iarray_reduce_function_t;
 
-INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
-                                    iarray_container_t *a,
-                                    iarray_reduce_function_t *ufunc,
-                                    int8_t axis,
-                                    iarray_container_t **b);
 
 INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
                                 iarray_container_t *a,
                                 iarray_reduce_func_t func,
                                 int8_t axis,
                                 iarray_container_t **b);
-
-INA_API(ina_rc_t) iarray_reduce2(iarray_context_t *ctx,
-                                 iarray_container_t *a,
-                                 iarray_reduce_func_t func,
-                                 int8_t axis,
-                                 iarray_container_t **b);
-
 
 /* linear algebra */
 INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
