@@ -224,6 +224,8 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                                          elem_index_n);
 
                 if (check_padding(block_offset_n, elem_index_n, rparams)) {
+                    dout++;
+                    fout++;
                     continue;
                 }
 

@@ -34,9 +34,9 @@ int main(void) {
     iarray_context_new(&cfg, &ctx);
 
 
-    int64_t shape[] = {20, 20};
-    int8_t ndim = 2;
-    int8_t axis = 1;
+    int64_t shape[] = {10, 10, 10};
+    int8_t ndim = 3;
+    int8_t axis = 0;
 
     iarray_dtshape_t dtshape;
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
@@ -48,8 +48,8 @@ int main(void) {
         nelem *= shape[i];
     }
 
-    int32_t xchunkshape[] = {10, 10};
-    int32_t xblockshape[] = {4, 4};
+    int32_t xchunkshape[] = {10, 10, 10};
+    int32_t xblockshape[] = {4, 4, 4};
 
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
@@ -85,7 +85,7 @@ int main(void) {
     printf("time 1: %f \n", blosc_elapsed_secs(t0, t1));
     buff = (double *) malloc(c_out->catarr->nitems * c_out->catarr->itemsize);
     iarray_to_buffer(ctx, c_out, buff, c_out->catarr->nitems * c_out->catarr->itemsize);
-    for (int i = 0; i < 20; ++i) {
+    for (int i = 0; i < 100; ++i) {
         printf(" %f ", buff[i]);
     }
     printf("\n");
