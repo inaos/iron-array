@@ -159,13 +159,13 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
         switch (rparams->result->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 if (empty)
-                    *dout = 0;
+                    continue;
                 else
                     rparams->ufunc->init(dout, NULL);
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 if (empty)
-                    *fout = 0;
+                    continue;
                 else
                     rparams->ufunc->init(fout, NULL);
                 break;
@@ -218,8 +218,8 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                 vector_nelems = rparams->input->catarr->blockshape[rparams->axis];
             }
 
-            double *dout = (double *) pparams->out;
-            float *fout = (float *) pparams->out;
+            dout = (double *) pparams->out;
+            fout = (float *) pparams->out;
 
             for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
                 // Compute index in dest
