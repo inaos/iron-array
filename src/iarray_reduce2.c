@@ -217,7 +217,7 @@ static int _reduce_prefilter2(blosc2_prefilter_params *pparams) {
 
     // Finish reduction
     if (rparams->chunk_index ==
-        rparams->result->catarr->shape[rparams->axis] /
+        rparams->result->catarr->extshape[rparams->axis] /
         rparams->result->catarr->chunkshape[rparams->axis] - 1) {
 
         dout = (double *) pparams->out;
@@ -233,10 +233,13 @@ static int _reduce_prefilter2(blosc2_prefilter_params *pparams) {
             bool padding = check_padding(block_offset_n, elem_index_n, rparams);
             switch (rparams->result->dtshape->dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
-                    if (padding)
+                    if (padding) {
                         *dout = 0;
-                    else
+                    }
+                    else {
+                        printf(" %f ", *dout);
                         rparams->ufunc->finish(dout, &user_data);
+                    }
                     break;
                 case IARRAY_DATA_TYPE_FLOAT:
                     if (padding)
@@ -251,6 +254,7 @@ static int _reduce_prefilter2(blosc2_prefilter_params *pparams) {
             dout++;
             fout++;
         }
+        printf("\n");
     }
     free(block);
 

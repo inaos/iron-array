@@ -34,9 +34,10 @@ int main(void) {
     iarray_context_new(&cfg, &ctx);
 
 
-    int64_t shape[] = {100, 100};
+    int64_t shape[] = {10, 10};
     int8_t ndim = 2;
     int8_t axis = 0;
+    iarray_reduce_func_t func = IARRAY_REDUCE_MEAN;
 
     iarray_dtshape_t dtshape;
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
@@ -48,8 +49,8 @@ int main(void) {
         nelem *= shape[i];
     }
 
-    int32_t xchunkshape[] = {50, 50};
-    int32_t xblockshape[] = {25, 25};
+    int32_t xchunkshape[] = {4, 4};
+    int32_t xblockshape[] = {2, 2};
 
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
@@ -80,12 +81,12 @@ int main(void) {
     double *buff;
 
     blosc_set_timestamp(&t0);
-    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, IARRAY_REDUCE_MAX, axis, &c_out));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, func, axis, &c_out));
     blosc_set_timestamp(&t1);
     printf("time 1: %f \n", blosc_elapsed_secs(t0, t1));
     buff = (double *) malloc(c_out->catarr->nitems * c_out->catarr->itemsize);
     iarray_to_buffer(ctx, c_out, buff, c_out->catarr->nitems * c_out->catarr->itemsize);
-    for (int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 10; ++i) {
         printf(" %f ", buff[i]);
     }
     printf("\n");
@@ -94,12 +95,12 @@ int main(void) {
 
 
     blosc_set_timestamp(&t0);
-    IARRAY_RETURN_IF_FAILED(iarray_reduce2(ctx, c_x, IARRAY_REDUCE_MAX, axis, &c_out));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce2(ctx, c_x, func, axis, &c_out));
     blosc_set_timestamp(&t1);
-    printf("time 1: %f \n", blosc_elapsed_secs(t0, t1));
+    printf("time 2: %f \n", blosc_elapsed_secs(t0, t1));
     buff = (double *) malloc(c_out->catarr->nitems * c_out->catarr->itemsize);
     iarray_to_buffer(ctx, c_out, buff, c_out->catarr->nitems * c_out->catarr->itemsize);
-    for (int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 10; ++i) {
         printf(" %f ", buff[i]);
     }
     printf("\n");
