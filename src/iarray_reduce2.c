@@ -217,8 +217,8 @@ static int _reduce_prefilter2(blosc2_prefilter_params *pparams) {
 
     // Finish reduction
     if (rparams->chunk_index ==
-        rparams->result->catarr->extshape[rparams->axis] /
-        rparams->result->catarr->chunkshape[rparams->axis] - 1) {
+        rparams->input->catarr->extshape[rparams->axis] /
+        rparams->input->catarr->chunkshape[rparams->axis] - 1) {
 
         dout = (double *) pparams->out;
         fout = (float *) pparams->out;
