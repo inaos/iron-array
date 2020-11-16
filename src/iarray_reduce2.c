@@ -237,7 +237,6 @@ static int _reduce_prefilter2(blosc2_prefilter_params *pparams) {
                         *dout = 0;
                     }
                     else {
-                        printf(" %f ", *dout);
                         rparams->ufunc->finish(dout, &user_data);
                     }
                     break;
@@ -254,7 +253,6 @@ static int _reduce_prefilter2(blosc2_prefilter_params *pparams) {
             dout++;
             fout++;
         }
-        printf("\n");
     }
     free(block);
 
