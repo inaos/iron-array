@@ -20,6 +20,7 @@ struct iarray_reduce_function_s {
     void (*finish)(void *, void *);
 };
 
+
 #define CAST_I (void (*)(void *, void *))
 #define CAST_R (void (*)(void *, int64_t, void *, int64_t, int64_t, void *))
 #define CAST_F (void (*)(void *, void *))

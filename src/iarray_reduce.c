@@ -56,8 +56,6 @@ static bool check_padding(int64_t *block_offset_n,
 }
 
 
-
-
 static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
     user_data_t user_data = {0};
@@ -311,11 +309,11 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
 }
 
 
-INA_API(ina_rc_t) iarray_reduce_udf(iarray_context_t *ctx,
-                                    iarray_container_t *a,
-                                    iarray_reduce_function_t *ufunc,
-                                    int8_t axis,
-                                    iarray_container_t **b) {
+INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
+                                     iarray_container_t *a,
+                                     iarray_reduce_function_t *ufunc,
+                                     int8_t axis,
+                                     iarray_container_t **b) {
 
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(a);
@@ -461,7 +459,7 @@ INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
                              &FMEAN;
             break;
     }
-    IARRAY_RETURN_IF_FAILED(iarray_reduce_udf(ctx, a, reduce_funtion, axis, b));
+    IARRAY_RETURN_IF_FAILED(_iarray_reduce_udf(ctx, a, reduce_funtion, axis, b));
 
     return INA_SUCCESS;
 }
