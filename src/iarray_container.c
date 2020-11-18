@@ -92,12 +92,12 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
     }
 
     if (container->catarr->sc->frame == NULL) {
-        blosc2_frame *frame = blosc2_new_frame(filename);
+        blosc2_frame *frame = blosc2_frame_new(filename);
         if (frame == NULL) {
             IARRAY_TRACE1(iarray.error, "Error creating blosc2 frame");
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
         }
-        int64_t err = blosc2_schunk_to_frame(container->catarr->sc, frame);
+        int64_t err = blosc2_frame_from_schunk(container->catarr->sc, frame);
 
         if (err < 0) {
             IARRAY_TRACE1(iarray.error, "Error converting a blosc schunk to a blosc frame");

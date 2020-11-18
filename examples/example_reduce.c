@@ -12,11 +12,13 @@
 
 #include <libiarray/iarray.h>
 #include <math.h>
+#include "iarray_private.h"
 
 
 int main(void) {
     iarray_init();
     ina_stopwatch_t *w;
+
 
     double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
@@ -24,16 +26,18 @@ int main(void) {
 
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    cfg.compression_level = 7;
+    cfg.compression_level = 9;
+    cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
     cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
 
     cfg.max_num_threads = 1;
     iarray_context_new(&cfg, &ctx);
 
 
-    int64_t shape[] = {10000, 10000};
+    int64_t shape[] = {10, 10};
     int8_t ndim = 2;
-    int8_t typesize = sizeof(double);
+    int8_t axis = 0;
+    iarray_reduce_func_t func = IARRAY_REDUCE_MEAN;
 
     iarray_dtshape_t dtshape;
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
@@ -45,8 +49,8 @@ int main(void) {
         nelem *= shape[i];
     }
 
-    int32_t xchunkshape[] = {1000, 1000};
-    int32_t xblockshape[] = {256, 256};
+    int32_t xchunkshape[] = {4, 4};
+    int32_t xblockshape[] = {2, 2};
 
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
@@ -60,8 +64,8 @@ int main(void) {
     iarray_container_t *c_x;
     IARRAY_RETURN_IF_FAILED(iarray_arange(ctx, &dtshape, 0, nelem, 1, &xstorage, 0, &c_x));
 
-    int32_t outchunkshape[] = {4000};
-    int32_t outblockshape[] = {1000};
+    int32_t outchunkshape[] = {0};
+    int32_t outblockshape[] = {0};
 
     iarray_storage_t outstorage;
     outstorage.backend = IARRAY_STORAGE_BLOSC;
@@ -72,10 +76,38 @@ int main(void) {
         outstorage.blockshape[i] = outblockshape[i];
     }
 
+    blosc_timestamp_t t0, t1;
     iarray_container_t *c_out;
-    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, IARRAY_REDUCE_MEAN, 0, &outstorage, &c_out));
+    double *buff;
 
+    blosc_set_timestamp(&t0);
+    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, func, axis, &c_out));
+    blosc_set_timestamp(&t1);
+    printf("time 1: %f \n", blosc_elapsed_secs(t0, t1));
+    buff = (double *) malloc(c_out->catarr->nitems * c_out->catarr->itemsize);
+    iarray_to_buffer(ctx, c_out, buff, c_out->catarr->nitems * c_out->catarr->itemsize);
+    for (int i = 0; i < 10; ++i) {
+        printf(" %f ", buff[i]);
+    }
+    printf("\n");
+    free(buff);
     iarray_container_free(ctx, &c_out);
+
+
+    blosc_set_timestamp(&t0);
+    IARRAY_RETURN_IF_FAILED(iarray_reduce2(ctx, c_x, func, axis, &c_out));
+    blosc_set_timestamp(&t1);
+    printf("time 2: %f \n", blosc_elapsed_secs(t0, t1));
+    buff = (double *) malloc(c_out->catarr->nitems * c_out->catarr->itemsize);
+    iarray_to_buffer(ctx, c_out, buff, c_out->catarr->nitems * c_out->catarr->itemsize);
+    for (int i = 0; i < 10; ++i) {
+        printf(" %f ", buff[i]);
+    }
+    printf("\n");
+    free(buff);
+    iarray_container_free(ctx, &c_out);
+
+
     iarray_container_free(ctx, &c_x);
 
     iarray_context_free(&ctx);
