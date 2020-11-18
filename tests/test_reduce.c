@@ -77,14 +77,10 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
     iarray_container_t *c_y;
     IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &storage, 0, &c_y));
 
-    storage.backend = IARRAY_STORAGE_BLOSC;
-    for (int i = 0; i < ndim - 1; ++i) {
-        storage.chunkshape[i] = cshape != NULL ? cshape[i] : shape[i + 1] / 3;
-        storage.blockshape[i] = bshape != NULL ? bshape[i] : shape[i + 1] / 6;
-    }
+
     iarray_container_t *c_z;
 
-    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_y, IARRAY_REDUCE_SUM, axis, &storage, &c_z));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_y, IARRAY_REDUCE_SUM, axis, &c_z));
 
     int64_t buffer_nitems = c_z->catarr->nitems;
     int64_t buffer_size = buffer_nitems * c_z->catarr->itemsize;

@@ -119,8 +119,8 @@ INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores)
     hwloc_topology_t topology;
     hwloc_topology_init(&topology);
     hwloc_topology_load(topology);
-    // Get the number of cores
-    int depth = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
+    // Get the number of logical cores (Processing Units)
+    int depth = hwloc_get_type_depth(topology, HWLOC_OBJ_PU);
     if (depth < 0) {
         IARRAY_TRACE1(iarray.error, "Can not get the number of cores");
         return INA_ERROR(IARRAY_ERR_GET_NCORES);
