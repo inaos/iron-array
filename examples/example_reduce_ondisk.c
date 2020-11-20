@@ -85,7 +85,7 @@ int main(void) {
     blosc_timestamp_t t0;
     blosc_set_timestamp(&t0);
     iarray_container_t *c_out;
-    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, IARRAY_REDUCE_SUM, axis, &c_out));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce2(ctx, c_x, IARRAY_REDUCE_SUM, axis, &c_out));
     blosc_timestamp_t t1;
     blosc_set_timestamp(&t1);
     printf("time: %f s\n", blosc_elapsed_secs(t0, t1));

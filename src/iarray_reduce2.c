@@ -40,6 +40,7 @@ typedef struct iarray_reduce_params_s {
     uint8_t *chunk;
     int64_t chunk_index;
     uint8_t *chunk_out;
+    int32_t csize;
 
     int64_t *shape_of_blocks;
     int64_t *strides;
@@ -69,6 +70,9 @@ static int _reduce_prefilter2(blosc2_prefilter_params *pparams) {
     iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
     user_data_t user_data = {0};
     user_data.nelem = rparams->input->dtshape->shape[rparams->axis];
+
+    blosc2_dparams dparams = {.nthreads = 1, .schunk = rparams->input->catarr->sc};
+    blosc2_context *dctx = blosc2_create_dctx(dparams);
 
     // Compute result block offset
     int64_t block_offset_u = pparams->out_offset / pparams->out_size;
@@ -131,8 +135,9 @@ static int _reduce_prefilter2(blosc2_prefilter_params *pparams) {
         }
         int64_t start = nblock * rparams->input->catarr->blocknitems;
 
-        blosc_getitem(rparams->chunk, start, rparams->input->catarr->blocknitems, block);
-
+        int err = blosc2_getitem_ctx(dctx, rparams->chunk, rparams->csize, start,
+                                     rparams->input->catarr->blocknitems,
+                                     block);
         // Check if there are padding in reduction axis
         int64_t aux = block_ind * rparams->input->catarr->blockshape[rparams->axis];
         aux += rparams->chunk_index * rparams->input->catarr->chunkshape[rparams->axis];
@@ -254,6 +259,8 @@ static int _reduce_prefilter2(blosc2_prefilter_params *pparams) {
             fout++;
         }
     }
+    blosc2_free_ctx(dctx);
+
     free(block);
 
     return 0;
@@ -414,7 +421,8 @@ static ina_rc_t _iarray_reduce_udf2(iarray_context_t *ctx,
             }
             uint8_t *chunk_axis;
             bool needs_free;
-            blosc2_schunk_get_chunk(a->catarr->sc, nchunk_axis, &chunk_axis, &needs_free);
+            reduce_params.csize = blosc2_schunk_get_chunk(a->catarr->sc, nchunk_axis, &chunk_axis,
+                                                          &needs_free);
             // printf("- GET CHUNK: {%lld}\n", nchunk_axis);
 
             reduce_params.chunk = chunk_axis;
