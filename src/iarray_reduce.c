@@ -169,8 +169,12 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
         }
         uint8_t *chunk;
         bool needs_free;
-        int csize = blosc2_schunk_get_chunk(rparams->input->catarr->sc, nchunk, &chunk,
-                                           &needs_free);
+        int csize = blosc2_schunk_get_chunk_lazy(rparams->input->catarr->sc, nchunk, &chunk,
+                                                 &needs_free);
+        if (csize < 0) {
+            IARRAY_TRACE1(iarray.tracing, "Error getting lazy chunk");
+            return -1;
+        }
 
         // printf("GET CHUNK: {%lld}\n", nchunk);
         for (int block_ind = 0; block_ind < nblocks; ++block_ind) {
@@ -184,9 +188,13 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
             int64_t start = nblock * rparams->input->catarr->blocknitems;
 
             // Compress data
-            int err = blosc2_getitem_ctx(dctx, chunk, csize, start,
-                                         rparams->input->catarr->blocknitems,
-                                         block);
+            int bsize = blosc2_getitem_ctx(dctx, chunk, csize, start,
+                                           rparams->input->catarr->blocknitems,
+                                           block);
+            if (bsize < 0) {
+                IARRAY_TRACE1(iarray.tracing, "Error getting block");
+                return -1;
+            }
 
             // Check if there are padding in reduction axis
             int64_t aux = block_ind * rparams->input->catarr->blockshape[rparams->axis];
