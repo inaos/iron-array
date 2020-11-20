@@ -61,6 +61,9 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     user_data_t user_data = {0};
     user_data.nelem = rparams->input->dtshape->shape[rparams->axis];
 
+    blosc2_dparams dparams = {.nthreads = 1, .schunk = rparams->input->catarr->sc};
+    blosc2_context *dctx = blosc2_create_dctx(dparams);
+
     // Compute result chunk offset
     int64_t chunk_offset_u = rparams->result->catarr->sc->nchunks;
     int64_t chunk_offset_n[IARRAY_DIMENSION_MAX] = {0};
@@ -166,22 +169,24 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
         }
         uint8_t *chunk;
         bool needs_free;
-        blosc2_schunk_get_chunk(rparams->input->catarr->sc, nchunk, &chunk,
-                                &needs_free);
+        int csize = blosc2_schunk_get_chunk(rparams->input->catarr->sc, nchunk, &chunk,
+                                           &needs_free);
+
         // printf("GET CHUNK: {%lld}\n", nchunk);
         for (int block_ind = 0; block_ind < nblocks; ++block_ind) {
             int64_t nblock = block_ind * block_strides[rparams->axis];
             for (int j = 0; j < rparams->result->catarr->ndim; ++j) {
                 if (j < rparams->axis)
-                    nblock += block_offset_n[j] * block_strides[j];
+                    nblock += (block_offset_n[j] % shape_of_blocks[j]) * block_strides[j];
                 else
-                    nblock += block_offset_n[j] * block_strides[j + 1];
+                    nblock += (block_offset_n[j] % shape_of_blocks[j]) * block_strides[j + 1];
             }
             int64_t start = nblock * rparams->input->catarr->blocknitems;
 
-
-            blosc_getitem(chunk, start, rparams->input->catarr->blocknitems,
-                          block);
+            // Compress data
+            int err = blosc2_getitem_ctx(dctx, chunk, csize, start,
+                                         rparams->input->catarr->blocknitems,
+                                         block);
 
             // Check if there are padding in reduction axis
             int64_t aux = block_ind * rparams->input->catarr->blockshape[rparams->axis];
@@ -303,6 +308,8 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
         fout++;
     }
 
+    blosc2_free_ctx(dctx);
+
     free(block);
 
     return 0;
@@ -401,6 +408,7 @@ INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
         blosc2_cparams cparams = {0};
         IARRAY_RETURN_IF_FAILED(iarray_create_blosc_cparams(&cparams, prefilter_ctx, c->catarr->itemsize,
                                                             c->catarr->blocknitems * c->catarr->itemsize));
+        cparams.schunk = a->catarr->sc;
         blosc2_context *cctx = blosc2_create_cctx(cparams);
         uint8_t *chunk = malloc(c->catarr->extchunknitems * c->catarr->itemsize +
                                 BLOSC_MAX_OVERHEAD);

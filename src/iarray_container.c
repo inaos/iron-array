@@ -123,6 +123,10 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename, b
     INA_VERIFY_NOT_NULL(filename);
     INA_VERIFY_NOT_NULL(container);
 
+    if (access( filename, F_OK ) == -1) {
+        IARRAY_TRACE1(iarray.error, "File not exists");
+        return INA_ERROR(INA_ERR_FILE_OPEN);
+    }
     caterva_config_t cfg;
     IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
     caterva_context_t *cat_ctx;
