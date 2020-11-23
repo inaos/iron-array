@@ -169,7 +169,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
         }
         uint8_t *chunk;
         bool needs_free;
-        int csize = blosc2_schunk_get_chunk_lazy(rparams->input->catarr->sc, nchunk, &chunk,
+        int csize = blosc2_schunk_get_lazychunk(rparams->input->catarr->sc, nchunk, &chunk,
                                                  &needs_free);
         if (csize < 0) {
             IARRAY_TRACE1(iarray.tracing, "Error getting lazy chunk");
