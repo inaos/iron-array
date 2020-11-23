@@ -123,7 +123,7 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename, b
     INA_VERIFY_NOT_NULL(filename);
     INA_VERIFY_NOT_NULL(container);
 
-    if (access( filename, F_OK ) == -1) {
+    if (access( filename, 0) == -1) {
         IARRAY_TRACE1(iarray.error, "File not exists");
         return INA_ERROR(INA_ERR_FILE_OPEN);
     }

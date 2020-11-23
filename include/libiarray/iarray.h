@@ -85,6 +85,10 @@
 #define IARRAY_ERR_END_ITER (IARRAY_ES_ITER | INA_ERR_COMPLETE)
 #define IARRAY_ERR_NOT_END_ITER (IARRAY_ES_ITER | INA_ERR_NOT_COMPLETE)
 
+#if __GNUC__
+#define IARRAY_FILE_EXISTS(filename) access()
+}
+
 #define IARRAY_TRACE1(cat, fmt) INA_TRACE1(cat, fmt " %s:%d", __FILE__, __LINE__)
 #define IARRAY_TRACE2(cat, fmt) INA_TRACE2(cat, fmt " %s:%d", __FILE__, __LINE__)
 #define IARRAY_TRACE3(cat, fmt) INA_TRACE3(cat, fmt " %s:%d", __FILE__, __LINE__)
