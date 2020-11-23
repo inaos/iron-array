@@ -94,20 +94,6 @@ int main(void) {
     iarray_container_free(ctx, &c_out);
 
 
-    blosc_set_timestamp(&t0);
-    IARRAY_RETURN_IF_FAILED(iarray_reduce2(ctx, c_x, func, axis, &c_out));
-    blosc_set_timestamp(&t1);
-    printf("time 2: %f \n", blosc_elapsed_secs(t0, t1));
-    buff = (double *) malloc(c_out->catarr->nitems * c_out->catarr->itemsize);
-    iarray_to_buffer(ctx, c_out, buff, c_out->catarr->nitems * c_out->catarr->itemsize);
-    for (int i = 0; i < 10; ++i) {
-        printf(" %f ", buff[i]);
-    }
-    printf("\n");
-    free(buff);
-    iarray_container_free(ctx, &c_out);
-
-
     iarray_container_free(ctx, &c_x);
 
     iarray_context_free(&ctx);
