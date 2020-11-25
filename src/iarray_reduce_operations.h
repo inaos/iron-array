@@ -50,7 +50,6 @@ struct iarray_reduce_function_s {
     INA_UNUSED(user_data); \
     for (int i = 0; i < nelem; ++i) { \
         *data0 = *data0 + *data1; \
-        data0 += strides0; \
         data1 += strides1; \
     }
 
@@ -89,7 +88,6 @@ static iarray_reduce_function_t FSUM = {
     INA_UNUSED(user_data); \
     for (int i = 0; i < nelem; ++i) { \
         *data0 = *data0 * *data1; \
-        data0 += strides0; \
         data1 += strides1; \
     }
 
@@ -130,7 +128,6 @@ static iarray_reduce_function_t FPROD = {
         if (*data1 > *data0) { \
             *data0 = *data1; \
         } \
-        data0 += strides0; \
         data1 += strides1; \
     }
 
@@ -171,7 +168,6 @@ static iarray_reduce_function_t FMAX = {
         if (*data1 < *data0) {    \
             *data0 = *data1; \
         } \
-        data0 += strides0; \
         data1 += strides1; \
     }
 
@@ -209,18 +205,17 @@ static iarray_reduce_function_t FMIN = {
     INA_UNUSED(user_data); \
      for (int i = 0; i < nelem; ++i) { \
         *data0 = *data0 + *data1; \
-        data0 += strides0; \
         data1 += strides1; \
     }
 
 typedef struct user_data_s {
-    int64_t nelem;
+    double inv_nelem;
 } user_data_t;
 
 #define MEAN_F \
     INA_UNUSED(user_data); \
     user_data_t *u_data = (user_data_t *) user_data; \
-    *res = *res / u_data->nelem;
+    *res = *res * u_data->inv_nelem;
 
 static void dmean_ini(DPARAMS_I) { MEAN_I }
 static void dmean_red(DPARAMS_R) { MEAN_R }

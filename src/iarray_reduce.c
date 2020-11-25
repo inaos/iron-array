@@ -59,7 +59,7 @@ static bool check_padding(int64_t *block_offset_n,
 static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
     user_data_t user_data = {0};
-    user_data.nelem = rparams->input->dtshape->shape[rparams->axis];
+    user_data.inv_nelem = 1. / rparams->input->dtshape->shape[rparams->axis];
 
     blosc2_dparams dparams = {.nthreads = 1, .schunk = rparams->input->catarr->sc};
     blosc2_context *dctx = blosc2_create_dctx(dparams);
