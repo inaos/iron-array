@@ -85,6 +85,10 @@
 #define IARRAY_ERR_END_ITER (IARRAY_ES_ITER | INA_ERR_COMPLETE)
 #define IARRAY_ERR_NOT_END_ITER (IARRAY_ES_ITER | INA_ERR_NOT_COMPLETE)
 
+#ifdef __WIN32__
+#define access _access
+#endif
+
 #define IARRAY_TRACE1(cat, fmt) INA_TRACE1(cat, fmt " %s:%d", __FILE__, __LINE__)
 #define IARRAY_TRACE2(cat, fmt) INA_TRACE2(cat, fmt " %s:%d", __FILE__, __LINE__)
 #define IARRAY_TRACE3(cat, fmt) INA_TRACE3(cat, fmt " %s:%d", __FILE__, __LINE__)
@@ -569,12 +573,6 @@ typedef struct iarray_reduce_function_s iarray_reduce_function_t;
 
 
 INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
-                                iarray_container_t *a,
-                                iarray_reduce_func_t func,
-                                int8_t axis,
-                                iarray_container_t **b);
-
-INA_API(ina_rc_t) iarray_reduce2(iarray_context_t *ctx,
                                 iarray_container_t *a,
                                 iarray_reduce_func_t func,
                                 int8_t axis,

@@ -102,6 +102,11 @@ set_target_properties(
 include_directories("${PROJECT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/inac"
         "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/src")
 
+if (ENABLE_ASAN)
+    message(STATUS "Enable sanitizers")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -Os -fno-omit-frame-pointer -fsanitize=address")
+    link_libraries("-g -fsanitize=address")
+endif()
 
 if (DO_COVERAGE)
     target_compile_options(iarray_c PRIVATE -fprofile-arcs -ftest-coverage)
