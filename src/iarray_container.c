@@ -715,13 +715,13 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
 }
 
 
-INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
-                                 iarray_container_t *container)
+INA_API(ina_rc_t) iarray_squeeze_index(iarray_context_t *ctx,
+                                       iarray_container_t *container,
+                                       bool *index)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(container);
 
-    uint8_t inc = 0;
 
     if (!container->view) {
         caterva_config_t cfg = {0};
@@ -729,14 +729,15 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
         caterva_context_t *cat_ctx;
         IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
-        IARRAY_ERR_CATERVA(caterva_array_squeeze(cat_ctx, container->catarr));
-
+        IARRAY_ERR_CATERVA(caterva_array_squeeze_index(cat_ctx, container->catarr, index));
         IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
+
+        uint8_t inc = 0;
         if (container->dtshape->ndim != container->catarr->ndim) {
             container->dtshape->ndim = (uint8_t) container->catarr->ndim;
             for (int i = 0; i < container->catarr->ndim; ++i) {
-                if (container->dtshape->shape[i] != container->catarr->shape[i]) {
-                    inc += 1;
+                if (index[i]) {
+                    inc ++;
                 }
                 container->dtshape->shape[i] = container->catarr->shape[i];
                 container->storage->chunkshape[i] = container->catarr->chunkshape[i];
@@ -748,9 +749,9 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
             }
         }
     } else {
-        inc = 0;
+        uint8_t inc = 0;
         for (int i = 0; i < container->dtshape->ndim; ++i) {
-            if (container->dtshape->shape[i] == 1) {
+            if (index[i]) {
                 inc ++;
             } else {
                 container->dtshape->shape[i - inc] = container->dtshape->shape[i];
@@ -761,6 +762,24 @@ INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
         }
         container->dtshape->ndim -= inc;
     }
+
+    return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
+                                 iarray_container_t *container)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(container);
+
+    bool index[IARRAY_DIMENSION_MAX] = {0};
+    for (int i = 0; i < container->dtshape->ndim; ++i) {
+        if (container->dtshape->shape[i] == 1) {
+            index[i] = true;
+        }
+    }
+
+    IARRAY_RETURN_IF_FAILED(iarray_squeeze_index(ctx, container, index));
 
     return INA_SUCCESS;
 }
@@ -780,6 +799,7 @@ INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
     }
     return INA_SUCCESS;
 }
+
 
 INA_API(ina_rc_t) iarray_get_storage(iarray_context_t *ctx,
                                      iarray_container_t *c,
