@@ -1075,5 +1075,6 @@ INA_API(void) iarray_iter_write_free(iarray_iter_write_t **itr)
     INA_MEM_FREE_SAFE((*itr)->cur_block_index);
     INA_MEM_FREE_SAFE((*itr)->cur_block_shape);
 
+    caterva_context_free(&(*itr)->cat_ctx);
     INA_MEM_FREE_SAFE(*itr);
 }
