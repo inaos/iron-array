@@ -17,6 +17,9 @@
 
 
 static void index_unidim_to_multidim(int8_t ndim, int64_t *shape, int64_t i, int64_t *index) {
+    if (ndim == 0) {
+        return;
+    }
     int64_t strides[CATERVA_MAX_DIM];
     strides[ndim - 1] = 1;
     for (int j = ndim - 2; j >= 0; --j) {
@@ -340,7 +343,7 @@ INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
                                     "container");
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
-    if (a->dtshape->ndim < 2) {
+    if (a->dtshape->ndim < 1) {
         IARRAY_TRACE1(iarray.error, "The container dimensions must be greater than 1");
         return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
     }
@@ -370,8 +373,8 @@ INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
     iarray_container_t *c = *b;
 
     // Set up prefilter
-    iarray_context_t *prefilter_ctx = ina_mem_alloc(sizeof(iarray_context_t));
-    memcpy(prefilter_ctx, ctx, sizeof(iarray_context_t));
+    iarray_context_t *prefilter_ctx;
+    iarray_context_new(ctx->cfg, &prefilter_ctx);
     prefilter_ctx->prefilter_fn = (blosc2_prefilter_fn) _reduce_prefilter;
     iarray_reduce_params_t reduce_params = {0};
     blosc2_prefilter_params pparams = {0};
@@ -438,6 +441,8 @@ INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
     c->catarr->empty = false;
     c->catarr->filled = true;
 
+    iarray_context_free(&prefilter_ctx);
+
     return INA_SUCCESS;
 }
 
@@ -476,6 +481,63 @@ INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
             break;
     }
     IARRAY_RETURN_IF_FAILED(_iarray_reduce_udf(ctx, a, reduce_funtion, axis, b));
+
+    return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
+                                      iarray_container_t *a,
+                                      iarray_reduce_func_t func,
+                                      int8_t naxis,
+                                      int8_t *axis,
+                                      iarray_container_t **b) {
+
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(a);
+    INA_VERIFY_NOT_NULL(axis);
+    INA_VERIFY_NOT_NULL(b);
+
+    if (naxis > a->dtshape->ndim) {
+        return INA_ERROR(IARRAY_ERR_INVALID_AXIS);
+    }
+
+    int8_t axis_new[IARRAY_DIMENSION_MAX] = {0};
+    bool axis_used[IARRAY_DIMENSION_MAX] = {0};
+
+    // Check if an axis is higher than array dimensions and if an axis is repeated
+    int ii = 0;
+    for (int i = 0; i < naxis; ++i) {
+        if (axis[i] > a->dtshape->ndim) {
+            return INA_ERROR(IARRAY_ERR_INVALID_AXIS);
+        } else if (axis_used[axis[i]]) {
+            continue;
+        }
+        axis_new[ii] = axis[i];
+        axis_used[axis[i]] = true;
+        ii++;
+    }
+
+      // Flip axis
+//    for (int i = 0; i < ii; ++i) {
+//        axis_new[i] = a->dtshape->ndim - 1 - axis_new[i];
+//    }
+
+    // Start reductions
+    iarray_container_t *c = NULL;
+    for (int i = 0; i < ii; ++i) {
+        if (i == ii - 1) {
+            iarray_reduce(ctx, a, func, axis_new[i], b);
+        } else {
+            iarray_reduce(ctx, a, func, axis_new[i], &c);
+        }
+        a = c;
+        for (int j = i + 1; j < ii; ++j) {
+            if (axis_new[j] > axis_new[i]) {
+                axis_new[j]--;
+            }
+        }
+    }
+    iarray_container_free(ctx, &c);
 
     return INA_SUCCESS;
 }

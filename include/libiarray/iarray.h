@@ -45,6 +45,7 @@
 #define IARRAY_ES_ITERSHAPE (INA_ES_USER_DEFINED + 20)
 #define IARRAY_ES_NCORES (INA_ES_USER_DEFINED + 21)
 #define IARRAY_ES_CACHE_SIZES (INA_ES_USER_DEFINED + 22)
+#define IARRAY_ES_AXIS (INA_ES_USER_DEFINED + 23)
 
 
 #define IARRAY_ERR_EMPTY_CONTAINER (INA_ERR_EMPTY | IARRAY_ES_CONTAINER)
@@ -58,6 +59,7 @@
 #define IARRAY_ERR_INVALID_BLOCKSHAPE (INA_ERR_INVALID | IARRAY_ES_BLOCKSHAPE)
 #define IARRAY_ERR_INVALID_ITERSHAPE (INA_ERR_INVALID | IARRAY_ES_ITERSHAPE)
 #define IARRAY_ERR_INVALID_NDIM (INA_ERR_INVALID | IARRAY_ES_NDIM)
+#define IARRAY_ERR_INVALID_AXIS (INA_ERR_INVALID | IARRAY_ES_AXIS)
 
 #define IARRAY_ERR_INVALID_RNG_METHOD (INA_ERR_INVALID | IARRAY_ES_RNG_METHOD)
 #define IARRAY_ERR_INVALID_RAND_METHOD (INA_ERR_INVALID | IARRAY_ES_RAND_METHOD)
@@ -581,6 +583,13 @@ INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
                                 iarray_reduce_func_t func,
                                 int8_t axis,
                                 iarray_container_t **b);
+
+INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
+                                      iarray_container_t *a,
+                                      iarray_reduce_func_t func,
+                                      int8_t naxis,
+                                      int8_t *axis,
+                                      iarray_container_t **b);
 
 /* linear algebra */
 INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
