@@ -514,6 +514,10 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
                                         iarray_container_t *container,
                                         char *filename);
 
+INA_API(ina_rc_t) iarray_squeeze_index(iarray_context_t *ctx,
+                                       iarray_container_t *container,
+                                       bool *index);
+
 INA_API(ina_rc_t) iarray_squeeze(iarray_context_t *ctx,
                                  iarray_container_t *container);
 
