@@ -16,25 +16,25 @@
 
 struct iarray_reduce_function_s {
     void (*init)(void *, void *);
-    void (*reduction)(void *, int64_t, void *, int64_t, int64_t, void *);
+    void (*reduction)(void *, void *, int64_t, int64_t, void *);
     void (*finish)(void *, void *);
 };
 
 
 #define CAST_I (void (*)(void *, void *))
-#define CAST_R (void (*)(void *, int64_t, void *, int64_t, int64_t, void *))
+#define CAST_R (void (*)(void *, void *, int64_t, int64_t, void *))
 #define CAST_F (void (*)(void *, void *))
 
 #define DPARAMS_I double *res, void *user_data
 
-#define DPARAMS_R double *data0, int64_t strides0, \
+#define DPARAMS_R double *data0, \
                   double *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 
 #define DPARAMS_F double *res, void *user_data
 
 #define FPARAMS_I float *res, void *user_data
-#define FPARAMS_R float *data0, int64_t strides0, \
+#define FPARAMS_R float *data0, \
                   float *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 #define FPARAMS_F float *res, void *user_data
@@ -43,22 +43,20 @@ struct iarray_reduce_function_s {
 /* SUM REDUCTION */
 
 #define SUM_I \
-        INA_UNUSED(user_data); \
-        *res = 0;
-
-#define SUM_R \
     INA_UNUSED(user_data); \
-    for (int i = 0; i < nelem; ++i) { \
-        *data0 = *data0 + *data1; \
-        data1 += strides1; \
-    }
+    *res = 0;
+
+#define SUM_R(func) \
+    INA_UNUSED(user_data); \
+    *data0 += func(nelem, data1, strides1);
 
 #define SUM_F \
-    INA_UNUSED(user_data); \
-    ;
+    INA_UNUSED(res); \
+    INA_UNUSED(user_data);
+
 
 static void dsum_ini(DPARAMS_I) { SUM_I }
-static void dsum_red(DPARAMS_R) { SUM_R }
+static void dsum_red(DPARAMS_R) { SUM_R(cblas_dasum); }
 static void dsum_fin(DPARAMS_F) { SUM_F }
 
 static iarray_reduce_function_t DSUM = {
@@ -68,7 +66,7 @@ static iarray_reduce_function_t DSUM = {
 };
 
 static void fsum_ini(FPARAMS_I) { SUM_I }
-static void fsum_red(FPARAMS_R) { SUM_R }
+static void fsum_red(FPARAMS_R) { SUM_R(cblas_sasum); }
 static void fsum_fin(FPARAMS_F) { SUM_F }
 
 static iarray_reduce_function_t FSUM = {
@@ -92,8 +90,9 @@ static iarray_reduce_function_t FSUM = {
     }
 
 #define PROD_F \
-    INA_UNUSED(user_data); \
-    ;
+    INA_UNUSED(res); \
+    INA_UNUSED(user_data);
+
 
 static void dprod_ini(DPARAMS_I) { PROD_I }
 static void dprod_red(DPARAMS_R) { PROD_R }
@@ -132,8 +131,8 @@ static iarray_reduce_function_t FPROD = {
     }
 
 #define MAX_F \
-    INA_UNUSED(user_data); \
-    ;
+    INA_UNUSED(res); \
+    INA_UNUSED(user_data);
 
 static void dmax_ini(DPARAMS_I) { MAX_I }
 static void dmax_red(DPARAMS_R) { MAX_R }
@@ -172,8 +171,8 @@ static iarray_reduce_function_t FMAX = {
     }
 
 #define MIN_F \
-    INA_UNUSED(user_data); \
-    ;
+    INA_UNUSED(res); \
+    INA_UNUSED(user_data);
 
 static void dmin_ini(DPARAMS_I) { MIN_I }
 static void dmin_red(DPARAMS_R) { MIN_R }
@@ -201,12 +200,8 @@ static iarray_reduce_function_t FMIN = {
     INA_UNUSED(user_data); \
     *res = 0;
 
-#define MEAN_R \
-    INA_UNUSED(user_data); \
-     for (int i = 0; i < nelem; ++i) { \
-        *data0 = *data0 + *data1; \
-        data1 += strides1; \
-    }
+#define MEAN_R(func) \
+    *data0 += func(nelem, data1, strides1);
 
 typedef struct user_data_s {
     double inv_nelem;
@@ -218,7 +213,7 @@ typedef struct user_data_s {
     *res = *res * u_data->inv_nelem;
 
 static void dmean_ini(DPARAMS_I) { MEAN_I }
-static void dmean_red(DPARAMS_R) { MEAN_R }
+static void dmean_red(DPARAMS_R) { MEAN_R(cblas_dasum) }
 static void dmean_fin(DPARAMS_F) { MEAN_F }
 
 static iarray_reduce_function_t DMEAN = {
@@ -228,7 +223,7 @@ static iarray_reduce_function_t DMEAN = {
 };
 
 static void fmean_ini(FPARAMS_I) { MEAN_I }
-static void fmean_red(FPARAMS_R) { MEAN_R }
+static void fmean_red(FPARAMS_R) { MEAN_R(cblas_sasum) }
 static void fmean_fin(FPARAMS_F) { MEAN_F }
 
 static iarray_reduce_function_t FMEAN = {

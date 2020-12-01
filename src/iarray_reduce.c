@@ -225,6 +225,9 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
             if (vector_nelems2 < vector_nelems) {
                 vector_nelems = vector_nelems2;
             }
+            if (vector_nelems < 0) {
+                vector_nelems = 0;
+            }
 
             dout = (double *) pparams->out;
             fout = (float *) pparams->out;
@@ -264,11 +267,11 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
 
                 switch (rparams->result->dtshape->dtype) {
                     case IARRAY_DATA_TYPE_DOUBLE:
-                        rparams->ufunc->reduction(dout, 0, dblock, strides[rparams->axis],
+                        rparams->ufunc->reduction(dout, dblock, strides[rparams->axis],
                                                   vector_nelems, &user_data);
                         break;
                     case IARRAY_DATA_TYPE_FLOAT:
-                        rparams->ufunc->reduction(fout, 0, fblock, strides[rparams->axis],
+                        rparams->ufunc->reduction(fout, fblock, strides[rparams->axis],
                                                   vector_nelems, &user_data);
                         break;
                     default:
