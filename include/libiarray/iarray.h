@@ -276,6 +276,8 @@ static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = {
 INA_API(ina_rc_t) iarray_init(void);
 INA_API(void) iarray_destroy(void);
 
+INA_API(const char *) iarray_err_strerror(ina_rc_t error);
+
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx);
 INA_API(void) iarray_context_free(iarray_context_t **ctx);
 
