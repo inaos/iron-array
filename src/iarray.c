@@ -112,6 +112,12 @@ INA_API(void) iarray_destroy()
     _blosc_inited = 0;
 }
 
+
+INA_API(const char *) iarray_err_strerror(ina_rc_t error) {
+    return ina_err_strerror(error);
+}
+
+
 // Return the number of (logical) cores in CPU
 INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores)
 {
