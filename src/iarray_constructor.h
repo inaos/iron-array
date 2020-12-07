@@ -121,7 +121,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     IARRAY_RETURN_IF_FAILED(iarray_create_caterva_params(dtshape, &cat_params));
 
     caterva_storage_t cat_storage = {0};
-   IARRAY_RETURN_IF_FAILED( iarray_create_caterva_storage(dtshape, storage, &cat_storage));
+    IARRAY_RETURN_IF_FAILED( iarray_create_caterva_storage(dtshape, storage, &cat_storage));
 
     IARRAY_ERR_CATERVA(caterva_array_empty(cat_ctx, &cat_params, &cat_storage, &(*c)->catarr));
 
