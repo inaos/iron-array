@@ -310,6 +310,23 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         IARRAY_ERR_CATERVA(caterva_array_free(cat_ctx, &(*container)->catarr));
 
         IARRAY_ERR_CATERVA(caterva_array_get_slice(cat_ctx, src->catarr, start_, stop_, &cat_storage, &(*container)->catarr));
+
+        if ((*container)->catarr->storage == CATERVA_STORAGE_BLOSC) {
+            uint8_t *smeta;
+            int32_t smeta_len = serialize_meta((*container)->dtshape->dtype, &smeta);
+            if (smeta_len < 0) {
+                IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
+                return INA_ERROR(INA_ERR_FAILED);
+            }
+            // And store it in iarray metalayer
+            if (blosc2_add_metalayer((*container)->catarr->sc, "iarray", smeta, (uint32_t)
+            smeta_len) < 0) {
+                IARRAY_TRACE1(iarray.error, "Error adding a metalayer to blosc");
+                return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+            }
+            free(smeta);
+        }
+
         IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
     }
 
