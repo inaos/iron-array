@@ -300,32 +300,24 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape, storage, flags, container));
 
         caterva_config_t cfg = {0};
-        IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
+        IARRAY_RETURN_IF_FAILED(
+                iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
         caterva_context_t *cat_ctx;
         IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
 
         caterva_storage_t cat_storage = {0};
         IARRAY_RETURN_IF_FAILED(iarray_create_caterva_storage(&dtshape, storage, &cat_storage));
-
+        if ((*container)->catarr->storage == CATERVA_STORAGE_BLOSC) {
+            cat_storage.properties.blosc.nmetalayers = 1;
+            cat_storage.properties.blosc.metalayers[0].name = "iarray";
+            uint8_t *smeta;
+            int32_t smeta_len = serialize_meta((*container)->dtshape->dtype, &smeta);
+            cat_storage.properties.blosc.metalayers[0].sdata = smeta;
+            cat_storage.properties.blosc.metalayers[0].size = smeta_len;
+        }
         IARRAY_ERR_CATERVA(caterva_array_free(cat_ctx, &(*container)->catarr));
 
         IARRAY_ERR_CATERVA(caterva_array_get_slice(cat_ctx, src->catarr, start_, stop_, &cat_storage, &(*container)->catarr));
-
-        if ((*container)->catarr->storage == CATERVA_STORAGE_BLOSC) {
-            uint8_t *smeta;
-            int32_t smeta_len = serialize_meta((*container)->dtshape->dtype, &smeta);
-            if (smeta_len < 0) {
-                IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
-                return INA_ERROR(INA_ERR_FAILED);
-            }
-            // And store it in iarray metalayer
-            if (blosc2_add_metalayer((*container)->catarr->sc, "iarray", smeta, (uint32_t)
-            smeta_len) < 0) {
-                IARRAY_TRACE1(iarray.error, "Error adding a metalayer to blosc");
-                return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
-            }
-            free(smeta);
-        }
 
         IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
     }
