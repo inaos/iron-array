@@ -526,7 +526,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     // Initialize the typesize for each variable
     for (int nvar = 0; nvar < nvars; nvar++) {
         iarray_container_t *var = e->vars[nvar].c;
-        expr_pparams.input_typesizes[nvar] = var->catarr->sc->typesize;
+        expr_pparams.input_typesizes[nvar] = (int32_t) var->catarr->itemsize;
     }
 
     // Determine the class of each container
