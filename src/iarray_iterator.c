@@ -296,6 +296,9 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
         }
     }
 
+    // TODO: Remove this by checking whether padding chunks are going to be used (using a param)
+    (*itr)->contiguous = false;
+
     // Check if to alloc a block is needed
     if (!(*itr)->contiguous) {
         if (!external_buffer) {
