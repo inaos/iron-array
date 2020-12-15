@@ -40,7 +40,7 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, i
 
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &xdtshape, size, start, stop, &store, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &xdtshape, start, stop, &store, 0, &c_x));
 
     // Assert iterator reading it
 
