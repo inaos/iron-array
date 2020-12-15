@@ -262,7 +262,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
     }
 
     for (int i = 0; i < src->dtshape->ndim; ++i) {
-        if (start_[i] >= stop_[i]) {
+        if (start_[i] > stop_[i]) {
             IARRAY_TRACE1(iarray.error, "Start is bigger than stop");
             return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }
