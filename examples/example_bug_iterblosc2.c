@@ -59,7 +59,7 @@ int main(void)
     iarray_container_t* c_x;
     iarray_container_t* c_y;
     iarray_arange(ctx, &dtshape, 0, (double) nelem, 1, &store, 0, &c_x);
-    iarray_linspace(ctx, &dtshape, nelem, 0.1, .1, &store, 0, &c_y);
+    iarray_linspace(ctx, &dtshape, 0.1, .1, &store, 0, &c_y);
 
     iarray_expression_t* e;
     iarray_expr_new(ctx, &e);

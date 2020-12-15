@@ -117,7 +117,6 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
                                   iarray_dtshape_t *dtshape,
-                                  int64_t nelem,
                                   double start,
                                   double stop,
                                   iarray_storage_t *storage,
@@ -133,11 +132,6 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
     double contsize = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {
         contsize *= dtshape->shape[i];
-    }
-
-    if (contsize != nelem) {
-        IARRAY_TRACE1(iarray.error, "The nelem parameter is invalid");
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, storage, flags, container));

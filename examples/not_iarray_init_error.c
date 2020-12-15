@@ -52,7 +52,7 @@ int main(void)
     }
 
     iarray_container_t *data;
-    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape, shape[0], 0, 1, &store, 0, &data));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape, 0, 1, &store, 0, &data));
 
     iarray_expression_t* e;
     iarray_expr_new(ctx, &e);

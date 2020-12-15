@@ -363,9 +363,7 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
                                   iarray_dtshape_t *dtshape,
-                                  int64_t nelem,
-                                  double start,
-                                  double stop,
+                                  double start, double stop,
                                   iarray_storage_t *storage,
                                   int flags,
                                   iarray_container_t **container);

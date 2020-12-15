@@ -102,9 +102,9 @@ int main(void) {
     iarray_container_t *c_y;
     iarray_container_t *c_z;
 
-    iarray_linspace(ctx, &dtshape, nelem, 0, 1, &xstorage, 0, &c_x);
-    iarray_linspace(ctx, &dtshape, nelem, 0, 1, &ystorage, 0, &c_y);
-    iarray_linspace(ctx, &dtshape, nelem, 0, 1, &zstorage, 0, &c_z);
+    iarray_linspace(ctx, &dtshape, 0, 1, &xstorage, 0, &c_x);
+    iarray_linspace(ctx, &dtshape, 0, 1, &ystorage, 0, &c_y);
+    iarray_linspace(ctx, &dtshape, 0, 1, &zstorage, 0, &c_z);
 
 
     iarray_expression_t *e;
