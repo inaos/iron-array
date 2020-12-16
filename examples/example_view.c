@@ -58,7 +58,7 @@ int main(void)
     IARRAY_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     int64_t start[] = {2, 3};
-    int64_t stop[] = {9, 7};
+    int64_t stop[] = {2, 7};
 
     iarray_storage_t store_out;
     store_out.backend = IARRAY_STORAGE_PLAINBUFFER;

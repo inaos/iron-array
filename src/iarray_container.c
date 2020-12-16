@@ -375,6 +375,14 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                                           void *buffer,
                                           int64_t buflen)
 {
+    int64_t size = 1;
+    for (int i = 0; i < container->dtshape->ndim; ++i) {
+        size *= container->dtshape->shape[i];
+    }
+    if (size == 0) {
+        return INA_SUCCESS;
+    }
+
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
