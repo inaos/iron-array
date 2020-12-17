@@ -507,7 +507,10 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx,
                                         char *filename,
-                                        bool enforce_frame,
+                                        iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_container_open(iarray_context_t *ctx,
+                                        char *filename,
                                         iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
