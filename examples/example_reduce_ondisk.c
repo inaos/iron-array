@@ -62,7 +62,7 @@ int main(void) {
     iarray_random_ctx_new(ctx, 0, IARRAY_RANDOM_RNG_MERSENNE_TWISTER, &rnd_ctx);
 
     iarray_container_t *c_x;
-    if (!INA_SUCCEED(iarray_container_load(ctx, "ia_reduce.iarray-dev", false, &c_x))) {
+    if (!INA_SUCCEED(iarray_container_open(ctx, "ia_reduce.iarray-dev", &c_x))) {
         IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rnd_ctx,
                                                                     IARRAY_RANDOM_DIST_PARAM_MU,
                                                                     0));

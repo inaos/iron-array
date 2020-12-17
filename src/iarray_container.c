@@ -116,8 +116,8 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
 }
 
 
-INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename, bool enforce_frame,
-                                        iarray_container_t **container)
+ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *filename, bool enforce_frame,
+                                iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(filename);
@@ -199,6 +199,21 @@ INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename, b
     free(smeta);
 
     return INA_SUCCESS;
+}
+
+
+INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename,
+                                        iarray_container_t **container)
+{
+    return _iarray_container_load(ctx, filename, true, container);
+}
+
+
+INA_API(ina_rc_t) iarray_container_open(iarray_context_t *ctx,
+                                        char *filename,
+                                        iarray_container_t **container)
+{
+    return _iarray_container_load(ctx, filename, false, container);
 }
 
 

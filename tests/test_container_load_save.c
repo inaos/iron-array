@@ -72,7 +72,7 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
     }
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_container_load(ctx, filename, true, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_load(ctx, filename, &c_y));
 
     INA_TEST_ASSERT_SUCCEED(iarray_container_almost_equal(c_x, c_y, 1e-12));
 
