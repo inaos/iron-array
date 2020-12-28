@@ -34,7 +34,7 @@ int main(void) {
     iarray_context_new(&cfg, &ctx);
 
 
-    int64_t shape[] = {100, 100, 100, 100};
+    int64_t shape[] = {100, 100, 100};
     int8_t ndim = 3;
     int8_t naxis = 3;
     int8_t axis[] = {1, 1, 0};
@@ -65,8 +65,8 @@ int main(void) {
     iarray_container_t *c_x;
     IARRAY_RETURN_IF_FAILED(iarray_ones(ctx, &dtshape, &xstorage, 0, &c_x));
 
-    int32_t outchunkshape[] = {0};
-    int32_t outblockshape[] = {0};
+    int32_t outchunkshape[] = {40};
+    int32_t outblockshape[] = {14};
 
     iarray_storage_t outstorage;
     outstorage.backend = IARRAY_STORAGE_BLOSC;
@@ -82,7 +82,7 @@ int main(void) {
     double *buff;
 
     blosc_set_timestamp(&t0);
-    IARRAY_RETURN_IF_FAILED(iarray_reduce_multi(ctx, c_x, func, naxis, axis, &c_out));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce_multi(ctx, c_x, func, naxis, axis, &outstorage, &c_out));
 
     blosc_set_timestamp(&t1);
     printf("time 1: %f \n", blosc_elapsed_secs(t0, t1));
