@@ -432,12 +432,12 @@ INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
-                                iarray_container_t *a,
-                                iarray_reduce_func_t func,
-                                int8_t axis,
-                                iarray_storage_t *storage,
-                                iarray_container_t **b) {
+ina_rc_t _iarray_reduce(iarray_context_t *ctx,
+                        iarray_container_t *a,
+                        iarray_reduce_func_t func,
+                        int8_t axis,
+                        iarray_storage_t *storage,
+                        iarray_container_t **b) {
     void *reduce_funtion = NULL;
 
     switch (func) {
@@ -467,55 +467,12 @@ INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
                              &FMEAN;
             break;
     }
-    iarray_storage_t storage_red;
-    storage_red.backend = IARRAY_STORAGE_BLOSC;
-    storage_red.enforce_frame = storage->enforce_frame;
-    storage_red.filename = storage->filename != NULL ? "iarray_red_temp.iarray" : NULL;
-    for (int j = 0; j < a->dtshape->ndim; ++j) {
-        if (j < axis) {
-            storage_red.chunkshape[j] = a->storage->chunkshape[j];
-            storage_red.blockshape[j] = a->storage->blockshape[j];
-        } else {
-            storage_red.chunkshape[j] = a->storage->chunkshape[j + 1];
-            storage_red.blockshape[j] = a->storage->blockshape[j + 1];
-        }
-    }
-    iarray_container_t *c;
-    IARRAY_RETURN_IF_FAILED(_iarray_reduce_udf(ctx, a, reduce_funtion, axis, &storage_red, &c));
 
-    // Check if a copy is needed
-    bool copy = false;
-    for (int i = 0; i < c->dtshape->ndim; ++i) {
-        if (storage->chunkshape[i] != c->storage->chunkshape[i]) {
-            copy = true;
-            break;
-        }
-        if (storage->blockshape[i] != c->storage->blockshape[i]) {
-            copy = true;
-            break;
-        }
-    }
-
-    if (copy) {
-        IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c, false, storage, 0, b));
-        iarray_container_free(ctx, &c);
-        if (storage->filename != NULL) {
-            remove("iarray_red_temp.iarray");
-            remove("iarray_red_temp2.iarray");
-        }
-    } else {
-        if (storage->filename != NULL) {
-            iarray_container_free(ctx, &c);
-            rename("iarray_red_temp.iarray", storage->filename);
-            remove("iarray_red_temp2.iarray");
-            IARRAY_RETURN_IF_FAILED(iarray_container_open(ctx, storage->filename, b));
-        } else {
-            *b = c;
-        }
-    }
+    IARRAY_RETURN_IF_FAILED(_iarray_reduce_udf(ctx, a, reduce_funtion, axis, storage, b));
 
     return INA_SUCCESS;
 }
+
 
 INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
                                       iarray_container_t *a,
@@ -576,7 +533,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
             }
         }
 
-        IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, a, func, axis_new[i], &storage_red, &c));
+        IARRAY_RETURN_IF_FAILED(_iarray_reduce(ctx, a, func, axis_new[i], &storage_red, &c));
 
         if (i != 0) {
             iarray_container_free(ctx, &a);
@@ -621,5 +578,20 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     }
 
 
+    return INA_SUCCESS;
+}
+
+
+INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
+                                iarray_container_t *a,
+                                iarray_reduce_func_t func,
+                                int8_t axis,
+                                iarray_storage_t *storage,
+                                iarray_container_t **b) {
+
+    int8_t axis_[] = {0};
+    axis_[0] = axis;
+
+    IARRAY_RETURN_IF_FAILED(iarray_reduce_multi(ctx, a, func, 1, axis_, storage, b));
     return INA_SUCCESS;
 }
