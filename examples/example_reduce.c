@@ -63,7 +63,7 @@ int main(void) {
     }
 
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_arange(ctx, &dtshape, &xstorage, 0, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_ones(ctx, &dtshape, &xstorage, 0, &c_x));
 
     int32_t outchunkshape[] = {16};
     int32_t outblockshape[] = {16};
