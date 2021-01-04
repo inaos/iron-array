@@ -34,10 +34,10 @@ int main(void) {
     iarray_context_new(&cfg, &ctx);
 
 
-    int64_t shape[] = {100, 100, 100, 100};
-    int8_t ndim = 3;
+    int64_t shape[] = {20, 20, 10, 14};
+    int8_t ndim = 4;
     int8_t naxis = 3;
-    int8_t axis[] = {1, 1, 0};
+    int8_t axis[] = {2, 3, 1};
     iarray_reduce_func_t func = IARRAY_REDUCE_SUM;
 
     iarray_dtshape_t dtshape;
@@ -50,8 +50,8 @@ int main(void) {
         nelem *= shape[i];
     }
 
-    int32_t xchunkshape[] = {40, 30, 40};
-    int32_t xblockshape[] = {21, 10, 14};
+    int32_t xchunkshape[] = {16, 8, 8, 8};
+    int32_t xblockshape[] = {16, 8, 8, 8};
 
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
@@ -65,8 +65,8 @@ int main(void) {
     iarray_container_t *c_x;
     IARRAY_RETURN_IF_FAILED(iarray_ones(ctx, &dtshape, &xstorage, 0, &c_x));
 
-    int32_t outchunkshape[] = {0};
-    int32_t outblockshape[] = {0};
+    int32_t outchunkshape[] = {16};
+    int32_t outblockshape[] = {16};
 
     iarray_storage_t outstorage;
     outstorage.backend = IARRAY_STORAGE_BLOSC;
@@ -82,7 +82,7 @@ int main(void) {
     double *buff;
 
     blosc_set_timestamp(&t0);
-    IARRAY_RETURN_IF_FAILED(iarray_reduce_multi(ctx, c_x, func, naxis, axis, &c_out));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce_multi(ctx, c_x, func, naxis, axis, &outstorage, &c_out));
 
     blosc_set_timestamp(&t1);
     printf("time 1: %f \n", blosc_elapsed_secs(t0, t1));
