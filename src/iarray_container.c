@@ -779,8 +779,6 @@ INA_API(ina_rc_t) iarray_squeeze_index(iarray_context_t *ctx,
                 inc ++;
             } else {
                 container->dtshape->shape[i - inc] = container->dtshape->shape[i];
-                container->storage->chunkshape[i - inc] = container->storage->chunkshape[i];
-                container->storage->blockshape[i - inc] = container->storage->blockshape[i];
                 container->auxshape->index[i - inc] = (uint8_t) i;
             }
         }
