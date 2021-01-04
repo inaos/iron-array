@@ -141,8 +141,8 @@ INA_TEST_FIXTURE(reduce_multi, 3_d_2) {
     int8_t naxis = 3;
     int8_t axis[] = {0, 2, 1};
 
-    int64_t dest_cshape[] = {};
-    int64_t dest_bshape[] = {};
+    int64_t dest_cshape[] = {0};  // {} not compile on Windows
+    int64_t dest_bshape[] = {0};  // {} not compile on Windows
     bool dest_frame = false;
     char *dest_filename = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
