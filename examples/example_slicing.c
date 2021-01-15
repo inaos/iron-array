@@ -60,9 +60,9 @@ int main(void)
     // Create out container (empty)
     int8_t outndim = 3;
     int64_t start[] = {10, 20, 30};
-    int64_t stop[] = {40, 21, 80};
-    int64_t outcshape[] = {12, 1, 20};
-    int64_t outbshape[] = {5, 1, 10};
+    int64_t stop[] = {40, 20, 80};
+    int64_t outcshape[] = {12, 0, 20};
+    int64_t outbshape[] = {5, 0, 10};
 
     iarray_storage_t store_out;
     store_out.backend = IARRAY_STORAGE_BLOSC;

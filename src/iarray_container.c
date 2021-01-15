@@ -105,7 +105,7 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
         }
         free(frame);
     } else {
-        if (container->catarr->sc->frame->fname != NULL) {
+        if (container->catarr->sc->frame->urlpath != NULL) {
             IARRAY_TRACE1(iarray.error, "Container is already on disk");
             return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
         } else {
