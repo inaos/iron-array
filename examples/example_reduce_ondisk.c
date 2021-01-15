@@ -62,7 +62,7 @@ int main(void) {
     iarray_random_ctx_new(ctx, 0, IARRAY_RANDOM_RNG_MERSENNE_TWISTER, &rnd_ctx);
 
     iarray_container_t *c_x;
-    if (!INA_SUCCEED(iarray_container_load(ctx, "ia_reduce.iarray-dev", false, &c_x))) {
+    if (!INA_SUCCEED(iarray_container_open(ctx, "ia_reduce.iarray-dev", &c_x))) {
         IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rnd_ctx,
                                                                     IARRAY_RANDOM_DIST_PARAM_MU,
                                                                     0));
@@ -82,10 +82,22 @@ int main(void) {
 
     iarray_to_buffer(ctx, c_x, buff, buff_size);
 
+    int32_t outchunkshape[] = {200};
+    int32_t outblockshape[] = {10};
+
+    iarray_storage_t outstorage;
+    outstorage.backend = IARRAY_STORAGE_BLOSC;
+    outstorage.enforce_frame = false;
+    outstorage.filename = NULL;
+    for (int i = 0; i < ndim; ++i) {
+        outstorage.chunkshape[i] = outchunkshape[i];
+        outstorage.blockshape[i] = outblockshape[i];
+    }
+
     blosc_timestamp_t t0;
     blosc_set_timestamp(&t0);
     iarray_container_t *c_out;
-    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, IARRAY_REDUCE_SUM, axis, &c_out));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, IARRAY_REDUCE_SUM, axis, &outstorage, &c_out));
     blosc_timestamp_t t1;
     blosc_set_timestamp(&t1);
     printf("time: %f s\n", blosc_elapsed_secs(t0, t1));

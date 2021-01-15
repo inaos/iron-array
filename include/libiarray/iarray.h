@@ -507,7 +507,10 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx,
                                         char *filename,
-                                        bool enforce_frame,
+                                        iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_container_open(iarray_context_t *ctx,
+                                        char *filename,
                                         iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
@@ -582,6 +585,7 @@ INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
                                 iarray_container_t *a,
                                 iarray_reduce_func_t func,
                                 int8_t axis,
+                                iarray_storage_t *storage,
                                 iarray_container_t **b);
 
 INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
@@ -589,6 +593,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
                                       iarray_reduce_func_t func,
                                       int8_t naxis,
                                       int8_t *axis,
+                                      iarray_storage_t *storage,
                                       iarray_container_t **b);
 
 /* linear algebra */
