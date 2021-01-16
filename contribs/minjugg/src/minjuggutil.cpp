@@ -1,11 +1,24 @@
+/*
+ * Copyright INAOS GmbH, Thalwil, 2019-2021.
+ * Copyright Francesc Alted, 2019-2021.
+ *
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information of INAOS GmbH
+ * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * Information and shall use it only in accordance with the terms of the license agreement.
+ *
+ */
+
 #include "minjuggutil.h"
 #include <cstdlib>
 
 #include <llvm-c/Transforms/PassManagerBuilder.h>
-#include "llvm/Analysis/TargetLibraryInfo.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include <llvm/Analysis/TargetLibraryInfo.h>
+#include <llvm/Transforms/IPO/PassManagerBuilder.h>
+#include <llvm/Support/CommandLine.h>
+#include <llvm/Support/Host.h>
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
 
 using namespace llvm;
 
@@ -21,12 +34,13 @@ extern "C" int jug_util_set_svml_vector_library()
     char *envvar = getenv("DISABLE_SVML");  // useful for debugging purposes
     int nargs = (envvar != NULL) ? 1 : 2;
     llvm::cl::ParseCommandLineOptions(nargs, argv);
+
     return 0;
 }
 
 extern "C" int jug_utils_enable_loop_vectorize(LLVMPassManagerBuilderRef PMB)
 {
-    llvm::PassManagerBuilder *pmb = unwrap(PMB);
+    llvm::PassManagerBuilder *pmb = llvm::unwrap(PMB);
     pmb->LoopVectorize = 1;
     return 0;
 }
