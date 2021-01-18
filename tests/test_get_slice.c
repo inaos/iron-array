@@ -105,8 +105,8 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_out);
 
-    ina_mem_free(buffer_x);
-    ina_mem_free(bufdes);
+    INA_MEM_FREE_SAFE(buffer_x);
+    INA_MEM_FREE_SAFE(bufdes);
     return INA_SUCCESS;
 }
 
@@ -129,6 +129,7 @@ INA_TEST_TEARDOWN(get_slice) {
     iarray_destroy();
 }
 
+/*
 INA_TEST_FIXTURE(get_slice, 2_d_p) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
@@ -285,6 +286,24 @@ INA_TEST_FIXTURE(get_slice, 7_f) {
                       7538451, 7538452, 7538461, 7538462, 7538551, 7538552, 7538561, 7538562,
                       7538651, 7538652, 7538661, 7538662, 7548451, 7548452, 7548461, 7548462,
                       7548551, 7548552, 7548561, 7548562, 7548651, 7548652, 7548661, 7548662};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                  cshape_dest, bshape_dest, start, stop, result));
+}
+*/
+INA_TEST_FIXTURE(get_slice, 3_f_2) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    int32_t type_size = sizeof(float);
+
+    const int8_t ndim = 3;
+    int64_t shape[] = {10, 10, 10};
+    int64_t cshape[] = {5, 4, 5};
+    int64_t bshape[] = {2, 2, 1};
+    int64_t start[] = {0, 5, 5};
+    int64_t stop[] = {0, 10, 5};
+    int64_t cshape_dest[] = {0, 4, 0};
+    int64_t bshape_dest[] = {0, 2, 0};
+    float result[] = {0}; // Fix windows
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   cshape_dest, bshape_dest, start, stop, result));
