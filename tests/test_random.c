@@ -27,7 +27,8 @@ static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx,
 
     iarray_storage_t xstorage;
     iarray_get_storage(ctx, c_y, &xstorage);
-    
+    xstorage.filename = NULL;
+
     iarray_container_t *c_x;
     INA_TEST_ASSERT_SUCCEED(random_fun(ctx, &xdtshape, rnd_ctx, &xstorage, 0, &c_x));
 

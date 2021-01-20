@@ -105,7 +105,7 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
         }
         free(frame);
     } else {
-        if (container->catarr->sc->frame->fname != NULL) {
+        if (container->catarr->sc->frame->urlpath != NULL) {
             IARRAY_TRACE1(iarray.error, "Container is already on disk");
             return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
         } else {
@@ -277,7 +277,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
     }
 
     for (int i = 0; i < src->dtshape->ndim; ++i) {
-        if (start_[i] >= stop_[i]) {
+        if (start_[i] > stop_[i]) {
             IARRAY_TRACE1(iarray.error, "Start is bigger than stop");
             return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }
@@ -390,6 +390,14 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
                                           void *buffer,
                                           int64_t buflen)
 {
+    int64_t size = 1;
+    for (int i = 0; i < container->dtshape->ndim; ++i) {
+        size *= container->dtshape->shape[i];
+    }
+    if (size == 0) {
+        return INA_SUCCESS;
+    }
+
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
@@ -674,7 +682,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
     }
 
     for (int i = 0; i < container->dtshape->ndim; ++i) {
-        if (start_[i] >= stop_[i]) {
+        if (start_[i] > stop_[i]) {
             IARRAY_TRACE1(iarray.error, "Start is bigger than stop");
             return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }

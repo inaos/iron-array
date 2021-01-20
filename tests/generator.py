@@ -25,17 +25,17 @@ def create_files(method, dtype, **kwargs):
     size = int(np.prod(shape))
     chunkshape = (100 * 1000,)
     blockshape = (10 * 1000,)
-    cparams = dict(clevel=5, clib=ia.LZ4)
 
-    if kwargs:
-        kwargs["size"] = size
-        c = dtype(method(**kwargs))
-    else:
-        c = dtype(method(size))
+    with ia.config(clevel=5, codec=ia.Codecs.LZ4) as cfg:
+        if kwargs:
+            kwargs["size"] = size
+            c = dtype(method(**kwargs))
+        else:
+            c = dtype(method(size))
 
-    storage = ia.Storage(chunkshape, blockshape, create_filename(method, dtype, **kwargs))
+        storage = ia.Storage(chunkshape, blockshape, create_filename(method, dtype, **kwargs))
 
-    ia.numpy2iarray(c, storage=storage, **cparams)
+        ia.numpy2iarray(c, storage=storage, cfg=cfg)
 
 
 # Rand
