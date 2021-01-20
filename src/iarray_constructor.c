@@ -338,14 +338,17 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
                                    void *buffer,
                                    int64_t buflen)
 {
-    INA_VERIFY_NOT_NULL(ctx);
-    INA_VERIFY_NOT_NULL(buffer);
-    INA_VERIFY_NOT_NULL(container);
-
     int64_t size = 1;
     for (int i = 0; i < container->dtshape->ndim; ++i) {
         size *= container->dtshape->shape[i];
     }
+    if (size == 0) {
+        return INA_SUCCESS;
+    }
+
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(buffer);
+    INA_VERIFY_NOT_NULL(container);
 
     switch (container->dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
