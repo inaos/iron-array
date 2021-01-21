@@ -54,6 +54,7 @@ typedef struct iarray_expr_pparams_s {
     int ninputs;  // number of data inputs
     iarray_expr_input_class_t input_class[IARRAY_EXPR_OPERANDS_MAX];  // whether the inputs are compressed or not
     uint8_t* inputs[IARRAY_EXPR_OPERANDS_MAX];  // the data inputs
+    int32_t input_csizes[IARRAY_EXPR_OPERANDS_MAX];  // the compressed size of data inputs
     int32_t input_typesizes[IARRAY_EXPR_OPERANDS_MAX];  // the typesizes for data inputs
     iarray_expression_t *e;
     iarray_iter_write_block_value_t out_value;
@@ -352,7 +353,11 @@ int prefilter_func(blosc2_prefilter_params *pparams)
                 inputs_malloced[i] = true;
                 int64_t nitems = blocksize / typesize;
                 int64_t offset_index = pparams->out_offset / typesize;
-                int64_t rbytes = blosc_getitem(expr_pparams->inputs[i], (int) offset_index, (int) nitems, eval_pparams.inputs[i]);
+                blosc2_dparams dparams = {.nthreads = 1, .schunk = e->vars[i].c->catarr->sc};
+                blosc2_context *dctx = blosc2_create_dctx(dparams);
+                int64_t rbytes = blosc2_getitem_ctx(dctx, expr_pparams->inputs[i], expr_pparams->input_csizes[i],
+                                                    (int) offset_index, (int) nitems, eval_pparams.inputs[i]);
+                blosc2_free_ctx(dctx);
                 if (rbytes != blocksize) {
                     fprintf(stderr, "Read from inputs failed inside pipeline\n");
                     return -1;
@@ -601,7 +606,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         for (int nvar = 0; nvar < nvars; nvar++) {
             if (expr_pparams.input_class[nvar] != IARRAY_EXPR_NEQ) {
                 blosc2_schunk *schunk = e->vars[nvar].c->catarr->sc;
-                int csize = blosc2_schunk_get_chunk(schunk, nchunk, &var_chunks[nvar], &var_needs_free[nvar]);
+                int csize = blosc2_schunk_get_lazychunk(schunk, nchunk, &var_chunks[nvar], &var_needs_free[nvar]);
                 if (csize < 0) {
                     IARRAY_TRACE1(iarray.error, "Error in retrieving chunk from schunk");
                     return INA_ERROR(INA_ERR_NOT_SUPPORTED);
@@ -611,6 +616,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
                     expr_pparams.input_class[nvar] = IARRAY_EXPR_EQ_NCOMP;
                 }
                 expr_pparams.inputs[nvar] = var_chunks[nvar];
+                expr_pparams.input_csizes[nvar] = csize;
             } else {
                 IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_next(iter_var[nvar], NULL, 0));
                 IARRAY_ERR_CATERVA(caterva_blosc_array_repart_chunk((int8_t *) external_buffers[nvar],
