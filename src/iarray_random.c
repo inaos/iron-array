@@ -60,10 +60,8 @@ INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
     }
 
     vslNewStream(&(*rng_ctx)->stream, mkl_rng, seed);
-
     ina_mem_set((*rng_ctx)->dparams, 0, sizeof(double)*(IARRAY_RANDOM_DIST_PARAM_SENTINEL));
     ina_mem_set((*rng_ctx)->fparams, 0, sizeof(float)*(IARRAY_RANDOM_DIST_PARAM_SENTINEL));
-
     return INA_SUCCESS;
 }
 

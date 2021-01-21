@@ -11,7 +11,6 @@
  */
 
 #include <libiarray/iarray.h>
-#include <math.h>
 #include "iarray_private.h"
 
 
@@ -19,6 +18,7 @@ int main(void) {
     iarray_init();
     ina_stopwatch_t *w;
 
+    printf("Start...\n");
     double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
 
@@ -32,9 +32,10 @@ int main(void) {
     iarray_context_new(&cfg, &ctx);
 
 
-    int64_t shape[] = {200, 200};
-    int8_t ndim = 2;
-    int8_t axis = 0;
+    int64_t shape[] = {10, 20, 10, 14};
+    int8_t ndim = 4;
+    int8_t axis[] = {2, 3, 1};
+    int8_t naxis = 3;
 
     iarray_dtshape_t dtshape;
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
@@ -46,12 +47,12 @@ int main(void) {
         nelem *= shape[i];
     }
 
-    int32_t xchunkshape[] = {200, 200};
-    int32_t xblockshape[] = {10, 10};
+    int32_t xchunkshape[] = {10, 20, 10, 14};
+    int32_t xblockshape[] = {10, 20, 10, 14};
 
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
-    xstorage.filename = "ia_reduce.iarray";
+    xstorage.filename = "ia_reduce.iarray-dev";
     xstorage.enforce_frame = true;
     for (int i = 0; i < ndim; ++i) {
         xstorage.chunkshape[i] = xchunkshape[i];
@@ -62,15 +63,14 @@ int main(void) {
     iarray_random_ctx_new(ctx, 0, IARRAY_RANDOM_RNG_MERSENNE_TWISTER, &rnd_ctx);
 
     iarray_container_t *c_x;
-    if (!INA_SUCCEED(iarray_container_open(ctx, "ia_reduce.iarray-dev", &c_x))) {
-        IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rnd_ctx,
-                                                                    IARRAY_RANDOM_DIST_PARAM_MU,
-                                                                    0));
-        IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rnd_ctx,
-                                                                    IARRAY_RANDOM_DIST_PARAM_SIGMA,
-                                                                    1));
-        IARRAY_RETURN_IF_FAILED(iarray_ones(ctx, &dtshape, &xstorage, 0, &c_x));
-    }
+    IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rnd_ctx,
+                                                                IARRAY_RANDOM_DIST_PARAM_MU,
+                                                                0));
+    IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rnd_ctx,
+                                                                IARRAY_RANDOM_DIST_PARAM_SIGMA,
+                                                                1));
+    IARRAY_RETURN_IF_FAILED(iarray_ones(ctx, &dtshape, &xstorage, 0, &c_x));
+
 
     int64_t buff_nitems = 1;
     for (int i = 0; i < ndim; ++i) {
@@ -82,13 +82,13 @@ int main(void) {
 
     iarray_to_buffer(ctx, c_x, buff, buff_size);
 
-    int32_t outchunkshape[] = {200};
-    int32_t outblockshape[] = {10};
+    int32_t outchunkshape[] = {4};
+    int32_t outblockshape[] = {4};
 
     iarray_storage_t outstorage;
     outstorage.backend = IARRAY_STORAGE_BLOSC;
-    outstorage.enforce_frame = false;
-    outstorage.filename = NULL;
+    outstorage.enforce_frame = true;
+    outstorage.filename = "ia_reduce2.iarray-dev";
     for (int i = 0; i < ndim; ++i) {
         outstorage.chunkshape[i] = outchunkshape[i];
         outstorage.blockshape[i] = outblockshape[i];
@@ -97,7 +97,8 @@ int main(void) {
     blosc_timestamp_t t0;
     blosc_set_timestamp(&t0);
     iarray_container_t *c_out;
-    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, IARRAY_REDUCE_SUM, axis, &outstorage, &c_out));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce_multi(ctx, c_x, IARRAY_REDUCE_SUM, naxis,
+                                                axis, &outstorage, &c_out));
     blosc_timestamp_t t1;
     blosc_set_timestamp(&t1);
     printf("time: %f s\n", blosc_elapsed_secs(t0, t1));
@@ -112,7 +113,7 @@ int main(void) {
 
     iarray_random_ctx_free(ctx, &rnd_ctx);
     iarray_context_free(&ctx);
-
+    free(buff);
     INA_STOPWATCH_FREE(&w);
 
     return 0;

@@ -197,7 +197,7 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *filename, bool enfo
     (*container)->transposed = false;
 
     free(smeta);
-
+    caterva_context_free(&cat_ctx);
     return INA_SUCCESS;
 }
 
@@ -333,6 +333,10 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         IARRAY_ERR_CATERVA(caterva_array_free(cat_ctx, &(*container)->catarr));
 
         IARRAY_ERR_CATERVA(caterva_array_get_slice(cat_ctx, src->catarr, start_, stop_, &cat_storage, &(*container)->catarr));
+
+        if ((*container)->catarr->storage == CATERVA_STORAGE_BLOSC) {
+            free(cat_storage.properties.blosc.metalayers[0].sdata);
+        }
 
         IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
     }

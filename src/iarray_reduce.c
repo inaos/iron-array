@@ -487,7 +487,10 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(axis);
     INA_VERIFY_NOT_NULL(b);
 
-    if (naxis > a->dtshape->ndim) {
+    int err_io;
+
+    iarray_container_t *aa = a;
+    if (naxis > aa->dtshape->ndim) {
         return INA_ERROR(IARRAY_ERR_INVALID_AXIS);
     }
 
@@ -497,7 +500,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     // Check if an axis is higher than array dimensions and if an axis is repeated
     int ii = 0;
     for (int i = 0; i < naxis; ++i) {
-        if (axis[i] > a->dtshape->ndim) {
+        if (axis[i] > aa->dtshape->ndim) {
             return INA_ERROR(IARRAY_ERR_INVALID_AXIS);
         } else if (axis_used[axis[i]]) {
             continue;
@@ -513,30 +516,41 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     for (int i = 0; i < ii; ++i) {
         if (i != 0) {
             if (storage->filename != NULL) {
-                rename("iarray_red_temp.iarray", "iarray_red_temp2.iarray");
-                IARRAY_RETURN_IF_FAILED(iarray_container_open(ctx, "iarray_red_temp2.iarray", &a));
+                if (i != 1) {
+                    err_io = remove("iarray_red_temp2.iarray");
+                    if (err_io != 0) {
+                        IARRAY_TRACE1(iarray.tracing, "Invalid io");
+                        return INA_ERROR(INA_ERR_OPERATION_INVALID);
+                    }
+                }
+                err_io = rename("iarray_red_temp.iarray", "iarray_red_temp2.iarray");
+                if (err_io != 0) {
+                    IARRAY_TRACE1(iarray.tracing, "Invalid io");
+                    return INA_ERROR(INA_ERR_OPERATION_INVALID);
+                }
+                IARRAY_RETURN_IF_FAILED(iarray_container_open(ctx, "iarray_red_temp2.iarray", &aa));
             } else {
-                a = c;
+                aa = c;
             }
         }
+
         iarray_storage_t storage_red;
         storage_red.backend = IARRAY_STORAGE_BLOSC;
         storage_red.enforce_frame = storage->enforce_frame;
         storage_red.filename = storage->filename != NULL ? "iarray_red_temp.iarray" : NULL;
-        for (int j = 0; j < a->dtshape->ndim; ++j) {
+        for (int j = 0; j < aa->dtshape->ndim; ++j) {
             if (j < axis_new[i]) {
-                storage_red.chunkshape[j] = a->storage->chunkshape[j];
-                storage_red.blockshape[j] = a->storage->blockshape[j];
+                storage_red.chunkshape[j] = aa->storage->chunkshape[j];
+                storage_red.blockshape[j] = aa->storage->blockshape[j];
             } else {
-                storage_red.chunkshape[j] = a->storage->chunkshape[j + 1];
-                storage_red.blockshape[j] = a->storage->blockshape[j + 1];
+                storage_red.chunkshape[j] = aa->storage->chunkshape[j + 1];
+                storage_red.blockshape[j] = aa->storage->blockshape[j + 1];
             }
         }
 
-        IARRAY_RETURN_IF_FAILED(_iarray_reduce(ctx, a, func, axis_new[i], &storage_red, &c));
-
+        IARRAY_RETURN_IF_FAILED(_iarray_reduce(ctx, aa, func, axis_new[i], &storage_red, &c));
         if (i != 0) {
-            iarray_container_free(ctx, &a);
+            iarray_container_free(ctx, &aa);
         }
 
         for (int j = i + 1; j < ii; ++j) {
@@ -563,14 +577,30 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
         IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c, false, storage, 0, b));
         iarray_container_free(ctx, &c);
         if (storage->filename != NULL) {
-            remove("iarray_red_temp.iarray");
-            remove("iarray_red_temp2.iarray");
+            err_io = remove("iarray_red_temp.iarray");
+            if (err_io != 0) {
+                IARRAY_TRACE1(iarray.tracing, "Invalid io");
+                return INA_ERROR(INA_ERR_OPERATION_INVALID);
+            }
+            err_io = remove("iarray_red_temp2.iarray");
+            if (err_io != 0) {
+                IARRAY_TRACE1(iarray.tracing, "Invalid io");
+                return INA_ERROR(INA_ERR_OPERATION_INVALID);
+            }
         }
     } else {
         if (storage->filename != NULL) {
             iarray_container_free(ctx, &c);
-            rename("iarray_red_temp.iarray", storage->filename);
-            remove("iarray_red_temp2.iarray");
+            err_io = rename("iarray_red_temp.iarray", storage->filename);
+            if (err_io != 0) {
+                IARRAY_TRACE1(iarray.tracing, "Invalid io");
+                return INA_ERROR(INA_ERR_OPERATION_INVALID);
+            }
+            err_io = remove("iarray_red_temp2.iarray");
+            if (err_io != 0) {
+                IARRAY_TRACE1(iarray.tracing, "Invalid io");
+                return INA_ERROR(INA_ERR_OPERATION_INVALID);
+            }
             IARRAY_RETURN_IF_FAILED(iarray_container_open(ctx, storage->filename, b));
         } else {
             *b = c;
