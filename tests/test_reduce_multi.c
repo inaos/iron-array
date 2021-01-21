@@ -33,6 +33,8 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
 
     iarray_storage_t storage = {0};
     storage.backend = IARRAY_STORAGE_BLOSC;
+    storage.enforce_frame = true;
+    storage.filename = "iarray_reduce2.iarray";
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {
             storage.chunkshape[i] = cshape[i];
