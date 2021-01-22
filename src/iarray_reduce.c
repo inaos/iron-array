@@ -514,9 +514,9 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     // Start reductions
     iarray_container_t *c = NULL;
     for (int i = 0; i < ii; ++i) {
-        if (i != 0) {
+        if (i > 0) {
             if (storage->filename != NULL) {
-                if (i != 1) {
+                if (i > 1) {
                     err_io = remove("iarray_red_temp2.iarray");
                     if (err_io != 0) {
                         IARRAY_TRACE1(iarray.tracing, "Invalid io");
@@ -582,10 +582,12 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
                 IARRAY_TRACE1(iarray.tracing, "Invalid io");
                 return INA_ERROR(INA_ERR_OPERATION_INVALID);
             }
-            err_io = remove("iarray_red_temp2.iarray");
-            if (err_io != 0) {
-                IARRAY_TRACE1(iarray.tracing, "Invalid io");
-                return INA_ERROR(INA_ERR_OPERATION_INVALID);
+            if (ii > 1) {
+                err_io = remove("iarray_red_temp2.iarray");
+                if (err_io != 0) {
+                    IARRAY_TRACE1(iarray.tracing, "Invalid io");
+                    return INA_ERROR(INA_ERR_OPERATION_INVALID);
+                }
             }
         }
     } else {
@@ -596,10 +598,12 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
                 IARRAY_TRACE1(iarray.tracing, "Invalid io");
                 return INA_ERROR(INA_ERR_OPERATION_INVALID);
             }
-            err_io = remove("iarray_red_temp2.iarray");
-            if (err_io != 0) {
-                IARRAY_TRACE1(iarray.tracing, "Invalid io");
-                return INA_ERROR(INA_ERR_OPERATION_INVALID);
+            if (ii > 1) {
+                err_io = remove("iarray_red_temp2.iarray");
+                if (err_io != 0) {
+                    IARRAY_TRACE1(iarray.tracing, "Invalid io");
+                    return INA_ERROR(INA_ERR_OPERATION_INVALID);
+                }
             }
             IARRAY_RETURN_IF_FAILED(iarray_container_open(ctx, storage->filename, b));
         } else {
