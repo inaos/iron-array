@@ -31,7 +31,7 @@ static ina_rc_t test_ones(iarray_context_t *ctx,
     iarray_storage_t store;
     store.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     store.enforce_frame = false;
-    store.filename = NULL;
+    store.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {
             store.chunkshape[i] = cshape[i];

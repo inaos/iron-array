@@ -216,7 +216,7 @@ typedef struct iarray_dtshape_s {
 
 typedef struct iarray_storage_s {
     iarray_storage_type_t backend;
-    char *filename;
+    char *urlpath;
     bool enforce_frame;
     int64_t chunkshape[IARRAY_DIMENSION_MAX];
     int64_t blockshape[IARRAY_DIMENSION_MAX];
@@ -506,16 +506,16 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                                           int64_t buflen);
 
 INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx,
-                                        char *filename,
+                                        char *urlpath,
                                         iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_container_open(iarray_context_t *ctx,
-                                        char *filename,
+                                        char *urlpath,
                                         iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
                                         iarray_container_t *container,
-                                        char *filename);
+                                        char *urlpath);
 
 INA_API(ina_rc_t) iarray_squeeze_index(iarray_context_t *ctx,
                                        iarray_container_t *container,

@@ -104,17 +104,17 @@ int main(int argc, char** argv)
     iarray_storage_t mat_x_prop = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
-        .filename = mat_x_name
+        .urlpath = mat_x_name
     };
     iarray_storage_t mat_y_prop = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
-        .filename = mat_y_name
+        .urlpath = mat_y_name
     };
     iarray_storage_t mat_out_prop = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
-        .filename = mat_out_name
+        .urlpath = mat_out_name
     };
     for (int i = 0; i < 2; ++i) {
         mat_x_prop.chunkshape[i] = cshape_x[i];
@@ -160,10 +160,10 @@ int main(int argc, char** argv)
     mat_y = (double *) ina_mem_alloc((sizeof(double) * size_y));
 
     printf("\n");
-    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_x_prop.filename) && _iarray_file_exists(mat_y_prop.filename)) {
+    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_x_prop.urlpath) && _iarray_file_exists(mat_y_prop.urlpath)) {
         INA_STOPWATCH_START(w);
-        INA_MUST_SUCCEED(iarray_container_open(ctx, mat_x_prop.filename, &con_x));
-        INA_MUST_SUCCEED(iarray_container_open(ctx, mat_y_prop.filename, &con_y));
+        INA_MUST_SUCCEED(iarray_container_open(ctx, mat_x_prop.urlpath, &con_x));
+        INA_MUST_SUCCEED(iarray_container_open(ctx, mat_y_prop.urlpath, &con_y));
         INA_STOPWATCH_STOP(w);
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
         printf("Time for *opening* X and Y values: %.3g s, %.1f GB/s\n",

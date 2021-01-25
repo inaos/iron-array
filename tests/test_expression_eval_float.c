@@ -59,7 +59,7 @@ static ina_rc_t fexecute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const in
     iarray_storage_t store;
     store.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
-    store.filename = NULL;
+    store.urlpath = NULL;
     if (!plain_buffer) {
         for (int i = 0; i < ndim; ++i) {
             store.chunkshape[i] = cshape[i];

@@ -269,7 +269,7 @@ void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr);
 int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr);
 
 // Utilities
-bool _iarray_file_exists(const char *filename);
+bool _iarray_file_exists(const char *urlpath);
 
 ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
                                   iarray_container_t *container,

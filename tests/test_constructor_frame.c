@@ -31,7 +31,7 @@ static ina_rc_t test_constructor_frame(iarray_context_t *ctx, iarray_data_type_t
 
     double step = (stop - start) / size;
 
-    iarray_storage_t xstore = {.filename=NULL, .enforce_frame=true};
+    iarray_storage_t xstore = {.urlpath=NULL, .enforce_frame=true};
     if (cshape == NULL) {
         xstore.backend = IARRAY_STORAGE_PLAINBUFFER;
     } else {

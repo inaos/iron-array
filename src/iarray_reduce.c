@@ -515,7 +515,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     iarray_container_t *c = NULL;
     for (int i = 0; i < ii; ++i) {
         if (i > 0) {
-            if (storage->filename != NULL) {
+            if (storage->urlpath != NULL) {
                 if (i > 1) {
                     err_io = remove("iarray_red_temp2.iarray");
                     if (err_io != 0) {
@@ -537,7 +537,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
         iarray_storage_t storage_red;
         storage_red.backend = IARRAY_STORAGE_BLOSC;
         storage_red.enforce_frame = storage->enforce_frame;
-        storage_red.filename = storage->filename != NULL ? "iarray_red_temp.iarray" : NULL;
+        storage_red.urlpath = storage->urlpath != NULL ? "iarray_red_temp.iarray" : NULL;
         for (int j = 0; j < aa->dtshape->ndim; ++j) {
             if (j < axis_new[i]) {
                 storage_red.chunkshape[j] = aa->storage->chunkshape[j];
@@ -576,7 +576,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     if (copy) {
         IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c, false, storage, 0, b));
         iarray_container_free(ctx, &c);
-        if (storage->filename != NULL) {
+        if (storage->urlpath != NULL) {
             err_io = remove("iarray_red_temp.iarray");
             if (err_io != 0) {
                 IARRAY_TRACE1(iarray.tracing, "Invalid io");
@@ -591,9 +591,9 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
             }
         }
     } else {
-        if (storage->filename != NULL) {
+        if (storage->urlpath != NULL) {
             iarray_container_free(ctx, &c);
-            err_io = rename("iarray_red_temp.iarray", storage->filename);
+            err_io = rename("iarray_red_temp.iarray", storage->urlpath);
             if (err_io != 0) {
                 IARRAY_TRACE1(iarray.tracing, "Invalid io");
                 return INA_ERROR(INA_ERR_OPERATION_INVALID);
@@ -605,7 +605,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
                     return INA_ERROR(INA_ERR_OPERATION_INVALID);
                 }
             }
-            IARRAY_RETURN_IF_FAILED(iarray_container_open(ctx, storage->filename, b));
+            IARRAY_RETURN_IF_FAILED(iarray_container_open(ctx, storage->urlpath, b));
         } else {
             *b = c;
         }

@@ -51,7 +51,7 @@ int main(void)
     iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
-    store.filename = NULL;
+    store.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         store.chunkshape[i] = cshape[i];
         store.blockshape[i] = bshape[i];

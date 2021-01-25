@@ -60,7 +60,7 @@ static ina_rc_t _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_typ
     iarray_storage_t xstore;
     xstore.backend = cshape? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.enforce_frame = false;
-    xstore.filename = NULL;
+    xstore.urlpath = NULL;
 
     int64_t bufdes_size = 1;
 

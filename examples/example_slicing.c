@@ -39,7 +39,7 @@ int main(void)
     iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.enforce_frame = false;
-    store.filename = NULL;
+    store.urlpath = NULL;
     
     if (INA_FAILED(iarray_partition_advice(ctx, &xdtshape, &store, 0, 0, 0, 8 * 1024))) {
         printf("Error in getting advice for chunkshape: %s\n", ina_err_strerror(ina_err_get_rc()));
@@ -67,7 +67,7 @@ int main(void)
     iarray_storage_t store_out;
     store_out.backend = IARRAY_STORAGE_BLOSC;
     store_out.enforce_frame = false;
-    store_out.filename = NULL;
+    store_out.urlpath = NULL;
     for (int i = 0; i < outndim; ++i) {
         store_out.chunkshape[i] = outcshape[i];
         store_out.blockshape[i] = outbshape[i];
