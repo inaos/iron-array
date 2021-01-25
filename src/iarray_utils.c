@@ -18,13 +18,13 @@
  *
  * Return true if the file exist otherwise return false
  */
-bool _iarray_file_exists(const char * filename)
+bool _iarray_file_exists(const char * urlpath)
 {
-    INA_VERIFY_NOT_NULL(filename);
+    INA_VERIFY_NOT_NULL(urlpath);
 
     /* try to open file to read */
     FILE *file;
-    if ((file = fopen(filename, "r")) != NULL) {
+    if ((file = fopen(urlpath, "r")) != NULL) {
         fclose(file);
         return true;
     }

@@ -18,7 +18,7 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
                                const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
                                int8_t naxis, int8_t *axis,
                                int64_t *dest_cshape, int64_t *dest_bshape, bool dest_frame,
-                               char* dest_filename)
+                               char* dest_urlpath)
 {
     // Create dtshape
     iarray_dtshape_t dtshape;
@@ -34,7 +34,7 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
     iarray_storage_t storage = {0};
     storage.backend = IARRAY_STORAGE_BLOSC;
     storage.enforce_frame = true;
-    storage.filename = "iarray_reduce2.iarray";
+    storage.urlpath = "iarray_reduce2.iarray";
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {
             storage.chunkshape[i] = cshape[i];
@@ -49,7 +49,7 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
     iarray_storage_t dest_storage = {0};
     dest_storage.backend = IARRAY_STORAGE_BLOSC;
     dest_storage.enforce_frame = dest_frame;
-    dest_storage.filename = dest_filename;
+    dest_storage.urlpath = dest_urlpath;
     for (int i = 0; i < ndim - naxis; ++i) {
         dest_storage.blockshape[i] = dest_bshape[i];
         dest_storage.chunkshape[i] = dest_cshape[i];
@@ -89,8 +89,8 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
     iarray_container_free(ctx, &c_z);
     iarray_container_free(ctx, &c_x);
 
-    if (dest_filename) {
-        remove(dest_filename);
+    if (dest_urlpath) {
+        remove(dest_urlpath);
     }
     return INA_SUCCESS;
 }
@@ -126,10 +126,10 @@ INA_TEST_FIXTURE(reduce_multi, 2_d_1) {
     int64_t dest_cshape[] = {50};
     int64_t dest_bshape[] = {31};
     bool dest_frame = false;
-    char *dest_filename = NULL;
+    char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
                                               naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_filename));
+                                              dest_urlpath));
 }
 
 
@@ -146,10 +146,10 @@ INA_TEST_FIXTURE(reduce_multi, 3_d_2) {
     int64_t dest_cshape[] = {0};  // {} not compile on Windows
     int64_t dest_bshape[] = {0};  // {} not compile on Windows
     bool dest_frame = false;
-    char *dest_filename = NULL;
+    char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
                                               naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_filename));
+                                              dest_urlpath));
 }
 
 INA_TEST_FIXTURE(reduce_multi, 4_d_0) {
@@ -165,10 +165,10 @@ INA_TEST_FIXTURE(reduce_multi, 4_d_0) {
     int64_t dest_cshape[] = {3, 1};
     int64_t dest_bshape[] = {3, 1};
     bool dest_frame = true;
-    char *dest_filename = "iarray_reduce.iarray";
+    char *dest_urlpath = "iarray_reduce.iarray";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
                                               naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_filename));
+                                              dest_urlpath));
 }
 
 
@@ -185,10 +185,10 @@ INA_TEST_FIXTURE(reduce_multi, 8_d_6) {
     int64_t dest_cshape[] = {4, 5, 2, 5, 3, 4, 5};
     int64_t dest_bshape[] = {2, 2, 2, 3, 2, 1, 2};
     bool dest_frame = false;
-    char *dest_filename = NULL;
+    char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
                                               naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_filename));
+                                              dest_urlpath));
 }
 
 
@@ -206,10 +206,10 @@ INA_TEST_FIXTURE(reduce_multi, 2_f_1) {
     int64_t dest_cshape[] = {210};
     int64_t dest_bshape[] = {2};
     bool dest_frame = false;
-    char *dest_filename = NULL;
+    char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
                                               naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_filename));
+                                              dest_urlpath));
 }
 
 
@@ -226,10 +226,10 @@ INA_TEST_FIXTURE(reduce_multi, 3_f_2) {
     int64_t dest_cshape[] = {6};
     int64_t dest_bshape[] = {3};
     bool dest_frame = false;
-    char *dest_filename = NULL;
+    char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
                                               naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_filename));
+                                              dest_urlpath));
 }
 
 INA_TEST_FIXTURE(reduce_multi, 4_f_0) {
@@ -245,10 +245,10 @@ INA_TEST_FIXTURE(reduce_multi, 4_f_0) {
     int64_t dest_cshape[] = {16, 3, 1};
     int64_t dest_bshape[] = {3, 3, 1};
     bool dest_frame = false;
-    char *dest_filename = NULL;
+    char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
                                               naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_filename));
+                                              dest_urlpath));
 }
 
 
@@ -265,8 +265,8 @@ INA_TEST_FIXTURE(reduce_multi, 8_f_6) {
     int64_t dest_cshape[] = {5};
     int64_t dest_bshape[] = {2};
     bool dest_frame = false;
-    char *dest_filename = NULL;
+    char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
                                               naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_filename));
+                                              dest_urlpath));
 }

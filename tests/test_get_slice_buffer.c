@@ -51,7 +51,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     iarray_storage_t store;
     store.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     store.enforce_frame = false;
-    store.filename = NULL;
+    store.urlpath = NULL;
     if (cshape != NULL) {
         for (int j = 0; j < xdtshape.ndim; ++j) {
             store.chunkshape[j] = cshape[j];

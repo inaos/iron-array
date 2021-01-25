@@ -19,7 +19,7 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
                bool fname, bool copy)
 {
 
-    char *filename = "test_load_save.iarray";
+    char *urlpath = "test_load_save.iarray";
 
     // Create dtshape
     iarray_dtshape_t xdtshape;
@@ -38,7 +38,7 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
     int flags = 0;
     iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
-    store.filename = NULL;
+    store.urlpath = NULL;
     store.enforce_frame = false;
     for (int i = 0; i < ndim; ++i) {
         store.chunkshape[i] = cshape[i];
@@ -53,7 +53,7 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
             store.enforce_frame = true;
         }
         if (fname) {
-            store.filename = filename;
+            store.urlpath = urlpath;
         }
         INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_x, false, &store, 0, &c_z));
     } else {
@@ -61,18 +61,18 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
             store.enforce_frame = true;
         }
         if (fname) {
-            store.filename = filename;
+            store.urlpath = urlpath;
         }
         INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, flags, &c_x));
         c_z = c_x;
     }
 
     if (!fname) {
-        INA_TEST_ASSERT_SUCCEED(iarray_container_save(ctx, c_z, filename));
+        INA_TEST_ASSERT_SUCCEED(iarray_container_save(ctx, c_z, urlpath));
     }
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_container_load(ctx, filename, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_load(ctx, urlpath, &c_y));
 
     INA_TEST_ASSERT_SUCCEED(iarray_container_almost_equal(c_x, c_y, 1e-12));
 

@@ -46,7 +46,7 @@ static ina_rc_t test_buffer(iarray_context_t *ctx,
         }
     }
 
-    iarray_storage_t xstore = {.filename=NULL, .enforce_frame=false};
+    iarray_storage_t xstore = {.urlpath=NULL, .enforce_frame=false};
     if (cshape == NULL) {
         xstore.backend = IARRAY_STORAGE_PLAINBUFFER;
     } else {

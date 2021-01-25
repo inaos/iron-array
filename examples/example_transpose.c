@@ -52,7 +52,7 @@ int main(void) {
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
     xstorage.enforce_frame = false;
-    xstorage.filename = NULL;
+    xstorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         xstorage.chunkshape[i] = xchunkshape[i];
         xstorage.blockshape[i] = xblockshape[i];

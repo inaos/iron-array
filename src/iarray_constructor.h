@@ -57,7 +57,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
         IARRAY_TRACE1(iarray.error, "The container dimension is larger than caterva maximum dimension");
         return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
     }
-    if (flags & IARRAY_CONTAINER_PERSIST && storage->filename == NULL) {
+    if (flags & IARRAY_CONTAINER_PERSIST && storage->urlpath == NULL) {
         IARRAY_TRACE1(iarray.error, "Error with persistency flags");
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }

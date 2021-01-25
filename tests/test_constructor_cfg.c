@@ -30,7 +30,7 @@ static ina_rc_t test_cfg(iarray_context_t *ctx,
     iarray_storage_t xstore;
     xstore.backend = (cshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     xstore.enforce_frame = false;
-    xstore.filename = NULL;
+    xstore.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {
             xstore.chunkshape[i] = cshape[i];

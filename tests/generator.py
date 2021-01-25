@@ -8,16 +8,16 @@ import iarray as ia
 import numpy as np
 
 
-def create_filename(method, dtype, **kwargs):
-    # Create filename
+def create_urlpath(method, dtype, **kwargs):
+    # Create urlpath
     funcname = method.__name__
     dname = str(np.dtype(dtype))
-    filename = f"test_{funcname}_{dname}"
+    urlpath = f"test_{funcname}_{dname}"
     for k, v in kwargs.items():
         if k != "size":
-            filename += f"_{k}{v}"
-    filename += f".iarray"
-    return filename
+            urlpath += f"_{k}{v}"
+    urlpath += f".iarray"
+    return urlpath
 
 
 def create_files(method, dtype, **kwargs):
@@ -33,7 +33,7 @@ def create_files(method, dtype, **kwargs):
         else:
             c = dtype(method(size))
 
-        storage = ia.Storage(chunkshape, blockshape, create_filename(method, dtype, **kwargs))
+        storage = ia.Storage(chunkshape, blockshape, create_urlpath(method, dtype, **kwargs))
 
         ia.numpy2iarray(c, storage=storage, cfg=cfg)
 
