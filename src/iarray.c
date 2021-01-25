@@ -431,7 +431,7 @@ ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage
     switch (cat_storage->backend) {
         case CATERVA_STORAGE_BLOSC:
             cat_storage->properties.blosc.enforceframe = storage->enforce_frame;
-            cat_storage->properties.blosc.filename = storage->filename;
+            cat_storage->properties.blosc.urlpath = storage->urlpath;
             for (int i = 0; i < dtshape->ndim; ++i) {
                 cat_storage->properties.blosc.chunkshape[i] = (int32_t) storage->chunkshape[i];
                 cat_storage->properties.blosc.blockshape[i] = (int32_t) storage->blockshape[i];

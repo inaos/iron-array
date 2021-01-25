@@ -33,7 +33,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
 
     iarray_storage_t xstore;
     xstore.backend = xcshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    xstore.filename = NULL;
+    xstore.urlpath = NULL;
     xstore.enforce_frame = false;
     if (xcshape != NULL) {
         for (int i = 0; i < xdtshape.ndim; ++i) {
@@ -44,7 +44,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
 
     iarray_storage_t xtransstore;
     xtransstore.backend = xcshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    xtransstore.filename = NULL;
+    xtransstore.urlpath = NULL;
     xtransstore.enforce_frame = false;
     if (xcshape != NULL) {
         for (int i = 0; i < xdtshape.ndim; ++i) {
@@ -75,7 +75,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
 
     iarray_storage_t ystore;
     ystore.backend = ycshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    ystore.filename = NULL;
+    ystore.urlpath = NULL;
     ystore.enforce_frame = false;
     if (ycshape != NULL) {
         for (int i = 0; i < ydtshape.ndim; ++i) {
@@ -125,7 +125,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
 
     iarray_storage_t zstore;
     zstore.backend = zcshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    zstore.filename = NULL;
+    zstore.urlpath = NULL;
     zstore.enforce_frame = false;
     if (zcshape != NULL) {
         for (int i = 0; i < zdtshape.ndim; ++i) {

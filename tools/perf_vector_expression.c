@@ -153,7 +153,7 @@ int main(int argc, char** argv)
     iarray_storage_t mat_x = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
-        .filename = mat_x_name
+        .urlpath = mat_x_name
     };
     if (!INA_SUCCEED(ina_opt_isset("P"))) {
         mat_x.chunkshape[0] = cshape[0];
@@ -162,7 +162,7 @@ int main(int argc, char** argv)
     iarray_storage_t mat_y = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
-        .filename = mat_y_name
+        .urlpath = mat_y_name
     };
     if (!INA_SUCCEED(ina_opt_isset("P"))) {
         mat_y.chunkshape[0] = cshape[0];
@@ -171,7 +171,7 @@ int main(int argc, char** argv)
     iarray_storage_t mat_out = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
-        .filename = mat_out_name
+        .urlpath = mat_out_name
     };
     if (!INA_SUCCEED(ina_opt_isset("P"))) {
         mat_out.chunkshape[0] = cshape[0];
@@ -258,9 +258,9 @@ int main(int argc, char** argv)
 
     bool x_allocated = false, y_allocated = false;
 
-    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_x.filename)) {
+    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_x.urlpath)) {
         INA_STOPWATCH_START(w);
-        INA_MUST_SUCCEED(iarray_container_open(ctx, mat_x.filename, &con_x));
+        INA_MUST_SUCCEED(iarray_container_open(ctx, mat_x.urlpath, &con_x));
         INA_STOPWATCH_STOP(w);
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
         printf("Time for *opening* X values: %.3g s, %.1f GB/s\n",
@@ -330,9 +330,9 @@ int main(int argc, char** argv)
     printf("Compression for X values: %.1f MB -> %.1f MB (%.1fx)\n",
            nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
 
-    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_y.filename)) {
+    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_y.urlpath)) {
         INA_STOPWATCH_START(w);
-        INA_MUST_SUCCEED(iarray_container_open(ctx, mat_y.filename, &con_y));
+        INA_MUST_SUCCEED(iarray_container_open(ctx, mat_y.urlpath, &con_y));
         INA_STOPWATCH_STOP(w);
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
         printf("Time for *opening* Y values: %.3g s, %.1f GB/s\n",

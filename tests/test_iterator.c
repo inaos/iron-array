@@ -28,7 +28,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
     iarray_storage_t store;
     store.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     store.enforce_frame = false;
-    store.filename = NULL;
+    store.urlpath = NULL;
     if (cshape != NULL) {
         for (int i = 0; i < ndim; ++i) {
             store.chunkshape[i] = cshape[i];

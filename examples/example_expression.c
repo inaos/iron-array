@@ -57,7 +57,7 @@ int main(void) {
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
     xstorage.enforce_frame = false;
-    xstorage.filename = NULL;
+    xstorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         xstorage.chunkshape[i] = xchunkshape[i];
         xstorage.blockshape[i] = xblockshape[i];
@@ -69,7 +69,7 @@ int main(void) {
     iarray_storage_t ystorage;
     ystorage.backend = IARRAY_STORAGE_BLOSC;
     ystorage.enforce_frame = false;
-    ystorage.filename = NULL;
+    ystorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         ystorage.chunkshape[i] = ychunkshape[i];
         ystorage.blockshape[i] = yblockshape[i];
@@ -80,7 +80,7 @@ int main(void) {
     iarray_storage_t zstorage;
     zstorage.backend = IARRAY_STORAGE_BLOSC;
     zstorage.enforce_frame = false;
-    zstorage.filename = NULL;
+    zstorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         zstorage.chunkshape[i] = zchunkshape[i];
         zstorage.blockshape[i] = zblockshape[i];
@@ -92,7 +92,7 @@ int main(void) {
     iarray_storage_t outstorage;
     outstorage.backend = IARRAY_STORAGE_BLOSC;
     outstorage.enforce_frame = false;
-    outstorage.filename = NULL;
+    outstorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         outstorage.chunkshape[i] = outchunkshape[i];
         outstorage.blockshape[i] = outblockshape[i];

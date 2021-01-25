@@ -81,10 +81,10 @@ INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
                                         iarray_container_t *container,
-                                        char *filename) {
+                                        char *urlpath) {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(container);
-    INA_VERIFY_NOT_NULL(filename);
+    INA_VERIFY_NOT_NULL(urlpath);
 
     if (container->catarr->storage != CATERVA_STORAGE_BLOSC) {
         IARRAY_TRACE1(iarray.error, "Container must be stored on a blosc schunk");
@@ -92,7 +92,7 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
     }
 
     if (container->catarr->sc->frame == NULL) {
-        blosc2_frame *frame = blosc2_frame_new(filename);
+        blosc2_frame *frame = blosc2_frame_new(urlpath);
         if (frame == NULL) {
             IARRAY_TRACE1(iarray.error, "Error creating blosc2 frame");
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
@@ -109,21 +109,21 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
             IARRAY_TRACE1(iarray.error, "Container is already on disk");
             return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
         } else {
-            blosc2_frame_to_file(container->catarr->sc->frame, filename);
+            blosc2_frame_to_file(container->catarr->sc->frame, urlpath);
         }
     }
     return INA_SUCCESS;
 }
 
 
-ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *filename, bool enforce_frame,
+ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool enforce_frame,
                                 iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
-    INA_VERIFY_NOT_NULL(filename);
+    INA_VERIFY_NOT_NULL(urlpath);
     INA_VERIFY_NOT_NULL(container);
 
-    if (access( filename, 0) == -1) {
+    if (access( urlpath, 0) == -1) {
         IARRAY_TRACE1(iarray.error, "File not exists");
         return INA_ERROR(INA_ERR_FILE_OPEN);
     }
@@ -137,7 +137,7 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *filename, bool enfo
     }
 
     caterva_array_t *catarr;
-    IARRAY_ERR_CATERVA(caterva_array_from_file(cat_ctx, filename, enforce_frame, &catarr));
+    IARRAY_ERR_CATERVA(caterva_array_from_file(cat_ctx, urlpath, enforce_frame, &catarr));
 
     if (catarr == NULL) {
         IARRAY_TRACE1(iarray.error, "Error creating the caterva array from a file");
@@ -185,7 +185,7 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *filename, bool enfo
         IARRAY_TRACE1(iarray.error, "Error allocating the store parameter");
         return INA_ERROR(INA_ERR_FAILED);
     }
-    (*container)->storage->filename = filename;
+    (*container)->storage->urlpath = urlpath;
     (*container)->storage->backend = IARRAY_STORAGE_BLOSC;
     (*container)->storage->enforce_frame = enforce_frame;
     for (int i = 0; i < catarr->ndim; ++i) {
@@ -202,18 +202,18 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *filename, bool enfo
 }
 
 
-INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *filename,
+INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx, char *urlpath,
                                         iarray_container_t **container)
 {
-    return _iarray_container_load(ctx, filename, true, container);
+    return _iarray_container_load(ctx, urlpath, true, container);
 }
 
 
 INA_API(ina_rc_t) iarray_container_open(iarray_context_t *ctx,
-                                        char *filename,
+                                        char *urlpath,
                                         iarray_container_t **container)
 {
-    return _iarray_container_load(ctx, filename, false, container);
+    return _iarray_container_load(ctx, urlpath, false, container);
 }
 
 

@@ -18,7 +18,7 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
                                const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
                                int8_t axis,
                                int64_t *dest_cshape, int64_t *dest_bshape, bool dest_frame,
-                               char *dest_filename) {
+                               char *dest_urlpath) {
     // Create dtshape
     iarray_dtshape_t dtshape;
 
@@ -81,7 +81,7 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
     iarray_storage_t dest_storage = {0};
     dest_storage.backend = IARRAY_STORAGE_BLOSC;
     dest_storage.enforce_frame = dest_frame;
-    dest_storage.filename = dest_filename;
+    dest_storage.urlpath = dest_urlpath;
     for (int i = 0; i < ndim - 1; ++i) {
         dest_storage.blockshape[i] = dest_bshape[i];
         dest_storage.chunkshape[i] = dest_cshape[i];
@@ -149,9 +149,9 @@ INA_TEST_FIXTURE(reduce, 2_d_1) {
     int64_t dest_cshape[] = {69};
     int64_t dest_bshape[] = {31};
     bool dest_frame = false;
-    char *dest_filename = NULL;
+    char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_filename));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
 
 
@@ -167,10 +167,10 @@ INA_TEST_FIXTURE(reduce, 3_d_2) {
     int64_t dest_cshape[] = {6, 6};
     int64_t dest_bshape[] = {3, 3};
     bool dest_frame = false;
-    char *dest_filename = NULL;
+    char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_filename));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
 
 INA_TEST_FIXTURE(reduce, 4_d_0) {
@@ -185,10 +185,10 @@ INA_TEST_FIXTURE(reduce, 4_d_0) {
     int64_t dest_cshape[] = {3, 1, 109};
     int64_t dest_bshape[] = {3, 1, 25};
     bool dest_frame = false;
-    char *dest_filename = NULL;
+    char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_filename));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
 
 
@@ -204,10 +204,10 @@ INA_TEST_FIXTURE(reduce, 8_d_6) {
     int64_t dest_cshape[] = {4, 5, 2, 5, 3, 4, 2};
     int64_t dest_bshape[] = {2, 2, 2, 3, 2, 1, 1};
     bool dest_frame = false;
-    char *dest_filename = NULL;
+    char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_filename));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
 
 
@@ -224,10 +224,10 @@ INA_TEST_FIXTURE(reduce, 2_f_1) {
     int64_t dest_cshape[] = {69};
     int64_t dest_bshape[] = {31};
     bool dest_frame = false;
-    char *dest_filename = NULL;
+    char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_filename));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
 
 
@@ -243,10 +243,10 @@ INA_TEST_FIXTURE(reduce, 3_f_2) {
     int64_t dest_cshape[] = {6, 9};
     int64_t dest_bshape[] = {3, 3};
     bool dest_frame = false;
-    char *dest_filename = NULL;
+    char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_filename));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
 
 INA_TEST_FIXTURE(reduce, 4_f_0) {
@@ -261,10 +261,10 @@ INA_TEST_FIXTURE(reduce, 4_f_0) {
     int64_t dest_cshape[] = {3, 1, 109};
     int64_t dest_bshape[] = {3, 1, 25};
     bool dest_frame = false;
-    char *dest_filename = NULL;
+    char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_filename));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
 
 
@@ -280,7 +280,7 @@ INA_TEST_FIXTURE(reduce, 8_f_6) {
     int64_t dest_cshape[] = {4, 5, 2, 5, 3, 4, 2};
     int64_t dest_bshape[] = {2, 2, 2, 3, 2, 1, 1};
     bool dest_frame = false;
-    char *dest_filename = NULL;
+    char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_filename));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }

@@ -128,10 +128,10 @@ INA_API(ina_rc_t) iarray_expr_bind_out_properties(iarray_expression_t *e, iarray
 
     e->out_store_properties = ina_mem_alloc(sizeof(iarray_storage_t));
     ina_mem_cpy(e->out_store_properties, store, sizeof(iarray_storage_t));
-    if (store->filename != NULL) {
-        e->out_store_properties->filename = strdup(store->filename);
+    if (store->urlpath != NULL) {
+        e->out_store_properties->urlpath = strdup(store->urlpath);
     } else {
-        e->out_store_properties->filename = NULL;
+        e->out_store_properties->urlpath = NULL;
     }
     return INA_SUCCESS;
 }
@@ -683,7 +683,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
     INA_VERIFY_NOT_NULL(e);
     INA_VERIFY_NOT_NULL(container);
 
-    int flags = e->out_store_properties->filename ? IARRAY_CONTAINER_PERSIST : 0;
+    int flags = e->out_store_properties->urlpath ? IARRAY_CONTAINER_PERSIST : 0;
     IARRAY_RETURN_IF_FAILED(iarray_container_new(e->ctx, e->out_dtshape, e->out_store_properties, flags, container));
     e->out = *container;
     iarray_container_t *ret = *container;

@@ -87,7 +87,7 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
 
     iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
-    store.filename = NULL;
+    store.urlpath = NULL;
     store.enforce_frame = false;
     for (int i = 0; i < shape.ndim; ++i) {
         store.chunkshape[i] = csize;
@@ -162,7 +162,7 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
 
     iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
-    store.filename = NULL;
+    store.urlpath = NULL;
     store.enforce_frame = false;
     for (int i = 0; i < shape.ndim; ++i) {
         store.chunkshape[i] = csize;
