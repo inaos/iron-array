@@ -273,8 +273,8 @@ bool _iarray_file_exists(const char *urlpath);
 
 ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
                                   iarray_container_t *container,
-                                  int64_t *start,
-                                  int64_t *stop,
+                                  const int64_t *start,
+                                  const int64_t *stop,
                                   int64_t *chunkshape,
                                   void *buffer,
                                   int64_t buflen);
