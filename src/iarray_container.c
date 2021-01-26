@@ -86,8 +86,11 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(container);
     INA_VERIFY_NOT_NULL(urlpath);
 
-    if (container->catarr->storage != CATERVA_STORAGE_BLOSC) {
-        IARRAY_TRACE1(iarray.error, "Container must be stored on a blosc schunk");
+    if (container->catarr->storage != CATERVA_STORAGE_BLOSC ||
+        container->view ||
+        container->transposed) {
+        IARRAY_TRACE1(iarray.error, "Container must be stored on a blosc schunk and must not be a "
+                                    "view");
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
 
