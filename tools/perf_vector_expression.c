@@ -102,7 +102,6 @@ int main(int argc, char** argv)
     INA_OPTS(opt,
              INA_OPT_INT("e", "expr-type", 1, "COPY = 0, POLY = 1, TRANS1 = 2, , TRANS2 = 3"),
              INA_OPT_INT("M", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOSC = 2, EVAL_ITERBLOSC2 = 3"),
-             INA_OPT_INT("E", "eval-engine", 1, "EVAL_INTERPRETER = 1, EVAL_COMPILER = 2"),
              INA_OPT_INT("n", "eval-niter", 1, "Number of times to evaluate (default 1)"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
