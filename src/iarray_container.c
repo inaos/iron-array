@@ -268,7 +268,6 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
     if (src->transposed) {
         int64_t start_trans[IARRAY_DIMENSION_MAX];
         int64_t stop_trans[IARRAY_DIMENSION_MAX];
-        int64_t chunkshape_trans[IARRAY_DIMENSION_MAX];
         for (int i = 0; i < ndim; ++i) {
             start_trans[i] = start_[ndim - 1 - i];
             stop_trans[i] = stop_[ndim - 1 - i];
@@ -428,8 +427,7 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
         shape_[i] = stop_[i] - start_[i];
     }
 
-    IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer(ctx, container, start, stop, shape_, buffer,
-                                                     buflen));
+    IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer(ctx, container, start, stop, shape_, buffer, buflen));
 
     return INA_SUCCESS;
 }
@@ -553,7 +551,7 @@ int _caterva_get_slice_buffer_no_copy(void **dest, caterva_array_t *src, int64_t
     for (int j = 0; j < CATERVA_MAX_DIM - s_ndim; ++j) {
         start_[j] = 0;
     }
-    
+
     int64_t chunk_pointer = 0;
     int64_t chunk_pointer_inc = 1;
     for (int i = CATERVA_MAX_DIM - 1; i >= 0; --i) {
@@ -638,8 +636,8 @@ INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
 
 ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
                                   iarray_container_t *container,
-                                  int64_t *start,
-                                  int64_t *stop,
+                                  const int64_t *start,
+                                  const int64_t *stop,
                                   int64_t *chunkshape,
                                   void *buffer,
                                   int64_t buflen)
