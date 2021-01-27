@@ -19,10 +19,6 @@
 int main(void) {
 
     iarray_init();
-    ina_stopwatch_t *w;
-    struct timespec t0, t1;
-    INA_STOPWATCH_NEW(-1, -1, &w);
-
 
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -33,10 +29,8 @@ int main(void) {
     cfg.max_num_threads = 4;
     iarray_context_new(&cfg, &ctx);
 
-
     int64_t shape[] = {2000, 200, 100};
     int8_t ndim = 3;
-
 
     iarray_dtshape_t dtshape;
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
@@ -47,7 +41,6 @@ int main(void) {
         dtshape.shape[i] = shape[i];
         nelem *= shape[i];
     }
-    double bsize = (double) nelem * sizeof(double);
 
     int32_t xchunkshape[] = {500, 50, 10};
     int32_t xblockshape[] = {50, 20, 5};
@@ -64,19 +57,13 @@ int main(void) {
     iarray_container_t *c_x;
     IARRAY_RETURN_IF_FAILED(iarray_zeros(ctx, &dtshape, &xstorage, 0, &c_x));
 
-
-    blosc_set_timestamp(&t0);
     iarray_container_t *out;
     IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &xstorage, 0, &out));
-    blosc_set_timestamp(&t1);
-    printf("time fast copy: %f \n", bsize / blosc_elapsed_secs(t0, t1) / (1024 * 1024));
 
     cfg.compression_codec = 5;
-    blosc_set_timestamp(&t0);
+
     iarray_container_t *out2;
     IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &xstorage, 0, &out2));
-    blosc_set_timestamp(&t1);
-    printf("time copy: %f \n", bsize / blosc_elapsed_secs(t0, t1) / (1024 * 1024));
 
     IARRAY_RETURN_IF_FAILED(iarray_container_almost_equal(out, out2, 1e-6));
     iarray_container_free(ctx, &c_x);
@@ -84,8 +71,6 @@ int main(void) {
     iarray_container_free(ctx, &out2);
 
     iarray_context_free(&ctx);
-
-    INA_STOPWATCH_FREE(&w);
 
     return 0;
 }
