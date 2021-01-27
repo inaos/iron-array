@@ -67,11 +67,11 @@ int main(void) {
 
     blosc_set_timestamp(&t0);
     iarray_container_t *out;
-    IARRAY_RETURN_IF_FAILED(iarray_fast_copy(ctx, c_x, &xstorage, &out));
+    IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &xstorage, 0, &out));
     blosc_set_timestamp(&t1);
     printf("time fast copy: %f \n", bsize / blosc_elapsed_secs(t0, t1) / (1024 * 1024));
 
-
+    cfg.compression_codec = 5;
     blosc_set_timestamp(&t0);
     iarray_container_t *out2;
     IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &xstorage, 0, &out2));

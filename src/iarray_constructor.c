@@ -465,23 +465,3 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     }
     return INA_SUCCESS;
 }
-
-INA_API(ina_rc_t) iarray_fast_copy(iarray_context_t *ctx,
-                                   iarray_container_t *src,
-                                   iarray_storage_t *storage,
-                                   iarray_container_t **dest) {
-
-    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, src->dtshape, storage, 0, dest));
-    caterva_config_t cat_cfg = {0};
-    IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free,
-                                                      &cat_cfg));
-    caterva_context_t *cat_ctx;
-    IARRAY_ERR_CATERVA(caterva_context_new(&cat_cfg, &cat_ctx));
-    IARRAY_ERR_CATERVA(caterva_array_free(cat_ctx, &(*dest)->catarr));
-    caterva_storage_t cat_storage = {0};
-    IARRAY_ERR_CATERVA(iarray_create_caterva_storage(src->dtshape, storage, &cat_storage));
-    IARRAY_ERR_CATERVA(caterva_array_copy(cat_ctx, src->catarr, &cat_storage, &(*dest)->catarr));
-    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
-
-    return INA_SUCCESS;
-}
