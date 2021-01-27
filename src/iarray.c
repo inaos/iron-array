@@ -240,6 +240,21 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     }
 
     // Get reasonable defaults for max and mins for chunk and block sizes
+    if (max_blocksize == 0) {
+        hwloc_obj_t L2_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L2CACHE, 0);
+        if (L2_obj == NULL) {
+            IARRAY_TRACE1(iarray.error, "Can not get the L2 cache size");
+            return INA_ERROR(IARRAY_ERR_GET_CACHE_SIZES);
+        }
+        uint64_t L2_size = L2_obj->attr->cache.size;
+        // Should allow to hold (4x (3 operands + 1 result) * 2x temporaries = 8x) in L2
+        max_blocksize = L2_size / 8;
+    }
+    if (min_blocksize == 0) {
+        // 1 KB for blocksize sounds like a good minimum
+        min_blocksize = 1024;
+    }
+
     if (max_chunksize == 0) {
         hwloc_obj_t L3_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L3CACHE, 0);
         if (L3_obj == NULL) {
@@ -248,26 +263,22 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         }
         uint64_t L3_size = L3_obj->attr->cache.size;
         // Should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
-        max_chunksize = L3_size / 4;
+        // max_chunksize = L3_size / 4;
+        // Experiments say that making the chunks in expression to fit in L3
+        // is not too important.  It better pays off to provide room enough
+        // for having a lot of different threads to work in parallel for
+        // producing the chunk of the output.
+        // Here we are choosing a big multiple of blocksize (maybe in the future
+        // this number should depend on the number of threads, but then what happens
+        // when an array is transferred to another machine with a different number of
+        // cores?).
+        max_chunksize = max_blocksize * 256;
     }
     if (min_chunksize == 0) {
         // 256 KB for chunksize sounds like a good minimum
         min_chunksize = 256 * 1024;
     }
-    if (max_blocksize == 0) {
-        hwloc_obj_t L2_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L2CACHE, 0);
-        if (L2_obj == NULL) {
-            IARRAY_TRACE1(iarray.error, "Can not get the L2 cache size");
-            return INA_ERROR(IARRAY_ERR_GET_CACHE_SIZES);
-        }
-        uint64_t L2_size = L2_obj->attr->cache.size;
-        // Should allow to hold (2x operand, 1x temporary, 1x reserve) in L2
-        max_blocksize = L2_size / 4;
-    }
-    if (min_blocksize == 0) {
-        // 1 KB for blocksize sounds like a good minimum
-        min_blocksize = 1024;
-    }
+
     // ...and destroy topology
     hwloc_topology_destroy(topology);
 
