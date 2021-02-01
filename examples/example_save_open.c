@@ -25,11 +25,12 @@ int main(void) {
 
     iarray_context_new(&cfg, &ctx);
 
-    int64_t shape[] = {10, 10};
-    int8_t ndim = 2;
+    int64_t shape[] = {123};
+    int8_t ndim = 1;
 
     iarray_dtshape_t dtshape;
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
+    int8_t itemsize = sizeof(double);
     dtshape.ndim = ndim;
 
     int64_t nelem = 1;
@@ -38,8 +39,8 @@ int main(void) {
         nelem *= shape[i];
     }
 
-    int32_t xchunkshape[] = {8, 8};
-    int32_t xblockshape[] = {8, 8};
+    int32_t xchunkshape[] = {49};
+    int32_t xblockshape[] = {20};
 
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
@@ -50,29 +51,21 @@ int main(void) {
         xstorage.blockshape[i] = xblockshape[i];
     }
 
-    iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_linspace(ctx, &dtshape, -1, 1, &xstorage, 0, &c_x));
-
-    int32_t outchunkshape[] = {5, 5};
-    int32_t outblockshape[] = {2, 2};
-
-    iarray_storage_t outstorage;
-    outstorage.backend = IARRAY_STORAGE_BLOSC;
-    outstorage.enforce_frame = false;
-    outstorage.urlpath = NULL;
-    for (int i = 0; i < ndim; ++i) {
-        outstorage.chunkshape[i] = outchunkshape[i];
-        outstorage.blockshape[i] = outblockshape[i];
-    }
-    
-    iarray_container_t *out;
-    IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &outstorage, 0, &out));
-    IARRAY_RETURN_IF_FAILED(iarray_container_save(ctx, out, "example_copy.iarr"));
-    iarray_container_free(ctx, &out);
-    IARRAY_RETURN_IF_FAILED(iarray_container_open(ctx, "example_copy.iarr", &out));
+    iarray_container_t *x;
+    IARRAY_RETURN_IF_FAILED(iarray_linspace(ctx, &dtshape, -10, 10, &xstorage, 0, &x));
 
 
-    iarray_container_free(ctx, &out);
+    IARRAY_RETURN_IF_FAILED(iarray_container_save(ctx, x, "example_copy.iarr"));
+    iarray_container_free(ctx, &x);
+    IARRAY_RETURN_IF_FAILED(iarray_container_open(ctx, "example_copy.iarr", &x));
+
+    int64_t buflen = nelem * itemsize;
+    uint8_t *buf = malloc(buflen);
+    printf("TO buffer\n");
+    IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, x, buf, buflen));
+
+    free(buf);
+    iarray_container_free(ctx, &x);
     iarray_context_free(&ctx);
 
     return 0;
