@@ -460,6 +460,16 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
         IARRAY_ERR_CATERVA(caterva_array_free(cat_ctx, &(*dest)->catarr));
         caterva_storage_t cat_storage = {0};
         IARRAY_ERR_CATERVA(iarray_create_caterva_storage(src->dtshape, storage, &cat_storage));
+        uint8_t *smeta = NULL;
+        if (cat_storage.backend == CATERVA_STORAGE_BLOSC) {
+            cat_storage.properties.blosc.nmetalayers = 1;
+            cat_storage.properties.blosc.metalayers[0].name = "iarray";
+            uint32_t smeta_len;
+            blosc2_get_metalayer(src->catarr->sc, "iarray", &smeta, &smeta_len);
+            cat_storage.properties.blosc.metalayers[0].sdata = smeta;
+            cat_storage.properties.blosc.metalayers[0].size = smeta_len;
+        }
+
         IARRAY_ERR_CATERVA(caterva_array_copy(cat_ctx, src->catarr, &cat_storage, &(*dest)->catarr));
         IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
     }
