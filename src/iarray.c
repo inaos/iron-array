@@ -241,14 +241,19 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
 
     // Get reasonable defaults for max and mins for chunk and block sizes
     if (max_blocksize == 0) {
-        hwloc_obj_t L2_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L2CACHE, 0);
-        if (L2_obj == NULL) {
-            IARRAY_TRACE1(iarray.error, "Can not get the L2 cache size");
-            return INA_ERROR(IARRAY_ERR_GET_CACHE_SIZES);
-        }
-        uint64_t L2_size = L2_obj->attr->cache.size;
+        // hwloc_obj_t L2_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L2CACHE, 0);
+        // if (L2_obj == NULL) {
+        //     IARRAY_TRACE1(iarray.error, "Can not get the L2 cache size");
+        //     return INA_ERROR(IARRAY_ERR_GET_CACHE_SIZES);
+        // }
+        // uint64_t L2_size = L2_obj->attr->cache.size;
         // Should allow to hold (4x (3 operands + 1 result) * 2x temporaries = 8x) in L2
-        max_blocksize = L2_size / 8;
+        // max_blocksize = L2_size / 8;
+        //
+        // The L2 reported by Apple M1 is shared, and in the most energy-efficient cpu cluster (4 MB)
+        // Because of this, probably our best bet is to assign a contained amount for the blocksize.
+        // 64 KB is probably a good guess, but this requires a bit more of experimentation.
+        max_blocksize = 64 * 1024;
     }
     if (min_blocksize == 0) {
         // 1 KB for blocksize sounds like a good minimum
@@ -256,14 +261,17 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     }
 
     if (max_chunksize == 0) {
-        hwloc_obj_t L3_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L3CACHE, 0);
-        if (L3_obj == NULL) {
-            IARRAY_TRACE1(iarray.error, "Can not get the L3 cache size");
-            return INA_ERROR(IARRAY_ERR_GET_CACHE_SIZES);
-        }
-        uint64_t L3_size = L3_obj->attr->cache.size;
+        // Apple M1 is not working here (it does not really has a L3).
+        // As this is not really necessary even for x86, we disable L3 detection for now.
+        // hwloc_obj_t L3_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L3CACHE, 0);
+        // if (L3_obj == NULL) {
+        //    IARRAY_TRACE1(iarray.error, "Can not get the L3 cache size");
+        //    return INA_ERROR(IARRAY_ERR_GET_CACHE_SIZES);
+        // }
+        // uint64_t L3_size = L3_obj->attr->cache.size;
         // Should allow to hold (2x operand, 1x temporary, 1x reserve) in L3
         // max_chunksize = L3_size / 4;
+        //
         // Experiments say that making the chunks in expression to fit in L3
         // is not too important.  It better pays off to provide room enough
         // for having a lot of different threads to work in parallel for
