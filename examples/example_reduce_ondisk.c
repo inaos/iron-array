@@ -19,7 +19,6 @@ int main(void) {
     ina_stopwatch_t *w;
 
     printf("Start...\n");
-    double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
 
 
@@ -104,11 +103,11 @@ int main(void) {
     printf("time: %f s\n", blosc_elapsed_secs(t0, t1));
 
     IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_out, buff, buff_size));
-    for (int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 10; ++i) {
         printf(" %f ", buff[i]);
     }
+    printf("\n");
     iarray_container_free(ctx, &c_out);
-
     iarray_container_free(ctx, &c_x);
 
     iarray_random_ctx_free(ctx, &rnd_ctx);
