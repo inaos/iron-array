@@ -413,12 +413,12 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
 
                 caterva_config_t cfg = {0};
                 iarray_create_caterva_cfg(itr->ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
-                caterva_context_t *cat_ctx;
-                IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
+                caterva_ctx_t *cat_ctx;
+                IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
 
-                IARRAY_ERR_CATERVA(caterva_array_set_slice_buffer(cat_ctx, itr->block, blocksize, start, stop, catarr));
+                IARRAY_ERR_CATERVA(caterva_set_slice_buffer(cat_ctx, itr->block, blocksize, start, stop, catarr));
 
-                IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
+                IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
                 if (itr->external_buffer) {
                     free(itr->block);
                 }
@@ -431,7 +431,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                     return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
                 }
             } else {
-                caterva_array_append(itr->cat_ctx, catarr, itr->block, itr->cur_block_size * typesize);
+                caterva_append(itr->cat_ctx, catarr, itr->block, itr->cur_block_size * typesize);
                 if (itr->external_buffer) {
                     free(itr->block);
                 }
@@ -507,10 +507,10 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
 
                 caterva_config_t cfg = {0};
                 iarray_create_caterva_cfg(itr->ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
-                caterva_context_t *cat_ctx;
-                IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
-                IARRAY_ERR_CATERVA(caterva_array_set_slice_buffer(cat_ctx, itr->block, blocksize, start, stop, catarr));
-                IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
+                caterva_ctx_t *cat_ctx;
+                IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
+                IARRAY_ERR_CATERVA(caterva_set_slice_buffer(cat_ctx, itr->block, blocksize, start, stop, catarr));
+                IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
 
                 if (itr->external_buffer) {
                     free(itr->block);
@@ -526,7 +526,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                     return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
                 }
             } else {
-                caterva_array_append(itr->cat_ctx, catarr, itr->block, itr->cur_block_size * typesize);
+                caterva_append(itr->cat_ctx, catarr, itr->block, itr->cur_block_size * typesize);
                 if (itr->external_buffer) {
                     free(itr->block);
                 }
@@ -597,7 +597,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
     cfg.prefilter = ctx->prefilter_fn;
     cfg.pparams = ctx->prefilter_params;
-    IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &(*itr)->cat_ctx));
+    IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &(*itr)->cat_ctx));
 
     if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
         memset(cont->catarr->buf, 0, cont->catarr->nitems * typesize);
@@ -930,7 +930,7 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
     // check if a chunk is filled totally and append it
     if (itr->nelem_block == itr->cur_block_size - 1) {
         if (itr->container->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-            int err = caterva_array_append(itr->cat_ctx, itr->container->catarr, itr->chunk, itr->cur_block_size * typesize);
+            int err = caterva_append(itr->cat_ctx, itr->container->catarr, itr->chunk, itr->cur_block_size * typesize);
             if (err < 0) {
                 IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
                 return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
@@ -992,7 +992,7 @@ INA_API(ina_rc_t) iarray_iter_write_has_next(iarray_iter_write_t *itr)
     int64_t typesize = itr->container->catarr->itemsize;
     if (itr->nelem == itr->container->catarr->nitems) {
         if (itr->container->catarr->storage == CATERVA_STORAGE_BLOSC) {
-            caterva_array_append(itr->cat_ctx, itr->container->catarr, itr->chunk, itr->cur_block_size * typesize);
+            caterva_append(itr->cat_ctx, itr->container->catarr, itr->chunk, itr->cur_block_size * typesize);
         } else {
             itr->container->catarr->filled = true;
         }
@@ -1028,15 +1028,15 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
 
     caterva_config_t cfg = {0};
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
-    caterva_context_t *cat_ctx;
-    IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
+    caterva_ctx_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
 
     if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
         (*itr)->chunk = cont->catarr->buf;
     } else {
         (*itr)->chunk = (uint8_t *) ina_mem_alloc((size_t)cont->catarr->chunknitems * cont->catarr->itemsize);
     }
-    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
+    IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
 
     (*itr)->elem_index = (int64_t *) ina_mem_alloc(CATERVA_MAX_DIM * sizeof(int64_t));
     (*itr)->cur_block_index = (int64_t *) ina_mem_alloc(CATERVA_MAX_DIM * sizeof(int64_t));
@@ -1060,7 +1060,7 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
 
     caterva_config_t cat_cfg;
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cat_cfg);
-    caterva_context_new(&cat_cfg, &(*itr)->cat_ctx);
+    caterva_ctx_new(&cat_cfg, &(*itr)->cat_ctx);
 
     return INA_SUCCESS;
 }
@@ -1078,6 +1078,6 @@ INA_API(void) iarray_iter_write_free(iarray_iter_write_t **itr)
     INA_MEM_FREE_SAFE((*itr)->cur_block_index);
     INA_MEM_FREE_SAFE((*itr)->cur_block_shape);
 
-    caterva_context_free(&(*itr)->cat_ctx);
+    caterva_ctx_free(&(*itr)->cat_ctx);
     INA_MEM_FREE_SAFE(*itr);
 }

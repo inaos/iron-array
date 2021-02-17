@@ -114,8 +114,8 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
 
     caterva_config_t cfg = {0};
     IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
-    caterva_context_t *cat_ctx;
-    IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
+    caterva_ctx_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
 
     caterva_params_t cat_params = {0};
     IARRAY_RETURN_IF_FAILED(iarray_create_caterva_params(dtshape, &cat_params));
@@ -123,9 +123,9 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     caterva_storage_t cat_storage = {0};
     IARRAY_RETURN_IF_FAILED( iarray_create_caterva_storage(dtshape, storage, &cat_storage));
 
-    IARRAY_ERR_CATERVA(caterva_array_empty(cat_ctx, &cat_params, &cat_storage, &(*c)->catarr));
+    IARRAY_ERR_CATERVA(caterva_empty(cat_ctx, &cat_params, &cat_storage, &(*c)->catarr));
 
-    if (cat_ctx != NULL) caterva_context_free(&cat_ctx);
+    if (cat_ctx != NULL) caterva_ctx_free(&cat_ctx);
 
     if ((*c)->catarr == NULL) {
         IARRAY_TRACE1(iarray.error, "Error creating the caterva container");
@@ -140,7 +140,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
             return INA_ERROR(INA_ERR_FAILED);
         }
         // And store it in iarray metalayer
-        if (blosc2_add_metalayer((*c)->catarr->sc, "iarray", smeta, (uint32_t) smeta_len) < 0) {
+        if (blosc2_meta_add((*c)->catarr->sc, "iarray", smeta, (uint32_t) smeta_len) < 0) {
             IARRAY_TRACE1(iarray.error, "Error adding a metalayer to blosc");
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
         }

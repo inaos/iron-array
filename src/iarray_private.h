@@ -128,7 +128,7 @@ typedef struct iarray_iter_write_s {
     int64_t *elem_index; // The elem index in coord
     int64_t elem_flat_index; // The elem index if the container will be flatten
 
-    caterva_context_t *cat_ctx;
+    caterva_ctx_t *cat_ctx;
 } iarray_iter_write_t;
 
 static const iarray_iter_write_t IARRAY_ITER_WRITE_EMPTY = {0};
@@ -178,7 +178,7 @@ typedef struct iarray_iter_write_block_s {
     bool compressed_chunk_buffer;  // Flag to append an already compressed buffer
     bool external_buffer; // Flag to indicate if a external chunk is passed
 
-    caterva_context_t *cat_ctx;
+    caterva_ctx_t *cat_ctx;
 } iarray_iter_write_block_t;
 
 static const iarray_iter_write_block_t IARRAY_ITER_WRITE_BLOCK_EMPTY = {0};

@@ -306,28 +306,28 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
     iarray_create_caterva_params(dtshape, &params);
     caterva_storage_t cat_storage = {0};
     iarray_create_caterva_storage(dtshape, storage, &cat_storage);
-    caterva_context_t *cat_ctx;
-    IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
+    caterva_ctx_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
 
     uint8_t *smeta = NULL;
     if (cat_storage.backend == CATERVA_STORAGE_BLOSC) {
         cat_storage.properties.blosc.nmetalayers = 1;
         cat_storage.properties.blosc.metalayers[0].name = "iarray";
         uint32_t smeta_len;
-        blosc2_get_metalayer((*container)->catarr->sc, "iarray", &smeta, &smeta_len);
+        blosc2_meta_get((*container)->catarr->sc, "iarray", &smeta, &smeta_len);
         cat_storage.properties.blosc.metalayers[0].sdata = smeta;
         cat_storage.properties.blosc.metalayers[0].size = smeta_len;
     }
-    IARRAY_ERR_CATERVA(caterva_array_free(cat_ctx, &(*container)->catarr));
+    IARRAY_ERR_CATERVA(caterva_free(cat_ctx, &(*container)->catarr));
 
-    IARRAY_ERR_CATERVA(caterva_array_from_buffer(cat_ctx, buffer, buflen, &params, &cat_storage, &(*container)->catarr));
+    IARRAY_ERR_CATERVA(caterva_from_buffer(cat_ctx, buffer, buflen, &params, &cat_storage, &(*container)->catarr));
 
     if (cat_storage.backend == CATERVA_STORAGE_BLOSC) {
         free(smeta);
     }
     (*container)->catarr->empty = false;
 
-    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
+    IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
 
     return INA_SUCCESS;
 }
@@ -379,10 +379,10 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
     } else {
         caterva_config_t cfg = {0};
         iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
-        caterva_context_t *cat_ctx;
-        IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
-        IARRAY_ERR_CATERVA(caterva_array_to_buffer(cat_ctx, container->catarr, buffer, buflen));
-        IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
+        caterva_ctx_t *cat_ctx;
+        IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
+        IARRAY_ERR_CATERVA(caterva_to_buffer(cat_ctx, container->catarr, buffer, buflen));
+        IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
     }
 
     return INA_SUCCESS;
@@ -455,9 +455,9 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
         caterva_config_t cat_cfg = {0};
         IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free,
                                                           &cat_cfg));
-        caterva_context_t *cat_ctx;
-        IARRAY_ERR_CATERVA(caterva_context_new(&cat_cfg, &cat_ctx));
-        IARRAY_ERR_CATERVA(caterva_array_free(cat_ctx, &(*dest)->catarr));
+        caterva_ctx_t *cat_ctx;
+        IARRAY_ERR_CATERVA(caterva_ctx_new(&cat_cfg, &cat_ctx));
+        IARRAY_ERR_CATERVA(caterva_free(cat_ctx, &(*dest)->catarr));
         caterva_storage_t cat_storage = {0};
         IARRAY_ERR_CATERVA(iarray_create_caterva_storage(src->dtshape, storage, &cat_storage));
         uint8_t *smeta = NULL;
@@ -465,13 +465,13 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
             cat_storage.properties.blosc.nmetalayers = 1;
             cat_storage.properties.blosc.metalayers[0].name = "iarray";
             uint32_t smeta_len;
-            blosc2_get_metalayer(src->catarr->sc, "iarray", &smeta, &smeta_len);
+            blosc2_meta_get(src->catarr->sc, "iarray", &smeta, &smeta_len);
             cat_storage.properties.blosc.metalayers[0].sdata = smeta;
             cat_storage.properties.blosc.metalayers[0].size = smeta_len;
         }
 
-        IARRAY_ERR_CATERVA(caterva_array_copy(cat_ctx, src->catarr, &cat_storage, &(*dest)->catarr));
-        IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
+        IARRAY_ERR_CATERVA(caterva_copy(cat_ctx, src->catarr, &cat_storage, &(*dest)->catarr));
+        IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
     }
     return INA_SUCCESS;
 }

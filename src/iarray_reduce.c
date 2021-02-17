@@ -193,7 +193,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
             // Compress data
             int bsize = blosc2_getitem_ctx(dctx, chunk, csize, start,
                                            rparams->input->catarr->blocknitems,
-                                           block);
+                                           block, rparams->input->catarr->blocknitems * rparams->input->catarr->itemsize);
             if (bsize < 0) {
                 IARRAY_TRACE1(iarray.tracing, "Error getting block");
                 return -1;

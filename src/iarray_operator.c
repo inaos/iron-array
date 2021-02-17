@@ -91,8 +91,8 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     caterva_config_t cfg = {0};
     IARRAY_ERR_CATERVA(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
-    caterva_context_t *cat_ctx;
-    IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
+    caterva_ctx_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
 
     if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
         c_block = cat_ctx->cfg->alloc(c_size);
@@ -204,14 +204,14 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         } else {
             // Append it to a new iarray container
             if ((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
-                IARRAY_ERR_CATERVA(caterva_array_append(cat_ctx, c->catarr, &c_block[0], cB0 * cB2 * typesize));
+                IARRAY_ERR_CATERVA(caterva_append(cat_ctx, c->catarr, &c_block[0], cB0 * cB2 * typesize));
                 memset(c_block, 0, c_size);
             }
         }
     }
     _iarray_iter_matmul_free(&iter);
 
-    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
+    IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
     c->catarr->filled = true;
 
     if (a_copy) {
@@ -304,8 +304,8 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     caterva_config_t cfg = {0};
     IARRAY_ERR_CATERVA(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
-    caterva_context_t *cat_ctx;
-    IARRAY_ERR_CATERVA(caterva_context_new(&cfg, &cat_ctx));
+    caterva_ctx_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
 
     if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
         c_block = cat_ctx->cfg->alloc(c_size);
@@ -411,7 +411,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
         } else {
             // Append it to a new iarray container
             if ((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
-                IARRAY_ERR_CATERVA(caterva_array_append(cat_ctx, c->catarr, &c_block[0], cbshape_a[0] * typesize));
+                IARRAY_ERR_CATERVA(caterva_append(cat_ctx, c->catarr, &c_block[0], cbshape_a[0] * typesize));
                 memset(c_block, 0, c_size);
             }
         }
@@ -419,7 +419,7 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
 
     _iarray_iter_matmul_free(&iter);
 
-    IARRAY_ERR_CATERVA(caterva_context_free(&cat_ctx));
+    IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
     c->catarr->filled = true;
 
     if (a_copy) {

@@ -356,7 +356,8 @@ int prefilter_func(blosc2_prefilter_params *pparams)
                 blosc2_dparams dparams = {.nthreads = 1, .schunk = e->vars[i].c->catarr->sc};
                 blosc2_context *dctx = blosc2_create_dctx(dparams);
                 int64_t rbytes = blosc2_getitem_ctx(dctx, expr_pparams->inputs[i], expr_pparams->input_csizes[i],
-                                                    (int) offset_index, (int) nitems, eval_pparams.inputs[i]);
+                                                    (int) offset_index, (int) nitems,
+                                                    eval_pparams.inputs[i], blocksize);
                 blosc2_free_ctx(dctx);
                 if (rbytes != blocksize) {
                     fprintf(stderr, "Read from inputs failed inside pipeline\n");
