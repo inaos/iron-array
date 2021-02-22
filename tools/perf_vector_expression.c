@@ -13,9 +13,9 @@
 #include <libiarray/iarray.h>
 #include "src/iarray_private.h"
 
-#define NELEM (20 * 1000 * 1000)  // multiple of NITEMS_CHUNK for now
-#define NITEMS_CHUNK (4000 * 1000)
-#define NITEMS_BLOCK (16000)
+#define NITEMS_BLOCK (8192)
+#define NITEMS_CHUNK (512 * NITEMS_BLOCK)
+#define NELEM (10 * 1000 * NITEMS_BLOCK)  // multiple of NITEMS_CHUNK for now
 #define XMAX 10.
 
 static double _poly(const double x)
