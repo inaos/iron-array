@@ -11,14 +11,18 @@
  */
 
 #include <libiarray/iarray.h>
+#include "iarray_private.h"
 
-static ina_rc_t test_partition_advice(iarray_context_t *ctx,
+static ina_rc_t test_partition_advice(iarray_config_t cfg,
                                       iarray_data_type_t dtype,
                                       int8_t ndim,
                                       const int64_t *shape,
                                       const int64_t *cshape,
                                       const int64_t *bshape)
 {
+    iarray_context_t *ctx;
+    INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &ctx));
+    INA_TEST_ASSERT_SUCCEED(ctx->cfg->compression_favor <= IARRAY_COMPRESSION_FAVOR_CRATIO);
     iarray_dtshape_t dtshape;
     dtshape.dtype = dtype;
     int64_t max_chunksize = 0;
@@ -56,26 +60,27 @@ static ina_rc_t test_partition_advice(iarray_context_t *ctx,
         }
     }
 
+    iarray_context_free(&ctx);
+
     return INA_SUCCESS;
 
 }
 
 
 INA_TEST_DATA(partition_advice) {
-    iarray_context_t *ctx;
+    iarray_config_t cfg;
 };
 
 INA_TEST_SETUP(partition_advice)
 {
     iarray_init();
 
-    iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
+    data->cfg = IARRAY_CONFIG_DEFAULTS;
 }
 
 INA_TEST_TEARDOWN(partition_advice)
 {
-    iarray_context_free(&data->ctx);
+    INA_UNUSED(data);
     iarray_destroy();
 }
 
@@ -87,7 +92,8 @@ INA_TEST_FIXTURE(partition_advice, 1_d)
     int64_t cshape[] = {128 * 1024};
     int64_t bshape[] = {8 * 1024};
 
-    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, cshape, bshape));
+    data->cfg.compression_favor = IARRAY_COMPRESSION_FAVOR_BALANCE;
+    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->cfg, dtype, ndim, shape, cshape, bshape));
 }
 
 INA_TEST_FIXTURE(partition_advice, 1_d_1)
@@ -98,7 +104,8 @@ INA_TEST_FIXTURE(partition_advice, 1_d_1)
     int64_t cshape[] = {1};
     int64_t bshape[] = {1};
 
-    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, cshape, bshape));
+    data->cfg.compression_favor = IARRAY_COMPRESSION_FAVOR_SPEED;
+    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->cfg, dtype, ndim, shape, cshape, bshape));
 }
 
 INA_TEST_FIXTURE(partition_advice, 2_d)
@@ -109,7 +116,8 @@ INA_TEST_FIXTURE(partition_advice, 2_d)
     int64_t cshape[] = {32, 4 * 1024};
     int64_t bshape[] = {8, 1024};
 
-    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, cshape, bshape));
+    data->cfg.compression_favor = IARRAY_COMPRESSION_FAVOR_CRATIO;
+    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->cfg, dtype, ndim, shape, cshape, bshape));
 }
 
 INA_TEST_FIXTURE(partition_advice, 2_d_automatic)
@@ -120,7 +128,7 @@ INA_TEST_FIXTURE(partition_advice, 2_d_automatic)
     int64_t cshape[] = {0, 0};
     int64_t bshape[] = {0, 0};
 
-    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, cshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->cfg, dtype, ndim, shape, cshape, bshape));
 }
 
 INA_TEST_FIXTURE(partition_advice, 2_d_near_bounds)
@@ -131,7 +139,7 @@ INA_TEST_FIXTURE(partition_advice, 2_d_near_bounds)
     int64_t cshape[] = {256, 256};
     int64_t bshape[] = {64, 128};
 
-    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, cshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->cfg, dtype, ndim, shape, cshape, bshape));
 }
 
 INA_TEST_FIXTURE(partition_advice, 3_d)
@@ -142,7 +150,7 @@ INA_TEST_FIXTURE(partition_advice, 3_d)
     int64_t cshape[] = {32, 4, 1024};
     int64_t bshape[] = {8, 2, 512};
 
-    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, cshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->cfg, dtype, ndim, shape, cshape, bshape));
 }
 
 INA_TEST_FIXTURE(partition_advice, 4_d)
@@ -153,7 +161,8 @@ INA_TEST_FIXTURE(partition_advice, 4_d)
     int64_t cshape[] = {32, 4, 32, 32};
     int64_t bshape[] = {16, 2, 16, 16};
 
-    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, cshape, bshape));
+    data->cfg.compression_favor = IARRAY_COMPRESSION_FAVOR_SPEED;
+    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->cfg, dtype, ndim, shape, cshape, bshape));
 }
 
 INA_TEST_FIXTURE(partition_advice, 4_d_automatic)
@@ -164,5 +173,6 @@ INA_TEST_FIXTURE(partition_advice, 4_d_automatic)
     int64_t cshape[] = {0, 0, 0, 0};
     int64_t bshape[] = {0, 0, 0, 0};
 
-    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->ctx, dtype, ndim, shape, cshape, bshape));
+    data->cfg.compression_favor = IARRAY_COMPRESSION_FAVOR_CRATIO;
+    INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->cfg, dtype, ndim, shape, cshape, bshape));
 }
