@@ -226,9 +226,9 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
                                           int64_t min_chunksize, int64_t max_chunksize,
                                           int64_t min_blocksize, int64_t max_blocksize)
 {
-    INA_UNUSED(ctx);  // we could use context in the future
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(storage);
+    iarray_config_t* cfg = ctx->cfg;
 
     // Allocate, initialize, and perform topology detection
     hwloc_topology_t topology;
@@ -253,7 +253,18 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         // The L2 reported by Apple M1 is shared, and in the most energy-efficient cpu cluster (4 MB)
         // Because of this, probably our best bet is to assign a contained amount for the blocksize.
         // 64 KB is probably a good guess, but this requires a bit more of experimentation.
-        max_blocksize = 64 * 1024;
+        // For the case where we want to favor high compression ratios, use 4x more space.
+        switch (cfg->compression_favor) {
+            case IARRAY_COMPRESSION_FAVOR_CRATIO:
+                max_blocksize = 256 * 1024;
+                break;
+            case IARRAY_COMPRESSION_FAVOR_SPEED:
+                max_blocksize = 16 * 1024;
+                break;
+            case IARRAY_COMPRESSION_FAVOR_BALANCE:
+            default:
+                max_blocksize = 64 * 1024;
+        }
     }
     if (min_blocksize == 0) {
         // 1 KB for blocksize sounds like a good minimum
@@ -280,7 +291,17 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         // this number should depend on the number of threads, but then what happens
         // when an array is transferred to another machine with a different number of
         // cores?).
-        max_chunksize = max_blocksize * 256;
+        switch (cfg->compression_favor) {
+            case IARRAY_COMPRESSION_FAVOR_CRATIO:
+                max_chunksize = 512 * max_blocksize;
+                break;
+            case IARRAY_COMPRESSION_FAVOR_SPEED:
+                max_chunksize = 1024 * max_blocksize;
+                break;
+            case IARRAY_COMPRESSION_FAVOR_BALANCE:
+            default:
+                max_chunksize = 256 * max_blocksize;
+        }
     }
     if (min_chunksize == 0) {
         // 256 KB for chunksize sounds like a good minimum

@@ -206,6 +206,7 @@ typedef enum iarray_linalg_norm_e {
 typedef struct iarray_config_s {
     iarray_compression_codec_t compression_codec;
     int compression_level;
+    iarray_compression_favor_t compression_favor;
     int use_dict;
     int filter_flags;
     unsigned int eval_method;
@@ -263,6 +264,7 @@ typedef struct iarray_random_ctx_s iarray_random_ctx_t;
 static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .compression_codec=IARRAY_COMPRESSION_LZ4,
     .compression_level=5,
+    .compression_favor=IARRAY_COMPRESSION_FAVOR_BALANCE,
     .use_dict=0,
     .filter_flags=IARRAY_COMP_SHUFFLE,
     .eval_method=IARRAY_EVAL_METHOD_ITERCHUNK,
@@ -272,6 +274,7 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
 static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = {
     .compression_codec=IARRAY_COMPRESSION_LZ4,
     .compression_level=0,
+    .compression_favor=IARRAY_COMPRESSION_FAVOR_BALANCE,
     .use_dict=0,
     .filter_flags=0,
     .eval_method=0,
