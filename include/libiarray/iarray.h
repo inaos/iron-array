@@ -182,9 +182,14 @@ typedef enum iarray_compression_codec_e {
     IARRAY_COMPRESSION_LZ4HC,
     IARRAY_COMPRESSION_SNAPPY,
     IARRAY_COMPRESSION_ZLIB,
-    IARRAY_COMPRESSION_ZSTD,
-    IARRAY_COMPRESSION_LIZARD
+    IARRAY_COMPRESSION_ZSTD
 } iarray_compression_codec_t;
+
+typedef enum iarray_compression_favor_e {
+    IARRAY_COMPRESSION_FAVOR_BALANCE = 0,
+    IARRAY_COMPRESSION_FAVOR_SPEED,
+    IARRAY_COMPRESSION_FAVOR_CRATIO,
+} iarray_compression_favor_t;
 
 typedef enum iarray_linalg_norm_e {
     IARRAY_LINALG_NORM_NONE,
