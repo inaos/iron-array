@@ -251,19 +251,19 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         // max_blocksize = L2_size / 8;
         //
         // The L2 reported by Apple M1 is shared, and in the most energy-efficient cpu cluster (4 MB)
-        // Because of this, probably our best bet is to assign a contained amount for the blocksize.
-        // 64 KB is probably a good guess, but this requires a bit more of experimentation.
-        // For the case where we want to favor high compression ratios, use 4x more space.
+        //
+        // Because of this, probably our best bet is to assign a fixed amount for the blocksize.
+        // After some experimentation with the i9-10940X, 256 KB is probably a good and balanced guess.
         switch (cfg->compression_favor) {
             case IARRAY_COMPRESSION_FAVOR_CRATIO:
-                max_blocksize = 256 * 1024;
+                max_blocksize = 1024 * 1024;
                 break;
             case IARRAY_COMPRESSION_FAVOR_SPEED:
-                max_blocksize = 16 * 1024;
+                max_blocksize = 128 * 1024;
                 break;
             case IARRAY_COMPRESSION_FAVOR_BALANCE:
             default:
-                max_blocksize = 64 * 1024;
+                max_blocksize = 256 * 1024;
         }
     }
     if (min_blocksize == 0) {
@@ -287,20 +287,17 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         // is not too important.  It better pays off to provide room enough
         // for having a lot of different threads to work in parallel for
         // producing the chunk of the output.
-        // Here we are choosing a big multiple of blocksize (maybe in the future
-        // this number should depend on the number of threads, but then what happens
-        // when an array is transferred to another machine with a different number of
-        // cores?).
+        // Looks like 128 MB is a good figure for the i9-10940X processor.
         switch (cfg->compression_favor) {
             case IARRAY_COMPRESSION_FAVOR_CRATIO:
-                max_chunksize = 512 * max_blocksize;
+                max_chunksize = 128 * 1024 * 1024;
                 break;
             case IARRAY_COMPRESSION_FAVOR_SPEED:
-                max_chunksize = 1024 * max_blocksize;
+                max_chunksize = 128 * 1024 * 1024;
                 break;
             case IARRAY_COMPRESSION_FAVOR_BALANCE:
             default:
-                max_chunksize = 256 * max_blocksize;
+                max_chunksize = 128 * 1024 * 1024;
         }
     }
     if (min_chunksize == 0) {
@@ -332,7 +329,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     // Compute the chunkshape.
     // TODO: Only boxed partition algorithm is implement, but a C and Fortran order could be useful too
     IARRAY_RETURN_IF_FAILED(boxed_optim_partition(ndim, shape, chunkshape, itemsize,
-                                                     min_chunksize, max_chunksize));
+                                                  min_chunksize, max_chunksize));
 
     int32_t chunksize = itemsize;
     for (int i = 0; i < ndim; i++) {
@@ -343,7 +340,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     }
     // Compute the blockshape
     IARRAY_RETURN_IF_FAILED(boxed_optim_partition(ndim, chunkshape, blockshape, itemsize,
-                                                     min_blocksize, max_blocksize));
+                                                  min_blocksize, max_blocksize));
 
     return INA_SUCCESS;
 }
