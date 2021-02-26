@@ -141,9 +141,12 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool enfor
         cat_storage.properties.blosc.chunkshape[i] = catarr_aux->chunkshape[i];
         cat_storage.properties.blosc.blockshape[i] = catarr_aux->blockshape[i];
     }
-    IARRAY_ERR_CATERVA(caterva_copy(cat_ctx, catarr_aux, &cat_storage, &catarr));
-    caterva_free(cat_ctx, &catarr_aux);
-
+    if (enforce_frame) {
+        IARRAY_ERR_CATERVA(caterva_copy(cat_ctx, catarr_aux, &cat_storage, &catarr));
+        caterva_free(cat_ctx, &catarr_aux);
+    } else {
+        catarr = catarr_aux;
+    }
     if (catarr == NULL) {
         IARRAY_TRACE1(iarray.error, "Error creating the caterva array from a file");
         return INA_ERROR(IARRAY_ERR_CATERVA_FAILED);
