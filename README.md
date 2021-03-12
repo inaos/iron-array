@@ -18,18 +18,18 @@ Execute the following commands:
 ## Build
 
 We use inac cmake build-system in combination with different libraries which can be installed using
-miniconda3.  In particular, one can install MKL, IPP and SVML from Intel in a cross-platform
-portable way with:
+miniconda3.  In particular, one can install LLVM from the numba channel, and MKL and SVML from Intel
+channel in a cross-platform portable way with:
 
-    $ conda install -c intel mkl-include  # MKL
-    $ conda install -c intel mkl-static  # MKL
-    $ conda install -c intel ipp-devel # IPP
-    $ conda install -c intel icc_rt  # SVML
-    $ conda install -c numba llvmdev # LLVM
+    $ conda install -c numba llvmdev==10.0.1  # LLVM
+    $ conda install -c intel mkl-include      # MKL
+    $ conda install -c intel mkl-static       # MKL
+    $ conda install -c intel icc_rt           # SVML
 
-Also, you will need to install LLVM development libraries.  You can use conda for that (`llvmdev`)
-package, although it is better to use the native libraries in the system (using `apt`, `brew` or any
-other packager of your preference).
+Beware: currently we only support LLVM 10, which is the one that is supported by llvmlite,
+and we strongly suggest to use conda for installing  that package via conda (`llvmdev`).
+In particular, we discourage the use of native libraries in the system
+(either using `apt`, `brew` or any other packager).
 
 ### Windows
 
