@@ -33,8 +33,6 @@ strategy:
       BUILD_ARCH: x86_64
       VSINSTALL: "Microsoft Visual Studio\\2019\\Enterprise\\VC\\Auxiliary\\Build"
       MSVC_PLATFORM: amd64
-      LLVM_PKG_NAME: 'llvm-windows_vs17-x86_64-debug'
-      LLVM_PKG_VERSION: '10.0.0'
     windows-release:
       imageName: 'windows-2019'
       BUILD_CONFIGURATION: RelWithDebInfo
@@ -42,8 +40,6 @@ strategy:
       BUILD_ARCH: x86_64
       VSINSTALL: "Microsoft Visual Studio\\2019\\Enterprise\\VC\\Auxiliary\\Build"
       MSVC_PLATFORM: amd64
-      LLVM_PKG_NAME: 'llvm-windows_vs17-x86_64-relwithdebinfo'
-      LLVM_PKG_VERSION: '10.0.0'
 
 pool:
   vmImage: $(imageName)
@@ -85,7 +81,7 @@ steps:
     conda install -y --name iArrayEnv -c intel mkl-include
     conda install -y --name iArrayEnv -c intel mkl-static
     conda install -y --name iArrayEnv -c intel icc_rt
-    conda install -y --name iArrayEnv -c numba llvmdev
+    conda install -y --name iArrayEnv -c numba 'llvmdev<11'
   displayName: Download dependencies
   env:
     jfrog_artifactory_uid: $(jfrog_artifactory_uid)
@@ -114,8 +110,6 @@ steps:
   env:
     BUILD_CONFIGURATION: $(BUILD_CONFIGURATION)
     BUILD_ARCH: $(BUILD_ARCH)
-    LLVM_PKG_NAME: $(LLVM_PKG_NAME)
-    LLVM_PKG_VERSION: $(LLVM_PKG_VERSION)
     MULTITHREADING: $(MULTITHREADING)
   condition:
     eq( variables['Agent.OS'], 'Windows_NT' )
