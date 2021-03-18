@@ -11,15 +11,17 @@
  */
 
 #include <libiarray/iarray.h>
+#include <iarray_private.h>
 
-static ina_rc_t test_buffer(iarray_context_t *ctx,
-                           iarray_data_type_t dtype,
-                           size_t type_size,
-                           int8_t ndim,
-                           const int64_t *shape,
-                           const int64_t *cshape,
-                           const int64_t *bshape)
+static ina_rc_t
+test_btune_favor(iarray_config_t *cfg, iarray_data_type_t dtype, size_t type_size, int8_t ndim,
+                 const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
+                 int32_t *prev_cbytes)
 {
+
+    iarray_context_t *ctx;
+    INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
+
     iarray_dtshape_t xdtshape;
 
     xdtshape.dtype = dtype;
@@ -61,6 +63,8 @@ static ina_rc_t test_buffer(iarray_context_t *ctx,
 
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf_src, (size_t) buf_size * type_size, &xstore, 0, &c_x));
 
+    INA_TEST_ASSERT(*prev_cbytes < c_x->catarr->sc->cbytes);
+
     uint8_t *buf_dest = malloc((size_t)buf_size * type_size);
 
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf_dest, (size_t)buf_size * type_size));
@@ -81,28 +85,45 @@ static ina_rc_t test_buffer(iarray_context_t *ctx,
     free(buf_src);
     iarray_container_free(ctx, &c_x);
 
+    iarray_context_free(&ctx);
+    
     return INA_SUCCESS;
 }
 
-INA_TEST_DATA(constructor_buffer) {
-    iarray_context_t *ctx;
+INA_TEST_DATA(btune_favor) {
+    iarray_config_t cfg;
+    int32_t cbytes;
 };
 
-INA_TEST_SETUP(constructor_buffer)
+INA_TEST_SETUP(btune_favor)
 {
     iarray_init();
-
-    iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
+    data->cbytes = 0;
+    data->cfg = IARRAY_CONFIG_DEFAULTS;
 }
 
-INA_TEST_TEARDOWN(constructor_buffer)
+INA_TEST_TEARDOWN(btune_favor)
 {
-    iarray_context_free(&data->ctx);
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(constructor_buffer, 2_d)
+INA_TEST_FIXTURE(btune_favor, cratio)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    size_t type_size = sizeof(double);
+
+    int8_t ndim = 2;
+    int64_t shape[] = {367, 333};
+    int64_t cshape[] = {70, 91};
+    int64_t bshape[] = {12, 25};
+    
+    data->cfg.compression_favor = IARRAY_COMPRESSION_FAVOR_CRATIO;
+    
+    INA_TEST_ASSERT_SUCCEED(test_btune_favor(&data->cfg, dtype, type_size, ndim, shape, cshape,
+                                             bshape, &data->cbytes));
+}
+
+INA_TEST_FIXTURE(btune_favor, balance)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
@@ -112,44 +133,24 @@ INA_TEST_FIXTURE(constructor_buffer, 2_d)
     int64_t cshape[] = {70, 91};
     int64_t bshape[] = {12, 25};
 
-    INA_TEST_ASSERT_SUCCEED(test_buffer(data->ctx, dtype, type_size, ndim, shape, cshape, bshape));
+    data->cfg.compression_favor = IARRAY_COMPRESSION_FAVOR_BALANCE;
+
+    INA_TEST_ASSERT_SUCCEED(test_btune_favor(&data->cfg, dtype, type_size, ndim, shape, cshape,
+                                             bshape, &data->cbytes));
 }
 
-INA_TEST_FIXTURE(constructor_buffer, 4_f_p)
-{
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    size_t type_size = sizeof(float);
-
-    int8_t ndim = 4;
-    int64_t shape[] = {10, 12, 10, 13};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_buffer(data->ctx, dtype, type_size, ndim, shape, cshape, bshape));
-}
-
-INA_TEST_FIXTURE(constructor_buffer, 5_d)
+INA_TEST_FIXTURE(btune_favor, speed)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     size_t type_size = sizeof(double);
 
-    int8_t ndim = 5;
-    int64_t shape[] = {11, 13, 10, 16, 17};
-    int64_t cshape[] = {10, 6, 8, 10, 5};
-    int64_t bshape[] = {3, 4, 3, 3, 3};
+    int8_t ndim = 2;
+    int64_t shape[] = {367, 333};
+    int64_t cshape[] = {70, 91};
+    int64_t bshape[] = {12, 25};
 
-    INA_TEST_ASSERT_SUCCEED(test_buffer(data->ctx, dtype, type_size, ndim, shape, cshape, bshape));
-}
+    data->cfg.compression_favor = IARRAY_COMPRESSION_FAVOR_SPEED;
 
-INA_TEST_FIXTURE(constructor_buffer, 7_f)
-{
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    size_t type_size = sizeof(float);
-
-    int8_t ndim = 7;
-    int64_t shape[] = {7, 8, 10, 10, 4, 4, 11};
-    int64_t cshape[] = {4, 3, 6, 2, 3, 3, 2};
-    int64_t bshape[] = {2, 2, 2, 1, 2, 2, 2};
-
-    INA_TEST_ASSERT_SUCCEED(test_buffer(data->ctx, dtype, type_size, ndim, shape, cshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_btune_favor(&data->cfg, dtype, type_size, ndim, shape, cshape,
+                                             bshape, &data->cbytes));
 }

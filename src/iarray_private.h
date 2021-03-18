@@ -14,6 +14,7 @@
 #define _IARRAY_PRIVATE_H_
 
 #include <libiarray/iarray.h>
+#include "btune/iabtune.h"
 
 /* Dependencies */
 #include <blosc2.h>

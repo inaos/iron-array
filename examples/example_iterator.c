@@ -21,7 +21,7 @@ int main(void)
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int64_t shape[] = {100, 100};
     int64_t cshape[] = {20, 20};
-    int64_t bshape[] = {2, 9};
+    int64_t bshape[] = {5, 5};
     ina_rc_t rc;
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -54,7 +54,9 @@ int main(void)
     while (INA_SUCCEED(iarray_iter_write_has_next(iter_w))) {
         IARRAY_FAIL_IF_ERROR(iarray_iter_write_next(iter_w));
         ((double *) val_w.elem_pointer)[0] = (double) val_w.elem_flat_index;
+        printf("%.lld - ", val_w.elem_flat_index);
     }
+    printf("\n");
     iarray_iter_write_free(&iter_w);
     IARRAY_FAIL_IF(ina_err_get_rc() != INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
@@ -65,7 +67,7 @@ int main(void)
         IARRAY_FAIL_IF(iarray_iter_read_block_next(iter, NULL, 0));
         for (int64_t i = 0; i < val.block_size; ++i) {
             double value = ((double *) val.block_pointer)[i];
-            printf("%f - ", value);
+            printf("%.f - ", value);
         }
         printf("\n");
     }
