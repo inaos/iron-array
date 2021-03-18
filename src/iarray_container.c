@@ -123,6 +123,28 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool enfor
     }
     caterva_config_t cfg = {0};
     IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
+    blosc2_btune iabtune = {0};
+    btune_config iabtune_config = {0};
+    memcpy(&iabtune_config, &BTUNE_CONFIG_DEFAULTS, sizeof(btune_config));
+    switch(ctx->cfg->compression_favor) {
+        case IARRAY_COMPRESSION_FAVOR_CRATIO:
+            iabtune_config.comp_mode = BTUNE_COMP_HCR;
+            break;
+        case IARRAY_COMPRESSION_FAVOR_SPEED:
+            iabtune_config.comp_mode = BTUNE_COMP_HSP;
+            break;
+        default:
+            iabtune_config.comp_mode = BTUNE_COMP_BALANCED;
+    }
+    if (ctx->cfg->btune) {
+        iabtune.btune_config = &iabtune_config;
+        iabtune.btune_init = iabtune_init;
+        iabtune.btune_next_blocksize = iabtune_next_blocksize;
+        iabtune.btune_next_cparams = iabtune_next_cparams;
+        iabtune.btune_update = iabtune_update;
+        iabtune.btune_free = iabtune_free;
+        cfg.udbtune = &iabtune;
+    }
     caterva_ctx_t *cat_ctx;
     IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
     if (cat_ctx == NULL) {

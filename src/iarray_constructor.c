@@ -13,7 +13,6 @@
 #include "iarray_private.h"
 #include <libiarray/iarray.h>
 
-
 static ina_rc_t _iarray_container_fill_float(iarray_context_t *ctx, iarray_container_t *c, float value)
 {
     INA_VERIFY_NOT_NULL(ctx);
@@ -302,6 +301,29 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
 
     caterva_config_t cfg = {0};
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+
+    blosc2_btune iabtune = {0};
+    btune_config iabtune_config = {0};
+    memcpy(&iabtune_config, &BTUNE_CONFIG_DEFAULTS, sizeof(btune_config));
+    switch(ctx->cfg->compression_favor) {
+        case IARRAY_COMPRESSION_FAVOR_CRATIO:
+            iabtune_config.comp_mode = BTUNE_COMP_HCR;
+            break;
+        case IARRAY_COMPRESSION_FAVOR_SPEED:
+            iabtune_config.comp_mode = BTUNE_COMP_HSP;
+            break;
+        default:
+            iabtune_config.comp_mode = BTUNE_COMP_BALANCED;
+    }
+    if (ctx->cfg->btune) {
+        iabtune.btune_config = &iabtune_config;
+        iabtune.btune_init = iabtune_init;
+        iabtune.btune_next_blocksize = iabtune_next_blocksize;
+        iabtune.btune_next_cparams = iabtune_next_cparams;
+        iabtune.btune_update = iabtune_update;
+        iabtune.btune_free = iabtune_free;
+        cfg.udbtune = &iabtune;
+    }
     caterva_params_t params = {0};
     iarray_create_caterva_params(dtshape, &params);
     caterva_storage_t cat_storage = {0};
@@ -453,8 +475,32 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     } else {
         IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, src->dtshape, storage, 0, dest));
         caterva_config_t cat_cfg = {0};
+
         IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free,
                                                           &cat_cfg));
+        blosc2_btune iabtune = {0};
+        btune_config iabtune_config = {0};
+        memcpy(&iabtune_config, &BTUNE_CONFIG_DEFAULTS, sizeof(btune_config));
+        switch(ctx->cfg->compression_favor) {
+            case IARRAY_COMPRESSION_FAVOR_CRATIO:
+                iabtune_config.comp_mode = BTUNE_COMP_HCR;
+                break;
+            case IARRAY_COMPRESSION_FAVOR_SPEED:
+                iabtune_config.comp_mode = BTUNE_COMP_HSP;
+                break;
+            default:
+                iabtune_config.comp_mode = BTUNE_COMP_BALANCED;
+        }
+        if (ctx->cfg->btune) {
+            iabtune.btune_config = &iabtune_config;
+            iabtune.btune_init = iabtune_init;
+            iabtune.btune_next_blocksize = iabtune_next_blocksize;
+            iabtune.btune_next_cparams = iabtune_next_cparams;
+            iabtune.btune_update = iabtune_update;
+            iabtune.btune_free = iabtune_free;
+            cat_cfg.udbtune = &iabtune;
+        }
+
         caterva_ctx_t *cat_ctx;
         IARRAY_ERR_CATERVA(caterva_ctx_new(&cat_cfg, &cat_ctx));
         IARRAY_ERR_CATERVA(caterva_free(cat_ctx, &(*dest)->catarr));
