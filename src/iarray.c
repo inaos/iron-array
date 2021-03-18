@@ -347,8 +347,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
 
 
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx)
-{
-    if (!_ina_inited) {
+{if (!_ina_inited) {
         fprintf(stderr, "Error.  You need to call `iarray_init()` prior to any other iarray function call.");
         exit(1);
     }
@@ -391,31 +390,29 @@ ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams,
                                      int8_t typesize,
                                      int32_t blocksize)
 {
-    cparams->pparams = ctx->prefilter_params;
+    cparams->preparams = ctx->prefilter_params;
     cparams->prefilter = ctx->prefilter_fn;
     int blosc_filter_idx = 0;
     cparams->compcode = ctx->cfg->compression_codec;
     cparams->use_dict = ctx->cfg->use_dict;
     cparams->clevel = (uint8_t)ctx->cfg->compression_level; /* Since its just a mapping, we know the cast is ok */
     cparams->blocksize = blocksize;
-    cparams->typesize = typesize;
-    cparams->nthreads = (uint16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
+    cparams->typesize = (int32_t) typesize;
+    cparams->nthreads = (uint16_t) ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
     if ((ctx->cfg->filter_flags & IARRAY_COMP_TRUNC_PREC)) {
         cparams->filters[blosc_filter_idx] = BLOSC_TRUNC_PREC;
         cparams->filters_meta[blosc_filter_idx] = ctx->cfg->fp_mantissa_bits;
         blosc_filter_idx++;
     }
-    if (ctx->cfg->filter_flags & IARRAY_COMP_BITSHUFFLE) {
-        cparams->filters[blosc_filter_idx] = BLOSC_BITSHUFFLE;
-        blosc_filter_idx++;
-    }
-    if (ctx->cfg->filter_flags & IARRAY_COMP_SHUFFLE) {
-        cparams->filters[blosc_filter_idx] = BLOSC_SHUFFLE;
-        blosc_filter_idx++;
-    }
     if (ctx->cfg->filter_flags & IARRAY_COMP_DELTA) {
         cparams->filters[blosc_filter_idx] = BLOSC_DELTA;
         blosc_filter_idx++;
+    }
+    if (ctx->cfg->filter_flags & IARRAY_COMP_BITSHUFFLE) {
+        cparams->filters[BLOSC2_MAX_FILTERS - 1] = BLOSC_BITSHUFFLE;
+    }
+    if (ctx->cfg->filter_flags & IARRAY_COMP_SHUFFLE) {
+        cparams->filters[BLOSC2_MAX_FILTERS - 1] = BLOSC_SHUFFLE;
     }
     return INA_SUCCESS;
 }
@@ -438,16 +435,25 @@ ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t),
         cat_cfg->filtersmeta[blosc_filter_idx] = cfg->fp_mantissa_bits;
         blosc_filter_idx++;
     }
-    if (cfg->filter_flags & IARRAY_COMP_BITSHUFFLE) {
-        cat_cfg->filters[blosc_filter_idx] = BLOSC_BITSHUFFLE;
-        blosc_filter_idx++;
-    }
-    if (cfg->filter_flags & IARRAY_COMP_SHUFFLE) {
-        cat_cfg->filters[blosc_filter_idx] = BLOSC_SHUFFLE;
-        blosc_filter_idx++;
-    }
     if (cfg->filter_flags & IARRAY_COMP_DELTA) {
         cat_cfg->filters[blosc_filter_idx] = BLOSC_DELTA;
+    }
+    if (cfg->filter_flags & IARRAY_COMP_BITSHUFFLE) {
+        cat_cfg->filters[BLOSC2_MAX_FILTERS - 1] = BLOSC_BITSHUFFLE;
+    }
+    if (cfg->filter_flags & IARRAY_COMP_SHUFFLE) {
+        cat_cfg->filters[BLOSC2_MAX_FILTERS - 1] = BLOSC_SHUFFLE;
+    }
+    if (cfg->btune) {
+        blosc2_btune *iabtune = malloc(sizeof(blosc2_btune));
+        btune_config iabtune_config = BTUNE_CONFIG_DEFAULTS;
+        iabtune->btune_config = &iabtune_config;
+        iabtune->btune_init = iabtune_init;
+        iabtune->btune_next_blocksize = iabtune_next_blocksize;
+        iabtune->btune_next_cparams = iabtune_next_cparams;
+        iabtune->btune_update = iabtune_update;
+        iabtune->btune_free = iabtune_free;
+        cat_cfg->udbtune = iabtune;
     }
     return INA_SUCCESS;
 }

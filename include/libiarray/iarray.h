@@ -212,6 +212,7 @@ typedef struct iarray_config_s {
     unsigned int eval_method;
     int max_num_threads; /* Maximum number of threads to use */
     uint8_t fp_mantissa_bits; /* Only useful together with flag: IARRAY_COMP_TRUNC_PREC */
+    bool btune;  /* Enable btune */
 } iarray_config_t;
 
 typedef struct iarray_dtshape_s {
@@ -269,7 +270,9 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .filter_flags=IARRAY_COMP_SHUFFLE,
     .eval_method=IARRAY_EVAL_METHOD_ITERCHUNK,
     .max_num_threads=1,
-    .fp_mantissa_bits=0};
+    .fp_mantissa_bits=0,
+    .btune=true,
+    };
 
 static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = {
     .compression_codec=IARRAY_COMPRESSION_LZ4,
