@@ -18,6 +18,12 @@
 
 #define NTHREADS 1
 
+/* Special case for a constant function */
+static double const_(const double x)
+{
+    return 2.3 - (x - x);
+}
+
 
 /* Compute and fill X values in a buffer */
 static int fill_x(double* x, int64_t nelem)
@@ -81,7 +87,16 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void*)buffer_x, nelem * sizeof(double), &store, 0, &c_x));
 
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
-    INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
+    if (func == const_) {
+        // The next code should not be needed.
+        // Just for testing purposes, let's bind to NULL and see that it crashes too
+        INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "", NULL));
+        // However, the next link make things to work (but should not be needed).
+        // INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "", c_x));
+    }
+    else {
+        INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
+    }
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind_out_properties(e, &dtshape, &store));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, expr_str));
     INA_TEST_ASSERT_SUCCEED(iarray_eval(e, &c_out));
@@ -89,7 +104,7 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
 
     // We use a quite low tolerance as MKL functions always differ from those in OS math libraries
     INA_TEST_ASSERT_SUCCEED(test_double_buffer_cmp(ctx, c_out, buffer_y, nelem * sizeof(double), 5e-15, 5e-14));
-    
+
     iarray_expr_free(ctx, &e);
 
     ina_mem_free(buffer_x);
@@ -127,6 +142,20 @@ INA_TEST_TEARDOWN(expression_eval_double)
 static double expr_(const double x)
 {
     return (x - 2.3) * (x - 1.35) * (x + 4.2);
+}
+
+INA_TEST_FIXTURE(expression_eval_double, iterblosc_constant)
+{
+data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+data->func = const_;
+data->expr_str = "2.3";
+
+int8_t ndim = 2;
+int64_t shape[] = {100, 40};
+int64_t cshape[] = {50, 20};
+int64_t bshape[] = {15, 20};
+
+INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str));
 }
 
 
