@@ -398,6 +398,52 @@ int prefilter_func(blosc2_prefilter_params *pparams)
 }
 
 
+int postfilter_func(blosc2_postfilter_params *pparams) {
+    iarray_expr_pparams_t *expr_pparams = (iarray_expr_pparams_t *) pparams->user_data;
+    struct iarray_expression_s *e = expr_pparams->e;
+    int ninputs = expr_pparams->ninputs;
+    // Populate the eval_pparams
+    iarray_eval_pparams_t eval_pparams = {0};
+    eval_pparams.ninputs = ninputs;
+    memcpy(eval_pparams.input_typesizes, expr_pparams->input_typesizes, ninputs * sizeof(int32_t));
+    eval_pparams.user_data = expr_pparams;
+    eval_pparams.out = pparams->out;
+    eval_pparams.ndim = expr_pparams->e->out_dtshape->ndim;
+
+    // Do the actual evaluation
+    int ret = ((iarray_eval_fn) e->jug_expr_func)(&eval_pparams);
+    switch (ret) {
+        case 0:
+            // 0 means success
+            break;
+        case 1:
+            IARRAY_TRACE1(iarray.error, "Out of bounds in LLVM eval engine");
+            return -2;
+        default:
+            IARRAY_TRACE1(iarray.error, "Error in executing LLVM eval engine");
+            return -3;
+    }
+
+    return 0;
+}
+
+
+INA_API(ina_rc_t) iarray_attach_postfilter(iarray_expression_t *e, iarray_container_t *c) {
+    // Setup a new cparams with a prefilter
+    blosc2_postfilter_params pparams = {0};
+    iarray_expr_pparams_t expr_pparams = {0};
+    expr_pparams.e = e;
+    expr_pparams.ninputs = 0;
+    pparams.user_data = (void *) &expr_pparams;
+
+    blosc2_context* dctx = c->catarr->sc->dctx;
+    dctx->postfilter = (blosc2_postfilter_fn)postfilter_func;
+    dctx->postparams = &pparams;
+
+    return INA_SUCCESS;
+}
+
+
 ina_rc_t iarray_eval_cleanup(iarray_expression_t *e, int64_t nitems_written)
 {
     ina_mempool_reset(e->ctx->mp);
@@ -579,7 +625,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     // Need for compatible containers
     uint8_t **var_chunks = malloc(nvars * sizeof(void*));
     bool *var_needs_free = malloc(nvars * sizeof(bool));
-
 
     // Write iterator for output
     ctx->prefilter_fn = (blosc2_prefilter_fn)prefilter_func;

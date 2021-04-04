@@ -454,20 +454,18 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
         }
         iarray_iter_read_block_t *iter_read;
         iarray_iter_read_block_value_t read_val;
-        iarray_iter_read_block_new(ctx, &iter_read, src, iter_blockshape, &read_val,
-                                   false);
+        iarray_iter_read_block_new(ctx, &iter_read, src, iter_blockshape, &read_val, false);
         iarray_iter_write_block_t *iter_write;
         iarray_iter_write_block_value_t write_val;
         iarray_iter_write_block_new(ctx, &iter_write, *dest, iter_blockshape,
-                                    &write_val,
-                                   false);
+                                    &write_val, false);
 
         while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_write)) &&
         INA_SUCCEED(iarray_iter_read_block_has_next(iter_read))) {
             IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_next(iter_read, NULL, 0));
-            IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter_write,NULL, 0));
-            memcpy(write_val.block_pointer, read_val.block_pointer, write_val.block_size *
-            src->catarr->itemsize);
+            IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter_write, NULL, 0));
+            memcpy(write_val.block_pointer, read_val.block_pointer,
+                   write_val.block_size * src->catarr->itemsize);
         }
         iarray_iter_read_block_free(&iter_read);
         iarray_iter_write_block_free(&iter_write);

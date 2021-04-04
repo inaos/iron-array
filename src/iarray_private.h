@@ -83,6 +83,8 @@ struct iarray_context_s {
     ina_mempool_t *mp_tmp_out;
     blosc2_prefilter_fn prefilter_fn;
     blosc2_prefilter_params *prefilter_params;
+    blosc2_postfilter_fn postfilter_fn;
+    blosc2_postfilter_params *postfilter_params;
     /* FIXME: track expressions -> list */
 };
 
