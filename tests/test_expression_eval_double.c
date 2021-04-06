@@ -87,15 +87,11 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void*)buffer_x, nelem * sizeof(double), &store, 0, &c_x));
 
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
-    if (func == const_) {
-        // The next code should not be needed.
-        // Just for testing purposes, let's bind to NULL and see that it crashes too
-        INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "", NULL));
-        // However, the next link make things to work (but should not be needed).
-        // INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "", c_x));
+    if (func != const_) {
+        INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
     }
     else {
-        INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
+        
     }
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind_out_properties(e, &dtshape, &store));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, expr_str));
