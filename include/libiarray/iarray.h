@@ -695,6 +695,8 @@ INA_API(ina_rc_t) iarray_expr_compile_udf(iarray_expression_t *e,
 
 INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **container);
 
+INA_API(ina_rc_t) iarray_eval_attach_postfilter(iarray_expression_t *e, iarray_container_t *c);
+
 //FIXME: remove
 INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp);
 INA_API(ina_rc_t) iarray_expr_get_nthreads(iarray_expression_t *e, int *nthreads);

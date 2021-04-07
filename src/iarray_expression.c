@@ -126,12 +126,17 @@ INA_API(ina_rc_t) iarray_expr_bind_out_properties(iarray_expression_t *e, iarray
     e->out_dtshape = ina_mem_alloc(sizeof(iarray_dtshape_t));
     ina_mem_cpy(e->out_dtshape, dtshape, sizeof(iarray_dtshape_t));
 
-    e->out_store_properties = ina_mem_alloc(sizeof(iarray_storage_t));
-    ina_mem_cpy(e->out_store_properties, store, sizeof(iarray_storage_t));
-    if (store->urlpath != NULL) {
-        e->out_store_properties->urlpath = strdup(store->urlpath);
-    } else {
-        e->out_store_properties->urlpath = NULL;
+    if (store == NULL) {
+        e->out_store_properties = NULL;
+    }
+    else {
+        e->out_store_properties = ina_mem_alloc(sizeof(iarray_storage_t));
+        ina_mem_cpy(e->out_store_properties, store, sizeof(iarray_storage_t));
+        if (store->urlpath != NULL) {
+            e->out_store_properties->urlpath = strdup(store->urlpath);
+        } else {
+            e->out_store_properties->urlpath = NULL;
+        }
     }
     return INA_SUCCESS;
 }
@@ -399,16 +404,22 @@ int prefilter_func(blosc2_prefilter_params *pparams)
 
 
 int postfilter_func(blosc2_postfilter_params *pparams) {
+    // pparams is private for every thread when it arrives here
     iarray_expr_pparams_t *expr_pparams = (iarray_expr_pparams_t *) pparams->user_data;
     struct iarray_expression_s *e = expr_pparams->e;
     int ninputs = expr_pparams->ninputs;
     // Populate the eval_pparams
     iarray_eval_pparams_t eval_pparams = {0};
-    eval_pparams.ninputs = ninputs;
+    // A postfilter only accepts one input for now
+    eval_pparams.ninputs = 1;
+    eval_pparams.inputs[0] = (uint8_t*)pparams->in;
     memcpy(eval_pparams.input_typesizes, expr_pparams->input_typesizes, ninputs * sizeof(int32_t));
-    eval_pparams.user_data = expr_pparams;
     eval_pparams.out = pparams->out;
+    eval_pparams.out_size = pparams->size;
+    eval_pparams.out_typesize = eval_pparams.input_typesizes[0];
     eval_pparams.ndim = expr_pparams->e->out_dtshape->ndim;
+
+    eval_pparams.user_data = expr_pparams;
 
     // Do the actual evaluation
     int ret = ((iarray_eval_fn) e->jug_expr_func)(&eval_pparams);
@@ -428,17 +439,20 @@ int postfilter_func(blosc2_postfilter_params *pparams) {
 }
 
 
-INA_API(ina_rc_t) iarray_attach_postfilter(iarray_expression_t *e, iarray_container_t *c) {
-    // Setup a new cparams with a prefilter
-    blosc2_postfilter_params pparams = {0};
-    iarray_expr_pparams_t expr_pparams = {0};
-    expr_pparams.e = e;
-    expr_pparams.ninputs = 0;
-    pparams.user_data = (void *) &expr_pparams;
-
+INA_API(ina_rc_t) iarray_eval_attach_postfilter(iarray_expression_t *e, iarray_container_t *c) {
     blosc2_context* dctx = c->catarr->sc->dctx;
     dctx->postfilter = (blosc2_postfilter_fn)postfilter_func;
-    dctx->postparams = &pparams;
+    blosc2_postfilter_params *pparams = dctx->postparams;
+    if (pparams == NULL) {
+        // postparams not initialized yet
+        pparams = calloc(1, sizeof(blosc2_postfilter_params));
+    }
+    iarray_expr_pparams_t* expr_pparams = calloc(1, sizeof(iarray_expr_pparams_t));
+    expr_pparams->e = e;
+    expr_pparams->ninputs = 1;
+    expr_pparams->input_typesizes[0] = (int32_t) c->catarr->itemsize;
+    pparams->user_data = (void *) expr_pparams;
+    dctx->postparams = pparams;
 
     return INA_SUCCESS;
 }
@@ -496,7 +510,6 @@ INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container
     eval_pparams.user_data = &expr_pparams;
     for (int i = 0; i < nvars; ++i) {
         eval_pparams.input_typesizes[i] = (int32_t) e->vars[i].c->catarr->itemsize;
-        expr_pparams.input_typesizes[i] = (int32_t) e->vars[i].c->catarr->itemsize;
         expr_pparams.input_class[i] = IARRAY_EXPR_NEQ;
     }
 
