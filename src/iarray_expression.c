@@ -577,8 +577,8 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     }
 
     // Need for compatible containers
-    uint8_t **var_chunks = malloc(nvars * sizeof(void*));
-    bool *var_needs_free = malloc(nvars * sizeof(bool));
+    uint8_t **var_chunks = ina_mem_alloc(nvars * sizeof(void*));
+    bool *var_needs_free = ina_mem_alloc(nvars * sizeof(bool));
 
 
     // Write iterator for output
@@ -670,9 +670,9 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
             ina_mem_free(external_buffers[nvar]);
         }
     }
-    ina_mem_free(external_buffers);
-    free(var_chunks);
-    free(var_needs_free);
+    INA_MEM_FREE_SAFE(external_buffers);
+    INA_MEM_FREE_SAFE(var_chunks);
+    INA_MEM_FREE_SAFE(var_needs_free);
 
     INA_MEM_FREE_SAFE(iter_var);
     INA_MEM_FREE_SAFE(iter_value);
