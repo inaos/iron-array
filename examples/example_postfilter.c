@@ -74,7 +74,7 @@ int main(void) {
     iarray_expr_compile(e, expr);
     iarray_eval_attach_postfilter(e, c_x);
 
-    int nrep = 1;
+    int nrep = 3;
     INA_STOPWATCH_START(w);
     for (int i = 0; i < nrep; ++i) {
         // Convert into a buffer *after* postfilter
@@ -86,7 +86,7 @@ int main(void) {
     int64_t nbytes = nelem * typesize;
 
     printf("Time for eval expression: %.3g s, %.1f GB/s\n",
-           elapsed_sec, (1. * nbytes) * nrep / (elapsed_sec * (1u << 30u)));
+           elapsed_sec / nrep, (1. * nbytes) * nrep / (elapsed_sec * (1u << 30u)));
 
     for (int i = 0; i < nelem; ++i) {
         double d1 = ((double *) a_x)[i];
