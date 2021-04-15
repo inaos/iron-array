@@ -692,10 +692,10 @@ INA_API(ina_rc_t) iarray_expr_compile_udf(iarray_expression_t *e,
                                           int llvm_bc_len,
                                           const char *llvm_bc,
                                           const char *name);
+INA_API(ina_rc_t) iarray_expr_attach_postfilter(iarray_expression_t *e, iarray_container_t *c);
 
 INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_eval_attach_postfilter(iarray_expression_t *e, iarray_container_t *c);
 
 //FIXME: remove
 INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp);
