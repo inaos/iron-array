@@ -692,8 +692,7 @@ INA_API(ina_rc_t) iarray_expr_compile_udf(iarray_expression_t *e,
                                           int llvm_bc_len,
                                           const char *llvm_bc,
                                           const char *name);
-INA_API(ina_rc_t)
-iarray_expr_register_as_postfilter(iarray_expression_t *e, iarray_container_t *c);
+INA_API(ina_rc_t) iarray_expr_register_as_postfilter(iarray_expression_t *e, iarray_container_t *c);
 
 INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **container);
 

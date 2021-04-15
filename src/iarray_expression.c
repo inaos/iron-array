@@ -439,8 +439,7 @@ int postfilter_func(blosc2_postfilter_params *pparams) {
 }
 
 
-INA_API(ina_rc_t)
-iarray_expr_register_as_postfilter(iarray_expression_t *e, iarray_container_t *c) {
+INA_API(ina_rc_t) iarray_expr_register_as_postfilter(iarray_expression_t *e, iarray_container_t *c) {
     blosc2_context* dctx = c->catarr->sc->dctx;
     dctx->postfilter = (blosc2_postfilter_fn)postfilter_func;
     blosc2_postfilter_params *pparams = dctx->postparams;
