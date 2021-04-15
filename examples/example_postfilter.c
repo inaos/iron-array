@@ -72,7 +72,7 @@ int main(void) {
     iarray_expr_bind(e, "x", c_x);
     iarray_expr_bind_out_properties(e, &dtshape, NULL);
     iarray_expr_compile(e, expr);
-    iarray_expr_attach_postfilter(e, c_x);
+    iarray_expr_register_as_postfilter(e, c_x);
 
     int nrep = 3;
     INA_STOPWATCH_START(w);
