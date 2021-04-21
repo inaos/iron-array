@@ -23,8 +23,8 @@ def create_urlpath(method, dtype, **kwargs):
 def create_files(method, dtype, **kwargs):
     shape = (1000 * 1000,)
     size = int(np.prod(shape))
-    chunkshape = (100 * 1000,)
-    blockshape = (10 * 1000,)
+    chunks = (100 * 1000,)
+    blocks = (10 * 1000,)
 
     with ia.config(clevel=5, codec=ia.Codecs.LZ4) as cfg:
         if kwargs:
@@ -33,9 +33,9 @@ def create_files(method, dtype, **kwargs):
         else:
             c = dtype(method(size))
 
-        storage = ia.Storage(chunkshape, blockshape, create_urlpath(method, dtype, **kwargs))
+        store = ia.Store(chunks, blocks, create_urlpath(method, dtype, **kwargs))
 
-        ia.numpy2iarray(c, storage=storage, cfg=cfg)
+        ia.numpy2iarray(c, store=store, cfg=cfg)
 
 
 # Rand
