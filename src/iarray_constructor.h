@@ -40,6 +40,60 @@ static int32_t serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
     return smeta_len;
 }
 
+
+static ina_rc_t iarray_create_caterva_structs(iarray_context_t *ctx,
+                                              iarray_dtshape_t *dtshape,
+                                              iarray_storage_t *storage,
+                                              caterva_ctx_t **cat_ctx,
+                                              caterva_params_t *cat_params,
+                                              caterva_storage_t *cat_storage) {
+
+    caterva_config_t cfg = {0};
+    IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
+
+    blosc2_btune iabtune = {0};
+    btune_config iabtune_config = {0};
+    memcpy(&iabtune_config, &BTUNE_CONFIG_DEFAULTS, sizeof(btune_config));
+    switch(ctx->cfg->compression_favor) {
+        case IARRAY_COMPRESSION_FAVOR_CRATIO:
+            iabtune_config.comp_mode = BTUNE_COMP_HCR;
+            break;
+        case IARRAY_COMPRESSION_FAVOR_SPEED:
+            iabtune_config.comp_mode = BTUNE_COMP_HSP;
+            break;
+        default:
+            iabtune_config.comp_mode = BTUNE_COMP_BALANCED;
+    }
+    if (ctx->cfg->btune) {
+        iabtune.btune_config = &iabtune_config;
+        iabtune.btune_init = iabtune_init;
+        iabtune.btune_next_blocksize = iabtune_next_blocksize;
+        iabtune.btune_next_cparams = iabtune_next_cparams;
+        iabtune.btune_update = iabtune_update;
+        iabtune.btune_free = iabtune_free;
+        cfg.udbtune = &iabtune;
+    }
+
+    if (storage->backend == IARRAY_STORAGE_BLOSC) {
+        uint8_t *smeta;
+        int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
+        if (smeta_len < 0) {
+            IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
+            return INA_ERROR(INA_ERR_FAILED);
+        }
+
+        IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, cat_ctx));
+        IARRAY_RETURN_IF_FAILED(iarray_create_caterva_params(dtshape, cat_params));
+        IARRAY_RETURN_IF_FAILED(iarray_create_caterva_storage(dtshape, storage, cat_storage));
+        cat_storage->properties.blosc.nmetalayers = 1;
+        caterva_metalayer_t metalayer = cat_storage->properties.blosc.metalayers[0];
+        metalayer.name = strdup("iarray");
+        metalayer.sdata = smeta;
+        metalayer.size = smeta_len;
+    }
+    return INA_SUCCESS;
+}
+
 // TODO: clang complains about unused function.  provide a test using this.
 static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
                                       iarray_dtshape_t *dtshape,
@@ -112,65 +166,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     }
     ina_mem_cpy((*c)->storage, storage, sizeof(iarray_storage_t));
 
-    caterva_config_t cfg = {0};
-    IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
-
-    blosc2_btune iabtune = {0};
-    btune_config iabtune_config = {0};
-    memcpy(&iabtune_config, &BTUNE_CONFIG_DEFAULTS, sizeof(btune_config));
-    switch(ctx->cfg->compression_favor) {
-        case IARRAY_COMPRESSION_FAVOR_CRATIO:
-            iabtune_config.comp_mode = BTUNE_COMP_HCR;
-            break;
-        case IARRAY_COMPRESSION_FAVOR_SPEED:
-            iabtune_config.comp_mode = BTUNE_COMP_HSP;
-            break;
-        default:
-            iabtune_config.comp_mode = BTUNE_COMP_BALANCED;
-    }
-    if (ctx->cfg->btune) {
-        iabtune.btune_config = &iabtune_config;
-        iabtune.btune_init = iabtune_init;
-        iabtune.btune_next_blocksize = iabtune_next_blocksize;
-        iabtune.btune_next_cparams = iabtune_next_cparams;
-        iabtune.btune_update = iabtune_update;
-        iabtune.btune_free = iabtune_free;
-        cfg.udbtune = &iabtune;
-    }
-
-    caterva_ctx_t *cat_ctx;
-    IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
-
-    caterva_params_t cat_params = {0};
-    IARRAY_RETURN_IF_FAILED(iarray_create_caterva_params(dtshape, &cat_params));
-
-    caterva_storage_t cat_storage = {0};
-    IARRAY_RETURN_IF_FAILED( iarray_create_caterva_storage(dtshape, storage, &cat_storage));
-
-    IARRAY_ERR_CATERVA(caterva_empty(cat_ctx, &cat_params, &cat_storage, &(*c)->catarr));
-
-    if (cat_ctx != NULL) caterva_ctx_free(&cat_ctx);
-
-    if ((*c)->catarr == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error creating the caterva container");
-        return INA_ERROR(IARRAY_ERR_CATERVA_FAILED);
-    }
-
-    if ((*c)->catarr->storage == CATERVA_STORAGE_BLOSC) {
-        uint8_t *smeta;
-        int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
-        if (smeta_len < 0) {
-            IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
-            return INA_ERROR(INA_ERR_FAILED);
-        }
-        // And store it in iarray metalayer
-        if (blosc2_meta_add((*c)->catarr->sc, "iarray", smeta, (uint32_t) smeta_len) < 0) {
-            IARRAY_TRACE1(iarray.error, "Error adding a metalayer to blosc");
-            return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
-        }
-        free(smeta);
-    }
-
+    (*c)->catarr = NULL;
     (*c)->view = false;
     (*c)->transposed = false;
 

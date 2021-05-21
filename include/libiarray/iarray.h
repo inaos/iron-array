@@ -357,11 +357,11 @@ INA_API(ina_rc_t) iarray_random_dist_set_param_double(iarray_random_ctx_t *ctx,
                                                       iarray_random_dist_parameter_t key,
                                                       double value);
 
-INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
-                                       iarray_dtshape_t *dtshape,
-                                       iarray_storage_t *storage,
-                                       int flags,
-                                       iarray_container_t **container);
+INA_API(ina_rc_t) iarray_empty(iarray_context_t *ctx,
+                               iarray_dtshape_t *dtshape,
+                               iarray_storage_t *storage,
+                               int flags,
+                               iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
                                 iarray_dtshape_t *dtshape,

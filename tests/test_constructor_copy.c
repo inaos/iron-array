@@ -66,7 +66,7 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
     } else {
         tol = 1e-6;
     }
-    iarray_container_almost_equal(c_x, c_y, tol);
+    INA_TEST_ASSERT_SUCCEED(iarray_container_almost_equal(c_x, c_y, tol));
 
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_x);

@@ -55,7 +55,7 @@ static ina_rc_t test_block_iterator_transpose(iarray_context_t *ctx, iarray_data
 
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, &xstorage, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, 0, &c_x));
 
     // Test write iterator
     iarray_iter_write_block_t *I;
@@ -254,7 +254,7 @@ static ina_rc_t test_block_iterator_transpose_external(iarray_context_t *ctx,
 
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, &xstorage, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, 0, &c_x));
 
     // Test write iterator
     iarray_iter_write_block_t *I;

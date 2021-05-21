@@ -242,11 +242,6 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(cont);
     INA_VERIFY_NOT_NULL(value);
 
-    if (!cont->catarr->filled) {
-        IARRAY_TRACE1(iarray.error, "The container is filled");
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
-    }
-
     if (iter_blockshape == NULL) {
         IARRAY_TRACE1(iarray.error, "The iter_blockshape can not be NULL");
         return INA_ERROR(IARRAY_ERR_INVALID_ITERSHAPE);
@@ -416,7 +411,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
                 caterva_ctx_t *cat_ctx;
                 IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
 
-                IARRAY_ERR_CATERVA(caterva_set_slice_buffer(cat_ctx, itr->block, blocksize, start, stop, catarr));
+                IARRAY_ERR_CATERVA(caterva_set_slice_buffer(cat_ctx, itr->block, itr->cur_block_shape, blocksize, start, stop, catarr));
 
                 IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
                 if (itr->external_buffer) {
@@ -425,13 +420,24 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
             }
         } else {
             if (itr->compressed_chunk_buffer) {
-                int err = blosc2_schunk_append_chunk(catarr->sc, itr->block, false);
+                int err = blosc2_schunk_update_chunk(catarr->sc, itr->nblock - 1, itr->block, false);
                 if (err < 0) {
                     IARRAY_TRACE1(iarray.error, "Error appending a chunk in a blosc schunk");
                     return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
                 }
             } else {
-                caterva_append(itr->cat_ctx, catarr, itr->block, itr->cur_block_size * typesize);
+                int64_t index_start[CATERVA_MAX_DIM];
+                int64_t index_stop[CATERVA_MAX_DIM];
+                for (int i = 0; i < itr->cont->dtshape->ndim; ++i) {
+                    index_start[i] = itr->cur_block_index[i] * itr->cont->catarr->chunkshape[i];
+                    index_stop[i] = index_start[i] + itr->cur_block_shape[i];
+                }
+                int err = caterva_set_slice_buffer(itr->cat_ctx, itr->block, itr->cur_block_shape, itr->cur_block_size * typesize,
+                                                   index_start, index_stop, itr->cont->catarr);
+                if (err != 0) {
+                    IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
+                    return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+                }
                 if (itr->external_buffer) {
                     free(itr->block);
                 }
@@ -509,7 +515,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
                 iarray_create_caterva_cfg(itr->ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
                 caterva_ctx_t *cat_ctx;
                 IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
-                IARRAY_ERR_CATERVA(caterva_set_slice_buffer(cat_ctx, itr->block, blocksize, start, stop, catarr));
+                IARRAY_ERR_CATERVA(caterva_set_slice_buffer(cat_ctx, itr->block, itr->cur_block_shape, blocksize, start, stop, catarr));
                 IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
 
                 if (itr->external_buffer) {
@@ -519,14 +525,25 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
         } else {
             // check if the chunk should be padded with 0s
             if (itr->compressed_chunk_buffer) {
-                int err = blosc2_schunk_append_chunk(catarr->sc, itr->block, false);
+                int err = blosc2_schunk_update_chunk(catarr->sc, itr->nblock - 1, itr->block, false);
                 if (err < 0) {
                     // TODO: if the next call is not zero, it can be interpreted as there are more elements
                     IARRAY_TRACE1(iarray.error, "Error appending a chunk to a blosc schunk");
                     return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
                 }
             } else {
-                caterva_append(itr->cat_ctx, catarr, itr->block, itr->cur_block_size * typesize);
+                int64_t index_start[CATERVA_MAX_DIM];
+                int64_t index_stop[CATERVA_MAX_DIM];
+                for (int i = 0; i < itr->cont->dtshape->ndim; ++i) {
+                    index_start[i] = itr->cur_block_index[i] * itr->cont->catarr->chunkshape[i];
+                    index_stop[i] = index_start[i] + itr->cur_block_shape[i];
+                }
+                int err = caterva_set_slice_buffer(itr->cat_ctx, itr->block, itr->cur_block_shape, itr->cur_block_size * typesize,
+                                                   index_start, index_stop, itr->cont->catarr);
+                if (err != 0) {
+                    IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
+                    return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+                }
                 if (itr->external_buffer) {
                     free(itr->block);
                 }
@@ -534,9 +551,6 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
         }
     }
 
-    if (itr->nblock == itr->total_blocks) {
-        itr->cont->catarr->filled = true;
-    }
     if(itr->nblock < itr->total_blocks) {
         return INA_SUCCESS;
     }
@@ -554,11 +568,6 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(cont);
     INA_VERIFY_NOT_NULL(value);
-
-    if (!cont->catarr->empty && cont->catarr->storage == CATERVA_STORAGE_BLOSC) {
-        IARRAY_TRACE1(iarray.error, "The container can not be full");
-        return INA_ERROR(IARRAY_ERR_FULL_CONTAINER); //TODO: Should we allow a rewrite a non-empty iarray cont
-    }
 
     if (cont->view) {
         IARRAY_TRACE1(iarray.error, "A view can not be rewritten");
@@ -580,8 +589,6 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         }
     }
 
-    cont->catarr->empty = false;
-
     INA_VERIFY_NOT_NULL(itr);
     *itr = (iarray_iter_write_block_t *)ina_mem_alloc(sizeof(iarray_iter_write_block_t));
     if (*itr == NULL) {
@@ -599,7 +606,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     cfg.pparams = ctx->prefilter_params;
     IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &(*itr)->cat_ctx));
 
-    if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
+    if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {  // TODO(aleix): Review this
         memset(cont->catarr->buf, 0, cont->catarr->nitems * typesize);
         if (cont->catarr->buf == NULL) {
             IARRAY_TRACE1(iarray.error, "Error allocating the caterva buffer where data is stored");
@@ -846,11 +853,6 @@ INA_API(ina_rc_t) iarray_iter_read_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(itr);
     INA_VERIFY_NOT_NULL(val);
 
-    if (cont->catarr->filled != true) {
-        IARRAY_TRACE1(iarray.error, "The container must be filled");
-        return INA_ERROR(IARRAY_ERR_EMPTY_CONTAINER);
-    }
-
     *itr = (iarray_iter_read_t*)ina_mem_alloc(sizeof(iarray_iter_read_t));
     if (*itr == NULL) {
         IARRAY_TRACE1(iarray.error, "Error allocating the iterator");
@@ -930,8 +932,15 @@ INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
     // check if a chunk is filled totally and append it
     if (itr->nelem_block == itr->cur_block_size - 1) {
         if (itr->container->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-            int err = caterva_append(itr->cat_ctx, itr->container->catarr, itr->chunk, itr->cur_block_size * typesize);
-            if (err < 0) {
+            int64_t index_start[CATERVA_MAX_DIM];
+            int64_t index_stop[CATERVA_MAX_DIM];
+            for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
+                index_start[i] = itr->cur_block_index[i] * itr->container->catarr->chunkshape[i];
+                index_stop[i] = index_start[i] + itr->cur_block_shape[i];
+            }
+            int err = caterva_set_slice_buffer(itr->cat_ctx, itr->chunk, itr->cur_block_shape, itr->cur_block_size * typesize,
+                                     index_start, index_stop, itr->container->catarr);
+            if (err != 0) {
                 IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
                 return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
             }
@@ -992,9 +1001,18 @@ INA_API(ina_rc_t) iarray_iter_write_has_next(iarray_iter_write_t *itr)
     int64_t typesize = itr->container->catarr->itemsize;
     if (itr->nelem == itr->container->catarr->nitems) {
         if (itr->container->catarr->storage == CATERVA_STORAGE_BLOSC) {
-            caterva_append(itr->cat_ctx, itr->container->catarr, itr->chunk, itr->cur_block_size * typesize);
-        } else {
-            itr->container->catarr->filled = true;
+            int64_t index_start[CATERVA_MAX_DIM];
+            int64_t index_stop[CATERVA_MAX_DIM];
+            for (int i = 0; i < itr->container->dtshape->ndim; ++i) {
+                index_start[i] = itr->cur_block_index[i] * itr->container->catarr->chunkshape[i];
+                index_stop[i] = index_start[i] + itr->cur_block_shape[i];
+            }
+            int err = caterva_set_slice_buffer(itr->cat_ctx, itr->chunk, itr->cur_block_shape, itr->cur_block_size * typesize,
+                                               index_start, index_stop, itr->container->catarr);
+            if (err != 0) {
+                IARRAY_TRACE1(iarray.error, "Error appending a buffer to a blosc schunk");
+                return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+            }
         }
     }
 
@@ -1024,14 +1042,13 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
 
     (*itr)->ctx = ctx;
     (*itr)->container = cont;
-    cont->catarr->empty = false;
 
     caterva_config_t cfg = {0};
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
     caterva_ctx_t *cat_ctx;
     IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
 
-    if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER && !cont->catarr->empty) {
+    if (cont->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
         (*itr)->chunk = cont->catarr->buf;
     } else {
         (*itr)->chunk = (uint8_t *) ina_mem_alloc((size_t)cont->catarr->chunknitems * cont->catarr->itemsize);

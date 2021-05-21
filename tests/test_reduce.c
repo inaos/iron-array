@@ -40,7 +40,7 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
     }
 
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape, &storage, 0, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, &storage, 0, &c_x));
 
 
     iarray_iter_write_block_t *iter;
@@ -136,18 +136,18 @@ INA_TEST_TEARDOWN(reduce) {
     iarray_destroy();
 }
 
-
+/*
 INA_TEST_FIXTURE(reduce, 2_d_1) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
-    int64_t shape[] = {120, 1000};
-    int64_t cshape[] = {69, 210};
-    int64_t bshape[] = {31, 2};
+    int64_t shape[] = {8, 8};
+    int64_t cshape[] = {4, 4};
+    int64_t bshape[] = {2, 2};
     int8_t axis = 1;
 
-    int64_t dest_cshape[] = {69};
-    int64_t dest_bshape[] = {31};
+    int64_t dest_cshape[] = {4};
+    int64_t dest_bshape[] = {2};
     bool dest_frame = false;
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
@@ -172,24 +172,26 @@ INA_TEST_FIXTURE(reduce, 3_d_2) {
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
                                         dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
+*/
 
 INA_TEST_FIXTURE(reduce, 4_d_0) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 4;
-    int64_t shape[] = {52, 21, 27, 109};
-    int64_t cshape[] = {16, 3, 1, 109};
-    int64_t bshape[] = {3, 3, 1, 25};
+    int64_t shape[] = {10, 10, 10, 10};
+    int64_t cshape[] = {5, 5, 5, 5};
+    int64_t bshape[] = {2, 2, 2, 2};
     int8_t axis = 0;
 
-    int64_t dest_cshape[] = {3, 1, 109};
-    int64_t dest_bshape[] = {3, 1, 25};
+    int64_t dest_cshape[] = {5, 1, 5};
+    int64_t dest_bshape[] = {2, 1, 2};
     bool dest_frame = false;
     char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
                                         dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
+
 
 
 INA_TEST_FIXTURE(reduce, 8_d_6) {

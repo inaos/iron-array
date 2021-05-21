@@ -213,7 +213,7 @@ static ina_rc_t gemm_blosc(iarray_context_t *ctx,
         IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, shape_a, cache_a, cache_size_a));
 
         // Compress data
-        blosc2_cparams cparams = {0};
+        blosc2_cparams cparams = BLOSC2_CPARAMS_DEFAULTS;
         IARRAY_RETURN_IF_FAILED(iarray_create_blosc_cparams(&cparams, prefilter_ctx, c->catarr->itemsize,
                                                             c->catarr->blocknitems * c->catarr->itemsize));
         blosc2_context *cctx = blosc2_create_cctx(cparams);
@@ -230,7 +230,7 @@ static ina_rc_t gemm_blosc(iarray_context_t *ctx,
         blosc2_free_ctx(cctx);
 
         // Append to schunk
-        blosc2_schunk_append_chunk(c->catarr->sc, chunk, false);
+        blosc2_schunk_update_chunk(c->catarr->sc, nchunk, chunk, false);
 
         int new_position = chunk_index[1] + chunk_index[0] * (c->catarr->extshape[1] / c->catarr->chunkshape[1]);
         chunk_order[new_position] = nchunk;
@@ -239,8 +239,6 @@ static ina_rc_t gemm_blosc(iarray_context_t *ctx,
         chunk_index[0] = nchunk % (c->catarr->extshape[0] / c->catarr->chunkshape[0]);
         chunk_index[1] = nchunk / (c->catarr->extshape[0] / c->catarr->chunkshape[0]);
     }
-    c->catarr->empty = false;
-    c->catarr->filled = true;
 
     blosc2_schunk_reorder_offsets(c->catarr->sc, chunk_order);
 

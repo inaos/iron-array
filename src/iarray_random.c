@@ -291,7 +291,7 @@ INA_API(ina_rc_t) iarray_random_rand(iarray_context_t *ctx,
         IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_B, 1.0));
     }
 
-    IARRAY_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, storage, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, dtshape, storage, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_UNIFORM);
 }
@@ -318,7 +318,7 @@ INA_API(ina_rc_t) iarray_random_randn(iarray_context_t *ctx,
         IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 1.0));
     }
 
-    IARRAY_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, storage, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, dtshape, storage, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_GAUSSIAN);
 }
@@ -353,7 +353,7 @@ INA_API(ina_rc_t) iarray_random_beta(iarray_context_t *ctx,
         }
     }
 
-    IARRAY_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, storage, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, dtshape, storage, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_BETA);
 }
@@ -385,7 +385,7 @@ INA_API(ina_rc_t) iarray_random_lognormal(iarray_context_t *ctx,
         }
     }
 
-    IARRAY_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, storage, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, dtshape, storage, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_LOGNORMAL);
 }
@@ -417,7 +417,7 @@ INA_API(ina_rc_t) iarray_random_exponential(iarray_context_t *ctx,
         }
     }
 
-    IARRAY_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, storage, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, dtshape, storage, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_EXPONENTIAL);
 }
@@ -449,7 +449,7 @@ INA_API(ina_rc_t) iarray_random_uniform(iarray_context_t *ctx,
         }
     }
 
-    IARRAY_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, storage, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, dtshape, storage, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_UNIFORM);
 }
@@ -481,7 +481,7 @@ INA_API(ina_rc_t) iarray_random_normal(iarray_context_t *ctx,
         }
     }
 
-    IARRAY_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, storage, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, dtshape, storage, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_GAUSSIAN);
 }
@@ -515,7 +515,7 @@ INA_API(ina_rc_t) iarray_random_bernoulli(iarray_context_t *ctx,
         }
     }
 
-    IARRAY_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, storage, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, dtshape, storage, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_BERNOUILLI);
 }
@@ -551,7 +551,7 @@ INA_API(ina_rc_t) iarray_random_binomial(iarray_context_t *ctx,
         }
     }
 
-    IARRAY_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, storage, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, dtshape, storage, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_BINOMIAL);
 }
@@ -583,7 +583,7 @@ INA_API(ina_rc_t) iarray_random_poisson(iarray_context_t *ctx,
         }
     }
 
-    IARRAY_RETURN_IF_FAILED(_iarray_container_new(ctx, dtshape, storage, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, dtshape, storage, flags, container));
 
     return _iarray_rand_internal(ctx, dtshape, random_ctx, *container, _IARRAY_RANDOM_METHOD_POISSON);
 }

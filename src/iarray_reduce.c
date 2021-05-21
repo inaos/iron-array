@@ -39,6 +39,7 @@ typedef struct iarray_reduce_params_s {
     iarray_container_t *result;
     int8_t axis;
     int64_t *chunk_shape;
+    int64_t nchunk;
 } iarray_reduce_params_t;
 
 
@@ -68,7 +69,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     blosc2_context *dctx = blosc2_create_dctx(dparams);
 
     // Compute result chunk offset
-    int64_t chunk_offset_u = rparams->result->catarr->sc->nchunks;
+    int64_t chunk_offset_u = rparams->nchunk;
     int64_t chunk_offset_n[IARRAY_DIMENSION_MAX] = {0};
 
     int64_t shape_of_chunks[IARRAY_DIMENSION_MAX] = {0};
@@ -356,7 +357,7 @@ INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
         dtshape.shape[i] = i < axis ? a->dtshape->shape[i] : a->dtshape->shape[i + 1];
     }
 
-    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape, storage, 0, b));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, storage, 0, b));
 
     iarray_container_t *c = *b;
 
@@ -400,9 +401,9 @@ INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
             }
         }
         reduce_params.chunk_shape = chunk_shape;
-
+        reduce_params.nchunk = nchunk;
         // Compress data
-        blosc2_cparams cparams = {0};
+        blosc2_cparams cparams = BLOSC2_CPARAMS_DEFAULTS;
         IARRAY_RETURN_IF_FAILED(iarray_create_blosc_cparams(&cparams, prefilter_ctx, c->catarr->itemsize,
                                                             c->catarr->blocknitems * c->catarr->itemsize));
         cparams.schunk = a->catarr->sc;
@@ -419,13 +420,11 @@ INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
         }
         blosc2_free_ctx(cctx);
 
-        blosc2_schunk_append_chunk(c->catarr->sc, chunk, false);
+        blosc2_schunk_update_chunk(c->catarr->sc, nchunk, chunk, false);
 
         nchunk++;
         index_unidim_to_multidim(c->dtshape->ndim, shape_of_chunks, nchunk, chunk_index);
     }
-    c->catarr->empty = false;
-    c->catarr->filled = true;
 
     iarray_context_free(&prefilter_ctx);
 

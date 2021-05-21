@@ -11,7 +11,6 @@
  */
 
 #include <libiarray/iarray.h>
-#include <src/iarray_private.h>
 
 
 static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, int32_t type_size, int8_t ndim,
@@ -50,13 +49,15 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
 
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, &xstorage, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, 0, &c_x));
 
     // Test write iterator
     iarray_iter_write_t *I;
     iarray_iter_write_value_t val;
     INA_TEST_ASSERT_SUCCEED(iarray_iter_write_new(ctx, &I, c_x, &val));
 
+    iarray_dtshape_t dtshape;
+    iarray_get_dtshape(ctx, c_x, &dtshape);
     while (INA_SUCCEED(iarray_iter_write_has_next(I))) {
         INA_TEST_ASSERT_SUCCEED(iarray_iter_write_next(I));
 
@@ -64,7 +65,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
         int64_t inc = 1;
         for (int i = ndim - 1; i >= 0; --i) {
             nelem += val.elem_index[i] * inc;
-            inc *= c_x->dtshape->shape[i];
+            inc *= dtshape.shape[i];
         }
         if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
             ((double *) val.elem_pointer)[0] = (double) nelem ;

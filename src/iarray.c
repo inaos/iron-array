@@ -447,7 +447,18 @@ ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t),
     if (cfg->btune) {
         blosc2_btune *iabtune = malloc(sizeof(blosc2_btune));
         btune_config iabtune_config = BTUNE_CONFIG_DEFAULTS;
-        iabtune->btune_config = &iabtune_config;
+        switch (cfg->compression_favor) {
+            case IARRAY_COMPRESSION_FAVOR_CRATIO:
+                iabtune_config.comp_mode = BTUNE_COMP_HCR;
+                break;
+            case IARRAY_COMPRESSION_FAVOR_SPEED:
+                iabtune_config.comp_mode = BTUNE_COMP_HSP;
+                break;
+            default:
+                iabtune_config.comp_mode = BTUNE_COMP_BALANCED;
+        }
+        iabtune->btune_config = malloc(sizeof(btune_config));
+        memcpy(iabtune->btune_config, &iabtune_config, sizeof(btune_config));
         iabtune->btune_init = iabtune_init;
         iabtune->btune_next_blocksize = iabtune_next_blocksize;
         iabtune->btune_next_cparams = iabtune_next_cparams;
@@ -455,6 +466,8 @@ ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t),
         iabtune->btune_free = iabtune_free;
         cat_cfg->udbtune = iabtune;
     }
+    // cat_cfg->udbtune = NULL;
+
     return INA_SUCCESS;
 }
 
@@ -469,6 +482,30 @@ ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_
 }
 
 
+static int32_t serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
+{
+    if (smeta == NULL) {
+        return -1;
+    }
+    if (dtype > IARRAY_DATA_TYPE_MAX) {
+        return -1;
+    }
+    int32_t smeta_len = 3;  // the dtype should take less than 7-bit, so 1 byte is enough to store it
+    *smeta = malloc((size_t)smeta_len);
+
+    // version
+    **smeta = 0;
+
+    // dtype entry
+    *(*smeta + 1) = (uint8_t)dtype;  // positive fixnum (7-bit positive integer)
+
+    // flags (initialising all the entries to 0)
+    *(*smeta + 2) = 0;  // positive fixnum (7-bit for flags)
+
+    return smeta_len;
+}
+
+
 ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage_t *storage, caterva_storage_t *cat_storage) {
     cat_storage->backend = storage->backend == IARRAY_STORAGE_BLOSC ? CATERVA_STORAGE_BLOSC : CATERVA_STORAGE_PLAINBUFFER;
     switch (cat_storage->backend) {
@@ -479,6 +516,17 @@ ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage
                 cat_storage->properties.blosc.chunkshape[i] = (int32_t) storage->chunkshape[i];
                 cat_storage->properties.blosc.blockshape[i] = (int32_t) storage->blockshape[i];
             }
+            uint8_t *smeta;
+            int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
+            if (smeta_len < 0) {
+                IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
+                return INA_ERROR(INA_ERR_FAILED);
+            }
+            cat_storage->properties.blosc.nmetalayers = 1;
+            caterva_metalayer_t *metalayer = &cat_storage->properties.blosc.metalayers[0];
+            metalayer->name = strdup("iarray");
+            metalayer->sdata = smeta;
+            metalayer->size = smeta_len;
             break;
         case CATERVA_STORAGE_PLAINBUFFER:
             break;
