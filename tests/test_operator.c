@@ -100,7 +100,7 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
 
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_x, buffer_x_len, &store, 0, &c_x));
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_r, buffer_r_len, &store, 0, &c_res));
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &shape, &store, 0, &c_out));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &shape, &store, 0, &c_out));
 
     INA_TEST_ASSERT_SUCCEED(_test_operator_x(ctx, c_x, c_out, c_res, test_fun, tol));
 
@@ -176,7 +176,7 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_x, buffer_x_len, &store, 0, &c_x));
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_y, buffer_y_len, &store, 0, &c_y));
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_r, buffer_r_len, &store, 0, &c_res));
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &shape, &store, 0, &c_out));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &shape, &store, 0, &c_out));
 
     INA_TEST_ASSERT_SUCCEED(_test_operator_xy(ctx, c_x, c_y, c_out, c_res, test_fun, tol));
 

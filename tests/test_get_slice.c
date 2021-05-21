@@ -129,7 +129,7 @@ INA_TEST_TEARDOWN(get_slice) {
     iarray_destroy();
 }
 
-/*
+
 INA_TEST_FIXTURE(get_slice, 2_d_p) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
@@ -290,7 +290,7 @@ INA_TEST_FIXTURE(get_slice, 7_f) {
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   cshape_dest, bshape_dest, start, stop, result));
 }
-*/
+
 INA_TEST_FIXTURE(get_slice, 3_f_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);

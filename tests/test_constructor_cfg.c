@@ -40,11 +40,8 @@ static ina_rc_t test_cfg(iarray_context_t *ctx,
 
     // Empty array
     iarray_container_t *c_x;
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstore, 0, &c_x));
 
-    if (!iarray_is_empty(c_x)) {
-        return INA_ERROR(INA_ERR_ERROR);
-    }
 
     // Non-empty array
     iarray_container_t *z_x;
