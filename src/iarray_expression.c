@@ -174,6 +174,96 @@ INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const c
 }
 
 
+static void index_unidim_to_multidim(int8_t ndim, int64_t *shape, int64_t i, int64_t *index) {
+    int64_t strides[CATERVA_MAX_DIM];
+    strides[ndim - 1] = 1;
+    for (int j = ndim - 2; j >= 0; --j) {
+        strides[j] = shape[j + 1] * strides[j + 1];
+    }
+
+    index[0] = i / strides[0];
+    for (int j = 1; j < ndim; ++j) {
+        index[j] = (i % strides[j - 1]) / strides[j];
+    }
+}
+
+int caterva_blosc_array_repart_chunk(int8_t *rchunk, int64_t rchunksize, void *chunk,
+                                     int64_t chunksize, caterva_array_t *array) {
+    if (rchunksize != array->extchunknitems * array->itemsize) {
+        CATERVA_ERROR(CATERVA_ERR_INVALID_ARGUMENT);
+    }
+    if (chunksize != array->chunknitems * array->itemsize) {
+        CATERVA_ERROR(CATERVA_ERR_INVALID_ARGUMENT);
+    }
+
+    const int8_t *src_b = (int8_t *) chunk;
+    memset(rchunk, 0, (size_t) rchunksize);
+    int32_t d_pshape[CATERVA_MAX_DIM];
+    int64_t d_epshape[CATERVA_MAX_DIM];
+    int32_t d_spshape[CATERVA_MAX_DIM];
+    int8_t d_ndim = array->ndim;
+
+    for (int i = 0; i < CATERVA_MAX_DIM; ++i) {
+        d_pshape[(CATERVA_MAX_DIM - d_ndim + i) % CATERVA_MAX_DIM] = array->chunkshape[i];
+        d_epshape[(CATERVA_MAX_DIM - d_ndim + i) % CATERVA_MAX_DIM] = array->extchunkshape[i];
+        d_spshape[(CATERVA_MAX_DIM - d_ndim + i) % CATERVA_MAX_DIM] = array->blockshape[i];
+    }
+
+    int64_t aux[CATERVA_MAX_DIM];
+    aux[7] = d_epshape[7] / d_spshape[7];
+    for (int i = CATERVA_MAX_DIM - 2; i >= 0; i--) {
+        aux[i] = d_epshape[i] / d_spshape[i] * aux[i + 1];
+    }
+
+    /* Fill each block buffer */
+    int32_t orig[CATERVA_MAX_DIM];
+    int64_t actual_spsize[CATERVA_MAX_DIM];
+    for (int32_t sci = 0; sci < array->extchunknitems / array->blocknitems; sci++) {
+        /*Calculate the coord. of the block first element */
+        orig[7] = sci % (d_epshape[7] / d_spshape[7]) * d_spshape[7];
+        for (int i = CATERVA_MAX_DIM - 2; i >= 0; i--) {
+            orig[i] = (int32_t)(sci % (aux[i]) / (aux[i + 1]) * d_spshape[i]);
+        }
+        /* Calculate if padding with 0s is needed for this block */
+        for (int i = CATERVA_MAX_DIM - 1; i >= 0; i--) {
+            if (orig[i] + d_spshape[i] > d_pshape[i]) {
+                actual_spsize[i] = (d_pshape[i] - orig[i]);
+            } else {
+                actual_spsize[i] = d_spshape[i];
+            }
+        }
+        int32_t seq_copylen = actual_spsize[7] * array->itemsize;
+        /* Reorder each line of data from src_b to chunk */
+        int64_t ii[CATERVA_MAX_DIM];
+        int64_t ncopies = 1;
+        for (int i = 0; i < CATERVA_MAX_DIM - 1; ++i) {
+            ncopies *= actual_spsize[i];
+        }
+        for (int ncopy = 0; ncopy < ncopies; ++ncopy) {
+            index_unidim_to_multidim(CATERVA_MAX_DIM - 1, actual_spsize, ncopy, ii);
+
+            int64_t d_a = d_spshape[7];
+            int64_t d_coord_f = sci * array->blocknitems;
+            for (int i = CATERVA_MAX_DIM - 2; i >= 0; i--) {
+                d_coord_f += ii[i] * d_a;
+                d_a *= d_spshape[i];
+            }
+
+            int64_t s_coord_f = orig[7];
+            int64_t s_a = d_pshape[7];
+            for (int i = CATERVA_MAX_DIM - 2; i >= 0; i--) {
+                s_coord_f += (orig[i] + ii[i]) * s_a;
+                s_a *= d_pshape[i];
+            }
+
+            memcpy(rchunk + d_coord_f * array->itemsize, src_b + s_coord_f * array->itemsize,
+                   seq_copylen);
+        }
+    }
+    return CATERVA_SUCCEED;
+}
+
+
 static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
 {
     uint32_t eval_method = e->ctx->cfg->eval_method & 0x3u;
@@ -634,7 +724,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
 
         // Eval the expression for this chunk
         expr_pparams.out_value = out_value;  // useful for the prefilter function
-        blosc2_cparams cparams = {0};
+        blosc2_cparams cparams = BLOSC2_CPARAMS_DEFAULTS;
         IARRAY_RETURN_IF_FAILED(iarray_create_blosc_cparams(&cparams, ctx, ret->catarr->itemsize,
                                 ret->catarr->itemsize * ret->catarr->blocknitems));
 
@@ -687,7 +777,7 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
     INA_VERIFY_NOT_NULL(container);
 
     int flags = e->out_store_properties->urlpath ? IARRAY_CONTAINER_PERSIST : 0;
-    IARRAY_RETURN_IF_FAILED(iarray_container_new(e->ctx, e->out_dtshape, e->out_store_properties, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(e->ctx, e->out_dtshape, e->out_store_properties, flags, container));
     e->out = *container;
     iarray_container_t *ret = *container;
 

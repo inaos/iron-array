@@ -301,8 +301,7 @@ static int split_block(int compcode, int32_t typesize, int32_t blocksize) {
      split.  However, in conducted benchmarks LZ4 seems that it runs
      faster if we don't split, which is quite surprising.
      */
-  return (((compcode == BLOSC_BLOSCLZ) ||
-           (compcode == BLOSC_SNAPPY)) &&
+  return (((compcode == BLOSC_BLOSCLZ)) &&
           (typesize <= MAX_SPLITS) &&
           (blocksize / typesize) >= BLOSC_MIN_BUFFERSIZE);
 }

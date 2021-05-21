@@ -21,6 +21,8 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
 
     char *urlpath = "test_load_save.iarray";
 
+    remove(urlpath);
+
     // Create dtshape
     iarray_dtshape_t xdtshape;
 
@@ -76,7 +78,8 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
 
     INA_TEST_ASSERT_SUCCEED(iarray_container_almost_equal(c_x, c_y, 1e-12));
 
-    
+    remove(urlpath);
+
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
 

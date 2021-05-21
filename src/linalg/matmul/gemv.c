@@ -166,7 +166,7 @@ static ina_rc_t gemv_blosc(iarray_context_t *ctx,
         IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer(ctx, a, start_a, stop_a, shape_a, cache_a, cache_size_a));
 
         // Compress data
-        blosc2_cparams cparams = {0};
+        blosc2_cparams cparams = BLOSC2_CPARAMS_DEFAULTS;
         IARRAY_RETURN_IF_FAILED(iarray_create_blosc_cparams(&cparams, prefilter_ctx, c->catarr->itemsize,
                                                             c->catarr->blocknitems * c->catarr->itemsize));
         blosc2_context *cctx = blosc2_create_cctx(cparams);
@@ -183,12 +183,10 @@ static ina_rc_t gemv_blosc(iarray_context_t *ctx,
         blosc2_free_ctx(cctx);
 
         // Append to schunk
-        blosc2_schunk_append_chunk(c->catarr->sc, chunk, false);
+        blosc2_schunk_update_chunk(c->catarr->sc, nchunk, chunk, false);
 
         nchunk++;
     }
-    c->catarr->empty = false;
-    c->catarr->filled = true;
 
     INA_MEM_FREE_SAFE(cache_a);
     INA_MEM_FREE_SAFE(cache_b);

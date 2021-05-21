@@ -339,4 +339,9 @@ ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t),
 ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_t *cat_params);
 ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage_t *storage, caterva_storage_t *cat_storage);
 
+ina_rc_t iarray_container_new(iarray_context_t *ctx,
+                              iarray_dtshape_t *dtshape,
+                              iarray_storage_t *storage,
+                              int flags,
+                              iarray_container_t **container);
 #endif

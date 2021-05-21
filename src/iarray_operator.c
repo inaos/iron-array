@@ -199,7 +199,6 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
         if (c->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
             if((iter->cont + 1) % (eshape_a[1] / B1) == 0) {
                 c->catarr->buf = c_block;
-                c->catarr->empty = false;
             }
         } else {
             // Append it to a new iarray container
@@ -212,7 +211,6 @@ static ina_rc_t _iarray_gemm(iarray_context_t *ctx, iarray_container_t *a, iarra
     _iarray_iter_matmul_free(&iter);
 
     IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
-    c->catarr->filled = true;
 
     if (a_copy) {
         INA_MEM_FREE_SAFE(a_block);
@@ -420,7 +418,6 @@ static ina_rc_t _iarray_gemv(iarray_context_t *ctx, iarray_container_t *a, iarra
     _iarray_iter_matmul_free(&iter);
 
     IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
-    c->catarr->filled = true;
 
     if (a_copy) {
         INA_MEM_FREE_SAFE(a_block);

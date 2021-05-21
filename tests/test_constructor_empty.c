@@ -40,27 +40,15 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
 
     // Empty array
     iarray_container_t *c_x;
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &xdtshape, &store, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &store, 0, &c_x));
 
-    if (!iarray_is_empty(c_x)) {
-        return INA_ERROR(INA_ERR_ERROR);
-    }
-
-    // Non-empty array
-    iarray_container_t *z_x;
-    INA_TEST_ASSERT_SUCCEED(iarray_zeros(ctx, &xdtshape, &store, 0, &z_x));
-
-    if (iarray_is_empty(z_x)) {
-        return INA_ERROR(INA_ERR_ERROR);
-    }
 
     int64_t nbytes;
     int64_t cbytes;
-    INA_TEST_ASSERT_SUCCEED(iarray_container_info(z_x, &nbytes, &cbytes));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_info(c_x, &nbytes, &cbytes));
     INA_TEST_ASSERT_SUCCEED(cbytes <= nbytes);
 
     iarray_container_free(ctx, &c_x);
-    iarray_container_free(ctx, &z_x);
 
     return INA_SUCCESS;
 
