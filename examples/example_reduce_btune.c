@@ -58,7 +58,7 @@ int main(void)
     }
 
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape, &storage, 0, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, &storage, 0, &c_x));
 
 
     iarray_iter_write_block_t *iter;

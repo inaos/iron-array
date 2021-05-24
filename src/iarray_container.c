@@ -64,11 +64,11 @@ INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dts
 }
 
 
-INA_API(ina_rc_t) iarray_container_new(iarray_context_t *ctx,
-                                       iarray_dtshape_t *dtshape,
-                                       iarray_storage_t *storage,
-                                       int flags,
-                                       iarray_container_t **container)
+ina_rc_t iarray_container_new(iarray_context_t *ctx,
+                              iarray_dtshape_t *dtshape,
+                              iarray_storage_t *storage,
+                              int flags,
+                              iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(dtshape);
