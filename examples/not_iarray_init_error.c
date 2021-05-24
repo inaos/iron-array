@@ -63,7 +63,7 @@ int main(void)
     iarray_expr_compile(e, expr_str);
 
     iarray_container_t* res1;
-    INA_TEST_ASSERT_SUCCEED(iarray_container_new(ctx, &dtshape, &store, 0, &res1));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &dtshape, &store, 0, &res1));
     iarray_eval(e, &res1);
 
     iarray_iter_read_block_t *iter;
