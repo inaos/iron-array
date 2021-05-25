@@ -390,6 +390,7 @@ ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams,
                                      int8_t typesize,
                                      int32_t blocksize)
 {
+    memcpy(cparams, &BLOSC2_CPARAMS_DEFAULTS, sizeof(blosc2_cparams));
     cparams->preparams = ctx->prefilter_params;
     cparams->prefilter = ctx->prefilter_fn;
     int blosc_filter_idx = 0;
@@ -419,6 +420,7 @@ ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams,
 
 
 ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t), void (*free)(void *), caterva_config_t *cat_cfg) {
+    memcpy(cat_cfg, &CATERVA_CONFIG_DEFAULTS, sizeof(caterva_config_t));
     cat_cfg->alloc = alloc;
     cat_cfg->free = free;
 
