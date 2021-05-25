@@ -20,6 +20,13 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
                                int64_t *dest_cshape, int64_t *dest_bshape, bool dest_frame,
                                char* dest_urlpath)
 {
+    char* src_urlpath = "iarray_reduce2.iarray";
+    remove(src_urlpath);
+
+    if (dest_urlpath) {
+        remove(dest_urlpath);
+    }
+
     // Create dtshape
     iarray_dtshape_t dtshape;
 
@@ -34,7 +41,7 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
     iarray_storage_t storage = {0};
     storage.backend = IARRAY_STORAGE_BLOSC;
     storage.enforce_frame = true;
-    storage.urlpath = "iarray_reduce2.iarray";
+    storage.urlpath = src_urlpath;
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {
             storage.chunkshape[i] = cshape[i];
@@ -92,6 +99,8 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
     if (dest_urlpath) {
         remove(dest_urlpath);
     }
+    remove(src_urlpath);
+
     return INA_SUCCESS;
 }
 
@@ -113,7 +122,7 @@ INA_TEST_TEARDOWN(reduce_multi) {
 }
 
 
-INA_TEST_FIXTURE_SKIP(reduce_multi, 2_d_1) {
+INA_TEST_FIXTURE(reduce_multi, 2_d_1) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
@@ -133,7 +142,7 @@ INA_TEST_FIXTURE_SKIP(reduce_multi, 2_d_1) {
 }
 
 
-INA_TEST_FIXTURE_SKIP(reduce_multi, 3_d_2) {
+INA_TEST_FIXTURE(reduce_multi, 3_d_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 3;
@@ -152,7 +161,7 @@ INA_TEST_FIXTURE_SKIP(reduce_multi, 3_d_2) {
                                               dest_urlpath));
 }
 
-INA_TEST_FIXTURE_SKIP(reduce_multi, 4_d_0) {
+INA_TEST_FIXTURE(reduce_multi, 4_d_0) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 4;
@@ -172,7 +181,7 @@ INA_TEST_FIXTURE_SKIP(reduce_multi, 4_d_0) {
 }
 
 
-INA_TEST_FIXTURE_SKIP(reduce_multi, 8_d_6) {
+INA_TEST_FIXTURE(reduce_multi, 8_d_6) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 8;
@@ -193,7 +202,7 @@ INA_TEST_FIXTURE_SKIP(reduce_multi, 8_d_6) {
 
 
 
-INA_TEST_FIXTURE_SKIP(reduce_multi, 2_f_1) {
+INA_TEST_FIXTURE(reduce_multi, 2_f_1) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 2;
@@ -213,7 +222,7 @@ INA_TEST_FIXTURE_SKIP(reduce_multi, 2_f_1) {
 }
 
 
-INA_TEST_FIXTURE_SKIP(reduce_multi, 3_f_2) {
+INA_TEST_FIXTURE(reduce_multi, 3_f_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 3;
@@ -232,7 +241,7 @@ INA_TEST_FIXTURE_SKIP(reduce_multi, 3_f_2) {
                                               dest_urlpath));
 }
 
-INA_TEST_FIXTURE_SKIP(reduce_multi, 4_f_0) {
+INA_TEST_FIXTURE(reduce_multi, 4_f_0) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 4;
@@ -252,7 +261,7 @@ INA_TEST_FIXTURE_SKIP(reduce_multi, 4_f_0) {
 }
 
 
-INA_TEST_FIXTURE_SKIP(reduce_multi, 8_f_6) {
+INA_TEST_FIXTURE(reduce_multi, 8_f_6) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 8;
