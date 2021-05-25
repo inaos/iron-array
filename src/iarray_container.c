@@ -474,11 +474,6 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
 
-    if (container->catarr->storage != CATERVA_STORAGE_PLAINBUFFER) {
-        IARRAY_TRACE1(iarray.error, "The container is not backed by a plainbuffer");
-        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
-    }
-
     int8_t ndim = container->dtshape->ndim;
     int64_t *offset = container->auxshape->offset;
     int8_t *index = container->auxshape->index;
