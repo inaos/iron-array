@@ -13,8 +13,8 @@
 #include <libiarray/iarray.h>
 #include "src/iarray_private.h"
 
-#define NITEMS_BLOCK (8192)
-#define NITEMS_CHUNK (512 * NITEMS_BLOCK)
+#define NITEMS_BLOCK (4 * 8192)
+#define NITEMS_CHUNK (256 * NITEMS_BLOCK)
 #define NELEM (10 * 1000 * NITEMS_BLOCK)  // multiple of NITEMS_CHUNK for now
 #define XMAX 10.
 
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 
     INA_OPTS(opt,
              INA_OPT_INT("e", "expr-type", 1, "COPY = 0, POLY = 1, TRANS1 = 2, , TRANS2 = 3"),
-             INA_OPT_INT("M", "eval-method", 1, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOSC = 2, EVAL_ITERBLOSC2 = 3"),
+             INA_OPT_INT("M", "eval-method", 2, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOSC = 2"),
              INA_OPT_INT("n", "eval-niter", 1, "Number of times to evaluate (default 1)"),
              INA_OPT_INT("c", "clevel", 5, "Compression level"),
              INA_OPT_INT("l", "codec", 1, "Compression codec"),
