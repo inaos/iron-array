@@ -445,6 +445,14 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     if (src->view) {
         IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, src->dtshape, storage, flags, dest));
 
+        int64_t nelem = 1;
+        for (int i = 0; i < src->dtshape->ndim; ++i) {
+            nelem *= src->dtshape->shape[i];
+        }
+        if (nelem == 0) {
+            return INA_SUCCESS;
+        }
+
         int64_t iter_blockshape[IARRAY_DIMENSION_MAX];
         for (int i = 0; i < src->dtshape->ndim; ++i) {
             iter_blockshape[i] = storage->backend == IARRAY_STORAGE_PLAINBUFFER ?
