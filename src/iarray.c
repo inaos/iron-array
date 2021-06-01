@@ -157,7 +157,7 @@ int64_t get_nearest_power2(int64_t value)
 
 // Return partition shapes whose elements are a power of 2, if possible, and as squared box as possible
 ina_rc_t boxed_optim_partition(int ndim, const int64_t *shape, int64_t *partshape, int itemsize,
-                               int64_t minsize, int64_t maxsize) {
+                               int64_t minsize, int64_t maxsize, bool btune) {
     for (int i = 0; i < ndim; i++) {
         partshape[i] = get_nearest_power2(shape[i]);
     }
@@ -204,6 +204,9 @@ out:
         }
         if (((float) (shape[i] - partshape[i]) / (float) partshape[i]) < 0.1) {
             partshape[i] = partshape[i] / 2;
+        }
+        if (btune && ndim == 1 && ((float) (shape[i]) / (float) partshape[i]) < 4.) {
+            partshape[i] = partshape[i] / 4;
         }
     }
 
@@ -329,7 +332,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     // Compute the chunkshape.
     // TODO: Only boxed partition algorithm is implement, but a C and Fortran order could be useful too
     IARRAY_RETURN_IF_FAILED(boxed_optim_partition(ndim, shape, chunkshape, itemsize,
-                                                  min_chunksize, max_chunksize));
+                                                     min_chunksize, max_chunksize, cfg->btune));
 
     int32_t chunksize = itemsize;
     for (int i = 0; i < ndim; i++) {
@@ -340,7 +343,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     }
     // Compute the blockshape
     IARRAY_RETURN_IF_FAILED(boxed_optim_partition(ndim, chunkshape, blockshape, itemsize,
-                                                  min_blocksize, max_blocksize));
+                                                     min_blocksize, max_blocksize, cfg->btune));
 
     return INA_SUCCESS;
 }
