@@ -41,7 +41,7 @@ enum {
 };
 
 static const cparams_btune cparams_btune_default = {
-        BLOSC_LZ4, BLOSC_SHUFFLE, 7, 0, 0, 0, 0, false, true, true, false, 100, 1.1, 100, 100};
+        BLOSC_LZ4, BLOSC_SHUFFLE, 9, 0, 0, 0, 0, false, true, true, false, 100, 1.1, 100, 100};
 
 // Get the codecs list for btune
 static codec_list * btune_get_codecs(btune_struct * btune) {
