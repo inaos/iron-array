@@ -205,7 +205,9 @@ out:
         if (((float) (shape[i] - partshape[i]) / (float) partshape[i]) < 0.1) {
             partshape[i] = partshape[i] / 2;
         }
-        if (btune && ndim == 1 && ((float) (shape[i]) / (float) partshape[i]) < 4.) {
+        // For btune and low dim (we start with 1), we want at least 4 chunks
+        // (or 4 blocks in a chunk)
+        if (btune && ndim == 1 && (shape[i] < (partshape[i] * 4))) {
             partshape[i] = partshape[i] / 4;
         }
     }
