@@ -41,7 +41,7 @@ enum {
 };
 
 static const cparams_btune cparams_btune_default = {
-        0, BLOSC_NOSHUFFLE, 7, 0, 0, 0, 0, false, true, true, false, 100, 1.1, 100, 100};
+        BLOSC_LZ4, BLOSC_SHUFFLE, 7, 0, 0, 0, 0, false, true, true, false, 100, 1.1, 100, 100};
 
 // Get the codecs list for btune
 static codec_list * btune_get_codecs(btune_struct * btune) {
@@ -325,7 +325,7 @@ void iabtune_init(btune_config * config, blosc2_context * cctx, blosc2_context *
 
   // State attributes
   btune->rep_index = 0;
-  btune->codec_filter_limit = 3 * REPEATS_PER_CPARAMS;  // 3 means len(NOSHUFFLE, SHUFFLE, BUTSHUFFLE)
+  btune->codec_filter_limit = 2 * REPEATS_PER_CPARAMS;  // 3 means len(NOSHUFFLE, SHUFFLE, BUTSHUFFLE)
   btune->aux_index = 0;
   btune->steps_count = 0;
   btune->nsofts = 0;
@@ -568,7 +568,7 @@ void iabtune_next_cparams(blosc2_context *context) {
     case CODEC_FILTER:
       codec_index = btune->aux_index / btune->codec_filter_limit;
       compcode = btune->codecs->list[codec_index];
-      filter = (uint8_t) ((btune->aux_index % btune->codec_filter_limit) /
+      filter = (uint8_t) (((btune->aux_index % btune->codec_filter_limit) + 1)/
               REPEATS_PER_CPARAMS);
       // The first tuning of ZSTD in some modes should start in clevel 3
       if (((btune->config.perf_mode == BTUNE_PERF_COMP) ||
