@@ -32,7 +32,8 @@ int main(void) {
 
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    cfg.compression_level = 9;
+    cfg.compression_level = 8;
+    //cfg.compression_codec = IARRAY_COMPRESSION_ZSTD;
     cfg.btune = true;
     cfg.compression_favor = IARRAY_COMPRESSION_FAVOR_BALANCE;
     cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
@@ -79,8 +80,12 @@ int main(void) {
     }
 
     iarray_container_t *c_x;
+    INA_STOPWATCH_START(w);
     iarray_linspace(ctx, &dtshape, 0, 1, &xstorage, 0, &c_x);
+    INA_STOPWATCH_STOP(w);
+    INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 
+    int64_t nbytes = nelem * typesize;
     int64_t c_nbytes;
     int64_t c_cbytes;
     IARRAY_RETURN_IF_FAILED(iarray_container_info(c_x, &c_nbytes, &c_cbytes));
@@ -88,6 +93,8 @@ int main(void) {
     printf("-   compression level: %d\n", cfg.compression_level);
     printf("-   nbytes: %lld\n", c_nbytes);
     printf("-   Ratio: %8.2f x\n", (double) c_nbytes / (double)c_cbytes);
+    printf("Time for generating input: %.3g s, %.1f MB/s\n",
+           elapsed_sec, (double)nbytes / (elapsed_sec * (1u << 20u)));
 
     iarray_expression_t *e;
     iarray_expr_new(ctx, &e);
@@ -110,8 +117,7 @@ int main(void) {
     printf("-   nbytes: %lld x\n", c_nbytes);
     printf("-   Ratio: %8.2f x\n", (double) c_nbytes / (double)c_cbytes);
 
-    int64_t nbytes = nelem * typesize;
-    printf("Time for eval expression: %.3g s, %.1f GB/s\n",
+    printf("Time for eval expression: %.3g s, %.1f MB/s\n",
            elapsed_sec, (double)nbytes * nrep / (elapsed_sec * (1u << 20u)));
 
     iarray_expr_free(ctx, &e);
