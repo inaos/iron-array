@@ -50,17 +50,16 @@ static codec_list * btune_get_codecs(btune_struct * btune) {
   char * all_codecs = blosc_list_compressors();
   codec_list * codecs = malloc(sizeof(codec_list));
   codecs->list = malloc(MAX_CODECS * sizeof(int));
+  int i = 0;
   if (btune->config.comp_mode == BTUNE_COMP_HCR) {
     if (strstr(all_codecs, "zstd") != NULL) {
-      codecs->list[0] = BLOSC_ZSTD;
-    } else if (strstr(all_codecs, "zlib") != NULL) {
-      codecs->list[0] = BLOSC_ZLIB;
-    } else {
-      codecs->list[0] = BLOSC_LZ4HC;
+      codecs->list[i++] = BLOSC_ZSTD;
     }
-    codecs->size = 1;
+    if (strstr(all_codecs, "zlib") != NULL) {
+      codecs->list[i++] = BLOSC_ZLIB;
+    }
+    codecs->list[i++] = BLOSC_LZ4HC;
   } else {
-    int i = 0;
     codecs->list[i++] = BLOSC_LZ4;
     codecs->list[i++] = BLOSC_BLOSCLZ;
     if (btune->config.perf_mode == BTUNE_PERF_DECOMP) {
@@ -71,8 +70,8 @@ static codec_list * btune_get_codecs(btune_struct * btune) {
     } else if (strstr(all_codecs, "zlib") != NULL) {
      codecs->list[i++] = BLOSC_ZLIB;
     }
-    codecs->size = i;
   }
+  codecs->size = i;
   return codecs;
 }
 
@@ -92,7 +91,7 @@ void extract_btune_cparams(blosc2_context * context, cparams_btune * cparams){
   cparams->filter = context->filters[BLOSC2_MAX_FILTERS - 1];
   cparams->clevel = context->clevel;
   cparams->blocksize = context->blocksize;
-  cparams->shufflesize = context->typesize;  // TODO typesize -> shufflesize
+  cparams->shufflesize = context->typesize;
   cparams->nthreads_comp = context->nthreads;
   btune_struct * btune = context->btune;
   if (btune->dctx == NULL) {
@@ -343,8 +342,8 @@ void iabtune_init(btune_config * config, blosc2_context * cctx, blosc2_context *
   best->compcode = btune->codecs->list[0];
   aux->compcode = btune->codecs->list[0];
   if (btune->config.comp_mode == BTUNE_COMP_HCR) {
-    best->clevel = 9;
-    aux->clevel = 9;
+    best->clevel = 8;
+    aux->clevel = 8;
   }
   best->shufflesize = cctx->typesize;  // TODO typesize -> shufflesize
   aux->shufflesize = cctx->typesize;  // TODO typesize -> shufflesize
@@ -536,6 +535,13 @@ static void set_btune_cparams(blosc2_context * context, cparams_btune * cparams)
   context->compcode = cparams->compcode;
   context->filters[BLOSC2_MAX_FILTERS - 1] = cparams->filter;
   context->clevel = cparams->clevel;
+  btune_struct * btune = (btune_struct*) context->btune;
+  // Do not set a too large clevel for ZSTD and BALANCED mode
+  if (btune->config.comp_mode == BTUNE_COMP_BALANCED &&
+      cparams->compcode == BLOSC_ZSTD &&
+      cparams->clevel >= 3) {
+    cparams->clevel = 3;
+  }
   if (cparams->blocksize) {
     context->blocksize = cparams->blocksize;
   } else {
@@ -544,7 +550,6 @@ static void set_btune_cparams(blosc2_context * context, cparams_btune * cparams)
   }
   context->typesize = cparams->shufflesize;  // TODO typesize -> shufflesize
   context->new_nthreads = cparams->nthreads_comp;
-  btune_struct * btune = (btune_struct*) context->btune;
   if (btune->dctx != NULL) {
     btune->dctx->new_nthreads = cparams->nthreads_decomp;
   } else {
@@ -628,6 +633,10 @@ void iabtune_next_cparams(blosc2_context *context) {
       if (cparams->increasing_clevel) {
         if (cparams->clevel <= (MAX_CLEVEL - btune->step_size)) {
           cparams->clevel += btune->step_size;
+          // ZSTD level 9 is extremely slow, so avoid it, always
+          if (cparams->clevel == 9 && cparams->compcode == BLOSC_ZSTD) {
+            cparams->clevel = 8;
+          }
         }
       } else {
         if (cparams->clevel > btune->step_size) {
@@ -677,21 +686,17 @@ void iabtune_next_cparams(blosc2_context *context) {
 // Computes the score depending on the perf_mode
 double score_function(btune_struct * btune, double ctime, size_t cbytes,
                       double dtime) {
-  double reduced_cbytes = cbytes / (double) BTUNE_KB;
-  if (btune->config.comp_mode == BTUNE_COMP_HCR) {
-    return reduced_cbytes / BTUNE_MBPS10;
-  } else {
-    switch (btune->config.perf_mode) {
-      case BTUNE_PERF_COMP:
-        return ctime + reduced_cbytes / btune->config.bandwidth;
-      case BTUNE_PERF_DECOMP:
-        return reduced_cbytes / btune->config.bandwidth + dtime;
-      case BTUNE_PERF_BALANCED:
-        return ctime + reduced_cbytes / btune->config.bandwidth + dtime;
-      default:
-        fprintf(stderr, "WARNING: unknown performance mode\n");
-        return -1;
-    }
+  double reduced_cbytes = (double)cbytes / (double) BTUNE_KB;
+  switch (btune->config.perf_mode) {
+    case BTUNE_PERF_COMP:
+      return ctime + reduced_cbytes / btune->config.bandwidth;
+    case BTUNE_PERF_DECOMP:
+      return reduced_cbytes / btune->config.bandwidth + dtime;
+    case BTUNE_PERF_BALANCED:
+      return ctime + reduced_cbytes / btune->config.bandwidth + dtime;
+    default:
+      fprintf(stderr, "WARNING: unknown performance mode\n");
+      return -1;
   }
 }
 
