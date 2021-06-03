@@ -61,9 +61,7 @@ static codec_list * btune_get_codecs(btune_struct * btune) {
   } else {
     int i = 0;
     codecs->list[i++] = BLOSC_LZ4;
-    if (btune->config.comp_mode != BTUNE_COMP_BALANCED) {
-      codecs->list[i++] = BLOSC_BLOSCLZ;
-    }
+    codecs->list[i++] = BLOSC_BLOSCLZ;
     if (btune->config.perf_mode == BTUNE_PERF_DECOMP) {
       codecs->list[i++] = BLOSC_LZ4HC;
     }
