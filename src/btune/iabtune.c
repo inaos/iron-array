@@ -21,6 +21,7 @@
 // Disable shufflesize and blocksize
 #define BTUNE_DISABLE_SHUFFLESIZE  true
 #define BTUNE_DISABLE_BLOCKSIZE    true
+#define BTUNE_DISABLE_MEMCPY       true
 
 
 // Internal btune control behaviour constants.
@@ -61,7 +62,6 @@ static codec_list * btune_get_codecs(btune_struct * btune) {
     int i = 0;
     codecs->list[i++] = BLOSC_LZ4;
     if (btune->config.comp_mode != BTUNE_COMP_BALANCED) {
-    //if (strstr(all_codecs, "blosclz") != NULL) {
       codecs->list[i++] = BLOSC_BLOSCLZ;
     }
     if (btune->config.perf_mode == BTUNE_PERF_DECOMP) {
@@ -586,9 +586,6 @@ void iabtune_next_cparams(blosc2_context *context) {
     // Tune shuffle size
     case SHUFFLE_SIZE:
       btune->aux_index++;
-      if (BTUNE_DISABLE_SHUFFLESIZE) {
-        break;
-      }
       if (cparams->increasing_shuffle) {
         // TODO These kind of condition checks should be removed (maybe asserts)
         if (cparams->shufflesize < MAX_SHUFFLE) {
@@ -868,7 +865,11 @@ void update_aux(blosc2_context * ctx, bool improved) {
         int32_t shufflesize = best->shufflesize;
         bool is_power_2 = (shufflesize & (shufflesize - 1)) == 0;
         // Is shufflesize valid or not
-        btune->state = (best->filter && is_power_2) ? SHUFFLE_SIZE: THREADS;
+        if (BTUNE_DISABLE_SHUFFLESIZE) {
+          btune->state = THREADS;
+        } else {
+          btune->state = (best->filter && is_power_2) ? SHUFFLE_SIZE : THREADS;
+        }
         // max_threads must be greater than 1
         if ((btune->state == THREADS) && (btune->max_threads == 1)) {
           btune->state = CLEVEL;
@@ -877,7 +878,7 @@ void update_aux(blosc2_context * ctx, bool improved) {
           }
         }
         // Control direction parameters
-        if (btune->state == SHUFFLE_SIZE) {
+        if (!BTUNE_DISABLE_SHUFFLESIZE && btune->state == SHUFFLE_SIZE) {
           if (has_ended_shuffle(best)) {
             best->increasing_shuffle = !best->increasing_shuffle;
           }
@@ -949,7 +950,17 @@ void update_aux(blosc2_context * ctx, bool improved) {
       // Can not change parameter or is not improving
       if (has_ended_clevel(btune) || (!improved && !first_time)) {
         btune->aux_index = 0;
-        btune->state = BLOCKSIZE;
+        if (!BTUNE_DISABLE_BLOCKSIZE) {
+          btune->state = BLOCKSIZE;
+        }
+        else {
+          if (!BTUNE_DISABLE_MEMCPY) {
+            btune->state = MEMCPY;
+          }
+          else {
+            btune->state = WAITING;
+          }
+        }
         if (has_ended_blocksize(ctx)) {
           best->increasing_block = !best->increasing_block;
         }
@@ -964,7 +975,12 @@ void update_aux(blosc2_context * ctx, bool improved) {
       if (has_ended_blocksize(ctx) || (!improved && !first_time)) {
         btune->aux_index = 0;
         if (btune->config.comp_mode == BTUNE_COMP_HSP) {
-          btune->state = MEMCPY;
+          if (!BTUNE_DISABLE_MEMCPY) {
+            btune->state = MEMCPY;
+          }
+          else {
+            btune->state = WAITING;
+          }
         } else {
           btune->state = WAITING;
         }
