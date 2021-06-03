@@ -21,11 +21,6 @@
 #define BLOCK_SHAPE (20 * 1000)
 
 
-double fexpr(double x) {
-    return (x - 2) * (x - 1) * (x - 3);
-}
-
-
 int main(void) {
     iarray_init();
     ina_stopwatch_t *w;
@@ -119,30 +114,10 @@ int main(void) {
     printf("Time for eval expression: %.3g s, %.1f GB/s\n",
            elapsed_sec, (double)nbytes * nrep / (elapsed_sec * (1u << 20u)));
 
-//    uint64_t b_size = nelem * typesize;
-//    uint8_t *b_x = ina_mem_alloc(b_size);
-//    uint8_t *b_out = ina_mem_alloc(b_size);
-//
-//    IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_x, b_x, b_size));
-//    IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_out, b_out, b_size));
-
-//    for (int i = 1; i < nelem; ++i) {
-//        double d1 = ((double *) b_out)[i];
-//        double d2 = fexpr(((double *) b_x)[i]);
-//        double rerr = fabs((d1 - d2) / d1);
-//        if (rerr > 1e-15) {
-//            printf("ERROR at [%d]!\n", i);
-//            return -1;
-//        }
-//    }
-
     iarray_expr_free(ctx, &e);
     iarray_container_free(ctx, &c_out);
     iarray_container_free(ctx, &c_x);
     iarray_context_free(&ctx);
-
-//    INA_MEM_FREE_SAFE(b_x);
-//    INA_MEM_FREE_SAFE(b_out);
 
     INA_STOPWATCH_FREE(&w);
 
