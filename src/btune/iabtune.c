@@ -22,6 +22,7 @@
 #define BTUNE_DISABLE_SHUFFLESIZE  true
 #define BTUNE_DISABLE_BLOCKSIZE    true
 #define BTUNE_DISABLE_MEMCPY       true
+#define BTUNE_DISABLE_THREADS      true
 
 
 // Internal btune control behaviour constants.
@@ -724,6 +725,7 @@ bool has_improved(btune_struct * btune, double score_coef, double cratio_coef) {
   }
 }
 
+
 bool cparams_equals(cparams_btune * cp1, cparams_btune * cp2) {
   return ((cp1->compcode == cp2->compcode) && (cp1->filter == cp2->filter) &&
           (cp1->clevel == cp2->clevel) && (cp1->blocksize == cp2->blocksize) &&
@@ -861,11 +863,16 @@ void update_aux(blosc2_context * ctx, bool improved) {
         btune->aux_index = 0;
 
         int32_t shufflesize = best->shufflesize;
-        bool is_power_2 = (shufflesize & (shufflesize - 1)) == 0;
         // Is shufflesize valid or not
         if (BTUNE_DISABLE_SHUFFLESIZE) {
-          btune->state = THREADS;
+          if (!BTUNE_DISABLE_THREADS) {
+            btune->state = THREADS;
+          }
+          else {
+            btune->state = CLEVEL;
+          }
         } else {
+          bool is_power_2 = (shufflesize & (shufflesize - 1)) == 0;
           btune->state = (best->filter && is_power_2) ? SHUFFLE_SIZE : THREADS;
         }
         // max_threads must be greater than 1
@@ -895,7 +902,12 @@ void update_aux(blosc2_context * ctx, bool improved) {
       // Can not change parameter or is not improving
       if (has_ended_shuffle(best) || (!improved && !first_time)) {
         btune->aux_index = 0;
-        btune->state = THREADS;
+          if (!BTUNE_DISABLE_THREADS) {
+            btune->state = THREADS;
+          }
+          else {
+            btune->state = CLEVEL;
+          }
         // max_threads must be greater than 1
         if ((btune->state == THREADS) && (btune->max_threads == 1)) {
           btune->state = CLEVEL;
