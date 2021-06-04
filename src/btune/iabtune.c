@@ -65,10 +65,13 @@ static codec_list * btune_get_codecs(btune_struct * btune) {
     if (btune->config.perf_mode == BTUNE_PERF_DECOMP) {
       codecs->list[i++] = BLOSC_LZ4HC;
     }
-    if (strstr(all_codecs, "zstd") != NULL) {
-     codecs->list[i++] = BLOSC_ZSTD;
-    } else if (strstr(all_codecs, "zlib") != NULL) {
-     codecs->list[i++] = BLOSC_ZLIB;
+    if (btune->config.comp_mode == BTUNE_COMP_BALANCED) {
+      if (strstr(all_codecs, "zlib") != NULL) {
+        codecs->list[i++] = BLOSC_ZLIB;
+      }
+      else if (strstr(all_codecs, "zstd") != NULL) {
+        codecs->list[i++] = BLOSC_ZSTD;
+      }
     }
   }
   codecs->size = i;
@@ -538,7 +541,7 @@ static void set_btune_cparams(blosc2_context * context, cparams_btune * cparams)
   btune_struct * btune = (btune_struct*) context->btune;
   // Do not set a too large clevel for ZSTD and BALANCED mode
   if (btune->config.comp_mode == BTUNE_COMP_BALANCED &&
-      cparams->compcode == BLOSC_ZSTD &&
+      (cparams->compcode == BLOSC_ZSTD || cparams->compcode == BLOSC_ZLIB) &&
       cparams->clevel >= 3) {
     cparams->clevel = 3;
   }
@@ -577,7 +580,8 @@ void iabtune_next_cparams(blosc2_context *context) {
       // The first tuning of ZSTD in some modes should start in clevel 3
       if (((btune->config.perf_mode == BTUNE_PERF_COMP) ||
            (btune->config.perf_mode == BTUNE_PERF_BALANCED)) &&
-          (compcode == BLOSC_ZSTD) && (btune->nhards == 0)) {
+          (compcode == BLOSC_ZSTD || cparams->compcode == BLOSC_ZLIB) &&
+          (btune->nhards == 0)) {
         cparams->clevel = 3;
       }
       cparams->compcode = compcode;
@@ -1028,8 +1032,8 @@ void iabtune_update(blosc2_context * context, double ctime) {
     size_t cbytes = context->destsize;
     double dtime = 0;
 
-    // When the source is NULL (eval with prefilters), decompression is not working
-
+    // When the source is NULL (eval with prefilters), decompression is not working.
+    // Disabling this part for the time being.
 //    // Compute the decompression time if needed
 //    if (!((btune->state == WAITING) &&
 //        ((behaviour.nwaits_before_readapt == 0) ||
