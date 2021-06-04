@@ -14,9 +14,9 @@
 #include <math.h>
 #include "src/iarray_private.h"
 
-#define NELEM (20 * 1000 * 1000)  // multiple of NITEMS_CHUNK for now
-#define NITEMS_CHUNK (4000 * 1000)
-#define NITEMS_BLOCK (16000)
+#define NITEMS_BLOCK (8 * 1024)
+#define NITEMS_CHUNK (64 * NITEMS_BLOCK)
+#define NELEM (500 * NITEMS_CHUNK)
 
 #define XMAX 10.
 
@@ -83,7 +83,9 @@ int main(int argc, char** argv)
              INA_OPT_FLAG("i", "iter", "Use iterator for filling values"),
              INA_OPT_FLAG("I", "iter-chunk", "Use chunk iterator for filling values"),
              INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
-             INA_OPT_FLAG("r", "remove", "Remove the previous persistent containers (only valid w/ -p)")
+             INA_OPT_FLAG("r", "remove", "Remove the previous persistent containers (only valid w/ -p)"),
+             INA_OPT_FLAG("B", "btune", "Activate BTune"),
+             INA_OPT_INT("b", "btune-favor", 1, "BALANCE = 0, SPEED = 1, CRATIO = 2")
     );
 
     if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
@@ -97,6 +99,8 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_opt_get_int("c", &clevel));
     int codec;
     INA_MUST_SUCCEED(ina_opt_get_int("l", &codec));
+    int btune_favor;
+    INA_MUST_SUCCEED(ina_opt_get_int("b", &btune_favor));
     int nthreads;
     INA_MUST_SUCCEED(ina_opt_get_int("t", &nthreads));
     int mantissa_bits;
@@ -147,9 +151,15 @@ int main(int argc, char** argv)
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
     config.compression_level = clevel;
     config.compression_codec = codec;
+    config.btune = false;
+    config.compression_favor = btune_favor;
+    if (INA_SUCCEED(ina_opt_isset("B"))) {
+        config.btune = true;
+    }
     if (clevel == 0) {
         // If there is no compression, there is no point in using filters.
         config.filter_flags = 0;
+        config.btune = false;
     }
     else {
         config.filter_flags = IARRAY_COMP_SHUFFLE;
