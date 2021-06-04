@@ -724,19 +724,25 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
 
         // Eval the expression for this chunk
         expr_pparams.out_value = out_value;  // useful for the prefilter function
-        blosc2_cparams cparams = BLOSC2_CPARAMS_DEFAULTS;
-        IARRAY_RETURN_IF_FAILED(iarray_create_blosc_cparams(&cparams, ctx, ret->catarr->itemsize,
-                                ret->catarr->itemsize * ret->catarr->blocknitems));
 
-        blosc2_context *cctx = blosc2_create_cctx(cparams);  // we need it here to propagate pparams.inputs
-        int csize = blosc2_compress_ctx(cctx, NULL, ret->catarr->extchunknitems * e->typesize,
+        blosc2_context *cctx = ret->catarr->sc->cctx;
+        blosc2_prefilter_fn old_prefilter = cctx->prefilter;
+        blosc2_prefilter_params *old_pparams = cctx->preparams;
+        cctx->prefilter = ctx->prefilter_fn;
+        cctx->preparams = ctx->prefilter_params;
+
+        int csize = blosc2_compress_ctx(ret->catarr->sc->cctx, NULL, ret->catarr->extchunknitems * e->typesize,
                                         out_value.block_pointer,
                                         ret->catarr->extchunknitems * e->typesize + BLOSC_MAX_OVERHEAD);
+        // Reset prefilters to previous value
+        ret->catarr->sc->cctx->prefilter = old_prefilter;
+        ret->catarr->sc->cctx->preparams = old_pparams;
+
         if (csize <= 0) {
             IARRAY_TRACE1(iarray.error, "Error compressing a blosc chunk");
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
         }
-        blosc2_free_ctx(cctx);
+
 
         // Free temporary chunks
         for (int nvar = 0; nvar < e->nvars; nvar++) {
