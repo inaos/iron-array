@@ -1028,28 +1028,30 @@ void iabtune_update(blosc2_context * context, double ctime) {
     size_t cbytes = context->destsize;
     double dtime = 0;
 
-    // Compute the decompression time if needed
-    if (!((btune->state == WAITING) &&
-        ((behaviour.nwaits_before_readapt == 0) ||
-        (btune->nwaitings % behaviour.nwaits_before_readapt != 0))) &&
-        ((btune->config.perf_mode == BTUNE_PERF_DECOMP) ||
-        (btune->config.perf_mode == BTUNE_PERF_BALANCED))) {
-      blosc2_context * dctx;
-      if (btune->dctx == NULL) {
-        blosc2_dparams dparams = { btune->nthreads_decomp, NULL, NULL, NULL};
-        dctx = blosc2_create_dctx(dparams);
-      } else {
-        dctx = btune->dctx;
-      }
-      blosc_set_timestamp(&last);
-      blosc2_decompress_ctx(dctx, context->dest, context->destsize, (void*)(context->src),
-                            context->sourcesize);
-      blosc_set_timestamp(&current);
-      dtime = blosc_elapsed_secs(last, current);
-      if (btune->dctx == NULL) {
-        blosc2_free_ctx(dctx);
-      }
-    }
+    // When the source is NULL (eval with prefilters), decompression is not working
+
+//    // Compute the decompression time if needed
+//    if (!((btune->state == WAITING) &&
+//        ((behaviour.nwaits_before_readapt == 0) ||
+//        (btune->nwaitings % behaviour.nwaits_before_readapt != 0))) &&
+//        ((btune->config.perf_mode == BTUNE_PERF_DECOMP) ||
+//        (btune->config.perf_mode == BTUNE_PERF_BALANCED))) {
+//      blosc2_context * dctx;
+//      if (btune->dctx == NULL) {
+//        blosc2_dparams dparams = { btune->nthreads_decomp, NULL, NULL, NULL};
+//        dctx = blosc2_create_dctx(dparams);
+//      } else {
+//        dctx = btune->dctx;
+//      }
+//      blosc_set_timestamp(&last);
+//      blosc2_decompress_ctx(dctx, context->dest, context->destsize, (void*)(context->src),
+//                            context->sourcesize);
+//      blosc_set_timestamp(&current);
+//      dtime = blosc_elapsed_secs(last, current);
+//      if (btune->dctx == NULL) {
+//        blosc2_free_ctx(dctx);
+//      }
+//    }
 
     double score = score_function(btune, ctime, cbytes, dtime);
     assert(score > 0);
