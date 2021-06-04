@@ -725,18 +725,19 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         // Eval the expression for this chunk
         expr_pparams.out_value = out_value;  // useful for the prefilter function
 
+        // Assign the prefilter to the super-chunk context
         blosc2_context *cctx = ret->catarr->sc->cctx;
         blosc2_prefilter_fn old_prefilter = cctx->prefilter;
         blosc2_prefilter_params *old_pparams = cctx->preparams;
         cctx->prefilter = ctx->prefilter_fn;
         cctx->preparams = ctx->prefilter_params;
-
-        int csize = blosc2_compress_ctx(ret->catarr->sc->cctx, NULL, ret->catarr->extchunknitems * e->typesize,
+        // Do the compression with prefilters
+        int csize = blosc2_compress_ctx(cctx, NULL, ret->catarr->extchunknitems * e->typesize,
                                         out_value.block_pointer,
                                         ret->catarr->extchunknitems * e->typesize + BLOSC_MAX_OVERHEAD);
-        // Reset prefilters to previous value
-        ret->catarr->sc->cctx->prefilter = old_prefilter;
-        ret->catarr->sc->cctx->preparams = old_pparams;
+        // Reset prefilters to a possible previous value
+        cctx->prefilter = old_prefilter;
+        cctx->preparams = old_pparams;
 
         if (csize <= 0) {
             IARRAY_TRACE1(iarray.error, "Error compressing a blosc chunk");
