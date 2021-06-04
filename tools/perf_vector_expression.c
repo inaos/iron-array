@@ -7,15 +7,16 @@
 * This software is the confidential and proprietary information of INAOS GmbH
 * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
 * Information and shall use it only in accordance with the terms of the license agreement.
+* Information and shall use it only in accordance with the terms of the license agreement.
 *
 */
 
 #include <libiarray/iarray.h>
 #include "src/iarray_private.h"
 
-#define NITEMS_BLOCK (4 * 8192)
-#define NITEMS_CHUNK (256 * NITEMS_BLOCK)
-#define NELEM (10 * 1000 * NITEMS_BLOCK)  // multiple of NITEMS_CHUNK for now
+#define NITEMS_BLOCK (8 * 1024)
+#define NITEMS_CHUNK (64 * NITEMS_BLOCK)
+#define NELEM (500 * NITEMS_CHUNK)
 #define XMAX 10.
 
 static double _poly(const double x)
@@ -113,7 +114,9 @@ int main(int argc, char** argv)
              INA_OPT_FLAG("i", "iter", "Use iterator for filling values"),
              INA_OPT_FLAG("I", "iter-chunk", "Use chunk iterator for filling values"),
              INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
-             INA_OPT_FLAG("r", "remove", "Remove the previous persistent containers (only valid w/ -p)")
+             INA_OPT_FLAG("r", "remove", "Remove the previous persistent containers (only valid w/ -p)"),
+             INA_OPT_FLAG("B", "btune", "Activate BTune"),
+             INA_OPT_INT("b", "btune-favor", 1, "BALANCE = 0, SPEED = 1, CRATIO = 2")
     );
 
     if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
@@ -133,6 +136,8 @@ int main(int argc, char** argv)
     INA_MUST_SUCCEED(ina_opt_get_int("l", &codec));
     int filter;
     INA_MUST_SUCCEED(ina_opt_get_int("f", &filter));
+    int btune_favor;
+    INA_MUST_SUCCEED(ina_opt_get_int("b", &btune_favor));
     int nthreads;
     INA_MUST_SUCCEED(ina_opt_get_int("t", &nthreads));
     int mantissa_bits;
@@ -185,9 +190,15 @@ int main(int argc, char** argv)
     config.compression_level = clevel;
     config.compression_codec = codec;
     config.filter_flags = filter;
+    config.btune = false;
+    config.compression_favor = btune_favor;
+    if (INA_SUCCEED(ina_opt_isset("B"))) {
+        config.btune = true;
+    }
     if (clevel == 0) {
         // If there is no compression, there is no point in using filters.
         config.filter_flags = 0;
+        config.btune = false;
     }
     else {
         if (mantissa_bits >  0) {
