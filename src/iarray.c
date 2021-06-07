@@ -261,7 +261,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         // After some experimentation with the i9-10940X, 256 KB is probably a good and balanced guess.
         switch (cfg->compression_favor) {
             case IARRAY_COMPRESSION_FAVOR_CRATIO:
-                max_blocksize = 1024 * 1024;
+                max_blocksize = 512 * 1024;
                 break;
             case IARRAY_COMPRESSION_FAVOR_SPEED:
                 max_blocksize = 128 * 1024;
@@ -292,18 +292,19 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
         // is not too important.  It better pays off to provide room enough
         // for having a lot of different threads to work in parallel for
         // producing the chunk of the output.
-        // Looks like 32 MB is a good compromise for BTune getting a nice 
-	// range of chunks to explore (arrays > 320 MB will have > 10 experiments).
+        // Looks like 16 MB is a good compromise for Intel CPUs.
+        // Besides, it is good for BTune for getting a nice range of chunks
+        // to explore (arrays > 160 MB will have > 10 experiments).
         switch (cfg->compression_favor) {
             case IARRAY_COMPRESSION_FAVOR_CRATIO:
-                max_chunksize = 32 * 1024 * 1024;
+                max_chunksize = 16 * 1024 * 1024;
                 break;
             case IARRAY_COMPRESSION_FAVOR_SPEED:
-                max_chunksize = 32 * 1024 * 1024;
+                max_chunksize = 16 * 1024 * 1024;
                 break;
             case IARRAY_COMPRESSION_FAVOR_BALANCE:
             default:
-                max_chunksize = 32 * 1024 * 1024;
+                max_chunksize = 16 * 1024 * 1024;
         }
     }
     if (min_chunksize == 0) {
