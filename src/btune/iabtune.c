@@ -43,7 +43,7 @@ enum {
 };
 
 static const cparams_btune cparams_btune_default = {
-        BLOSC_LZ4, BLOSC_SHUFFLE, 9, 0, 0, 0, 0, false, true, true, false, 100, 1.1, 100, 100};
+        BLOSC_LZ4, BLOSC_SHUFFLE, BLOSC_ALWAYS_SPLIT, 9, 0, 0, 0, 0, false, true, true, false, 100, 1.1, 100, 100};
 
 // Get the codecs list for btune
 static codec_list * btune_get_codecs(btune_struct * btune) {
@@ -317,7 +317,7 @@ void iabtune_init(btune_config * config, blosc2_context * cctx, blosc2_context *
            btune->config.behaviour.nsofts_before_hard,
            btune->config.behaviour.nhards_before_stop,
            repeat_mode_to_str(btune->config.behaviour.repeat_mode));
-    printf("|    Codec   | Filter | C.Level | Blocksize | Shufflesize | C.Threads | D.Threads |   Score   |  C.Ratio   |"
+    printf("|    Codec   | Filter | Split | C.Level | Blocksize | Shufflesize | C.Threads | D.Threads |   Score   |  C.Ratio   |"
            "   BTune State   | Readapt | Winner\n");
   }
 
@@ -326,7 +326,8 @@ void iabtune_init(btune_config * config, blosc2_context * cctx, blosc2_context *
 
   // State attributes
   btune->rep_index = 0;
-  btune->codec_filter_limit = 2 * REPEATS_PER_CPARAMS;  // 3 means len(NOSHUFFLE, SHUFFLE, BUTSHUFFLE)
+  // We want to iterate 2x per filter (SHUFFLE/BITSHUFFLE) and 2x per split/nonsplit
+  btune->filter_split_limit = 2 * 2 * REPEATS_PER_CPARAMS;
   btune->aux_index = 0;
   btune->steps_count = 0;
   btune->nsofts = 0;
@@ -537,6 +538,7 @@ void iabtune_next_blocksize(blosc2_context *context) {
 static void set_btune_cparams(blosc2_context * context, cparams_btune * cparams){
   context->compcode = cparams->compcode;
   context->filters[BLOSC2_MAX_FILTERS - 1] = cparams->filter;
+  context->splitmode = cparams->splitmode;
   context->clevel = cparams->clevel;
   btune_struct * btune = (btune_struct*) context->btune;
   // Do not set a too large clevel for ZSTD and BALANCED mode
@@ -566,17 +568,22 @@ void iabtune_next_cparams(blosc2_context *context) {
   *btune->aux_cparams = *btune->best;
   cparams_btune * cparams = btune->aux_cparams;
   int codec_index;
+  int filter_split;
   int compcode;
   uint8_t filter;
+  int splitmode;
 
   switch(btune->state){
 
     // Tune codec and filter
     case CODEC_FILTER:
-      codec_index = btune->aux_index / btune->codec_filter_limit;
+      codec_index = btune->aux_index / btune->filter_split_limit;
       compcode = btune->codecs->list[codec_index];
-      filter = (uint8_t) (((btune->aux_index % btune->codec_filter_limit) + 1)/
-              REPEATS_PER_CPARAMS);
+      filter_split = btune->filter_split_limit;
+      // Cycle filters every time
+      filter = (uint8_t) (((btune->aux_index % (filter_split / 2)) + 1) / REPEATS_PER_CPARAMS);
+      // Cycle split every two filters
+      splitmode = ((((btune->aux_index % filter_split) / 2) + 1) / REPEATS_PER_CPARAMS);
       // The first tuning of ZSTD in some modes should start in clevel 3
       if (((btune->config.perf_mode == BTUNE_PERF_COMP) ||
            (btune->config.perf_mode == BTUNE_PERF_BALANCED)) &&
@@ -586,6 +593,7 @@ void iabtune_next_cparams(blosc2_context *context) {
       }
       cparams->compcode = compcode;
       cparams->filter = filter;
+      cparams->splitmode = splitmode;
       // Force auto blocksize
       // cparams->blocksize = 0;
       btune->aux_index++;
@@ -736,8 +744,11 @@ bool has_improved(btune_struct * btune, double score_coef, double cratio_coef) {
 
 
 bool cparams_equals(cparams_btune * cp1, cparams_btune * cp2) {
-  return ((cp1->compcode == cp2->compcode) && (cp1->filter == cp2->filter) &&
-          (cp1->clevel == cp2->clevel) && (cp1->blocksize == cp2->blocksize) &&
+  return ((cp1->compcode == cp2->compcode) &&
+          (cp1->filter == cp2->filter) &&
+          (cp1->splitmode == cp2->splitmode) &&
+          (cp1->clevel == cp2->clevel) &&
+          (cp1->blocksize == cp2->blocksize) &&
           (cp1->shufflesize == cp2->shufflesize) &&
           (cp1->nthreads_comp == cp2->nthreads_comp) &&
           (cp1->nthreads_decomp == cp2->nthreads_decomp));
@@ -868,7 +879,7 @@ void update_aux(blosc2_context * ctx, bool improved) {
   switch (btune->state) {
     case CODEC_FILTER:
       // Reached last combination of codec filter
-      if ((btune->aux_index / btune->codec_filter_limit) == btune->codecs->size) {
+      if ((btune->aux_index / btune->filter_split_limit) == btune->codecs->size) {
         btune->aux_index = 0;
 
         int32_t shufflesize = best->shufflesize;
@@ -1090,8 +1101,8 @@ void iabtune_update(blosc2_context * context, double ctime) {
         if (envvar != NULL) {
           char *compname;
           blosc_compcode_to_compname(cparams->compcode, &compname);
-          printf("| %10s | %6d | %7d | %9d | %11d | %9d | %9d | %9.3g | %9.3gx | %15s | %7s | %s\n",
-                 compname, cparams->filter, cparams->clevel,
+          printf("| %10s | %6d | %5d | %7d | %9d | %11d | %9d | %9d | %9.3g | %9.3gx | %15s | %7s | %s\n",
+                 compname, cparams->filter, cparams->splitmode, cparams->clevel,
                  (int) cparams->blocksize / BTUNE_KB, (int) cparams->shufflesize,
                  cparams->nthreads_comp, cparams->nthreads_decomp,
                  score, cratio, stcode_to_stname(btune), readapt_to_str(btune->readapt_from),
