@@ -104,10 +104,10 @@ int main(int argc, char** argv)
              INA_OPT_INT("e", "expr-type", 1, "COPY = 0, POLY = 1, TRANS1 = 2, , TRANS2 = 3"),
              INA_OPT_INT("M", "eval-method", 2, "EVAL_ITERCHUNK = 1, EVAL_ITERBLOSC = 2"),
              INA_OPT_INT("n", "eval-niter", 1, "Number of times to evaluate (default 1)"),
-             INA_OPT_INT("c", "clevel", 5, "Compression level"),
-             INA_OPT_INT("l", "codec", 1, "Compression codec"),
+             INA_OPT_INT("c", "clevel", 5, "Compression level (default 5)"),
+             INA_OPT_INT("l", "codec", 1, "Compression codec (default LZ4/1)"),
              INA_OPT_INT("f", "filter", 1, "SHUFFLE = 1, BITSHUFFLE = 2"),
-             INA_OPT_INT("t", "nthreads", 1, "Use number of threads for the evaluation"),
+             INA_OPT_INT("t", "nthreads", 1, "Use number of threads for the evaluation (default 1)"),
              INA_OPT_INT("m", "mantissa-bits", 0, "The number of significant bits in mantissa (0 means no truncation"),
              INA_OPT_FLAG("d", "dict", "Use dictionary (only for Zstd (codec 5))"),
              INA_OPT_FLAG("P", "plainbuffer", "Use plain buffer arrays"),
@@ -116,7 +116,7 @@ int main(int argc, char** argv)
              INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
              INA_OPT_FLAG("r", "remove", "Remove the previous persistent containers (only valid w/ -p)"),
              INA_OPT_FLAG("B", "btune", "Activate BTune"),
-             INA_OPT_INT("b", "btune-favor", 1, "BALANCE = 0, SPEED = 1, CRATIO = 2")
+             INA_OPT_INT("b", "btune-favor", 1, "BALANCE = 0, SPEED = 1, CRATIO = 2 (default 1)")
     );
 
     if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
