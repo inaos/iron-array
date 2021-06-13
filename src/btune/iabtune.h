@@ -186,6 +186,8 @@ typedef struct {
     // The compressor code
     uint8_t filter;
     // The precompression filter
+    int32_t splitmode;
+    // Whether the blocks should be split or not
     int clevel;
     // The compression level
     int32_t blocksize;
@@ -230,8 +232,8 @@ typedef struct {
   // The aux array of cratios to calculate the mean
   int rep_index;
   // The aux index for the repetitions
-  int codec_filter_limit;
-  /* The limit of combinations for CODEC_FILTER,
+  int filter_split_limit;
+  /* The limit of filter/split combinations for CODEC_FILTER,
    * also helps determining the codec and filter based on aux_index */
   int aux_index;
   // The auxiliar index for state management
