@@ -284,9 +284,6 @@ typedef struct {
 */
 void iabtune_init(btune_config * config, blosc2_context* cctx, blosc2_context* dctx);
 
-/* The maximum number of splits in a block for compression */
-#define MAX_SPLITS 16            /* Cannot be larger than 128 */
-
 void iabtune_free(blosc2_context* context);
 
 void iabtune_next_cparams(blosc2_context *context);
@@ -296,16 +293,5 @@ void iabtune_update(blosc2_context* context, double ctime);
 void iabtune_next_blocksize(blosc2_context *context);
 
 const char * stcode_to_stname(btune_struct * btune);
-
-/* Conditions for splitting a block before compressing with a codec. */
-static int split_block(int compcode, int32_t typesize, int32_t blocksize) {
-  /* Normally all the compressors designed for speed benefit from a
-     split.  However, in conducted benchmarks LZ4 seems that it runs
-     faster if we don't split, which is quite surprising.
-     */
-  return (((compcode == BLOSC_BLOSCLZ)) &&
-          (typesize <= MAX_SPLITS) &&
-          (blocksize / typesize) >= BLOSC_MIN_BUFFERSIZE);
-}
 
 #endif  /* IABTUNE_H */
