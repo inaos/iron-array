@@ -148,8 +148,8 @@ typedef struct {
  *
  * This default configuration of BTune is meant for optimizing memory bandwidth, compression speed,
  * decompression speed and the compression ratio (BALANCED options). It behaves as follows:
- * it starts with a hard readapt (cparams_hint false) and then repeats 10 soft readapts and
- * a hard readapt 3 times before stopping completely.
+ * it starts with a hard readapt (cparams_hint false) and then repeats 5 soft readapts and
+ * a hard readapt 2 times before stopping completely.
 */
 static const btune_config BTUNE_CONFIG_DEFAULTS = {
   BTUNE_GBPS100, BTUNE_PERF_BALANCED, BTUNE_COMP_BALANCED, {0, 5, 2, BTUNE_STOP}, false};
