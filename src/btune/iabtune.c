@@ -508,8 +508,8 @@ void iabtune_next_blocksize(blosc2_context *context) {
     }
   }
 
-  /* Enlarge the blocksize for splittable codecs */
-  if (clevel > 0 && split_block(context->compcode, typesize, blocksize)) {
+  /* Enlarge the blocksize */
+  if (clevel > 0) {
     if (blocksize > (1 << 16)) {
       /* Do not use a too large buffer (64 KB) for splitting codecs */
       blocksize = (1 << 16);
@@ -584,6 +584,10 @@ void iabtune_next_cparams(blosc2_context *context) {
       filter = (uint8_t) (((btune->aux_index % (filter_split / 2)) + 1) / REPEATS_PER_CPARAMS);
       // Cycle split every two filters
       splitmode = ((((btune->aux_index % filter_split) / 2) + 1) / REPEATS_PER_CPARAMS);
+      if (compcode == BLOSC_BLOSCLZ) {
+          // BLOSCLZ is not designed to compress well in non-split mode, so disable it always
+          splitmode = BLOSC_ALWAYS_SPLIT;
+      }
       // The first tuning of ZSTD in some modes should start in clevel 3
       if (((btune->config.perf_mode == BTUNE_PERF_COMP) ||
            (btune->config.perf_mode == BTUNE_PERF_BALANCED)) &&
