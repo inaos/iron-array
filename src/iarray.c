@@ -268,7 +268,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
                 break;
             case IARRAY_COMPRESSION_FAVOR_BALANCE:
             default:
-                max_blocksize = 256 * 1024;
+                max_blocksize = 128 * 1024;
         }
     }
     if (min_blocksize == 0) {

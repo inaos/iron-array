@@ -152,7 +152,7 @@ typedef struct {
  * a hard readapt 2 times before stopping completely.
 */
 static const btune_config BTUNE_CONFIG_DEFAULTS = {
-  BTUNE_GBPS100, BTUNE_PERF_BALANCED, BTUNE_COMP_BALANCED, {0, 5, 2, BTUNE_STOP}, false};
+  2 * BTUNE_GBPS10, BTUNE_PERF_BALANCED, BTUNE_COMP_BALANCED, {0, 5, 2, BTUNE_STOP}, false};
 
 /// @cond DEV
 // Internal BTune state enumeration.

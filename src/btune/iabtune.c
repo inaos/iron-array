@@ -52,6 +52,7 @@ static codec_list * btune_get_codecs(btune_struct * btune) {
   codecs->list = malloc(MAX_CODECS * sizeof(int));
   int i = 0;
   if (btune->config.comp_mode == BTUNE_COMP_HCR) {
+    // In HCR mode only try with ZSTD, ZLIB and LZ4HC
     if (strstr(all_codecs, "zstd") != NULL) {
       codecs->list[i++] = BLOSC_ZSTD;
     }
@@ -60,18 +61,14 @@ static codec_list * btune_get_codecs(btune_struct * btune) {
     }
     codecs->list[i++] = BLOSC_LZ4HC;
   } else {
+    // In all other modes, LZ4 is mandatory
     codecs->list[i++] = BLOSC_LZ4;
-    codecs->list[i++] = BLOSC_BLOSCLZ;
+    if (btune->config.comp_mode == BTUNE_COMP_BALANCED) {
+      // In BALANCE mode give BLOSCLZ a chance
+      codecs->list[i++] = BLOSC_BLOSCLZ;
+    }
     if (btune->config.perf_mode == BTUNE_PERF_DECOMP) {
       codecs->list[i++] = BLOSC_LZ4HC;
-    }
-    if (btune->config.comp_mode == BTUNE_COMP_BALANCED) {
-      if (strstr(all_codecs, "zlib") != NULL) {
-        codecs->list[i++] = BLOSC_ZLIB;
-      }
-      else if (strstr(all_codecs, "zstd") != NULL) {
-        codecs->list[i++] = BLOSC_ZSTD;
-      }
     }
   }
   codecs->size = i;
@@ -546,6 +543,10 @@ static void set_btune_cparams(blosc2_context * context, cparams_btune * cparams)
       (cparams->compcode == BLOSC_ZSTD || cparams->compcode == BLOSC_ZLIB) &&
       cparams->clevel >= 3) {
     cparams->clevel = 3;
+  }
+  // Do not set a too large clevel for HCR mode
+  if (btune->config.comp_mode == BTUNE_COMP_HCR && cparams->clevel >= 6) {
+    cparams->clevel = 6;
   }
   if (cparams->blocksize) {
     context->blocksize = cparams->blocksize;
