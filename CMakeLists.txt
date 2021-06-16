@@ -61,6 +61,7 @@ set(CATERVA_BUILD_EXAMPLES OFF)
 add_subdirectory(contribs/caterva)
 include_directories(contribs/caterva/caterva)
 include_directories(contribs/caterva/contribs/c-blosc2/blosc)
+include_directories(contribs/caterva/contribs/c-blosc2/include)
 
 add_subdirectory(contribs/minjugg)
 include_directories(contribs/minjugg/include)

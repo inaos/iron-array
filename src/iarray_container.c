@@ -155,6 +155,11 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool enfor
     caterva_array_t *catarr_aux;
     IARRAY_ERR_CATERVA(caterva_open(cat_ctx, urlpath, &catarr_aux));
     caterva_array_t *catarr;
+
+    // Create new caterva ctx from opened array.
+    caterva_ctx_free(&cat_ctx);
+    IARRAY_ERR_CATERVA(caterva_ctx_new(catarr_aux->cfg, &cat_ctx));
+
     caterva_storage_t cat_storage = {0};
     cat_storage.backend = catarr_aux->storage;
     cat_storage.properties.blosc.urlpath = NULL;
