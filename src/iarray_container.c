@@ -222,7 +222,7 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool enfor
     }
     (*container)->storage->urlpath = urlpath;
     (*container)->storage->backend = IARRAY_STORAGE_BLOSC;
-    (*container)->storage->enforce_frame = enforce_frame;
+    (*container)->storage->enforce_frame = catarr->sc->storage->contiguous;
     for (int i = 0; i < catarr->ndim; ++i) {
         (*container)->storage->chunkshape[i] = catarr->chunkshape[i];
         (*container)->storage->blockshape[i] = catarr->blockshape[i];
@@ -869,6 +869,55 @@ INA_API(ina_rc_t) iarray_get_storage(iarray_context_t *ctx,
     ina_mem_cpy(storage, c->storage, sizeof(iarray_storage_t));
     return INA_SUCCESS;
 }
+
+
+INA_API(ina_rc_t) iarray_get_cfg(iarray_context_t *ctx,
+                                 iarray_container_t *c,
+                                 iarray_config_t *cfg) {
+    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(cfg);
+
+    uint8_t *blosc_filters = c->catarr->sc->filters;
+    uint8_t *blosc_filters_meta = c->catarr->sc->filters_meta;
+
+    cfg->filter_flags = 0;
+    cfg->fp_mantissa_bits = 0;
+
+    for (int i = 0; i < BLOSC2_MAX_FILTERS; ++i) {
+        switch (blosc_filters[i]) {
+            case BLOSC_SHUFFLE:
+                cfg->filter_flags |= IARRAY_COMP_SHUFFLE;
+                break;
+            case BLOSC_BITSHUFFLE:
+                cfg->filter_flags |= IARRAY_COMP_BITSHUFFLE;
+                break;
+            case BLOSC_DELTA:
+                cfg->filter_flags |= IARRAY_COMP_DELTA;
+                break;
+            case BLOSC_TRUNC_PREC:
+                cfg->filter_flags |= IARRAY_COMP_TRUNC_PREC;
+                cfg->fp_mantissa_bits = blosc_filters_meta[i];
+            case BLOSC_NOFILTER:
+                break;
+            default:
+                IARRAY_TRACE1(iarray.error, "Filter not supported");
+                return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+        }
+    }
+
+    cfg->compression_level = c->catarr->sc->clevel;
+    cfg->compression_codec = c->catarr->sc->compcode;
+
+    cfg->use_dict = false;
+    cfg->btune = ctx->cfg->btune;
+    cfg->max_num_threads = ctx->cfg->max_num_threads;
+    cfg->eval_method = ctx->cfg->eval_method;
+    cfg->compression_favor = ctx->cfg->compression_favor;
+
+    return INA_SUCCESS;
+}
+
+
 
 INA_API(ina_rc_t) iarray_is_view(iarray_context_t *ctx,
                                  iarray_container_t *c,
