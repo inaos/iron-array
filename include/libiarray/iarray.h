@@ -543,6 +543,10 @@ INA_API(ina_rc_t) iarray_get_storage(iarray_context_t *ctx,
                                      iarray_container_t *c,
                                      iarray_storage_t *storage);
 
+INA_API(ina_rc_t) iarray_get_cfg(iarray_context_t *ctx,
+                                 iarray_container_t *c,
+                                 iarray_config_t *cfg);
+
 INA_API(ina_rc_t) iarray_is_view(iarray_context_t *ctx,
                                  iarray_container_t *c,
                                  bool *view);
