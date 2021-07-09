@@ -81,7 +81,7 @@ steps:
     conda install -y --name iArrayEnv -c intel mkl-include
     conda install -y --name iArrayEnv -c intel mkl-static
     conda install -y --name iArrayEnv -c intel icc_rt
-    conda install -y --name iArrayEnv -c numba 'llvmdev<11'
+    conda install -y --name iArrayEnv -c numba llvmdev
   displayName: Download dependencies
   env:
     jfrog_artifactory_uid: $(jfrog_artifactory_uid)
