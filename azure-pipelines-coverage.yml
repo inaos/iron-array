@@ -37,7 +37,7 @@ steps:
     conda install -y --name iArrayEnv -c intel mkl-include
     conda install -y --name iArrayEnv -c intel mkl-static
     conda install -y --name iArrayEnv -c intel icc_rt
-    conda install -y --name iArrayEnv -c numba 'llvmdev<11'
+    conda install -y --name iArrayEnv -c numba 'llvmdev'
     conda install -y -c conda-forge gcovr
     ls -l $CONDA/bin
   displayName: Download dependencies
