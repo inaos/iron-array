@@ -21,12 +21,12 @@ We use inac cmake build-system in combination with different libraries which can
 miniconda3.  In particular, one can install LLVM from the numba channel, and MKL and SVML from Intel
 channel in a cross-platform portable way with:
 
-    $ conda install -c numba 'llvmdev<11'
+    $ conda install -c numba 'llvmdev>=11'
     $ conda install -c intel mkl-include
     $ conda install -c intel mkl-static
     $ conda install -c intel icc_rt    # SVML
 
-Beware: currently ironArray only supports LLVM 10.  Also, we strongly suggest to use the numba
+Beware: currently ironArray only supports LLVM 11.  Also, we strongly suggest to use the numba
 channel with conda/mamba for installing the LLVM package.   In particular, we discourage the use
 of native LLVM libraries in the system (either using `apt`, `brew` or any other packager), even
 if they are installing LLVM 10 (the numba team seems to be doing a great job in packaging).
