@@ -13,13 +13,13 @@
 #include <libiarray/iarray.h>
 
 int main(void) {
+    printf("This example should fail. Set 'INAC_TRACE=*' to see the error log.\n");
 
-    IARRAY_FAIL_IF_ERROR(iarray_init());
-
+    IARRAY_RETURN_IF_FAILED(iarray_init());
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
 
     iarray_context_t *ctx;
-    IARRAY_FAIL_IF_ERROR(iarray_context_new(&cfg, &ctx));
+    IARRAY_RETURN_IF_FAILED(iarray_context_new(&cfg, &ctx));
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int8_t ndim = 2;
@@ -42,15 +42,12 @@ int main(void) {
     }
 
     iarray_container_t *container;
-    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape, 0, 1, &storage, 0, &container));
+    IARRAY_RETURN_IF_FAILED(iarray_linspace(ctx, &dtshape, 0, 1, &storage, 0, &container));
 
     iarray_container_free(ctx, &container);
     iarray_context_free(&ctx);
 
     iarray_destroy();
 
-    return 0;
-    fail:
-        printf("ERROR: %s\n", ina_err_strerror(ina_err_get_rc()));
-        return 1;
+    return INA_SUCCESS;
 }
