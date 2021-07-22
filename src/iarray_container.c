@@ -251,6 +251,14 @@ INA_API(ina_rc_t) iarray_container_open(iarray_context_t *ctx,
     return _iarray_container_load(ctx, urlpath, false, container);
 }
 
+INA_API(ina_rc_t) iarray_container_remove(char *urlpath)
+{
+    if (blosc2_remove_urlpath(urlpath) != 0) {
+        return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+    }
+    return INA_SUCCESS;
+}
+
 
 INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    iarray_container_t *src,
