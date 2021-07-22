@@ -54,7 +54,7 @@ int main(void) {
     iarray_container_t *x;
     IARRAY_RETURN_IF_FAILED(iarray_linspace(ctx, &dtshape, -10, 10, &xstorage, 0, &x));
 
-
+    iarray_container_remove("example_copy.iarr");
     IARRAY_RETURN_IF_FAILED(iarray_container_save(ctx, x, "example_copy.iarr"));
     iarray_container_free(ctx, &x);
     IARRAY_RETURN_IF_FAILED(iarray_container_open(ctx, "example_copy.iarr", &x));
@@ -68,5 +68,6 @@ int main(void) {
     iarray_container_free(ctx, &x);
     iarray_context_free(&ctx);
 
+    iarray_container_remove("example_copy.iarr");
     return 0;
 }
