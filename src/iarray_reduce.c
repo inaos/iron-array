@@ -180,7 +180,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
             return -1;
         }
 
-        // printf("GET CHUNK: {%lld}\n", nchunk);
+        // printf("GET CHUNK: {%lld}\n", c_nchunk);
         for (int block_ind = 0; block_ind < nblocks; ++block_ind) {
             int64_t nblock = block_ind * block_strides[rparams->axis];
             for (int j = 0; j < rparams->result->catarr->ndim; ++j) {

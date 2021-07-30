@@ -705,4 +705,10 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
 INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp);
 INA_API(ina_rc_t) iarray_expr_get_nthreads(iarray_expression_t *e, int *nthreads);
 
+
+INA_API(ina_rc_t) iarray_gemv1(iarray_context_t *ctx,
+                               iarray_container_t *a,
+                               iarray_container_t *b,
+                               iarray_storage_t *storage,
+                               iarray_container_t **c);
 #endif
