@@ -92,7 +92,17 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
     uint8_t *b_block = malloc(b->catarr->blocknitems * b->catarr->itemsize);
 
     for (int i = 0; i < a->catarr->blockshape[0]; ++i) {
-        ((double *) pparams->out)[i] = 0;
+        switch(a->dtshape->dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                ((double *) pparams->out)[i] = 0;
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                ((float *) pparams->out)[i] = 0;
+                break;
+            default:
+                IARRAY_TRACE1(iarray.tracing, "dtype not supported");
+                return -1;
+        }
     }
 
     for (int b_nchunk = 0; b_nchunk < chunks_shape[1]; ++b_nchunk) {
@@ -177,12 +187,22 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
             }
 
             // Do matmul
-            for (int i = 0; i < current_blockshape[0]; ++i) {
-                for (int j = 0; j < current_blockshape[1]; ++j) {
-                    long double tmp1 = ((double *) b_block)[j];
-                    long double tmp2 = ((double *) a_block)[i * a->catarr->blockshape[1] + j];
-                    ((double *) pparams->out)[i] += (double) (tmp1 * tmp2);
-                }
+            switch(a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    cblas_dgemv(CblasRowMajor, CblasNoTrans,
+                                (int) current_blockshape[0], current_blockshape[1],
+                                1.0, (double *) a_block, a->catarr->blockshape[1],
+                                (double *) b_block, 1, 1.0, (double *) pparams->out, 1);
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    cblas_sgemv(CblasRowMajor, CblasNoTrans,
+                                (int) current_blockshape[0], current_blockshape[1],
+                                1.0, (float *) a_block, a->catarr->blockshape[1],
+                                (float *) b_block, 1, 1.0, (float *) pparams->out, 1);
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.tracing, "dtype not supported");
+                    return -1;
             }
         }
 
@@ -253,7 +273,10 @@ INA_API(ina_rc_t) iarray_gemv1(iarray_context_t *ctx,
         IARRAY_TRACE1(iarray.error, "a->blockshape[1] != b->blockshape[0]");
         return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
     }
-    
+
+    int nthreads = mkl_get_max_threads();
+    mkl_set_num_threads(1);
+
     iarray_dtshape_t dtshape;
     dtshape.dtype = a->dtshape->dtype;
     dtshape.ndim = 1;
@@ -309,6 +332,8 @@ INA_API(ina_rc_t) iarray_gemv1(iarray_context_t *ctx,
 
         c_nchunk++;
     }
+
+    mkl_set_num_threads(nthreads);
 
     iarray_context_free(&prefilter_ctx);
 
