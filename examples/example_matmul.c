@@ -70,7 +70,7 @@ int main(void)
         store_x.blockshape[i] = bshape_x[i];
     }
     iarray_container_t *c_x;
-    // IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, 0, 0, &store_x, 0, &c_x));
+    // IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, 0, 1, &store_x, 0, &c_x));
     // IARRAY_FAIL_IF_ERROR(iarray_zeros(ctx, &dtshape_x, &store_x, 0, &c_x));
     IARRAY_FAIL_IF_ERROR(iarray_container_load(ctx, "../../iron-array-python/examples/gemv.iarray", &c_x));
 
@@ -158,7 +158,7 @@ int main(void)
         if (fabs((b_res[i] - b_z[i]) / b_res[i]) > 1e-8) {
             fprintf(stderr, "%f - %f = %f\n", b_res[i], b_z[i], b_res[i] - b_z[i]);
             fprintf(stderr, "Error in element %" PRId64 "\n", i);
-            // return INA_ERROR(INA_ERR_ERROR);
+            return INA_ERROR(INA_ERR_ERROR);
         }
     }
 
