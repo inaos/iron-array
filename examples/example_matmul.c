@@ -29,21 +29,21 @@ int main(void)
     int8_t ndim_z = 1;
 
     int K = 1;
-    int64_t shape_x[] = {20055, 20055};
-    int64_t shape_y[] = {20055};
-    int64_t shape_z[] = {20055};
+    int64_t shape_x[] = {20, 20};
+    int64_t shape_y[] = {20};
+    int64_t shape_z[] = {20};
 
     int64_t size_x = shape_x[0] * shape_x[1];
     int64_t size_y = shape_y[0];
     int64_t size_z = shape_z[0];
 
-    int64_t cshape_x[] = {1024, 1024};
-    int64_t cshape_y[] = {1024};
-    int64_t cshape_z[] = {1024};
+    int64_t cshape_x[] = {20, 20};
+    int64_t cshape_y[] = {20};
+    int64_t cshape_z[] = {20};
 
-    int64_t bshape_x[] = {64, 64};
-    int64_t bshape_y[] = {64};
-    int64_t bshape_z[] = {64};
+    int64_t bshape_x[] = {20, 20};
+    int64_t bshape_y[] = {20};
+    int64_t bshape_z[] = {20};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = n_threads;
@@ -70,9 +70,9 @@ int main(void)
         store_x.blockshape[i] = bshape_x[i];
     }
     iarray_container_t *c_x;
-    // IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, 0, 1, &store_x, 0, &c_x));
+    // IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, 3, 2, &store_x, 0, &c_x));
     // IARRAY_FAIL_IF_ERROR(iarray_zeros(ctx, &dtshape_x, &store_x, 0, &c_x));
-    IARRAY_FAIL_IF_ERROR(iarray_container_load(ctx, "../../iron-array-python/examples/gemv.iarray", &c_x));
+    IARRAY_FAIL_IF_ERROR(iarray_container_load(ctx, "../../iron-array-python/examples/dense.iarray", &c_x));
 
     iarray_dtshape_t dtshape_y;
     dtshape_y.ndim = ndim_y;
@@ -89,7 +89,7 @@ int main(void)
         store_y.blockshape[i] = bshape_y[i];
     }
     iarray_container_t *c_y;
-    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, 0, 1, &store_y, 0, &c_y));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, 2, 10, &store_y, 0, &c_y));
 
     iarray_dtshape_t dtshape_z;
     dtshape_z.ndim = ndim_z;

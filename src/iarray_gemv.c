@@ -30,6 +30,8 @@ bool chunk_is_zeros(uint8_t *chunk) {
 bool block_is_zeros(uint8_t *chunk, int64_t nblock) {
     uint8_t blosc_flags = *(chunk + BLOSC2_CHUNK_FLAGS);
     bool memcpyed = blosc_flags & 0x02u;
+    bool split = blosc_flags & 0x4u;
+    uint8_t itemsize = *(chunk + BLOSC2_CHUNK_TYPESIZE);
 
     uint8_t blosc2_flags = *(chunk + BLOSC2_CHUNK_BLOSC2_FLAGS);
     uint8_t special_value = (blosc2_flags >> 4) & BLOSC2_SPECIAL_MASK;
@@ -57,9 +59,19 @@ bool block_is_zeros(uint8_t *chunk, int64_t nblock) {
         int32_t bstart = ((int32_t *) bstarts)[nblock];  // TODO: Fix endian
 
         uint8_t *cdata = chunk + bstart;
-        int32_t csize = ((int32_t *) cdata)[0];  // TODO: Fix endian
-        if (csize != 0) {
-            return false;
+        if (split) {
+            for (int i = 0; i < itemsize; ++i) {
+                int32_t csize = ((int32_t *) cdata)[0];  // TODO: Fix endian
+                if (csize != 0) {
+                    return false;
+                }
+                cdata += sizeof(int32_t) + csize;
+            }
+        } else {
+            int32_t csize = ((int32_t *) cdata)[0];  // TODO: Fix endian
+            if (csize != 0) {
+                return false;
+            }
         }
     }
 
@@ -197,8 +209,8 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
                 case IARRAY_DATA_TYPE_FLOAT:
                     cblas_sgemv(CblasRowMajor, CblasNoTrans,
                                 (int) current_blockshape[0], current_blockshape[1],
-                                1.0, (float *) a_block, a->catarr->blockshape[1],
-                                (float *) b_block, 1, 1.0, (float *) pparams->out, 1);
+                                1.0f, (float *) a_block, a->catarr->blockshape[1],
+                                (float *) b_block, 1, 1.0f, (float *) pparams->out, 1);
                     break;
                 default:
                     IARRAY_TRACE1(iarray.tracing, "dtype not supported");
