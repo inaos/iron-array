@@ -29,21 +29,21 @@ int main(void)
     int8_t ndim_z = 1;
 
     int K = 1;
-    int64_t shape_x[] = {20, 20};
-    int64_t shape_y[] = {20};
-    int64_t shape_z[] = {20};
+    int64_t shape_x[] = {2000, 2000};
+    int64_t shape_y[] = {2000};
+    int64_t shape_z[] = {2000};
 
     int64_t size_x = shape_x[0] * shape_x[1];
     int64_t size_y = shape_y[0];
     int64_t size_z = shape_z[0];
 
-    int64_t cshape_x[] = {20, 20};
-    int64_t cshape_y[] = {20};
-    int64_t cshape_z[] = {20};
+    int64_t cshape_x[] = {1000, 1000};
+    int64_t cshape_y[] = {1000};
+    int64_t cshape_z[] = {1000};
 
-    int64_t bshape_x[] = {20, 20};
-    int64_t bshape_y[] = {20};
-    int64_t bshape_z[] = {20};
+    int64_t bshape_x[] = {200, 200};
+    int64_t bshape_y[] = {200};
+    int64_t bshape_z[] = {200};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = n_threads;
@@ -70,9 +70,7 @@ int main(void)
         store_x.blockshape[i] = bshape_x[i];
     }
     iarray_container_t *c_x;
-    // IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, 3, 2, &store_x, 0, &c_x));
-    // IARRAY_FAIL_IF_ERROR(iarray_zeros(ctx, &dtshape_x, &store_x, 0, &c_x));
-    IARRAY_FAIL_IF_ERROR(iarray_container_load(ctx, "../../iron-array-python/examples/dense.iarray", &c_x));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, 3, 2, &store_x, 0, &c_x));
 
     iarray_dtshape_t dtshape_y;
     dtshape_y.ndim = ndim_y;
@@ -126,7 +124,7 @@ int main(void)
     printf("Time mkl (C): %.4f\n", elapsed_sec);
 
     INA_STOPWATCH_START(w);
-    if (INA_FAILED(iarray_gemv1(ctx, c_x, c_y, &store_z, &c_z))) {
+    if (INA_FAILED(iarray_opt_gemv(ctx, c_x, c_y, false, &store_z, &c_z))) {
         fprintf(stderr, "Error in linalg_gemv1: %s\n", ina_err_strerror(ina_err_get_rc()));
         goto fail;
     }
@@ -134,18 +132,6 @@ int main(void)
     IARRAY_FAIL_IF_ERROR(ina_stopwatch_duration(w, &elapsed_sec));
 
     printf("Time iarray gemv: %.4f\n", elapsed_sec);
-
-//    iarray_container_t *c_z2;
-//    INA_STOPWATCH_START(w);
-//    if (INA_FAILED(iarray_linalg_matmul(ctx, c_x, c_y, &store_z, &c_z2))) {
-//        fprintf(stderr, "Error in linalg_matmul: %s\n", ina_err_strerror(ina_err_get_rc()));
-//        goto fail;
-//    }
-//    INA_STOPWATCH_STOP(w);
-//    IARRAY_FAIL_IF_ERROR(ina_stopwatch_duration(w, &elapsed_sec));
-//
-//    printf("Time iarray matmul: %.4f\n", elapsed_sec);
-//    iarray_container_free(ctx, &c_z2);
 
     free(b_x);
     free(b_y);

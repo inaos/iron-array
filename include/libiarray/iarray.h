@@ -706,9 +706,10 @@ INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp)
 INA_API(ina_rc_t) iarray_expr_get_nthreads(iarray_expression_t *e, int *nthreads);
 
 
-INA_API(ina_rc_t) iarray_gemv1(iarray_context_t *ctx,
-                               iarray_container_t *a,
-                               iarray_container_t *b,
-                               iarray_storage_t *storage,
-                               iarray_container_t **c);
+INA_API(ina_rc_t) iarray_opt_gemv(iarray_context_t *ctx,
+                                  iarray_container_t *a,
+                                  iarray_container_t *b,
+                                  bool use_mkl,
+                                  iarray_storage_t *storage,
+                                  iarray_container_t **c);
 #endif

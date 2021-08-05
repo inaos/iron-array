@@ -84,6 +84,7 @@ typedef struct iarray_gemv_params_s {
     int64_t c_nchunk;
     int64_t chunks_shape[2];
     int64_t blocks_shape[2];
+    bool use_mkl;
 } iarray_gemv_params_t;
 
 
@@ -94,6 +95,7 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
     int64_t *chunks_shape = gparams->chunks_shape;
     int64_t *blocks_shape = gparams->blocks_shape;
     int64_t c_nchunk = gparams->c_nchunk;
+    bool use_mkl = gparams->use_mkl;
 
     blosc2_dparams a_dparams = {.nthreads = 1, .schunk = a->catarr->sc};
     blosc2_context *a_dctx = blosc2_create_dctx(a_dparams);
@@ -155,18 +157,26 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
 
             int32_t current_blockshape[2];
 
-            if (a->catarr->chunkshape[0] * c_nchunk + a->catarr->blockshape[0] * c_nblock > a->catarr->shape[0]) {
+            if (a->catarr->chunkshape[0] * c_nchunk + a->catarr->blockshape[0] * c_nblock >
+                a->catarr->shape[0]) {
                 continue;
-            } else if (a->catarr->chunkshape[0] * c_nchunk + a->catarr->blockshape[0] * (c_nblock + 1) > a->catarr->shape[0]) {
-                current_blockshape[0] = (int32_t) (a->catarr->shape[0] - (a->catarr->chunkshape[0] * c_nchunk + a->catarr->blockshape[0] * c_nblock));
+            } else if (a->catarr->chunkshape[0] * c_nchunk +
+                       a->catarr->blockshape[0] * (c_nblock + 1) > a->catarr->shape[0]) {
+                current_blockshape[0] = (int32_t) (a->catarr->shape[0] -
+                                                   (a->catarr->chunkshape[0] * c_nchunk +
+                                                    a->catarr->blockshape[0] * c_nblock));
             } else {
                 current_blockshape[0] = a->catarr->blockshape[0];
             }
 
-            if (a->catarr->chunkshape[1] * b_nchunk + a->catarr->blockshape[1] * b_nblock > a->catarr->shape[1]) {
+            if (a->catarr->chunkshape[1] * b_nchunk + a->catarr->blockshape[1] * b_nblock >
+                a->catarr->shape[1]) {
                 continue;
-            } else if (a->catarr->chunkshape[1] * b_nchunk + a->catarr->blockshape[1] * (b_nblock + 1) > a->catarr->shape[1]) {
-                current_blockshape[1] = (int32_t) (a->catarr->shape[1] - (a->catarr->chunkshape[1] * b_nchunk + a->catarr->blockshape[1] * b_nblock));
+            } else if (a->catarr->chunkshape[1] * b_nchunk +
+                       a->catarr->blockshape[1] * (b_nblock + 1) > a->catarr->shape[1]) {
+                current_blockshape[1] = (int32_t) (a->catarr->shape[1] -
+                                                   (a->catarr->chunkshape[1] * b_nchunk +
+                                                    a->catarr->blockshape[1] * b_nblock));
             } else {
                 current_blockshape[1] = a->catarr->blockshape[1];
             }
@@ -178,8 +188,8 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
             }
 
             int a_bsize = blosc2_getitem_ctx(a_dctx, a_chunk, a_csize, a_start,
-                                           a->catarr->blocknitems, a_block,
-                                           a->catarr->blocknitems * a->catarr->itemsize);
+                                             a->catarr->blocknitems, a_block,
+                                             a->catarr->blocknitems * a->catarr->itemsize);
             if (a_bsize < 0) {
                 IARRAY_TRACE1(iarray.tracing, "Error getting block");
                 return -1;
@@ -191,30 +201,40 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
 
             int b_start = (int) b_nblock * b->catarr->blocknitems;
             int b_bsize = blosc2_getitem_ctx(b_dctx, b_chunk, b_csize, b_start,
-                                           b->catarr->blocknitems, b_block,
-                                           b->catarr->blocknitems * b->catarr->itemsize);
+                                             b->catarr->blocknitems, b_block,
+                                             b->catarr->blocknitems * b->catarr->itemsize);
             if (b_bsize < 0) {
                 IARRAY_TRACE1(iarray.tracing, "Error getting block");
                 return -1;
             }
 
             // Do matmul
-            switch(a->dtshape->dtype) {
-                case IARRAY_DATA_TYPE_DOUBLE:
-                    cblas_dgemv(CblasRowMajor, CblasNoTrans,
-                                (int) current_blockshape[0], current_blockshape[1],
-                                1.0, (double *) a_block, a->catarr->blockshape[1],
-                                (double *) b_block, 1, 1.0, (double *) pparams->out, 1);
-                    break;
-                case IARRAY_DATA_TYPE_FLOAT:
-                    cblas_sgemv(CblasRowMajor, CblasNoTrans,
-                                (int) current_blockshape[0], current_blockshape[1],
-                                1.0f, (float *) a_block, a->catarr->blockshape[1],
-                                (float *) b_block, 1, 1.0f, (float *) pparams->out, 1);
-                    break;
-                default:
-                    IARRAY_TRACE1(iarray.tracing, "dtype not supported");
-                    return -1;
+            if (use_mkl) {
+                switch (a->dtshape->dtype) {
+                    case IARRAY_DATA_TYPE_DOUBLE:
+                        cblas_dgemv(CblasRowMajor, CblasNoTrans,
+                                    (int) current_blockshape[0], current_blockshape[1],
+                                    1.0, (double *) a_block, a->catarr->blockshape[1],
+                                    (double *) b_block, 1, 1.0, (double *) pparams->out, 1);
+                        break;
+                    case IARRAY_DATA_TYPE_FLOAT:
+                        cblas_sgemv(CblasRowMajor, CblasNoTrans,
+                                    (int) current_blockshape[0], current_blockshape[1],
+                                    1.0f, (float *) a_block, a->catarr->blockshape[1],
+                                    (float *) b_block, 1, 1.0f, (float *) pparams->out, 1);
+                        break;
+                    default:
+                        IARRAY_TRACE1(iarray.tracing, "dtype not supported");
+                        return -1;
+                }
+            } else {
+                for (int i = 0; i < current_blockshape[0]; ++i) {
+                    for (int j = 0; j < current_blockshape[1]; ++j) {
+                        double tmp1 = ((double *) b_block)[j];
+                        double tmp2 = ((double *) a_block)[i * a->catarr->blockshape[1] + j];
+                        ((double *) pparams->out)[i] +=  tmp1 * tmp2;
+                    }
+                }
             }
         }
 
@@ -236,11 +256,12 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
 }
 
 
-INA_API(ina_rc_t) iarray_gemv1(iarray_context_t *ctx,
-                              iarray_container_t *a,
-                              iarray_container_t *b,
-                              iarray_storage_t *storage,
-                              iarray_container_t **c) {
+INA_API(ina_rc_t) iarray_opt_gemv(iarray_context_t *ctx,
+                                  iarray_container_t *a,
+                                  iarray_container_t *b,
+                                  bool use_mkl,
+                                  iarray_storage_t *storage,
+                                  iarray_container_t **c) {
 
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(a);
@@ -306,7 +327,6 @@ INA_API(ina_rc_t) iarray_gemv1(iarray_context_t *ctx,
     blosc2_prefilter_params pparams = {0};
     pparams.user_data = &gemv_params;
     prefilter_ctx->prefilter_params = &pparams;
-    
 
     // Fill prefilter params
     gemv_params.a = a;
@@ -317,7 +337,9 @@ INA_API(ina_rc_t) iarray_gemv1(iarray_context_t *ctx,
 
     gemv_params.blocks_shape[0] = a->catarr->extchunkshape[0] / a->catarr->blockshape[0];
     gemv_params.blocks_shape[1] = a->catarr->extchunkshape[1] / a->catarr->blockshape[1];
-    
+
+    gemv_params.use_mkl = use_mkl;
+
     // Iterate over chunks
     int64_t c_nchunk = 0;
     while (c_nchunk < gemv_params.chunks_shape[0]) {
