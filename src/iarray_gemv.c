@@ -129,12 +129,12 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
             return -1;
         }
 
-        if (chunk_is_zeros(a_chunk)) {
-            if (a_needs_free) {
-                free(a_chunk);
-            }
-            continue;
-        }
+//        if (chunk_is_zeros(a_chunk)) {
+//            if (a_needs_free) {
+//                free(a_chunk);
+//            }
+//            continue;
+//        }
 
         uint8_t *b_chunk;
         bool b_needs_free;
@@ -144,12 +144,12 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
             return -1;
         }
 
-        if (chunk_is_zeros(b_chunk)) {
-            if (b_needs_free) {
-                free(b_chunk);
-            }
-            continue;
-        }
+//        if (chunk_is_zeros(b_chunk)) {
+//            if (b_needs_free) {
+//                free(b_chunk);
+//            }
+//            continue;
+//        }
 
         int64_t c_nblock = pparams->out_offset / pparams->out_size;
         for (int64_t b_nblock = 0; b_nblock < blocks_shape[1]; ++b_nblock) {
@@ -183,9 +183,9 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
 
             int a_start = (int) a_nblock * a->catarr->blocknitems;
 
-            if (block_is_zeros(a_chunk, a_nblock)) {
-                continue;
-            }
+//            if (block_is_zeros(a_chunk, a_nblock)) {
+//                continue;
+//            }
 
             int a_bsize = blosc2_getitem_ctx(a_dctx, a_chunk, a_csize, a_start,
                                              a->catarr->blocknitems, a_block,
@@ -195,9 +195,9 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
                 return -1;
             }
 
-            if (block_is_zeros(b_chunk, b_nblock)) {
-                continue;
-            }
+//            if (block_is_zeros(b_chunk, b_nblock)) {
+//                continue;
+//            }
 
             int b_start = (int) b_nblock * b->catarr->blocknitems;
             int b_bsize = blosc2_getitem_ctx(b_dctx, b_chunk, b_csize, b_start,
