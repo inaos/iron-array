@@ -91,9 +91,10 @@
 #define access _access
 #endif
 
-#define IARRAY_TRACE1(cat, fmt, ...) INA_TRACE1(cat, fmt " %s:%d", ##__VA_ARGS__, __FILE__, __LINE__)
-#define IARRAY_TRACE2(cat, fmt, ...) INA_TRACE2(cat, fmt " %s:%d", ##__VA_ARGS__, __FILE__, __LINE__)
-#define IARRAY_TRACE3(cat, fmt, ...) INA_TRACE3(cat, fmt " %s:%d", ##__VA_ARGS__, __FILE__, __LINE__)
+#define IARRAY_TRACE1(cat, fmt, ...) INA_TRACE1(cat, "%s:%d\n" fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define IARRAY_TRACE2(cat, fmt, ...) INA_TRACE2(cat, "%s:%d\n" fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+#define IARRAY_TRACE3(cat, fmt, ...) INA_TRACE3(cat, "%s:%d\n" fmt, __FILE__, __LINE__, ##__VA_ARGS__)
+
 #define IARRAY_FAIL_IF(cond) do { if ((cond)) {IARRAY_TRACE2(iarray.error, "Tracing: "); goto fail;}} while(0)
 #define IARRAY_FAIL_IF_ERROR(rc) IARRAY_FAIL_IF(INA_FAILED((rc)))
 
