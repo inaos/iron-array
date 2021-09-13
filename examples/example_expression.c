@@ -26,7 +26,7 @@ int main(void) {
     double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
 
-    char *expr = "sin(x) ** sin(y) + cos(z)";
+    char *expr = "sin(x) * sin(y) + cos(z)";
 
     iarray_context_t *ctx;
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
