@@ -589,7 +589,7 @@ jug_te_expr *jug_te_compile(const char *expression, const jug_te_variable *varia
         if (error) {
             *error = (int) (s.next - s.start);
             if (*error == 0) *error = 1;
-            padding = *error + strlen("[iarray.error] - Error at ");
+            padding = *error + (int) strlen("Error at ");
             IARRAY_TRACE1(iarray.error, "Error at %s\n%*s^\n%*s%s%*s", expression, padding - 1, "",
                           padding - 1, "", "Error happens here", 10, "");
         }
