@@ -102,8 +102,8 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
     blosc2_dparams b_dparams = {.nthreads = 1, .schunk = b->catarr->sc};
     blosc2_context *b_dctx = blosc2_create_dctx(b_dparams);
 
-    uint8_t *a_block = malloc(a->catarr->blocknitems * a->catarr->itemsize);
-    uint8_t *b_block = malloc(b->catarr->blocknitems * b->catarr->itemsize);
+    uint8_t *a_block = ina_mem_alloc_aligned(64, a->catarr->blocknitems * a->catarr->itemsize);
+    uint8_t *b_block = ina_mem_alloc_aligned(64, b->catarr->blocknitems * b->catarr->itemsize);
 
     for (int i = 0; i < a->catarr->blockshape[0]; ++i) {
         switch(a->dtshape->dtype) {
@@ -246,8 +246,8 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
         }
     }
 
-    free(a_block);
-    free(b_block);
+    INA_MEM_FREE_SAFE(a_block);
+    INA_MEM_FREE_SAFE(b_block);
 
     blosc2_free_ctx(a_dctx);
     blosc2_free_ctx(b_dctx);
