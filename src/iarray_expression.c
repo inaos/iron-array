@@ -102,8 +102,6 @@ INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
         free((void*)((*e)->vars[nvar].var));
     }
     ina_mempool_reset(ctx->mp);  // FIXME: should be ina_mempool_free(), but it currently crashes
-    ina_mempool_reset(ctx->mp_op);  // FIXME: ditto
-    ina_mempool_reset(ctx->mp_tmp_out);  // FIXME: ditto
     ina_str_free((*e)->expr);
     INA_MEM_FREE_SAFE(*e);
 }
@@ -491,8 +489,6 @@ int prefilter_func(blosc2_prefilter_params *pparams)
 ina_rc_t iarray_eval_cleanup(iarray_expression_t *e, int64_t nitems_written)
 {
     ina_mempool_reset(e->ctx->mp);
-    ina_mempool_reset(e->ctx->mp_op);
-    ina_mempool_reset(e->ctx->mp_tmp_out);
 
     int64_t nitems_in_schunk = e->nbytes / e->typesize;
     if (nitems_written != nitems_in_schunk) {

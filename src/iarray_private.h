@@ -79,8 +79,6 @@ struct iarray_context_s {
     iarray_config_t *cfg;
     ina_mempool_t *mp;
     ina_mempool_t *mp_chunk_cache;
-    ina_mempool_t *mp_op;
-    ina_mempool_t *mp_tmp_out;
     blosc2_prefilter_fn prefilter_fn;
     blosc2_prefilter_params *prefilter_params;
     /* FIXME: track expressions -> list */
