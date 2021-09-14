@@ -40,7 +40,7 @@ static ina_rc_t test_partition_advice(iarray_config_t cfg,
 
     iarray_storage_t storage = {0};
     storage.backend = IARRAY_STORAGE_BLOSC;
-    storage.enforce_frame = false;
+    storage.contiguous = false;
     storage.urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(iarray_partition_advice(ctx, &dtshape, &storage, 0, max_chunksize, 0, max_blocksize));
 
