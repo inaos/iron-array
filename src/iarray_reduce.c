@@ -534,7 +534,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
 
         iarray_storage_t storage_red;
         storage_red.backend = IARRAY_STORAGE_BLOSC;
-        storage_red.enforce_frame = storage->enforce_frame;
+        storage_red.contiguous = storage->contiguous;
         storage_red.urlpath = storage->urlpath != NULL ? "iarray_red_temp.iarray" : NULL;
         for (int j = 0; j < aa->dtshape->ndim; ++j) {
             if (j < axis_new[i]) {

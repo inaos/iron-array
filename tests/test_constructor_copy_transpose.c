@@ -31,7 +31,7 @@ static ina_rc_t test_copy_transpose(iarray_context_t *ctx, iarray_data_type_t dt
     iarray_storage_t store;
     store.backend = (cshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     store.urlpath = NULL;
-    store.enforce_frame = (ndim % 2 == 0) ? false : true;
+    store.contiguous = (ndim % 2 == 0) ? false : true;
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {
             store.chunkshape[i] = cshape[i];
@@ -42,7 +42,7 @@ static ina_rc_t test_copy_transpose(iarray_context_t *ctx, iarray_data_type_t dt
     iarray_storage_t ystore;
     ystore.backend = (cshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     ystore.urlpath = NULL;
-    ystore.enforce_frame = (ndim % 2 == 0) ? false : true;
+    ystore.contiguous = (ndim % 2 == 0) ? false : true;
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {
             ystore.chunkshape[i] = cshape[ndim - 1 - i];

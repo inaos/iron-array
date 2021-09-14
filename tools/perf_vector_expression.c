@@ -156,7 +156,7 @@ int main(int argc, char** argv)
 
     iarray_storage_t mat_x = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
-        .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
+        .contiguous = INA_SUCCEED(ina_opt_isset("p")),
         .urlpath = mat_x_name
     };
     if (!INA_SUCCEED(ina_opt_isset("P"))) {
@@ -165,7 +165,7 @@ int main(int argc, char** argv)
     }
     iarray_storage_t mat_y = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
-        .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
+        .contiguous = INA_SUCCEED(ina_opt_isset("p")),
         .urlpath = mat_y_name
     };
     if (!INA_SUCCEED(ina_opt_isset("P"))) {
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
     }
     iarray_storage_t mat_out = {
         .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
-        .enforce_frame = INA_SUCCEED(ina_opt_isset("p")),
+        .contiguous = INA_SUCCEED(ina_opt_isset("p")),
         .urlpath = mat_out_name
     };
     if (!INA_SUCCEED(ina_opt_isset("P"))) {

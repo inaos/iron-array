@@ -29,7 +29,7 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
 
     iarray_storage_t xstorage;
     xstorage.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    xstorage.enforce_frame = false;
+    xstorage.contiguous = false;
     xstorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         xstorage.chunkshape[i] = cshape ? cshape[i] : 0;
@@ -238,7 +238,7 @@ static ina_rc_t test_block_iterator_ext_chunk(iarray_context_t *ctx, iarray_data
 
     iarray_storage_t xstore;
     xstore.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    xstore.enforce_frame = false;
+    xstore.contiguous = false;
     xstore.urlpath = NULL;
     if (cshape != NULL) {
         for (int i = 0; i < ndim; ++i) {
@@ -495,7 +495,7 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
 
     iarray_storage_t xstore;
     xstore.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    xstore.enforce_frame = false;
+    xstore.contiguous = false;
     xstore.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {

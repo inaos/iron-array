@@ -225,7 +225,7 @@ typedef struct iarray_dtshape_s {
 typedef struct iarray_storage_s {
     iarray_storage_type_t backend;
     char *urlpath;
-    bool enforce_frame;
+    bool contiguous;
     int64_t chunkshape[IARRAY_DIMENSION_MAX];
     int64_t blockshape[IARRAY_DIMENSION_MAX];
 } iarray_storage_t;

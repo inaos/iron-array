@@ -31,7 +31,7 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
     iarray_storage_t store;
     store.backend = (cshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     store.urlpath = NULL;
-    store.enforce_frame = (ndim % 2 == 0) ? false : true;
+    store.contiguous = (ndim % 2 == 0) ? false : true;
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {
             store.chunkshape[i] = cshape[i];

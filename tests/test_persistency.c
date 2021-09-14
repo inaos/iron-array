@@ -95,7 +95,7 @@ INA_TEST_SETUP(persistency) {
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
 
-    data->store.enforce_frame = true;
+    data->store.contiguous = true;
     data->store.backend = IARRAY_STORAGE_BLOSC;
     data->store.urlpath = "test_persistency.b2frame";
     if (_iarray_file_exists(data->store.urlpath)) {

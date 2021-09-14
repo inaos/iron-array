@@ -61,7 +61,7 @@ _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64
 
     iarray_storage_t xstore;
     xstore.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    xstore.enforce_frame = false;
+    xstore.contiguous = false;
     xstore.urlpath = NULL;
 
 
@@ -91,7 +91,7 @@ _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64
 
     iarray_storage_t sstore;
     sstore.backend = cshape_slice ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    sstore.enforce_frame = false;
+    sstore.contiguous = false;
     sstore.urlpath = NULL;
     if (cshape_slice != NULL) {
         for (int i = 0; i < sdtshape.ndim; ++i) {

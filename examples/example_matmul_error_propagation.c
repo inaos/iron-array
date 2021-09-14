@@ -91,7 +91,7 @@ int main(void)
 
     iarray_storage_t store_x;
     store_x.backend = IARRAY_STORAGE_BLOSC;
-    store_x.enforce_frame = false;
+    store_x.contiguous = false;
     store_x.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         store_x.chunkshape[i] = cshape_a[i];
@@ -108,7 +108,7 @@ int main(void)
     }
     iarray_storage_t store_y;
     store_y.backend = IARRAY_STORAGE_BLOSC;
-    store_y.enforce_frame = false;
+    store_y.contiguous = false;
     store_y.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         store_y.chunkshape[i] = cshape_b[i];
@@ -125,7 +125,7 @@ int main(void)
     }
     iarray_storage_t store_z;
     store_z.backend = IARRAY_STORAGE_BLOSC;
-    store_z.enforce_frame = false;
+    store_z.contiguous = false;
     store_z.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         store_z.chunkshape[i] = cshape_c[i];
