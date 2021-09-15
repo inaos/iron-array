@@ -338,12 +338,12 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
         switch (cont->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                     cont->catarr->chunk_cache.data =
-                            ina_mempool_dalloc(ctx->mp_chunk_cache, (size_t) cont->catarr->extchunknitems * sizeof(double));
+                        ina_mem_alloc_aligned(64, (size_t) cont->catarr->extchunknitems * sizeof(double));
 
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                     cont->catarr->chunk_cache.data =
-                            ina_mempool_dalloc(ctx->mp_chunk_cache, (size_t) cont->catarr->extchunknitems * sizeof(float));
+                        ina_mem_alloc_aligned(32, (size_t) cont->catarr->extchunknitems * sizeof(float));
 
                 break;
             default:
@@ -364,9 +364,8 @@ INA_API(void) iarray_iter_read_block_free(iarray_iter_read_block_t **itr)
     }
 
     // Invalidate caches and get rid of memory pool
-    (*itr)->cont->catarr->chunk_cache.data = NULL;
     (*itr)->cont->catarr->chunk_cache.nchunk = -1;
-    ina_mempool_reset((*itr)->ctx->mp_chunk_cache);
+    INA_MEM_FREE_SAFE((*itr)->cont->catarr->chunk_cache.data);
 
     INA_MEM_FREE_SAFE((*itr)->aux);
     INA_MEM_FREE_SAFE((*itr)->block_shape);

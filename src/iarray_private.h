@@ -78,7 +78,6 @@ typedef enum iarray_blas_type_e {
 struct iarray_context_s {
     iarray_config_t *cfg;
     ina_mempool_t *mp;
-    ina_mempool_t *mp_chunk_cache;
     blosc2_prefilter_fn prefilter_fn;
     blosc2_prefilter_params *prefilter_params;
     /* FIXME: track expressions -> list */
