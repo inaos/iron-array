@@ -41,7 +41,7 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
     iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.urlpath = NULL;
-    store.enforce_frame = false;
+    store.contiguous = false;
     for (int i = 0; i < ndim; ++i) {
         store.chunkshape[i] = cshape[i];
         store.blockshape[i] = bshape[i];
@@ -52,7 +52,7 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
     if (copy) {
         INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, flags, &c_x));
         if (frame) {
-            store.enforce_frame = true;
+            store.contiguous = true;
         }
         if (fname) {
             store.urlpath = urlpath;
@@ -60,7 +60,7 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
         INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_x, false, &store, 0, &c_z));
     } else {
         if (frame) {
-            store.enforce_frame = true;
+            store.contiguous = true;
         }
         if (fname) {
             store.urlpath = urlpath;

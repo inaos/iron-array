@@ -38,7 +38,7 @@ int main(void)
 
     iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
-    store.enforce_frame = false;
+    store.contiguous = false;
     store.urlpath = NULL;
     
     if (INA_FAILED(iarray_partition_advice(ctx, &xdtshape, &store, 0, 0, 0, 8 * 1024))) {
@@ -66,7 +66,7 @@ int main(void)
 
     iarray_storage_t store_out;
     store_out.backend = IARRAY_STORAGE_BLOSC;
-    store_out.enforce_frame = false;
+    store_out.contiguous = false;
     store_out.urlpath = NULL;
     for (int i = 0; i < outndim; ++i) {
         store_out.chunkshape[i] = outcshape[i];

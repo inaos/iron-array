@@ -66,7 +66,7 @@ _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64
             xstore.blockshape[i] = bshape[i];
         }
     }
-    xstore.enforce_frame = false;
+    xstore.contiguous = false;
     xstore.urlpath = NULL;
 
     int64_t bufdes_size = 1;

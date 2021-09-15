@@ -55,7 +55,7 @@ int main(void) {
 
     iarray_storage_t xstorage;
     xstorage.backend = IARRAY_STORAGE_BLOSC;
-    xstorage.enforce_frame = false;
+    xstorage.contiguous = false;
     xstorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         xstorage.chunkshape[i] = xchunkshape[i];
@@ -70,7 +70,7 @@ int main(void) {
 
     iarray_storage_t outstorage;
     outstorage.backend = IARRAY_STORAGE_BLOSC;
-    outstorage.enforce_frame = false;
+    outstorage.contiguous = false;
     outstorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         outstorage.chunkshape[i] = outchunkshape[i];

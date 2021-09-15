@@ -110,7 +110,7 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
 }
 
 
-ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool enforce_frame,
+ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool contiguous,
                                 iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
@@ -168,7 +168,7 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool enfor
         cat_storage.properties.blosc.chunkshape[i] = catarr_aux->chunkshape[i];
         cat_storage.properties.blosc.blockshape[i] = catarr_aux->blockshape[i];
     }
-    if (enforce_frame) {
+    if (contiguous) {
         IARRAY_ERR_CATERVA(caterva_copy(cat_ctx, catarr_aux, &cat_storage, &catarr));
         caterva_free(cat_ctx, &catarr_aux);
     } else {
@@ -222,7 +222,7 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool enfor
     }
     (*container)->storage->urlpath = urlpath;
     (*container)->storage->backend = IARRAY_STORAGE_BLOSC;
-    (*container)->storage->enforce_frame = catarr->sc->storage->contiguous;
+    (*container)->storage->contiguous = catarr->sc->storage->contiguous;
     for (int i = 0; i < catarr->ndim; ++i) {
         (*container)->storage->chunkshape[i] = catarr->chunkshape[i];
         (*container)->storage->blockshape[i] = catarr->blockshape[i];

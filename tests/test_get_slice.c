@@ -51,7 +51,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     iarray_storage_t store;
     store.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    store.enforce_frame = false;
+    store.contiguous = false;
     store.urlpath = NULL;
     for (int j = 0; j < xdtshape.ndim; ++j) {
         if (cshape != NULL) {
@@ -67,7 +67,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     iarray_storage_t store_dest;
     store_dest.backend = cshape_dest ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    store_dest.enforce_frame = false;
+    store_dest.contiguous = false;
     store_dest.urlpath = NULL;
     for (int j = 0; j < xdtshape.ndim; ++j) {
         if (cshape_dest != NULL) {

@@ -31,7 +31,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
 
     iarray_storage_t xstorage;
     xstorage.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    xstorage.enforce_frame = false;
+    xstorage.contiguous = false;
     xstorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         xstorage.chunkshape[i] = cshape ? cshape[i] : 0;
@@ -40,7 +40,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
 
     iarray_storage_t ystorage;
     ystorage.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    ystorage.enforce_frame = false;
+    ystorage.contiguous = false;
     ystorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
         ystorage.chunkshape[i] = cshape ? cshape[ndim - 1 - i] : 0;

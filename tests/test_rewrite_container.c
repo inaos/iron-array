@@ -29,7 +29,7 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
 
     iarray_storage_t xstore;
     xstore.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    xstore.enforce_frame = false;
+    xstore.contiguous = false;
     xstore.urlpath = NULL;
     if (cshape != NULL) {
         for (int i = 0; i < ndim; ++i) {

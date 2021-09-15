@@ -98,7 +98,7 @@ int main(void)
 
     iarray_storage_t dest_storage = {0};
     dest_storage.backend = IARRAY_STORAGE_BLOSC;
-    dest_storage.enforce_frame = dest_frame;
+    dest_storage.contiguous = dest_frame;
     dest_storage.urlpath = dest_urlpath;
     for (int i = 0; i < ndim - 1; ++i) {
         dest_storage.blockshape[i] = dest_bshape[i];
