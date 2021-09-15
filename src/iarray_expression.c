@@ -84,6 +84,7 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e
     *e = ina_mem_alloc(sizeof(iarray_expression_t));
     INA_RETURN_IF_NULL(e);
     (*e)->ctx = ctx;
+    (*e)->ctx->expr_vars = NULL;
     (*e)->expr = NULL;
     (*e)->nvars = 0;
     (*e)->max_out_len = 0;   // helper for leftovers
@@ -101,7 +102,7 @@ INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e)
     for (int nvar=0; nvar < (*e)->nvars; nvar++) {
         free((void*)((*e)->vars[nvar].var));
     }
-    ina_mempool_reset(ctx->mp);  // FIXME: should be ina_mempool_free(), but it currently crashes
+    INA_MEM_FREE(ctx->expr_vars);
     ina_str_free((*e)->expr);
     INA_MEM_FREE_SAFE(*e);
 }
@@ -135,43 +136,6 @@ INA_API(ina_rc_t) iarray_expr_bind_out_properties(iarray_expression_t *e, iarray
 }
 
 
-INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val)
-//{
-//  iarray_container_t *c = ina_mempool_dalloc(e->mp, sizeof(iarray_container_t));
-//  c->dtshape = ina_mempool_dalloc(e->mp, sizeof(iarray_dtshape_t));
-//  c->dtshape->ndim = 0;
-//  c->dtshape->dims = NULL;
-//  c->dtshape->dtype = IARRAY_DATA_TYPE_FLOAT;
-//  c->scalar_value.f = val;
-//  return INA_SUCCESS;
-//}
-{
-    INA_UNUSED(e);
-    INA_UNUSED(var);
-    INA_UNUSED(val);
-    return INA_ERROR(INA_ERR_NOT_IMPLEMENTED);
-}
-
-INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val)
-//{
-//    iarray_container_t *c = ina_mempool_dalloc(e->ctx->mp, sizeof(iarray_container_t));
-//    c->dtshape = ina_mempool_dalloc(e->ctx->mp, sizeof(iarray_dtshape_t));
-//    c->dtshape->ndim = 0;
-//    c->dtshape->dtype = IARRAY_DATA_TYPE_DOUBLE;
-//    c->scalar_value.d = val;
-//    e->vars[e->nvars].var = var;
-//    e->vars[e->nvars].c = c;
-//    e->nvars++;
-//    return INA_SUCCESS;
-//}
-{
-    INA_UNUSED(e);
-    INA_UNUSED(var);
-    INA_UNUSED(val);
-    return INA_ERROR(INA_ERR_NOT_IMPLEMENTED);
-}
-
-
 static void index_unidim_to_multidim(int8_t ndim, int64_t *shape, int64_t i, int64_t *index) {
     int64_t strides[CATERVA_MAX_DIM];
     strides[ndim - 1] = 1;
@@ -184,6 +148,7 @@ static void index_unidim_to_multidim(int8_t ndim, int64_t *shape, int64_t i, int
         index[j] = (i % strides[j - 1]) / strides[j];
     }
 }
+
 
 int caterva_blosc_array_repart_chunk(int8_t *rchunk, int64_t rchunksize, void *chunk,
                                      int64_t chunksize, caterva_array_t *array) {
@@ -328,7 +293,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
 
     IARRAY_RETURN_IF_FAILED(_iarray_expr_prepare(e));
 
-    jug_te_variable *jug_vars = ina_mempool_dalloc(e->ctx->mp, e->nvars * sizeof(jug_te_variable));
+    jug_te_variable *jug_vars = ina_mem_alloc(e->nvars * sizeof(jug_te_variable));
     memset(jug_vars, 0, e->nvars * sizeof(jug_te_variable));
     for (int nvar = 0; nvar < e->nvars; nvar++) {
         jug_vars[nvar].name = e->vars[nvar].var;
@@ -488,8 +453,6 @@ int prefilter_func(blosc2_prefilter_params *pparams)
 
 ina_rc_t iarray_eval_cleanup(iarray_expression_t *e, int64_t nitems_written)
 {
-    ina_mempool_reset(e->ctx->mp);
-
     int64_t nitems_in_schunk = e->nbytes / e->typesize;
     if (nitems_written != nitems_in_schunk) {
         IARRAY_TRACE1(iarray.error, "The number of items written is different from items in final container");
@@ -827,14 +790,6 @@ ina_rc_t iarray_shape_size(iarray_dtshape_t *dtshape, size_t *size)
     return INA_SUCCESS;
 }
 
-
-INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp)
-{
-    INA_VERIFY_NOT_NULL(e);
-    INA_VERIFY_NOT_NULL(mp);
-    *mp = e->ctx->mp;
-    return INA_SUCCESS;
-}
 
 INA_API(ina_rc_t) iarray_expr_get_nthreads(iarray_expression_t *e, int *nthreads)
 {
