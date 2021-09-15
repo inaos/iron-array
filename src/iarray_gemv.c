@@ -122,20 +122,8 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
     for (int b_nchunk = 0; b_nchunk < chunks_shape[1]; ++b_nchunk) {
         int64_t a_nchunk = c_nchunk * chunks_shape[1] + b_nchunk;
         uint8_t *a_chunk;
-        bool a_needs_free;
-        int a_csize = blosc2_schunk_get_lazychunk(a->catarr->sc, (int) a_nchunk, &a_chunk, &a_needs_free);
-        if (a_csize < 0) {
-            IARRAY_TRACE1(iarray.tracing, "Error getting lazy a_chunk");
-            return -1;
-        }
 
-        if (chunk_is_zeros(a_chunk)) {
-            if (a_needs_free) {
-                free(a_chunk);
-            }
-            continue;
-        }
-
+        // Optimization for the case where the b vector is sparse, so deal with possible zeros in b first
         uint8_t *b_chunk;
         bool b_needs_free;
         int b_csize = blosc2_schunk_get_lazychunk(b->catarr->sc, (int) b_nchunk, &b_chunk, &b_needs_free);
@@ -148,8 +136,22 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
             if (b_needs_free) {
                 free(b_chunk);
             }
+            continue;
+        }
+
+        bool a_needs_free;
+        int a_csize = blosc2_schunk_get_lazychunk(a->catarr->sc, (int) a_nchunk, &a_chunk, &a_needs_free);
+        if (a_csize < 0) {
+            IARRAY_TRACE1(iarray.tracing, "Error getting lazy a_chunk");
+            return -1;
+        }
+
+        if (chunk_is_zeros(a_chunk)) {
             if (a_needs_free) {
                 free(a_chunk);
+            }
+            if (b_needs_free) {
+                free(b_chunk);
             }
             continue;
         }
@@ -157,6 +159,13 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
         int64_t c_nblock = pparams->out_offset / pparams->out_size;
         for (int64_t b_nblock = 0; b_nblock < blocks_shape[1]; ++b_nblock) {
             int64_t a_nblock = c_nblock * blocks_shape[1] + b_nblock;
+
+            if (block_is_zeros(a_chunk, a_nblock)) {
+                continue;
+            }
+            if (block_is_zeros(b_chunk, b_nblock)) {
+                continue;
+            }
 
             int32_t current_blockshape[2];
 
@@ -186,20 +195,12 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
 
             int a_start = (int) a_nblock * a->catarr->blocknitems;
 
-            if (block_is_zeros(a_chunk, a_nblock)) {
-                continue;
-            }
-
             int a_bsize = blosc2_getitem_ctx(a_dctx, a_chunk, a_csize, a_start,
                                              a->catarr->blocknitems, a_block,
                                              a->catarr->blocknitems * a->catarr->itemsize);
             if (a_bsize < 0) {
                 IARRAY_TRACE1(iarray.tracing, "Error getting block");
                 return -1;
-            }
-
-            if (block_is_zeros(b_chunk, b_nblock)) {
-                continue;
             }
 
             int b_start = (int) b_nblock * b->catarr->blocknitems;
