@@ -139,7 +139,7 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
         uint8_t *b_chunk;
         bool b_needs_free;
         int b_csize = blosc2_schunk_get_lazychunk(b->catarr->sc, (int) b_nchunk, &b_chunk, &b_needs_free);
-        if (a_csize < 0) {
+        if (b_csize < 0) {
             IARRAY_TRACE1(iarray.tracing, "Error getting lazy b_chunk");
             return -1;
         }
@@ -147,6 +147,9 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
         if (chunk_is_zeros(b_chunk)) {
             if (b_needs_free) {
                 free(b_chunk);
+            }
+            if (a_needs_free) {
+                free(a_chunk);
             }
             continue;
         }

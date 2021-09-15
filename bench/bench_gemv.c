@@ -88,7 +88,8 @@ int main(void)
         store_y.blockshape[i] = bshape_y[i];
     }
     iarray_container_t *c_y;
-    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, 2, 10, &store_y, 0, &c_y));
+    //IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, 2, 10, &store_y, 0, &c_y));
+    IARRAY_FAIL_IF_ERROR(iarray_zeros(ctx, &dtshape_y, &store_y, 0, &c_y));
 
     iarray_dtshape_t dtshape_z;
     dtshape_z.ndim = ndim_z;
