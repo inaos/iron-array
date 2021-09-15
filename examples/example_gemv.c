@@ -27,21 +27,21 @@ int main(void)
     int8_t ndim_y = 1;
     int8_t ndim_z = 1;
 
-    int64_t shape_x[] = {1000000, 140};
-    int64_t shape_y[] = {140};
-    int64_t shape_z[] = {1000000};
+    int64_t shape_x[] = {250000, 26232};
+    int64_t shape_y[] = {26232};
+    int64_t shape_z[] = {250000};
 
 //    int64_t size_x = shape_x[0] * shape_x[1];
 //    int64_t size_y = shape_y[0];
 //    int64_t size_z = shape_z[0];
 
     //int64_t cshape_x[] = {5000, 140};
-    int64_t cshape_y[] = {140};
-    int64_t cshape_z[] = {5000};
+    int64_t cshape_y[] = {5120};
+    int64_t cshape_z[] = {40960};
 
     //int64_t bshape_x[] = {200, 140};
-    int64_t bshape_y[] = {140};
-    int64_t bshape_z[] = {200};
+    int64_t bshape_y[] = {256};
+    int64_t bshape_z[] = {1280};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = n_threads;
@@ -71,7 +71,7 @@ int main(void)
     iarray_container_t *c_x;
     int niter = 100;
     //IARRAY_FAIL_IF_ERROR(iarray_container_load(ctx, "../examples/arr.iarr", &c_x));
-    IARRAY_FAIL_IF_ERROR(iarray_container_open(ctx, "../examples/arr.iarr", &c_x));
+    IARRAY_FAIL_IF_ERROR(iarray_container_open(ctx, "arr.iarr", &c_x));
 
     iarray_dtshape_t dtshape_y;
     dtshape_y.ndim = ndim_y;
