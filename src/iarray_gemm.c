@@ -138,7 +138,7 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
         b_ichunk[0] = K_nchunk;
         b_ichunk[1] = c_ichunk[1];
         int64_t a_nchunk = a_ichunk[0] * N_chunks_shape + a_ichunk[1];
-        int64_t b_nchunk = b_ichunk[0] * N_chunks_shape + b_ichunk[0];
+        int64_t b_nchunk = b_ichunk[0] * N_chunks_shape + b_ichunk[1];
 
         // printf("- a_chunk: %lld, %lld - b_chunk: %lld, %lld\n", a_ichunk[0], a_ichunk[1], b_ichunk[0], b_ichunk[1]);
         uint8_t *a_chunk;
@@ -192,8 +192,9 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
             a_iblock[1] = k_nblock;
             b_iblock[0] = k_nblock;
             b_iblock[1] = c_iblock[1];
+
             int64_t a_nblock = a_iblock[0] * N_blocks_shape + a_iblock[1];
-            int64_t b_nblock = b_iblock[0] * N_blocks_shape + b_iblock[0];
+            int64_t b_nblock = b_iblock[0] * N_blocks_shape + b_iblock[1];
 
 
             // printf("--- a_block: %lld, %lld - b_block: %lld, %lld\n", a_iblock[0], a_iblock[1], b_iblock[0], b_iblock[1]);
