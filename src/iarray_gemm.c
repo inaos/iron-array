@@ -227,17 +227,21 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
             switch (a->dtshape->dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
                     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                                (int) M_blocks_shape, (int) N_blocks_shape, (int) K_blocks_shape,
-                                1.0, (double *) a_block, (int) K_blocks_shape,
-                                (double *) b_block, (int) N_blocks_shape,
-                                1.0, (double *) pparams->out, (int) N_blocks_shape);
+                                (int) a->catarr->blockshape[0],
+                                (int) b->catarr->blockshape[1],
+                                (int) a->catarr->blockshape[1],
+                                1.0, (double *) a_block, (int) a->catarr->blockshape[1],
+                                (double *) b_block, (int) b->catarr->blockshape[1],
+                                1.0, (double *) pparams->out, (int) b->catarr->blockshape[1]);
                     break;
                 case IARRAY_DATA_TYPE_FLOAT:
                     cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                                (int) M_blocks_shape, (int) N_blocks_shape, (int) K_blocks_shape,
-                                1.0f, (float *) a_block, (int) K_blocks_shape,
-                                (float *) b_block, (int) N_blocks_shape,
-                                1.0f, (float *) pparams->out, (int) N_blocks_shape);
+                                (int) a->catarr->blockshape[0],
+                                (int) b->catarr->blockshape[1],
+                                (int) a->catarr->blockshape[1],
+                                1.0f, (float *) a_block, (int) a->catarr->blockshape[1],
+                                (float *) b_block, (int) b->catarr->blockshape[1],
+                                1.0f, (float *) pparams->out, (int) b->catarr->blockshape[1]);
                     break;
                 default:
                     IARRAY_TRACE1(iarray.tracing, "dtype not supported");
