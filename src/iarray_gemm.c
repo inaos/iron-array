@@ -176,76 +176,76 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
             continue;
         }
 
-        for (int c_nblock = 0; c_nblock < M_blocks_shape * N_blocks_shape; ++c_nblock) {
+        int64_t c_nblock = pparams->out_offset / pparams->out_size;
 
-            int64_t c_iblock[2];
-            c_iblock[0] = c_nblock / N_blocks_shape;
-            c_iblock[1] = c_nblock % N_blocks_shape;
+        int64_t c_iblock[2];
+        c_iblock[0] = c_nblock / N_blocks_shape;
+        c_iblock[1] = c_nblock % N_blocks_shape;
 
-            // printf("-- c_block: %lld, %lld\n", c_iblock[0], c_iblock[1]);
+        // printf("-- c_block: %lld, %lld\n", c_iblock[0], c_iblock[1]);
 
-            for (int k_nblock = 0; k_nblock < K_blocks_shape; ++k_nblock) {
-                int64_t a_iblock[2];
-                int64_t b_iblock[2];
+        for (int k_nblock = 0; k_nblock < K_blocks_shape; ++k_nblock) {
+            int64_t a_iblock[2];
+            int64_t b_iblock[2];
 
-                a_iblock[0] = c_iblock[0];
-                a_iblock[1] = k_nblock;
-                b_iblock[0] = k_nblock;
-                b_iblock[1] = c_iblock[1];
-                int64_t a_nblock = a_iblock[0] * N_blocks_shape + a_iblock[1];
-                int64_t b_nblock = b_iblock[0] * N_blocks_shape + b_iblock[0];
+            a_iblock[0] = c_iblock[0];
+            a_iblock[1] = k_nblock;
+            b_iblock[0] = k_nblock;
+            b_iblock[1] = c_iblock[1];
+            int64_t a_nblock = a_iblock[0] * N_blocks_shape + a_iblock[1];
+            int64_t b_nblock = b_iblock[0] * N_blocks_shape + b_iblock[0];
 
 
-                // printf("--- a_block: %lld, %lld - b_block: %lld, %lld\n", a_iblock[0], a_iblock[1], b_iblock[0], b_iblock[1]);
+            // printf("--- a_block: %lld, %lld - b_block: %lld, %lld\n", a_iblock[0], a_iblock[1], b_iblock[0], b_iblock[1]);
 
-                if (block_is_zeros(a_chunk, a_nblock)) {
-                    continue;
-                }
-                if (block_is_zeros(b_chunk, b_nblock)) {
-                    continue;
-                }
-
-                int a_start = (int) a_nblock * a->catarr->blocknitems;
-
-                int a_bsize = blosc2_getitem_ctx(a_dctx, a_chunk, a_csize, a_start,
-                                                 a->catarr->blocknitems, a_block,
-                                                 a->catarr->blocknitems * a->catarr->itemsize);
-                if (a_bsize < 0) {
-                    IARRAY_TRACE1(iarray.tracing, "Error getting block");
-                    return -1;
-                }
-
-                int b_start = (int) b_nblock * b->catarr->blocknitems;
-                int b_bsize = blosc2_getitem_ctx(b_dctx, b_chunk, b_csize, b_start,
-                                                 b->catarr->blocknitems, b_block,
-                                                 b->catarr->blocknitems * b->catarr->itemsize);
-                if (b_bsize < 0) {
-                    IARRAY_TRACE1(iarray.tracing, "Error getting block");
-                    return -1;
-                }
-
-                switch (a->dtshape->dtype) {
-                    case IARRAY_DATA_TYPE_DOUBLE:
-                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                                    (int) M_blocks_shape, (int) N_blocks_shape, (int) K_blocks_shape,
-                                    1.0, (double *) a_block, (int) K_blocks_shape,
-                                    (double *) b_block, (int) N_blocks_shape,
-                                    1.0, (double *) pparams->out, (int) N_blocks_shape);
-                        break;
-                    case IARRAY_DATA_TYPE_FLOAT:
-                        cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                                    (int) M_blocks_shape, (int) N_blocks_shape, (int) K_blocks_shape,
-                                    1.0f, (float *) a_block, (int) K_blocks_shape,
-                                    (float *) b_block, (int) N_blocks_shape,
-                                    1.0f, (float *) pparams->out, (int) N_blocks_shape);
-                        break;
-                    default:
-                        IARRAY_TRACE1(iarray.tracing, "dtype not supported");
-                        return -1;
-                }
-
+            if (block_is_zeros(a_chunk, a_nblock)) {
+                continue;
             }
+            if (block_is_zeros(b_chunk, b_nblock)) {
+                continue;
+            }
+
+            int a_start = (int) a_nblock * a->catarr->blocknitems;
+
+            int a_bsize = blosc2_getitem_ctx(a_dctx, a_chunk, a_csize, a_start,
+                                             a->catarr->blocknitems, a_block,
+                                             a->catarr->blocknitems * a->catarr->itemsize);
+            if (a_bsize < 0) {
+                IARRAY_TRACE1(iarray.tracing, "Error getting block");
+                return -1;
+            }
+
+            int b_start = (int) b_nblock * b->catarr->blocknitems;
+            int b_bsize = blosc2_getitem_ctx(b_dctx, b_chunk, b_csize, b_start,
+                                             b->catarr->blocknitems, b_block,
+                                             b->catarr->blocknitems * b->catarr->itemsize);
+            if (b_bsize < 0) {
+                IARRAY_TRACE1(iarray.tracing, "Error getting block");
+                return -1;
+            }
+
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                                (int) M_blocks_shape, (int) N_blocks_shape, (int) K_blocks_shape,
+                                1.0, (double *) a_block, (int) K_blocks_shape,
+                                (double *) b_block, (int) N_blocks_shape,
+                                1.0, (double *) pparams->out, (int) N_blocks_shape);
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                                (int) M_blocks_shape, (int) N_blocks_shape, (int) K_blocks_shape,
+                                1.0f, (float *) a_block, (int) K_blocks_shape,
+                                (float *) b_block, (int) N_blocks_shape,
+                                1.0f, (float *) pparams->out, (int) N_blocks_shape);
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.tracing, "dtype not supported");
+                    return -1;
+            }
+
         }
+
 
         if (a_needs_free) {
             free(a_chunk);
