@@ -16,7 +16,7 @@
 #include <libiarray/iarray.h>
 
 
-bool chunk_is_zeros(uint8_t *chunk) {
+static bool chunk_is_zeros(uint8_t *chunk) {
     uint8_t blosc2_flags = *(chunk + BLOSC2_CHUNK_BLOSC2_FLAGS);
     uint8_t special_value = (blosc2_flags >> 4) & BLOSC2_SPECIAL_MASK;
     if (special_value == BLOSC2_SPECIAL_ZERO) {
@@ -27,7 +27,7 @@ bool chunk_is_zeros(uint8_t *chunk) {
 }
 
 
-bool block_is_zeros(uint8_t *chunk, int64_t nblock) {
+static bool block_is_zeros(uint8_t *chunk, int64_t nblock) {
     uint8_t blosc_flags = *(chunk + BLOSC2_CHUNK_FLAGS);
     bool memcpyed = blosc_flags & 0x02u;
     bool split = blosc_flags & 0x4u;
