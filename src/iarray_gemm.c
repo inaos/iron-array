@@ -115,7 +115,7 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
     uint8_t *a_block = ina_mem_alloc_aligned(64, a->catarr->blocknitems * a->catarr->itemsize);
     uint8_t *b_block = ina_mem_alloc_aligned(64, b->catarr->blocknitems * b->catarr->itemsize);
 
-    for (int i = 0; i < a->catarr->blockshape[0]; ++i) {
+    for (int i = 0; i < a->catarr->blocknitems; ++i) {
         switch(a->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 ((double *) pparams->out)[i] = 0;
@@ -135,9 +135,10 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
 
         a_ichunk[0] = c_ichunk[0];
         a_ichunk[1] = K_nchunk;
+
         b_ichunk[0] = K_nchunk;
         b_ichunk[1] = c_ichunk[1];
-        int64_t a_nchunk = a_ichunk[0] * N_chunks_shape + a_ichunk[1];
+        int64_t a_nchunk = a_ichunk[0] * K_chunks_shape + a_ichunk[1];
         int64_t b_nchunk = b_ichunk[0] * N_chunks_shape + b_ichunk[1];
 
         // printf("- a_chunk: %lld, %lld - b_chunk: %lld, %lld\n", a_ichunk[0], a_ichunk[1], b_ichunk[0], b_ichunk[1]);
@@ -193,7 +194,7 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
             b_iblock[0] = k_nblock;
             b_iblock[1] = c_iblock[1];
 
-            int64_t a_nblock = a_iblock[0] * N_blocks_shape + a_iblock[1];
+            int64_t a_nblock = a_iblock[0] * K_blocks_shape + a_iblock[1];
             int64_t b_nblock = b_iblock[0] * N_blocks_shape + b_iblock[1];
 
 
