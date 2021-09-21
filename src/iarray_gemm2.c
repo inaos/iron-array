@@ -157,7 +157,7 @@ static int _gemm2_prefilter(blosc2_prefilter_params *pparams) {
         int b_start = (int) b_nblock * b->catarr->blocknitems;
         uint8_t *b_block = &b_blocks[b_start * b->catarr->itemsize];
 
-        if (false) {
+        if (true) {
             switch (a->dtshape->dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
                     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
