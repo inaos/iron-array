@@ -83,7 +83,6 @@ typedef struct iarray_gemm2_params_s {
     iarray_container_t *b;
     uint8_t *b_blocks;
     bool *b_block_zeros;
-    int64_t c_nchunk;
 } iarray_gemm2_params_t;
 
 
@@ -92,7 +91,6 @@ static int _gemm2_prefilter(blosc2_prefilter_params *pparams) {
     iarray_container_t *a = gparams->a;
     iarray_container_t *b = gparams->b;
 
-    int64_t c_nchunk = gparams->c_nchunk;
     uint8_t *b_blocks = gparams->b_blocks;
     bool *b_block_zeros = gparams->b_block_zeros;
 
@@ -118,7 +116,7 @@ static int _gemm2_prefilter(blosc2_prefilter_params *pparams) {
     }
 
     int64_t c_nblock = pparams->out_offset / pparams->out_size;
-    int64_t a_nchunk = c_nchunk;
+    int64_t a_nchunk = c_nblock;
 
     uint8_t *a_chunk;
     bool a_needs_free;
@@ -159,7 +157,7 @@ static int _gemm2_prefilter(blosc2_prefilter_params *pparams) {
         int b_start = (int) b_nblock * b->catarr->blocknitems;
         uint8_t *b_block = &b_blocks[b_start * b->catarr->itemsize];
 
-        if (INA_DEBUG) {
+        if (false) {
             switch (a->dtshape->dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
                     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
@@ -304,8 +302,6 @@ INA_API(ina_rc_t) iarray_opt_gemm2(iarray_context_t *ctx,
     int64_t c_nchunks = cc->catarr->nchunks;
     int64_t c_nchunk = 0;
     while (c_nchunk < c_nchunks) {
-        gemm2_params.c_nchunk = c_nchunk;
-
         uint8_t *b_chunk;
         bool needs_free;
         int b_csize = blosc2_schunk_get_lazychunk(b->catarr->sc, (int) c_nchunk, &b_chunk, &needs_free);
