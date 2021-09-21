@@ -115,7 +115,7 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
     uint8_t *a_block = ina_mem_alloc_aligned(64, a->catarr->blocknitems * a->catarr->itemsize);
     uint8_t *b_block = ina_mem_alloc_aligned(64, b->catarr->blocknitems * b->catarr->itemsize);
 
-    for (int i = 0; i < a->catarr->blocknitems; ++i) {
+    for (int i = 0; i < a->catarr->blockshape[0] * b->catarr->blockshape[1]; ++i) {
         switch(a->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 ((double *) pparams->out)[i] = 0;
