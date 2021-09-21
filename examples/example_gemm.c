@@ -35,13 +35,13 @@ int main(void)
 //    int64_t size_y = shape_y[0];
 //    int64_t size_z = shape_z[0];
 
-    int64_t cshape_x[] = {4, 4};
-    int64_t cshape_y[] = {4, 4};
-    int64_t cshape_z[] = {4, 4};
+    int64_t cshape_x[] = {4, 8};
+    int64_t cshape_y[] = {8, 4};
+    int64_t cshape_z[] = {8, 4};
 
-    int64_t bshape_x[] = {2, 2};
-    int64_t bshape_y[] = {2, 2};
-    int64_t bshape_z[] = {2, 2};
+    int64_t bshape_x[] = {4, 2};
+    int64_t bshape_y[] = {2, 4};
+    int64_t bshape_z[] = {4, 4};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = n_threads;
@@ -104,7 +104,7 @@ int main(void)
     iarray_container_t *c_z;
 
     INA_STOPWATCH_START(w);
-    if (INA_FAILED(iarray_opt_gemm(ctx, c_x, c_y, false, &store_z, &c_z))) {
+    if (INA_FAILED(iarray_opt_gemm2(ctx, c_x, c_y, &store_z, &c_z))) {
         fprintf(stderr, "Error in linalg_gemm: %s\n", ina_err_strerror(ina_err_get_rc()));
         goto fail;
     }
@@ -113,10 +113,10 @@ int main(void)
 
     printf("Time iarray gemv: %.4f\n", elapsed_sec);
 
-    int64_t buflen = 64 * sizeof(double);
+    int64_t buflen = shape_z[0] * shape_z[1] * (int64_t) sizeof(double);
     double *buf = malloc(buflen);
     IARRAY_FAIL_IF_ERROR(iarray_to_buffer(ctx, c_z, buf, buflen));
-    for (int i = 0; i < 64; ++i) {
+    for (int i = 0; i < 10; ++i) {
         printf("%f\n", buf[i]);
     }
     iarray_container_free(ctx, &c_x);
