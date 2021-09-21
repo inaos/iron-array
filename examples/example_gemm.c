@@ -27,21 +27,21 @@ int main(void)
     int8_t ndim_y = 2;
     int8_t ndim_z = 2;
 
-    int64_t shape_x[] = {8, 8};
-    int64_t shape_y[] = {8, 8};
-    int64_t shape_z[] = {8, 8};
+    int64_t shape_x[] = {512, 512};
+    int64_t shape_y[] = {512, 1024};
+    int64_t shape_z[] = {512, 1024};
 
 //    int64_t size_x = shape_x[0] * shape_x[1];
 //    int64_t size_y = shape_y[0];
 //    int64_t size_z = shape_z[0];
 
-    int64_t cshape_x[] = {4, 8};
-    int64_t cshape_y[] = {8, 4};
-    int64_t cshape_z[] = {8, 4};
+    int64_t cshape_x[] = {128, 512};
+    int64_t cshape_y[] = {512, 128};
+    int64_t cshape_z[] = {512, 128};
 
-    int64_t bshape_x[] = {4, 2};
-    int64_t bshape_y[] = {2, 4};
-    int64_t bshape_z[] = {4, 4};
+    int64_t bshape_x[] = {128, 128};
+    int64_t bshape_y[] = {128, 128};
+    int64_t bshape_z[] = {128, 128};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = n_threads;
