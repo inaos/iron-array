@@ -224,19 +224,19 @@ INA_API(ina_rc_t) iarray_opt_gemm2(iarray_context_t *ctx,
         return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
     }
 
-    if (a->catarr->chunkshape[1] != a->catarr->shape[1]) {
-        IARRAY_TRACE1(iarray.error, "a->chunkshape[1]  != a->shape[1]");
+    if (a->catarr->chunkshape[1] < a->catarr->shape[1]) {
+        IARRAY_TRACE1(iarray.error, "a->chunkshape[1]  < a->shape[1]");
         return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
 
-    if (b->catarr->chunkshape[0] != b->catarr->shape[0]) {
-        IARRAY_TRACE1(iarray.error, "b->chunkshape[0] != c->chunkshape[0]");
+    if (b->catarr->chunkshape[0] < b->catarr->shape[0]) {
+        IARRAY_TRACE1(iarray.error, "b->chunkshape[0] < c->chunkshape[0]");
         return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
 
 
-    if (a->catarr->shape[0] != storage->chunkshape[0]) {
-        IARRAY_TRACE1(iarray.error, "a->shape[0] != c->chunkshape[0]");
+    if (a->catarr->shape[0] > storage->chunkshape[0]) {
+        IARRAY_TRACE1(iarray.error, "a->shape[0] > c->chunkshape[0]");
         return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
     if (a->catarr->chunkshape[1] != b->catarr->chunkshape[0]) {
@@ -257,8 +257,8 @@ INA_API(ina_rc_t) iarray_opt_gemm2(iarray_context_t *ctx,
         IARRAY_TRACE1(iarray.error, "b->chunkshape[1] != c->blockshape[1]");
         return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
     }
-    if (a->catarr->blockshape[0] != b->catarr->blockshape[1]) {
-        IARRAY_TRACE1(iarray.error, "a->blockshape[0] != b->blockshape[1]");
+    if (a->catarr->blockshape[1] != b->catarr->blockshape[0]) {
+        IARRAY_TRACE1(iarray.error, "a->blockshape[1] != b->blockshape[0]");
         return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
     }
 
