@@ -129,6 +129,7 @@ static int _gemm2_prefilter(blosc2_prefilter_params *pparams) {
     if (chunk_is_zeros(a_chunk)) {
         if (a_needs_free) {
             free(a_chunk);
+            INA_MEM_FREE_SAFE(a_block);
         }
         return 0;
     }
