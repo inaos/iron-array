@@ -224,23 +224,28 @@ INA_API(ina_rc_t) iarray_opt_gemm2(iarray_context_t *ctx,
         return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
     }
 
+    /* Shape restrictions */
+    if (a->catarr->shape[1] != b->catarr->shape[0]) {
+        IARRAY_TRACE1(iarray.error, "a->shape[1] != b->shape[0]");
+        return INA_ERROR(IARRAY_ERR_INVALID_SHAPE);
+    }
+
+    /* Chunks restrictions */
     if (a->catarr->chunkshape[1] < a->catarr->shape[1]) {
         IARRAY_TRACE1(iarray.error, "a->chunkshape[1]  < a->shape[1]");
         return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
-
     if (b->catarr->chunkshape[0] < b->catarr->shape[0]) {
         IARRAY_TRACE1(iarray.error, "b->chunkshape[0] < c->chunkshape[0]");
         return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
-
+    if (a->catarr->chunkshape[1] != b->catarr->chunkshape[0]) {
+        IARRAY_TRACE1(iarray.error, "a->chunkshape[1] != b->chunkshape[0]");
+        return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
+    }
 
     if (a->catarr->shape[0] > storage->chunkshape[0]) {
         IARRAY_TRACE1(iarray.error, "a->shape[0] > c->chunkshape[0]");
-        return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
-    }
-    if (a->catarr->chunkshape[1] != b->catarr->chunkshape[0]) {
-        IARRAY_TRACE1(iarray.error, "a->chunkshape[1] != b->chunkshape[0]");
         return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
     if (b->catarr->chunkshape[1] != storage->chunkshape[1]) {
@@ -248,6 +253,7 @@ INA_API(ina_rc_t) iarray_opt_gemm2(iarray_context_t *ctx,
         return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
 
+    /* Blocks restrictions */
     if (a->catarr->chunkshape[0] != storage->blockshape[0]) {
         IARRAY_TRACE1(iarray.error, "a->chunkshape[0] != c->blockshape[0]");
         return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
@@ -255,6 +261,15 @@ INA_API(ina_rc_t) iarray_opt_gemm2(iarray_context_t *ctx,
 
     if (b->catarr->chunkshape[1] != storage->blockshape[1]) {
         IARRAY_TRACE1(iarray.error, "b->chunkshape[1] != c->blockshape[1]");
+        return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
+    }
+
+    if (a->catarr->chunkshape[0] != a->catarr->blockshape[0]) {
+        IARRAY_TRACE1(iarray.error, "a->chunkshape[0] != a->blockshape[0]");
+        return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
+    }
+    if (b->catarr->chunkshape[1] != b->catarr->blockshape[1]) {
+        IARRAY_TRACE1(iarray.error, "b->chunkshape[1] != b->blockshape[1]");
         return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
     }
     if (a->catarr->blockshape[1] != b->catarr->blockshape[0]) {
