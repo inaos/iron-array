@@ -307,7 +307,10 @@ INA_API(ina_rc_t) iarray_opt_gemm2(iarray_context_t *ctx,
     int32_t b_nbytes = b->catarr->sc->chunksize;
     uint8_t *b_blocks = ina_mem_alloc(b_nbytes);
     bool *b_block_zeros = ina_mem_alloc(b_nblocks_in_chunk);
-    blosc2_dparams b_dparams = {.nthreads = ctx->cfg->max_num_threads, .schunk = b->catarr->sc};
+    blosc2_dparams b_dparams = {
+            .nthreads = (int16_t) ctx->cfg->max_num_threads,
+            .schunk = b->catarr->sc
+    };
     blosc2_context *b_dctx = blosc2_create_dctx(b_dparams);
 
     gemm2_params.b_blocks = b_blocks;
