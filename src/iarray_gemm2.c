@@ -307,7 +307,7 @@ INA_API(ina_rc_t) iarray_opt_gemm2(iarray_context_t *ctx,
     int32_t b_nbytes = b->catarr->sc->chunksize;
     uint8_t *b_blocks = ina_mem_alloc(b_nbytes);
     bool *b_block_zeros = ina_mem_alloc(b_nblocks_in_chunk);
-    blosc2_dparams b_dparams = {.nthreads = 1, .schunk = b->catarr->sc};
+    blosc2_dparams b_dparams = {.nthreads = ctx->cfg->max_num_threads, .schunk = b->catarr->sc};
     blosc2_context *b_dctx = blosc2_create_dctx(b_dparams);
 
     gemm2_params.b_blocks = b_blocks;
@@ -323,18 +323,12 @@ INA_API(ina_rc_t) iarray_opt_gemm2(iarray_context_t *ctx,
         int b_csize = blosc2_schunk_get_lazychunk(b->catarr->sc, (int) c_nchunk, &b_chunk, &needs_free);
         for (int b_nblock = 0; b_nblock < b_nblocks_in_chunk; ++b_nblock) {
             b_block_zeros[b_nblock] = block_is_zeros(b_chunk, b_nblock);
-            if(!b_block_zeros[b_nblock]) {
-                int b_start = (int) b_nblock * b->catarr->blocknitems;
-                int b_bsize = blosc2_getitem_ctx(b_dctx, b_chunk, b_csize,
-                                                 b_start, b->catarr->blocknitems,
-                                                 &b_blocks[b_start * b->catarr->itemsize],
-                                                 b->catarr->blocknitems * b->catarr->itemsize);
-                if (b_bsize < 0) {
-                    IARRAY_TRACE1(iarray.tracing, "Error getting block");
-                    return -1;
-                }
-
-            }
+        }
+        blosc2_set_maskout(b_dctx, b_block_zeros, b_nblocks_in_chunk);
+        int b_dnbytes = blosc2_decompress_ctx(b_dctx, b_chunk, b_csize, b_blocks, b_nbytes);
+        if (b_dnbytes < 0) {
+            IARRAY_TRACE1(iarray.tracing, "Error getting blocks");
+            return -1;
         }
         if (needs_free) {
             free(b_chunk);
