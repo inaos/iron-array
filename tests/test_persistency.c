@@ -99,13 +99,13 @@ INA_TEST_SETUP(persistency) {
     data->store.backend = IARRAY_STORAGE_BLOSC;
     data->store.urlpath = "test_persistency.b2frame";
     if (_iarray_file_exists(data->store.urlpath)) {
-        remove(data->store.urlpath);
+        blosc2_remove_urlpath(data->store.urlpath);
     }
 }
 
 INA_TEST_TEARDOWN(persistency) {
     if (_iarray_file_exists(data->store.urlpath)) {
-        remove(data->store.urlpath);
+        blosc2_remove_urlpath(data->store.urlpath);
     }
     iarray_context_free(&data->ctx);
     iarray_destroy();

@@ -20,7 +20,7 @@ int main(void) {
 
     iarray_init();
 
-    remove("example_copy.iarr");
+    blosc2_remove_urlpath("example_copy.iarr");
 
     ina_stopwatch_t *w;
     double elapsed_sec = 0;

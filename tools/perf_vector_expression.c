@@ -148,9 +148,9 @@ int main(int argc, char** argv)
         mat_y_name = "mat_y.b2frame";
         mat_out_name = "mat_out.b2frame";
         if (INA_SUCCEED(ina_opt_isset("r"))) {
-            remove(mat_x_name);
-            remove(mat_y_name);
-            remove(mat_out_name);
+            blosc2_remove_urlpath(mat_x_name);
+            blosc2_remove_urlpath(mat_y_name);
+            blosc2_remove_urlpath(mat_out_name);
         }
     }
 
