@@ -78,41 +78,27 @@ static bool block_is_zeros(uint8_t *chunk, int64_t nblock) {
     return true;
 }
 
-typedef struct iarray_gemm_params_s {
+typedef struct iarray_gemm3_params_s {
     iarray_container_t *a;
     iarray_container_t *b;
-    int64_t c_ichunk[2];
-    int64_t M_chunks_shape;
-    int64_t K_chunks_shape;
-    int64_t N_chunks_shape;
-    int64_t M_blocks_shape;
-    int64_t K_blocks_shape;
-    int64_t N_blocks_shape;
-    bool use_mkl;
-} iarray_gemm_params_t;
+    uint8_t *a_blocks;
+    bool *a_block_zeros;
+} iarray_gemm3_params_t;
 
 
-static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
-    iarray_gemm_params_t *gparams = (iarray_gemm_params_t *) pparams->user_data;
+static int _gemm3_prefilter(blosc2_prefilter_params *pparams) {
+    iarray_gemm3_params_t *gparams = (iarray_gemm3_params_t *) pparams->user_data;
     iarray_container_t *a = gparams->a;
     iarray_container_t *b = gparams->b;
-    int64_t M_chunks_shape = gparams->M_chunks_shape;
-    int64_t K_chunks_shape = gparams->K_chunks_shape;
-    int64_t N_chunks_shape = gparams->N_chunks_shape;
-    int64_t M_blocks_shape = gparams->M_blocks_shape;
-    int64_t K_blocks_shape = gparams->K_blocks_shape;
-    int64_t N_blocks_shape = gparams->N_blocks_shape;
-    int64_t *c_ichunk = gparams->c_ichunk;
-    bool use_mkl = gparams->use_mkl;
 
-    // printf("C_nchunk: %lld, %lld\n", c_nchunk[0], c_nchunk[1]);
+    uint8_t *a_blocks = gparams->a_blocks;
+    bool *a_block_zeros = gparams->a_block_zeros;
 
-    blosc2_dparams a_dparams = {.nthreads = 1, .schunk = a->catarr->sc};
-    blosc2_context *a_dctx = blosc2_create_dctx(a_dparams);
+    // printf("C_nchunk: %lld, %lld\n", c_chunk[0], c_chunk[1]);
+
     blosc2_dparams b_dparams = {.nthreads = 1, .schunk = b->catarr->sc};
     blosc2_context *b_dctx = blosc2_create_dctx(b_dparams);
 
-    uint8_t *a_block = ina_mem_alloc_aligned(64, a->catarr->blocknitems * a->catarr->itemsize);
     uint8_t *b_block = ina_mem_alloc_aligned(64, b->catarr->blocknitems * b->catarr->itemsize);
 
     for (int i = 0; i < a->catarr->blockshape[0] * b->catarr->blockshape[1]; ++i) {
@@ -129,103 +115,50 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
         }
     }
 
-    for (int K_nchunk = 0; K_nchunk < K_chunks_shape; ++K_nchunk) {
-        int64_t a_ichunk[2];
-        int64_t b_ichunk[2];
+    int64_t c_nblock = pparams->out_offset / pparams->out_size;
+    int64_t b_nchunk = c_nblock;
 
-        a_ichunk[0] = c_ichunk[0];
-        a_ichunk[1] = K_nchunk;
+    uint8_t *b_chunk;
+    bool b_needs_free;
+    int b_csize = blosc2_schunk_get_lazychunk(b->catarr->sc, (int) b_nchunk, &b_chunk, &b_needs_free);
+    if (b_csize < 0) {
+        IARRAY_TRACE1(iarray.tracing, "Error getting lazy b_chunk");
+        return -1;
+    }
 
-        b_ichunk[0] = K_nchunk;
-        b_ichunk[1] = c_ichunk[1];
-        int64_t a_nchunk = a_ichunk[0] * K_chunks_shape + a_ichunk[1];
-        int64_t b_nchunk = b_ichunk[0] * N_chunks_shape + b_ichunk[1];
-
-        // printf("- a_chunk: %lld, %lld - a_blocks: %lld, %lld\n", a_ichunk[0], a_ichunk[1], b_ichunk[0], b_ichunk[1]);
-        uint8_t *a_chunk;
-
-        // Optimization for the case where the b vector is sparse, so deal with possible zeros in b first
-        uint8_t *b_chunk;
-        bool b_needs_free;
-        int b_csize = blosc2_schunk_get_lazychunk(b->catarr->sc, (int) b_nchunk, &b_chunk, &b_needs_free);
-        if (b_csize < 0) {
-            IARRAY_TRACE1(iarray.tracing, "Error getting lazy a_blocks");
-            return -1;
+    if (chunk_is_zeros(b_chunk)) {
+        if (b_needs_free) {
+            free(b_chunk);
+            INA_MEM_FREE_SAFE(b_block);
         }
+        return 0;
+    }
 
-        if (chunk_is_zeros(b_chunk)) {
-            if (b_needs_free) {
-                free(b_chunk);
-            }
+    int32_t b_nblocks_in_chunk = (int32_t) b->catarr->extchunkshape[0] / b->catarr->blockshape[0];
+
+    for (int b_nblock = 0; b_nblock < b_nblocks_in_chunk; ++b_nblock) {
+        int a_nblock = b_nblock;
+        if (a_block_zeros[a_nblock]) {
+            continue;
+        }
+        if (block_is_zeros(b_chunk, b_nblock)) {
             continue;
         }
 
-        bool a_needs_free;
-        int a_csize = blosc2_schunk_get_lazychunk(a->catarr->sc, (int) a_nchunk, &a_chunk, &a_needs_free);
-        if (a_csize < 0) {
-            IARRAY_TRACE1(iarray.tracing, "Error getting lazy a_chunk");
+        int b_start = (int) b_nblock * b->catarr->blocknitems;
+
+        int b_bsize = blosc2_getitem_ctx(b_dctx, b_chunk, b_csize, b_start,
+                                         b->catarr->blocknitems, b_block,
+                                         b->catarr->blocknitems * b->catarr->itemsize);
+        if (b_bsize < 0) {
+            IARRAY_TRACE1(iarray.tracing, "Error getting block");
             return -1;
         }
 
-        if (chunk_is_zeros(a_chunk)) {
-            if (a_needs_free) {
-                free(a_chunk);
-            }
-            if (b_needs_free) {
-                free(b_chunk);
-            }
-            continue;
-        }
+        int a_start = (int) a_nblock * a->catarr->blocknitems;
+        uint8_t *a_block = &a_blocks[a_start * a->catarr->itemsize];
 
-        int64_t c_nblock = pparams->out_offset / pparams->out_size;
-
-        int64_t c_iblock[2];
-        c_iblock[0] = c_nblock / N_blocks_shape;
-        c_iblock[1] = c_nblock % N_blocks_shape;
-
-        // printf("-- c_block: %lld, %lld\n", c_iblock[0], c_iblock[1]);
-
-        for (int k_nblock = 0; k_nblock < K_blocks_shape; ++k_nblock) {
-            int64_t a_iblock[2];
-            int64_t b_iblock[2];
-
-            a_iblock[0] = c_iblock[0];
-            a_iblock[1] = k_nblock;
-            b_iblock[0] = k_nblock;
-            b_iblock[1] = c_iblock[1];
-
-            int64_t a_nblock = a_iblock[0] * K_blocks_shape + a_iblock[1];
-            int64_t b_nblock = b_iblock[0] * N_blocks_shape + b_iblock[1];
-
-
-            // printf("--- a_block: %lld, %lld - b_block: %lld, %lld\n", a_iblock[0], a_iblock[1], b_iblock[0], b_iblock[1]);
-
-            if (block_is_zeros(a_chunk, a_nblock)) {
-                continue;
-            }
-            if (block_is_zeros(b_chunk, b_nblock)) {
-                continue;
-            }
-
-            int a_start = (int) a_nblock * a->catarr->blocknitems;
-
-            int a_bsize = blosc2_getitem_ctx(a_dctx, a_chunk, a_csize, a_start,
-                                             a->catarr->blocknitems, a_block,
-                                             a->catarr->blocknitems * a->catarr->itemsize);
-            if (a_bsize < 0) {
-                IARRAY_TRACE1(iarray.tracing, "Error getting block");
-                return -1;
-            }
-
-            int b_start = (int) b_nblock * b->catarr->blocknitems;
-            int b_bsize = blosc2_getitem_ctx(b_dctx, b_chunk, b_csize, b_start,
-                                             b->catarr->blocknitems, b_block,
-                                             b->catarr->blocknitems * b->catarr->itemsize);
-            if (b_bsize < 0) {
-                IARRAY_TRACE1(iarray.tracing, "Error getting block");
-                return -1;
-            }
-
+        if (true) {
             switch (a->dtshape->dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
                     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
@@ -249,29 +182,17 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
                     IARRAY_TRACE1(iarray.tracing, "dtype not supported");
                     return -1;
             }
-
-        }
-
-
-        if (a_needs_free) {
-            free(a_chunk);
-        }
-        if (b_needs_free) {
-            free(b_chunk);
         }
     }
 
-    INA_MEM_FREE_SAFE(a_block);
     INA_MEM_FREE_SAFE(b_block);
-
-    blosc2_free_ctx(a_dctx);
     blosc2_free_ctx(b_dctx);
 
     return 0;
 }
 
 
-INA_API(ina_rc_t) iarray_opt_gemm(iarray_context_t *ctx,
+INA_API(ina_rc_t) iarray_opt_gemm3(iarray_context_t *ctx,
                                   iarray_container_t *a,
                                   iarray_container_t *b,
                                   iarray_storage_t *storage,
@@ -284,12 +205,12 @@ INA_API(ina_rc_t) iarray_opt_gemm(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(c);
 
     if (a->storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
-        IARRAY_TRACE1(iarray.error, "gemm can not be performed over a plainbuffer "
+        IARRAY_TRACE1(iarray.error, "gemm3 can not be performed over a plainbuffer "
                                     "container");
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
     if (b->storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
-        IARRAY_TRACE1(iarray.error, "gemm can not be performed over a plainbuffer "
+        IARRAY_TRACE1(iarray.error, "gemm3 can not be performed over a plainbuffer "
                                     "container");
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
@@ -303,34 +224,57 @@ INA_API(ina_rc_t) iarray_opt_gemm(iarray_context_t *ctx,
         return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
     }
 
-    if (a->catarr->chunkshape[0] != storage->chunkshape[0]) {
-        IARRAY_TRACE1(iarray.error, "a->chunkshape[0] != c->chunkshape[0]");
+    /* Shape restrictions */
+    if (a->catarr->shape[1] != b->catarr->shape[0]) {
+        IARRAY_TRACE1(iarray.error, "a->shape[1] != b->shape[0]");
+        return INA_ERROR(IARRAY_ERR_INVALID_SHAPE);
+    }
+
+    /* Chunks restrictions */
+    if (a->catarr->chunkshape[1] < a->catarr->shape[1]) {
+        IARRAY_TRACE1(iarray.error, "a->chunkshape[1]  < a->shape[1]");
+        return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
+    }
+    if (b->catarr->chunkshape[0] < b->catarr->shape[0]) {
+        IARRAY_TRACE1(iarray.error, "b->chunkshape[0] < c->chunkshape[0]");
         return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
     if (a->catarr->chunkshape[1] != b->catarr->chunkshape[0]) {
         IARRAY_TRACE1(iarray.error, "a->chunkshape[1] != b->chunkshape[0]");
         return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
-    if (b->catarr->chunkshape[1] != storage->chunkshape[1]) {
-        IARRAY_TRACE1(iarray.error, "b->chunkshape[1] != c->chunkshape[1]");
+
+    if (a->catarr->chunkshape[0] != storage->chunkshape[0]) {
+        IARRAY_TRACE1(iarray.error, "a->chunkshape[0] = c->chunkshape[0]");
+        return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
+    }
+    if (b->catarr->shape[1] > storage->chunkshape[1]) {
+        IARRAY_TRACE1(iarray.error, "b->shape[1] > c->chunkshape[1]");
         return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
 
-    if (a->catarr->blockshape[0] != storage->blockshape[0]) {
-        IARRAY_TRACE1(iarray.error, "a->blockshape[0] != c->blockshape[0]");
+    /* Blocks restrictions */
+    if (a->catarr->chunkshape[0] != storage->blockshape[0]) {
+        IARRAY_TRACE1(iarray.error, "a->chunkshape[0] != c->blockshape[0]");
+        return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
+    }
+
+    if (b->catarr->chunkshape[1] != storage->blockshape[1]) {
+        IARRAY_TRACE1(iarray.error, "b->chunkshape[1] != c->blockshape[1]");
+        return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
+    }
+
+    if (a->catarr->chunkshape[0] != a->catarr->blockshape[0]) {
+        IARRAY_TRACE1(iarray.error, "a->chunkshape[0] != a->blockshape[0]");
+        return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
+    }
+    if (b->catarr->chunkshape[1] != b->catarr->blockshape[1]) {
+        IARRAY_TRACE1(iarray.error, "b->chunkshape[1] != b->blockshape[1]");
         return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
     }
     if (a->catarr->blockshape[1] != b->catarr->blockshape[0]) {
         IARRAY_TRACE1(iarray.error, "a->blockshape[1] != b->blockshape[0]");
         return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
-    }
-    if (b->catarr->blockshape[1] != storage->blockshape[1]) {
-        IARRAY_TRACE1(iarray.error, "b->blockshape[1] != c->blockshape[1]");
-        return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
-    }
-    if (a->catarr->chunkshape[0] != storage->chunkshape[0]) {
-        IARRAY_TRACE1(iarray.error, "a->chunkshape[0] != c->chunkshape[0]");
-        return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
     }
 
     int nthreads = mkl_get_max_threads();
@@ -349,38 +293,58 @@ INA_API(ina_rc_t) iarray_opt_gemm(iarray_context_t *ctx,
     // Set up prefilter
     iarray_context_t *prefilter_ctx;
     iarray_context_new(ctx->cfg, &prefilter_ctx);
-    prefilter_ctx->prefilter_fn = (blosc2_prefilter_fn) _gemm_prefilter;
-    iarray_gemm_params_t gemm_params = {0};
+    prefilter_ctx->prefilter_fn = (blosc2_prefilter_fn) _gemm3_prefilter;
+    iarray_gemm3_params_t gemm3_params = {0};
     blosc2_prefilter_params pparams = {0};
-    pparams.user_data = &gemm_params;
+    pparams.user_data = &gemm3_params;
     prefilter_ctx->prefilter_params = &pparams;
 
     // Fill prefilter params
-    gemm_params.a = a;
-    gemm_params.b = b;
+    gemm3_params.a = a;
+    gemm3_params.b = b;
 
-    int64_t M = a->dtshape->shape[0];
-    int64_t K = a->dtshape->shape[1];
-    int64_t N = b->dtshape->shape[1];
+    int32_t a_nblocks_in_chunk = (int32_t) a->catarr->extchunkshape[1] / a->catarr->blockshape[1];
+    int32_t a_nbytes = a->catarr->sc->chunksize;
+    uint8_t *a_blocks = ina_mem_alloc(a_nbytes);
+    bool *a_block_zeros = ina_mem_alloc(a_nblocks_in_chunk);
+    blosc2_dparams a_dparams = {.nthreads = 1, .schunk = a->catarr->sc};
+    blosc2_context *a_dctx = blosc2_create_dctx(a_dparams);
 
-    gemm_params.M_chunks_shape = a->catarr->extshape[0] / a->catarr->chunkshape[0];
-    gemm_params.K_chunks_shape = a->catarr->extshape[1] / a->catarr->chunkshape[1];
-    gemm_params.N_chunks_shape = b->catarr->extshape[1] / b->catarr->chunkshape[1];
-    gemm_params.M_blocks_shape = a->catarr->extchunkshape[0] / a->catarr->blockshape[0];
-    gemm_params.K_blocks_shape = a->catarr->extchunkshape[1] / a->catarr->blockshape[1];
-    gemm_params.N_blocks_shape = b->catarr->extchunkshape[1] / b->catarr->blockshape[1];
+    gemm3_params.a_blocks = a_blocks;
+    gemm3_params.a_block_zeros = a_block_zeros;
+
 
     // Iterate over chunks
+    int64_t c_nchunks = cc->catarr->nchunks;
     int64_t c_nchunk = 0;
-    while (c_nchunk < gemm_params.M_chunks_shape * gemm_params.N_chunks_shape) {
-        gemm_params.c_ichunk[0] = c_nchunk / gemm_params.N_chunks_shape;
-        gemm_params.c_ichunk[1] = c_nchunk % gemm_params.N_chunks_shape;
+    while (c_nchunk < c_nchunks) {
+        uint8_t *a_chunk;
+        bool needs_free;
+        int a_csize = blosc2_schunk_get_lazychunk(a->catarr->sc, (int) c_nchunk, &a_chunk, &needs_free);
+        for (int a_nblock = 0; a_nblock < a_nblocks_in_chunk; ++a_nblock) {
+            a_block_zeros[a_nblock] = block_is_zeros(a_chunk, a_nblock);
+            if(!a_block_zeros[a_nblock]) {
+                int a_start = (int) a_nblock * a->catarr->blocknitems;
+                int a_bsize = blosc2_getitem_ctx(a_dctx, a_chunk, a_csize,
+                                                 a_start, a->catarr->blocknitems,
+                                                 &a_blocks[a_start * a->catarr->itemsize],
+                                                 a->catarr->blocknitems * a->catarr->itemsize);
+                if (a_bsize < 0) {
+                    IARRAY_TRACE1(iarray.tracing, "Error getting block");
+                    return -1;
+                }
+
+            }
+        }
+        if (needs_free) {
+            free(a_chunk);
+        }
 
         // Compress data
         blosc2_cparams cparams = BLOSC2_CPARAMS_DEFAULTS;
         IARRAY_RETURN_IF_FAILED(iarray_create_blosc_cparams(&cparams, prefilter_ctx, cc->catarr->itemsize,
                                                             cc->catarr->blocknitems * cc->catarr->itemsize));
-        cparams.schunk = a->catarr->sc;
+        cparams.schunk = cc->catarr->sc;
         blosc2_context *cctx = blosc2_create_cctx(cparams);
         uint8_t *chunk = malloc(cc->catarr->extchunknitems * cc->catarr->itemsize +
                                 BLOSC_MAX_OVERHEAD);
@@ -398,6 +362,11 @@ INA_API(ina_rc_t) iarray_opt_gemm(iarray_context_t *ctx,
 
         c_nchunk++;
     }
+
+    blosc2_free_ctx(a_dctx);
+
+    INA_MEM_FREE_SAFE(a_blocks);
+    INA_MEM_FREE_SAFE(a_block_zeros);
 
     mkl_set_num_threads(nthreads);
 
