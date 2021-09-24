@@ -21,10 +21,10 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
                                char* dest_urlpath)
 {
     char* src_urlpath = "iarray_reduce2.iarray";
-    remove(src_urlpath);
+    blosc2_remove_urlpath(src_urlpath);
 
     if (dest_urlpath) {
-        remove(dest_urlpath);
+        blosc2_remove_urlpath(dest_urlpath);
     }
 
     // Create dtshape
@@ -97,9 +97,9 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
     iarray_container_free(ctx, &c_x);
 
     if (dest_urlpath) {
-        remove(dest_urlpath);
+        blosc2_remove_urlpath(dest_urlpath);
     }
-    remove(src_urlpath);
+    blosc2_remove_urlpath(src_urlpath);
 
     return INA_SUCCESS;
 }

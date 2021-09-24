@@ -89,9 +89,9 @@ int main(int argc, char** argv)
         mat_y_name = "mat_y_vec.b2frame";
         mat_out_name = "mat_out_vec.b2frame";
         if (INA_SUCCEED(ina_opt_isset("r"))) {
-            remove(mat_x_name);
-            remove(mat_y_name);
-            remove(mat_out_name);
+            blosc2_remove_urlpath(mat_x_name);
+            blosc2_remove_urlpath(mat_y_name);
+            blosc2_remove_urlpath(mat_out_name);
             printf("Storage for iarray containers: *memory*\n");
         } else {
             printf("Storage for iarray containers: *disk*\n");
