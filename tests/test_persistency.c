@@ -104,9 +104,7 @@ INA_TEST_SETUP(persistency) {
 }
 
 INA_TEST_TEARDOWN(persistency) {
-    if (_iarray_file_exists(data->store.urlpath)) {
-        blosc2_remove_urlpath(data->store.urlpath);
-    }
+    blosc2_remove_urlpath(data->store.urlpath);
     iarray_context_free(&data->ctx);
     iarray_destroy();
 }
@@ -121,6 +119,10 @@ INA_TEST_FIXTURE(persistency, double_2) {
     int64_t bshape[] = {7, 7};
 
     INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
+
+    // Check sparse persistent storage
+    data->store.contiguous = false;
+    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
 }
 
 
@@ -134,6 +136,10 @@ INA_TEST_FIXTURE(persistency, float_2) {
     int64_t bshape[] = {8, 9};
 
     INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
+
+    // Check sparse persistent storage
+    data->store.contiguous = false;
+    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
 }
 
 INA_TEST_FIXTURE(persistency, double_5) {
@@ -146,6 +152,10 @@ INA_TEST_FIXTURE(persistency, double_5) {
     int64_t bshape[] = {2, 5, 4, 3, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
+
+    // Check sparse persistent storage
+    data->store.contiguous = false;
+    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
 }
 
 INA_TEST_FIXTURE(persistency, float_7) {
@@ -157,5 +167,9 @@ INA_TEST_FIXTURE(persistency, float_7) {
     int64_t cshape[] = {2, 5, 3, 4, 1, 3, 3};
     int64_t bshape[] = {2, 2, 2, 4, 1, 2, 1};
 
+    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
+
+    // Check sparse persistent storage
+    data->store.contiguous = false;
     INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
 }
