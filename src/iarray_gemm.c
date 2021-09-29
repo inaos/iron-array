@@ -105,7 +105,7 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
     int64_t *c_ichunk = gparams->c_ichunk;
     bool use_mkl = gparams->use_mkl;
 
-    // printf("C_nchunk: %lld, %lld\n", c_nchunk[0], c_nchunk[1]);
+    // printf("C_nchunk: %lld, %lld\n", c_ichunk[0], c_ichunk[1]);
 
     blosc2_dparams a_dparams = {.nthreads = 1, .schunk = a->catarr->sc};
     blosc2_context *a_dctx = blosc2_create_dctx(a_dparams);
@@ -141,7 +141,7 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
         int64_t a_nchunk = a_ichunk[0] * K_chunks_shape + a_ichunk[1];
         int64_t b_nchunk = b_ichunk[0] * N_chunks_shape + b_ichunk[1];
 
-        // printf("- a_chunk: %lld, %lld - a_blocks: %lld, %lld\n", a_ichunk[0], a_ichunk[1], b_ichunk[0], b_ichunk[1]);
+        // printf("- a_chunk: %lld, %lld - b_chunk: %lld, %lld\n", a_ichunk[0], a_ichunk[1], b_ichunk[0], b_ichunk[1]);
         uint8_t *a_chunk;
 
         // Optimization for the case where the b vector is sparse, so deal with possible zeros in b first
@@ -177,6 +177,24 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
             continue;
         }
 
+        bool chunk_has_padding_m = false;
+        if (a->catarr->shape[0] != a->catarr->extshape[0]
+            && a_ichunk[0] == M_chunks_shape - 1) {
+            chunk_has_padding_m = true;
+        }
+
+        bool chunk_has_padding_k = false;
+        if (a->catarr->shape[1] != a->catarr->extshape[1]
+            && a_ichunk[1] == K_chunks_shape - 1) {
+            chunk_has_padding_k = true;
+        }
+
+        bool chunk_has_padding_n = false;
+        if (b->catarr->shape[1] != b->catarr->extshape[1]
+            && b_ichunk[1] == N_chunks_shape - 1) {
+            chunk_has_padding_n = true;
+        }
+
         int64_t c_nblock = pparams->out_offset / pparams->out_size;
 
         int64_t c_iblock[2];
@@ -207,6 +225,51 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
                 continue;
             }
 
+            // Check the padding
+            int64_t M = a->catarr->blockshape[0];
+            int64_t K = a->catarr->blockshape[1];
+            int64_t N = b->catarr->blockshape[1];
+
+            int64_t lda = K;
+            int64_t ldb = N;
+            int64_t ldc = N;
+
+            if (chunk_has_padding_m) {
+                int64_t block_start = a_ichunk[0] * a->catarr->chunkshape[0] + a_iblock[0] * a->catarr->blockshape[0];
+                int64_t block_stop = block_start + a->catarr->blockshape[0];
+                if (a->catarr->shape[0] <= block_start) {
+                    continue;
+                } else if (block_start < a->catarr->shape[0] && a->catarr->shape[0] < block_stop) {
+                    M = a->catarr->shape[0] - block_start;
+                } else {
+                    M = block_stop - block_start;
+                }
+            }
+
+            if (chunk_has_padding_k) {
+                int64_t block_start = a_ichunk[1] * a->catarr->chunkshape[1] + a_iblock[1] * a->catarr->blockshape[1];
+                int64_t block_stop = block_start + a->catarr->blockshape[1];
+                if (a->catarr->shape[1] <= block_start) {
+                    continue;
+                } else if (block_start < a->catarr->shape[1] && a->catarr->shape[1] < block_stop) {
+                    K = a->catarr->shape[1] - block_start;
+                } else {
+                    K = block_stop - block_start;
+                }
+            }
+
+            if (chunk_has_padding_n) {
+                int64_t block_start = b_ichunk[1] * b->catarr->chunkshape[1] + b_iblock[1] * b->catarr->blockshape[1];
+                int64_t block_stop = block_start + b->catarr->blockshape[1];
+                if (b->catarr->shape[1] <= block_start) {
+                    continue;
+                } else if (block_start < b->catarr->shape[1] && b->catarr->shape[1] < block_stop) {
+                    N = b->catarr->shape[1] - block_start;
+                } else {
+                    N = block_stop - block_start;
+                }
+            }
+
             int a_start = (int) a_nblock * a->catarr->blocknitems;
 
             int a_bsize = blosc2_getitem_ctx(a_dctx, a_chunk, a_csize, a_start,
@@ -229,29 +292,23 @@ static int _gemm_prefilter(blosc2_prefilter_params *pparams) {
             switch (a->dtshape->dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
                     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                                (int) a->catarr->blockshape[0],
-                                (int) b->catarr->blockshape[1],
-                                (int) a->catarr->blockshape[1],
-                                1.0, (double *) a_block, (int) a->catarr->blockshape[1],
-                                (double *) b_block, (int) b->catarr->blockshape[1],
-                                1.0, (double *) pparams->out, (int) b->catarr->blockshape[1]);
+                                (int) M, (int) N, (int) K,
+                                1.0, (double *) a_block, (int) lda,
+                                (double *) b_block, (int) ldb,
+                                1.0, (double *) pparams->out, (int) ldc);
                     break;
                 case IARRAY_DATA_TYPE_FLOAT:
                     cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                                (int) a->catarr->blockshape[0],
-                                (int) b->catarr->blockshape[1],
-                                (int) a->catarr->blockshape[1],
-                                1.0f, (float *) a_block, (int) a->catarr->blockshape[1],
-                                (float *) b_block, (int) b->catarr->blockshape[1],
-                                1.0f, (float *) pparams->out, (int) b->catarr->blockshape[1]);
+                                (int) M, (int) N, (int) K,
+                                1.0f, (float *) a_block, (int) lda,
+                                (float *) b_block, (int) ldb,
+                                1.0f, (float *) pparams->out, (int) ldc);
                     break;
                 default:
                     IARRAY_TRACE1(iarray.tracing, "dtype not supported");
                     return -1;
             }
-
         }
-
 
         if (a_needs_free) {
             free(a_chunk);
