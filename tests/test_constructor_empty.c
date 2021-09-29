@@ -10,6 +10,7 @@
  *
  */
 
+#include <blosc2.h>
 #include <libiarray/iarray.h>
 
 static ina_rc_t test_empty(iarray_context_t *ctx,
@@ -17,7 +18,7 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
                            int8_t ndim,
                            const int64_t *shape,
                            const int64_t *cshape,
-                           const int64_t *bshape)
+                           const int64_t *bshape, bool contiguous, char *urlpath)
 {
     iarray_dtshape_t xdtshape;
 
@@ -29,8 +30,8 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
 
     iarray_storage_t store;
     store.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    store.contiguous = false;
-    store.urlpath = NULL;
+    store.contiguous = contiguous;
+    store.urlpath = urlpath;
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {
             store.chunkshape[i] = cshape[i];
@@ -40,6 +41,7 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
 
     // Empty array
     iarray_container_t *c_x;
+    blosc2_remove_urlpath(store.urlpath);
     INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &store, 0, &c_x));
 
 
@@ -49,6 +51,7 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
     INA_TEST_ASSERT_SUCCEED(cbytes <= nbytes);
 
     iarray_container_free(ctx, &c_x);
+    blosc2_remove_urlpath(store.urlpath);
 
     return INA_SUCCESS;
 
@@ -80,7 +83,7 @@ INA_TEST_FIXTURE(constructor_empty, 1_d)
     int64_t cshape[] = {100};
     int64_t bshape[] = {26};
 
-    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, false, NULL));
 }
 
 INA_TEST_FIXTURE(constructor_empty, 1_d_1)
@@ -91,7 +94,7 @@ INA_TEST_FIXTURE(constructor_empty, 1_d_1)
     int64_t cshape[] = {252};
     int64_t bshape[] = {34};
 
-    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, true, NULL));
 }
 
 INA_TEST_FIXTURE(constructor_empty, 2_d)
@@ -102,7 +105,7 @@ INA_TEST_FIXTURE(constructor_empty, 2_d)
     int64_t cshape[] = {3, 12};
     int64_t bshape[] = {3, 12};
 
-    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, false, "arr.iarr"));
 }
 
 INA_TEST_FIXTURE(constructor_empty, 4_f_p)
@@ -113,7 +116,7 @@ INA_TEST_FIXTURE(constructor_empty, 4_f_p)
     int64_t *cshape = NULL;
     int64_t *bshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, true, "arr.iarr"));
 }
 
 INA_TEST_FIXTURE(constructor_empty, 5_d)
@@ -124,7 +127,7 @@ INA_TEST_FIXTURE(constructor_empty, 5_d)
     int64_t cshape[] = {11, 12, 8, 5, 3};
     int64_t bshape[] = {3, 4, 2, 4, 3};
 
-    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, false, NULL));
 }
 
 INA_TEST_FIXTURE(constructor_empty, 7_f_p)
@@ -135,5 +138,5 @@ INA_TEST_FIXTURE(constructor_empty, 7_f_p)
     int64_t *cshape = NULL;
     int64_t *bshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, true, "arr.iarr"));
 }

@@ -19,6 +19,7 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
                                int8_t axis,
                                int64_t *dest_cshape, int64_t *dest_bshape, bool dest_frame,
                                char *dest_urlpath) {
+    blosc2_remove_urlpath(dest_urlpath);
     // Create dtshape
     iarray_dtshape_t dtshape;
 
@@ -185,8 +186,8 @@ INA_TEST_FIXTURE(reduce, 4_d_0) {
 
     int64_t dest_cshape[] = {5, 1, 5};
     int64_t dest_bshape[] = {2, 1, 2};
-    bool dest_frame = false;
-    char *dest_urlpath = NULL;
+    bool dest_frame = true;
+    char *dest_urlpath = "arr.iarr";
 
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
                                         dest_cshape, dest_bshape, dest_frame, dest_urlpath));
@@ -225,7 +226,7 @@ INA_TEST_FIXTURE(reduce, 2_f_1) {
 
     int64_t dest_cshape[] = {69};
     int64_t dest_bshape[] = {31};
-    bool dest_frame = false;
+    bool dest_frame = true;
     char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
@@ -245,7 +246,7 @@ INA_TEST_FIXTURE(reduce, 3_f_2) {
     int64_t dest_cshape[] = {6, 9};
     int64_t dest_bshape[] = {3, 3};
     bool dest_frame = false;
-    char *dest_urlpath = NULL;
+    char *dest_urlpath = "arr.iarr";
 
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
                                         dest_cshape, dest_bshape, dest_frame, dest_urlpath));
@@ -281,8 +282,8 @@ INA_TEST_FIXTURE(reduce, 8_f_6) {
 
     int64_t dest_cshape[] = {4, 5, 2, 5, 3, 4, 2};
     int64_t dest_bshape[] = {2, 2, 2, 3, 2, 1, 1};
-    bool dest_frame = false;
-    char *dest_urlpath = NULL;
+    bool dest_frame = true;
+    char *dest_urlpath = "arr.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
                                         dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }

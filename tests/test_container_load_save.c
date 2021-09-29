@@ -16,8 +16,8 @@
 
 static ina_rc_t
 test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, const int64_t *shape,
-               const int64_t *cshape, const int64_t *bshape, double start, double stop, bool frame,
-               bool fname, bool copy)
+               const int64_t *cshape, const int64_t *bshape, double start, double stop, bool contiguous,
+               bool persistent, bool copy)
 {
 
     char *urlpath = "test_load_save.iarray";
@@ -42,7 +42,7 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
     iarray_storage_t store;
     store.backend = IARRAY_STORAGE_BLOSC;
     store.urlpath = NULL;
-    store.contiguous = false;
+    store.contiguous = contiguous;
     for (int i = 0; i < ndim; ++i) {
         store.chunkshape[i] = cshape[i];
         store.blockshape[i] = bshape[i];
@@ -52,25 +52,25 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
     iarray_container_t *c_z;
     if (copy) {
         INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, flags, &c_x));
-        if (frame) {
+        if (contiguous) {
             store.contiguous = true;
         }
-        if (fname) {
+        if (persistent) {
             store.urlpath = urlpath;
         }
         INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_x, false, &store, 0, &c_z));
     } else {
-        if (frame) {
+        if (contiguous) {
             store.contiguous = true;
         }
-        if (fname) {
+        if (persistent) {
             store.urlpath = urlpath;
         }
         INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, flags, &c_x));
         c_z = c_x;
     }
 
-    if (!fname) {
+    if (!persistent) {
         INA_TEST_ASSERT_SUCCEED(iarray_container_save(ctx, c_z, urlpath));
     }
 
@@ -114,7 +114,7 @@ INA_TEST_FIXTURE(container_load_save, 2_d) {
     double start = - 0.1;
     double stop = - 0.25;
 
-    bool copy = false;
+    bool copy = true;
     INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, cshape, bshape, start,
                                            stop, false, false, copy));
 }
@@ -129,7 +129,7 @@ INA_TEST_FIXTURE(container_load_save, 3_d) {
     double start = 3123;
     double stop = 45654;
 
-    bool copy = false;
+    bool copy = true;
     INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, cshape, bshape, start,
                                            stop, true, false, copy));
 }
@@ -189,7 +189,7 @@ INA_TEST_FIXTURE(container_load_save, 5_f) {
     double start = 0.1;
     double stop = 0.2;
 
-    bool copy = false;
+    bool copy = true;
     INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, cshape, bshape, start,
-                                           stop, true, true, copy));
+                                           stop, false, true, copy));
 }

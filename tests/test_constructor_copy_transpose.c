@@ -15,7 +15,8 @@
 
 static ina_rc_t test_copy_transpose(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim,
                                     const int64_t *shape, const int64_t *cshape,
-                                    const int64_t *bshape, double start, double stop)
+                                    const int64_t *bshape, double start, double stop,
+                                    bool contiguous, char *xurlpath, char *yurlpath)
 {
     // Create dtshape
     iarray_dtshape_t xdtshape;
@@ -30,8 +31,8 @@ static ina_rc_t test_copy_transpose(iarray_context_t *ctx, iarray_data_type_t dt
 
     iarray_storage_t store;
     store.backend = (cshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
-    store.urlpath = NULL;
-    store.contiguous = (ndim % 2 == 0) ? false : true;
+    store.urlpath = xurlpath;
+    store.contiguous = contiguous;
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {
             store.chunkshape[i] = cshape[i];
@@ -41,8 +42,8 @@ static ina_rc_t test_copy_transpose(iarray_context_t *ctx, iarray_data_type_t dt
 
     iarray_storage_t ystore;
     ystore.backend = (cshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
-    ystore.urlpath = NULL;
-    ystore.contiguous = (ndim % 2 == 0) ? false : true;
+    ystore.urlpath = yurlpath;
+    ystore.contiguous = contiguous;
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {
             ystore.chunkshape[i] = cshape[ndim - 1 - i];
@@ -54,6 +55,8 @@ static ina_rc_t test_copy_transpose(iarray_context_t *ctx, iarray_data_type_t dt
 
     iarray_container_t *c_x;
     iarray_container_t *c_trans;
+    blosc2_remove_urlpath(store.urlpath);
+    blosc2_remove_urlpath(ystore.urlpath);
 
 
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, 0, &c_trans));
@@ -76,6 +79,8 @@ static ina_rc_t test_copy_transpose(iarray_context_t *ctx, iarray_data_type_t dt
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_trans);
+    blosc2_remove_urlpath(store.urlpath);
+    blosc2_remove_urlpath(ystore.urlpath);
 
     return INA_SUCCESS;
 }
@@ -108,7 +113,7 @@ INA_TEST_FIXTURE(constructor_copy_transpose, 2_f_p) {
     double start = 0;
     double stop = 1;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, false, "arr.iarr", "arr2.iarr"));
 }
 
 INA_TEST_FIXTURE(constructor_copy_transpose, 2_d) {
@@ -122,7 +127,7 @@ INA_TEST_FIXTURE(constructor_copy_transpose, 2_d) {
     double start = -1000;
     double stop = 1;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, NULL, NULL));
 }
 
 INA_TEST_FIXTURE(constructor_copy_transpose, 2_f) {
@@ -136,5 +141,5 @@ INA_TEST_FIXTURE(constructor_copy_transpose, 2_f) {
     double start = -5.3;
     double stop = 1.1245;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, NULL, "arr2.iarr"));
 }

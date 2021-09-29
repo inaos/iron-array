@@ -10,6 +10,7 @@
  *
  */
 
+#include <blosc2.h>
 #include <libiarray/iarray.h>
 
 static ina_rc_t test_zeros(iarray_context_t *ctx,
@@ -18,7 +19,7 @@ static ina_rc_t test_zeros(iarray_context_t *ctx,
                           int8_t ndim,
                           const int64_t *shape,
                           const int64_t *cshape,
-                          const int64_t *bshape)
+                          const int64_t *bshape, bool contiguous, char *urlpath)
 {
     iarray_dtshape_t xdtshape;
 
@@ -30,8 +31,8 @@ static ina_rc_t test_zeros(iarray_context_t *ctx,
 
     iarray_storage_t store;
     store.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    store.contiguous = false;
-    store.urlpath = NULL;
+    store.contiguous = contiguous;
+    store.urlpath = urlpath;
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {
             store.chunkshape[i] = cshape[i];
@@ -47,6 +48,7 @@ static ina_rc_t test_zeros(iarray_context_t *ctx,
     uint8_t *buf_dest = malloc((size_t)buf_size * type_size);
 
     iarray_container_t *c_x;
+    blosc2_remove_urlpath(store.urlpath);
     INA_TEST_ASSERT_SUCCEED(iarray_zeros(ctx, &xdtshape, &store, 0, &c_x));
 
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf_dest, (size_t)buf_size * type_size));
@@ -65,6 +67,7 @@ static ina_rc_t test_zeros(iarray_context_t *ctx,
 
     iarray_container_free(ctx, &c_x);
     free(buf_dest);
+    blosc2_remove_urlpath(store.urlpath);
 
     return INA_SUCCESS;
 }
@@ -97,7 +100,7 @@ INA_TEST_FIXTURE(constructor_zeros, 2_d_p)
     int64_t *cshape = NULL;
     int64_t *bshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, cshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, false, NULL));
 }
 
 INA_TEST_FIXTURE(constructor_zeros, 4_f_p)
@@ -110,7 +113,7 @@ INA_TEST_FIXTURE(constructor_zeros, 4_f_p)
     int64_t *cshape = NULL;
     int64_t *bshape = NULL;
 
-    INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, cshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, false, "arr.iarr"));
 }
 
 INA_TEST_FIXTURE(constructor_zeros, 5_d)
@@ -123,7 +126,7 @@ INA_TEST_FIXTURE(constructor_zeros, 5_d)
     int64_t cshape[] = {3, 4, 10, 3, 3};
     int64_t bshape[] = {2, 2, 3, 1, 3};
 
-    INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, cshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, true, NULL));
 }
 
 INA_TEST_FIXTURE(constructor_zeros, 7_f)
@@ -136,5 +139,5 @@ INA_TEST_FIXTURE(constructor_zeros, 7_f)
     int64_t cshape[] = {4, 3, 5, 5, 3, 3, 2};
     int64_t bshape[] = {2, 1, 2, 2, 3, 2, 2};
 
-    INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, cshape, bshape));
+    INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, true, "arr.iarr"));
 }

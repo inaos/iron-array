@@ -10,6 +10,7 @@
  *
  */
 
+#include <blosc2.h>
 #include <libiarray/iarray.h>
 #include <tests/iarray_test.h>
 
@@ -23,7 +24,7 @@ static ina_rc_t test_slice_buffer(iarray_context_t *ctx, iarray_container_t *c_x
 
 static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64_t type_size, int8_t ndim,
                                       const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
-                                      int64_t *start, int64_t *stop, const void *result) {
+                                      int64_t *start, int64_t *stop, const void *result, bool contiguous, char *urlpath) {
     void *buffer_x;
     size_t buffer_x_len;
 
@@ -50,8 +51,8 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     iarray_storage_t store;
     store.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    store.contiguous = false;
-    store.urlpath = NULL;
+    store.contiguous = contiguous;
+    store.urlpath = urlpath;
     if (cshape != NULL) {
         for (int j = 0; j < xdtshape.ndim; ++j) {
             store.chunkshape[j] = cshape[j];
@@ -59,6 +60,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
         }
     }
     int64_t bufdes_size = 1;
+    blosc2_remove_urlpath(store.urlpath);
 
     for (int k = 0; k < ndim; ++k) {
         int64_t st = (start[k] + shape[k]) % shape[k];
@@ -99,6 +101,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     ina_mem_free(buffer_x);
     ina_mem_free(bufdes);
+    blosc2_remove_urlpath(store.urlpath);
 
     return INA_SUCCESS;
 }
@@ -136,7 +139,7 @@ INA_TEST_FIXTURE(get_slice_buffer, 2_d_p) {
                        77, 78, 79, 83, 84, 85, 86, 87, 88, 89};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result));
+                                                  start, stop, result, false, NULL));
 }
 
 INA_TEST_FIXTURE(get_slice_buffer, 3_f) {
@@ -164,7 +167,7 @@ INA_TEST_FIXTURE(get_slice_buffer, 3_f) {
                       563, 564, 565, 566, 567, 568, 569};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result));
+                                                  start, stop, result, false, "arr.iarr"));
 }
 
 INA_TEST_FIXTURE(get_slice_buffer, 4_d) {
@@ -186,7 +189,7 @@ INA_TEST_FIXTURE(get_slice_buffer, 4_d) {
 
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result));
+                                                  start, stop, result, true, NULL));
 }
 
 INA_TEST_FIXTURE(get_slice_buffer, 5_f_p) {
@@ -208,7 +211,7 @@ INA_TEST_FIXTURE(get_slice_buffer, 5_f_p) {
                       77559, 78557, 78558, 78559};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result));
+                                                  start, stop, result, true, "arr.iarr"));
 }
 
 INA_TEST_FIXTURE(get_slice_buffer, 6_d_p) {
@@ -232,7 +235,7 @@ INA_TEST_FIXTURE(get_slice_buffer, 6_d_p) {
                        63571, 63572};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result));
+                                                  start, stop, result, false, "arr.iarr"));
 }
 
 INA_TEST_FIXTURE(get_slice_buffer, 7_f) {
@@ -266,5 +269,5 @@ INA_TEST_FIXTURE(get_slice_buffer, 7_f) {
                       7548551, 7548552, 7548561, 7548562, 7548651, 7548652, 7548661, 7548662};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result));
+                                                  start, stop, result, false, NULL));
 }

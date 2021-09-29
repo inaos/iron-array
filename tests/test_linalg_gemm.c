@@ -18,7 +18,8 @@ static ina_rc_t
 test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize, const int64_t *xshape, const int64_t *xcshape,
           const int64_t *xbshape, int64_t *xblockshape, const int64_t *yshape, const int64_t *ycshape,
           const int64_t *ybshape, int64_t *yblockbshape, const int64_t *zshape, const int64_t *zcshape,
-          const int64_t *zbshape)
+          const int64_t *zbshape, bool xcontiguous, char *xurlpath, bool ycontiguous, char *yurlpath,
+          bool zcontiguous, char *zurlpath)
 {
     int xflag = CblasNoTrans;
     int yflag = CblasNoTrans;
@@ -35,14 +36,15 @@ test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize, const i
 
     iarray_storage_t xstore;
     xstore.backend = xcshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    xstore.urlpath = NULL;
-    xstore.contiguous = false;
+    xstore.urlpath = xurlpath;
+    xstore.contiguous = xcontiguous;
     if (xcshape != NULL) {
         for (int i = 0; i < xdtshape.ndim; ++i) {
             xstore.chunkshape[i] = xcshape[i];
             xstore.blockshape[i] = xbshape[i];
         }
     }
+    blosc2_remove_urlpath(xstore.urlpath);
     
     iarray_container_t *c_x;
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, (double) xsize, 1, &xstore, 0, &c_x));
@@ -63,14 +65,15 @@ test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize, const i
 
     iarray_storage_t ystore;
     ystore.backend = ycshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    ystore.urlpath = NULL;
-    ystore.contiguous = false;
+    ystore.urlpath = yurlpath;
+    ystore.contiguous = ycontiguous;
     if (ycshape != NULL) {
         for (int i = 0; i < ydtshape.ndim; ++i) {
             ystore.chunkshape[i] = ycshape[i];
             ystore.blockshape[i] = ybshape[i];
         }
     }
+    blosc2_remove_urlpath(ystore.urlpath);
     iarray_container_t *c_y;
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &ydtshape, 0, (double) ysize, 1, &ystore, 0, &c_y));
 
@@ -116,14 +119,15 @@ test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize, const i
 
     iarray_storage_t zstore;
     zstore.backend = zcshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    zstore.urlpath = NULL;
-    zstore.contiguous = false;
+    zstore.urlpath = zurlpath;
+    zstore.contiguous = zcontiguous;
     if (zcshape != NULL) {
         for (int i = 0; i < zdtshape.ndim; ++i) {
             zstore.chunkshape[i] = zcshape[i];
             zstore.blockshape[i] = zbshape[i];
         }
     }
+    blosc2_remove_urlpath(zstore.urlpath);
 
     iarray_container_t *c_z;
 
@@ -160,6 +164,9 @@ test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize, const i
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
     iarray_container_free(ctx, &c_z);
+    blosc2_remove_urlpath(xstore.urlpath);
+    blosc2_remove_urlpath(ystore.urlpath);
+    blosc2_remove_urlpath(zstore.urlpath);
 
     INA_MEM_FREE_SAFE(xbuffer);
     INA_MEM_FREE_SAFE(ybuffer);
@@ -209,7 +216,7 @@ INA_TEST_FIXTURE(linalg_gemm, f_plain_plain) {
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
                                     xshape, xcshape, xbshape, xblockshape,
                                     yshape, ycshape, ybshape, yblockshape,
-                                    zshape, zcshape, zbshape));
+                                    zshape, zcshape, zbshape, false, "xarr.iarr", true, "yarr.iarr", true, NULL));
 }
 
 
@@ -237,7 +244,7 @@ INA_TEST_FIXTURE(linalg_gemm, d_plain_plain) {
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
                                       xshape, xcshape, xbshape, xblockshape,
                                       yshape, ycshape, ybshape, yblockshape,
-                                      zshape, zcshape, zbshape));
+                                      zshape, zcshape, zbshape, false, NULL, false, NULL, false, NULL));
 }
 
 
@@ -265,7 +272,7 @@ INA_TEST_FIXTURE(linalg_gemm, f_schunk_schunk) {
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
                                       xshape, xcshape, xbshape, xblockshape,
                                       yshape, ycshape, ybshape, yblockshape,
-                                      zshape, zcshape, zbshape));
+                                      zshape, zcshape, zbshape, false, "xarr.iarr", false, "yarr.iarr", false, "zarr.iarr"));
 }
 
 
@@ -293,7 +300,7 @@ INA_TEST_FIXTURE(linalg_gemm, d_schunk_schunk) {
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
                                       xshape, xcshape, xbshape, xblockshape,
                                       yshape, ycshape, ybshape, yblockshape,
-                                      zshape, zcshape, zbshape));
+                                      zshape, zcshape, zbshape, true, NULL, true, NULL, true, NULL));
 }
 
 
@@ -321,7 +328,7 @@ INA_TEST_FIXTURE(linalg_gemm, f_plain_plain2) {
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
                                       xshape, xcshape, xbshape, xblockshape,
                                       yshape, ycshape, ybshape, yblockshape,
-                                      zshape, zcshape, zbshape));
+                                      zshape, zcshape, zbshape, true, "xarr.iarr", true, "yarr.iarr", true, "zarr.iarr"));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, d_plain_plain2) {
@@ -348,7 +355,7 @@ INA_TEST_FIXTURE(linalg_gemm, d_plain_plain2) {
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
                                       xshape, xcshape, xbshape, xblockshape,
                                       yshape, ycshape, ybshape, yblockshape,
-                                      zshape, zcshape, zbshape));
+                                      zshape, zcshape, zbshape, false, NULL, false, "yarr.iarr", true, NULL));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, f_schunk_schunk2) {
@@ -375,7 +382,7 @@ INA_TEST_FIXTURE(linalg_gemm, f_schunk_schunk2) {
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
                                       xshape, xcshape, xbshape, xblockshape,
                                       yshape, ycshape, ybshape, yblockshape,
-                                      zshape, zcshape, zbshape));
+                                      zshape, zcshape, zbshape, false, "xarr.iarr", true, "yarr.iarr", false, "zarr.iarr"));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, d_schunk_schunk2) {
@@ -402,7 +409,7 @@ INA_TEST_FIXTURE(linalg_gemm, d_schunk_schunk2) {
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
                                       xshape, xcshape, xbshape, xblockshape,
                                       yshape, ycshape, ybshape, yblockshape,
-                                      zshape, zcshape, zbshape));
+                                      zshape, zcshape, zbshape, true, NULL, true, "yarr.iarr", false, "zarr.iarr"));
 }
 
 
@@ -430,7 +437,7 @@ INA_TEST_FIXTURE(linalg_gemm, f_plain_schunk) {
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
                                       xshape, xcshape, xbshape, xblockshape,
                                       yshape, ycshape, ybshape, yblockshape,
-                                      zshape, zcshape, zbshape));
+                                      zshape, zcshape, zbshape, false, NULL, true, NULL, true, NULL));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, d_plain_schunk) {
@@ -457,7 +464,7 @@ INA_TEST_FIXTURE(linalg_gemm, d_plain_schunk) {
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
                                       xshape, xcshape, xbshape, xblockshape,
                                       yshape, ycshape, ybshape, yblockshape,
-                                      zshape, zcshape, zbshape));
+                                      zshape, zcshape, zbshape, true, "xarr.iarr", true, NULL, true, "zarr.iarr"));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, f_schunk_plain) {
@@ -484,7 +491,7 @@ INA_TEST_FIXTURE(linalg_gemm, f_schunk_plain) {
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
                                       xshape, xcshape, xbshape, xblockshape,
                                       yshape, ycshape, ybshape, yblockshape,
-                                      zshape, zcshape, zbshape));
+                                      zshape, zcshape, zbshape, true, NULL, false, NULL, true, "zarr.iarr"));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, d_schunk_plain_schunk) {
@@ -511,7 +518,7 @@ INA_TEST_FIXTURE(linalg_gemm, d_schunk_plain_schunk) {
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
                                       xshape, xcshape, xbshape, xblockshape,
                                       yshape, ycshape, ybshape, yblockshape,
-                                      zshape, zcshape, zbshape));
+                                      zshape, zcshape, zbshape, false, NULL, true, NULL, false, "zarr.iarr"));
 }
 
 INA_TEST_FIXTURE(linalg_gemm, d_schunk_plain_plain) {
@@ -538,5 +545,5 @@ INA_TEST_FIXTURE(linalg_gemm, d_schunk_plain_plain) {
     INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
                                       xshape, xcshape, xbshape, xblockshape,
                                       yshape, ycshape, ybshape, yblockshape,
-                                      zshape, zcshape, zbshape));
+                                      zshape, zcshape, zbshape, true, "xarr.iarr", true, "yarr.iarr", false, "zarr.iarr"));
 }

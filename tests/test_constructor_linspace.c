@@ -10,12 +10,13 @@
  *
  */
 
+#include <blosc2.h>
 #include <libiarray/iarray.h>
 
 
 static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim,
                               const int64_t *shape, const int64_t *cshape, const int64_t *bshape, double start,
-                              double stop) {
+                              double stop, bool contiguous, char *urlpath) {
     // Create dtshape
     iarray_dtshape_t xdtshape;
 
@@ -29,8 +30,8 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, i
 
     iarray_storage_t store;
     store.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    store.contiguous = false;
-    store.urlpath = NULL;
+    store.contiguous = contiguous;
+    store.urlpath = urlpath;
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {
             store.chunkshape[i] = cshape[i];
@@ -39,6 +40,7 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, i
     }
 
     iarray_container_t *c_x;
+    blosc2_remove_urlpath(store.urlpath);
 
     INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &xdtshape, start, stop, &store, 0, &c_x));
 
@@ -69,6 +71,7 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, i
     INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     iarray_container_free(ctx, &c_x);
+    blosc2_remove_urlpath(store.urlpath);
     return INA_SUCCESS;
 }
 
@@ -98,7 +101,7 @@ INA_TEST_FIXTURE(constructor_linspace, 2_d) {
     double start = - 0.1;
     double stop = - 0.25;
 
-    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, false, NULL));
 }
 
 INA_TEST_FIXTURE(constructor_linspace, 2_f_p) {
@@ -111,7 +114,7 @@ INA_TEST_FIXTURE(constructor_linspace, 2_f_p) {
     double start = 3123;
     double stop = 45654;
 
-    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, false, "arr.iarr"));
 }
 
 INA_TEST_FIXTURE(constructor_linspace, 5_d_p) {
@@ -124,7 +127,7 @@ INA_TEST_FIXTURE(constructor_linspace, 5_d_p) {
     double start = 0.1;
     double stop = 0.2;
 
-    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, NULL));
 }
 
 INA_TEST_FIXTURE(constructor_linspace, 7_f) {
@@ -137,5 +140,5 @@ INA_TEST_FIXTURE(constructor_linspace, 7_f) {
     double start = 10;
     double stop = 0;
 
-    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, "arr.iarr"));
 }

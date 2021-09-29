@@ -16,7 +16,7 @@
 static ina_rc_t
 test_btune_favor(iarray_config_t *cfg, iarray_data_type_t dtype, size_t type_size, int8_t ndim,
                  const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
-                 int32_t *prev_cbytes)
+                 int32_t *prev_cbytes, bool contiguous, char *urlpath)
 {
 
     iarray_context_t *ctx;
@@ -48,7 +48,7 @@ test_btune_favor(iarray_config_t *cfg, iarray_data_type_t dtype, size_t type_siz
         }
     }
 
-    iarray_storage_t xstore = {.urlpath=NULL, .contiguous=false};
+    iarray_storage_t xstore = {.urlpath=urlpath, .contiguous=contiguous};
     if (cshape == NULL) {
         xstore.backend = IARRAY_STORAGE_PLAINBUFFER;
     } else {
@@ -60,6 +60,7 @@ test_btune_favor(iarray_config_t *cfg, iarray_data_type_t dtype, size_t type_siz
     }
 
     iarray_container_t *c_x;
+    blosc2_remove_urlpath(xstore.urlpath);
 
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf_src, (size_t) buf_size * type_size, &xstore, 0, &c_x));
 
@@ -84,6 +85,7 @@ test_btune_favor(iarray_config_t *cfg, iarray_data_type_t dtype, size_t type_siz
     free(buf_dest);
     free(buf_src);
     iarray_container_free(ctx, &c_x);
+    blosc2_remove_urlpath(xstore.urlpath);
 
     iarray_context_free(&ctx);
     
@@ -120,7 +122,7 @@ INA_TEST_FIXTURE(btune_favor, cratio)
     data->cfg.compression_favor = IARRAY_COMPRESSION_FAVOR_CRATIO;
     
     INA_TEST_ASSERT_SUCCEED(test_btune_favor(&data->cfg, dtype, type_size, ndim, shape, cshape,
-                                             bshape, &data->cbytes));
+                                             bshape, &data->cbytes, false, NULL));
 }
 
 INA_TEST_FIXTURE(btune_favor, balance)
@@ -136,7 +138,7 @@ INA_TEST_FIXTURE(btune_favor, balance)
     data->cfg.compression_favor = IARRAY_COMPRESSION_FAVOR_BALANCE;
 
     INA_TEST_ASSERT_SUCCEED(test_btune_favor(&data->cfg, dtype, type_size, ndim, shape, cshape,
-                                             bshape, &data->cbytes));
+                                             bshape, &data->cbytes, true, NULL));
 }
 
 INA_TEST_FIXTURE(btune_favor, speed)
@@ -152,5 +154,8 @@ INA_TEST_FIXTURE(btune_favor, speed)
     data->cfg.compression_favor = IARRAY_COMPRESSION_FAVOR_SPEED;
 
     INA_TEST_ASSERT_SUCCEED(test_btune_favor(&data->cfg, dtype, type_size, ndim, shape, cshape,
-                                             bshape, &data->cbytes));
+                                             bshape, &data->cbytes, true, "arr.iarr"));
+
+    INA_TEST_ASSERT_SUCCEED(test_btune_favor(&data->cfg, dtype, type_size, ndim, shape, cshape,
+                                             bshape, &data->cbytes, false, "arr.iarr"));
 }
