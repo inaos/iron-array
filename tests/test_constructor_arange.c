@@ -10,12 +10,13 @@
  *
  */
 
+#include <blosc2.h>
 #include <libiarray/iarray.h>
 
 
 static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim,
                            const int64_t *shape, const int64_t *cshape, const int64_t *bshape, double start,
-                           double stop)
+                           double stop, bool contiguous, char *urlpath)
 {
 
     // Create dtshape
@@ -31,7 +32,7 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
 
     double step = (stop - start) / size;
 
-    iarray_storage_t xstore = {.urlpath=NULL, .contiguous=false};
+    iarray_storage_t xstore = {.urlpath=urlpath, .contiguous=contiguous};
     if (cshape == NULL) {
         xstore.backend = IARRAY_STORAGE_PLAINBUFFER;
     } else {
@@ -43,6 +44,7 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
     }
 
     iarray_container_t *c_x;
+    blosc2_remove_urlpath(xstore.urlpath);
 
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &xstore, 0, &c_x));
 
@@ -70,6 +72,7 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
     iarray_iter_read_free(&I2);
     INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
+    blosc2_remove_urlpath(xstore.urlpath);
     iarray_container_free(ctx, &c_x);
     return INA_SUCCESS;
 }
@@ -100,7 +103,7 @@ INA_TEST_FIXTURE(constructor_arange, 2_d_p) {
     double start = 0;
     double stop = 100;
 
-    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, false, NULL));
 }
 
 INA_TEST_FIXTURE(constructor_arange, 2_f) {
@@ -113,7 +116,7 @@ INA_TEST_FIXTURE(constructor_arange, 2_f) {
     double start = 0;
     double stop = 100 * 100;
 
-    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, "arr.iarr"));
 }
 
 
@@ -127,7 +130,7 @@ INA_TEST_FIXTURE(constructor_arange, 5_d) {
     double start = 0.1;
     double stop = 0.2;
 
-    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, false, "arr.iarr"));
 }
 
 INA_TEST_FIXTURE(constructor_arange, 7_f_p) {
@@ -140,5 +143,5 @@ INA_TEST_FIXTURE(constructor_arange, 7_f_p) {
     double start = 10;
     double stop = 0;
 
-    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop));
+    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, NULL));
 }

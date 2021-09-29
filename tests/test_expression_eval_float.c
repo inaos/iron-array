@@ -40,7 +40,7 @@ static void ffill_y(const float* x, float* y, int64_t nelem, float (func)(float)
 
 static ina_rc_t fexecute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape,
                                      const int64_t *cshape, const int64_t *bshape,
-                                     bool plain_buffer, float (func)(float), char* expr_str)
+                                     bool plain_buffer, float (func)(float), char* expr_str, bool contiguous, char *urlpath)
 {
     iarray_context_t *ctx;
     iarray_expression_t* e;
@@ -58,14 +58,15 @@ static ina_rc_t fexecute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const in
 
     iarray_storage_t store;
     store.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
-    store.contiguous = false;
-    store.urlpath = NULL;
+    store.contiguous = contiguous;
+    store.urlpath = urlpath;
     if (!plain_buffer) {
         for (int i = 0; i < ndim; ++i) {
             store.chunkshape[i] = cshape[i];
             store.blockshape[i] = bshape[i];
         }
     }
+    blosc2_remove_urlpath(store.urlpath);
     float *buffer_x = (float *) ina_mem_alloc(nelem * sizeof(float));
     float *buffer_y = (float *) ina_mem_alloc(nelem * sizeof(float));
 
@@ -75,9 +76,23 @@ static ina_rc_t fexecute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const in
 
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void*)buffer_x, nelem * sizeof(float), &store, 0, &c_x));
 
+    iarray_storage_t outstore;
+    outstore.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
+    outstore.contiguous = contiguous;
+    outstore.urlpath = NULL;
+    if (urlpath != NULL) {
+        outstore.urlpath = "outarr.iarr";
+    }
+    if (!plain_buffer) {
+        for (int i = 0; i < ndim; ++i) {
+            outstore.chunkshape[i] = cshape[i];
+            outstore.blockshape[i] = bshape[i];
+        }
+    }
+    blosc2_remove_urlpath(outstore.urlpath);
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
-    INA_TEST_ASSERT_SUCCEED(iarray_expr_bind_out_properties(e, &dtshape, &store));
+    INA_TEST_ASSERT_SUCCEED(iarray_expr_bind_out_properties(e, &dtshape, &outstore));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, expr_str));
     INA_TEST_ASSERT_SUCCEED(iarray_eval(e, &c_out));
 
@@ -90,6 +105,8 @@ static ina_rc_t fexecute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const in
     iarray_container_free(ctx, &c_out);
     iarray_container_free(ctx, &c_x);
     iarray_context_free(&ctx);
+    blosc2_remove_urlpath(store.urlpath);
+    blosc2_remove_urlpath(outstore.urlpath);
 
     return INA_SUCCESS;
 }
@@ -133,7 +150,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk0)
     int64_t cshape[] = {3456};
     int64_t bshape[] = {456};
 
-    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str, false, NULL));
 }
 
 static float expr1(const float x)
@@ -152,7 +169,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk1)
     int64_t cshape[] = {3456};
     int64_t bshape[] = {456};
 
-    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str, false, "arr.iarr"));
 }
 
 static float expr2(const float x)
@@ -171,7 +188,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk2)
     int64_t cshape[] = {3456};
     int64_t bshape[] = {456};
 
-    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str, true, NULL));
 }
 
 static float expr3(const float x)
@@ -190,7 +207,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
     int64_t cshape[] = {31, 32, 17};
     int64_t bshape[] = {7, 7, 7};
 
-    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str, true, "arr.iarr"));
 }
 
 static float expr4(const float x)
@@ -209,7 +226,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk_4)
     int64_t cshape[] = {31, 32, 17};
     int64_t bshape[] = {7, 7, 7};
 
-    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str, false, NULL));
 }
 
 static float expr5(const float x)
@@ -228,5 +245,5 @@ INA_TEST_FIXTURE(expression_eval_float, iterchunk_plainbuffer)
     int64_t cshape[] = {0, 0, 0};
     int64_t bshape[] = {0, 0, 0};
 
-    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, true, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, true, data->func, data->expr_str, false, "arr.iarr"));
 }

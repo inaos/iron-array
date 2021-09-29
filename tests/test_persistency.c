@@ -37,6 +37,7 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
 
 
     iarray_container_t *c_x;
+    blosc2_remove_urlpath(store->urlpath);
     INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, store, IARRAY_CONTAINER_PERSIST, &c_x));
 
     // Fill data via write iterator
@@ -79,6 +80,7 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
     iarray_iter_read_free(&I2);
     INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
+    blosc2_remove_urlpath(store->urlpath);
     iarray_container_free(ctx, &c_x);
 
     return INA_SUCCESS;
@@ -117,11 +119,8 @@ INA_TEST_FIXTURE(persistency, double_2) {
     int64_t shape[] = {125, 157};
     int64_t cshape[] = {12, 13};
     int64_t bshape[] = {7, 7};
-
-    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
-
-    // Check sparse persistent storage
     data->store.contiguous = false;
+
     INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
 }
 
@@ -134,11 +133,8 @@ INA_TEST_FIXTURE(persistency, float_2) {
     int64_t shape[] = {445, 321};
     int64_t cshape[] = {21, 17};
     int64_t bshape[] = {8, 9};
+    data->store.contiguous = true;
 
-    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
-
-    // Check sparse persistent storage
-    data->store.contiguous = false;
     INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
 }
 
@@ -150,11 +146,8 @@ INA_TEST_FIXTURE(persistency, double_5) {
     int64_t shape[] = {20, 25, 27, 4, 46};
     int64_t cshape[] = {12, 24, 19, 3, 13};
     int64_t bshape[] = {2, 5, 4, 3, 3};
-
-    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
-
-    // Check sparse persistent storage
     data->store.contiguous = false;
+
     INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
 }
 
@@ -166,10 +159,7 @@ INA_TEST_FIXTURE(persistency, float_7) {
     int64_t shape[] = {10, 12, 8, 9, 1, 7, 7};
     int64_t cshape[] = {2, 5, 3, 4, 1, 3, 3};
     int64_t bshape[] = {2, 2, 2, 4, 1, 2, 1};
+    data->store.contiguous = true;
 
-    INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
-
-    // Check sparse persistent storage
-    data->store.contiguous = false;
     INA_TEST_ASSERT_SUCCEED(test_persistency(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &data->store));
 }

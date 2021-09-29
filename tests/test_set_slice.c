@@ -33,7 +33,8 @@ static ina_rc_t test_set_slice(iarray_context_t *ctx,
 static ina_rc_t
 _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64_t type_size, int8_t ndim,
                           const int64_t *shape, const int64_t *cshape, const int64_t *cshape_slice,
-                          const int64_t *bshape_slice, int64_t *start, int64_t *stop) {
+                          const int64_t *bshape_slice, int64_t *start, int64_t *stop,
+                          bool xcontiguous, char *xurlpath, bool scontiguous, char *surlpath) {
     void *buffer_x;
     size_t buffer_x_len;
 
@@ -61,8 +62,9 @@ _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64
 
     iarray_storage_t xstore;
     xstore.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    xstore.contiguous = false;
-    xstore.urlpath = NULL;
+    xstore.contiguous = xcontiguous;
+    xstore.urlpath = xurlpath;
+    blosc2_remove_urlpath(xstore.urlpath);
 
 
     int64_t bufdes_size = 1;
@@ -91,14 +93,15 @@ _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64
 
     iarray_storage_t sstore;
     sstore.backend = cshape_slice ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    sstore.contiguous = false;
-    sstore.urlpath = NULL;
+    sstore.contiguous = scontiguous;
+    sstore.urlpath = surlpath;
     if (cshape_slice != NULL) {
         for (int i = 0; i < sdtshape.ndim; ++i) {
             sstore.chunkshape[i] = cshape_slice[i];
             sstore.blockshape[i] = bshape_slice[i];
         }
     }
+    blosc2_remove_urlpath(sstore.urlpath);
     iarray_container_t *slice;
     INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &sdtshape, 0, (double) bufdes_size, 1, &sstore, 0, &slice));
 
@@ -120,6 +123,8 @@ _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &slice);
+    blosc2_remove_urlpath(xstore.urlpath);
+    blosc2_remove_urlpath(sstore.urlpath);
 
     ina_mem_free(buffer_x);
     ina_mem_free(bufdes);
@@ -159,7 +164,7 @@ INA_TEST_FIXTURE(set_slice, 2_f) {
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape,
                                                       cshape, cshape_slice, bshape_slice,
-                                                      start, stop));
+                                                      start, stop, false, NULL, false, NULL));
 }
 
 INA_TEST_FIXTURE(set_slice, 2_d_t) {
@@ -176,7 +181,7 @@ INA_TEST_FIXTURE(set_slice, 2_d_t) {
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape,
                                                       cshape, cshape_slice, bshape_slice,
-                                                      start, stop));
+                                                      start, stop, false, "xarr.iarr", false, "sarr.iarr"));
 }
 
 INA_TEST_FIXTURE(set_slice, 3_f) {
@@ -193,7 +198,7 @@ INA_TEST_FIXTURE(set_slice, 3_f) {
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape,
                                                       cshape, cshape_slice, bshape_slice,
-                                                      start, stop));
+                                                      start, stop, true, NULL, true, NULL));
 }
 
 INA_TEST_FIXTURE(set_slice, 4_d) {
@@ -210,7 +215,7 @@ INA_TEST_FIXTURE(set_slice, 4_d) {
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape,
                                                       cshape, cshape_slice, bshape_slice,
-                                                      start, stop));
+                                                      start, stop, true, "xarr.iarr", true, "sarr.iarr"));
 }
 
 INA_TEST_FIXTURE(set_slice, 5_d) {
@@ -227,7 +232,7 @@ const int8_t ndim = 5;
 
 INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape,
                                                   cshape, cshape_slice, bshape_slice,
-                                                  start, stop));
+                                                  start, stop, false, "xarr.iarr", true, NULL));
 }
 
 
@@ -246,7 +251,7 @@ INA_TEST_FIXTURE(set_slice, 6_f) {
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape,
                                                       cshape, cshape_slice, bshape_slice,
-                                                      start, stop));
+                                                      start, stop, true, NULL, true, "sarr.iarr"));
 }
 
 INA_TEST_FIXTURE(set_slice, 7_d) {
@@ -263,5 +268,5 @@ INA_TEST_FIXTURE(set_slice, 7_d) {
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape,
                                                       cshape, cshape_slice, bshape_slice,
-                                                      start, stop));
+                                                      start, stop, true, "xarr.iarr", false, NULL));
 }

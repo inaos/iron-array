@@ -10,6 +10,7 @@
  *
  */
 
+#include <blosc2.h>
 #include <libiarray/iarray.h>
 #include <tests/iarray_test.h>
 
@@ -23,7 +24,7 @@ static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_x, int64
 
 static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int32_t type_size, int8_t ndim,
                                       const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
-                                      int64_t *start, int64_t *stop, const void *result) {
+                                      int64_t *start, int64_t *stop, const void *result, bool xcontiguous, char *xurlpath) {
     void *buffer_x;
     size_t buffer_x_len;
 
@@ -51,14 +52,15 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     iarray_storage_t xstore;
     xstore.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    xstore.contiguous = false;
-    xstore.urlpath = NULL;
+    xstore.contiguous = xcontiguous;
+    xstore.urlpath = xurlpath;
     if (cshape != NULL) {
         for (int i = 0; i < ndim; ++i) {
             xstore.chunkshape[i] = cshape[i];
             xstore.blockshape[i] = bshape[i];
         }
     }
+    blosc2_remove_urlpath(xstore.urlpath);
     iarray_container_t *c_x;
     iarray_container_t *c_out;
 
@@ -92,6 +94,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_out);
+    blosc2_remove_urlpath(xstore.urlpath);
 
     ina_mem_free(buffer_x);
 
@@ -132,7 +135,7 @@ INA_TEST_FIXTURE(view, 2_d_p_v) {
                        77, 78, 79, 83, 84, 85, 86, 87, 88, 89};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result));
+                                                  start, stop, result, false, "xarr.iarr"));
 }
 
 INA_TEST_FIXTURE(view, 3_f_v) {
@@ -159,7 +162,7 @@ INA_TEST_FIXTURE(view, 3_f_v) {
                       563, 564, 565, 566, 567, 568, 569};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result));
+                                                  start, stop, result, true, "xarr.iarr"));
 }
 
 INA_TEST_FIXTURE(view, 4_d_v) {
@@ -181,7 +184,7 @@ INA_TEST_FIXTURE(view, 4_d_v) {
 
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result));
+                                                  start, stop, result, false, NULL));
 }
 
 INA_TEST_FIXTURE(view, 5_f_p_v) {
@@ -203,7 +206,7 @@ INA_TEST_FIXTURE(view, 5_f_p_v) {
                       77559, 78557, 78558, 78559};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result));
+                                                  start, stop, result, true, NULL));
 }
 
 INA_TEST_FIXTURE(view, 6_d_p_v) {
@@ -227,7 +230,7 @@ INA_TEST_FIXTURE(view, 6_d_p_v) {
                        63571, 63572};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result));
+                                                  start, stop, result, true, "xarr.iarr"));
 }
 
 INA_TEST_FIXTURE(view, 7_f_v) {
@@ -261,7 +264,7 @@ INA_TEST_FIXTURE(view, 7_f_v) {
                       7548551, 7548552, 7548561, 7548562, 7548651, 7548652, 7548661, 7548662};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result));
+                                                  start, stop, result, false, "xarr.iarr"));
 }
 
 
@@ -279,7 +282,7 @@ INA_TEST_FIXTURE(view, 7_f_v2) {
     float result[] = {0}; // Fix windows
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result));
+                                                  start, stop, result, false, NULL));
 }
 
 INA_TEST_FIXTURE(view, 3_f_v2) {
@@ -296,5 +299,5 @@ INA_TEST_FIXTURE(view, 3_f_v2) {
     float result[] = {0}; // Fix windows
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result));
+                                                  start, stop, result, true, NULL));
 }

@@ -10,24 +10,27 @@
  *
  */
 
+#include <blosc2.h>
 #include <libiarray/iarray.h>
 
 
 static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx,
-                          char* urlpath,
+                          bool xcontiguous, char* xurlpath, char* yurlpath,
                           ina_rc_t (*random_fun)(iarray_context_t*, iarray_dtshape_t*,
                                                  iarray_random_ctx_t*, iarray_storage_t*, int, iarray_container_t**))
 {
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_container_open(ctx, urlpath, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_open(ctx, yurlpath, &c_y));
 
     iarray_dtshape_t xdtshape;
     iarray_get_dtshape(ctx, c_y, &xdtshape);
 
     iarray_storage_t xstorage;
     iarray_get_storage(ctx, c_y, &xstorage);
-    xstorage.urlpath = NULL;
+    xstorage.urlpath = xurlpath;
+    xstorage.contiguous = xcontiguous;
+    blosc2_remove_urlpath(xstorage.urlpath);
 
     iarray_container_t *c_x;
     INA_TEST_ASSERT_SUCCEED(random_fun(ctx, &xdtshape, rnd_ctx, &xstorage, 0, &c_x));
@@ -43,6 +46,7 @@ static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx,
 
     iarray_container_free(ctx, &c_x);
     iarray_container_free(ctx, &c_y);
+    blosc2_remove_urlpath(xstorage.urlpath);
 
     return INA_SUCCESS;
 }
@@ -74,7 +78,7 @@ INA_TEST_FIXTURE(random_mt, rand) {
 
     char *urlpath = "test_rand_float64.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, false, "xarr.iarr", urlpath,
                                       &iarray_random_rand));
 }
 
@@ -82,7 +86,7 @@ INA_TEST_FIXTURE(random_mt, rand_f) {
 
     char* urlpath = "test_rand_float32.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, true, "xarr.iarr", urlpath,
                                       &iarray_random_rand));
 }
 
@@ -90,7 +94,7 @@ INA_TEST_FIXTURE(random_mt, randn) {
 
     char* urlpath = "test_randn_float64.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, false, NULL, urlpath,
                                       &iarray_random_randn));
 }
 
@@ -98,7 +102,7 @@ INA_TEST_FIXTURE(random_mt, randn_f) {
 
     char* urlpath = "test_randn_float32.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, true, "xarr.iarr", urlpath,
                                       &iarray_random_randn));
 }
 
@@ -111,7 +115,7 @@ INA_TEST_FIXTURE(random_mt, beta) {
 
     char* urlpath = "test_beta_float64_a3_b4.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, true, NULL, urlpath,
                                       &iarray_random_beta));
 }
 
@@ -122,7 +126,7 @@ INA_TEST_FIXTURE(random_mt, beta_f) {
 
     char* urlpath = "test_beta_float32_a0.1_b5.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, false, NULL, urlpath,
                                       &iarray_random_beta));
 }
 
@@ -133,7 +137,7 @@ INA_TEST_FIXTURE(random_mt, lognormal) {
 
     char* urlpath = "test_lognormal_float64_mean3_sigma4.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, false, "xarr.iarr", urlpath,
                                       &iarray_random_lognormal));
 }
 
@@ -144,7 +148,7 @@ INA_TEST_FIXTURE(random_mt, lognormal_f) {
 
     char* urlpath = "test_lognormal_float32_mean0.1_sigma5.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, false, "xarr.iarr", urlpath,
                                       &iarray_random_lognormal));
 }
 
@@ -154,7 +158,7 @@ INA_TEST_FIXTURE(random_mt, exponential) {
     
     char* urlpath = "test_exponential_float64_scale3.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, true, NULL, urlpath,
                                       &iarray_random_exponential));
 }
 
@@ -164,7 +168,7 @@ INA_TEST_FIXTURE(random_mt, exponential_f) {
 
     char* urlpath = "test_exponential_float32_scale0.1.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, true, NULL, urlpath,
                                       &iarray_random_exponential));
 }
 
@@ -175,7 +179,7 @@ INA_TEST_FIXTURE(random_mt, uniform) {
 
     char* urlpath = "test_uniform_float64_low-3_high5.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, false, NULL, urlpath,
                                       &iarray_random_uniform));
 }
 
@@ -186,7 +190,7 @@ INA_TEST_FIXTURE(random_mt, uniform_f) {
 
     char* urlpath = "test_uniform_float32_low-0.1_high0.2.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, true, "xarr.iarr", urlpath,
                                       &iarray_random_uniform));
 }
 
@@ -197,7 +201,7 @@ INA_TEST_FIXTURE(random_mt, normal) {
 
     char* urlpath = "test_normal_float64_loc3_scale5.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, false, "xarr.iarr", urlpath,
                                       &iarray_random_normal));
 }
 
@@ -208,7 +212,7 @@ INA_TEST_FIXTURE(random_mt, normal_f) {
 
     char* urlpath = "test_normal_float32_loc0.1_scale0.2.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, true, NULL, urlpath,
                                       &iarray_random_normal));
 }
 
@@ -219,7 +223,7 @@ INA_TEST_FIXTURE(random_mt, binomial) {
 
     char* urlpath = "test_binomial_float64_n3_p0.7.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, false, NULL, urlpath,
                                       &iarray_random_binomial));
 }
 
@@ -230,7 +234,7 @@ INA_TEST_FIXTURE(random_mt, binomial_f) {
 
     char* urlpath = "test_binomial_float32_n10_p0.01.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath,
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, true, "xarr.iarr", urlpath,
                                       &iarray_random_binomial));
 }
 
@@ -241,7 +245,7 @@ INA_TEST_FIXTURE(random_mt, poisson) {
 
     char* urlpath = "test_poisson_float64_lam3.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath, &iarray_random_poisson));
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, false, "xarr.iarr", urlpath, &iarray_random_poisson));
 }
 
 
@@ -251,7 +255,7 @@ INA_TEST_FIXTURE(random_mt, poisson_f) {
 
     char* urlpath = "test_poisson_float32_lam0.001.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath, &iarray_random_poisson));
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, true, "xarr.iarr", urlpath, &iarray_random_poisson));
 }
 
 
@@ -261,7 +265,7 @@ INA_TEST_FIXTURE(random_mt, bernouilli) {
 
     char* urlpath = "test_binomial_float64_n1_p0.7.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath, &iarray_random_bernoulli));
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, true, NULL, urlpath, &iarray_random_bernoulli));
 }
 
 
@@ -275,5 +279,5 @@ INA_TEST_FIXTURE(random_mt, bernoulli_f) {
 
     char* urlpath = "test_binomial_float32_n1_p0.01.iarray";
 
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, urlpath, &iarray_random_bernoulli));
+    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, false, "xarr.iarr", urlpath, &iarray_random_bernoulli));
 }

@@ -42,7 +42,7 @@ static void fill_y(const double* x, double* y,double *z, int64_t nelem,
 static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape,
                                     const int64_t *cshape, const int64_t *bshape,
                                     bool plain_buffer, double (func)(double, double),
-                                    char *expr_str)
+                                    char *expr_str, bool contiguous, char *urlpath)
 {
     iarray_context_t *ctx;
     iarray_expression_t* e;
@@ -69,25 +69,30 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
 
     iarray_storage_t store;
     store.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
-    store.contiguous = false;
-    store.urlpath = NULL;
+    store.contiguous = contiguous;
+    store.urlpath = urlpath;
     if (!plain_buffer) {
         for (int i = 0; i < ndim; ++i) {
             store.chunkshape[i] = cshape[i];
             store.blockshape[i] = bshape[i];
         }
     }
+    blosc2_remove_urlpath(store.urlpath);
 
     iarray_storage_t transstore;
     transstore.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
-    transstore.contiguous = false;
+    transstore.contiguous = contiguous;
     transstore.urlpath = NULL;
+    if (urlpath != NULL) {
+        transstore.urlpath = "transarr.iarr";
+    }
     if (!plain_buffer) {
         for (int i = 0; i < ndim; ++i) {
             transstore.chunkshape[i] = cshape[ndim - 1 - i];
             transstore.blockshape[i] = bshape[ndim - 1 - i];
         }
     }
+    blosc2_remove_urlpath(transstore.urlpath);
     double *buffer_x = (double *) ina_mem_alloc(nelem * sizeof(double));
     double *buffer_y = (double *) ina_mem_alloc(nelem * sizeof(double));
     double *buffer_z = (double *) ina_mem_alloc(nelem * sizeof(double));
@@ -115,10 +120,24 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
 
     fill_y(buffer_x, buffer_y, buffer_z, nelem, func);
 
+    iarray_storage_t outstore;
+    outstore.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
+    outstore.contiguous = contiguous;
+    outstore.urlpath = NULL;
+    if (urlpath != NULL) {
+        outstore.urlpath = "outarr.iarr";
+    }
+    if (!plain_buffer) {
+        for (int i = 0; i < ndim; ++i) {
+            outstore.chunkshape[i] = cshape[i];
+            outstore.blockshape[i] = bshape[i];
+        }
+    }
+    blosc2_remove_urlpath(outstore.urlpath);
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "y", c_y));
-    INA_TEST_ASSERT_SUCCEED(iarray_expr_bind_out_properties(e, &dtshape, &store));
+    INA_TEST_ASSERT_SUCCEED(iarray_expr_bind_out_properties(e, &dtshape, &outstore));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, expr_str));
     INA_TEST_ASSERT_SUCCEED(iarray_eval(e, &c_out));
 
@@ -134,6 +153,9 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
     iarray_container_free(ctx, &c_trans);
     iarray_container_free(ctx, &c_x);
     iarray_context_free(&ctx);
+    blosc2_remove_urlpath(store.urlpath);
+    blosc2_remove_urlpath(transstore.urlpath);
+    blosc2_remove_urlpath(outstore.urlpath);
 
     return INA_SUCCESS;
 }
@@ -178,7 +200,7 @@ INA_TEST_FIXTURE(expression_eval_transpose, iterblosc_superchunk_2)
     int64_t cshape[] = {245, 200};
     int64_t bshape[] = {25, 100};
 
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str, false, NULL));
 }
 
 INA_TEST_FIXTURE(expression_eval_transpose, iterchunk_superchunk_3)
@@ -192,7 +214,7 @@ INA_TEST_FIXTURE(expression_eval_transpose, iterchunk_superchunk_3)
     int64_t cshape[] = {500, 15};
     int64_t bshape[] = {200, 5};
 
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str, false, "arr.iarr"));
 }
 
 INA_TEST_FIXTURE(expression_eval_transpose, iterchunk_plainbuffer_4)
@@ -206,6 +228,8 @@ INA_TEST_FIXTURE(expression_eval_transpose, iterchunk_plainbuffer_4)
     int64_t cshape[] = {0, 0};
     int64_t bshape[] = {0, 0};
 
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, true, data->func, data->expr_str));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, true, data->func, data->expr_str, true, "arr.iarr"));
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, true, data->func, data->expr_str, true, NULL));
 }
 

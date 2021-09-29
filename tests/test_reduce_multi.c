@@ -17,15 +17,11 @@
 static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim,
                                const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
                                int8_t naxis, int8_t *axis,
-                               int64_t *dest_cshape, int64_t *dest_bshape, bool dest_frame,
-                               char* dest_urlpath)
+                               int64_t *dest_cshape, int64_t *dest_bshape, bool src_contiguous, char *src_urlpath,
+                               bool dest_contiguous, char* dest_urlpath)
 {
-    char* src_urlpath = "iarray_reduce2.iarray";
     blosc2_remove_urlpath(src_urlpath);
-
-    if (dest_urlpath) {
-        blosc2_remove_urlpath(dest_urlpath);
-    }
+    blosc2_remove_urlpath(dest_urlpath);
 
     // Create dtshape
     iarray_dtshape_t dtshape;
@@ -40,7 +36,7 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
 
     iarray_storage_t storage = {0};
     storage.backend = IARRAY_STORAGE_BLOSC;
-    storage.contiguous = true;
+    storage.contiguous = src_contiguous;
     storage.urlpath = src_urlpath;
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {
@@ -55,7 +51,7 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
 
     iarray_storage_t dest_storage = {0};
     dest_storage.backend = IARRAY_STORAGE_BLOSC;
-    dest_storage.contiguous = dest_frame;
+    dest_storage.contiguous = dest_contiguous;
     dest_storage.urlpath = dest_urlpath;
     for (int i = 0; i < ndim - naxis; ++i) {
         dest_storage.blockshape[i] = dest_bshape[i];
@@ -96,9 +92,7 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
     iarray_container_free(ctx, &c_z);
     iarray_container_free(ctx, &c_x);
 
-    if (dest_urlpath) {
-        blosc2_remove_urlpath(dest_urlpath);
-    }
+    blosc2_remove_urlpath(dest_urlpath);
     blosc2_remove_urlpath(src_urlpath);
 
     return INA_SUCCESS;
@@ -134,11 +128,13 @@ INA_TEST_FIXTURE(reduce_multi, 2_d_1) {
 
     int64_t dest_cshape[] = {50};
     int64_t dest_bshape[] = {31};
-    bool dest_frame = false;
+    bool src_contiguous = true;
+    char *src_urlpath = NULL;
+    bool dest_contiguous = false;
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
-                                              naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_urlpath));
+                                              naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
+                                              dest_contiguous, dest_urlpath));
 }
 
 
@@ -154,11 +150,13 @@ INA_TEST_FIXTURE(reduce_multi, 3_d_2) {
 
     int64_t dest_cshape[] = {0};  // {} not compile on Windows
     int64_t dest_bshape[] = {0};  // {} not compile on Windows
-    bool dest_frame = false;
+    bool src_contiguous = true;
+    char *src_urlpath = "srcarr.iarr";
+    bool dest_contiguous = false;
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
-                                              naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_urlpath));
+                                              naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
+                                              dest_contiguous, dest_urlpath));
 }
 
 INA_TEST_FIXTURE(reduce_multi, 4_d_0) {
@@ -173,11 +171,13 @@ INA_TEST_FIXTURE(reduce_multi, 4_d_0) {
 
     int64_t dest_cshape[] = {3, 1};
     int64_t dest_bshape[] = {3, 1};
-    bool dest_frame = true;
-    char *dest_urlpath = "iarray_reduce.iarray";
+    bool src_contiguous = false;
+    char *src_urlpath = NULL;
+    bool dest_contiguous = true;
+    char *dest_urlpath = "iarray_reduce.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
-                                              naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_urlpath));
+                                              naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
+                                              dest_contiguous, dest_urlpath));
 }
 
 
@@ -193,11 +193,13 @@ INA_TEST_FIXTURE(reduce_multi, 8_d_6) {
 
     int64_t dest_cshape[] = {4, 5, 2, 5, 3, 4, 5};
     int64_t dest_bshape[] = {2, 2, 2, 3, 2, 1, 2};
-    bool dest_frame = false;
-    char *dest_urlpath = NULL;
+    bool src_contiguous = false;
+    char *src_urlpath = "srcarr.iarr";
+    bool dest_contiguous = false;
+    char *dest_urlpath = "destarr.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
-                                              naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_urlpath));
+                                              naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
+                                              dest_contiguous, dest_urlpath));
 }
 
 
@@ -214,11 +216,13 @@ INA_TEST_FIXTURE(reduce_multi, 2_f_1) {
 
     int64_t dest_cshape[] = {210};
     int64_t dest_bshape[] = {2};
-    bool dest_frame = false;
-    char *dest_urlpath = NULL;
+    bool src_contiguous = true;
+    char *src_urlpath = NULL;
+    bool dest_contiguous = false;
+    char *dest_urlpath = "destarr.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
-                                              naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_urlpath));
+                                              naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
+                                              dest_contiguous, dest_urlpath));
 }
 
 
@@ -234,11 +238,13 @@ INA_TEST_FIXTURE(reduce_multi, 3_f_2) {
 
     int64_t dest_cshape[] = {6};
     int64_t dest_bshape[] = {3};
-    bool dest_frame = false;
+    bool src_contiguous = false;
+    char *src_urlpath = NULL;
+    bool dest_contiguous = true;
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
-                                              naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_urlpath));
+                                              naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
+                                              dest_contiguous, dest_urlpath));
 }
 
 INA_TEST_FIXTURE(reduce_multi, 4_f_0) {
@@ -253,11 +259,13 @@ INA_TEST_FIXTURE(reduce_multi, 4_f_0) {
 
     int64_t dest_cshape[] = {16, 3, 1};
     int64_t dest_bshape[] = {3, 3, 1};
-    bool dest_frame = false;
+    bool src_contiguous = true;
+    char *src_urlpath = NULL;
+    bool dest_contiguous = true;
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
-                                              naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_urlpath));
+                                              naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
+                                              dest_contiguous, dest_urlpath));
 }
 
 
@@ -273,9 +281,11 @@ INA_TEST_FIXTURE(reduce_multi, 8_f_6) {
 
     int64_t dest_cshape[] = {5};
     int64_t dest_bshape[] = {2};
-    bool dest_frame = false;
-    char *dest_urlpath = NULL;
+    bool src_contiguous = true;
+    char *src_urlpath = NULL;
+    bool dest_contiguous = false;
+    char *dest_urlpath = "iarray_reduce.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
-                                              naxis, axis, dest_cshape, dest_bshape, dest_frame,
-                                              dest_urlpath));
+                                              naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
+                                              dest_contiguous, dest_urlpath));
 }

@@ -10,6 +10,7 @@
  *
  */
 
+#include <blosc2.h>
 #include <libiarray/iarray.h>
 #include <tests/iarray_test.h>
 
@@ -24,7 +25,8 @@ static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_x, int64
 static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int32_t type_size, int8_t ndim,
                                       const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
                                       const int64_t *cshape_dest, const int64_t *bshape_dest, int64_t *start,
-                                      int64_t *stop, const void *result) {
+                                      int64_t *stop, const void *result, bool contiguous, char *urlpath, bool dest_contiguous,
+                                      char *dest_urlpath) {
     void *buffer_x;
     size_t buffer_x_len;
 
@@ -51,14 +53,15 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     iarray_storage_t store;
     store.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    store.contiguous = false;
-    store.urlpath = NULL;
+    store.contiguous = contiguous;
+    store.urlpath = urlpath;
     for (int j = 0; j < xdtshape.ndim; ++j) {
         if (cshape != NULL) {
             store.chunkshape[j] = cshape[j];
             store.blockshape[j] = bshape[j];
         }
     }
+    blosc2_remove_urlpath(store.urlpath);
 
     iarray_container_t *c_x;
     iarray_container_t *c_out;
@@ -67,14 +70,15 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     iarray_storage_t store_dest;
     store_dest.backend = cshape_dest ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
-    store_dest.contiguous = false;
-    store_dest.urlpath = NULL;
+    store_dest.contiguous = dest_contiguous;
+    store_dest.urlpath = dest_urlpath;
     for (int j = 0; j < xdtshape.ndim; ++j) {
         if (cshape_dest != NULL) {
             store_dest.chunkshape[j] = cshape_dest[j];
             store_dest.blockshape[j] = bshape_dest[j];
         }
     }
+    blosc2_remove_urlpath(store_dest.urlpath);
 
     INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, &store_dest, 0, &c_out));
 
@@ -107,6 +111,8 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
 
     INA_MEM_FREE_SAFE(buffer_x);
     INA_MEM_FREE_SAFE(bufdes);
+    blosc2_remove_urlpath(store.urlpath);
+    blosc2_remove_urlpath(store_dest.urlpath);
     return INA_SUCCESS;
 }
 
@@ -147,7 +153,7 @@ INA_TEST_FIXTURE(get_slice, 2_d_p) {
                        77, 78, 79, 83, 84, 85, 86, 87, 88, 89};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  cshape_dest, bshape_dest, start, stop, result));
+                                                  cshape_dest, bshape_dest, start, stop, result, false, NULL, false, NULL));
 }
 
 
@@ -177,7 +183,7 @@ INA_TEST_FIXTURE(get_slice, 3_f) {
                       563, 564, 565, 566, 567, 568, 569};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  cshape_dest, bshape_dest, start, stop, result));
+                                                  cshape_dest, bshape_dest, start, stop, result, false, "arr.iarr", false, "arr2.iarr"));
 }
 
 
@@ -202,7 +208,7 @@ INA_TEST_FIXTURE(get_slice, 4_d) {
 
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  cshape_dest, bshape_dest, start, stop, result));
+                                                  cshape_dest, bshape_dest, start, stop, result, false, "arr.iarr", true, NULL));
 }
 
 INA_TEST_FIXTURE(get_slice, 5_f_p) {
@@ -226,7 +232,7 @@ INA_TEST_FIXTURE(get_slice, 5_f_p) {
                       77559, 78557, 78558, 78559};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  cshape_dest, bshape_dest, start, stop, result));
+                                                  cshape_dest, bshape_dest, start, stop, result, false, NULL, true, "arr2.iarr"));
 }
 
 INA_TEST_FIXTURE(get_slice, 6_d_p) {
@@ -252,7 +258,7 @@ INA_TEST_FIXTURE(get_slice, 6_d_p) {
                        63571, 63572};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  cshape_dest, bshape_dest, start, stop, result));
+                                                  cshape_dest, bshape_dest, start, stop, result, true, "arr.iarr", true, "arr2.iarr"));
 }
 
 INA_TEST_FIXTURE(get_slice, 7_f) {
@@ -288,7 +294,7 @@ INA_TEST_FIXTURE(get_slice, 7_f) {
                       7548551, 7548552, 7548561, 7548562, 7548651, 7548652, 7548661, 7548662};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  cshape_dest, bshape_dest, start, stop, result));
+                                                  cshape_dest, bshape_dest, start, stop, result, true, NULL, true, NULL));
 }
 
 INA_TEST_FIXTURE(get_slice, 3_f_2) {
@@ -306,5 +312,5 @@ INA_TEST_FIXTURE(get_slice, 3_f_2) {
     float result[] = {0}; // Fix windows
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  cshape_dest, bshape_dest, start, stop, result));
+                                                  cshape_dest, bshape_dest, start, stop, result, false, "arr.iarr", true, "arr2.iarr"));
 }
