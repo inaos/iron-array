@@ -20,28 +20,28 @@ int main(void)
     double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
 
-    int n_threads = 8;
+    int n_threads = 1;
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim_x = 2;
     int8_t ndim_y = 2;
     int8_t ndim_z = 2;
 
-    int64_t shape_x[] = {512, 512};
-    int64_t shape_y[] = {512, 512};
-    int64_t shape_z[] = {512, 512};
+    int64_t shape_x[] = {100, 100};
+    int64_t shape_y[] = {100, 100};
+    int64_t shape_z[] = {100, 100};
 
 //    int64_t size_x = shape_x[0] * shape_x[1];
 //    int64_t size_y = shape_y[0];
 //    int64_t size_z = shape_z[0];
 
-    int64_t cshape_x[] = {128, 512};
-    int64_t cshape_y[] = {512, 128};
-    int64_t cshape_z[] = {128, 512};
+    int64_t cshape_x[] = {90, 90};
+    int64_t cshape_y[] = {90, 90};
+    int64_t cshape_z[] = {90, 90};
 
-    int64_t bshape_x[] = {128, 128};
-    int64_t bshape_y[] = {128, 128};
-    int64_t bshape_z[] = {128, 128};
+    int64_t bshape_x[] = {9, 9};
+    int64_t bshape_y[] = {9, 9};
+    int64_t bshape_z[] = {9, 9};
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.max_num_threads = n_threads;
@@ -104,7 +104,7 @@ int main(void)
     iarray_container_t *c_z;
 
     INA_STOPWATCH_START(w);
-    if (INA_FAILED(iarray_opt_gemm3(ctx, c_x, c_y, &store_z, &c_z))) {
+    if (INA_FAILED(iarray_opt_gemm(ctx, c_x, c_y, &store_z, &c_z))) {
         fprintf(stderr, "Error in linalg_gemm: %s\n", ina_err_strerror(ina_err_get_rc()));
         goto fail;
     }
