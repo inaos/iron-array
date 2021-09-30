@@ -160,7 +160,7 @@ int main(int argc, char** argv)
     mat_y = (double *) ina_mem_alloc((sizeof(double) * size_y));
 
     printf("\n");
-    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_x_prop.urlpath) && _iarray_file_exists(mat_y_prop.urlpath)) {
+    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_path_exists(mat_x_prop.urlpath) && _iarray_path_exists(mat_y_prop.urlpath)) {
         INA_STOPWATCH_START(w);
         INA_MUST_SUCCEED(iarray_container_open(ctx, mat_x_prop.urlpath, &con_x));
         INA_MUST_SUCCEED(iarray_container_open(ctx, mat_y_prop.urlpath, &con_y));

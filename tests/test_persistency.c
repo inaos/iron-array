@@ -59,7 +59,7 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
 
     // Close the container and re-open it from disk
     iarray_container_free(ctx, &c_x);
-    INA_TEST_ASSERT(_iarray_file_exists(store->urlpath));
+    INA_TEST_ASSERT(_iarray_path_exists(store->urlpath));
     INA_TEST_ASSERT_SUCCEED(iarray_container_open(ctx, store->urlpath, &c_x));
 
     // Check values
@@ -100,7 +100,7 @@ INA_TEST_SETUP(persistency) {
     data->store.contiguous = true;
     data->store.backend = IARRAY_STORAGE_BLOSC;
     data->store.urlpath = "test_persistency.b2frame";
-    if (_iarray_file_exists(data->store.urlpath)) {
+    if (_iarray_path_exists(data->store.urlpath)) {
         blosc2_remove_urlpath(data->store.urlpath);
     }
 }
