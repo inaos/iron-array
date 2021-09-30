@@ -11,13 +11,15 @@ strategy:
       BUILD_CONFIGURATION: Debug
       MULTITHREADING: False
       DISABLE_LLVM_CONFIG: True
-      CC: clang
-      LD: ld.lld
+      CC: clang  # use clang on Linux wich is faster to compile
+      LD: ld.lld # use lld LLVM for linking too
     linux-release:
       imageName: 'ubuntu-20.04'
       BUILD_CONFIGURATION: RelWithDebInfo
       MULTITHREADING: False
       DISABLE_LLVM_CONFIG: True
+      CC: clang  # use clang on Linux wich is faster to compile
+      LD: ld.lld # use lld LLVM for linking too
 #    mac-debug:
 #      imageName: 'macos-10.14'
 #      BUILD_CONFIGURATION: Debug
@@ -81,11 +83,8 @@ steps:
     if [ "$AGENT_OS" == "Linux" ]
       then
         sudo apt install clang lld
-        export CC=/usr/bin/clang
-        export CXX=/usr/bin/clang++
-        export LD=/usr/bin/ld.lld
       fi
-  displayName: Install clang on Linux
+  displayName: Install clang/lld on Linux
 
 - bash: |
     conda create --yes --quiet --name iArrayEnv
@@ -105,7 +104,7 @@ steps:
         mkdir cmake-build-$BUILD_CONFIGURATION
         cd cmake-build-$BUILD_CONFIGURATION
         cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION -DMULTITHREADING=$MULTITHREADING -DDISABLE_LLVM_CONFIG=$DISABLE_LLVM_CONFIG -DLLVM_ROOT=$CONDA/envs/iArrayEnv
-        make -j 2
+        make -j 1
     fi
   displayName: Compile
   env:
