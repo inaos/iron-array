@@ -251,7 +251,6 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
 INA_API(ina_rc_t) iarray_opt_gemv(iarray_context_t *ctx,
                                   iarray_container_t *a,
                                   iarray_container_t *b,
-                                  bool use_mkl,
                                   iarray_storage_t *storage,
                                   iarray_container_t **c) {
 
