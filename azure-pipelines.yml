@@ -76,6 +76,16 @@ steps:
   displayName: Take ownership of conda installation
 
 - bash: |
+    if [ "$AGENT_OS" == "Linux" ]
+      then
+        sudo apt install clang lld
+        export CC=/usr/bin/clang
+        export CXX=/usr/bin/clang++
+        export LD=/usr/bin/ld.lld
+      fi
+  displayName: Install clang on Linux
+
+- bash: |
     conda create --yes --quiet --name iArrayEnv
     source activate iArrayEnv
     conda install -y --name iArrayEnv -c intel mkl-include
