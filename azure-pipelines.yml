@@ -20,30 +20,30 @@ strategy:
       DISABLE_LLVM_CONFIG: True
       CC: clang  # use clang on Linux wich is faster to compile
       LD: ld.lld # use lld LLVM for linking too
-#    mac-debug:
-#      imageName: 'macos-10.14'
-#      BUILD_CONFIGURATION: Debug
-#      MULTITHREADING: False
-#      DISABLE_LLVM_CONFIG: True
-#    mac-release:
-#      imageName: 'macos-10.14'
-#      BUILD_CONFIGURATION: RelWithDebInfo
-#      MULTITHREADING: False
-#      DISABLE_LLVM_CONFIG: True
-#    windows-debug:
-#      imageName: 'windows-2019'
-#      BUILD_CONFIGURATION: Debug
-#      MULTITHREADING: False
-#      BUILD_ARCH: x86_64
-#      VSINSTALL: "Microsoft Visual Studio\\2019\\Enterprise\\VC\\Auxiliary\\Build"
-#      MSVC_PLATFORM: amd64
-#    windows-release:
-#      imageName: 'windows-2019'
-#      BUILD_CONFIGURATION: RelWithDebInfo
-#      MULTITHREADING: False
-#      BUILD_ARCH: x86_64
-#      VSINSTALL: "Microsoft Visual Studio\\2019\\Enterprise\\VC\\Auxiliary\\Build"
-#      MSVC_PLATFORM: amd64
+    mac-debug:
+      imageName: 'macos-10.14'
+      BUILD_CONFIGURATION: Debug
+      MULTITHREADING: False
+      DISABLE_LLVM_CONFIG: True
+    mac-release:
+      imageName: 'macos-10.14'
+      BUILD_CONFIGURATION: RelWithDebInfo
+      MULTITHREADING: False
+      DISABLE_LLVM_CONFIG: True
+    windows-debug:
+      imageName: 'windows-2019'
+      BUILD_CONFIGURATION: Debug
+      MULTITHREADING: False
+      BUILD_ARCH: x86_64
+      VSINSTALL: "Microsoft Visual Studio\\2019\\Enterprise\\VC\\Auxiliary\\Build"
+      MSVC_PLATFORM: amd64
+    windows-release:
+      imageName: 'windows-2019'
+      BUILD_CONFIGURATION: RelWithDebInfo
+      MULTITHREADING: False
+      BUILD_ARCH: x86_64
+      VSINSTALL: "Microsoft Visual Studio\\2019\\Enterprise\\VC\\Auxiliary\\Build"
+      MSVC_PLATFORM: amd64
 
 pool:
   vmImage: $(imageName)
@@ -104,7 +104,7 @@ steps:
         mkdir cmake-build-$BUILD_CONFIGURATION
         cd cmake-build-$BUILD_CONFIGURATION
         cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION -DMULTITHREADING=$MULTITHREADING -DDISABLE_LLVM_CONFIG=$DISABLE_LLVM_CONFIG -DLLVM_ROOT=$CONDA/envs/iArrayEnv
-        make -j 4
+        make -j 2  # do not use too many parallel jobs or the VM can run out of memory
     fi
   displayName: Compile
   env:
