@@ -7,12 +7,12 @@ variables:
 strategy:
   matrix:
     linux-debug:
-      imageName: 'ubuntu-18.04'
+      imageName: 'ubuntu-20.04'
       BUILD_CONFIGURATION: Debug
       MULTITHREADING: False
       DISABLE_LLVM_CONFIG: True
     linux-release:
-      imageName: 'ubuntu-18.04'
+      imageName: 'ubuntu-20.04'
       BUILD_CONFIGURATION: RelWithDebInfo
       MULTITHREADING: False
       DISABLE_LLVM_CONFIG: True
