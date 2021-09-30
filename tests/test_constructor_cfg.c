@@ -10,7 +10,7 @@
  *
  */
 
-#include <blosc2.h>
+#include <src/iarray_private.h>
 #include <libiarray/iarray.h>
 
 static ina_rc_t test_cfg(iarray_context_t *ctx,
