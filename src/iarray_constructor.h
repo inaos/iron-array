@@ -116,15 +116,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
-//    if (storage->backend == IARRAY_STORAGE_BLOSC) {
-//        for (int i = 0; i < dtshape->ndim; ++i) {
-//            if (dtshape->shape[i] < storage->chunkshape[i]) {
-//                IARRAY_TRACE1(iarray.error, "The chunkshape is larger than the shape");
-//                return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
-//            }
-//        }
-//    }
-
     *c = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
     if ((*c) == NULL) {
         IARRAY_TRACE1(iarray.error, "Error allocating the iarray container");
