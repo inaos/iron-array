@@ -109,7 +109,7 @@ int main(void)
 
     INA_STOPWATCH_START(w);
     for (int j = 0; j < niter; j++) {
-        if (INA_FAILED(iarray_opt_gemv(ctx, c_x, c_y, false, &store_z, &c_z))) {
+        if (INA_FAILED(iarray_opt_gemv(ctx, c_x, c_y, &store_z, &c_z))) {
             fprintf(stderr, "Error in linalg_gemv1: %s\n", ina_err_strerror(ina_err_get_rc()));
             goto fail;
         }

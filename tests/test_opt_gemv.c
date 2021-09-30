@@ -121,7 +121,7 @@ static ina_rc_t test_opt_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, i
     iarray_container_t *c_z;
 
     // iarray multiplication
-    INA_TEST_ASSERT_SUCCEED(iarray_opt_gemv(ctx, c_x, c_y,true, &zstore, &c_z));
+    INA_TEST_ASSERT_SUCCEED(iarray_opt_gemv(ctx, c_x, c_y, &zstore, &c_z));
 
     // define z buffer
     uint8_t *zbuffer = ina_mem_alloc(zsize * typesize);
