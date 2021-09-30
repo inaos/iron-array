@@ -84,7 +84,6 @@ typedef struct iarray_gemv_params_s {
     int64_t c_nchunk;
     int64_t chunks_shape[2];
     int64_t blocks_shape[2];
-    bool use_mkl;
 } iarray_gemv_params_t;
 
 
@@ -95,7 +94,6 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
     int64_t *chunks_shape = gparams->chunks_shape;
     int64_t *blocks_shape = gparams->blocks_shape;
     int64_t c_nchunk = gparams->c_nchunk;
-    bool use_mkl = gparams->use_mkl;
 
     blosc2_dparams a_dparams = {.nthreads = 1, .schunk = a->catarr->sc};
     blosc2_context *a_dctx = blosc2_create_dctx(a_dparams);
@@ -213,32 +211,22 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
             }
 
             // Do matmul
-            if (use_mkl) {
-                switch (a->dtshape->dtype) {
-                    case IARRAY_DATA_TYPE_DOUBLE:
-                        cblas_dgemv(CblasRowMajor, CblasNoTrans,
-                                    (int) current_blockshape[0], current_blockshape[1],
-                                    1.0, (double *) a_block, a->catarr->blockshape[1],
-                                    (double *) b_block, 1, 1.0, (double *) pparams->out, 1);
-                        break;
-                    case IARRAY_DATA_TYPE_FLOAT:
-                        cblas_sgemv(CblasRowMajor, CblasNoTrans,
-                                    (int) current_blockshape[0], current_blockshape[1],
-                                    1.0f, (float *) a_block, a->catarr->blockshape[1],
-                                    (float *) b_block, 1, 1.0f, (float *) pparams->out, 1);
-                        break;
-                    default:
-                        IARRAY_TRACE1(iarray.tracing, "dtype not supported");
-                        return -1;
-                }
-            } else {
-                for (int i = 0; i < current_blockshape[0]; ++i) {
-                    for (int j = 0; j < current_blockshape[1]; ++j) {
-                        double tmp1 = ((double *) b_block)[j];
-                        double tmp2 = ((double *) a_block)[i * a->catarr->blockshape[1] + j];
-                        ((double *) pparams->out)[i] +=  tmp1 * tmp2;
-                    }
-                }
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    cblas_dgemv(CblasRowMajor, CblasNoTrans,
+                                (int) current_blockshape[0], current_blockshape[1],
+                                1.0, (double *) a_block, a->catarr->blockshape[1],
+                                (double *) b_block, 1, 1.0, (double *) pparams->out, 1);
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    cblas_sgemv(CblasRowMajor, CblasNoTrans,
+                                (int) current_blockshape[0], current_blockshape[1],
+                                1.0f, (float *) a_block, a->catarr->blockshape[1],
+                                (float *) b_block, 1, 1.0f, (float *) pparams->out, 1);
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.tracing, "dtype not supported");
+                    return -1;
             }
         }
 
@@ -341,8 +329,6 @@ INA_API(ina_rc_t) iarray_opt_gemv(iarray_context_t *ctx,
 
     gemv_params.blocks_shape[0] = a->catarr->extchunkshape[0] / a->catarr->blockshape[0];
     gemv_params.blocks_shape[1] = a->catarr->extchunkshape[1] / a->catarr->blockshape[1];
-
-    gemv_params.use_mkl = use_mkl;
 
     // Iterate over chunks
     int64_t c_nchunk = 0;

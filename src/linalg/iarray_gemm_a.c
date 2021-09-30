@@ -192,11 +192,11 @@ static int _gemm3_prefilter(blosc2_prefilter_params *pparams) {
 }
 
 
-INA_API(ina_rc_t) iarray_opt_gemm3(iarray_context_t *ctx,
-                                  iarray_container_t *a,
-                                  iarray_container_t *b,
-                                  iarray_storage_t *storage,
-                                  iarray_container_t **c) {
+INA_API(ina_rc_t) iarray_opt_gemm_a(iarray_context_t *ctx,
+                                    iarray_container_t *a,
+                                    iarray_container_t *b,
+                                    iarray_storage_t *storage,
+                                    iarray_container_t **c) {
 
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(a);
