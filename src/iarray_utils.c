@@ -12,20 +12,20 @@
 
 #include "iarray_private.h"
 #include <libiarray/iarray.h>
+#include <sys/stat.h>
 
 /*
- * Check if a file exist using fopen() function.
+ * Check if a path (file or directory) exists using stat() function.
  *
- * Return true if the file exist otherwise return false
+ * Return true if the path exists otherwise return false
  */
-bool _iarray_file_exists(const char * urlpath)
+bool _iarray_path_exists(const char * urlpath)
 {
     INA_VERIFY_NOT_NULL(urlpath);
 
-    /* try to open file to read */
-    FILE *file;
-    if ((file = fopen(urlpath, "r")) != NULL) {
-        fclose(file);
+    struct stat statbuf;
+    /* try to access the path to read */
+    if (stat(urlpath, &statbuf) == 0){
         return true;
     }
     return false;

@@ -207,7 +207,7 @@ int main(int argc, char** argv)
 
     bool x_allocated = false, y_allocated = false;
 
-    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_x.urlpath)) {
+    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_path_exists(mat_x.urlpath)) {
         INA_STOPWATCH_START(w);
         INA_MUST_SUCCEED(iarray_container_open(ctx, mat_x.urlpath, &con_x));
         INA_STOPWATCH_STOP(w);
@@ -279,7 +279,7 @@ int main(int argc, char** argv)
     printf("Compression for X values: %.1f MB -> %.1f MB (%.1fx)\n",
            nbytes_mb, cbytes_mb, (1.*nbytes)/cbytes);
 
-    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_file_exists(mat_y.urlpath)) {
+    if (INA_SUCCEED(ina_opt_isset("p")) && _iarray_path_exists(mat_y.urlpath)) {
         INA_STOPWATCH_START(w);
         INA_MUST_SUCCEED(iarray_container_open(ctx, mat_y.urlpath, &con_y));
         INA_STOPWATCH_STOP(w);
