@@ -11,8 +11,8 @@ strategy:
       BUILD_CONFIGURATION: Debug
       MULTITHREADING: False
       DISABLE_LLVM_CONFIG: True
-      CC=clang
-      LD=ld.lld
+      CC: clang
+      LD: ld.lld
     linux-release:
       imageName: 'ubuntu-20.04'
       BUILD_CONFIGURATION: RelWithDebInfo
