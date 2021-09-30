@@ -104,7 +104,7 @@ steps:
         mkdir cmake-build-$BUILD_CONFIGURATION
         cd cmake-build-$BUILD_CONFIGURATION
         cmake ../ -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION -DMULTITHREADING=$MULTITHREADING -DDISABLE_LLVM_CONFIG=$DISABLE_LLVM_CONFIG -DLLVM_ROOT=$CONDA/envs/iArrayEnv
-        make -j 1
+        make -j 4
     fi
   displayName: Compile
   env:
