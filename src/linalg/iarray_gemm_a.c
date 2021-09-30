@@ -78,16 +78,16 @@ static bool block_is_zeros(uint8_t *chunk, int64_t nblock) {
     return true;
 }
 
-typedef struct iarray_gemm3_params_s {
+typedef struct iarray_gemm_a_params_s {
     iarray_container_t *a;
     iarray_container_t *b;
     uint8_t *a_blocks;
     bool *a_block_zeros;
-} iarray_gemm3_params_t;
+} iarray_gemm_a_params_t;
 
 
-static int _gemm3_prefilter(blosc2_prefilter_params *pparams) {
-    iarray_gemm3_params_t *gparams = (iarray_gemm3_params_t *) pparams->user_data;
+static int _gemm_a_prefilter(blosc2_prefilter_params *pparams) {
+    iarray_gemm_a_params_t *gparams = (iarray_gemm_a_params_t *) pparams->user_data;
     iarray_container_t *a = gparams->a;
     iarray_container_t *b = gparams->b;
 
@@ -205,12 +205,12 @@ INA_API(ina_rc_t) iarray_opt_gemm_a(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(c);
 
     if (a->storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
-        IARRAY_TRACE1(iarray.error, "gemm3 can not be performed over a plainbuffer "
+        IARRAY_TRACE1(iarray.error, "gemm_a can not be performed over a plainbuffer "
                                     "container");
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
     if (b->storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
-        IARRAY_TRACE1(iarray.error, "gemm3 can not be performed over a plainbuffer "
+        IARRAY_TRACE1(iarray.error, "gemm_a can not be performed over a plainbuffer "
                                     "container");
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
@@ -293,15 +293,15 @@ INA_API(ina_rc_t) iarray_opt_gemm_a(iarray_context_t *ctx,
     // Set up prefilter
     iarray_context_t *prefilter_ctx;
     iarray_context_new(ctx->cfg, &prefilter_ctx);
-    prefilter_ctx->prefilter_fn = (blosc2_prefilter_fn) _gemm3_prefilter;
-    iarray_gemm3_params_t gemm3_params = {0};
+    prefilter_ctx->prefilter_fn = (blosc2_prefilter_fn) _gemm_a_prefilter;
+    iarray_gemm_a_params_t gemm_a_params = {0};
     blosc2_prefilter_params pparams = {0};
-    pparams.user_data = &gemm3_params;
+    pparams.user_data = &gemm_a_params;
     prefilter_ctx->prefilter_params = &pparams;
 
     // Fill prefilter params
-    gemm3_params.a = a;
-    gemm3_params.b = b;
+    gemm_a_params.a = a;
+    gemm_a_params.b = b;
 
     int32_t a_nblocks_in_chunk = (int32_t) a->catarr->extchunkshape[1] / a->catarr->blockshape[1];
     int32_t a_nbytes = a->catarr->sc->chunksize;
@@ -313,8 +313,8 @@ INA_API(ina_rc_t) iarray_opt_gemm_a(iarray_context_t *ctx,
     };
     blosc2_context *a_dctx = blosc2_create_dctx(a_dparams);
 
-    gemm3_params.a_blocks = a_blocks;
-    gemm3_params.a_block_zeros = a_block_zeros;
+    gemm_a_params.a_blocks = a_blocks;
+    gemm_a_params.a_block_zeros = a_block_zeros;
 
 
     // Iterate over chunks
