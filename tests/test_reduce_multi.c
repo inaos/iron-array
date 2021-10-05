@@ -43,7 +43,7 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
     }
 
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_ones(ctx, &dtshape, &storage, 0, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_ones(ctx, &dtshape, &storage, &c_x));
 
 
     iarray_storage_t dest_storage = {0};

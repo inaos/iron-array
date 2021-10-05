@@ -46,7 +46,7 @@ static ina_rc_t test_zeros(iarray_context_t *ctx,
 
     iarray_container_t *c_x;
     blosc2_remove_urlpath(store.urlpath);
-    INA_TEST_ASSERT_SUCCEED(iarray_zeros(ctx, &xdtshape, &store, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_zeros(ctx, &xdtshape, &store, &c_x));
 
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf_dest, (size_t)buf_size * type_size));
 

@@ -71,7 +71,7 @@ int main(void)
 
         INA_STOPWATCH_START(w);
         iarray_container_t *cont;
-        IARRAY_RETURN_IF_FAILED(iarray_from_buffer(ctx, &dtshape, src, nbytes, &store, 0, &cont));
+        IARRAY_RETURN_IF_FAILED(iarray_from_buffer(ctx, &dtshape, src, nbytes, &store, &cont));
         INA_STOPWATCH_STOP(w);
 
         int64_t c_nbytes;

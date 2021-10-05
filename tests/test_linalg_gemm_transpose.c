@@ -46,7 +46,7 @@ test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize, const i
     blosc2_remove_urlpath(xstore.urlpath);
     
     iarray_container_t *c_x;
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, (double) xsize, 1, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, 1, &xstore, &c_x));
     iarray_container_t *c_xtrans;
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, &c_xtrans));
     
@@ -74,7 +74,7 @@ test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize, const i
     blosc2_remove_urlpath(ystore.urlpath);
     
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &ydtshape, 0, (double) ysize, 1, &ystore, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &ydtshape, 0, 1, &ystore, &c_y));
     iarray_container_t *c_ytrans;
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_y, &c_ytrans));
 

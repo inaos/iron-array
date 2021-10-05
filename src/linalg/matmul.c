@@ -57,7 +57,7 @@ ina_rc_t iarray_linalg_matmul(iarray_context_t *ctx,
 
 
     // Create output array
-    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, storage, 0, c));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, storage, c));
 
     if (b->dtshape->ndim == 2) {
         IARRAY_RETURN_IF_FAILED(iarray_gemm(ctx, a, b, *c));

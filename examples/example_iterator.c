@@ -43,7 +43,7 @@ int main(void)
         store.blockshape[i] = bshape[i];
     }
     iarray_container_t *cont;
-    IARRAY_FAIL_IF_ERROR(iarray_empty(ctx, &dtshape, &store, 0, &cont));
+    IARRAY_FAIL_IF_ERROR(iarray_empty(ctx, &dtshape, &store, &cont));
 
 
     iarray_iter_write_t *iter_w;

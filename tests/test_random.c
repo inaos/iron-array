@@ -17,7 +17,7 @@
 static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx,
                           bool xcontiguous, char* xurlpath, char* yurlpath,
                           ina_rc_t (*random_fun)(iarray_context_t*, iarray_dtshape_t*,
-                                                 iarray_random_ctx_t*, iarray_storage_t*, int, iarray_container_t**))
+                                                 iarray_random_ctx_t*, iarray_storage_t*, iarray_container_t**))
 {
 
     iarray_container_t *c_y;
@@ -33,7 +33,7 @@ static ina_rc_t test_rand(iarray_context_t *ctx, iarray_random_ctx_t *rnd_ctx,
     blosc2_remove_urlpath(xstorage.urlpath);
 
     iarray_container_t *c_x;
-    INA_TEST_ASSERT_SUCCEED(random_fun(ctx, &xdtshape, rnd_ctx, &xstorage, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(random_fun(ctx, &xdtshape, rnd_ctx, &xstorage, &c_x));
 
 
     bool res = false;
@@ -64,7 +64,7 @@ INA_TEST_SETUP(random_mt) {
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
 
     INA_TEST_ASSERT_SUCCEED(iarray_random_ctx_new(
-        data->ctx, 1234, IARRAY_RANDOM_RNG_MERSENNE_TWISTER, &data->rnd_ctx));
+            data->ctx, 123, IARRAY_RANDOM_RNG_MRG32K3A, &data->rnd_ctx));
 }
 
 INA_TEST_TEARDOWN(random_mt) {
@@ -155,7 +155,7 @@ INA_TEST_FIXTURE(random_mt, lognormal_f) {
 INA_TEST_FIXTURE(random_mt, exponential) {
 
     iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 3.0f);
-    
+
     char* urlpath = "test_exponential_float64_scale3.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, true, NULL, urlpath,
@@ -274,10 +274,11 @@ INA_TEST_FIXTURE(random_mt, bernoulli_f) {
     iarray_random_ctx_free(data->ctx, &data->rnd_ctx);
 
     INA_TEST_ASSERT_SUCCEED(iarray_random_ctx_new(
-        data->ctx, 777, IARRAY_RANDOM_RNG_SOBOL, &data->rnd_ctx));
+            data->ctx, 777, IARRAY_RANDOM_RNG_MRG32K3A, &data->rnd_ctx));
     iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.01f);
 
     char* urlpath = "test_binomial_float32_n1_p0.01.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, false, "xarr.iarr", urlpath, &iarray_random_bernoulli));
 }
+

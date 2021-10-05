@@ -97,7 +97,7 @@ int main(void)
         store_x.blockshape[i] = cshape_a[i];
     }
     iarray_container_t *cont_a = NULL;
-    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, -100, 100, &store_x, 0, &cont_a));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_x, -100, 100, &store_x, &cont_a));
 
     iarray_dtshape_t dtshape_y;
     dtshape_y.ndim = ndim;
@@ -113,7 +113,7 @@ int main(void)
         store_y.blockshape[i] = cshape_b[i];
     }
     iarray_container_t *cont_b = NULL;
-    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, -100, 100, &store_y, 0, &cont_b));
+    IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape_y, -100, 100, &store_y, &cont_b));
 
     iarray_dtshape_t dtshape_z;
     dtshape_z.ndim = ndim;

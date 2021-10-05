@@ -126,7 +126,8 @@ test_btune_favor(iarray_config_t *cfg, iarray_data_type_t dtype, size_t type_siz
     iarray_container_t *c_x;
     blosc2_remove_urlpath(xstore.urlpath);
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf_src, (size_t) buf_size * type_size, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf_src,
+                                               (size_t) buf_size * type_size, &xstore, &c_x));
 
     INA_TEST_ASSERT(*prev_cbytes < c_x->catarr->sc->cbytes);
 

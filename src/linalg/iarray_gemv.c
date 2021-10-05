@@ -295,7 +295,7 @@ INA_API(ina_rc_t) iarray_opt_gemv(iarray_context_t *ctx,
     dtshape.ndim = 1;
     dtshape.shape[0] = a->dtshape->shape[0];
 
-    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, storage, 0, c));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, storage, c));
 
     iarray_container_t *cc = *c;
 

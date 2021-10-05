@@ -48,39 +48,40 @@ static ina_rc_t test_fill(iarray_context_t *ctx,
 
     iarray_container_t *c_x;
     blosc2_remove_urlpath(store.urlpath);
+
     switch (dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (double *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (double *) value, &store,&c_x));
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (float *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (float *) value, &store,&c_x));
             break;
         case IARRAY_DATA_TYPE_INT64:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int64_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int64_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_INT32:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int32_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int32_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_INT16:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int16_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int16_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_INT8:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int8_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int8_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_UINT64:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint64_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint64_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_UINT32:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint32_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint32_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_UINT16:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint16_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint16_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_UINT8:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint8_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint8_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_BOOL:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (bool *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (bool *) value, &store, &c_x));
             break;
     }
 

@@ -74,13 +74,14 @@ int main() {
     }
 
     iarray_random_ctx_t *rctx;
-    IARRAY_RETURN_IF_FAILED(iarray_random_ctx_new(ctx, 0, IARRAY_RANDOM_RNG_MERSENNE_TWISTER, &rctx));
 
+    IARRAY_RETURN_IF_FAILED(iarray_random_ctx_new(ctx, 0, IARRAY_RANDOM_RNG_MRG32K3A, &rctx));
+    
     iarray_container_t *c;
     IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rctx, IARRAY_RANDOM_DIST_PARAM_A, -1));
     IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rctx, IARRAY_RANDOM_DIST_PARAM_B, 1));
-    IARRAY_RETURN_IF_FAILED(iarray_random_uniform(ctx, &dtshape, rctx, &storage, 0, &c));
-
+    IARRAY_RETURN_IF_FAILED(iarray_random_uniform(ctx, &dtshape, rctx, &storage, &c));
+    
     int64_t buf_nbytes = nelem * typesize;
     double *buf = malloc(buf_nbytes);
     IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c, buf, buf_nbytes));

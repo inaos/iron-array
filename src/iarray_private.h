@@ -108,6 +108,23 @@ struct iarray_container_s {
     } scalar_value;
 };
 
+/* RANDOM */
+struct iarray_random_ctx_s {
+    iarray_random_rng_t rng;
+    uint32_t seed;
+    VSLStreamStatePtr stream;
+    double dparams[IARRAY_RANDOM_DIST_PARAM_SENTINEL];
+    float fparams[IARRAY_RANDOM_DIST_PARAM_SENTINEL];
+};
+
+typedef int (* iarray_random_method_fn) (iarray_random_ctx_t *ctx,
+                                         VSLStreamStatePtr stream,
+                                         uint8_t itemsize,
+                                         int32_t blocksize,
+                                         uint8_t *buffer);
+
+
+/* ITERATORS */
 typedef struct iarray_iter_write_s {
     iarray_context_t *ctx;
     iarray_container_t *container;
@@ -334,13 +351,6 @@ ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t),
 ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_t *cat_params);
 ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage_t *storage, caterva_storage_t *cat_storage);
 
-ina_rc_t iarray_container_new(iarray_context_t *ctx,
-                              iarray_dtshape_t *dtshape,
-                              iarray_storage_t *storage,
-                              int flags,
-                              iarray_container_t **container);
-
-
 ina_rc_t iarray_set_dtype_size(iarray_dtshape_t *dtshape);
 
 static int32_t _iarray_serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
@@ -401,4 +411,187 @@ static ina_rc_t _iarray_deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iar
 
     return INA_SUCCESS;
 }
+
+ina_rc_t iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *dtshape,
+                              iarray_storage_t *storage, iarray_container_t **container);
+
+/* Constructor machinery */
+typedef struct {
+    iarray_container_t *a;  //!< The container to be built
+    uint8_t ndim;  //!< The number of dimensions
+    uint8_t itemsize;  //!< The size (in bytes) of each item
+    int64_t strides[IARRAY_DIMENSION_MAX];  //!< The strides (for an item) inside the array
+    int64_t chunk_strides[IARRAY_DIMENSION_MAX];  //!< The strides (for an item) inside a chunk
+    int64_t block_strides[IARRAY_DIMENSION_MAX];  //!< The strides (for an item) inside a block
+} iarray_constructor_array_info_t;
+
+
+typedef int (* iarray_constructor_array_init_fn)(iarray_constructor_array_info_t *array_info,
+                                                 void **custom_info);
+
+typedef int (* iarray_constructor_array_destroy_fn)(iarray_constructor_array_info_t *array_info,
+                                                    void **custom_info);
+
+typedef struct {
+    int64_t chunk_strides_block[IARRAY_DIMENSION_MAX];  //!< The strides (for a block) inside a chunk
+    int64_t index[IARRAY_DIMENSION_MAX];  //!< The index of the chunk inside the array
+    int64_t index_flat;  //!< The index of the chunk (flattened) inside the array
+    int64_t start[IARRAY_DIMENSION_MAX];  //!< The index of the first chunk item
+    int64_t stop[IARRAY_DIMENSION_MAX];  //!< The index of the last chunk item
+    int64_t shape[IARRAY_DIMENSION_MAX];  //!< The chunk shape without padding
+} iarray_constructor_chunk_info_t;
+
+
+typedef int (* iarray_constructor_chunk_init_fn)(iarray_constructor_array_info_t *array_info,
+                                                 iarray_constructor_chunk_info_t *chunk_info,
+                                                 void *custom_info,
+                                                 void **custom_chunk_info);
+
+typedef int (* iarray_constructor_chunk_destroy_fn)(iarray_constructor_array_info_t *array_info,
+                                                    iarray_constructor_chunk_info_t *chunk_info,
+                                                    void *custom_info,
+                                                    void **custom_chunk_info);
+
+typedef struct {
+    int64_t index_in_chunk[IARRAY_DIMENSION_MAX];  //!< The index of the block inside its chunk
+    int64_t index_in_chunk_flat;  //!< The index of the block (flattened) inside its chunk
+    int64_t block_strides[IARRAY_DIMENSION_MAX];  //!< The strides (for an item) inside the block without padding
+    int64_t start[IARRAY_DIMENSION_MAX];  //!< The index of the first block item
+    int64_t stop[IARRAY_DIMENSION_MAX];  //!< The index of the last block item
+    int64_t shape[IARRAY_DIMENSION_MAX];  //!< The block shape without padding
+    int64_t size;  //!< The block size without padding
+    uint32_t tid;  //!< The thread id that is processing the block
+} iarray_constructor_block_info_t;
+
+typedef int (* iarray_constructor_block_init_fn)(iarray_constructor_array_info_t *array_info,
+                                                 iarray_constructor_chunk_info_t *chunk_info,
+                                                 iarray_constructor_block_info_t *block_info,
+                                                 void *custom_info,
+                                                 void *custom_chunk_info,
+                                                 void **custom_block_info);
+
+typedef int (* iarray_constructor_block_destroy_fn)(iarray_constructor_array_info_t *array_info,
+                                                    iarray_constructor_chunk_info_t *chunk_info,
+                                                    iarray_constructor_block_info_t *block_info,
+                                                    void *custom_info,
+                                                    void *custom_chunk_info,
+                                                    void **custom_block_info);
+
+typedef struct {
+    int64_t index_in_block[IARRAY_DIMENSION_MAX];  //!< The index of the item inside the block
+    int64_t index_in_block_flat;  //!< The index of the item (flattened) inside the block
+    int64_t index_in_block2_flat;  //!< The index of the item (flattened) inside the block with padding
+    int64_t index[IARRAY_DIMENSION_MAX];  //!< The index of the item inside the array
+    int64_t index_flat;  //!< The index of the item (flattened) inside the array
+} iarray_constructor_item_info_t;
+
+
+typedef ina_rc_t (* iarray_constructor_item_fn)(iarray_constructor_array_info_t *array_params,
+                                              iarray_constructor_chunk_info_t *chunk_params,
+                                              iarray_constructor_block_info_t *block_params,
+                                              iarray_constructor_item_info_t *item_params,
+                                              void *custom_params,
+                                              void *custom_chunk_params,
+                                              void *custom_block_params,
+                                              uint8_t *item);
+
+
+typedef int (* iarray_constructor_generator_fn)(uint8_t *dest,
+                                                iarray_constructor_array_info_t *array_params,
+                                                iarray_constructor_chunk_info_t *chunk_params,
+                                                iarray_constructor_block_info_t *block_params,
+                                                void *custom_params,
+                                                void *custom_chunk_params,
+                                                void *custom_block_params,
+                                                iarray_constructor_item_fn item_fn);
+
+typedef struct {
+    void *constructor_info;
+    iarray_constructor_array_init_fn array_init_fn;
+    iarray_constructor_array_destroy_fn array_destroy_fn;
+    iarray_constructor_chunk_init_fn chunk_init_fn;
+    iarray_constructor_chunk_destroy_fn chunk_destroy_fn;
+    iarray_constructor_block_init_fn block_init_fn;
+    iarray_constructor_block_destroy_fn block_destroy_fn;
+    iarray_constructor_item_fn item_fn;
+    iarray_constructor_generator_fn generator_fn;
+} iarray_constructor_block_params_t;
+
+static iarray_constructor_block_params_t IARRAY_CONSTRUCTOR_BLOCK_PARAMS_DEFAULT = {0};
+
+typedef struct {
+    void *constructor_info;
+    iarray_constructor_array_init_fn array_init_fn;
+    iarray_constructor_array_destroy_fn array_destroy_fn;
+    iarray_constructor_chunk_init_fn chunk_init_fn;
+    iarray_constructor_chunk_destroy_fn chunk_destroy_fn;
+    iarray_constructor_block_init_fn block_init_fn;
+    iarray_constructor_block_destroy_fn block_destroy_fn;
+    iarray_constructor_item_fn item_fn;
+} iarray_constructor_element_params_t;
+
+static iarray_constructor_element_params_t IARRAY_CONSTRUCTOR_ELEMENT_PARAMS_DEFAULT = {0};
+
+ina_rc_t iarray_constructor_block(iarray_context_t *ctx,
+                                  iarray_dtshape_t *dtshape,
+                                  iarray_constructor_block_params_t *const_params,
+                                  iarray_storage_t *storage,
+                                  iarray_container_t **container);
+
+ina_rc_t iarray_constructor_element(iarray_context_t *ctx,
+                                    iarray_dtshape_t *dtshape,
+                                    iarray_constructor_element_params_t *element_params,
+                                    iarray_storage_t *storage,
+                                    iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_random_prefilter(iarray_context_t *ctx,
+                                          iarray_dtshape_t *dtshape,
+                                          iarray_random_ctx_t *random_ctx,
+                                          iarray_random_method_fn random_method_fn,
+                                          iarray_storage_t *storage,
+                                          iarray_container_t **container);
+
+// Inline functions
+static inline void compute_strides(uint8_t ndim, int64_t *shape, int64_t *strides) {
+    if (ndim == 0) {
+        return;
+    }
+    strides[ndim - 1] = 1;
+    for (int j = ndim - 2; j >= 0; --j) {
+        strides[j] = shape[j + 1] * strides[j + 1];
+    }
+}
+
+static inline void iarray_index_multidim_to_unidim(uint8_t ndim, int64_t *strides, int64_t *index, int64_t *i) {
+    *i = 0;
+    for (int j = 0; j < ndim; ++j) {
+        *i += index[j] * strides[j];
+    }
+}
+
+static inline void iarray_index_unidim_to_multidim(uint8_t ndim, int64_t *strides, int64_t i, int64_t *index) {
+    if (ndim == 0) {
+        return;
+    }
+
+    index[0] = i / strides[0];
+    for (int j = 1; j < ndim; ++j) {
+        index[j] = (i % strides[j - 1]) / strides[j];
+    }
+}
+
+static inline void iarray_index_unidim_to_multidim_shape(int8_t ndim, int64_t *shape, int64_t i, int64_t *index) {
+    if (ndim == 0) {
+        return;
+    }
+
+    int64_t strides[CATERVA_MAX_DIM];
+    compute_strides(ndim, shape, strides);
+
+    index[0] = i / strides[0];
+    for (int j = 1; j < ndim; ++j) {
+        index[j] = (i % strides[j - 1]) / strides[j];
+    }
+}
+
 #endif

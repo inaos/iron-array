@@ -39,7 +39,7 @@ static ina_rc_t test_empty(iarray_context_t *ctx,
     // Empty array
     iarray_container_t *c_x;
     blosc2_remove_urlpath(store.urlpath);
-    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &store, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &store, &c_x));
 
 
     int64_t nbytes;

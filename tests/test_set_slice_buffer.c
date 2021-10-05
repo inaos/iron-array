@@ -114,7 +114,8 @@ _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64
 
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buffer_x, buffer_x_len * type_size, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buffer_x, buffer_x_len * type_size,
+                                               &xstore, &c_x));
 
     INA_TEST_ASSERT_SUCCEED(test_set_slice_buffer(ctx, c_x, start, stop, bufdes, buflen));
 

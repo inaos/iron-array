@@ -57,7 +57,7 @@ int main(void)
     }
 
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, &storage, 0, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, &storage, &c_x));
 
 
     iarray_iter_write_block_t *iter;
@@ -89,7 +89,7 @@ int main(void)
     }
 
     iarray_container_t *c_y;
-    IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &storage, 0, &c_y));
+    IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &storage, &c_y));
 
     iarray_storage_t dest_storage = {0};
     dest_storage.contiguous = dest_frame;

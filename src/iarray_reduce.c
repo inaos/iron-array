@@ -16,23 +16,6 @@
 #include <libiarray/iarray.h>
 
 
-static void index_unidim_to_multidim(int8_t ndim, int64_t *shape, int64_t i, int64_t *index) {
-    if (ndim == 0) {
-        return;
-    }
-    int64_t strides[CATERVA_MAX_DIM];
-    strides[ndim - 1] = 1;
-    for (int j = ndim - 2; j >= 0; --j) {
-        strides[j] = shape[j + 1] * strides[j + 1];
-    }
-
-    index[0] = i / strides[0];
-    for (int j = 1; j < ndim; ++j) {
-        index[j] = (i % strides[j - 1]) / strides[j];
-    }
-}
-
-
 typedef struct iarray_reduce_params_s {
     iarray_reduce_function_t *ufunc;
     iarray_container_t *input;
@@ -77,10 +60,11 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
         shape_of_chunks[i] = rparams->result->catarr->extshape[i] /
                 rparams->result->catarr->chunkshape[i];
     }
-    index_unidim_to_multidim(rparams->result->catarr->ndim,
-                             shape_of_chunks,
-                             chunk_offset_u,
-                             chunk_offset_n);
+
+    iarray_index_unidim_to_multidim_shape(rparams->result->catarr->ndim,
+                                          shape_of_chunks,
+                                          chunk_offset_u,
+                                          chunk_offset_n);
 
     // Compute result block offset
     int64_t block_offset_u = pparams->out_offset / pparams->out_size;
@@ -91,10 +75,10 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
         shape_of_blocks[i] = rparams->result->catarr->extchunkshape[i] /
                 rparams->result->catarr->blockshape[i];
     }
-    index_unidim_to_multidim(rparams->result->catarr->ndim,
-                             shape_of_blocks,
-                             block_offset_u,
-                             block_offset_n);
+    iarray_index_unidim_to_multidim_shape(rparams->result->catarr->ndim,
+                                          shape_of_blocks,
+                                          block_offset_u,
+                                          block_offset_n);
 
 
     // Compute the input strides
@@ -142,10 +126,10 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
         // Compute index in dest
         int64_t elem_index_n[IARRAY_DIMENSION_MAX] = {0};
-        index_unidim_to_multidim(rparams->result->catarr->ndim,
-                                 rparams->result->storage->blockshape,
-                                 ind,
-                                 elem_index_n);
+        iarray_index_unidim_to_multidim_shape(rparams->result->catarr->ndim,
+                                              rparams->result->storage->blockshape,
+                                              ind,
+                                              elem_index_n);
 
         bool empty = check_padding(block_offset_n, elem_index_n, rparams);
 
@@ -310,10 +294,10 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
             for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
                 // Compute index in dest
                 int64_t elem_index_n[IARRAY_DIMENSION_MAX] = {0};
-                index_unidim_to_multidim(rparams->result->catarr->ndim,
-                                         rparams->result->storage->blockshape,
-                                         ind,
-                                         elem_index_n);
+                iarray_index_unidim_to_multidim_shape(rparams->result->catarr->ndim,
+                                                      rparams->result->storage->blockshape,
+                                                      ind,
+                                                      elem_index_n);
 
                 if (check_padding(block_offset_n, elem_index_n, rparams)) {
                     switch (rparams->result->dtshape->dtype) {
@@ -549,10 +533,10 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
         // Compute index in dest
         int64_t elem_index_n[IARRAY_DIMENSION_MAX] = {0};
-        index_unidim_to_multidim(rparams->result->catarr->ndim,
-                                 rparams->result->storage->blockshape,
-                                 ind,
-                                 elem_index_n);
+        iarray_index_unidim_to_multidim_shape(rparams->result->catarr->ndim,
+                                              rparams->result->storage->blockshape,
+                                              ind,
+                                              elem_index_n);
 
         bool padding = check_padding(block_offset_n, elem_index_n, rparams);
 
@@ -683,7 +667,7 @@ INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
         dtshape.shape[i] = i < axis ? a->dtshape->shape[i] : a->dtshape->shape[i + 1];
     }
 
-    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, storage, 0, b));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, storage, b));
 
     iarray_container_t *c = *b;
 
@@ -749,7 +733,8 @@ INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
         blosc2_schunk_update_chunk(c->catarr->sc, nchunk, chunk, false);
 
         nchunk++;
-        index_unidim_to_multidim(c->dtshape->ndim, shape_of_chunks, nchunk, chunk_index);
+        iarray_index_unidim_to_multidim_shape(c->dtshape->ndim, shape_of_chunks, nchunk,
+                                              chunk_index);
     }
 
     iarray_context_free(&prefilter_ctx);
@@ -1065,7 +1050,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
                 return INA_ERROR(INA_ERR_INVALID);
             }
         }
-        iarray_copy(ctx, a, false, &view_storage, 0, &aa);
+        iarray_copy(ctx, a, false, &view_storage, &aa);
     }
 
     // Start reductions
@@ -1134,7 +1119,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     }
 
     if (copy) {
-        IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c, false, storage, 0, b));
+        IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c, false, storage, b));
         iarray_container_free(ctx, &c);
         if (storage->urlpath != NULL) {
             err_io = blosc2_remove_urlpath("_iarray_red.iarr");

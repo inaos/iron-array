@@ -44,7 +44,7 @@ test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize, const i
     blosc2_remove_urlpath(xstore.urlpath);
     
     iarray_container_t *c_x;
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, (double) xsize, 1, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, 1, &xstore, &c_x));
 
     // iarray container x to buffer
     uint8_t *xbuffer = ina_mem_alloc(xsize * typesize);
@@ -69,7 +69,7 @@ test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize, const i
     }
     blosc2_remove_urlpath(ystore.urlpath);
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &ydtshape, 0, (double) ysize, 1, &ystore, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &ydtshape, 0, 1, &ystore, &c_y));
 
     // iarray container y to buffer
     uint8_t *ybuffer = ina_mem_alloc(ysize * typesize);

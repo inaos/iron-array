@@ -80,7 +80,7 @@ INA_TEST(expression_eval_memcpyed, case1) {
     }
 
     iarray_container_t *c;
-    INA_TEST_ASSERT_SUCCEED(iarray_ones(ctx, &dtshape, &storage, 0, &c));
+    INA_TEST_ASSERT_SUCCEED(iarray_ones(ctx, &dtshape, &storage, &c));
 
     int64_t buf_nbytes = nelem * typesize;
     double *buf = malloc(buf_nbytes);

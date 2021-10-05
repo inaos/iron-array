@@ -98,10 +98,10 @@ execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, con
 
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &transdtshape, (void*)buffer_x,
-                                               nelem * sizeof(double), &transstore, 0, &c_trans));
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void*)buffer_y,
-                                               nelem * sizeof(double), &store, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &transdtshape, (void *) buffer_x,
+                                               nelem * sizeof(double), &transstore, &c_trans));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void *) buffer_y,
+                                               nelem * sizeof(double), &store, &c_y));
 
     int64_t start[IARRAY_DIMENSION_MAX];
     int64_t stop[IARRAY_DIMENSION_MAX];

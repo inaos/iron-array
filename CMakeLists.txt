@@ -19,6 +19,9 @@ if (MSVC)
 else()
     set(CMAKE_C_FLAGS "-Wall -Wextra")
 endif()
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64 -m64")
+
 option(MULTITHREADING "Use multithreaded iarray" OFF)
 option(DISABLE_LLVM_CONFIG "Disable the use of llvm-config for finding libraries" ON)
 
@@ -93,7 +96,7 @@ endif(UNIX AND NOT APPLE AND NOT DISABLE_LLVM_CONFIG)
 set(INAC_DEPENDENCY_LIBS ${INAC_DEPENDENCY_LIBS} ${IPP_LIBRARIES} ${llvm_libs})
 
 set(SRC ${CMAKE_SOURCE_DIR}/src)
-file(GLOB src ${SRC_DIR}/*.c ${SRC_DIR}/linalg/*.c ${SRC_DIR}/linalg/matmul/*.c ${SRC_DIR}/btune/*.c)
+file(GLOB src ${SRC_DIR}/*.c ${SRC_DIR}/linalg/*.c ${SRC_DIR}/constructors/*.c ${SRC_DIR}/constructors/random/*.c ${SRC_DIR}/linalg/matmul/*.c ${SRC_DIR}/btune/*.c)
 
 add_library(iarray_c ${src})
 set_target_properties(
