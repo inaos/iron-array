@@ -241,6 +241,21 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk1)
     INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, false, NULL));
 }
 
+INA_TEST_FIXTURE(expression_eval_double, iterblosc_superchunk_memcpy)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr1;
+    // eval of constants is not supported with the interpreter engine
+    data->expr_str = "(x - 1.35) + sin(.45)";
+
+    int8_t ndim = 1;
+    int64_t shape[] = {100};
+    int64_t cshape[] = {25};
+    int64_t bshape[] = {10};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, false, "arr.iarr"));
+}
+
 static double expr2(const double x)
 {
     return sinh(x) + (cosh(x) - 1.35) - tanh(x + .2);

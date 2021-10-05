@@ -662,7 +662,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
                     return INA_ERROR(INA_ERR_NOT_SUPPORTED);
                 }
                 bool memcpyed = *(var_chunks[nvar] + 2) & (uint8_t)BLOSC_MEMCPYED;
-                if (memcpyed) {
+                if (memcpyed && schunk->storage->urlpath == NULL) {
                     expr_pparams.input_class[nvar] = IARRAY_EXPR_EQ_NCOMP;
                 } else {
                     expr_pparams.input_class[nvar] = IARRAY_EXPR_EQ;
