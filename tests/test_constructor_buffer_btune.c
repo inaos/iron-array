@@ -49,14 +49,10 @@ test_btune_favor(iarray_config_t *cfg, iarray_data_type_t dtype, size_t type_siz
     }
 
     iarray_storage_t xstore = {.urlpath=urlpath, .contiguous=contiguous};
-    if (cshape == NULL) {
-        xstore.backend = IARRAY_STORAGE_PLAINBUFFER;
-    } else {
-        xstore.backend = IARRAY_STORAGE_BLOSC;
-        for (int i = 0; i < ndim; ++i) {
-            xstore.chunkshape[i] = cshape[i];
-            xstore.blockshape[i] = bshape[i];
-        }
+
+    for (int i = 0; i < ndim; ++i) {
+        xstore.chunkshape[i] = cshape[i];
+        xstore.blockshape[i] = bshape[i];
     }
 
     iarray_container_t *c_x;

@@ -38,9 +38,10 @@ static void fill_y(const double* x, double* y, int64_t nelem, double (func)(doub
     }
 }
 
-static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape,
-                                    const int64_t *cshape, const int64_t *bshape,
-                                    bool plain_buffer, double (func)(double), char* expr_str, bool contiguous, char *urlpath)
+static ina_rc_t
+execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, const int64_t *cshape,
+                    const int64_t *bshape, double (*func)(double), char *expr_str, bool contiguous,
+                    char *urlpath)
 {
     iarray_context_t *ctx;
     iarray_expression_t* e;
@@ -67,14 +68,11 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
     }
 
     iarray_storage_t store;
-    store.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     store.contiguous = contiguous;
     store.urlpath = urlpath;
-    if (!plain_buffer) {
-        for (int i = 0; i < ndim; ++i) {
-            store.chunkshape[i] = cshape[i];
-            store.blockshape[i] = bshape[i];
-        }
+    for (int i = 0; i < ndim; ++i) {
+        store.chunkshape[i] = cshape[i];
+        store.blockshape[i] = bshape[i];
     }
     blosc2_remove_urlpath(store.urlpath);
 
@@ -100,17 +98,14 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
     fill_y(buffer_x, buffer_y, nelem2, func);
 
     iarray_storage_t outstore;
-    outstore.backend = plain_buffer ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     outstore.contiguous = contiguous;
     outstore.urlpath = NULL;
     if (urlpath != NULL) {
         outstore.urlpath = "outarr.iarr";
     }
-    if (!plain_buffer) {
-        for (int i = 0; i < ndim; ++i) {
-            outstore.chunkshape[i] = cshape[i];
-            outstore.blockshape[i] = bshape[i];
-        }
+    for (int i = 0; i < ndim; ++i) {
+        outstore.chunkshape[i] = cshape[i];
+        outstore.blockshape[i] = bshape[i];
     }
     blosc2_remove_urlpath(outstore.urlpath);
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
@@ -186,7 +181,8 @@ INA_TEST_FIXTURE(expression_eval_view, iterblosc_superchunk_2)
     int64_t cshape[] = {50, 200};
     int64_t bshape[] = {25, 100};
 
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str, false, NULL));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func,
+                                                data->expr_str, false, NULL));
 }
 
 static double expr3(const double x)
@@ -205,7 +201,8 @@ INA_TEST_FIXTURE(expression_eval_view, iterchunk_superchunk_3)
     int64_t cshape[] = {20, 20, 20};
     int64_t bshape[] = {10, 10, 10};
 
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, false, data->func, data->expr_str, false, "arr.iarr"));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func,
+                                                data->expr_str, false, "arr.iarr"));
 }
 
 static double expr4(const double x)
@@ -213,7 +210,7 @@ static double expr4(const double x)
     return exp(x) + (log(x) - 1.35) - log10(x + .2);
 }
 
-INA_TEST_FIXTURE(expression_eval_view, iterchunk_plainbuffer_4)
+INA_TEST_FIXTURE(expression_eval_view, iterchunk_superchunk_4)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;
     data->func = expr4;
@@ -221,10 +218,11 @@ INA_TEST_FIXTURE(expression_eval_view, iterchunk_plainbuffer_4)
 
     int8_t ndim = 3;
     int64_t shape[] = {121, 121, 123};
-    int64_t cshape[] = {0, 0, 0};
-    int64_t bshape[] = {0, 0, 0};
+    int64_t cshape[] = {30, 30, 30};
+    int64_t bshape[] = {10, 10, 10};
 
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, true, data->func, data->expr_str, true, NULL));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func,
+                                                data->expr_str, true, NULL));
 }
 
 static double expr5(const double x)
@@ -239,9 +237,10 @@ INA_TEST_FIXTURE(expression_eval_view, iterchunk_plainbuffer_5)
     data->expr_str = "sqrt(x) + atan2(x, x) + pow(x, x)";
 
     int8_t ndim = 3;
-    int64_t shape[] = {121, 121, 123};
-    int64_t cshape[] = {0, 0, 0};
-    int64_t bshape[] = {0, 0, 0};
+    int64_t shape[] = {120, 120, 120};
+    int64_t cshape[] = {20, 20, 20};
+    int64_t bshape[] = {10, 10, 10};
 
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, true, data->func, data->expr_str, true, "arr.iarr"));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func,
+                                                data->expr_str, true, "arr.iarr"));
 }

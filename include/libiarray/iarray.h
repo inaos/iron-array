@@ -143,11 +143,6 @@ typedef enum iarray_storage_format_e {
     IARRAY_STORAGE_COL_WISE
 } iarray_storage_format_t;
 
-typedef enum iarray_storage_type_e {
-    IARRAY_STORAGE_PLAINBUFFER = 0,
-    IARRAY_STORAGE_BLOSC = 1,
-} iarray_storage_type_t;
-
 // The first 3 bits (0, 1, 2) of eval_method are reserved for the eval method
 typedef enum iarray_eval_method_e {
     IARRAY_EVAL_METHOD_AUTO = 0u,
@@ -223,7 +218,6 @@ typedef struct iarray_dtshape_s {
 } iarray_dtshape_t;
 
 typedef struct iarray_storage_s {
-    iarray_storage_type_t backend;
     char *urlpath;
     bool contiguous;
     int64_t chunkshape[IARRAY_DIMENSION_MAX];

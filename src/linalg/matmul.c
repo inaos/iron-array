@@ -49,13 +49,12 @@ ina_rc_t iarray_linalg_matmul(iarray_context_t *ctx,
        dtshape.shape[1] = b->dtshape->shape[1];
    }
 
-    if (storage->backend == IARRAY_STORAGE_BLOSC) {
-        for (int i = 0; i < dtshape.ndim; ++i) {
-            if (dtshape.shape[i] < storage->chunkshape[i]) {
-                return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
-            }
+    for (int i = 0; i < dtshape.ndim; ++i) {
+        if (dtshape.shape[i] < storage->chunkshape[i]) {
+            return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
         }
     }
+
 
     // Create output array
     IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, storage, 0, c));

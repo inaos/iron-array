@@ -74,23 +74,22 @@ static ina_rc_t iarray_create_caterva_structs(iarray_context_t *ctx,
         cfg.udbtune = &iabtune;
     }
 
-    if (storage->backend == IARRAY_STORAGE_BLOSC) {
-        uint8_t *smeta;
-        int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
-        if (smeta_len < 0) {
-            IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
-            return INA_ERROR(INA_ERR_FAILED);
-        }
-
-        IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, cat_ctx));
-        IARRAY_RETURN_IF_FAILED(iarray_create_caterva_params(dtshape, cat_params));
-        IARRAY_RETURN_IF_FAILED(iarray_create_caterva_storage(dtshape, storage, cat_storage));
-        cat_storage->properties.blosc.nmetalayers = 1;
-        caterva_metalayer_t metalayer = cat_storage->properties.blosc.metalayers[0];
-        metalayer.name = strdup("iarray");
-        metalayer.sdata = smeta;
-        metalayer.size = smeta_len;
+    uint8_t *smeta;
+    int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
+    if (smeta_len < 0) {
+        IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
+        return INA_ERROR(INA_ERR_FAILED);
     }
+
+    IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, cat_ctx));
+    IARRAY_RETURN_IF_FAILED(iarray_create_caterva_params(dtshape, cat_params));
+    IARRAY_RETURN_IF_FAILED(iarray_create_caterva_storage(dtshape, storage, cat_storage));
+    cat_storage->properties.blosc.nmetalayers = 1;
+    caterva_metalayer_t metalayer = cat_storage->properties.blosc.metalayers[0];
+    metalayer.name = strdup("iarray");
+    metalayer.sdata = smeta;
+    metalayer.size = smeta_len;
+
     return INA_SUCCESS;
 }
 
@@ -128,13 +127,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
         return INA_ERROR(INA_ERR_FAILED);
     }
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
-
-    if (storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
-        for (int i = 0; i < IARRAY_DIMENSION_MAX; ++i) {
-            storage->chunkshape[i] = dtshape->shape[i];
-            storage->blockshape[i] = dtshape->shape[i];
-        }
-    }
 
     iarray_auxshape_t auxshape;
     for (int i = 0; i < dtshape->ndim; ++i) {

@@ -30,14 +30,11 @@ static ina_rc_t test_zeros(iarray_context_t *ctx,
     }
 
     iarray_storage_t store;
-    store.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     store.contiguous = contiguous;
     store.urlpath = urlpath;
     for (int i = 0; i < ndim; ++i) {
-        if (cshape != NULL) {
-            store.chunkshape[i] = cshape[i];
-            store.blockshape[i] = bshape[i];
-        }
+        store.chunkshape[i] = cshape[i];
+        store.blockshape[i] = bshape[i];
     }
 
     int64_t buf_size = 1;
@@ -88,32 +85,6 @@ INA_TEST_TEARDOWN(constructor_zeros)
 {
     iarray_context_free(&data->ctx);
     iarray_destroy();
-}
-
-INA_TEST_FIXTURE(constructor_zeros, 2_d_p)
-{
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    size_t type_size = sizeof(double);
-
-    int8_t ndim = 2;
-    int64_t shape[] = {10, 10};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, false, NULL));
-}
-
-INA_TEST_FIXTURE(constructor_zeros, 4_f_p)
-{
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    size_t type_size = sizeof(float);
-
-    int8_t ndim = 4;
-    int64_t shape[] = {10, 15, 20, 12};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, false, "arr.iarr"));
 }
 
 INA_TEST_FIXTURE(constructor_zeros, 5_d)

@@ -33,14 +33,10 @@ static ina_rc_t test_constructor_frame(iarray_context_t *ctx, iarray_data_type_t
     double step = (stop - start) / size;
 
     iarray_storage_t xstore = {.urlpath=urlpath, .contiguous=contiguous};
-    if (cshape == NULL) {
-        xstore.backend = IARRAY_STORAGE_PLAINBUFFER;
-    } else {
-        xstore.backend = IARRAY_STORAGE_BLOSC;
-        for (int i = 0; i < ndim; ++i) {
-            xstore.chunkshape[i] = cshape[i];
-            xstore.blockshape[i] = bshape[i];
-        }
+
+    for (int i = 0; i < ndim; ++i) {
+        xstore.chunkshape[i] = cshape[i];
+        xstore.blockshape[i] = bshape[i];
     }
 
     iarray_container_t *c_x;

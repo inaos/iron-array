@@ -29,14 +29,11 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
     }
 
     iarray_storage_t xstore;
-    xstore.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.contiguous = xcontiguous;
     xstore.urlpath = xurlpath;
-    if (cshape != NULL) {
-        for (int i = 0; i < ndim; ++i) {
-            xstore.chunkshape[i] = cshape[i];
-            xstore.blockshape[i] = bshape[i];
-        }
+    for (int i = 0; i < ndim; ++i) {
+        xstore.chunkshape[i] = cshape[i];
+        xstore.blockshape[i] = bshape[i];
     }
     blosc2_remove_urlpath(xstore.urlpath);
     iarray_container_t *c_x;
@@ -133,20 +130,6 @@ INA_TEST_TEARDOWN(rewrite_cont) {
 }
 
 
-INA_TEST_FIXTURE(rewrite_cont, 2_d_p) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int32_t type_size = sizeof(double);
-
-    int8_t ndim = 2;
-    int64_t shape[] = {5, 5};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    int64_t blockshape[] = {3, 2};
-
-    INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                              blockshape, false, NULL));
-}
-
 INA_TEST_FIXTURE(rewrite_cont, 3_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
@@ -170,34 +153,6 @@ INA_TEST_FIXTURE(rewrite_cont, 4_d) {
     int64_t cshape[] = {11, 8, 12, 21};
     int64_t bshape[] = {4, 3, 3, 4};
     int64_t *blockshape = cshape;
-
-    INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                              blockshape, true, NULL));
-}
-
-INA_TEST_FIXTURE(rewrite_cont, 5_f_p) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int32_t type_size = sizeof(float);
-
-    int8_t ndim = 5;
-    int64_t shape[] = {40, 26, 35, 23, 21};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    int64_t blockshape[] = {12, 12, 12, 12, 12};
-
-    INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                              blockshape, true, "xarr.iarr"));
-}
-
-INA_TEST_FIXTURE(rewrite_cont, 6_d_p) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int32_t type_size = sizeof(double);
-
-    int8_t ndim = 6;
-    int64_t shape[] = {12, 13, 21, 19, 13, 15};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    int64_t blockshape[] = {2, 3, 5, 4, 3, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                               blockshape, true, NULL));

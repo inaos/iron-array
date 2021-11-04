@@ -304,14 +304,10 @@ INA_API(ina_rc_t) iarray_gemm(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(b);
     INA_VERIFY_NOT_NULL(c);
 
+    int nthreads = mkl_get_max_threads();
+    mkl_set_num_threads(1);
+    IARRAY_RETURN_IF_FAILED(gemm_blosc(ctx, a, b, c));
+    mkl_set_num_threads(nthreads);
 
-    if (c->storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
-        IARRAY_RETURN_IF_FAILED(gemm_plainbuffer(ctx, a, b, c));
-    } else {
-        int nthreads = mkl_get_max_threads();
-        mkl_set_num_threads(1);
-        IARRAY_RETURN_IF_FAILED(gemm_blosc(ctx, a, b, c));
-        mkl_set_num_threads(nthreads);
-    }
     return INA_SUCCESS;
 }

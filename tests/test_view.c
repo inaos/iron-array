@@ -51,14 +51,11 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     }
 
     iarray_storage_t xstore;
-    xstore.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.contiguous = xcontiguous;
     xstore.urlpath = xurlpath;
-    if (cshape != NULL) {
-        for (int i = 0; i < ndim; ++i) {
-            xstore.chunkshape[i] = cshape[i];
-            xstore.blockshape[i] = bshape[i];
-        }
+    for (int i = 0; i < ndim; ++i) {
+        xstore.chunkshape[i] = cshape[i];
+        xstore.blockshape[i] = bshape[i];
     }
     blosc2_remove_urlpath(xstore.urlpath);
     iarray_container_t *c_x;
@@ -119,25 +116,6 @@ INA_TEST_TEARDOWN(view) {
     iarray_destroy();
 }
 
-
-INA_TEST_FIXTURE(view, 2_d_p_v) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int32_t type_size = sizeof(double);
-
-    const int8_t ndim = 2;
-    int64_t shape[] = {10, 10};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    int64_t start[] = {-5, -7};
-    int64_t stop[] = {-1, 10};
-
-    double result[] = {53, 54, 55, 56, 57, 58, 59, 63, 64, 65, 66, 67, 68, 69, 73, 74, 75, 76,
-                       77, 78, 79, 83, 84, 85, 86, 87, 88, 89};
-
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result, false, "xarr.iarr"));
-}
-
 INA_TEST_FIXTURE(view, 3_f_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
@@ -185,52 +163,6 @@ INA_TEST_FIXTURE(view, 4_d_v) {
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   start, stop, result, false, NULL));
-}
-
-INA_TEST_FIXTURE(view, 5_f_p_v) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int32_t type_size = sizeof(float);
-
-    const int8_t ndim = 5;
-    int64_t shape[] = {10, 10, 10, 10, 10};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    int64_t start[] = {-4, 0, -5, 5, 7};
-    int64_t stop[] = {8, 9, -4, -4, 10};
-
-    float result[] = {60557, 60558, 60559, 61557, 61558, 61559, 62557, 62558, 62559, 63557,
-                      63558, 63559, 64557, 64558, 64559, 65557, 65558, 65559, 66557, 66558,
-                      66559, 67557, 67558, 67559, 68557, 68558, 68559, 70557, 70558, 70559,
-                      71557, 71558, 71559, 72557, 72558, 72559, 73557, 73558, 73559, 74557,
-                      74558, 74559, 75557, 75558, 75559, 76557, 76558, 76559, 77557, 77558,
-                      77559, 78557, 78558, 78559};
-
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result, true, NULL));
-}
-
-INA_TEST_FIXTURE(view, 6_d_p_v) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int32_t type_size = sizeof(double);
-
-    const int8_t ndim = 6;
-    int64_t shape[] = {10, 10, 10, 10, 10, 10};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    int64_t start[] = {0, 4, -8, 4, 5, 1};
-    int64_t stop[] = {1, 7, 4, -4, 8, 3};
-
-    double result[] = {42451, 42452, 42461, 42462, 42471, 42472, 42551, 42552, 42561, 42562,
-                       42571, 42572, 43451, 43452, 43461, 43462, 43471, 43472, 43551, 43552,
-                       43561, 43562, 43571, 43572, 52451, 52452, 52461, 52462, 52471, 52472,
-                       52551, 52552, 52561, 52562, 52571, 52572, 53451, 53452, 53461, 53462,
-                       53471, 53472, 53551, 53552, 53561, 53562, 53571, 53572, 62451, 62452,
-                       62461, 62462, 62471, 62472, 62551, 62552, 62561, 62562, 62571, 62572,
-                       63451, 63452, 63461, 63462, 63471, 63472, 63551, 63552, 63561, 63562,
-                       63571, 63572};
-
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result, true, "xarr.iarr"));
 }
 
 INA_TEST_FIXTURE(view, 7_f_v) {

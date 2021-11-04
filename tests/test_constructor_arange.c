@@ -33,14 +33,10 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
     double step = (stop - start) / size;
 
     iarray_storage_t xstore = {.urlpath=urlpath, .contiguous=contiguous};
-    if (cshape == NULL) {
-        xstore.backend = IARRAY_STORAGE_PLAINBUFFER;
-    } else {
-        xstore.backend = IARRAY_STORAGE_BLOSC;
-        for (int i = 0; i < ndim; ++i) {
-            xstore.chunkshape[i] = cshape[i];
-            xstore.blockshape[i] = bshape[i];
-        }
+
+    for (int i = 0; i < ndim; ++i) {
+        xstore.chunkshape[i] = cshape[i];
+        xstore.blockshape[i] = bshape[i];
     }
 
     iarray_container_t *c_x;
@@ -93,19 +89,6 @@ INA_TEST_TEARDOWN(constructor_arange) {
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(constructor_arange, 2_d_p) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-
-    int8_t ndim = 2;
-    int64_t shape[] = {10, 10};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    double start = 0;
-    double stop = 100;
-
-    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, false, NULL));
-}
-
 INA_TEST_FIXTURE(constructor_arange, 2_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
@@ -131,17 +114,4 @@ INA_TEST_FIXTURE(constructor_arange, 5_d) {
     double stop = 0.2;
 
     INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, false, "arr.iarr"));
-}
-
-INA_TEST_FIXTURE(constructor_arange, 7_f_p) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-
-    int8_t ndim = 7;
-    int64_t shape[] = {5, 7, 8, 9, 6, 5, 7};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    double start = 10;
-    double stop = 0;
-
-    INA_TEST_ASSERT_SUCCEED(test_arange(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, NULL));
 }

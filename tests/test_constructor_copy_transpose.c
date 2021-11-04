@@ -30,25 +30,19 @@ static ina_rc_t test_copy_transpose(iarray_context_t *ctx, iarray_data_type_t dt
     }
 
     iarray_storage_t store;
-    store.backend = (cshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     store.urlpath = xurlpath;
     store.contiguous = contiguous;
     for (int i = 0; i < ndim; ++i) {
-        if (cshape != NULL) {
-            store.chunkshape[i] = cshape[i];
-            store.blockshape[i] = bshape[i];
-        }
+        store.chunkshape[i] = cshape[i];
+        store.blockshape[i] = bshape[i];
     }
 
     iarray_storage_t ystore;
-    ystore.backend = (cshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     ystore.urlpath = yurlpath;
     ystore.contiguous = contiguous;
     for (int i = 0; i < ndim; ++i) {
-        if (cshape != NULL) {
-            ystore.chunkshape[i] = cshape[ndim - 1 - i];
-            ystore.blockshape[i] = bshape[ndim - 1 - i];
-        }
+        ystore.chunkshape[i] = cshape[ndim - 1 - i];
+        ystore.blockshape[i] = bshape[ndim - 1 - i];
     }
 
     double step = (stop - start) / size;
@@ -100,20 +94,6 @@ INA_TEST_SETUP(constructor_copy_transpose) {
 INA_TEST_TEARDOWN(constructor_copy_transpose) {
     iarray_context_free(&data->ctx);
     iarray_destroy();
-}
-
-INA_TEST_FIXTURE(constructor_copy_transpose, 2_f_p) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-
-    int8_t ndim = 2;
-    int64_t shape[] = {1000, 2500};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-
-    double start = 0;
-    double stop = 1;
-
-    INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, false, "arr.iarr", "arr2.iarr"));
 }
 
 INA_TEST_FIXTURE(constructor_copy_transpose, 2_d) {

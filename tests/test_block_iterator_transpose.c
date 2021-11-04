@@ -36,21 +36,19 @@ static ina_rc_t test_block_iterator_transpose(iarray_context_t *ctx, iarray_data
     }
 
     iarray_storage_t xstorage;
-    xstorage.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstorage.contiguous = xcontiguous;
     xstorage.urlpath = xurlpath;
     for (int i = 0; i < ndim; ++i) {
-        xstorage.chunkshape[i] = cshape ? cshape[i] : 0;
-        xstorage.blockshape[i] = bshape ? bshape[i] : 0;
+        xstorage.chunkshape[i] = cshape[i];
+        xstorage.blockshape[i] = bshape[i];
     }
 
     iarray_storage_t ystorage;
-    ystorage.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     ystorage.contiguous = ycontiguous;
     ystorage.urlpath = yurlpath;
     for (int i = 0; i < ndim; ++i) {
-        ystorage.chunkshape[i] = cshape ? cshape[ndim - 1 - i] : 0;
-        ystorage.blockshape[i] = bshape ? bshape[ndim - 1 - i] : 0;
+        ystorage.chunkshape[i] = cshape[ndim - 1 - i];
+        ystorage.blockshape[i] = bshape[ndim - 1 - i];
     }
 
     iarray_container_t *c_x;
@@ -160,15 +158,15 @@ INA_TEST_TEARDOWN(block_iterator_transpose) {
 }
 
 
-INA_TEST_FIXTURE(block_iterator_transpose, d_p) {
+INA_TEST_FIXTURE(block_iterator_transpose, d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
     int8_t ndim = 2;
     int64_t shape[] = {10, 10};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    int64_t blockshape[] = {5, 5};
+    int64_t cshape[] = {5, 5};
+    int64_t bshape[] = {5, 5};
+    int64_t *blockshape = cshape;
 
     INA_TEST_ASSERT_SUCCEED(test_block_iterator_transpose(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                 blockshape, false, NULL, false, NULL));
@@ -189,7 +187,7 @@ INA_TEST_FIXTURE(block_iterator_transpose, f) {
                                                 blockshape, true, "xarr.iarr", false, "yarr.iarr"));
 }
 
-INA_TEST_FIXTURE(block_iterator_transpose, d) {
+INA_TEST_FIXTURE(block_iterator_transpose, d_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
@@ -240,21 +238,19 @@ static ina_rc_t test_block_iterator_transpose_external(iarray_context_t *ctx,
     }
 
     iarray_storage_t xstorage;
-    xstorage.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstorage.contiguous = xcontiguous;
     xstorage.urlpath = xurlpath;
     for (int i = 0; i < ndim; ++i) {
-        xstorage.chunkshape[i] = cshape ? cshape[i] : 0;
-        xstorage.blockshape[i] = bshape ? bshape[i] : 0;
+        xstorage.chunkshape[i] = cshape[i];
+        xstorage.blockshape[i] = bshape[i];
     }
 
     iarray_storage_t ystorage;
-    ystorage.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     ystorage.contiguous = ycontiguous;
     ystorage.urlpath = yurlpath;
     for (int i = 0; i < ndim; ++i) {
-        ystorage.chunkshape[i] = cshape ? cshape[ndim - 1 - i] : 0;
-        ystorage.blockshape[i] = bshape ? bshape[ndim - 1 - i] : 0;
+        ystorage.chunkshape[i] = cshape[ndim - 1 - i];
+        ystorage.blockshape[i] = bshape[ndim - 1 - i];
     }
 
     iarray_container_t *c_x;
@@ -358,21 +354,6 @@ INA_TEST_SETUP(block_iterator_transpose_external) {
 INA_TEST_TEARDOWN(block_iterator_transpose_external) {
     iarray_context_free(&data->ctx);
     iarray_destroy();
-}
-
-
-INA_TEST_FIXTURE(block_iterator_transpose_external, d_p) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int32_t type_size = sizeof(double);
-
-    int8_t ndim = 2;
-    int64_t shape[] = {10, 10};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    int64_t blockshape[] = {5, 5};
-
-    INA_TEST_ASSERT_SUCCEED(test_block_iterator_transpose_external(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                          blockshape, false, NULL, false, NULL));
 }
 
 

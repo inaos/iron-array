@@ -204,17 +204,6 @@ INA_API(ina_rc_t) iarray_opt_gemm_b(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(c);
 
-    if (a->storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
-        IARRAY_TRACE1(iarray.error, "gemm_b can not be performed over a plainbuffer "
-                                    "container");
-        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
-    }
-    if (b->storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
-        IARRAY_TRACE1(iarray.error, "gemm_b can not be performed over a plainbuffer "
-                                    "container");
-        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
-    }
-
     if (a->catarr->ndim != 2) {
         IARRAY_TRACE1(iarray.error, "The a dimension must be 2");
         return INA_ERROR(IARRAY_ERR_INVALID_NDIM);

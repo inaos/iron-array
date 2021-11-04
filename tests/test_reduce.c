@@ -32,12 +32,9 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
     }
 
     iarray_storage_t storage = {0};
-    storage.backend = IARRAY_STORAGE_BLOSC;
     for (int i = 0; i < ndim; ++i) {
-        if (cshape != NULL) {
-            storage.chunkshape[i] = i == axis ? shape[i] : 1;
-            storage.blockshape[i] = i == axis ? shape[i] : 1;
-        }
+        storage.chunkshape[i] = i == axis ? shape[i] : 1;
+        storage.blockshape[i] = i == axis ? shape[i] : 1;
     }
 
     iarray_container_t *c_x;
@@ -68,19 +65,15 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
     IARRAY_ITER_FINISH();
 
 
-    storage.backend = cshape == NULL ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     for (int i = 0; i < ndim; ++i) {
-        if (cshape != NULL) {
-            storage.chunkshape[i] = cshape[i];
-            storage.blockshape[i] = bshape[i];
-        }
+        storage.chunkshape[i] = cshape[i];
+        storage.blockshape[i] = bshape[i];
     }
 
     iarray_container_t *c_y;
     IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &storage, 0, &c_y));
 
     iarray_storage_t dest_storage = {0};
-    dest_storage.backend = IARRAY_STORAGE_BLOSC;
     dest_storage.contiguous = dest_frame;
     dest_storage.urlpath = dest_urlpath;
     for (int i = 0; i < ndim - 1; ++i) {
@@ -137,7 +130,7 @@ INA_TEST_TEARDOWN(reduce) {
     iarray_destroy();
 }
 
-/*
+
 INA_TEST_FIXTURE(reduce, 2_d_1) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
@@ -173,7 +166,7 @@ INA_TEST_FIXTURE(reduce, 3_d_2) {
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
                                         dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
-*/
+
 
 INA_TEST_FIXTURE(reduce, 4_d_0) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;

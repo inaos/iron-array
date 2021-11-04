@@ -35,14 +35,11 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
     }
 
     iarray_storage_t storage = {0};
-    storage.backend = IARRAY_STORAGE_BLOSC;
     storage.contiguous = src_contiguous;
     storage.urlpath = src_urlpath;
     for (int i = 0; i < ndim; ++i) {
-        if (cshape != NULL) {
-            storage.chunkshape[i] = cshape[i];
-            storage.blockshape[i] = bshape[i];
-        }
+        storage.chunkshape[i] = cshape[i];
+        storage.blockshape[i] = bshape[i];
     }
 
     iarray_container_t *c_x;
@@ -50,7 +47,6 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
 
 
     iarray_storage_t dest_storage = {0};
-    dest_storage.backend = IARRAY_STORAGE_BLOSC;
     dest_storage.contiguous = dest_contiguous;
     dest_storage.urlpath = dest_urlpath;
     for (int i = 0; i < ndim - naxis; ++i) {
