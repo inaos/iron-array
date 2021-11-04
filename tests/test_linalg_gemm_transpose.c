@@ -35,7 +35,6 @@ test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize, const i
     }
 
     iarray_storage_t xstore;
-    xstore.backend = xcshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.urlpath = xurlpath;
     xstore.contiguous = xcontiguous;
     if (xcshape != NULL) {
@@ -66,14 +65,11 @@ test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize, const i
     }
 
     iarray_storage_t ystore;
-    ystore.backend = ycshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     ystore.urlpath = yurlpath;
     ystore.contiguous = ycontiguous;
-    if (ycshape != NULL) {
-        for (int i = 0; i < ydtshape.ndim; ++i) {
-            ystore.chunkshape[i] = ycshape[i];
-            ystore.blockshape[i] = ybshape[i];
-        }
+    for (int i = 0; i < ydtshape.ndim; ++i) {
+        ystore.chunkshape[i] = ycshape[i];
+        ystore.blockshape[i] = ybshape[i];
     }
     blosc2_remove_urlpath(ystore.urlpath);
     
@@ -123,14 +119,11 @@ test_gemm(iarray_context_t *ctx, iarray_data_type_t dtype, int typesize, const i
     }
 
     iarray_storage_t zstore;
-    zstore.backend = zcshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     zstore.urlpath = zurlpath;
     zstore.contiguous = zcontiguous;
-    if (zcshape != NULL) {
-        for (int i = 0; i < zdtshape.ndim; ++i) {
-            zstore.chunkshape[i] = zcshape[i];
-            zstore.blockshape[i] = zbshape[i];
-        }
+    for (int i = 0; i < zdtshape.ndim; ++i) {
+        zstore.chunkshape[i] = zcshape[i];
+        zstore.blockshape[i] = zbshape[i];
     }
     blosc2_remove_urlpath(zstore.urlpath);
 
@@ -198,56 +191,6 @@ INA_TEST_TEARDOWN(linalg_gemm_transpose) {
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(linalg_gemm_transpose, f_plain_plain) {
-
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int typesize = sizeof(float);
-
-    int64_t xshape[] = {250, 150};
-    int64_t *xcshape = NULL;
-    int64_t *xbshape = NULL;
-
-    int64_t yshape[] = {100, 250};
-    int64_t *ycshape = NULL;
-    int64_t *ybshape = NULL;
-
-    int64_t zshape[] = {150, 100};
-    int64_t *zcshape = NULL;
-    int64_t *zbshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
-                                      xshape, xcshape, xbshape,
-                                      yshape, ycshape, ybshape,
-                                      zshape, zcshape, zbshape,
-                                      false, NULL, false, NULL, false, NULL));
-}
-
-
-INA_TEST_FIXTURE(linalg_gemm_transpose, d_plain_schunk) {
-
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int typesize = sizeof(double);
-
-    int64_t xshape[] = {200, 100};
-    int64_t *xcshape = NULL;
-    int64_t *xbshape = NULL;
-
-    int64_t yshape[] = {150, 200};
-    int64_t ycshape[] = {50, 30};
-    int64_t ybshape[] = {20, 12};
-
-    int64_t zshape[] = {100, 150};
-    int64_t *zcshape = NULL;
-    int64_t *zbshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
-                                      xshape, xcshape, xbshape,
-                                      yshape, ycshape, ybshape,
-                                      zshape, zcshape, zbshape,
-                                      false, "xarr.iarr", false, "yarr.iarr", false, "zarr.iarr"));
-}
-
-
 INA_TEST_FIXTURE(linalg_gemm_transpose, f_schunk_schunk) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -270,30 +213,4 @@ INA_TEST_FIXTURE(linalg_gemm_transpose, f_schunk_schunk) {
                                       yshape, ycshape, ybshape,
                                       zshape, zcshape, zbshape,
                                       true, "xarr.iarr", false, NULL, false, "zarr.iarr"));
-}
-
-
-INA_TEST_FIXTURE(linalg_gemm_transpose, d_schunk_plain) {
-
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int typesize = sizeof(double);
-
-    int64_t xshape[] = {670, 300};
-    int64_t xcshape[] = {300, 28};
-    int64_t xbshape[] = {31, 11};
-
-
-    int64_t yshape[] = {210, 670};
-    int64_t *ycshape = NULL;
-    int64_t *ybshape = NULL;
-
-
-    int64_t zshape[] = {300, 210};
-    int64_t zcshape[] = {43, 11};
-    int64_t zbshape[] = {13, 5};
-
-    INA_TEST_ASSERT_SUCCEED(test_gemm(data->ctx, dtype, typesize,
-                                      xshape, xcshape, xbshape,
-                                      yshape, ycshape, ybshape,
-                                      zshape, zcshape, zbshape, true, NULL, false, NULL, true, "zarr.iarr"));
 }

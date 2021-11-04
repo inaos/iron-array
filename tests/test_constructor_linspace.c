@@ -29,14 +29,11 @@ static ina_rc_t test_linspace(iarray_context_t *ctx, iarray_data_type_t dtype, i
     }
 
     iarray_storage_t store;
-    store.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     store.contiguous = contiguous;
     store.urlpath = urlpath;
     for (int i = 0; i < ndim; ++i) {
-        if (cshape != NULL) {
-            store.chunkshape[i] = cshape[i];
-            store.blockshape[i] = bshape[i];
-        }
+        store.chunkshape[i] = cshape[i];
+        store.blockshape[i] = bshape[i];
     }
 
     iarray_container_t *c_x;
@@ -104,31 +101,6 @@ INA_TEST_FIXTURE(constructor_linspace, 2_d) {
     INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, false, NULL));
 }
 
-INA_TEST_FIXTURE(constructor_linspace, 2_f_p) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-
-    int8_t ndim = 2;
-    int64_t shape[] = {445, 321};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    double start = 3123;
-    double stop = 45654;
-
-    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, false, "arr.iarr"));
-}
-
-INA_TEST_FIXTURE(constructor_linspace, 5_d_p) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-
-    int8_t ndim = 5;
-    int64_t shape[] = {20, 18, 17, 13, 21};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    double start = 0.1;
-    double stop = 0.2;
-
-    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, NULL));
-}
 
 INA_TEST_FIXTURE(constructor_linspace, 7_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;

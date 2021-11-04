@@ -33,14 +33,11 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     }
 
     iarray_storage_t xstore;
-    xstore.backend = xcshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.urlpath = xurlpath;
     xstore.contiguous = xcontiguous;
-    if (xcshape != NULL) {
-        for (int i = 0; i < xdtshape.ndim; ++i) {
-            xstore.chunkshape[i] = xcshape[i];
-            xstore.blockshape[i] = xbshape[i];
-        }
+    for (int i = 0; i < xdtshape.ndim; ++i) {
+        xstore.chunkshape[i] = xcshape[i];
+        xstore.blockshape[i] = xbshape[i];
     }
     blosc2_remove_urlpath(xstore.urlpath);
     iarray_container_t *c_x;
@@ -61,14 +58,11 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     }
 
     iarray_storage_t ystore;
-    ystore.backend = ycshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     ystore.urlpath = yurlpath;
     ystore.contiguous = ycontiguous;
-    if (ycshape != NULL) {
-        for (int i = 0; i < ydtshape.ndim; ++i) {
-            ystore.chunkshape[i] = ycshape[i];
-            ystore.blockshape[i] = ybshape[i];
-        }
+    for (int i = 0; i < ydtshape.ndim; ++i) {
+        ystore.chunkshape[i] = ycshape[i];
+        ystore.blockshape[i] = ybshape[i];
     }
     blosc2_remove_urlpath(ystore.urlpath);
     iarray_container_t *c_y;
@@ -111,14 +105,11 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     }
 
     iarray_storage_t zstore;
-    zstore.backend = zcshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     zstore.urlpath = zurlpath;
     zstore.contiguous = zcontiguous;
-    if (zcshape != NULL) {
-        for (int i = 0; i < zdtshape.ndim; ++i) {
-            zstore.chunkshape[i] = zcshape[i];
-            zstore.blockshape[i] = zbshape[i];
-        }
+    for (int i = 0; i < zdtshape.ndim; ++i) {
+        zstore.chunkshape[i] = zcshape[i];
+        zstore.blockshape[i] = zbshape[i];
     }
     blosc2_remove_urlpath(zstore.urlpath);
     iarray_container_t *c_z;
@@ -183,78 +174,6 @@ INA_TEST_TEARDOWN(linalg_gemv) {
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(linalg_gemv, f_plain) {
-
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int typesize = sizeof(float);
-
-    int64_t xshape[] = {157, 200};
-    int64_t *xcshape = NULL;
-    int64_t *xbshape = NULL;
-
-    int64_t yshape[] = {200};
-    int64_t *ycshape = NULL;
-    int64_t *ybshape = NULL;
-
-    int64_t zshape[] = {157};
-    int64_t *zcshape = NULL;
-    int64_t *zbshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_gemv(data->ctx, dtype, typesize,
-                                      xshape, xcshape, xbshape,
-                                      yshape, ycshape, ybshape,
-                                      zshape, zcshape, zbshape,
-                                      false, NULL, false, NULL, false, NULL));
-}
-
-INA_TEST_FIXTURE(linalg_gemv, d_plain) {
-
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int typesize = sizeof(double);
-
-    int64_t xshape[] = {10, 10};
-    int64_t *xcshape = NULL;
-    int64_t *xbshape = NULL;
-
-    int64_t yshape[] = {10};
-    int64_t *ycshape = NULL;
-    int64_t *ybshape = NULL;
-
-    int64_t zshape[] = {10};
-    int64_t *zcshape = NULL;
-    int64_t *zbshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_gemv(data->ctx, dtype, typesize,
-                                      xshape, xcshape, xbshape,
-                                      yshape, ycshape, ybshape,
-                                      zshape, zcshape, zbshape,
-                                      false, "xarr.iarr", false, "yarr.iarr", false, "zarr.iarr"));
-}
-
-INA_TEST_FIXTURE(linalg_gemv, f_schunk) {
-
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int typesize = sizeof(float);
-
-    int64_t xshape[] = {234, 200};
-    int64_t xcshape[] = {11, 33};
-    int64_t xbshape[] = {5, 10};
-
-    int64_t yshape[] = {200};
-    int64_t ycshape[] = {100};
-    int64_t ybshape[] = {40};
-
-    int64_t zshape[] = {234};
-    int64_t *zcshape = NULL;
-    int64_t *zbshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_gemv(data->ctx, dtype, typesize,
-                                      xshape, xcshape, xbshape,
-                                      yshape, ycshape, ybshape,
-                                      zshape, zcshape, zbshape,
-                                      true, NULL, false, "yarr.iarr", true, "zarr.iarr"));
-}
-
 INA_TEST_FIXTURE(linalg_gemv, d_schunk) {
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -277,54 +196,6 @@ INA_TEST_FIXTURE(linalg_gemv, d_schunk) {
                                       yshape, ycshape, ybshape,
                                       zshape, zcshape, zbshape,
                                       false, "xarr.iarr", false, NULL, true, NULL));
-}
-
-INA_TEST_FIXTURE(linalg_gemv, f_plain_plain) {
-
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int typesize = sizeof(float);
-
-    int64_t xshape[] = {130, 160};
-    int64_t *xcshape = NULL;
-    int64_t *xbshape = NULL;
-
-    int64_t yshape[] = {160};
-    int64_t *ycshape = NULL;
-    int64_t *ybshape = NULL;
-
-    int64_t zshape[] = {130};
-    int64_t *zcshape = NULL;
-    int64_t *zbshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_gemv(data->ctx, dtype, typesize,
-                                      xshape, xcshape, xbshape,
-                                      yshape, ycshape, ybshape,
-                                      zshape, zcshape, zbshape,
-                                      true, NULL, true, NULL, true, NULL));
-}
-
-INA_TEST_FIXTURE(linalg_gemv, d_plain_plain) {
-
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int typesize = sizeof(double);
-
-    int64_t xshape[] = {100, 167};
-    int64_t *xcshape = NULL;
-    int64_t *xbshape = NULL;
-
-    int64_t yshape[] = {167};
-    int64_t *ycshape = NULL;
-    int64_t *ybshape = NULL;
-
-    int64_t zshape[] = {100};
-    int64_t *zcshape = NULL;
-    int64_t *zbshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_gemv(data->ctx, dtype, typesize,
-                                      xshape, xcshape, xbshape,
-                                      yshape, ycshape, ybshape,
-                                      zshape, zcshape, zbshape,
-                                      false, "xarr.iarr", true, "yarr.irr", false, NULL));
 }
 
 INA_TEST_FIXTURE(linalg_gemv, f_schunk_schunk) {
@@ -373,52 +244,4 @@ INA_TEST_FIXTURE(linalg_gemv, d_schunk_schunk) {
                                       yshape, ycshape, ybshape,
                                       zshape, zcshape, zbshape,
                                       true, NULL, false, NULL, true, "zarr.iarr"));;
-}
-
-INA_TEST_FIXTURE(linalg_gemv, f_schunk_plain) {
-
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int typesize = sizeof(double);
-
-    int64_t xshape[] = {900, 650};
-    int64_t xcshape[] = {200, 140};
-    int64_t xbshape[] = {11, 3};
-
-    int64_t yshape[] = {650};
-    int64_t *ycshape = NULL;
-    int64_t *ybshape = NULL;
-
-    int64_t zshape[] = {900};
-    int64_t zcshape[] = {155};
-    int64_t zbshape[] = {31};
-
-    INA_TEST_ASSERT_SUCCEED(test_gemv(data->ctx, dtype, typesize,
-                                      xshape, xcshape, xbshape,
-                                      yshape, ycshape, ybshape,
-                                      zshape, zcshape, zbshape,
-                                      false, NULL, false, "yarr.iarr", true, NULL));;
-}
-
-INA_TEST_FIXTURE(linalg_gemv, d_plain_schunk) {
-
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int typesize = sizeof(double);
-
-    int64_t xshape[] = {60, 300};
-    int64_t *xcshape = NULL;
-    int64_t *xbshape = NULL;
-
-    int64_t yshape[] = {300};
-    int64_t ycshape[] = {41};
-    int64_t ybshape[] = {21};
-
-    int64_t zshape[] = {60};
-    int64_t zcshape[] = {60};
-    int64_t zbshape[] = {60};
-
-    INA_TEST_ASSERT_SUCCEED(test_gemv(data->ctx, dtype, typesize,
-                                      xshape, xcshape, xbshape,
-                                      yshape, ycshape, ybshape,
-                                      zshape, zcshape, zbshape,
-                                      true, "xarr.iarr", false, NULL, true, NULL));;
 }

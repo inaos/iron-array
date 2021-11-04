@@ -339,11 +339,6 @@ INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ufunc);
     INA_VERIFY_NOT_NULL(b);
 
-    if (a->storage->backend == IARRAY_STORAGE_PLAINBUFFER) {
-        IARRAY_TRACE1(iarray.error, "Reduction can not be performed over a plainbuffer "
-                                    "container");
-        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
-    }
     if (a->dtshape->ndim < 1) {
         IARRAY_TRACE1(iarray.error, "The container dimensions must be greater than 1");
         return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
@@ -512,7 +507,6 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     // Start reductions
     iarray_container_t *c = NULL;
     iarray_storage_t storage_red;
-    storage_red.backend = IARRAY_STORAGE_BLOSC;
     storage_red.contiguous = storage->contiguous;
     storage_red.urlpath = storage->urlpath != NULL ? "iarray_red_temp.iarray" : NULL;
     if (storage_red.urlpath != NULL && access(storage_red.urlpath, 0) == 0) {

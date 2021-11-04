@@ -50,14 +50,11 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     }
 
     iarray_storage_t store;
-    store.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     store.contiguous = contiguous;
     store.urlpath = urlpath;
-    if (cshape != NULL) {
-        for (int j = 0; j < xdtshape.ndim; ++j) {
-            store.chunkshape[j] = cshape[j];
-            store.blockshape[j] = bshape[j];
-        }
+    for (int j = 0; j < xdtshape.ndim; ++j) {
+        store.chunkshape[j] = cshape[j];
+        store.blockshape[j] = bshape[j];
     }
     int64_t bufdes_size = 1;
     blosc2_remove_urlpath(store.urlpath);
@@ -124,14 +121,14 @@ INA_TEST_TEARDOWN(get_slice_buffer) {
     iarray_context_free(&data->ctx);
     iarray_destroy();
 }
-INA_TEST_FIXTURE(get_slice_buffer, 2_d_p) {
+INA_TEST_FIXTURE(get_slice_buffer, 2_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
     const int8_t ndim = 2;
     int64_t shape[] = {10, 10};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
+    int64_t cshape[] = {5, 5};
+    int64_t bshape[] = {2, 2};
     int64_t start[] = {-5, -7};
     int64_t stop[] = {-1, 10};
 
@@ -192,14 +189,14 @@ INA_TEST_FIXTURE(get_slice_buffer, 4_d) {
                                                   start, stop, result, true, NULL));
 }
 
-INA_TEST_FIXTURE(get_slice_buffer, 5_f_p) {
+INA_TEST_FIXTURE(get_slice_buffer, 5_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
 
     const int8_t ndim = 5;
     int64_t shape[] = {10, 10, 10, 10, 10};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
+    int64_t cshape[] = {5, 5, 5, 5, 5};
+    int64_t bshape[] = {2, 5, 1, 5, 2};
     int64_t start[] = {-4, 0, -5, 5, 7};
     int64_t stop[] = {8, 9, -4, -4, 10};
 
@@ -214,14 +211,14 @@ INA_TEST_FIXTURE(get_slice_buffer, 5_f_p) {
                                                   start, stop, result, true, "arr.iarr"));
 }
 
-INA_TEST_FIXTURE(get_slice_buffer, 6_d_p) {
+INA_TEST_FIXTURE(get_slice_buffer, 6_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
 
     const int8_t ndim = 6;
     int64_t shape[] = {10, 10, 10, 10, 10, 10};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
+    int64_t cshape[] = {10, 10, 10, 10, 10, 10};
+    int64_t bshape[] = {5, 5, 5, 5, 5, 5};
     int64_t start[] = {0, 4, -8, 4, 5, 1};
     int64_t stop[] = {1, 7, 4, -4, 8, 3};
 

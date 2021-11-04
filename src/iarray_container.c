@@ -221,7 +221,6 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool conti
         return INA_ERROR(INA_ERR_FAILED);
     }
     (*container)->storage->urlpath = urlpath;
-    (*container)->storage->backend = IARRAY_STORAGE_BLOSC;
     (*container)->storage->contiguous = catarr->sc->storage->contiguous;
     for (int i = 0; i < catarr->ndim; ++i) {
         (*container)->storage->chunkshape[i] = catarr->chunkshape[i];
@@ -324,7 +323,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
             return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         }
         if (!view) {
-            if (storage->backend == IARRAY_STORAGE_BLOSC && storage->chunkshape[i] > stop_[i] - start_[i]) {
+            if (storage->chunkshape[i] > stop_[i] - start_[i]) {
                 IARRAY_TRACE1(iarray.error, "The chunkshape is bigger than shape");
                 return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
             }
@@ -369,12 +368,10 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         iarray_create_caterva_storage(&dtshape, storage, &cat_storage);
 
         IARRAY_ERR_CATERVA(caterva_get_slice(cat_ctx, src->catarr, start_, stop_, &cat_storage, &(*container)->catarr));
-        if (storage->backend == IARRAY_STORAGE_BLOSC) {
-            free(cat_storage.properties.blosc.metalayers[0].sdata);
-            free(cat_storage.properties.blosc.metalayers[0].name);
-        }
-        caterva_ctx_free(&cat_ctx);
+        free(cat_storage.properties.blosc.metalayers[0].sdata);
+        free(cat_storage.properties.blosc.metalayers[0].name);
 
+        caterva_ctx_free(&cat_ctx);
     }
 
     return INA_SUCCESS;

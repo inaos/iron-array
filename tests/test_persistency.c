@@ -98,7 +98,6 @@ INA_TEST_SETUP(persistency) {
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
 
     data->store.contiguous = true;
-    data->store.backend = IARRAY_STORAGE_BLOSC;
     data->store.urlpath = "test_persistency.b2frame";
     if (_iarray_path_exists(data->store.urlpath)) {
         blosc2_remove_urlpath(data->store.urlpath);

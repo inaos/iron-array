@@ -29,14 +29,11 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
     }
 
     iarray_storage_t store;
-    store.backend = (cshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     store.urlpath = urlpath;
     store.contiguous = (ndim % 2 == 0) ? false : true;
     for (int i = 0; i < ndim; ++i) {
-        if (cshape != NULL) {
-            store.chunkshape[i] = cshape[i];
-            store.blockshape[i] = bshape[i];
-        }
+        store.chunkshape[i] = cshape[i];
+        store.blockshape[i] = bshape[i];
     }
     double step = (stop - start) / size;
 
@@ -99,95 +96,6 @@ INA_TEST_SETUP(constructor_copy) {
 INA_TEST_TEARDOWN(constructor_copy) {
     iarray_context_free(&data->ctx);
     iarray_destroy();
-}
-
-INA_TEST_FIXTURE(constructor_copy, 1_f_p_n_n) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-
-    int8_t ndim = 1;
-    int64_t shape[] = {1000};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    int64_t stop_view[] = {431};
-    double start = 0;
-    double stop = 1;
-
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, false, NULL));
-}
-
-
-INA_TEST_FIXTURE(constructor_copy, 2_f_p_v_n) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-
-    int8_t ndim = 2;
-    int64_t shape[] = {10, 200};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    int64_t stop_view[] = {1, 121};
-    double start = - 0.1;
-    double stop = - 0.2;
-
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, true, false, NULL));
-}
-
-INA_TEST_FIXTURE(constructor_copy, 3_f_p_n_v) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-
-    int8_t ndim = 3;
-    int64_t shape[] = {10, 20, 10};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    int64_t stop_view[] = {2, 5, 6};
-    double start = 1;
-    double stop = 25;
-
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, true, "arr.iarr"));
-}
-
-
-INA_TEST_FIXTURE(constructor_copy, 5_d_p_n_n) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-
-    int8_t ndim = 5;
-    int64_t shape[] = {2, 3, 4, 5, 6};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    int64_t stop_view[] = {2, 2, 2, 2, 2};
-    double start = - 0.1;
-    double stop = - 0.25;
-
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, false, "arr.iarr"));
-}
-
-
-INA_TEST_FIXTURE(constructor_copy, 6_d_p_v_n) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-
-    int8_t ndim = 6;
-    int64_t shape[] = {6, 3, 6, 3, 6, 3};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    int64_t stop_view[] = {4, 3, 2, 3, 4, 3};
-
-    double start = 1000;
-    double stop = 2000;
-
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, true, false, "arr.iarr"));
-}
-
-INA_TEST_FIXTURE(constructor_copy, 7_d_p_n_v) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-
-    int8_t ndim = 7;
-    int64_t shape[] = {2, 4, 6, 8, 6, 4, 2};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-    int64_t stop_view[] = {2, 3, 5, 2, 2, 2};
-
-    double start = 0;
-    double stop = 0.000001;
-
-    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, true, NULL));
 }
 
 

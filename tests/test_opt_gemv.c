@@ -35,14 +35,11 @@ static ina_rc_t test_opt_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, i
     }
 
     iarray_storage_t xstore;
-    xstore.backend = xcshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     xstore.urlpath = xurlpath;
     xstore.contiguous = xcontiguous;
-    if (xcshape != NULL) {
-        for (int i = 0; i < xdtshape.ndim; ++i) {
-            xstore.chunkshape[i] = xcshape[i];
-            xstore.blockshape[i] = xbshape[i];
-        }
+    for (int i = 0; i < xdtshape.ndim; ++i) {
+        xstore.chunkshape[i] = xcshape[i];
+        xstore.blockshape[i] = xbshape[i];
     }
     blosc2_remove_urlpath(xstore.urlpath);
     iarray_container_t *c_x;
@@ -63,14 +60,11 @@ static ina_rc_t test_opt_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, i
     }
 
     iarray_storage_t ystore;
-    ystore.backend = ycshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     ystore.urlpath = yurlpath;
     ystore.contiguous = ycontiguous;
-    if (ycshape != NULL) {
-        for (int i = 0; i < ydtshape.ndim; ++i) {
-            ystore.chunkshape[i] = ycshape[i];
-            ystore.blockshape[i] = ybshape[i];
-        }
+    for (int i = 0; i < ydtshape.ndim; ++i) {
+        ystore.chunkshape[i] = ycshape[i];
+        ystore.blockshape[i] = ybshape[i];
     }
     blosc2_remove_urlpath(ystore.urlpath);
 
@@ -114,14 +108,11 @@ static ina_rc_t test_opt_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, i
     }
 
     iarray_storage_t zstore;
-    zstore.backend = zcshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     zstore.urlpath = zurlpath;
     zstore.contiguous = zcontiguous;
-    if (zcshape != NULL) {
-        for (int i = 0; i < zdtshape.ndim; ++i) {
-            zstore.chunkshape[i] = zcshape[i];
-            zstore.blockshape[i] = zbshape[i];
-        }
+    for (int i = 0; i < zdtshape.ndim; ++i) {
+        zstore.chunkshape[i] = zcshape[i];
+        zstore.blockshape[i] = zbshape[i];
     }
     blosc2_remove_urlpath(zstore.urlpath);
     iarray_container_t *c_z;

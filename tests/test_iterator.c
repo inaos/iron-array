@@ -27,15 +27,13 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
     }
 
     iarray_storage_t store;
-    store.backend = cshape ? IARRAY_STORAGE_BLOSC : IARRAY_STORAGE_PLAINBUFFER;
     store.contiguous = contiguous;
     store.urlpath = urlpath;
-    if (cshape != NULL) {
-        for (int i = 0; i < ndim; ++i) {
-            store.chunkshape[i] = cshape[i];
-            store.blockshape[i] = bshape[i];
-        }
+    for (int i = 0; i < ndim; ++i) {
+        store.chunkshape[i] = cshape[i];
+        store.blockshape[i] = bshape[i];
     }
+
     blosc2_remove_urlpath(store.urlpath);
 
     iarray_container_t *c_x;
@@ -103,18 +101,6 @@ INA_TEST_TEARDOWN(iterator) {
     iarray_destroy();
 }
 
-INA_TEST_FIXTURE(iterator, 2_d_p) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int32_t type_size = sizeof(double);
-
-    int8_t ndim = 2;
-    int64_t shape[] = {4, 6};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, false, NULL));
-}
-
 
 INA_TEST_FIXTURE(iterator, 2_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -141,31 +127,6 @@ INA_TEST_FIXTURE(iterator, 3_d) {
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, true, NULL));
 }
 
-
-INA_TEST_FIXTURE(iterator, 4_f_p) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int32_t type_size = sizeof(float);
-
-    int8_t ndim = 4;
-    int64_t shape[] = {15, 18, 14, 13};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, true, "arr.iarr"));
-}
-
-INA_TEST_FIXTURE(iterator, 5_d_p) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int32_t type_size = sizeof(double);
-
-    int8_t ndim = 5;
-    int64_t shape[] = {15, 18, 17, 13, 13};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, false, NULL));
-}
-
 INA_TEST_FIXTURE(iterator, 6_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
@@ -188,16 +149,4 @@ INA_TEST_FIXTURE(iterator, 7_d) {
     int64_t bshape[] = {2, 2, 1, 2, 1, 2, 2};
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, true, "arr.iarr"));
-}
-
-INA_TEST_FIXTURE(iterator, 8_f_p) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int32_t type_size = sizeof(float);
-
-    int8_t ndim = 8;
-    int64_t shape[] = {5, 7, 8, 9, 6, 5, 3, 5};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, true, NULL));
 }

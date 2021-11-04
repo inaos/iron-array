@@ -29,14 +29,11 @@ static ina_rc_t test_cfg(iarray_context_t *ctx,
     }
 
     iarray_storage_t xstore;
-    xstore.backend = (cshape == NULL) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     xstore.contiguous = contiguous;
     xstore.urlpath = urlpath;
     for (int i = 0; i < ndim; ++i) {
-        if (cshape != NULL) {
-            xstore.chunkshape[i] = cshape[i];
-            xstore.blockshape[i] = bshape[i];
-        }
+        xstore.chunkshape[i] = cshape[i];
+        xstore.blockshape[i] = bshape[i];
     }
 
     // Empty array
@@ -127,21 +124,6 @@ INA_TEST_FIXTURE(constructor_cfg, 2_d)
     INA_TEST_ASSERT_SUCCEED(test_cfg(data->ctx, dtype, ndim, shape, cshape, bshape, true, NULL));
 }
 
-INA_TEST_FIXTURE(constructor_cfg, 4_f_p)
-{
-    iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    cfg.filter_flags = IARRAY_COMP_TRUNC_PREC;
-    INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
-
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int8_t ndim = 4;
-    int64_t shape[] = {10, 5, 6, 10};
-    int64_t *cshape = NULL;
-    int64_t *bshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_cfg(data->ctx, dtype, ndim, shape, cshape, bshape, true, "arr.iarr"));
-}
-
 INA_TEST_FIXTURE(constructor_cfg, 5_d)
 {
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
@@ -154,18 +136,4 @@ INA_TEST_FIXTURE(constructor_cfg, 5_d)
     int64_t bshape[] = {5, 2, 2, 5, 3};
 
     INA_TEST_ASSERT_SUCCEED(test_cfg(data->ctx, dtype, ndim, shape, cshape, bshape, false, NULL));
-}
-
-INA_TEST_FIXTURE(constructor_cfg, 7_f_p)
-{
-    iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
-    INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
-
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int8_t ndim = 7;
-    int64_t shape[] = {10, 6, 6, 4, 12, 7, 10};
-    int64_t *cshape = NULL;
-    int64_t * bshape = NULL;
-
-    INA_TEST_ASSERT_SUCCEED(test_cfg(data->ctx, dtype, ndim, shape, cshape, bshape, false, "arr.iarr"));
 }

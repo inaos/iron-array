@@ -40,7 +40,6 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
 
     int flags = 0;
     iarray_storage_t store;
-    store.backend = IARRAY_STORAGE_BLOSC;
     store.urlpath = NULL;
     store.contiguous = contiguous;
     for (int i = 0; i < ndim; ++i) {

@@ -89,7 +89,6 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
     shape.shape[1] = (int64_t)n;
 
     iarray_storage_t xstore;
-    xstore.backend = IARRAY_STORAGE_BLOSC;
     xstore.urlpath = xurlpath;
     xstore.contiguous = xcontiguous;
     for (int i = 0; i < shape.ndim; ++i) {
@@ -99,7 +98,6 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
     blosc2_remove_urlpath(xstore.urlpath);
 
     iarray_storage_t rstore;
-    rstore.backend = IARRAY_STORAGE_BLOSC;
     rstore.urlpath = rurlpath;
     rstore.contiguous = rcontiguous;
     for (int i = 0; i < shape.ndim; ++i) {
@@ -109,7 +107,6 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
     blosc2_remove_urlpath(rstore.urlpath);
 
     iarray_storage_t ostore;
-    ostore.backend = IARRAY_STORAGE_BLOSC;
     ostore.urlpath = ourlpath;
     ostore.contiguous = ocontiguous;
     for (int i = 0; i < shape.ndim; ++i) {
@@ -191,7 +188,6 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
     shape.shape[1] = (int64_t)n;
 
     iarray_storage_t xstore;
-    xstore.backend = IARRAY_STORAGE_BLOSC;
     xstore.urlpath = xurlpath;
     xstore.contiguous = xcontiguous;
     for (int i = 0; i < shape.ndim; ++i) {
@@ -201,7 +197,6 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
     blosc2_remove_urlpath(xstore.urlpath);
 
     iarray_storage_t ystore;
-    ystore.backend = IARRAY_STORAGE_BLOSC;
     ystore.urlpath = yurlpath;
     ystore.contiguous = ycontiguous;
     for (int i = 0; i < shape.ndim; ++i) {
@@ -211,7 +206,6 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
     blosc2_remove_urlpath(ystore.urlpath);
 
     iarray_storage_t rstore;
-    rstore.backend = IARRAY_STORAGE_BLOSC;
     rstore.urlpath = rurlpath;
     rstore.contiguous = rcontiguous;
     for (int i = 0; i < shape.ndim; ++i) {
@@ -221,7 +215,6 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
     blosc2_remove_urlpath(rstore.urlpath);
 
     iarray_storage_t ostore;
-    ostore.backend = IARRAY_STORAGE_BLOSC;
     ostore.urlpath = ourlpath;
     ostore.contiguous = ocontiguous;
     for (int i = 0; i < shape.ndim; ++i) {
