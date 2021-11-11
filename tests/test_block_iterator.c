@@ -229,11 +229,7 @@ static ina_rc_t test_block_iterator_ext_chunk(iarray_context_t *ctx, iarray_data
     }
 
     for (int i = 0; i < c_x->dtshape->ndim; ++i) {
-        if (c_x->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-            csize_x *= (int32_t) c_x->dtshape->shape[i];
-        } else {
-            csize_x *= (int32_t) c_x->storage->chunkshape[i];
-        }
+        csize_x *= (int32_t) c_x->storage->chunkshape[i];
     }
 
     csize_x += BLOSC_MAX_OVERHEAD;

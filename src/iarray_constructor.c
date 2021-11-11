@@ -38,8 +38,8 @@ INA_API(ina_rc_t) iarray_empty(iarray_context_t *ctx,
     caterva_storage_t cat_storage = {0};
     iarray_create_caterva_storage(dtshape, storage, &cat_storage);
     IARRAY_ERR_CATERVA(caterva_empty(cat_ctx, &cat_params, &cat_storage, &(*container)->catarr));
-    free(cat_storage.properties.blosc.metalayers[0].sdata);
-    free(cat_storage.properties.blosc.metalayers[0].name);
+    free(cat_storage.metalayers[0].sdata);
+    free(cat_storage.metalayers[0].name);
 
     IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
 
@@ -181,8 +181,8 @@ ina_rc_t iarray_fill(iarray_context_t *ctx,
     iarray_create_caterva_storage(dtshape, storage, &cat_storage);
 
     IARRAY_ERR_CATERVA(caterva_full(cat_ctx, &cat_params, &cat_storage, value, &(*container)->catarr));
-     free(cat_storage.properties.blosc.metalayers[0].sdata);
-     free(cat_storage.properties.blosc.metalayers[0].name);
+     free(cat_storage.metalayers[0].sdata);
+     free(cat_storage.metalayers[0].name);
 
      IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
 
@@ -251,8 +251,8 @@ INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
     iarray_create_caterva_storage(dtshape, storage, &cat_storage);
 
     IARRAY_ERR_CATERVA(caterva_zeros(cat_ctx, &cat_params, &cat_storage, &(*container)->catarr));
-    free(cat_storage.properties.blosc.metalayers[0].sdata);
-    free(cat_storage.properties.blosc.metalayers[0].name);
+    free(cat_storage.metalayers[0].sdata);
+    free(cat_storage.metalayers[0].name);
 
     IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
 
@@ -338,8 +338,8 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
     iarray_create_caterva_storage(dtshape, storage, &cat_storage);
 
     IARRAY_ERR_CATERVA(caterva_from_buffer(cat_ctx, buffer, buflen, &cat_params, &cat_storage, &(*container)->catarr));
-    free(cat_storage.properties.blosc.metalayers[0].sdata);
-    free(cat_storage.properties.blosc.metalayers[0].name);
+    free(cat_storage.metalayers[0].sdata);
+    free(cat_storage.metalayers[0].name);
 
     IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
 
@@ -485,8 +485,8 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
 
         IARRAY_ERR_CATERVA(caterva_copy(cat_ctx, src->catarr, &cat_storage, &(*dest)->catarr));
 
-        free(cat_storage.properties.blosc.metalayers[0].sdata);
-        free(cat_storage.properties.blosc.metalayers[0].name);
+        free(cat_storage.metalayers[0].sdata);
+        free(cat_storage.metalayers[0].name);
 
         IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
 

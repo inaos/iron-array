@@ -503,13 +503,11 @@ static int32_t serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
 
 
 ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage_t *storage, caterva_storage_t *cat_storage) {
-    cat_storage->backend = CATERVA_STORAGE_BLOSC;
-
-    cat_storage->properties.blosc.sequencial = storage->contiguous;
-    cat_storage->properties.blosc.urlpath = storage->urlpath;
+    cat_storage->sequencial = storage->contiguous;
+    cat_storage->urlpath = storage->urlpath;
     for (int i = 0; i < dtshape->ndim; ++i) {
-        cat_storage->properties.blosc.chunkshape[i] = (int32_t) storage->chunkshape[i];
-        cat_storage->properties.blosc.blockshape[i] = (int32_t) storage->blockshape[i];
+        cat_storage->chunkshape[i] = (int32_t) storage->chunkshape[i];
+        cat_storage->blockshape[i] = (int32_t) storage->blockshape[i];
     }
     uint8_t *smeta;
     int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
@@ -517,8 +515,8 @@ ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage
         IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
         return INA_ERROR(INA_ERR_FAILED);
     }
-    cat_storage->properties.blosc.nmetalayers = 1;
-    caterva_metalayer_t *metalayer = &cat_storage->properties.blosc.metalayers[0];
+    cat_storage->nmetalayers = 1;
+    caterva_metalayer_t *metalayer = &cat_storage->metalayers[0];
     metalayer->name = strdup("iarray");
     metalayer->sdata = smeta;
     metalayer->size = smeta_len;

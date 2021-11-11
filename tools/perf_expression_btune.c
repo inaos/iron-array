@@ -59,7 +59,6 @@ int main(void) {
     int32_t xblockshape[] = {BLOCK_SHAPE};
 
     iarray_storage_t xstorage;
-    xstorage.backend = IARRAY_STORAGE_BLOSC;
     xstorage.contiguous = false;
     xstorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
@@ -71,7 +70,6 @@ int main(void) {
     int32_t outblockshape[] = {BLOCK_SHAPE};
 
     iarray_storage_t outstorage;
-    outstorage.backend = IARRAY_STORAGE_BLOSC;
     outstorage.contiguous = false;
     outstorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {

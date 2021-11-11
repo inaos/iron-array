@@ -102,17 +102,14 @@ int main(int argc, char** argv)
 
 
     iarray_storage_t mat_x_prop = {
-        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .contiguous = INA_SUCCEED(ina_opt_isset("p")),
         .urlpath = mat_x_name
     };
     iarray_storage_t mat_y_prop = {
-        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .contiguous = INA_SUCCEED(ina_opt_isset("p")),
         .urlpath = mat_y_name
     };
     iarray_storage_t mat_out_prop = {
-        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .contiguous = INA_SUCCEED(ina_opt_isset("p")),
         .urlpath = mat_out_name
     };

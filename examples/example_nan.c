@@ -68,7 +68,6 @@ int main() {
     }
     
     iarray_storage_t storage = {0};
-    storage.backend = IARRAY_STORAGE_BLOSC;
     for (int i = 0; i < ndim; ++i) {
         storage.chunkshape[i] = chunkshape[i];
         storage.blockshape[i] = blockshape[i];

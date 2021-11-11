@@ -110,7 +110,6 @@ int main(int argc, char** argv)
              INA_OPT_INT("t", "nthreads", 1, "Use number of threads for the evaluation (default 1)"),
              INA_OPT_INT("m", "mantissa-bits", 0, "The number of significant bits in mantissa (0 means no truncation"),
              INA_OPT_FLAG("d", "dict", "Use dictionary (only for Zstd (codec 5))"),
-             INA_OPT_FLAG("P", "plainbuffer", "Use plain buffer arrays"),
              INA_OPT_FLAG("i", "iter", "Use iterator for filling values"),
              INA_OPT_FLAG("I", "iter-chunk", "Use chunk iterator for filling values"),
              INA_OPT_FLAG("p", "persistence", "Use persistent containers"),
@@ -155,32 +154,19 @@ int main(int argc, char** argv)
     }
 
     iarray_storage_t mat_x = {
-        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .contiguous = INA_SUCCEED(ina_opt_isset("p")),
         .urlpath = mat_x_name
     };
-    if (!INA_SUCCEED(ina_opt_isset("P"))) {
-        mat_x.chunkshape[0] = cshape[0];
-        mat_x.blockshape[0] = bshape[0];
-    }
+
     iarray_storage_t mat_y = {
-        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .contiguous = INA_SUCCEED(ina_opt_isset("p")),
         .urlpath = mat_y_name
     };
-    if (!INA_SUCCEED(ina_opt_isset("P"))) {
-        mat_y.chunkshape[0] = cshape[0];
-        mat_y.blockshape[0] = bshape[0];
-    }
+
     iarray_storage_t mat_out = {
-        .backend = INA_SUCCEED(ina_opt_isset("P")) ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC,
         .contiguous = INA_SUCCEED(ina_opt_isset("p")),
         .urlpath = mat_out_name
     };
-    if (!INA_SUCCEED(ina_opt_isset("P"))) {
-        mat_out.chunkshape[0] = cshape[0];
-        mat_out.blockshape[0] = bshape[0];
-    }
 
     int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
 

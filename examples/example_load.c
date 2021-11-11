@@ -49,7 +49,6 @@ int main(void) {
     int32_t xblockshape[] = {128 * 1024};
 
     iarray_storage_t xstorage;
-    xstorage.backend = IARRAY_STORAGE_BLOSC;
     xstorage.contiguous = false;
     xstorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {

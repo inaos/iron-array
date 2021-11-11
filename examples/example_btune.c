@@ -37,7 +37,6 @@ int main(void)
     int64_t nbytes = size * sizeof(double);
 
     iarray_storage_t store;
-    store.backend = IARRAY_STORAGE_BLOSC;
     store.contiguous = false;
     store.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {

@@ -49,7 +49,6 @@ int main(void)
     }
 
     iarray_storage_t storage = {0};
-    storage.backend = IARRAY_STORAGE_BLOSC;
     for (int i = 0; i < ndim; ++i) {
         if (cshape != NULL) {
             storage.chunkshape[i] = i == axis ? shape[i] : 1;
@@ -84,20 +83,15 @@ int main(void)
     iarray_iter_write_block_free(&iter);
     IARRAY_ITER_FINISH();
 
-
-    storage.backend = cshape == NULL ? IARRAY_STORAGE_PLAINBUFFER : IARRAY_STORAGE_BLOSC;
     for (int i = 0; i < ndim; ++i) {
-        if (cshape != NULL) {
-            storage.chunkshape[i] = cshape[i];
-            storage.blockshape[i] = bshape[i];
-        }
+        storage.chunkshape[i] = cshape[i];
+        storage.blockshape[i] = bshape[i];
     }
 
     iarray_container_t *c_y;
     IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &storage, 0, &c_y));
 
     iarray_storage_t dest_storage = {0};
-    dest_storage.backend = IARRAY_STORAGE_BLOSC;
     dest_storage.contiguous = dest_frame;
     dest_storage.urlpath = dest_urlpath;
     for (int i = 0; i < ndim - 1; ++i) {

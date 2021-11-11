@@ -70,11 +70,10 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
 
     // Start Iterator
     ina_rc_t err = iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, false);
-    if (c_x->catarr->storage == CATERVA_STORAGE_BLOSC) {
-        if (err != 0) {
-            return INA_SUCCESS;
-        }
+    if (err != 0) {
+        return INA_SUCCESS;
     }
+
     while (INA_SUCCEED(iarray_iter_write_block_has_next(I))) {
         INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(I, NULL, 0));
 
