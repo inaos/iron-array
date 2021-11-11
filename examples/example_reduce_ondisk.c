@@ -50,7 +50,6 @@ int main(void) {
     int32_t xblockshape[] = {10, 20, 10, 14};
 
     iarray_storage_t xstorage;
-    xstorage.backend = IARRAY_STORAGE_BLOSC;
     xstorage.urlpath = "ia_reduce.iarray-dev";
     xstorage.contiguous = true;
     for (int i = 0; i < ndim; ++i) {
@@ -85,7 +84,6 @@ int main(void) {
     int32_t outblockshape[] = {4};
 
     iarray_storage_t outstorage;
-    outstorage.backend = IARRAY_STORAGE_BLOSC;
     outstorage.contiguous = true;
     outstorage.urlpath = "ia_reduce2.iarray-dev";
     for (int i = 0; i < ndim; ++i) {

@@ -55,7 +55,6 @@ int main(void) {
     int32_t xblockshape[] = {32 * 1000};
 
     iarray_storage_t xstorage;
-    xstorage.backend = IARRAY_STORAGE_BLOSC;
     xstorage.contiguous = false;
     xstorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
@@ -67,7 +66,6 @@ int main(void) {
     int32_t yblockshape[] = {32 * 1000};
 
     iarray_storage_t ystorage;
-    ystorage.backend = IARRAY_STORAGE_BLOSC;
     ystorage.contiguous = false;
     ystorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
@@ -78,7 +76,6 @@ int main(void) {
     int32_t zchunkshape[] = {4000 * 1000};
     int32_t zblockshape[] = {32 * 1000};
     iarray_storage_t zstorage;
-    zstorage.backend = IARRAY_STORAGE_BLOSC;
     zstorage.contiguous = false;
     zstorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
@@ -90,7 +87,6 @@ int main(void) {
     int32_t outblockshape[] = {32 * 1000};
 
     iarray_storage_t outstorage;
-    outstorage.backend = IARRAY_STORAGE_BLOSC;
     outstorage.contiguous = false;
     outstorage.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {

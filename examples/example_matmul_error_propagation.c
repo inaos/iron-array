@@ -90,7 +90,6 @@ int main(void)
     }
 
     iarray_storage_t store_x;
-    store_x.backend = IARRAY_STORAGE_BLOSC;
     store_x.contiguous = false;
     store_x.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
@@ -107,7 +106,6 @@ int main(void)
         dtshape_y.shape[i] = shape_b[i];
     }
     iarray_storage_t store_y;
-    store_y.backend = IARRAY_STORAGE_BLOSC;
     store_y.contiguous = false;
     store_y.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
@@ -124,7 +122,6 @@ int main(void)
         dtshape_z.shape[i] = shape_z[i];
     }
     iarray_storage_t store_z;
-    store_z.backend = IARRAY_STORAGE_BLOSC;
     store_z.contiguous = false;
     store_z.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {

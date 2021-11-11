@@ -49,7 +49,6 @@ int main(void)
     }
 
     iarray_storage_t store;
-    store.backend = IARRAY_STORAGE_BLOSC;
     store.contiguous = false;
     store.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {

@@ -35,7 +35,6 @@ int main(void)
     }
 
     iarray_storage_t store;
-    store.backend = IARRAY_STORAGE_BLOSC;
     store.contiguous = false;
     store.urlpath = NULL;
     for (int i = 0; i < ndim; ++i) {
@@ -61,7 +60,6 @@ int main(void)
     int64_t stop[] = {2, 7};
 
     iarray_storage_t store_out;
-    store_out.backend = IARRAY_STORAGE_PLAINBUFFER;
 
     iarray_container_t *cout;
     iarray_get_slice(ctx, cont, start, stop, true, &store_out, 0, &cout);

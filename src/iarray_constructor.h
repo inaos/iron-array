@@ -84,8 +84,8 @@ static ina_rc_t iarray_create_caterva_structs(iarray_context_t *ctx,
     IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, cat_ctx));
     IARRAY_RETURN_IF_FAILED(iarray_create_caterva_params(dtshape, cat_params));
     IARRAY_RETURN_IF_FAILED(iarray_create_caterva_storage(dtshape, storage, cat_storage));
-    cat_storage->properties.blosc.nmetalayers = 1;
-    caterva_metalayer_t metalayer = cat_storage->properties.blosc.metalayers[0];
+    cat_storage->nmetalayers = 1;
+    caterva_metalayer_t metalayer = cat_storage->metalayers[0];
     metalayer.name = strdup("iarray");
     metalayer.sdata = smeta;
     metalayer.size = smeta_len;

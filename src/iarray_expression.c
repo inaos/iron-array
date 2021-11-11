@@ -13,7 +13,7 @@
 #include "iarray_private.h"
 #include <libiarray/iarray.h>
 #include <minjugg.h>
-#include <caterva_blosc.h>
+#include <caterva.h>
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -558,11 +558,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     int64_t nitems_written = 0;
     int nvars = e->nvars;
 
-    if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        IARRAY_TRACE1(iarray.error, "ITERBLOSC eval can't be used with a plainbuffer output container");
-        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
-    }
-
     // Setup a new cparams with a prefilter
     blosc2_prefilter_params pparams = {0};
     iarray_expr_pparams_t expr_pparams = {0};
@@ -740,17 +735,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
     iarray_container_t *ret = *container;
 
     int64_t out_chunkshape[IARRAY_DIMENSION_MAX];
-    if (ret->catarr->storage == CATERVA_STORAGE_PLAINBUFFER) {
-        int32_t nelems = e->out->catarr->chunknitems;
-        for (int i = ret->dtshape->ndim - 1; i >= 0; i--) {
-            int32_t chunkshapei = nelems < ret->dtshape->shape[i] ? nelems : (int32_t) ret->dtshape->shape[i];
-            out_chunkshape[i] = chunkshapei;
-            nelems = nelems / chunkshapei;
-        }
-    } else {
-        for (int i = 0; i < ret->dtshape->ndim; ++i) {
-            out_chunkshape[i] = ret->storage->chunkshape[i];
-        }
+    for (int i = 0; i < ret->dtshape->ndim; ++i) {
+        out_chunkshape[i] = ret->storage->chunkshape[i];
     }
 
     uint32_t eval_method = e->ctx->cfg->eval_method & 0x3u;
