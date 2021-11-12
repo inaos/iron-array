@@ -27,7 +27,7 @@ INA_API(ina_rc_t) iarray_empty(iarray_context_t *ctx,
 
     IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, storage, flags, container));
 
-    caterva_config_t cat_cfg = CATERVA_CONFIG_DEFAULTS;
+    caterva_config_t cat_cfg = {0};
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cat_cfg);
     caterva_ctx_t *cat_ctx;
     IARRAY_ERR_CATERVA(caterva_ctx_new(&cat_cfg, &cat_ctx));

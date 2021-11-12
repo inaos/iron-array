@@ -137,7 +137,7 @@ INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores)
 
     // See whether cap value should be used
     if ((max_ncores > 0) && (*ncores > max_ncores)) {
-        *ncores = max_ncores;
+        *ncores = (int)max_ncores;
     }
 
     return INA_SUCCESS;
@@ -350,7 +350,8 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
 
 
 INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ctx)
-{if (!_ina_inited) {
+{
+    if (!_ina_inited) {
         fprintf(stderr, "Error.  You need to call `iarray_init()` prior to any other iarray function call.");
         exit(1);
     }
@@ -413,12 +414,15 @@ ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams,
 }
 
 
-ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t), void (*free)(void *), caterva_config_t *cat_cfg) {
-    memcpy(cat_cfg, &CATERVA_CONFIG_DEFAULTS, sizeof(caterva_config_t));
+ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t), void (*free)(void *),
+                                   caterva_config_t *cat_cfg) {
+    // Set all caterva config to 0, as we are overriding *everything* here.
+    // This fixes a bug where filters={0,0,0,0,0,0} but the last was set to the default BLOSC_SHUFFLE.
+    memset(cat_cfg, 0, sizeof(caterva_config_t));
     cat_cfg->alloc = alloc;
     cat_cfg->free = free;
 
-    cat_cfg->nthreads = cfg->max_num_threads;
+    cat_cfg->nthreads = (int16_t)cfg->max_num_threads;
     cat_cfg->compcodec = cfg->compression_codec;
     cat_cfg->complevel = cfg->compression_level;
     cat_cfg->usedict = cfg->use_dict;

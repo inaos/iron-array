@@ -938,7 +938,7 @@ INA_API(ina_rc_t) iarray_iter_write_new(iarray_context_t *ctx,
     }
     memset((*itr)->chunk, 0, cont->catarr->chunknitems * cont->catarr->itemsize);
 
-    caterva_config_t cat_cfg;
+    caterva_config_t cat_cfg = {0};
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cat_cfg);
     caterva_ctx_new(&cat_cfg, &(*itr)->cat_ctx);
 
