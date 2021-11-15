@@ -52,15 +52,15 @@ static codec_list * btune_get_codecs(btune_struct * btune) {
   codecs->list = malloc(MAX_CODECS * sizeof(int));
   int i = 0;
   if (btune->config.comp_mode == BTUNE_COMP_HCR) {
-    // In HCR mode only try with ZSTD
+    // In HCR mode only try with ZSTD and ZLIB
     if (strstr(all_codecs, "zstd") != NULL) {
       codecs->list[i++] = BLOSC_ZSTD;
     }
-    // And disable ZLIB and LZ4HC as they compress typically less than ZSTD
-//    if (strstr(all_codecs, "zlib") != NULL) {
-//      codecs->list[i++] = BLOSC_ZLIB;
-//    }
-//    codecs->list[i++] = BLOSC_LZ4HC;
+    if (strstr(all_codecs, "zlib") != NULL) {
+      codecs->list[i++] = BLOSC_ZLIB;
+    }
+    // And disable LZ4HC as it compress typically less
+    // codecs->list[i++] = BLOSC_LZ4HC;
   } else {
     // In all other modes, LZ4 is mandatory
     codecs->list[i++] = BLOSC_LZ4;
@@ -587,11 +587,10 @@ void iabtune_next_cparams(blosc2_context *context) {
       filter = (uint8_t) ((btune->aux_index % (filter_split / 2)) / REPEATS_PER_CPARAMS);
       // Cycle split every two filters
       splitmode = (((btune->aux_index % filter_split) / 3) + 1) / REPEATS_PER_CPARAMS;
-      // BLOSCLZ made great strides in getting better cratios, so let's try with non-split too
-//      if (compcode == BLOSC_BLOSCLZ) {
-//          // BLOSCLZ is not designed to compress well in non-split mode, so disable it always
-//          splitmode = BLOSC_ALWAYS_SPLIT;
-//      }
+      if (compcode == BLOSC_BLOSCLZ) {
+          // BLOSCLZ is not designed to compress well in non-split mode, so disable it always
+          splitmode = BLOSC_ALWAYS_SPLIT;
+      }
       // The first tuning of ZSTD in some modes should start in clevel 3
       if (((btune->config.perf_mode == BTUNE_PERF_COMP) ||
            (btune->config.perf_mode == BTUNE_PERF_BALANCED)) &&
