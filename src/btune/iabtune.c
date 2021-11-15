@@ -52,14 +52,15 @@ static codec_list * btune_get_codecs(btune_struct * btune) {
   codecs->list = malloc(MAX_CODECS * sizeof(int));
   int i = 0;
   if (btune->config.comp_mode == BTUNE_COMP_HCR) {
-    // In HCR mode only try with ZSTD, ZLIB and LZ4HC
+    // In HCR mode only try with ZSTD
     if (strstr(all_codecs, "zstd") != NULL) {
       codecs->list[i++] = BLOSC_ZSTD;
     }
-    if (strstr(all_codecs, "zlib") != NULL) {
-      codecs->list[i++] = BLOSC_ZLIB;
-    }
-    codecs->list[i++] = BLOSC_LZ4HC;
+    // And disable ZLIB and LZ4HC as they compress typically less than ZSTD
+//    if (strstr(all_codecs, "zlib") != NULL) {
+//      codecs->list[i++] = BLOSC_ZLIB;
+//    }
+//    codecs->list[i++] = BLOSC_LZ4HC;
   } else {
     // In all other modes, LZ4 is mandatory
     codecs->list[i++] = BLOSC_LZ4;
