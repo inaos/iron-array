@@ -187,6 +187,13 @@ typedef enum iarray_compression_favor_e {
     IARRAY_COMPRESSION_FAVOR_CRATIO,
 } iarray_compression_favor_t;
 
+typedef enum iarray_split_mode_e {
+    IARRAY_ALWAYS_SPLIT = 1,
+    IARRAY_NEVER_SPLIT = 2,
+    IARRAY_AUTO_SPLIT = 3,
+    IARRAY_FORWARD_COMPAT_SPLIT = 4,
+} iarray_split_mode_t;
+
 typedef enum iarray_linalg_norm_e {
     IARRAY_LINALG_NORM_NONE,
     IARRAY_LINALG_NORM_FROBENIUS,
@@ -204,6 +211,7 @@ typedef struct iarray_config_s {
     int compression_level;
     iarray_compression_favor_t compression_favor;
     int use_dict;
+    int splitmode;
     int filter_flags;
     unsigned int eval_method;
     int max_num_threads; /* Maximum number of threads to use */
@@ -258,26 +266,29 @@ typedef struct iarray_iter_read_block_value_s {
 typedef struct iarray_random_ctx_s iarray_random_ctx_t;
 
 static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
-    .compression_codec=IARRAY_COMPRESSION_LZ4,
-    .compression_level=5,
-    .compression_favor=IARRAY_COMPRESSION_FAVOR_BALANCE,
-    .use_dict=0,
-    .filter_flags=IARRAY_COMP_SHUFFLE,
-    .eval_method=IARRAY_EVAL_METHOD_ITERCHUNK,
-    .max_num_threads=1,
-    .fp_mantissa_bits=0,
-    .btune=true,
-    };
+    .compression_codec = IARRAY_COMPRESSION_LZ4,
+    .compression_level = 5,
+    .compression_favor = IARRAY_COMPRESSION_FAVOR_BALANCE,
+    .use_dict = 0,
+    .splitmode = IARRAY_AUTO_SPLIT,
+    .filter_flags = IARRAY_COMP_SHUFFLE,
+    .eval_method = IARRAY_EVAL_METHOD_ITERCHUNK,
+    .max_num_threads = 1,
+    .fp_mantissa_bits = 0,
+    .btune = true,
+};
 
 static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = {
-    .compression_codec=IARRAY_COMPRESSION_LZ4,
-    .compression_level=0,
-    .compression_favor=IARRAY_COMPRESSION_FAVOR_BALANCE,
-    .use_dict=0,
-    .filter_flags=0,
-    .eval_method=0,
-    .max_num_threads=1,
-    .fp_mantissa_bits=0};
+    .compression_codec = IARRAY_COMPRESSION_LZ4,
+    .compression_level = 0,
+    .compression_favor = IARRAY_COMPRESSION_FAVOR_BALANCE,
+    .use_dict = 0,
+    .splitmode = IARRAY_AUTO_SPLIT,
+    .filter_flags = 0,
+    .eval_method = 0,
+    .max_num_threads = 1,
+    .fp_mantissa_bits = 0
+};
 
 INA_API(ina_rc_t) iarray_init(void);
 INA_API(void) iarray_destroy(void);
