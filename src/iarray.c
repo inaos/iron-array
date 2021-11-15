@@ -393,8 +393,9 @@ ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams,
     cparams->use_dict = ctx->cfg->use_dict;
     cparams->clevel = (uint8_t)ctx->cfg->compression_level; /* Since its just a mapping, we know the cast is ok */
     cparams->blocksize = blocksize;
+    cparams->splitmode = (int32_t)ctx->cfg->splitmode;
     cparams->typesize = (int32_t) typesize;
-    cparams->nthreads = (uint16_t) ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
+    cparams->nthreads = (int16_t)ctx->cfg->max_num_threads; /* Since its just a mapping, we know the cast is ok */
     if ((ctx->cfg->filter_flags & IARRAY_COMP_TRUNC_PREC)) {
         cparams->filters[blosc_filter_idx] = BLOSC_TRUNC_PREC;
         cparams->filters_meta[blosc_filter_idx] = ctx->cfg->fp_mantissa_bits;
