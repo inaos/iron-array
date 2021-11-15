@@ -91,6 +91,7 @@ void extract_btune_cparams(blosc2_context * context, cparams_btune * cparams){
   cparams->compcode = context->compcode;
   cparams->filter = context->filters[BLOSC2_MAX_FILTERS - 1];
   cparams->clevel = context->clevel;
+  cparams->splitmode = context->splitmode;
   cparams->blocksize = context->blocksize;
   cparams->shufflesize = context->typesize;
   cparams->nthreads_comp = context->nthreads;
@@ -585,11 +586,12 @@ void iabtune_next_cparams(blosc2_context *context) {
       // Cycle filters every time
       filter = (uint8_t) ((btune->aux_index % (filter_split / 2)) / REPEATS_PER_CPARAMS);
       // Cycle split every two filters
-      splitmode = ((btune->aux_index % filter_split) / 3) / REPEATS_PER_CPARAMS;
-      if (compcode == BLOSC_BLOSCLZ) {
-          // BLOSCLZ is not designed to compress well in non-split mode, so disable it always
-          splitmode = BLOSC_ALWAYS_SPLIT;
-      }
+      splitmode = (((btune->aux_index % filter_split) / 3) + 1) / REPEATS_PER_CPARAMS;
+      // BLOSCLZ made great strides in getting better cratios, so let's try with non-split too
+//      if (compcode == BLOSC_BLOSCLZ) {
+//          // BLOSCLZ is not designed to compress well in non-split mode, so disable it always
+//          splitmode = BLOSC_ALWAYS_SPLIT;
+//      }
       // The first tuning of ZSTD in some modes should start in clevel 3
       if (((btune->config.perf_mode == BTUNE_PERF_COMP) ||
            (btune->config.perf_mode == BTUNE_PERF_BALANCED)) &&
@@ -1105,10 +1107,11 @@ void iabtune_update(blosc2_context * context, double ctime) {
       if (!btune->is_repeating) {
         char* envvar = getenv("BTUNE_LOG");
         if (envvar != NULL) {
+          int split = (cparams->splitmode == BLOSC_ALWAYS_SPLIT) ? 1 : 0;
           char *compname;
           blosc_compcode_to_compname(cparams->compcode, &compname);
           printf("| %10s | %6d | %5d | %7d | %9d | %11d | %9d | %9d | %9.3g | %9.3gx | %15s | %7s | %s\n",
-                 compname, cparams->filter, cparams->splitmode, cparams->clevel,
+                 compname, cparams->filter, split, cparams->clevel,
                  (int) cparams->blocksize / BTUNE_KB, (int) cparams->shufflesize,
                  cparams->nthreads_comp, cparams->nthreads_decomp,
                  score, cratio, stcode_to_stname(btune), readapt_to_str(btune->readapt_from),
