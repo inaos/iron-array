@@ -1116,7 +1116,9 @@ void iabtune_update(blosc2_context * context, double ctime) {
         }
       }
 
-      if (improved || cparams_equals(btune->best, cparams)) {
+      // if (improved || cparams_equals(btune->best, cparams)) {
+      // We don't want to get rid of the previous best->score
+      if (improved) {
         *btune->best = *cparams;
       }
       btune->rep_index = 0;
