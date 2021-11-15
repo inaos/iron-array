@@ -324,8 +324,8 @@ void iabtune_init(btune_config * config, blosc2_context * cctx, blosc2_context *
 
   // State attributes
   btune->rep_index = 0;
-  // We want to iterate 2x per filter (SHUFFLE/BITSHUFFLE) and 2x per split/nonsplit
-  btune->filter_split_limit = 2 * 2 * REPEATS_PER_CPARAMS;
+  // We want to iterate 3x per filter (NOSHUFFLE/SHUFFLE/BITSHUFFLE) and 2x per split/nonsplit
+  btune->filter_split_limit = 3 * 2 * REPEATS_PER_CPARAMS;
   btune->aux_index = 0;
   btune->steps_count = 0;
   btune->nsofts = 0;
@@ -583,9 +583,9 @@ void iabtune_next_cparams(blosc2_context *context) {
       compcode = btune->codecs->list[codec_index];
       filter_split = btune->filter_split_limit;
       // Cycle filters every time
-      filter = (uint8_t) (((btune->aux_index % (filter_split / 2)) + 1) / REPEATS_PER_CPARAMS);
+      filter = (uint8_t) ((btune->aux_index % (filter_split / 2)) / REPEATS_PER_CPARAMS);
       // Cycle split every two filters
-      splitmode = ((((btune->aux_index % filter_split) / 2) + 1) / REPEATS_PER_CPARAMS);
+      splitmode = ((btune->aux_index % filter_split) / 3) / REPEATS_PER_CPARAMS;
       if (compcode == BLOSC_BLOSCLZ) {
           // BLOSCLZ is not designed to compress well in non-split mode, so disable it always
           splitmode = BLOSC_ALWAYS_SPLIT;
