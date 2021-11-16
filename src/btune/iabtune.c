@@ -1102,19 +1102,27 @@ void iabtune_update(blosc2_context * context, double ctime) {
       } else {
         improved = has_improved(btune, score_coef, cratio_coef);
       }
+      char winner = '-';
+      // If the chunk is made of special values, it cannot never improve scoring
+      if (cbytes <= (BLOSC_MAX_OVERHEAD + (size_t)context->typesize)) {
+        improved = false;
+        winner = 'S';
+      }
+      if (improved) {
+        winner = 'W';
+      }
 
       if (!btune->is_repeating) {
         char* envvar = getenv("BTUNE_LOG");
         if (envvar != NULL) {
           int split = (cparams->splitmode == BLOSC_ALWAYS_SPLIT) ? 1 : 0;
-          char *compname;
+          const char *compname;
           blosc_compcode_to_compname(cparams->compcode, &compname);
-          printf("| %10s | %6d | %5d | %7d | %9d | %11d | %9d | %9d | %9.3g | %9.3gx | %15s | %7s | %s\n",
+          printf("| %10s | %6d | %5d | %7d | %9d | %11d | %9d | %9d | %9.3g | %9.3gx | %15s | %7s | %c\n",
                  compname, cparams->filter, split, cparams->clevel,
                  (int) cparams->blocksize / BTUNE_KB, (int) cparams->shufflesize,
                  cparams->nthreads_comp, cparams->nthreads_decomp,
-                 score, cratio, stcode_to_stname(btune), readapt_to_str(btune->readapt_from),
-                 improved ? "W" : "-");
+                 score, cratio, stcode_to_stname(btune), readapt_to_str(btune->readapt_from), winner);
         }
       }
 
