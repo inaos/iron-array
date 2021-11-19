@@ -275,7 +275,7 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .eval_method = IARRAY_EVAL_METHOD_ITERCHUNK,
     .max_num_threads = 1,
     .fp_mantissa_bits = 0,
-    .btune = true,
+    .btune = false,
 };
 
 static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = {
@@ -287,7 +287,8 @@ static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = {
     .filter_flags = 0,
     .eval_method = 0,
     .max_num_threads = 1,
-    .fp_mantissa_bits = 0
+    .fp_mantissa_bits = 0,
+    .btune = false,
 };
 
 INA_API(ina_rc_t) iarray_init(void);

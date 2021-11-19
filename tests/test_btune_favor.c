@@ -84,7 +84,7 @@ test_btune_favor(iarray_config_t *cfg, iarray_data_type_t dtype, size_t type_siz
     blosc2_remove_urlpath(xstore.urlpath);
 
     iarray_context_free(&ctx);
-    
+
     return INA_SUCCESS;
 }
 
@@ -98,6 +98,7 @@ INA_TEST_SETUP(btune_favor)
     iarray_init();
     data->cbytes = 0;
     data->cfg = IARRAY_CONFIG_DEFAULTS;
+    data->cfg.btune = true;  // activate btune (deactivated by default)
 }
 
 INA_TEST_TEARDOWN(btune_favor)
@@ -114,9 +115,9 @@ INA_TEST_FIXTURE(btune_favor, cratio)
     int64_t shape[] = {367, 333};
     int64_t cshape[] = {70, 91};
     int64_t bshape[] = {12, 25};
-    
+
     data->cfg.compression_favor = IARRAY_COMPRESSION_FAVOR_CRATIO;
-    
+
     INA_TEST_ASSERT_SUCCEED(test_btune_favor(&data->cfg, dtype, type_size, ndim, shape, cshape,
                                              bshape, &data->cbytes, false, NULL));
 }
@@ -139,7 +140,7 @@ INA_TEST_FIXTURE(btune_favor, balance)
 
 INA_TEST_FIXTURE(btune_favor, speed)
 {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     size_t type_size = sizeof(double);
 
     int8_t ndim = 2;
