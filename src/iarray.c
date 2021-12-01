@@ -429,6 +429,7 @@ ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t),
     cat_cfg->usedict = cfg->use_dict;
     cat_cfg->prefilter = NULL;
     cat_cfg->pparams = NULL;
+    cat_cfg->splitmode = cfg->splitmode;
 
     int blosc_filter_idx = 0;
     if ((cfg->filter_flags & IARRAY_COMP_TRUNC_PREC)) {
