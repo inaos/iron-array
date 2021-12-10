@@ -17,7 +17,6 @@
 #include <libiarray/iarray.h>
 
 typedef struct jug_context_s jug_context_t;
-typedef struct jug_expression_s jug_expression_t;
 typedef struct jug_udf_s jug_udf_t;
 
 INA_API(ina_rc_t) jug_init(void);
