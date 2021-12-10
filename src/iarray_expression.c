@@ -20,33 +20,12 @@
 #endif
 
 
-typedef struct _iarray_jug_var_s {
-    const char *var;
-    iarray_container_t *c;
-} _iarray_jug_var_t;
-
-
 typedef enum iarray_expr_input_class_e {
     IARRAY_EXPR_EQ = 0u,  // Same chunkshape/blockshape
     IARRAY_EXPR_EQ_NCOMP = 1u, // Same chunkshape/blockshape and no-compressed data
     IARRAY_EXPR_NEQ = 2u  // Different chunkshape/blockshape
 } iarray_expr_input_class_t;
 
-
-struct iarray_expression_s {
-    iarray_context_t *ctx;
-    ina_str_t expr;
-    int32_t typesize;
-    int64_t nbytes;
-    int nvars;
-    int32_t max_out_len;
-    jug_expression_t *jug_expr;
-    uint64_t jug_expr_func;
-    iarray_dtshape_t *out_dtshape;
-    iarray_storage_t *out_store_properties;
-    iarray_container_t *out;
-    _iarray_jug_var_t vars[IARRAY_EXPR_OPERANDS_MAX];
-};
 
 // Struct to be used as info container for dealing with the expression
 typedef struct iarray_expr_pparams_s {

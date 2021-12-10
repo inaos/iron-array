@@ -112,8 +112,6 @@ typedef struct iarray_iter_read_s iarray_iter_read_t;
 typedef struct iarray_iter_read_block_s iarray_iter_read_block_t;
 typedef struct iarray_iter_write_block_s iarray_iter_write_block_t;
 
-typedef struct iarray_expression_s iarray_expression_t;
-
 typedef enum iarray_random_rng_e {
     IARRAY_RANDOM_RNG_MERSENNE_TWISTER,
     IARRAY_RANDOM_RNG_SOBOL,
@@ -289,6 +287,28 @@ static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = {
     .max_num_threads = 1,
     .fp_mantissa_bits = 0
 };
+
+typedef struct _iarray_jug_var_s {
+    const char *var;
+    iarray_container_t *c;
+} _iarray_jug_var_t;
+
+typedef struct jug_expression_s jug_expression_t;
+
+typedef struct iarray_expression_s {
+    iarray_context_t *ctx;
+    ina_str_t expr;
+    int32_t typesize;
+    int64_t nbytes;
+    int nvars;
+    int32_t max_out_len;
+    jug_expression_t *jug_expr;
+    uint64_t jug_expr_func;
+    iarray_dtshape_t *out_dtshape;
+    iarray_storage_t *out_store_properties;
+    iarray_container_t *out;
+    _iarray_jug_var_t vars[IARRAY_EXPR_OPERANDS_MAX];
+} iarray_expression_t;
 
 INA_API(ina_rc_t) iarray_init(void);
 INA_API(void) iarray_destroy(void);
