@@ -42,12 +42,7 @@ _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64
     }
     buffer_x = ina_mem_alloc(buffer_x_len * type_size);
 
-    if (type_size == sizeof(float)) {
-        ffill_buf((float *) buffer_x, buffer_x_len);
-
-    } else {
-        dfill_buf((double *) buffer_x, buffer_x_len);
-    }
+    fill_buf(dtype, buffer_x, buffer_x_len);
 
     iarray_dtshape_t xdtshape;
 
@@ -80,10 +75,40 @@ _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64
     uint8_t *bufdes = ina_mem_alloc(bufdes_size * type_size);
 
     for (int i = 0; i < bufdes_size; ++i) {
-        if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            ((double *) bufdes)[i] = (double) i;
-        } else {
-            ((float *) bufdes)[i] = (float) i;
+        switch (dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                ((double *) bufdes)[i] = (double) i;
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                ((float *) bufdes)[i] = (float) i;
+                break;
+            case IARRAY_DATA_TYPE_INT64:
+                ((int64_t *) bufdes)[i] = (int64_t) i;
+                break;
+            case IARRAY_DATA_TYPE_INT32:
+                ((int32_t *) bufdes)[i] = (int32_t) i;
+                break;
+            case IARRAY_DATA_TYPE_INT16:
+                ((int16_t *) bufdes)[i] = (int16_t) i;
+                break;
+            case IARRAY_DATA_TYPE_INT8:
+                ((int8_t *) bufdes)[i] = (int8_t) i;
+                break;
+            case IARRAY_DATA_TYPE_UINT64:
+                ((uint64_t *) bufdes)[i] = (uint64_t) i;
+                break;
+            case IARRAY_DATA_TYPE_UINT32:
+                ((uint32_t *) bufdes)[i] = (uint32_t) i;
+                break;
+            case IARRAY_DATA_TYPE_UINT16:
+                ((uint16_t *) bufdes)[i] = (uint16_t) i;
+                break;
+            case IARRAY_DATA_TYPE_UINT8:
+                ((uint8_t *) bufdes)[i] = (uint8_t) i;
+                break;
+            case IARRAY_DATA_TYPE_BOOL:
+                ((boolean_t *) bufdes)[i] = (boolean_t) i;
+                break;
         }
     }
 
@@ -93,14 +118,62 @@ _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64
 
     INA_TEST_ASSERT_SUCCEED(test_set_slice_buffer(ctx, c_x, start, stop, bufdes, buflen));
 
-    if (dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        for (int64_t l = 0; l < bufdes_size; ++l) {
-            INA_TEST_ASSERT_EQUAL_FLOATING(((double *) bufdes)[l], (double) l);
-        }
-    } else {
-        for (int64_t l = 0; l < bufdes_size; ++l) {
-            INA_TEST_ASSERT_EQUAL_FLOATING(((float *) bufdes)[l], (float) l);
-        }
+    switch (dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            for (int64_t l = 0; l < bufdes_size; ++l) {
+                INA_TEST_ASSERT_EQUAL_FLOATING(((double *) bufdes)[l], (double) l);
+            }
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            for (int64_t l = 0; l < bufdes_size; ++l) {
+                INA_TEST_ASSERT_EQUAL_FLOATING(((float *) bufdes)[l], (float) l);
+            }
+            break;
+        case IARRAY_DATA_TYPE_INT64:
+            for (int64_t l = 0; l < bufdes_size; ++l) {
+                INA_TEST_ASSERT_EQUAL_INT64(((int64_t *) bufdes)[l], (int64_t) l);
+            }
+            break;
+        case IARRAY_DATA_TYPE_INT32:
+            for (int64_t l = 0; l < bufdes_size; ++l) {
+                INA_TEST_ASSERT_EQUAL_INT(((int32_t *) bufdes)[l], (int32_t) l);
+            }
+            break;
+        case IARRAY_DATA_TYPE_INT16:
+            for (int64_t l = 0; l < bufdes_size; ++l) {
+                INA_TEST_ASSERT_EQUAL_INT(((int16_t *) bufdes)[l], (int16_t) l);
+            }
+            break;
+        case IARRAY_DATA_TYPE_INT8:
+            for (int64_t l = 0; l < bufdes_size; ++l) {
+                INA_TEST_ASSERT_EQUAL_INT(((int8_t *) bufdes)[l], (int8_t) l);
+            }
+            break;
+        case IARRAY_DATA_TYPE_UINT64:
+            for (int64_t l = 0; l < bufdes_size; ++l) {
+                INA_TEST_ASSERT_EQUAL_UINT64(((uint64_t *) bufdes)[l], (uint64_t) l);
+            }
+            break;
+        case IARRAY_DATA_TYPE_UINT32:
+            for (int64_t l = 0; l < bufdes_size; ++l) {
+                INA_TEST_ASSERT_EQUAL_UINT(((uint32_t *) bufdes)[l], (uint32_t) l);
+            }
+            break;
+        case IARRAY_DATA_TYPE_UINT16:
+            for (int64_t l = 0; l < bufdes_size; ++l) {
+                INA_TEST_ASSERT_EQUAL_UINT(((uint16_t *) bufdes)[l], (uint16_t) l);
+            }
+            break;
+        case IARRAY_DATA_TYPE_UINT8:
+            for (int64_t l = 0; l < bufdes_size; ++l) {
+                INA_TEST_ASSERT_EQUAL_UINT(((uint8_t *) bufdes)[l], (uint8_t) l);
+            }
+            break;
+        case IARRAY_DATA_TYPE_BOOL:
+            for (int64_t l = 0; l < bufdes_size; ++l) {
+                INA_TEST_ASSERT(((boolean_t *) bufdes)[l] == (boolean_t) l);
+            }
+            break;
     }
 
     iarray_container_free(ctx, &c_x);
@@ -163,9 +236,9 @@ INA_TEST_FIXTURE(set_slice_buffer, 2_d_t_blosc) {
                                                       start, stop, false, NULL));
 }
 
-INA_TEST_FIXTURE(set_slice_buffer, 2_f_t_blosc) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int32_t type_size = sizeof(float);
+INA_TEST_FIXTURE(set_slice_buffer, 2_ll_t_blosc) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
+    int32_t type_size = sizeof(int64_t);
 
     const int8_t ndim = 2;
     int64_t shape[] = {20, 14};
@@ -179,9 +252,9 @@ INA_TEST_FIXTURE(set_slice_buffer, 2_f_t_blosc) {
                                                       start, stop, true, NULL));
 }
 
-INA_TEST_FIXTURE(set_slice_buffer, 3_f_blosc) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int32_t type_size = sizeof(float);
+INA_TEST_FIXTURE(set_slice_buffer, 3_ui_blosc) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
+    int32_t type_size = sizeof(uint32_t);
 
     const int8_t ndim = 3;
     int64_t shape[] = {100, 123, 234};
@@ -195,25 +268,25 @@ INA_TEST_FIXTURE(set_slice_buffer, 3_f_blosc) {
                                                       start, stop, true, "xarr.iarr"));
 }
 
-INA_TEST_FIXTURE(set_slice_buffer, 4_d_blosc) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int32_t type_size = sizeof(double);
+INA_TEST_FIXTURE(set_slice_buffer, 2_uc_blosc) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;
+    int32_t type_size = sizeof(uint8_t);
 
-    const int8_t ndim = 4;
-    int64_t shape[] = {60, 80, 80, 15};
-    int64_t cshape[] = {20, 20, 21, 14};
-    int64_t bshape[] = {20, 4, 7, 13};
-    int64_t start[] = {23, 31, 22, 1};
-    int64_t stop[] = {54, 78, 76, 2};
+    const int8_t ndim = 2;
+    int64_t shape[] = {30, 8};
+    int64_t cshape[] = {20, 2};
+    int64_t bshape[] = {20, 1};
+    int64_t start[] = {23, 7};
+    int64_t stop[] = {29, 8};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape,
                                                       cshape, bshape,
                                                       start, stop, false, "xarr.iarr"));
 }
 
-INA_TEST_FIXTURE(set_slice_buffer, 5_f_blosc) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int32_t type_size = sizeof(float);
+INA_TEST_FIXTURE(set_slice_buffer, 5_i_blosc) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
+    int32_t type_size = sizeof(int32_t);
 
     const int8_t ndim = 5;
     int64_t shape[] = {10, 12, 32, 14, 14};
@@ -227,9 +300,9 @@ INA_TEST_FIXTURE(set_slice_buffer, 5_f_blosc) {
                                                       start, stop, false, NULL));
 }
 
-INA_TEST_FIXTURE(set_slice_buffer, 6_f_blosc) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int32_t type_size = sizeof(float);
+INA_TEST_FIXTURE(set_slice_buffer, 6_ull_blosc) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
+    int32_t type_size = sizeof(uint64_t);
 
     const int8_t ndim = 6;
     int64_t shape[] = {8, 7, 6, 7, 8, 5};
@@ -243,9 +316,9 @@ INA_TEST_FIXTURE(set_slice_buffer, 6_f_blosc) {
                                                       start, stop, true, "xarr.iarr"));
 }
 
-INA_TEST_FIXTURE(set_slice_buffer, 7_d_blosc) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int32_t type_size = sizeof(double);
+INA_TEST_FIXTURE(set_slice_buffer, 7_b_blosc) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
+    int32_t type_size = sizeof(boolean_t);
 
     const int8_t ndim = 7;
     int64_t shape[] = {5, 7, 6, 4, 8, 6, 5};
@@ -253,6 +326,54 @@ INA_TEST_FIXTURE(set_slice_buffer, 7_d_blosc) {
     int64_t bshape[] = {1, 2, 1, 1, 2, 1, 2};
     int64_t start[] = {1, 2, 1, 2, 0, 2, 1};
     int64_t stop[] = {5, 4, 4, 3, 6, 3, 4};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape,
+                                                      cshape, bshape,
+                                                      start, stop, true, NULL));
+}
+
+INA_TEST_FIXTURE(set_slice_buffer, 2_s_blosc) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
+    int32_t type_size = sizeof(int32_t);
+
+    const int8_t ndim = 2;
+    int64_t shape[] = {100, 100};
+    int64_t cshape[] = {100, 2};
+    int64_t bshape[] = {50, 1};
+    int64_t start[] = {21, 17};
+    int64_t stop[] = {-21, 55};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape,
+                                                      cshape, bshape,
+                                                      start, stop, false, "xarr.iar"));
+}
+
+INA_TEST_FIXTURE(set_slice_buffer, 2_sc_t_blosc) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT8;
+    int32_t type_size = sizeof(int8_t);
+
+    const int8_t ndim = 2;
+    int64_t shape[] = {10, 10};
+    int64_t cshape[] = {5, 3};
+    int64_t bshape[] = {2, 2};
+    int64_t start[] = {0, 0};
+    int64_t stop[] = {-5, 5};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape,
+                                                      cshape, bshape,
+                                                      start, stop, false, NULL));
+}
+
+INA_TEST_FIXTURE(set_slice_buffer, 2_us_t_blosc) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT16;
+    int32_t type_size = sizeof(uint16_t);
+
+    const int8_t ndim = 2;
+    int64_t shape[] = {20, 14};
+    int64_t cshape[] = {13, 13};
+    int64_t bshape[] = {11, 3};
+    int64_t start[] = {3, 1};
+    int64_t stop[] = {-2, 5};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape,
                                                       cshape, bshape,

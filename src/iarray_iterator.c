@@ -304,21 +304,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
         (*itr)->cur_block_index[i] = 0;
     }
 
-    switch (cont->dtshape->dtype) {
-        case IARRAY_DATA_TYPE_DOUBLE:
-                cont->catarr->chunk_cache.data =
-                    ina_mem_alloc_aligned(64, (size_t) cont->catarr->extchunknitems * sizeof(double));
-
-            break;
-        case IARRAY_DATA_TYPE_FLOAT:
-                cont->catarr->chunk_cache.data =
-                    ina_mem_alloc_aligned(32, (size_t) cont->catarr->extchunknitems * sizeof(float));
-
-            break;
-        default:
-            IARRAY_TRACE1(iarray.error, "The data type is invalid");
-            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-    }
+    cont->catarr->chunk_cache.data = ina_mem_alloc_aligned(8 * cont->dtshape->dtype_size, (size_t) cont->catarr->extchunknitems * cont->dtshape->dtype_size);
 
     return INA_SUCCESS;
 }

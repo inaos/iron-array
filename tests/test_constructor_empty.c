@@ -83,9 +83,9 @@ INA_TEST_FIXTURE(constructor_empty, 1_d)
     INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, false, NULL));
 }
 
-INA_TEST_FIXTURE(constructor_empty, 1_d_1)
+INA_TEST_FIXTURE(constructor_empty, 1_f_1)
 {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int8_t ndim = 1;
     int64_t shape[] = {667};
     int64_t cshape[] = {252};
@@ -94,9 +94,9 @@ INA_TEST_FIXTURE(constructor_empty, 1_d_1)
     INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, true, NULL));
 }
 
-INA_TEST_FIXTURE(constructor_empty, 2_d)
+INA_TEST_FIXTURE(constructor_empty, 2_ll)
 {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
     int8_t ndim = 2;
     int64_t shape[] = {15, 1112};
     int64_t cshape[] = {3, 12};
@@ -105,13 +105,112 @@ INA_TEST_FIXTURE(constructor_empty, 2_d)
     INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, false, "arr.iarr"));
 }
 
-INA_TEST_FIXTURE(constructor_empty, 5_d)
+INA_TEST_FIXTURE(constructor_empty, 5_ui)
 {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
     int8_t ndim = 5;
     int64_t shape[] = {22, 13, 16, 10, 7};
     int64_t cshape[] = {11, 12, 8, 5, 3};
     int64_t bshape[] = {3, 4, 2, 4, 3};
+
+    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, false, NULL));
+}
+
+INA_TEST_FIXTURE(constructor_empty, 1_ll)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
+    int8_t ndim = 1;
+    int64_t shape[] = {500};
+    int64_t cshape[] = {100};
+    int64_t bshape[] = {26};
+
+    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, false, NULL));
+}
+
+INA_TEST_FIXTURE(constructor_empty, 1_i_1)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
+    int8_t ndim = 1;
+    int64_t shape[] = {667};
+    int64_t cshape[] = {252};
+    int64_t bshape[] = {34};
+
+    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, true, NULL));
+}
+
+INA_TEST_FIXTURE(constructor_empty, 2_s)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT16;
+    int8_t ndim = 2;
+    int64_t shape[] = {15, 1112};
+    int64_t cshape[] = {3, 12};
+    int64_t bshape[] = {3, 12};
+
+    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, false, "arr.iarr"));
+}
+
+INA_TEST_FIXTURE(constructor_empty, 5_sc)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT8;
+    int8_t ndim = 5;
+    int64_t shape[] = {22, 13, 16, 10, 7};
+    int64_t cshape[] = {11, 12, 8, 5, 3};
+    int64_t bshape[] = {3, 4, 2, 4, 3};
+
+    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, false, NULL));
+}
+
+INA_TEST_FIXTURE(constructor_empty, 1_ull)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
+    int8_t ndim = 1;
+    int64_t shape[] = {500};
+    int64_t cshape[] = {100};
+    int64_t bshape[] = {26};
+
+    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, false, NULL));
+}
+
+INA_TEST_FIXTURE(constructor_empty, 1_ui_1)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
+    int8_t ndim = 1;
+    int64_t shape[] = {667};
+    int64_t cshape[] = {252};
+    int64_t bshape[] = {34};
+
+    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, true, NULL));
+}
+
+INA_TEST_FIXTURE(constructor_empty, 2_us)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT16;
+    int8_t ndim = 2;
+    int64_t shape[] = {15, 1112};
+    int64_t cshape[] = {3, 12};
+    int64_t bshape[] = {3, 12};
+
+    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, false, "arr.iarr"));
+}
+
+INA_TEST_FIXTURE(constructor_empty, 5_uc)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;
+    int8_t ndim = 5;
+    int64_t shape[] = {22, 13, 16, 10, 7};
+    int64_t cshape[] = {11, 12, 8, 5, 3};
+    int64_t bshape[] = {3, 4, 2, 4, 3};
+
+    INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, false, NULL));
+}
+
+INA_TEST_FIXTURE(constructor_empty, 1_b)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
+    int8_t ndim = 1;
+    int64_t shape[] = {500};
+    int64_t cshape[] = {100};
+    int64_t bshape[] = {26};
 
     INA_TEST_ASSERT_SUCCEED(test_empty(data->ctx, dtype, ndim, shape, cshape, bshape, false, NULL));
 }

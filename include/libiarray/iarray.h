@@ -131,8 +131,19 @@ typedef enum iarray_random_dist_parameter_e {
 } iarray_random_dist_parameter_t;
 
 typedef enum iarray_data_type_e {
-    IARRAY_DATA_TYPE_DOUBLE,
-    IARRAY_DATA_TYPE_FLOAT,
+    IARRAY_DATA_TYPE_DOUBLE = 0,
+    IARRAY_DATA_TYPE_FLOAT = 1,
+    IARRAY_DATA_TYPE_FLOAT16 = 2,
+    IARRAY_DATA_TYPE_FLOAT8 = 3,
+    IARRAY_DATA_TYPE_INT64 = 10,
+    IARRAY_DATA_TYPE_INT32 = 11,
+    IARRAY_DATA_TYPE_INT16 = 12,
+    IARRAY_DATA_TYPE_INT8 = 13,
+    IARRAY_DATA_TYPE_UINT64 = 16,
+    IARRAY_DATA_TYPE_UINT32 = 17,
+    IARRAY_DATA_TYPE_UINT16 = 18,
+    IARRAY_DATA_TYPE_UINT8 = 19,
+    IARRAY_DATA_TYPE_BOOL = 24,
     IARRAY_DATA_TYPE_MAX  // marker; must be the last entry
 } iarray_data_type_t;
 
@@ -219,6 +230,7 @@ typedef struct iarray_config_s {
 
 typedef struct iarray_dtshape_s {
     iarray_data_type_t dtype;
+    int32_t dtype_size;
     int8_t ndim;     /* if ndim = 0 it is a scalar */
     int64_t shape[IARRAY_DIMENSION_MAX];
 } iarray_dtshape_t;
@@ -417,19 +429,12 @@ INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
                               int flags,
                               iarray_container_t **container);
 
-INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx,
-                                    iarray_dtshape_t *dtshape,
-                                    float value,
-                                    iarray_storage_t *storage,
-                                    int flags,
-                                    iarray_container_t **container);
-
-INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
-                                     iarray_dtshape_t *dtshape,
-                                     double value,
-                                     iarray_storage_t *storage,
-                                     int flags,
-                                     iarray_container_t **container);
+INA_API(ina_rc_t) iarray_fill(iarray_context_t *ctx,
+                                iarray_dtshape_t *dtshape,
+                                void *value,
+                                iarray_storage_t *storage,
+                                int flags,
+                                iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
                               iarray_container_t *src,
@@ -607,6 +612,7 @@ INA_API(ina_rc_t) iarray_container_lte(iarray_context_t *ctx, iarray_container_t
 INA_API(ina_rc_t) iarray_container_eq(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_container_t *result);
 
 INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_container_t *b, double tol);
+INA_API(ina_rc_t) iarray_container_equal(iarray_container_t *a, iarray_container_t *b);
 
 INA_API(ina_rc_t) iarray_container_is_symmetric(iarray_container_t *a);
 INA_API(ina_rc_t) iarray_container_is_triangular(iarray_container_t *a);

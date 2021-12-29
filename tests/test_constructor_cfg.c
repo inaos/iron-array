@@ -94,13 +94,13 @@ INA_TEST_FIXTURE(constructor_cfg, 1_d)
     INA_TEST_ASSERT_SUCCEED(test_cfg(data->ctx, dtype, ndim, shape, cshape, bshape, false, NULL));
 }
 
-INA_TEST_FIXTURE(constructor_cfg, 1_d_1)
+INA_TEST_FIXTURE(constructor_cfg, 1_f_1)
 {
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.filter_flags = IARRAY_COMP_BITSHUFFLE;
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
 
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int8_t ndim = 1;
     int64_t shape[] = {128};
     int64_t cshape[] = {128};
@@ -109,13 +109,13 @@ INA_TEST_FIXTURE(constructor_cfg, 1_d_1)
     INA_TEST_ASSERT_SUCCEED(test_cfg(data->ctx, dtype, ndim, shape, cshape, bshape, false, "arr.iarr"));
 }
 
-INA_TEST_FIXTURE(constructor_cfg, 2_d)
+INA_TEST_FIXTURE(constructor_cfg, 2_s)
 {
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.filter_flags = IARRAY_COMP_SHUFFLE;
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
 
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT16;
     int8_t ndim = 2;
     int64_t shape[] = {15, 1112};
     int64_t cshape[] = {4, 231};
@@ -124,12 +124,12 @@ INA_TEST_FIXTURE(constructor_cfg, 2_d)
     INA_TEST_ASSERT_SUCCEED(test_cfg(data->ctx, dtype, ndim, shape, cshape, bshape, true, NULL));
 }
 
-INA_TEST_FIXTURE(constructor_cfg, 5_d)
+INA_TEST_FIXTURE(constructor_cfg, 5_ui)
 {
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
 
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
     int8_t ndim = 5;
     int64_t shape[] = {11, 12, 8, 5, 3};
     int64_t cshape[] = {11, 4, 6, 5, 3};

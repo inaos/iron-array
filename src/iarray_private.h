@@ -339,4 +339,7 @@ ina_rc_t iarray_container_new(iarray_context_t *ctx,
                               iarray_storage_t *storage,
                               int flags,
                               iarray_container_t **container);
+
+
+ina_rc_t iarray_set_dtype_size(iarray_dtshape_t *dtshape);
 #endif

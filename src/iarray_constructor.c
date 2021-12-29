@@ -88,12 +88,60 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
             inc *= dtshape->shape[j];
         }
 
-        if (dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value = i * step + start;
-            memcpy(val.elem_pointer, &value, sizeof(double));
-        } else {
-            float value = (float) (i * step + start);
-            memcpy(val.elem_pointer, &value, sizeof(float));
+        switch (dtshape->dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE: {
+                double value = (double) i * step + start;
+                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
+                break;
+            }
+            case IARRAY_DATA_TYPE_FLOAT: {
+                float value = (float) (i * step + start);
+                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
+                break;
+            }
+            case IARRAY_DATA_TYPE_INT64: {
+                int64_t value = (int64_t) (i * step + start);
+                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
+                break;
+            }
+            case IARRAY_DATA_TYPE_INT32: {
+                int32_t value = (int32_t) (i * step + start);
+                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
+                break;
+            }
+            case IARRAY_DATA_TYPE_INT16: {
+                int16_t value = (int16_t) (i * step + start);
+                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
+                break;
+            }
+            case IARRAY_DATA_TYPE_INT8: {
+                int8_t value = (int8_t) (i * step + start);
+                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
+                break;
+            }
+            case IARRAY_DATA_TYPE_UINT64: {
+                uint64_t value = (uint64_t) (i * step + start);
+                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
+                break;
+            }
+            case IARRAY_DATA_TYPE_UINT32: {
+                uint32_t value = (uint32_t) (i * step + start);
+                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
+                break;
+            }
+            case IARRAY_DATA_TYPE_UINT16: {
+                uint16_t value = (uint16_t) (i * step + start);
+                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
+                break;
+            }
+            case IARRAY_DATA_TYPE_UINT8: {
+                uint8_t value = (uint8_t) (i * step + start);
+                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
+                break;
+            }
+            default:
+                INA_TRACE1(iarray.error, "The data type is invalid");
+                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
         }
     }
 
@@ -140,12 +188,20 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
             inc *= dtshape->shape[j];
         }
 
-        if (dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            double value = i * (stop - start) / (contsize - 1) + start;
-            memcpy(val.elem_pointer, &value, sizeof(double));
-        } else {
-            float value = (float) (i * (stop - start) / (contsize - 1) + start);
-            memcpy(val.elem_pointer, &value, sizeof(float));
+        switch (dtshape->dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE: {
+                double value = (double) i * (stop - start) / (contsize - 1) + start;
+                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
+                break;
+            }
+            case IARRAY_DATA_TYPE_FLOAT: {
+                float value = (float) (i * (stop - start) / (contsize - 1) + start);
+                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
+                break;
+            }
+            default:
+                INA_TRACE1(iarray.error, "The data type must be float or double");
+                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
         }
     }
     IARRAY_ITER_FINISH();
@@ -185,42 +241,6 @@ ina_rc_t iarray_fill(iarray_context_t *ctx,
      free(cat_storage.metalayers[0].name);
 
      IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
-
-    return INA_SUCCESS;
-}
-
-
-INA_API(ina_rc_t) iarray_fill_float(iarray_context_t *ctx,
-                                    iarray_dtshape_t *dtshape,
-                                    float value,
-                                    iarray_storage_t *storage,
-                                    int flags,
-                                    iarray_container_t **container)
-{
-    INA_VERIFY_NOT_NULL(ctx);
-    INA_VERIFY_NOT_NULL(dtshape);
-    INA_VERIFY_NOT_NULL(storage);
-    INA_VERIFY_NOT_NULL(container);
-
-    IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
-
-    return INA_SUCCESS;
-}
-
-
-INA_API(ina_rc_t) iarray_fill_double(iarray_context_t *ctx,
-                                     iarray_dtshape_t *dtshape,
-                                     double value,
-                                     iarray_storage_t *storage,
-                                     int flags,
-                                     iarray_container_t **container)
-{
-    INA_VERIFY_NOT_NULL(ctx);
-    INA_VERIFY_NOT_NULL(dtshape);
-    INA_VERIFY_NOT_NULL(storage);
-    INA_VERIFY_NOT_NULL(container);
-
-    IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
 
     return INA_SUCCESS;
 }
@@ -272,14 +292,58 @@ INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(container);
 
     switch (dtshape->dtype) {
-        case IARRAY_DATA_TYPE_DOUBLE:
-            IARRAY_RETURN_IF_FAILED(iarray_fill_double(ctx, dtshape, 1., storage, flags, container));
+        case IARRAY_DATA_TYPE_DOUBLE: {
+            double value = 1;
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
             break;
-        case IARRAY_DATA_TYPE_FLOAT:
-            IARRAY_RETURN_IF_FAILED(iarray_fill_float(ctx, dtshape, 1.f, storage, flags, container));
+        }
+        case IARRAY_DATA_TYPE_FLOAT: {
+            float value = 1;
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
             break;
+        }
+        case IARRAY_DATA_TYPE_INT64: {
+            int64_t value = 1;
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            break;
+        }
+        case IARRAY_DATA_TYPE_INT32: {
+            int32_t value = 1;
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            break;
+        }
+        case IARRAY_DATA_TYPE_INT16: {
+            int16_t value = 1;
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            break;
+        }
+        case IARRAY_DATA_TYPE_INT8: {
+            int8_t value = 1;
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            break;
+        }
+        case IARRAY_DATA_TYPE_UINT64: {
+            uint64_t value = 1;
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            break;
+        }
+        case IARRAY_DATA_TYPE_UINT32: {
+            uint32_t value = 1;
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            break;
+        }
+        case IARRAY_DATA_TYPE_UINT16: {
+            uint16_t value = 1;
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            break;
+        }
+        case IARRAY_DATA_TYPE_UINT8: {
+            uint8_t value = 1;
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            break;
+        }
         default:
-            IARRAY_TRACE1(iarray.error, "The data type is invalid");
+            IARRAY_TRACE1(iarray.error, "The data type is invalid for this operation");
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
 
@@ -308,22 +372,9 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
         nitems *= dtshape->shape[i];
     }
 
-    switch ((*container)->dtshape->dtype) {
-        case IARRAY_DATA_TYPE_DOUBLE:
-            if (nitems * (int64_t) sizeof(double) > buflen) {
-                IARRAY_TRACE1(iarray.error, "The size of the buffer is not enough");
-                return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
-            }
-            break;
-        case IARRAY_DATA_TYPE_FLOAT:
-            if (nitems * (int64_t) sizeof(float) > buflen) {
-                IARRAY_TRACE1(iarray.error, "The size of the buffer is not enough");
-                return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
-            }
-            break;
-        default:
-            IARRAY_TRACE1(iarray.error, "The data type is invalid");
-            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+    if (nitems * (int64_t) (*container)->dtshape->dtype_size > buflen) {
+        IARRAY_TRACE1(iarray.error, "The size of the buffer is not enough");
+        return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
     }
 
     caterva_config_t cat_cfg = {0};
@@ -364,22 +415,9 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(buffer);
     INA_VERIFY_NOT_NULL(container);
 
-    switch (container->dtshape->dtype) {
-        case IARRAY_DATA_TYPE_DOUBLE:
-            if (size * (int64_t) sizeof(double) > buflen) {
-                IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
-                return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
-            }
-            break;
-        case IARRAY_DATA_TYPE_FLOAT:
-            if (size * (int64_t) sizeof(float) > buflen) {
-                IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
-                return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
-            }
-            break;
-        default:
-            IARRAY_TRACE1(iarray.error, "The data type is invalid");
-            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+    if (size * (int64_t) container->dtshape->dtype_size > buflen) {
+        IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
+        return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
     }
 
     if (container->view) {
