@@ -76,7 +76,12 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
     iarray_container_t *c_y;
     INA_TEST_ASSERT_SUCCEED(iarray_container_load(ctx, urlpath, &c_y));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_container_almost_equal(c_x, c_y, 1e-12));
+    if (dtype == IARRAY_DATA_TYPE_FLOAT || dtype == IARRAY_DATA_TYPE_DOUBLE) {
+        INA_TEST_ASSERT_SUCCEED(iarray_container_almost_equal(c_x, c_y, 1e-12));
+    }
+    else {
+        INA_TEST_ASSERT_SUCCEED(iarray_container_equal(c_x, c_y));
+    }
 
     blosc2_remove_urlpath(urlpath);
 
@@ -118,23 +123,8 @@ INA_TEST_FIXTURE(container_load_save, 2_d) {
                                            stop, false, false, copy));
 }
 
-INA_TEST_FIXTURE(container_load_save, 3_d) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-
-    int8_t ndim = 2;
-    int64_t shape[] = {43, 33};
-    int64_t cshape[] = {14, 12};
-    int64_t bshape[] = {7, 7};
-    double start = 3123;
-    double stop = 45654;
-
-    bool copy = true;
-    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, cshape, bshape, start,
-                                           stop, true, false, copy));
-}
-
-INA_TEST_FIXTURE(container_load_save, 5_d) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+INA_TEST_FIXTURE(container_load_save, 5_f) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 3;
     int64_t shape[] = {20, 55, 125};
@@ -148,47 +138,77 @@ INA_TEST_FIXTURE(container_load_save, 5_d) {
                                            stop, true, true, copy));
 }
 
-INA_TEST_FIXTURE(container_load_save, 2_f) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+INA_TEST_FIXTURE(container_load_save, 3_ll) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
+
+    int8_t ndim = 2;
+    int64_t shape[] = {43, 33};
+    int64_t cshape[] = {14, 12};
+    int64_t bshape[] = {7, 7};
+    double start = 3123;
+    double stop = 43 * 33 + 3123 + 1;
+
+    bool copy = true;
+    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, cshape, bshape, start,
+                                           stop, true, false, copy));
+}
+
+INA_TEST_FIXTURE(container_load_save, 2_us) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT16;
 
     int8_t ndim = 2;
     int64_t shape[] = {120, 100};
     int64_t cshape[] = {50, 51};
     int64_t bshape[] = {5, 22};
-    double start = - 0.1;
-    double stop = - 0.25;
+    double start = 1;
+    double stop = 120 * 100 + 1;
 
     bool copy = false;
     INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, cshape, bshape, start,
                                            stop, false, false, copy));
 }
 
-INA_TEST_FIXTURE(container_load_save, 3_f) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+INA_TEST_FIXTURE(container_load_save, 3_i) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
 
     int8_t ndim = 3;
     int64_t shape[] = {50, 10, 80};
     int64_t cshape[] = {21, 7, 7};
     int64_t bshape[] = {21, 2, 2};
     double start = 3123;
-    double stop = 45654;
+    double stop = 50 * 10 *80 + 3123 + 1;
 
     bool copy = false;
     INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, cshape, bshape, start,
                                            stop, true, false, copy));
 }
 
-INA_TEST_FIXTURE(container_load_save, 5_f) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+INA_TEST_FIXTURE(container_load_save, 5_s) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT16;
 
-    int8_t ndim = 5;
-    int64_t shape[] = {4, 5, 10, 5, 4};
-    int64_t cshape[] = {3, 4, 3, 3, 2};
-    int64_t bshape[] = {3, 3, 2, 3, 2};
-    double start = 0.1;
-    double stop = 0.2;
+    int8_t ndim = 2;
+    int64_t shape[] = {43, 33};
+    int64_t cshape[] = {14, 12};
+    int64_t bshape[] = {7, 7};
+    double start = 1;
+    double stop = 43 * 33 + 1;
 
     bool copy = true;
     INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, cshape, bshape, start,
                                            stop, false, true, copy));
+}
+
+INA_TEST_FIXTURE(container_load_save, 1_uc) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;
+
+    int8_t ndim = 1;
+    int64_t shape[] = {35};
+    int64_t cshape[] = {12};
+    int64_t bshape[] = {5};
+    double start = 23;
+    double stop = 35 * 23 + 1;
+
+    bool copy = true;
+    INA_TEST_ASSERT_SUCCEED(test_load_save(data->ctx, dtype, ndim, shape, cshape, bshape, start,
+                                           stop, false, false, copy));
 }

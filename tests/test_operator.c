@@ -70,14 +70,13 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
     buffer_x = ina_mem_alloc(buffer_x_len);
     buffer_r = ina_mem_alloc(buffer_r_len);
 
+    fill_buf(dtype, buffer_x, (size_t)(n * n));
     if (type_size == sizeof(float)) {
         tol = 1e-06;
-        ffill_buf((float*)buffer_x, (size_t)(n * n));
         vml_fun_s((const int)(n * n), buffer_x, buffer_r);
     }
     else {
         tol = 1e-14;
-        dfill_buf((double*)buffer_x, (size_t)(n * n));
         vml_fun_d((const int)(n * n), buffer_x, buffer_r);
     }
 
@@ -167,16 +166,14 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
     buffer_y = ina_mem_alloc(buffer_y_len);
     buffer_r = ina_mem_alloc(buffer_r_len);
 
+    fill_buf(dtype, buffer_x, (size_t)(n * n));
+    fill_buf(dtype, buffer_y, (size_t)(n * n));
     if (type_size == sizeof(float)) {
         tol = 1e-06;
-        ffill_buf((float*)buffer_x, (size_t)(n * n));
-        ffill_buf((float*)buffer_y, (size_t)(n * n));
         vml_fun_s((const int)(n * n), buffer_x, buffer_y, buffer_r);
     }
     else {
         tol = 1e-14;
-        dfill_buf((double*)buffer_x, (size_t)(n * n));
-        dfill_buf((double*)buffer_y, (size_t)(n * n));
         vml_fun_d((const int)(n * n), buffer_x, buffer_y, buffer_r);
     }
 

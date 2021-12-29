@@ -126,6 +126,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
         IARRAY_TRACE1(iarray.error, "Error allocating the iarray dtshape");
         return INA_ERROR(INA_ERR_FAILED);
     }
+    IARRAY_RETURN_IF_FAILED(iarray_set_dtype_size(dtshape));
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
 
     iarray_auxshape_t auxshape;

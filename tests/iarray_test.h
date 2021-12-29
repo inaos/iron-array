@@ -16,21 +16,76 @@
 #include <libiarray/iarray.h>
 #include <stdbool.h>
 
-inline static void ffill_buf(float *x, size_t nitems)
+inline static void fill_buf(iarray_data_type_t dtype, void *x, size_t nitems)
 {
-    /* Fill with even values between 0 and 10 */
-
-    for (size_t i = 0; i < nitems; i++) {
-        x[i] = (float)i;
-    }
-}
-
-inline static void dfill_buf(double *x, size_t nitems)
-{
-    /* Fill with even values between 0 and 10 */
-
-    for (size_t i = 0; i < nitems; i++) {
-        x[i] = (double)i;
+    switch (dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE: {
+            for (size_t i = 0; i < nitems; i++) {
+                ((double*)x)[i] = (double) i;
+            }
+            break;
+        }
+        case IARRAY_DATA_TYPE_FLOAT: {
+            for (size_t i = 0; i < nitems; i++) {
+                ((float *)x)[i] = (float) i;
+            }
+            break;
+        }
+        case IARRAY_DATA_TYPE_INT64: {
+            for (size_t i = 0; i < nitems; i++) {
+                ((int64_t *)x)[i] = (int64_t) i;
+            }
+            break;
+        }
+        case IARRAY_DATA_TYPE_INT32: {
+            int32_t *aux = (int32_t *)x;
+            for (size_t i = 0; i < nitems; i++) {
+                ((int32_t*)x)[i] = (int32_t) i;
+            }
+            break;
+        }
+        case IARRAY_DATA_TYPE_INT16: {
+            for (size_t i = 0; i < nitems; i++) {
+                ((int16_t*)x)[i] = (int16_t) i;
+            }
+            break;
+        }
+        case IARRAY_DATA_TYPE_INT8: {
+            for (size_t i = 0; i < nitems; i++) {
+                ((int8_t*)x)[i] = (int8_t) i;
+            }
+            break;
+        }
+        case IARRAY_DATA_TYPE_UINT64: {
+            for (size_t i = 0; i < nitems; i++) {
+                ((uint64_t *)x)[i] = (uint64_t) i;
+            }
+            break;
+        }
+        case IARRAY_DATA_TYPE_UINT32: {
+            for (size_t i = 0; i < nitems; i++) {
+                ((uint32_t*)x)[i] = (uint32_t) i;
+            }
+            break;
+        }
+        case IARRAY_DATA_TYPE_UINT16: {
+            for (size_t i = 0; i < nitems; i++) {
+                ((uint16_t*)x)[i] = (uint16_t) i;
+            }
+            break;
+        }
+        case IARRAY_DATA_TYPE_UINT8: {
+            for (size_t i = 0; i < nitems; i++) {
+                ((uint8_t*)x)[i] = (uint8_t) i;
+            }
+            break;
+        }
+        case IARRAY_DATA_TYPE_BOOL: {
+            for (size_t i = 0; i < nitems; i++) {
+                ((boolean_t *)x)[i] = (boolean_t) (i % 2);
+            }
+            break;
+        }
     }
 }
 
@@ -80,6 +135,66 @@ inline static ina_rc_t test_float_buffer_cmp(iarray_context_t *ctx, iarray_conta
     fail:
     ina_mem_free(bufcmp);
     return ina_err_get_rc();
+}
+
+inline static void fill_block_iter(iarray_iter_write_block_value_t val, int64_t nelem, iarray_data_type_t dtype) {
+    switch (dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            for (int64_t i = 0; i < val.block_size; ++i) {
+                ((double *) val.block_pointer)[i] = (double) nelem + i;
+            }
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            for (int64_t i = 0; i < val.block_size; ++i) {
+                ((float *) val.block_pointer)[i] = (float) nelem  + i;
+            }
+            break;
+        case IARRAY_DATA_TYPE_INT64:
+            for (int64_t i = 0; i < val.block_size; ++i) {
+                ((int64_t *) val.block_pointer)[i] = (int64_t) nelem  + i;
+            }
+            break;
+        case IARRAY_DATA_TYPE_INT32:
+            for (int64_t i = 0; i < val.block_size; ++i) {
+                ((int32_t *) val.block_pointer)[i] = (int32_t) (nelem  + i);
+            }
+            break;
+        case IARRAY_DATA_TYPE_INT16:
+            for (int64_t i = 0; i < val.block_size; ++i) {
+                ((int16_t *) val.block_pointer)[i] = (int16_t) (nelem  + i);
+            }
+            break;
+        case IARRAY_DATA_TYPE_INT8:
+            for (int64_t i = 0; i < val.block_size; ++i) {
+                ((int8_t *) val.block_pointer)[i] = (int8_t) (nelem  + i);
+            }
+            break;
+        case IARRAY_DATA_TYPE_UINT64:
+            for (int64_t i = 0; i < val.block_size; ++i) {
+                ((uint64_t *) val.block_pointer)[i] = (uint64_t) (nelem  + i);
+            }
+            break;
+        case IARRAY_DATA_TYPE_UINT32:
+            for (int64_t i = 0; i < val.block_size; ++i) {
+                ((uint32_t *) val.block_pointer)[i] = (uint32_t) (nelem  + i);
+            }
+            break;
+        case IARRAY_DATA_TYPE_UINT16:
+            for (int64_t i = 0; i < val.block_size; ++i) {
+                ((uint16_t *) val.block_pointer)[i] = (uint16_t) (nelem  + i);
+            }
+            break;
+        case IARRAY_DATA_TYPE_UINT8:
+            for (int64_t i = 0; i < val.block_size; ++i) {
+                ((uint8_t *) val.block_pointer)[i] = (uint8_t) (nelem  + i);
+            }
+            break;
+        case IARRAY_DATA_TYPE_BOOL:
+            for (int64_t i = 0; i < val.block_size; ++i) {
+                ((boolean_t *) val.block_pointer)[i] = (boolean_t) (nelem  + i)%2;
+            }
+            break;
+    }
 }
 
 #endif

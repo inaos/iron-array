@@ -523,22 +523,9 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
         chunksize *= shape_[i];
     }
 
-    switch (container->dtshape->dtype) {
-        case IARRAY_DATA_TYPE_DOUBLE:
-            if (chunksize * (int64_t)sizeof(double) > buflen) {
-                IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
-                return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
-            }
-            break;
-        case IARRAY_DATA_TYPE_FLOAT:
-            if (chunksize * (int64_t)sizeof(float) > buflen) {
-                IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
-                return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
-            }
-            break;
-        default:
-            IARRAY_TRACE1(iarray.error, "The data type is invalid");
-            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+    if (chunksize * (int64_t)container->dtshape->dtype_size > buflen) {
+        IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
+        return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
     }
 
     caterva_config_t cfg = {0};
@@ -617,16 +604,9 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
         chunksize *= chunkshape_[i];
     }
 
-    if (container->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-        if (chunksize * (int64_t)sizeof(double) > buflen) {
-            IARRAY_TRACE1(iarray.error, "The buffer size is not enough\n");
-            return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
-        }
-    } else {
-        if (chunksize * (int64_t)sizeof(float) > buflen) {
-            IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
-            return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
-        }
+    if (chunksize * (int64_t)container->dtshape->dtype_size > buflen) {
+        IARRAY_TRACE1(iarray.error, "The buffer size is not enough\n");
+        return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
     }
 
     caterva_config_t cfg = {0};
@@ -846,16 +826,16 @@ INA_API(ina_rc_t) iarray_container_info(iarray_container_t *container, int64_t *
 INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_container_t *b, double tol)
 {
     if (a->dtshape->dtype != b->dtshape->dtype){
-        IARRAY_TRACE1(iarray.error, "The data types are not equals");
+        IARRAY_TRACE1(iarray.error, "The data types are not equal");
         return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
     if (a->dtshape->ndim != b->dtshape->ndim) {
-        IARRAY_TRACE1(iarray.error, "The dimensions are not equals");
+        IARRAY_TRACE1(iarray.error, "The dimensions are not equal");
         return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
     }
     for (int i = 0; i < a->dtshape->ndim; ++i) {
         if (a->dtshape->shape[i] != b->dtshape->shape[i]) {
-            IARRAY_TRACE1(iarray.error, "The shapes are not equals");
+            IARRAY_TRACE1(iarray.error, "The shapes are not equal");
             return INA_ERROR(IARRAY_ERR_INVALID_SHAPE);
         }
     }
@@ -908,6 +888,154 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
                     return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
                 }
             }
+        }
+    }
+
+    IARRAY_ITER_FINISH();
+    iarray_iter_read_block_free(&iter_a);
+    iarray_iter_read_block_free(&iter_b);
+
+    iarray_context_free(&ctx);
+
+    return INA_SUCCESS;
+}
+
+
+INA_API(ina_rc_t) iarray_container_equal(iarray_container_t *a, iarray_container_t *b)
+{
+    if (a->dtshape->dtype != b->dtshape->dtype){
+        IARRAY_TRACE1(iarray.error, "The data types are not equal");
+        return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+    }
+    if (a->dtshape->ndim != b->dtshape->ndim) {
+        IARRAY_TRACE1(iarray.error, "The dimensions are not equal");
+        return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
+    }
+    for (int i = 0; i < a->dtshape->ndim; ++i) {
+        if (a->dtshape->shape[i] != b->dtshape->shape[i]) {
+            IARRAY_TRACE1(iarray.error, "The shapes are not equal");
+            return INA_ERROR(IARRAY_ERR_INVALID_SHAPE);
+        }
+    }
+
+    int dtype = a->dtshape->dtype;
+    int ndim = a->dtshape->ndim;
+
+    // For the blocksize, choose the maximum of the partition shapes
+    int64_t blocksize[IARRAY_DIMENSION_MAX];
+    for (int i = 0; i < ndim; ++i) {
+        blocksize[i] = INA_MAX(a->storage->chunkshape[i], b->storage->chunkshape[i]);
+    }
+
+    iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
+    iarray_context_t *ctx = NULL;
+    IARRAY_RETURN_IF_FAILED(iarray_context_new(&cfg, &ctx));
+    iarray_iter_read_block_t *iter_a;
+    iarray_iter_read_block_value_t val_a;
+    IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_new(ctx, &iter_a, a, blocksize, &val_a, false));
+    iarray_iter_read_block_t *iter_b;
+    iarray_iter_read_block_value_t val_b;
+    IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_new(ctx, &iter_b, b, blocksize, &val_b, false));
+
+    while (INA_SUCCEED(iarray_iter_read_block_has_next(iter_a))) {
+        IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_next(iter_a, NULL, 0));
+        IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_next(iter_b, NULL, 0));
+
+        switch (dtype) {
+            case IARRAY_DATA_TYPE_INT64:
+                for (int64_t i = 0; i < val_a.block_size; ++i) {
+                    int64_t diff = ((int64_t *)val_a.block_pointer)[i] - ((int64_t *)val_b.block_pointer)[i];
+                    if (diff != 0) {
+                        printf("%lld, %lld (diff: %lld)\n", ((int64_t *)val_a.block_pointer)[i], ((int64_t *)val_b.block_pointer)[i], diff);
+                        IARRAY_TRACE1(iarray.error, "Values are different");
+                        return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
+                    }
+                }
+                break;
+            case IARRAY_DATA_TYPE_INT32:
+                for (int64_t i = 0; i < val_a.block_size; ++i) {
+                    int32_t diff = ((int32_t *)val_a.block_pointer)[i] - ((int32_t *)val_b.block_pointer)[i];
+                    if (diff != 0) {
+                        printf("%d, %d (diff: %d)\n", ((int32_t *)val_a.block_pointer)[i], ((int32_t *)val_b.block_pointer)[i], diff);
+                        IARRAY_TRACE1(iarray.error, "Values are different");
+                        return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
+                    }
+                }
+                break;
+            case IARRAY_DATA_TYPE_INT16:
+                for (int64_t i = 0; i < val_a.block_size; ++i) {
+                    int16_t diff = ((int16_t *)val_a.block_pointer)[i] - ((int16_t *)val_b.block_pointer)[i];
+                    if (diff != 0) {
+                        printf("%hd, %hd (diff: %d)\n", ((int16_t *)val_a.block_pointer)[i], ((int16_t *)val_b.block_pointer)[i], diff);
+                        IARRAY_TRACE1(iarray.error, "Values are different");
+                        return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
+                    }
+                }
+                break;
+            case IARRAY_DATA_TYPE_INT8:
+                for (int64_t i = 0; i < val_a.block_size; ++i) {
+                    int8_t diff = ((int8_t *)val_a.block_pointer)[i] - ((int8_t *)val_b.block_pointer)[i];
+                    if (diff != 0) {
+                        printf("%hhd, %hhd (diff: %d)\n", ((int8_t *)val_a.block_pointer)[i], ((int8_t *)val_b.block_pointer)[i], diff);
+                        IARRAY_TRACE1(iarray.error, "Values are different");
+                        return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
+                    }
+                }
+                break;
+            case IARRAY_DATA_TYPE_UINT64:
+                for (int64_t i = 0; i < val_a.block_size; ++i) {
+                    uint64_t diff = ((uint64_t *)val_a.block_pointer)[i] - ((uint64_t *)val_b.block_pointer)[i];
+                    if (diff != 0) {
+                        printf("%llu, %llu (diff: %lld)\n", ((uint64_t *)val_a.block_pointer)[i], ((uint64_t *)val_b.block_pointer)[i], diff);
+                        IARRAY_TRACE1(iarray.error, "Values are different");
+                        return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
+                    }
+                }
+                break;
+            case IARRAY_DATA_TYPE_UINT32:
+                for (int64_t i = 0; i < val_a.block_size; ++i) {
+                    uint32_t diff = ((uint32_t *)val_a.block_pointer)[i] - ((uint32_t *)val_b.block_pointer)[i];
+                    if (diff != 0) {
+                        printf("%u, %u (diff: %d)\n", ((uint32_t *)val_a.block_pointer)[i], ((uint32_t *)val_b.block_pointer)[i], diff);
+                        IARRAY_TRACE1(iarray.error, "Values are different");
+                        return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
+                    }
+                }
+                break;
+            case IARRAY_DATA_TYPE_UINT16:
+                for (int64_t i = 0; i < val_a.block_size; ++i) {
+                    uint16_t diff = ((uint16_t *)val_a.block_pointer)[i] - ((uint16_t *)val_b.block_pointer)[i];
+                    if (diff != 0) {
+                        printf("%hu, %hu (diff: %d)\n", ((uint16_t *)val_a.block_pointer)[i], ((uint16_t *)val_b.block_pointer)[i], diff);
+                        IARRAY_TRACE1(iarray.error, "Values are different");
+                        return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
+                    }
+                }
+                break;
+            case IARRAY_DATA_TYPE_UINT8:
+                for (int64_t i = 0; i < val_a.block_size; ++i) {
+                    uint8_t diff = ((uint8_t *)val_a.block_pointer)[i] - ((uint8_t *)val_b.block_pointer)[i];
+                    if (diff != 0) {
+                        printf("%hhu, %hhu (diff: %d)\n", ((uint8_t *)val_a.block_pointer)[i], ((uint8_t *)val_b.block_pointer)[i], diff);
+                        IARRAY_TRACE1(iarray.error, "Values are different");
+                        return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
+                    }
+                }
+                break;
+            case IARRAY_DATA_TYPE_BOOL:
+                for (int64_t i = 0; i < val_a.block_size; ++i) {
+                    boolean_t a_val = ((boolean_t *)val_a.block_pointer)[i];
+                    boolean_t b_val = ((boolean_t *)val_b.block_pointer)[i];
+                    if (a_val != b_val) {
+                        printf("%u, %u\n", a_val, b_val);
+                        IARRAY_TRACE1(iarray.error, "Values are different");
+                        return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
+                    }
+                }
+                break;
+            default:
+                IARRAY_TRACE1(iarray.error, "The data type is invalid");
+                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
         }
     }
 

@@ -10,6 +10,7 @@
  *
  */
 
+#include "iarray_test.h"
 #include <libiarray/iarray.h>
 #include <src/iarray_private.h>
 
@@ -71,15 +72,7 @@ static ina_rc_t test_block_iterator_transpose(iarray_context_t *ctx, iarray_data
             nelem += val.elem_index[i] * inc;
             inc *= c_x->dtshape->shape[i];
         }
-        if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            for (int64_t i = 0; i < val.block_size; ++i) {
-                ((double *) val.block_pointer)[i] = (double) nelem + i;
-            }
-        } else {
-            for (int64_t i = 0; i < val.block_size; ++i) {
-                ((float *) val.block_pointer)[i] = (float) nelem  + i;
-            }
-        }
+        fill_block_iter(val, nelem, dtype);
     }
 
     iarray_iter_write_block_free(&I);
@@ -273,15 +266,7 @@ static ina_rc_t test_block_iterator_transpose_external(iarray_context_t *ctx,
             nelem += val.elem_index[i] * inc;
             inc *= c_x->dtshape->shape[i];
         }
-        if(dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            for (int64_t i = 0; i < val.block_size; ++i) {
-                ((double *) val.block_pointer)[i] = (double) nelem + i;
-            }
-        } else {
-            for (int64_t i = 0; i < val.block_size; ++i) {
-                ((float *) val.block_pointer)[i] = (float) nelem  + i;
-            }
-        }
+        fill_block_iter(val, nelem, dtype);
     }
 
     iarray_iter_write_block_free(&I);

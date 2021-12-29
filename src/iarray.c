@@ -311,23 +311,12 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     // ...and destroy topology
     hwloc_topology_destroy(topology);
 
-    iarray_data_type_t dtype = dtshape->dtype;
     int8_t ndim = dtshape->ndim;
     int64_t *shape = dtshape->shape;
+    IARRAY_RETURN_IF_FAILED(iarray_set_dtype_size(dtshape));
+    int32_t itemsize = dtshape->dtype_size;
     int64_t *chunkshape = storage->chunkshape;
     int64_t *blockshape = storage->blockshape;
-    int itemsize;
-    switch (dtype) {
-        case IARRAY_DATA_TYPE_DOUBLE:
-            itemsize = 8;
-            break;
-        case IARRAY_DATA_TYPE_FLOAT:
-            itemsize = 4;
-            break;
-        default:
-            INA_TRACE1(iarray.error, "The data type is invalid");
-            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-    }
 
     // Compute the chunkshape.
     // TODO: Only boxed partition algorithm is implement, but a C and Fortran order could be useful too
@@ -476,7 +465,7 @@ ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t),
 
 ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_t *cat_params) {
     cat_params->ndim = dtshape->ndim;
-    cat_params->itemsize = dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ? sizeof(double) : sizeof(float);
+    cat_params->itemsize = dtshape->dtype_size;
     for (int i = 0; i < cat_params->ndim; ++i) {
         cat_params->shape[i] = dtshape->shape[i];
     }
@@ -527,5 +516,38 @@ ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage
     metalayer->sdata = smeta;
     metalayer->size = smeta_len;
 
+    return INA_SUCCESS;
+}
+
+// Set dtype_size from iarray_data_type_t
+ina_rc_t iarray_set_dtype_size(iarray_dtshape_t *dtshape)
+{
+    INA_VERIFY_NOT_NULL(dtshape);
+    switch (dtshape->dtype) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+        case IARRAY_DATA_TYPE_INT64:
+        case IARRAY_DATA_TYPE_UINT64:
+            dtshape->dtype_size = 8;
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+        case IARRAY_DATA_TYPE_INT32:
+        case IARRAY_DATA_TYPE_UINT32:
+            dtshape->dtype_size = 4;
+            break;
+        case IARRAY_DATA_TYPE_INT16:
+        case IARRAY_DATA_TYPE_UINT16:
+            dtshape->dtype_size = 2;
+            break;
+        case IARRAY_DATA_TYPE_INT8:
+        case IARRAY_DATA_TYPE_UINT8:
+            dtshape->dtype_size = 1;
+            break;
+        case IARRAY_DATA_TYPE_BOOL:
+            dtshape->dtype_size = sizeof(boolean_t);
+            break;
+        default:
+            INA_TRACE1(iarray.error, "The data type is invalid");
+            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+    }
     return INA_SUCCESS;
 }
