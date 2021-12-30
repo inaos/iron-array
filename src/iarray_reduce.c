@@ -129,6 +129,15 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     // Init reduction
     double *dout = (double *) pparams->out;
     float *fout = (float *) pparams->out;
+    int64_t *i64out = (int64_t *) pparams->out;
+    int32_t *i32out = (int32_t *) pparams->out;
+    int16_t *i16out = (int16_t *) pparams->out;
+    int8_t *i8out = (int8_t *) pparams->out;
+    uint64_t *ui64out = (uint64_t *) pparams->out;
+    uint32_t *ui32out = (uint32_t *) pparams->out;
+    uint16_t *ui16out = (uint16_t *) pparams->out;
+    uint8_t *ui8out = (uint8_t *) pparams->out;
+
     for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
         // Compute index in dest
         int64_t elem_index_n[IARRAY_DIMENSION_MAX] = {0};
@@ -139,25 +148,78 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
 
         bool empty = check_padding(block_offset_n, elem_index_n, rparams);
 
+        if (!empty) {
+            switch (rparams->result->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    rparams->ufunc->init(dout, &user_data);
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    rparams->ufunc->init(fout, &user_data);
+                    break;
+                case IARRAY_DATA_TYPE_INT64:
+                    rparams->ufunc->init(i64out, &user_data);
+                    break;
+                case IARRAY_DATA_TYPE_INT32:
+                    rparams->ufunc->init(i32out, &user_data);
+                    break;
+                case IARRAY_DATA_TYPE_INT16:
+                    rparams->ufunc->init(i16out, &user_data);
+                    break;
+                case IARRAY_DATA_TYPE_INT8:
+                    rparams->ufunc->init(i8out, &user_data);
+                    break;
+                case IARRAY_DATA_TYPE_UINT64:
+                    rparams->ufunc->init(ui64out, &user_data);
+                    break;
+                case IARRAY_DATA_TYPE_UINT32:
+                    rparams->ufunc->init(ui32out, &user_data);
+                    break;
+                case IARRAY_DATA_TYPE_UINT16:
+                    rparams->ufunc->init(ui16out, &user_data);
+                    break;
+                case IARRAY_DATA_TYPE_UINT8:
+                    rparams->ufunc->init(ui8out, &user_data);
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+        }
         switch (rparams->result->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                if (empty)
-                    break;
-                else
-                    rparams->ufunc->init(dout, &user_data);
+                dout++;
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                if (empty)
-                    break;
-                else
-                    rparams->ufunc->init(fout, &user_data);
+                fout++;
+                break;
+            case IARRAY_DATA_TYPE_INT64:
+                i64out++;
+                break;
+            case IARRAY_DATA_TYPE_INT32:
+                i32out++;
+                break;
+            case IARRAY_DATA_TYPE_INT16:
+                i16out++;
+                break;
+            case IARRAY_DATA_TYPE_INT8:
+                i8out++;
+                break;
+            case IARRAY_DATA_TYPE_UINT64:
+                ui64out++;
+                break;
+            case IARRAY_DATA_TYPE_UINT32:
+                ui32out++;
+                break;
+            case IARRAY_DATA_TYPE_UINT16:
+                ui16out++;
+                break;
+            case IARRAY_DATA_TYPE_UINT8:
+                ui8out++;
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "Invalid dtype");
                 return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
         }
-        dout++;
-        fout++;
     }
 
     // Allocate destination
@@ -228,6 +290,14 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
 
             dout = (double *) pparams->out;
             fout = (float *) pparams->out;
+            i64out = (int64_t *) pparams->out;
+            i32out = (int32_t *) pparams->out;
+            i16out = (int16_t *) pparams->out;
+            i8out = (int8_t *) pparams->out;
+            ui64out = (uint64_t *) pparams->out;
+            ui32out = (uint32_t *) pparams->out;
+            ui16out = (uint16_t *) pparams->out;
+            ui8out = (uint8_t *) pparams->out;
 
             for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
                 // Compute index in dest
@@ -238,8 +308,41 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                                          elem_index_n);
 
                 if (check_padding(block_offset_n, elem_index_n, rparams)) {
-                    dout++;
-                    fout++;
+                    switch (rparams->result->dtshape->dtype) {
+                        case IARRAY_DATA_TYPE_DOUBLE:
+                            dout++;
+                            break;
+                        case IARRAY_DATA_TYPE_FLOAT:
+                            fout++;
+                            break;
+                        case IARRAY_DATA_TYPE_INT64:
+                            i64out++;
+                            break;
+                        case IARRAY_DATA_TYPE_INT32:
+                            i32out++;
+                            break;
+                        case IARRAY_DATA_TYPE_INT16:
+                            i16out++;
+                            break;
+                        case IARRAY_DATA_TYPE_INT8:
+                            i8out++;
+                            break;
+                        case IARRAY_DATA_TYPE_UINT64:
+                            ui64out++;
+                            break;
+                        case IARRAY_DATA_TYPE_UINT32:
+                            ui32out++;
+                            break;
+                        case IARRAY_DATA_TYPE_UINT16:
+                            ui16out++;
+                            break;
+                        case IARRAY_DATA_TYPE_UINT8:
+                            ui8out++;
+                            break;
+                        default:
+                            IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+                    }
                     continue;
                 }
 
@@ -261,23 +364,144 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
 
                 double *dblock = ((double *) block) + elem_index_u;
                 float *fblock = ((float *) block) + elem_index_u;
+                int64_t *i64block = ((int64_t *) block) + elem_index_u;
+                int32_t *i32block = ((int32_t *) block) + elem_index_u;
+                int16_t *i16block = ((int16_t *) block) + elem_index_u;
+                int8_t *i8block = ((int8_t *) block) + elem_index_u;
+                uint64_t *ui64block = ((uint64_t *) block) + elem_index_u;
+                uint32_t *ui32block = ((uint32_t *) block) + elem_index_u;
+                uint16_t *ui16block = ((uint16_t *) block) + elem_index_u;
+                uint8_t *ui8block = ((uint8_t *) block) + elem_index_u;
 
                 switch (rparams->result->dtshape->dtype) {
                     case IARRAY_DATA_TYPE_DOUBLE:
-                        rparams->ufunc->reduction(dout, 0, dblock, strides[rparams->axis],
-                                                  vector_nelems, &user_data);
+                        switch (rparams->input->dtshape->dtype) {
+                            case IARRAY_DATA_TYPE_DOUBLE:
+                                rparams->ufunc->reduction(dout, 0, dblock, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_FLOAT:
+                                rparams->ufunc->reduction(dout, 0, fblock, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_INT64:
+                                rparams->ufunc->reduction(dout, 0, i64block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_INT32:
+                                rparams->ufunc->reduction(dout, 0, i32block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_INT16:
+                                rparams->ufunc->reduction(dout, 0, i16block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_INT8:
+                                rparams->ufunc->reduction(dout, 0, i8block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_UINT64:
+                                rparams->ufunc->reduction(dout, 0, ui64block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_UINT32:
+                                rparams->ufunc->reduction(dout, 0, ui32block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_UINT16:
+                                rparams->ufunc->reduction(dout, 0, ui16block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_UINT8:
+                                rparams->ufunc->reduction(dout, 0, ui8block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                        }
+                        dout++;
                         break;
                     case IARRAY_DATA_TYPE_FLOAT:
                         rparams->ufunc->reduction(fout, 0, fblock, strides[rparams->axis],
                                                   vector_nelems, &user_data);
+                        fout++;
+                        break;
+                    case IARRAY_DATA_TYPE_INT64:
+                        // If the reduction is a sum or a product the result is of type int64_t but the source may not
+                        switch (rparams->input->dtshape->dtype) {
+                            case IARRAY_DATA_TYPE_INT64:
+                                rparams->ufunc->reduction(i64out, 0, i64block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_INT32:
+                                rparams->ufunc->reduction(i64out, 0, i32block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_INT16:
+                                rparams->ufunc->reduction(i64out, 0, i16block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_INT8:
+                                rparams->ufunc->reduction(i64out, 0, i8block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                        }
+                        i64out++;
+                        break;
+                    case IARRAY_DATA_TYPE_INT32:
+                        rparams->ufunc->reduction(i32out, 0, i32block, strides[rparams->axis],
+                                                  vector_nelems, &user_data);
+                        i32out++;
+                        break;
+                    case IARRAY_DATA_TYPE_INT16:
+                        rparams->ufunc->reduction(i16out, 0, i16block, strides[rparams->axis],
+                                                  vector_nelems, &user_data);
+                        i16out++;
+                        break;
+                    case IARRAY_DATA_TYPE_INT8:
+                        rparams->ufunc->reduction(i8out, 0, i8block, strides[rparams->axis],
+                                                  vector_nelems, &user_data);
+                        i8out++;
+                        break;
+                    case IARRAY_DATA_TYPE_UINT64:
+                        // If the reduction is a sum or a product the result is of type uint64_t but the source may not
+                        switch (rparams->input->dtshape->dtype) {
+                            case IARRAY_DATA_TYPE_UINT64:
+                                rparams->ufunc->reduction(ui64out, 0, ui64block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_UINT32:
+                                rparams->ufunc->reduction(ui64out, 0, ui32block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_UINT16:
+                                rparams->ufunc->reduction(ui64out, 0, ui16block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_UINT8:
+                                rparams->ufunc->reduction(ui64out, 0, ui8block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                        }
+                        ui64out++;
+                        break;
+                    case IARRAY_DATA_TYPE_UINT32:
+                        rparams->ufunc->reduction(ui32out, 0, ui32block, strides[rparams->axis],
+                                                  vector_nelems, &user_data);
+                        ui32out++;
+                        break;
+                    case IARRAY_DATA_TYPE_UINT16:
+                        rparams->ufunc->reduction(ui16out, 0, ui16block, strides[rparams->axis],
+                                                  vector_nelems, &user_data);
+                        ui16out++;
+                        break;
+                    case IARRAY_DATA_TYPE_UINT8:
+                        rparams->ufunc->reduction(ui8out, 0, ui8block, strides[rparams->axis],
+                                                  vector_nelems, &user_data);
+                        ui8out++;
                         break;
                     default:
                         IARRAY_TRACE1(iarray.error, "Invalid dtype");
                         return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-
                 }
-                dout++;
-                fout++;
             }
         }
         if (needs_free) {
@@ -288,6 +512,14 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     // Finish reduction
     dout = (double *) pparams->out;
     fout = (float *) pparams->out;
+    i64out = (int64_t *) pparams->out;
+    i32out = (int32_t *) pparams->out;
+    i16out = (int16_t *) pparams->out;
+    i8out = (int8_t *) pparams->out;
+    ui64out = (uint64_t *) pparams->out;
+    ui32out = (uint32_t *) pparams->out;
+    ui16out = (uint16_t *) pparams->out;
+    ui8out = (uint8_t *) pparams->out;
     for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
         // Compute index in dest
         int64_t elem_index_n[IARRAY_DIMENSION_MAX] = {0};
@@ -304,19 +536,75 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                     *dout = 0;
                 else
                     rparams->ufunc->finish(dout, &user_data);
+                dout++;
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 if (padding)
                     *fout = 0;
                 else
                     rparams->ufunc->finish(fout, &user_data);
+                fout++;
+                break;
+            case IARRAY_DATA_TYPE_INT64:
+                if (padding)
+                    *i64out = 0;
+                else
+                    rparams->ufunc->finish(i64out, &user_data);
+                i64out++;
+                break;
+            case IARRAY_DATA_TYPE_INT32:
+                if (padding)
+                    *i32out = 0;
+                else
+                    rparams->ufunc->finish(i32out, &user_data);
+                i32out++;
+                break;
+            case IARRAY_DATA_TYPE_INT16:
+                if (padding)
+                    *i16out = 0;
+                else
+                    rparams->ufunc->finish(i16out, &user_data);
+                i16out++;
+                break;
+            case IARRAY_DATA_TYPE_INT8:
+                if (padding)
+                    *i8out = 0;
+                else
+                    rparams->ufunc->finish(i8out, &user_data);
+                i8out++;
+                break;
+            case IARRAY_DATA_TYPE_UINT64:
+                if (padding)
+                    *ui64out = 0;
+                else
+                    rparams->ufunc->finish(ui64out, &user_data);
+                ui64out++;
+                break;
+            case IARRAY_DATA_TYPE_UINT32:
+                if (padding)
+                    *ui32out = 0;
+                else
+                    rparams->ufunc->finish(ui32out, &user_data);
+                ui32out++;
+                break;
+            case IARRAY_DATA_TYPE_UINT16:
+                if (padding)
+                    *ui16out = 0;
+                else
+                    rparams->ufunc->finish(ui16out, &user_data);
+                ui16out++;
+                break;
+            case IARRAY_DATA_TYPE_UINT8:
+                if (padding)
+                    *ui8out = 0;
+                else
+                    rparams->ufunc->finish(ui8out, &user_data);
+                ui8out++;
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "Invalid dtype");
                 return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
         }
-        dout++;
-        fout++;
     }
 
     blosc2_free_ctx(dctx);
@@ -332,7 +620,7 @@ INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
                                      iarray_reduce_function_t *ufunc,
                                      int8_t axis,
                                      iarray_storage_t *storage,
-                                     iarray_container_t **b) {
+                                     iarray_container_t **b, iarray_data_type_t res_dtype) {
 
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(a);
@@ -345,7 +633,7 @@ INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
     }
 
     iarray_dtshape_t dtshape;
-    dtshape.dtype = a->dtshape->dtype;
+    dtshape.dtype = res_dtype;
     dtshape.ndim = a->dtshape->ndim - 1;
     for (int i = 0; i < dtshape.ndim; ++i) {
         dtshape.shape[i] = i < axis ? a->dtshape->shape[i] : a->dtshape->shape[i + 1];
@@ -432,36 +720,235 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                         iarray_storage_t *storage,
                         iarray_container_t **b) {
     void *reduce_funtion = NULL;
-
+    // res data type
+    iarray_data_type_t dtype;
     switch (func) {
         case IARRAY_REDUCE_SUM:
-            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
-                    &DSUM :
-                    &FSUM;
+            // If the input is of type integer or unsigned int the result will be of type int64_t or uint64_t respectively
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_funtion = &DSUM;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_funtion = &FSUM;
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                case IARRAY_DATA_TYPE_INT64:
+                    reduce_funtion = &I64SUM;
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT32:
+                    reduce_funtion = &I32SUM;
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT16:
+                    reduce_funtion = &I16SUM;
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT8:
+                    reduce_funtion = &I8SUM;
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT64:
+                    reduce_funtion = &UI64SUM;
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT32:
+                    reduce_funtion = &UI32SUM;
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT16:
+                    reduce_funtion = &UI16SUM;
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT8:
+                    reduce_funtion = &UI8SUM;
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+            }
             break;
         case IARRAY_REDUCE_PROD:
-            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
-                             &DPROD :
-                             &FPROD;
+            // If the input is of type integer or unsigned int the result will be of type int64_t or uint64_t respectively
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_funtion = &DPROD;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_funtion = &FPROD;
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                case IARRAY_DATA_TYPE_INT64:
+                    reduce_funtion = &I64PROD;
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT32:
+                    reduce_funtion = &I32PROD;
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT16:
+                    reduce_funtion = &I16PROD;
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT8:
+                    reduce_funtion = &I8PROD;
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT64:
+                    reduce_funtion = &UI64PROD;
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT32:
+                    reduce_funtion = &UI32PROD;
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT16:
+                    reduce_funtion = &UI16PROD;
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT8:
+                    reduce_funtion = &UI8PROD;
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+            }
             break;
         case IARRAY_REDUCE_MAX:
-            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
-                             &DMAX :
-                             &FMAX;
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_funtion = &DMAX;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_funtion = &FMAX;
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                case IARRAY_DATA_TYPE_INT64:
+                    reduce_funtion = &I64MAX;
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT32:
+                    reduce_funtion = &I32MAX;
+                    dtype = IARRAY_DATA_TYPE_INT32;
+                    break;
+                case IARRAY_DATA_TYPE_INT16:
+                    reduce_funtion = &I16MAX;
+                    dtype = IARRAY_DATA_TYPE_INT16;
+                    break;
+                case IARRAY_DATA_TYPE_INT8:
+                    reduce_funtion = &I8MAX;
+                    dtype = IARRAY_DATA_TYPE_INT8;
+                    break;
+                case IARRAY_DATA_TYPE_UINT64:
+                    reduce_funtion = &UI64MAX;
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT32:
+                    reduce_funtion = &UI32MAX;
+                    dtype = IARRAY_DATA_TYPE_UINT32;
+                    break;
+                case IARRAY_DATA_TYPE_UINT16:
+                    reduce_funtion = &UI16MAX;
+                    dtype = IARRAY_DATA_TYPE_UINT16;
+                    break;
+                case IARRAY_DATA_TYPE_UINT8:
+                    reduce_funtion = &UI8MAX;
+                    dtype = IARRAY_DATA_TYPE_UINT8;
+                    break;
+            }
             break;
         case IARRAY_REDUCE_MIN:
-            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
-                             &DMIN :
-                             &FMIN;
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_funtion = &DMIN;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_funtion = &FMIN;
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                case IARRAY_DATA_TYPE_INT64:
+                    reduce_funtion = &I64MIN;
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT32:
+                    reduce_funtion = &I32MIN;
+                    dtype = IARRAY_DATA_TYPE_INT32;
+                    break;
+                case IARRAY_DATA_TYPE_INT16:
+                    reduce_funtion = &I16MIN;
+                    dtype = IARRAY_DATA_TYPE_INT16;
+                    break;
+                case IARRAY_DATA_TYPE_INT8:
+                    reduce_funtion = &I8MIN;
+                    dtype = IARRAY_DATA_TYPE_INT8;
+                    break;
+                case IARRAY_DATA_TYPE_UINT64:
+                    reduce_funtion = &UI64MIN;
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT32:
+                    reduce_funtion = &UI32MIN;
+                    dtype = IARRAY_DATA_TYPE_UINT32;
+                    break;
+                case IARRAY_DATA_TYPE_UINT16:
+                    reduce_funtion = &UI16MIN;
+                    dtype = IARRAY_DATA_TYPE_UINT16;
+                    break;
+                case IARRAY_DATA_TYPE_UINT8:
+                    reduce_funtion = &UI8MIN;
+                    dtype = IARRAY_DATA_TYPE_UINT8;
+                    break;
+            }
             break;
         case IARRAY_REDUCE_MEAN:
-            reduce_funtion = a->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE ?
-                             &DMEAN :
-                             &FMEAN;
+            // If the input is of type integer or unsigned int the result will be of type double
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_funtion = &DMEAN;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_funtion = &FMEAN;
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                case IARRAY_DATA_TYPE_INT64:
+                    reduce_funtion = &I64MEAN;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_INT32:
+                    reduce_funtion = &I32MEAN;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_INT16:
+                    reduce_funtion = &I16MEAN;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_INT8:
+                    reduce_funtion = &I8MEAN;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_UINT64:
+                    reduce_funtion = &UI64MEAN;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_UINT32:
+                    reduce_funtion = &UI32MEAN;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_UINT16:
+                    reduce_funtion = &UI16MEAN;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_UINT8:
+                    reduce_funtion = &UI8MEAN;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+            }
             break;
     }
 
-    IARRAY_RETURN_IF_FAILED(_iarray_reduce_udf(ctx, a, reduce_funtion, axis, storage, b));
+    IARRAY_RETURN_IF_FAILED(_iarray_reduce_udf(ctx, a, reduce_funtion, axis, storage, b, dtype));
 
     return INA_SUCCESS;
 }
