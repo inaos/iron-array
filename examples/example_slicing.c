@@ -54,7 +54,8 @@ int main(void)
     }
     printf("\n");
 
-    IARRAY_FAIL_IF_ERROR(iarray_fill_double(ctx, &xdtshape, 3.14, &store, 0, &c_x));
+    double val = 3.14;
+    IARRAY_FAIL_IF_ERROR(iarray_fill(ctx, &xdtshape, &val, &store, 0, &c_x));
 
     // Create out container (empty)
     int8_t outndim = 3;

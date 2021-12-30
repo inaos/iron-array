@@ -10,6 +10,7 @@
  *
  */
 
+#include "iarray_test.h"
 #include <libiarray/iarray.h>
 #include <src/iarray_private.h>
 
@@ -47,19 +48,7 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
                                                         &iter_value, false));
     while (INA_SUCCEED(iarray_iter_write_block_has_next(iter))) {
         IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter, NULL, 0));
-        for (int i = 0; i < iter_value.block_size; ++i) {
-            switch (c_x->dtshape->dtype) {
-                case IARRAY_DATA_TYPE_DOUBLE:
-                    ((double *) iter_value.block_pointer)[i] = (double) i;
-                    break;
-                case IARRAY_DATA_TYPE_FLOAT:
-                    ((float *) iter_value.block_pointer)[i] = (float) i;
-                    break;
-                default:
-                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
-                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-            }
-        }
+        fill_block_iter(iter_value, 0, c_x->dtshape->dtype);
     }
     iarray_iter_write_block_free(&iter);
     IARRAY_ITER_FINISH();
@@ -100,6 +89,12 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
             case IARRAY_DATA_TYPE_FLOAT:
                 INA_TEST_ASSERT_EQUAL_FLOATING(((float *) buffer)[i], val);
                 break;
+            case IARRAY_DATA_TYPE_INT64:
+                INA_TEST_ASSERT_EQUAL_INT64(((int64_t *) buffer)[i], val);
+                break;
+            case IARRAY_DATA_TYPE_UINT64:
+                INA_TEST_ASSERT_EQUAL_UINT64(((uint64_t *) buffer)[i], val);
+                break;
             default:
                 IARRAY_TRACE1(iarray.error, "Invalid dtype");
                 return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
@@ -131,8 +126,8 @@ INA_TEST_TEARDOWN(reduce) {
 }
 
 
-INA_TEST_FIXTURE(reduce, 2_d_1) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+INA_TEST_FIXTURE(reduce, 2_i_1) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
 
     int8_t ndim = 2;
     int64_t shape[] = {8, 8};
@@ -149,8 +144,8 @@ INA_TEST_FIXTURE(reduce, 2_d_1) {
 }
 
 
-INA_TEST_FIXTURE(reduce, 3_d_2) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+INA_TEST_FIXTURE(reduce, 3_s_2) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT16;
 
     int8_t ndim = 3;
     int64_t shape[] = {12, 12, 12};
@@ -188,8 +183,8 @@ INA_TEST_FIXTURE(reduce, 4_d_0) {
 
 
 
-INA_TEST_FIXTURE(reduce, 8_d_6) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+INA_TEST_FIXTURE(reduce, 8_ull_6) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
 
     int8_t ndim = 8;
     int64_t shape[] = {8, 8, 7, 7, 6, 7, 5, 7};
@@ -208,8 +203,8 @@ INA_TEST_FIXTURE(reduce, 8_d_6) {
 
 
 
-INA_TEST_FIXTURE(reduce, 2_f_1) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+INA_TEST_FIXTURE(reduce, 2_ui_1) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
 
     int8_t ndim = 2;
     int64_t shape[] = {120, 1000};
@@ -245,17 +240,17 @@ INA_TEST_FIXTURE(reduce, 3_f_2) {
                                         dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
 
-INA_TEST_FIXTURE(reduce, 4_f_0) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+INA_TEST_FIXTURE(reduce, 4_us_0) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT16;
 
     int8_t ndim = 4;
-    int64_t shape[] = {52, 21, 27, 109};
-    int64_t cshape[] = {16, 3, 1, 109};
-    int64_t bshape[] = {3, 3, 1, 25};
+    int64_t shape[] = {30, 10, 15, 10};
+    int64_t cshape[] = {16, 3, 1, 10};
+    int64_t bshape[] = {3, 3, 1, 5};
     int8_t axis = 0;
 
-    int64_t dest_cshape[] = {3, 1, 109};
-    int64_t dest_bshape[] = {3, 1, 25};
+    int64_t dest_cshape[] = {3, 1, 10};
+    int64_t dest_bshape[] = {3, 1, 5};
     bool dest_frame = false;
     char *dest_urlpath = NULL;
 
@@ -264,8 +259,8 @@ INA_TEST_FIXTURE(reduce, 4_f_0) {
 }
 
 
-INA_TEST_FIXTURE(reduce, 8_f_6) {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+INA_TEST_FIXTURE(reduce, 8_ll_6) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
 
     int8_t ndim = 8;
     int64_t shape[] = {8, 8, 7, 7, 6, 7, 5, 7};
@@ -277,6 +272,45 @@ INA_TEST_FIXTURE(reduce, 8_f_6) {
     int64_t dest_bshape[] = {2, 2, 2, 3, 2, 1, 1};
     bool dest_frame = true;
     char *dest_urlpath = "arr.iarr";
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+}
+
+
+INA_TEST_FIXTURE(reduce, 2_sc_0) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT8;
+
+    int8_t ndim = 2;
+    int64_t shape[] = {10, 10};
+    int64_t cshape[] = {5, 5};
+    int64_t bshape[] = {2, 2};
+    int8_t axis = 0;
+
+    int64_t dest_cshape[] = {5, 1};
+    int64_t dest_bshape[] = {2, 1};
+    bool dest_frame = true;
+    char *dest_urlpath = "arr.iarr";
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+}
+
+
+
+INA_TEST_FIXTURE(reduce, 4_uc_3) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;
+
+    int8_t ndim = 4;
+    int64_t shape[] = {8, 8, 7, 7};
+    int64_t cshape[] = {4, 5, 2, 5};
+    int64_t bshape[] = {2, 2, 2, 3};
+    int8_t axis = 3;
+
+    int64_t dest_cshape[] = {4, 5, 2};
+    int64_t dest_bshape[] = {2, 2, 2};
+    bool dest_frame = false;
+    char *dest_urlpath = NULL;
+
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, shape, cshape, bshape, axis,
                                         dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
