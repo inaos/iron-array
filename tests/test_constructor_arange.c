@@ -84,9 +84,6 @@ static ina_rc_t test_arange(iarray_context_t *ctx, iarray_data_type_t dtype, int
             case IARRAY_DATA_TYPE_UINT8:
                 INA_TEST_ASSERT_EQUAL_UINT((uint8_t) (val.elem_flat_index * step + start), ((uint8_t *) val.elem_pointer)[0]);
                 break;
-            case IARRAY_DATA_TYPE_BOOL:
-                INA_TEST_ASSERT((boolean_t) (val.elem_flat_index * step + start) == ((boolean_t *) val.elem_pointer)[0]);
-                break;
             default:
                 return INA_ERR_EXCEEDED;
         }

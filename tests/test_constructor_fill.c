@@ -12,6 +12,7 @@
 
 #include <src/iarray_private.h>
 #include <libiarray/iarray.h>
+#include <stdbool.h>
 
 static ina_rc_t test_fill(iarray_context_t *ctx,
                           iarray_data_type_t dtype,
@@ -79,7 +80,7 @@ static ina_rc_t test_fill(iarray_context_t *ctx,
             INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint8_t *) value, &store, 0, &c_x));
             break;
         case IARRAY_DATA_TYPE_BOOL:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (boolean_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (bool *) value, &store, 0, &c_x));
             break;
     }
 
@@ -157,9 +158,9 @@ static ina_rc_t test_fill(iarray_context_t *ctx,
             break;
         }
         case IARRAY_DATA_TYPE_BOOL: {
-            boolean_t *buff = (boolean_t *) buf_dest;
+            bool *buff = (bool *) buf_dest;
             for (int64_t i = 0; i < buf_size; ++i) {
-                INA_TEST_ASSERT(buff[i] == *((boolean_t *) value));
+                INA_TEST_ASSERT(buff[i] == *((bool *) value));
             }
             break;
         }
@@ -339,13 +340,13 @@ INA_TEST_FIXTURE(constructor_fill, 7_uc)
 INA_TEST_FIXTURE(constructor_fill, 2_b)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
-    size_t type_size = sizeof(boolean_t);
+    size_t type_size = sizeof(bool);
 
     int8_t ndim = 2;
     int64_t shape[] = {100, 312};
     int64_t cshape[] = {35, 101};
     int64_t bshape[] = {12, 12};
-    boolean_t value = FALSE;
+    bool value = false;
 
     INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &value, false, NULL));
 }

@@ -107,7 +107,7 @@ _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64
                 ((uint8_t *) bufdes)[i] = (uint8_t) i;
                 break;
             case IARRAY_DATA_TYPE_BOOL:
-                ((boolean_t *) bufdes)[i] = (boolean_t) i;
+                ((bool *) bufdes)[i] = (bool) i;
                 break;
         }
     }
@@ -171,7 +171,7 @@ _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64
             break;
         case IARRAY_DATA_TYPE_BOOL:
             for (int64_t l = 0; l < bufdes_size; ++l) {
-                INA_TEST_ASSERT(((boolean_t *) bufdes)[l] == (boolean_t) l);
+                INA_TEST_ASSERT(((bool *) bufdes)[l] == (bool) l);
             }
             break;
     }
@@ -318,7 +318,7 @@ INA_TEST_FIXTURE(set_slice_buffer, 6_ull_blosc) {
 
 INA_TEST_FIXTURE(set_slice_buffer, 7_b_blosc) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
-    int32_t type_size = sizeof(boolean_t);
+    int32_t type_size = sizeof(bool);
 
     const int8_t ndim = 7;
     int64_t shape[] = {5, 7, 6, 4, 8, 6, 5};

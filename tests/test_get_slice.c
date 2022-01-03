@@ -152,10 +152,10 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
             }
             break;
         case IARRAY_DATA_TYPE_BOOL:
-            bufdes = ina_mem_alloc(bufdes_size * sizeof(boolean_t));
-            INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_out, bufdes, bufdes_size * sizeof(boolean_t)));
+            bufdes = ina_mem_alloc(bufdes_size * sizeof(bool));
+            INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_out, bufdes, bufdes_size * sizeof(bool)));
             for (int64_t l = 0; l < bufdes_size; ++l) {
-                INA_TEST_ASSERT(((boolean_t *) bufdes)[l] == ((boolean_t *) result)[l]);
+                INA_TEST_ASSERT(((bool *) bufdes)[l] == ((bool *) result)[l]);
             }
             break;
     }
@@ -456,7 +456,7 @@ INA_TEST_FIXTURE(get_slice, 2_uc) {
 
 INA_TEST_FIXTURE(get_slice, 7_b) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
-    int32_t type_size = sizeof(boolean_t);
+    int32_t type_size = sizeof(bool);
 
     const int8_t ndim = 7;
     int64_t shape[] = {10, 10, 10, 10, 10, 10, 10};
@@ -468,24 +468,24 @@ INA_TEST_FIXTURE(get_slice, 7_b) {
     int64_t bshape_dest[] = {2, 2, 1, 1, 2, 2, 2};
 
 
-    boolean_t result[] = {TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE,
-                        TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE};
+    bool result[] = {true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false,
+                        true, false, true, false, true, false, true, false};
 
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,

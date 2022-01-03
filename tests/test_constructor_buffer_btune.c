@@ -108,9 +108,9 @@ test_btune_favor(iarray_config_t *cfg, iarray_data_type_t dtype, size_t type_siz
             break;
         }
         case IARRAY_DATA_TYPE_BOOL: {
-            boolean_t *buff = (boolean_t *) buf_src;
+            bool *buff = (bool *) buf_src;
             for (int64_t i = 0; i < buf_size; ++i) {
-                buff[i] = (boolean_t) i;
+                buff[i] = (bool) i;
             }
             break;
         }
@@ -206,9 +206,9 @@ test_btune_favor(iarray_config_t *cfg, iarray_data_type_t dtype, size_t type_siz
             break;
         }
         case IARRAY_DATA_TYPE_BOOL: {
-            boolean_t *buff = (boolean_t *) buf_dest;
+            bool *buff = (bool *) buf_dest;
             for (int64_t i = 0; i < buf_size; ++i) {
-                INA_TEST_ASSERT(buff[i] == (boolean_t) i);
+                INA_TEST_ASSERT(buff[i] == (bool) i);
             }
             break;
         }
@@ -417,7 +417,7 @@ INA_TEST_FIXTURE(btune_favor, uc_speed)
 INA_TEST_FIXTURE(btune_favor, b_cratio)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
-    size_t type_size = sizeof(boolean_t);
+    size_t type_size = sizeof(bool);
 
     int8_t ndim = 2;
     int64_t shape[] = {367, 333};

@@ -543,7 +543,7 @@ ina_rc_t iarray_set_dtype_size(iarray_dtshape_t *dtshape)
             dtshape->dtype_size = 1;
             break;
         case IARRAY_DATA_TYPE_BOOL:
-            dtshape->dtype_size = sizeof(boolean_t);
+            dtshape->dtype_size = sizeof(bool);
             break;
         default:
             INA_TRACE1(iarray.error, "The data type is invalid");

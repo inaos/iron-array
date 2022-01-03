@@ -278,7 +278,7 @@ INA_TEST_FIXTURE(rewrite_cont, 3_uc) {
 
 INA_TEST_FIXTURE(rewrite_cont, 4_b) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
-    int32_t type_size = sizeof(boolean_t);
+    int32_t type_size = sizeof(bool);
 
     int8_t ndim = 4;
     int64_t shape[] = {30, 64, 50, 43};
