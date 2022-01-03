@@ -197,6 +197,7 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool conti
     (*container)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
     iarray_dtshape_t* dtshape = (*container)->dtshape;
     dtshape->dtype = dtype;
+    IARRAY_RETURN_IF_FAILED(iarray_set_dtype_size(dtshape));
     dtshape->ndim = catarr->ndim;
     for (int i = 0; i < catarr->ndim; ++i) {
         dtshape->shape[i] = catarr->shape[i];
@@ -333,6 +334,7 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         iarray_dtshape_t dtshape;
         dtshape.ndim = src->dtshape->ndim;
         dtshape.dtype = src->dtshape->dtype;
+        IARRAY_RETURN_IF_FAILED(iarray_set_dtype_size(&dtshape));
 
         for (int i = 0; i < dtshape.ndim; ++i) {
             dtshape.shape[i] = stop_[i] - start_[i];
@@ -604,7 +606,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
         chunksize *= chunkshape_[i];
     }
 
-    if (chunksize * (int64_t)container->dtshape->dtype_size > buflen) {
+    if (chunksize * (int64_t) container->dtshape->dtype_size > buflen) {
         IARRAY_TRACE1(iarray.error, "The buffer size is not enough\n");
         return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
     }
@@ -728,6 +730,7 @@ INA_API(ina_rc_t) iarray_get_dtshape(iarray_context_t *ctx,
 
     dtshape->ndim = c->dtshape->ndim;
     dtshape->dtype = c->dtshape->dtype;
+    dtshape->dtype_size = c->dtshape->dtype_size;
     for (int i = 0; i < c->dtshape->ndim; ++i) {
         dtshape->shape[i] = c->dtshape->shape[i];
     }
