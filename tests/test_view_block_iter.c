@@ -109,7 +109,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
                     INA_TEST_ASSERT_EQUAL_UINT(((uint8_t *) val.block_pointer)[j], ((uint8_t *) block_buffer)[j]);
                     break;
                 case IARRAY_DATA_TYPE_BOOL:
-                    INA_TEST_ASSERT(((boolean_t *) val.block_pointer)[j] == ((boolean_t *) block_buffer)[j]);
+                    INA_TEST_ASSERT(((bool *) val.block_pointer)[j] == ((bool *) block_buffer)[j]);
                     break;
             }
         }
@@ -210,7 +210,7 @@ INA_TEST_FIXTURE(view_block_iter, 3_ll_v) {
 
 INA_TEST_FIXTURE(view_block_iter, 4_b_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
-    int32_t type_size = sizeof(boolean_t);
+    int32_t type_size = sizeof(bool);
 
     const int8_t ndim = 4;
     int64_t shape[] = {10, 10, 10, 10};

@@ -97,7 +97,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
                 INA_TEST_ASSERT_EQUAL_UINT(((uint8_t *) val.elem_pointer)[0], ((uint8_t *) result)[val.elem_flat_index]);
                 break;
             case IARRAY_DATA_TYPE_BOOL:
-                INA_TEST_ASSERT(((boolean_t *) val.elem_pointer)[0] == ((boolean_t *) result)[val.elem_flat_index]);
+                INA_TEST_ASSERT(((bool *) val.elem_pointer)[0] == ((bool *) result)[val.elem_flat_index]);
                 break;
         }
     }
@@ -330,7 +330,7 @@ INA_TEST_FIXTURE(view_iter, 3_s_v) {
 
 INA_TEST_FIXTURE(view_iter, 4_b_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
-    int32_t type_size = sizeof(boolean_t);
+    int32_t type_size = sizeof(bool);
 
     const int8_t ndim = 4;
     int64_t shape[] = {10, 10, 10, 10};
@@ -339,18 +339,18 @@ INA_TEST_FIXTURE(view_iter, 4_b_v) {
     int64_t start[] = {5, -7, 9, 2};
     int64_t stop[] = {-1, 6, 10, -3};
 
-    boolean_t result[] = {FALSE, TRUE, FALSE, TRUE, FALSE,
-                          FALSE, TRUE, FALSE, TRUE, FALSE,
-                          FALSE, TRUE, FALSE, TRUE, FALSE,
-                          FALSE, TRUE, FALSE, TRUE, FALSE,
-                          FALSE, TRUE, FALSE, TRUE, FALSE,
-                          FALSE, TRUE, FALSE, TRUE, FALSE,
-                          FALSE, TRUE, FALSE, TRUE, FALSE,
-                          FALSE, TRUE, FALSE, TRUE, FALSE,
-                          FALSE, TRUE, FALSE, TRUE, FALSE,
-                          FALSE, TRUE, FALSE, TRUE, FALSE,
-                          FALSE, TRUE, FALSE, TRUE, FALSE,
-                          FALSE, TRUE, FALSE, TRUE, FALSE};
+    bool result[] = {false, true, false, true, false,
+                     false, true, false, true, false,
+                     false, true, false, true, false,
+                     false, true, false, true, false,
+                     false, true, false, true, false,
+                     false, true, false, true, false,
+                     false, true, false, true, false,
+                     false, true, false, true, false,
+                     false, true, false, true, false,
+                     false, true, false, true, false,
+                     false, true, false, true, false,
+                     false, true, false, true, false};
 
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,

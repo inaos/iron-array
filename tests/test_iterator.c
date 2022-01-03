@@ -99,7 +99,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
                 break;
             }
             case IARRAY_DATA_TYPE_BOOL: {
-                boolean_t value = (boolean_t) val.elem_flat_index;
+                bool value = (bool) val.elem_flat_index;
                 memcpy(val.elem_pointer, &value, type_size);
                 break;
             }
@@ -170,8 +170,8 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
                 break;
             }
             case IARRAY_DATA_TYPE_BOOL: {
-                boolean_t value = (boolean_t) val2.elem_flat_index;
-                INA_TEST_ASSERT(value == ((boolean_t *) val2.elem_pointer)[0]);
+                bool value = (bool) val2.elem_flat_index;
+                INA_TEST_ASSERT(value == ((bool *) val2.elem_pointer)[0]);
                 break;
             }
         }
@@ -241,7 +241,7 @@ INA_TEST_FIXTURE(iterator, 6_ll) {
 
 INA_TEST_FIXTURE(iterator, 7_ub) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
-    int32_t type_size = sizeof(boolean_t);
+    int32_t type_size = sizeof(bool);
 
     int8_t ndim = 7;
     int64_t shape[] = {5, 7, 8, 9, 6, 5, 4};

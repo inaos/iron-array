@@ -149,8 +149,8 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
                 break;
             case IARRAY_DATA_TYPE_BOOL:
                 for (int64_t i = 0; i < val3.block_size; ++i) {
-                    INA_TEST_ASSERT(((boolean_t *) val2.block_pointer)[i] ==
-                                                   ((boolean_t *) val3.block_pointer)[i]);
+                    INA_TEST_ASSERT(((bool *) val2.block_pointer)[i] ==
+                                                   ((bool *) val3.block_pointer)[i]);
                 }
                 break;
             default:
@@ -331,7 +331,7 @@ INA_TEST_FIXTURE(block_iterator, 3_uc) {
 
 INA_TEST_FIXTURE(block_iterator, 4_b) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
-    int32_t type_size = sizeof(boolean_t);
+    int32_t type_size = sizeof(bool);
 
     int8_t ndim = 4;
     int64_t shape[] = {30, 64, 50, 43};
@@ -500,8 +500,8 @@ static ina_rc_t test_block_iterator_ext_chunk(iarray_context_t *ctx, iarray_data
                 break;
             case IARRAY_DATA_TYPE_BOOL:
                 for (int64_t i = 0; i < val3.block_size; ++i) {
-                    INA_TEST_ASSERT(((boolean_t *) val2.block_pointer)[i] ==
-                                                   ((boolean_t *) val3.block_pointer)[i]);
+                    INA_TEST_ASSERT(((bool *) val2.block_pointer)[i] ==
+                                                   ((bool *) val3.block_pointer)[i]);
                 }
                 break;
             default:
@@ -627,7 +627,7 @@ INA_TEST_FIXTURE(block_iterator_ext_chunk, 7_sc) {
 
 INA_TEST_FIXTURE(block_iterator_ext_chunk, 3_b) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
-    int32_t type_size = sizeof(boolean_t);
+    int32_t type_size = sizeof(bool);
 
     int8_t ndim = 3;
     int64_t shape[] = {120, 131, 155};
@@ -830,8 +830,8 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
                 break;
             case IARRAY_DATA_TYPE_BOOL:
                 for (int64_t i = 0; i < val3.block_size; ++i) {
-                    INA_TEST_ASSERT(((boolean_t *) val2.block_pointer)[i] ==
-                                                   ((boolean_t *) val3.block_pointer)[i]);
+                    INA_TEST_ASSERT(((bool *) val2.block_pointer)[i] ==
+                                                   ((bool *) val3.block_pointer)[i]);
                 }
                 break;
             default:

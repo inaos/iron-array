@@ -82,7 +82,7 @@ inline static void fill_buf(iarray_data_type_t dtype, void *x, size_t nitems)
         }
         case IARRAY_DATA_TYPE_BOOL: {
             for (size_t i = 0; i < nitems; i++) {
-                ((boolean_t *)x)[i] = (boolean_t) (i % 2);
+                ((bool *)x)[i] = (bool) (i % 2);
             }
             break;
         }
@@ -191,7 +191,7 @@ inline static void fill_block_iter(iarray_iter_write_block_value_t val, int64_t 
             break;
         case IARRAY_DATA_TYPE_BOOL:
             for (int64_t i = 0; i < val.block_size; ++i) {
-                ((boolean_t *) val.block_pointer)[i] = (boolean_t) (nelem  + i)%2;
+                ((bool *) val.block_pointer)[i] = (bool) (nelem  + i)%2;
             }
             break;
     }

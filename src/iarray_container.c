@@ -1024,8 +1024,8 @@ INA_API(ina_rc_t) iarray_container_equal(iarray_container_t *a, iarray_container
                 break;
             case IARRAY_DATA_TYPE_BOOL:
                 for (int64_t i = 0; i < val_a.block_size; ++i) {
-                    boolean_t a_val = ((boolean_t *)val_a.block_pointer)[i];
-                    boolean_t b_val = ((boolean_t *)val_b.block_pointer)[i];
+                    bool a_val = ((bool *)val_a.block_pointer)[i];
+                    bool b_val = ((bool *)val_b.block_pointer)[i];
                     if (a_val != b_val) {
                         printf("%u, %u\n", a_val, b_val);
                         IARRAY_TRACE1(iarray.error, "Values are different");

@@ -532,73 +532,83 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
 
         switch (rparams->result->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
-                if (padding)
+                if (padding) {
                     *dout = 0;
-                else
+                } else {
                     rparams->ufunc->finish(dout, &user_data);
+                }
                 dout++;
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
-                if (padding)
+                if (padding) {
                     *fout = 0;
-                else
+                } else {
                     rparams->ufunc->finish(fout, &user_data);
+                }
                 fout++;
                 break;
             case IARRAY_DATA_TYPE_INT64:
-                if (padding)
+                if (padding) {
                     *i64out = 0;
-                else
+                } else {
                     rparams->ufunc->finish(i64out, &user_data);
+                }
                 i64out++;
                 break;
             case IARRAY_DATA_TYPE_INT32:
-                if (padding)
+                if (padding) {
                     *i32out = 0;
-                else
+                } else {
                     rparams->ufunc->finish(i32out, &user_data);
+                }
                 i32out++;
                 break;
             case IARRAY_DATA_TYPE_INT16:
-                if (padding)
+                if (padding) {
                     *i16out = 0;
-                else
+                } else {
                     rparams->ufunc->finish(i16out, &user_data);
+                }
                 i16out++;
                 break;
             case IARRAY_DATA_TYPE_INT8:
-                if (padding)
+                if (padding) {
                     *i8out = 0;
-                else
+                } else {
                     rparams->ufunc->finish(i8out, &user_data);
+                }
                 i8out++;
                 break;
             case IARRAY_DATA_TYPE_UINT64:
-                if (padding)
+                if (padding) {
                     *ui64out = 0;
-                else
+                } else {
                     rparams->ufunc->finish(ui64out, &user_data);
+                }
                 ui64out++;
                 break;
             case IARRAY_DATA_TYPE_UINT32:
-                if (padding)
+                if (padding) {
                     *ui32out = 0;
-                else
+                } else {
                     rparams->ufunc->finish(ui32out, &user_data);
+                }
                 ui32out++;
                 break;
             case IARRAY_DATA_TYPE_UINT16:
-                if (padding)
+                if (padding) {
                     *ui16out = 0;
-                else
+                } else {
                     rparams->ufunc->finish(ui16out, &user_data);
+                }
                 ui16out++;
                 break;
             case IARRAY_DATA_TYPE_UINT8:
-                if (padding)
+                if (padding) {
                     *ui8out = 0;
-                else
+                } else {
                     rparams->ufunc->finish(ui8out, &user_data);
+                }
                 ui8out++;
                 break;
             default:

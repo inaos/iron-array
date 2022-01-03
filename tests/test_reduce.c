@@ -296,7 +296,6 @@ INA_TEST_FIXTURE(reduce, 2_sc_0) {
 }
 
 
-
 INA_TEST_FIXTURE(reduce, 4_uc_3) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;
 
