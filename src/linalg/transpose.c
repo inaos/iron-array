@@ -35,6 +35,7 @@ iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a, iarray_con
     iarray_dtshape_t view_dtshape = {0};
     view_dtshape.ndim = a->dtshape->ndim;
     view_dtshape.dtype = a->dtshape->dtype;
+    IARRAY_RETURN_IF_FAILED(iarray_set_dtype_size(&view_dtshape));
     for (int i = 0; i < view_dtshape.ndim; ++i) {
         view_dtshape.shape[i] = a->dtshape->shape[(a->dtshape->ndim - 1) - i];
     }
