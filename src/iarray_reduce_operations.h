@@ -397,7 +397,16 @@ static iarray_reduce_function_t UI8PROD = {
 #define MAX_I_I8 \
     INA_UNUSED(user_data); \
     *res = SCHAR_MIN;
-#define MAX_I_UI \
+#define MAX_I_UI64 \
+    INA_UNUSED(user_data); \
+    *res = 0ULL;
+#define MAX_I_UI32 \
+    INA_UNUSED(user_data); \
+    *res = 0U;
+#define MAX_I_UI16 \
+    INA_UNUSED(user_data); \
+    *res = 0;
+#define MAX_I_UI8 \
     INA_UNUSED(user_data); \
     *res = 0;
 
@@ -474,7 +483,7 @@ static iarray_reduce_function_t I8MAX = {
     .finish = CAST_F i8max_fin
 };
 
-static void ui64max_ini(UI64PARAMS_I) { MAX_I_UI }
+static void ui64max_ini(UI64PARAMS_I) { MAX_I_UI64 }
 static void ui64max_red(UI64PARAMS_R) { MAX_R }
 static void ui64max_fin(UI64PARAMS_F) { MAX_F }
 
@@ -484,7 +493,7 @@ static iarray_reduce_function_t UI64MAX = {
     .finish = CAST_F ui64max_fin
 };
 
-static void ui32max_ini(UI32PARAMS_I) { MAX_I_UI }
+static void ui32max_ini(UI32PARAMS_I) { MAX_I_UI32 }
 static void ui32max_red(UI32PARAMS_R) { MAX_R }
 static void ui32max_fin(UI32PARAMS_F) { MAX_F }
 
@@ -494,7 +503,7 @@ static iarray_reduce_function_t UI32MAX = {
     .finish = CAST_F ui32max_fin
 };
 
-static void ui16max_ini(UI16PARAMS_I) { MAX_I_UI }
+static void ui16max_ini(UI16PARAMS_I) { MAX_I_UI16 }
 static void ui16max_red(UI16PARAMS_R) { MAX_R }
 static void ui16max_fin(UI16PARAMS_F) { MAX_F }
 
@@ -504,7 +513,7 @@ static iarray_reduce_function_t UI16MAX = {
     .finish = CAST_F ui16max_fin
 };
 
-static void ui8max_ini(UI8PARAMS_I) { MAX_I_UI }
+static void ui8max_ini(UI8PARAMS_I) { MAX_I_UI8 }
 static void ui8max_red(UI8PARAMS_R) { MAX_R }
 static void ui8max_fin(UI8PARAMS_F) { MAX_F }
 
