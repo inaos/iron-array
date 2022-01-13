@@ -54,7 +54,7 @@ int main(void)
     IARRAY_FAIL_IF_ERROR(iarray_linspace(ctx, &dtshape, 0, 1, &store, 0, &data));
 
     iarray_expression_t* e;
-    iarray_expr_new(ctx, &e);
+    iarray_expr_new(ctx, &dtshape, &e);
 
     iarray_expr_bind(e, "x", data);
     iarray_expr_bind_out_properties(e, &dtshape, &store);
