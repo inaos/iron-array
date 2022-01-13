@@ -342,6 +342,11 @@ INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
             IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
             break;
         }
+        case IARRAY_DATA_TYPE_BOOL: {
+            bool value = true;
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            break;
+        }
         default:
             IARRAY_TRACE1(iarray.error, "The data type is invalid for this operation");
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);

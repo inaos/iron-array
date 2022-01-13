@@ -80,6 +80,12 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
                 INA_TEST_ASSERT_EQUAL_FLOATING(((float *) buffer)[i], val);
                 break;
             case IARRAY_DATA_TYPE_INT64:
+                if (dtype == IARRAY_DATA_TYPE_BOOL) {
+                    val = 0;
+                    for (int j = 0; j < naxis; ++j) {
+                        val += shape[axis[j]];
+                    }
+                }
                 INA_TEST_ASSERT_EQUAL_INT64(((int64_t *) buffer)[i], val);
                 break;
             case IARRAY_DATA_TYPE_UINT64:
@@ -316,6 +322,27 @@ INA_TEST_FIXTURE(reduce_multi, 2_sc_1) {
 
 INA_TEST_FIXTURE(reduce_multi, 2_uc_1) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;
+
+    int8_t ndim = 2;
+    int64_t shape[] = {12, 12};
+    int64_t cshape[] = {6, 9};
+    int64_t bshape[] = {3, 3};
+    int8_t naxis = 1;
+    int8_t axis[] = {0};
+
+    int64_t dest_cshape[] = {6};
+    int64_t dest_bshape[] = {3};
+    bool src_contiguous = false;
+    char *src_urlpath = NULL;
+    bool dest_contiguous = true;
+    char *dest_urlpath = NULL;
+    INA_TEST_ASSERT_SUCCEED(test_reduce_multi(data->ctx, dtype, ndim, shape, cshape, bshape,
+                                              naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
+                                              dest_contiguous, dest_urlpath));
+}
+
+INA_TEST_FIXTURE(reduce_multi, 2_b_1) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
 
     int8_t ndim = 2;
     int64_t shape[] = {12, 12};

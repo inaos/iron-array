@@ -141,12 +141,12 @@ inline static void fill_block_iter(iarray_iter_write_block_value_t val, int64_t 
     switch (dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
             for (int64_t i = 0; i < val.block_size; ++i) {
-                ((double *) val.block_pointer)[i] = (double) nelem + i;
+                ((double *) val.block_pointer)[i] = (double) (nelem + i);
             }
             break;
         case IARRAY_DATA_TYPE_FLOAT:
             for (int64_t i = 0; i < val.block_size; ++i) {
-                ((float *) val.block_pointer)[i] = (float) nelem  + i;
+                ((float *) val.block_pointer)[i] = (float) (nelem  + i);
             }
             break;
         case IARRAY_DATA_TYPE_INT64:
@@ -191,7 +191,7 @@ inline static void fill_block_iter(iarray_iter_write_block_value_t val, int64_t 
             break;
         case IARRAY_DATA_TYPE_BOOL:
             for (int64_t i = 0; i < val.block_size; ++i) {
-                ((bool *) val.block_pointer)[i] = (bool) (nelem  + i)%2;
+                ((bool *) val.block_pointer)[i] = (bool) ((nelem  + i)%2);
             }
             break;
     }
