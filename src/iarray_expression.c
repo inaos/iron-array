@@ -57,8 +57,7 @@ typedef struct iarray_eval_pparams_s {
 
 typedef int (*iarray_eval_fn)(iarray_eval_pparams_t *params);
 
-INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e)
-{
+INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_expression_t **e) {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(e);
     *e = ina_mem_alloc(sizeof(iarray_expression_t));
@@ -68,9 +67,43 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e
     (*e)->expr = NULL;
     (*e)->nvars = 0;
     (*e)->max_out_len = 0;   // helper for leftovers
-    ina_mem_set(&(*e)->vars, 0, sizeof(_iarray_jug_var_t) * IARRAY_EXPR_OPERANDS_MAX);
     (*e)->nuser_params = 0;
-    jug_expression_new(&(*e)->jug_expr);
+    ina_mem_set(&(*e)->vars, 0, sizeof(_iarray_jug_var_t) * IARRAY_EXPR_OPERANDS_MAX);
+    // map dtype to JUG type
+    jug_expression_dtype_t dtype;
+    switch (dtshape->dtype) {
+        case IARRAY_DATA_TYPE_BOOL:
+            // how to support?
+            dtype = JUG_EXPRESSION_DTYPE_SINT8;// is that accurate?
+            break;
+        case IARRAY_DATA_TYPE_DOUBLE:
+            dtype = JUG_EXPRESSION_DTYPE_DOUBLE;
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            dtype = JUG_EXPRESSION_DTYPE_FLOAT;
+            break;
+        case IARRAY_DATA_TYPE_FLOAT16:
+            // not supported yet
+            return INA_ERR_INVALID_ARGUMENT;
+        case IARRAY_DATA_TYPE_FLOAT8:
+            // not supported yet
+            return INA_ERR_INVALID_ARGUMENT;
+        case IARRAY_DATA_TYPE_INT8:
+            dtype = JUG_EXPRESSION_DTYPE_SINT8;
+            break;
+        case IARRAY_DATA_TYPE_INT16:
+            dtype = JUG_EXPRESSION_DTYPE_SINT16;
+            break;
+        case IARRAY_DATA_TYPE_INT32:
+            dtype = JUG_EXPRESSION_DTYPE_SINT32;
+            break;
+        case IARRAY_DATA_TYPE_INT64:
+            dtype = JUG_EXPRESSION_DTYPE_SINT64;
+            break;
+        default:
+            return INA_ERR_INVALID_ARGUMENT;
+    }
+    jug_expression_new(&(*e)->jug_expr, dtype);
     return INA_SUCCESS;
 }
 
@@ -286,7 +319,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     }
 
     IARRAY_RETURN_IF_FAILED(jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars,
-                                                      jug_vars, e->typesize, &e->jug_expr_func));
+                                                   jug_vars, &e->jug_expr_func));
 
     return INA_SUCCESS;
 }

@@ -20,16 +20,11 @@
 /* This is required to make sure Intel SVML is being linked and loaded properly */
 extern double *__svml_sin2(double *input);
 
-typedef enum _jug_expression_dtype_e {
-    _JUG_EXPRESSION_DTYPE_DOUBLE = 1,
-    _JUG_EXPRESSION_DTYPE_FLOAT = 2,
-} _jug_expression_dtype_t;
-
 struct jug_expression_s {
     LLVMContextRef context;
     LLVMModuleRef mod;
     LLVMExecutionEngineRef engine;
-    _jug_expression_dtype_t dtype;
+    jug_expression_dtype_t dtype;
     ina_hashtable_t *fun_map;
     ina_hashtable_t *decl_cache;
     void **fun_map_te;
@@ -54,43 +49,48 @@ typedef struct _jug_fun_type_s {
     void* no_decl_ref_f64;
     char decl_name_f32[32];
     char decl_name_f64[32];
+    void *uint_ref;
+    void *sint_ref;
+    char decl_name_sint_pre[32];
+    char decl_name_uint_pre[32];
 } _jug_fun_type_t;
 
 static const _jug_fun_type_t _jug_function_map[] = {
-    {"EXPR_TYPE_ADD", 0, 0, 2, (void*)LLVMBuildFAdd, (void*)LLVMBuildFAdd, {0}, {0}},
-    {"EXPR_TYPE_SUB", 0, 0, 2, (void*)LLVMBuildFSub, (void*)LLVMBuildFSub, {0}, {0}},
-    {"EXPR_TYPE_MUL", 0, 0, 2, (void*)LLVMBuildFMul, (void*)LLVMBuildFMul, {0}, {0}},
-    {"EXPR_TYPE_DIVIDE", 0, 0, 2, (void*)LLVMBuildFDiv, (void*)LLVMBuildFDiv, {0}, {0}},
-    {"EXPR_TYPE_NEGATE", 0, 0, 1, (void*)LLVMBuildFNeg, (void*)LLVMBuildFNeg, {0}, {0}},
-    {"EXPR_TYPE_COMMA", 1, 1, 1, NULL, NULL, {0}, {0}},
-    {"EXPR_TYPE_ABS", 1, 0, 1, NULL, NULL, "llvm.fabs.f32", "llvm.fabs.f64"},
-    {"EXPR_TYPE_ACOS", 1, 0, 1, NULL, NULL, "acosf", "acos"},
-    {"EXPR_TYPE_ASIN", 1, 0, 1, NULL, NULL, "asinf", "asin"},
-    {"EXPR_TYPE_ATAN", 1, 0, 1, NULL, NULL, "atanf", "atan"},
-    {"EXPR_TYPE_ATAN2", 1, 0, 2, NULL, NULL, "atan2f", "atan2"},
-    {"EXPR_TYPE_CEIL", 1, 0, 1, NULL, NULL, "llvm.ceil.f32", "llvm.ceil.f64"},
-    {"EXPR_TYPE_COS", 1, 0, 1, NULL, NULL, "llvm.cos.f32", "llvm.cos.f64"},
-    {"EXPR_TYPE_COSH", 1, 0, 1, NULL, NULL, "coshf", "cosh"},
-    {"EXPR_TYPE_E", 1, 1, 1, NULL, NULL, {0}, {0}},
-    {"EXPR_TYPE_EXP", 1, 0, 1, NULL, NULL, "llvm.exp.f32", "llvm.exp.f64"},
-    {"EXPR_TYPE_FAC", 1, 1, 1, NULL, NULL, {0}, {0}},
-    {"EXPR_TYPE_FLOOR", 1, 0, 1, NULL, NULL, "llvm.floor.f32", "llvm.floor.f64"},
-    {"EXPR_TYPE_LOG", 1, 0, 1, NULL, NULL, "llvm.log.f32", "llvm.log.f64"},
-    {"EXPR_TYPE_LOG10", 1, 0, 1, NULL, NULL, "llvm.log10.f32", "llvm.log10.f64"},
-    {"EXPR_TYPE_NCR", 1, 1, 1, NULL, NULL, {0}, {0}},
-    {"EXPR_TYPE_NPR", 1, 1, 1, NULL, NULL, {0}, {0}},
-    {"EXPR_TYPE_PI", 1, 1, 1, NULL, NULL, {0}, {0}},
-    {"EXPR_TYPE_POW", 1, 0, 2, NULL, NULL, "llvm.pow.f32", "llvm.pow.f64"},
-    {"EXPR_TYPE_SIN", 1, 0, 1, NULL, NULL, "llvm.sin.f32", "llvm.sin.f64"},
-    {"EXPR_TYPE_SINH", 1, 0, 1, NULL, NULL, "sinhf", "sinh"},
-    {"EXPR_TYPE_SQRT", 1, 0, 1, NULL, NULL, "llvm.sqrt.f32", "llvm.sqrt.f64"},
-    {"EXPR_TYPE_TAN", 1, 0, 1, NULL, NULL, "tanf", "tan"},
-    {"EXPR_TYPE_TANH", 1, 0, 1, NULL, NULL, "tanhf", "tanh"},
-    {"EXPR_TYPE_FMOD", 1, 0, 2, NULL, NULL, "fmodf", "fmod"}
-};
+    {"EXPR_TYPE_ADD", 0, 0, 2, (void *) LLVMBuildFAdd, (void *) LLVMBuildFAdd, {0}, {0}, (void *) LLVMBuildAdd, (void *) LLVMBuildAdd, {0}, {0}},
+    {"EXPR_TYPE_SUB", 0, 0, 2, (void *) LLVMBuildFSub, (void *) LLVMBuildFSub, {0}, {0}, (void *) LLVMBuildSub, (void *) LLVMBuildSub, {0}, {0}},
+    {"EXPR_TYPE_MUL", 0, 0, 2, (void *) LLVMBuildFMul, (void *) LLVMBuildFMul, {0}, {0}, (void *) LLVMBuildMul, (void *) LLVMBuildMul, {0}, {0}},
+    {"EXPR_TYPE_DIVIDE", 0, 0, 2, (void *) LLVMBuildFDiv, (void *) LLVMBuildFDiv, {0}, {0}, (void *) LLVMBuildUDiv, (void *) LLVMBuildSDiv, {0}, {0}},
+    {"EXPR_TYPE_NEGATE", 0, 0, 1, (void *) LLVMBuildFNeg, (void *) LLVMBuildFNeg, {0}, {0}, (void *) LLVMBuildNeg, (void *) LLVMBuildNeg, {0}, {0}},
+    {"EXPR_TYPE_COMMA", 1, 1, 1, NULL, NULL, {0}, {0}, {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_ABS", 1, 0, 1, NULL, NULL, "llvm.fabs.f32", "llvm.fabs.f64", {0}, {0}, "llvm.abs.", "llvm.abs."},
+    {"EXPR_TYPE_ACOS", 1, 0, 1, NULL, NULL, "acosf", "acos", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_ASIN", 1, 0, 1, NULL, NULL, "asinf", "asin", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_ATAN", 1, 0, 1, NULL, NULL, "atanf", "atan", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_ATAN2", 1, 0, 2, NULL, NULL, "atan2f", "atan2", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_CEIL", 1, 0, 1, NULL, NULL, "llvm.ceil.f32", "llvm.ceil.f64", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_COS", 1, 0, 1, NULL, NULL, "llvm.cos.f32", "llvm.cos.f64", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_COSH", 1, 0, 1, NULL, NULL, "coshf", "cosh", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_E", 1, 1, 1, NULL, NULL, {0}, {0}, {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_EXP", 1, 0, 1, NULL, NULL, "llvm.exp.f32", "llvm.exp.f64", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_FAC", 1, 1, 1, NULL, NULL, {0}, {0}, {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_FLOOR", 1, 0, 1, NULL, NULL, "llvm.floor.f32", "llvm.floor.f64", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_LOG", 1, 0, 1, NULL, NULL, "llvm.log.f32", "llvm.log.f64", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_LOG10", 1, 0, 1, NULL, NULL, "llvm.log10.f32", "llvm.log10.f64", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_NCR", 1, 1, 1, NULL, NULL, {0}, {0}, {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_NPR", 1, 1, 1, NULL, NULL, {0}, {0}, {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_PI", 1, 1, 1, NULL, NULL, {0}, {0}, {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_POW", 1, 0, 2, NULL, NULL, "llvm.pow.f32", "llvm.pow.f64", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_SIN", 1, 0, 1, NULL, NULL, "llvm.sin.f32", "llvm.sin.f64", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_SINH", 1, 0, 1, NULL, NULL, "sinhf", "sinh", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_SQRT", 1, 0, 1, NULL, NULL, "llvm.sqrt.f32", "llvm.sqrt.f64", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_TAN", 1, 0, 1, NULL, NULL, "tanf", "tan", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_TANH", 1, 0, 1, NULL, NULL, "tanhf", "tanh", {0}, {0}, {0}, {0}},
+    {"EXPR_TYPE_FMOD", 1, 0, 2, NULL, NULL, "fmodf", "fmod", {0}, {0}, {0}, {0}}};
 
 static LLVMValueRef _jug_build_fun_call(jug_expression_t *e, const char *name, int num_args, LLVMValueRef *args)
 {
+    ina_str_t fname = NULL;
+
     /* lookup function */
     const _jug_fun_type_t *f = NULL;
     ina_hashtable_get_str(e->fun_map, name, (void**)&f);
@@ -107,11 +107,41 @@ static LLVMValueRef _jug_build_fun_call(jug_expression_t *e, const char *name, i
     LLVMValueRef fun_decl = NULL;
     if (f->require_decl) {
         const char *fun_name;
-        if (e->dtype == _JUG_EXPRESSION_DTYPE_FLOAT) {
+        if (e->dtype == JUG_EXPRESSION_DTYPE_FLOAT) {
             fun_name = f->decl_name_f32;
         }
-        else {
+        else if (e->dtype == JUG_EXPRESSION_DTYPE_DOUBLE) {
             fun_name = f->decl_name_f64;
+        } 
+        else {
+            switch (e->dtype) {
+                case JUG_EXPRESSION_DTYPE_SINT8:
+                    fname = ina_str_new_fromcstr(f->decl_name_sint_pre);
+                    fname = ina_str_catcstr(fname, "i8");
+                    break;
+                case JUG_EXPRESSION_DTYPE_SINT16:
+                    fname = ina_str_new_fromcstr(f->decl_name_sint_pre);
+                    break;
+                case JUG_EXPRESSION_DTYPE_SINT32:
+                    fname = ina_str_new_fromcstr(f->decl_name_sint_pre);
+                    break;
+                case JUG_EXPRESSION_DTYPE_SINT64:
+                    fname = ina_str_new_fromcstr(f->decl_name_sint_pre);
+                    break;
+                case JUG_EXPRESSION_DTYPE_UINT8:
+                    fname = ina_str_new_fromcstr(f->decl_name_uint_pre);
+                    break;
+                case JUG_EXPRESSION_DTYPE_UINT16:
+                    fname = ina_str_new_fromcstr(f->decl_name_uint_pre);
+                    break;
+                case JUG_EXPRESSION_DTYPE_UINT32:
+                    fname = ina_str_new_fromcstr(f->decl_name_uint_pre);
+                    break;
+                case JUG_EXPRESSION_DTYPE_UINT64:
+                    fname = ina_str_new_fromcstr(f->decl_name_uint_pre);
+                    break;
+            }
+            fun_name = ina_str_cstr(fname);
         }
         ina_hashtable_get_str(e->decl_cache, fun_name, (void**)&fun_decl);
         if (fun_decl == NULL) {
@@ -126,14 +156,47 @@ static LLVMValueRef _jug_build_fun_call(jug_expression_t *e, const char *name, i
     }
     else {
         /* if not required, build IR instruction and return (ADD, SUB, MUL, DIV etc.) */
+        void *fun_ref = NULL;
+        switch (e->dtype) {
+            case JUG_EXPRESSION_DTYPE_FLOAT:
+                fun_ref = f->no_decl_ref_f64;
+                break;
+            case JUG_EXPRESSION_DTYPE_DOUBLE:
+                fun_ref = f->no_decl_ref_f64;
+                break;
+            case JUG_EXPRESSION_DTYPE_SINT8:
+                fun_ref = f->sint_ref;
+                break;
+            case JUG_EXPRESSION_DTYPE_SINT16:
+                fun_ref = f->sint_ref;
+                break;
+            case JUG_EXPRESSION_DTYPE_SINT32:
+                fun_ref = f->sint_ref;
+                break;
+            case JUG_EXPRESSION_DTYPE_SINT64:
+                fun_ref = f->sint_ref;
+                break;
+            case JUG_EXPRESSION_DTYPE_UINT8:
+                fun_ref = f->uint_ref;
+                break;
+            case JUG_EXPRESSION_DTYPE_UINT16:
+                fun_ref = f->uint_ref;
+                break;
+            case JUG_EXPRESSION_DTYPE_UINT32:
+                fun_ref = f->uint_ref;
+                break;
+            case JUG_EXPRESSION_DTYPE_UINT64:
+                fun_ref = f->uint_ref;
+                break;
+        }
         _jug_llvm_fun_p_one_arg_t oa;
         _jug_llvm_fun_p_two_arg_t ta;
         switch (f->arity) {
             case 1:
-                oa = (_jug_llvm_fun_p_one_arg_t)f->no_decl_ref_f64;
+                oa = (_jug_llvm_fun_p_one_arg_t)fun_ref;
                 return oa(e->builder, args[0], f->name);
             case 2:
-                ta = (_jug_llvm_fun_p_two_arg_t)f->no_decl_ref_f64;
+                ta = (_jug_llvm_fun_p_two_arg_t)fun_ref;
                 return ta(e->builder, args[0], args[1], f->name);
             default:
                 INA_ASSERT_TRUE(0);
@@ -150,6 +213,10 @@ static LLVMValueRef _jug_build_fun_call(jug_expression_t *e, const char *name, i
     /* cleanup - if required */
     if (param_types != NULL) {
         ina_mem_free(param_types);
+    }
+
+    if (fname != NULL) {
+        ina_str_free(fname);
     }
 
     return ret;
@@ -271,7 +338,6 @@ static LLVMValueRef _jug_expr_compile_function(
     jug_expression_t *e,
     const char *name,
     jug_te_expr *expression,
-    int32_t typesize,
     int var_len,
     jug_te_variable *vars)
 {
@@ -287,19 +353,47 @@ static LLVMValueRef _jug_expr_compile_function(
 
     LLVMTypeRef int32Type = LLVMInt32Type();
 
-    LLVMValueRef constant_zero = LLVMConstInt(int32Type, 0, 1);
-    LLVMValueRef constant_one = LLVMConstInt(int32Type, 1, 1);
-
     e->context = LLVMContextCreate();
-    e->typesize = typesize;
-    if (e->typesize == 8) {
-        e->expr_type = LLVMDoubleType();
-    }
-    else if (e->typesize == 4) {
-        e->expr_type = LLVMFloatType();
-    }
-    else {
-        return NULL;
+    
+    LLVMValueRef constant_zero;
+    LLVMValueRef constant_one;
+    switch (e->dtype) {
+        case JUG_EXPRESSION_DTYPE_FLOAT:
+            constant_zero = LLVMConstInt(LLVMFloatType(), 0, 1);
+            constant_one = LLVMConstInt(LLVMFloatType(), 1, 1);
+            e->expr_type = LLVMFloatType();
+            break;
+        case JUG_EXPRESSION_DTYPE_DOUBLE:
+            constant_zero = LLVMConstInt(LLVMDoubleType(), 0, 1);
+            constant_one = LLVMConstInt(LLVMDoubleType(), 1, 1);
+            e->expr_type = LLVMDoubleType();
+            break;
+        case JUG_EXPRESSION_DTYPE_SINT8:
+        case JUG_EXPRESSION_DTYPE_UINT8:
+            constant_zero = LLVMConstInt(LLVMInt8Type(), 0, 1);
+            constant_one = LLVMConstInt(LLVMInt8Type(), 1, 1);
+            e->expr_type = LLVMInt8Type();
+            break;
+        case JUG_EXPRESSION_DTYPE_SINT16:
+        case JUG_EXPRESSION_DTYPE_UINT16:
+            constant_zero = LLVMConstInt(LLVMInt16Type(), 0, 1);
+            constant_one = LLVMConstInt(LLVMInt16Type(), 1, 1);
+            e->expr_type = LLVMInt16Type();
+            break;
+        case JUG_EXPRESSION_DTYPE_SINT32:
+        case JUG_EXPRESSION_DTYPE_UINT32:
+            constant_zero = LLVMConstInt(LLVMInt32Type(), 0, 1);
+            constant_one = LLVMConstInt(LLVMInt32Type(), 1, 1);
+            e->expr_type = LLVMInt32Type();
+            break;
+        case JUG_EXPRESSION_DTYPE_SINT64:
+        case JUG_EXPRESSION_DTYPE_UINT64:
+            constant_zero = LLVMConstInt(LLVMInt64Type(), 0, 1);
+            constant_one = LLVMConstInt(LLVMInt64Type(), 1, 1);
+            e->expr_type = LLVMInt64Type();
+            break;
+        default:
+            return NULL;
     }
 
     /* define the parameter structure for prefilter */
@@ -599,11 +693,11 @@ INA_API(void) jug_destroy()
 //    }
 }
 
-INA_API(ina_rc_t) jug_expression_new(jug_expression_t **expr)
-{
+INA_API(ina_rc_t) jug_expression_new(jug_expression_t **expr, jug_expression_dtype_t dtype) {
     LLVMModuleRef m;
     *expr = (jug_expression_t*)ina_mem_alloc(sizeof(jug_expression_t));
     memset(*expr, 0, sizeof(jug_expression_t));
+    (*expr)->dtype = dtype;
     (*expr)->mod = LLVMModuleCreateWithName("expr_engine");
     m = (*expr)->mod;
     INA_UNUSED(m);
@@ -651,7 +745,6 @@ INA_API(ina_rc_t) jug_udf_compile(
 
     // Read the IR file into a buffer
     buffer = LLVMCreateMemoryBufferWithMemoryRange(llvm_bc, llvm_bc_len, "udf", 0);
-    //buffer = LLVMCreateMemoryBufferWithMemoryRangeCopy(llvm_bc, llvm_bc_len, "udf");
 
     // now create our module
     e->context = LLVMContextCreate();
@@ -683,11 +776,9 @@ INA_API(ina_rc_t) jug_expression_compile(
     const char *expr_str,
     int num_vars,
     void *vars,
-    int32_t typesize,
     uint64_t *function_addr)
 {
     int parse_error = 0;
-    e->dtype = typesize == 4 ? _JUG_EXPRESSION_DTYPE_FLOAT : _JUG_EXPRESSION_DTYPE_DOUBLE;
 
     jug_te_variable *te_vars = (jug_te_variable*)vars;
     jug_te_expr *expression = jug_te_compile(expr_str, te_vars, num_vars, &parse_error);
@@ -695,7 +786,7 @@ INA_API(ina_rc_t) jug_expression_compile(
         IARRAY_TRACE1(iarray.error, "Error parsing the expression with juggernaut");
         IARRAY_RETURN_IF_FAILED(INA_ERR_INVALID_ARGUMENT);
     }
-    _jug_expr_compile_function(e, "expr_func", expression, typesize, num_vars, te_vars);
+    _jug_expr_compile_function(e, "expr_func", expression, num_vars, te_vars);
     jug_te_free(expression);
 
     if (_jug_prepare_module(e, true)) {

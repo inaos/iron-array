@@ -12,12 +12,12 @@
 
 #include <libiarray/iarray.h>
 
-ina_rc_t ia_eval(iarray_context_t *ctx, iarray_container_t **c) {
+ina_rc_t ia_eval(iarray_context_t *ctx, iarray_dtshape_t *dtshape_in, iarray_container_t **c) {
     iarray_container_t *c1 = *c;
     iarray_container_t *c2 = NULL;
 
     iarray_expression_t *expr;
-    IARRAY_RETURN_IF_FAILED(iarray_expr_new(ctx, &expr));
+    IARRAY_RETURN_IF_FAILED(iarray_expr_new(ctx, dtshape_in, &expr));
 
     iarray_expr_bind(expr, "x", c1);
 
@@ -86,7 +86,7 @@ int main() {
     IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c, buf, buf_nbytes));
     printf("%f\n", buf[0]);
     eval(nelem, buf);
-    IARRAY_RETURN_IF_FAILED(ia_eval(ctx, &c));
+    IARRAY_RETURN_IF_FAILED(ia_eval(ctx, &dtshape, &c));
 
     double *buf2 = malloc(buf_nbytes);
     IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c, buf2, buf_nbytes));
