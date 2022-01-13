@@ -121,6 +121,13 @@ static ina_rc_t test_zeros(iarray_context_t *ctx,
             }
             break;
         }
+        case IARRAY_DATA_TYPE_BOOL: {
+            bool *buff = (bool *) buf_dest;
+            for (int64_t i = 0; i < buf_size; ++i) {
+                INA_TEST_ASSERT(buff[i] == false);
+            }
+            break;
+        }
     }
 
     iarray_container_free(ctx, &c_x);
@@ -278,6 +285,19 @@ INA_TEST_FIXTURE(constructor_zeros, 7_uc)
     int64_t shape[] = {10, 6, 8, 6, 4, 4, 2};
     int64_t cshape[] = {4, 3, 5, 5, 3, 3, 2};
     int64_t bshape[] = {2, 1, 2, 2, 3, 2, 2};
+
+    INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, true, "arr.iarr"));
+}
+
+INA_TEST_FIXTURE(constructor_zeros, 2_b)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
+    size_t type_size = sizeof(bool);
+
+    int8_t ndim = 2;
+    int64_t shape[] = {10, 6};
+    int64_t cshape[] = {4, 3};
+    int64_t bshape[] = {2, 1};
 
     INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, true, "arr.iarr"));
 }

@@ -144,6 +144,19 @@ struct iarray_reduce_function_s {
                   int64_t nelem, void *user_data
 #define UI8PARAMS_F uint8_t *res, void *user_data
 
+#define BOOLPARAMS_I bool *res, void *user_data
+#define BOOLPARAMS_R bool *data0, int64_t strides0, \
+                  bool *data1, int64_t strides1, \
+                  int64_t nelem, void *user_data
+// Needed when we want the result as int64_t
+#define BOOL_64PARAMS_R int64_t *data0, int64_t strides0, \
+                  bool *data1, int64_t strides1, \
+                  int64_t nelem, void *user_data
+// Needed when we want the result as double
+#define BOOL_DPARAMS_R double *data0, int64_t strides0, \
+                  bool *data1, int64_t strides1, \
+                  int64_t nelem, void *user_data
+#define BOOLPARAMS_F bool *res, void *user_data
 
 /* SUM REDUCTION */
 
@@ -260,6 +273,16 @@ static iarray_reduce_function_t UI8SUM = {
     .init = CAST_I ui8sum_ini,
     .reduction = CAST_R ui8sum_red,
     .finish = CAST_F ui8sum_fin
+};
+
+static void boolsum_ini(I64PARAMS_I) { SUM_I }
+static void boolsum_red(BOOL_64PARAMS_R) { SUM_R }
+static void boolsum_fin(I64PARAMS_F) { SUM_F }
+
+static iarray_reduce_function_t BOOLSUM = {
+    .init = CAST_I boolsum_ini,
+    .reduction = CAST_R boolsum_red,
+    .finish = CAST_F boolsum_fin
 };
 
 /* PROD REDUCTION */
@@ -379,6 +402,16 @@ static iarray_reduce_function_t UI8PROD = {
     .finish = CAST_F ui8prod_fin
 };
 
+static void boolprod_ini(I64PARAMS_I) { PROD_I }
+static void boolprod_red(BOOL_64PARAMS_R) { PROD_R }
+static void boolprod_fin(I64PARAMS_F) { PROD_F }
+
+static iarray_reduce_function_t BOOLPROD = {
+    .init = CAST_I boolprod_ini,
+    .reduction = CAST_R boolprod_red,
+    .finish = CAST_F boolprod_fin
+};
+
 
 /* MAX REDUCTION */
 
@@ -409,6 +442,9 @@ static iarray_reduce_function_t UI8PROD = {
 #define MAX_I_UI8 \
     INA_UNUSED(user_data); \
     *res = 0;
+#define MAX_I_BOOL \
+    INA_UNUSED(user_data); \
+    *res = false;
 
 #define MAX_R \
     INA_UNUSED(user_data); \
@@ -523,6 +559,16 @@ static iarray_reduce_function_t UI8MAX = {
     .finish = CAST_F ui8max_fin
 };
 
+static void boolmax_ini(BOOLPARAMS_I) { MAX_I_BOOL }
+static void boolmax_red(BOOLPARAMS_R) { MAX_R }
+static void boolmax_fin(BOOLPARAMS_F) { MAX_F }
+
+static iarray_reduce_function_t BOOLMAX = {
+    .init = CAST_I boolmax_ini,
+    .reduction = CAST_R boolmax_red,
+    .finish = CAST_F boolmax_fin
+};
+
 /* MIN REDUCTION */
 
 #define MIN_I \
@@ -552,6 +598,9 @@ static iarray_reduce_function_t UI8MAX = {
 #define MIN_I_UI8 \
     INA_UNUSED(user_data); \
     *res = UCHAR_MAX;
+#define MIN_I_BOOL \
+    INA_UNUSED(user_data); \
+    *res = true;
 
 #define MIN_R \
     INA_UNUSED(user_data); \
@@ -664,6 +713,16 @@ static iarray_reduce_function_t UI8MIN = {
     .init = CAST_I ui8min_ini,
     .reduction =  CAST_R ui8min_red,
     .finish = CAST_F ui8min_fin
+};
+
+static void boolmin_ini(BOOLPARAMS_I) { MIN_I_BOOL }
+static void boolmin_red(BOOLPARAMS_R) { MIN_R }
+static void boolmin_fin(BOOLPARAMS_F) { MIN_F }
+
+static iarray_reduce_function_t BOOLMIN = {
+    .init = CAST_I boolmin_ini,
+    .reduction =  CAST_R boolmin_red,
+    .finish = CAST_F boolmin_fin
 };
 
 /* MEAN REDUCTION */
@@ -784,4 +843,14 @@ static iarray_reduce_function_t UI8MEAN = {
     .init = CAST_I ui8mean_ini,
     .reduction = CAST_R ui8mean_red,
     .finish = CAST_F ui8mean_fin
+};
+
+static void boolmean_ini(DPARAMS_I) { MEAN_I }
+static void boolmean_red(BOOL_DPARAMS_R) { MEAN_R }
+static void boolmean_fin(DPARAMS_F) { MEAN_F }
+
+static iarray_reduce_function_t BOOLMEAN = {
+    .init = CAST_I boolmean_ini,
+    .reduction = CAST_R boolmean_red,
+    .finish = CAST_F boolmean_fin
 };

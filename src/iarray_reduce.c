@@ -137,6 +137,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     uint32_t *ui32out = (uint32_t *) pparams->out;
     uint16_t *ui16out = (uint16_t *) pparams->out;
     uint8_t *ui8out = (uint8_t *) pparams->out;
+    bool *boolout = (bool *) pparams->out;
 
     for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
         // Compute index in dest
@@ -180,6 +181,9 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                 case IARRAY_DATA_TYPE_UINT8:
                     rparams->ufunc->init(ui8out, &user_data);
                     break;
+                case IARRAY_DATA_TYPE_BOOL:
+                    rparams->ufunc->init(boolout, &user_data);
+                    break;
                 default:
                     IARRAY_TRACE1(iarray.error, "Invalid dtype");
                     return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
@@ -215,6 +219,9 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                 break;
             case IARRAY_DATA_TYPE_UINT8:
                 ui8out++;
+                break;
+            case IARRAY_DATA_TYPE_BOOL:
+                boolout++;
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "Invalid dtype");
@@ -298,6 +305,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
             ui32out = (uint32_t *) pparams->out;
             ui16out = (uint16_t *) pparams->out;
             ui8out = (uint8_t *) pparams->out;
+            boolout = (bool *) pparams->out;
 
             for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
                 // Compute index in dest
@@ -339,6 +347,9 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                         case IARRAY_DATA_TYPE_UINT8:
                             ui8out++;
                             break;
+                        case IARRAY_DATA_TYPE_BOOL:
+                            boolout++;
+                            break;
                         default:
                             IARRAY_TRACE1(iarray.error, "Invalid dtype");
                             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
@@ -372,6 +383,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                 uint32_t *ui32block = ((uint32_t *) block) + elem_index_u;
                 uint16_t *ui16block = ((uint16_t *) block) + elem_index_u;
                 uint8_t *ui8block = ((uint8_t *) block) + elem_index_u;
+                bool *boolblock = ((bool *) block) + elem_index_u;
 
                 switch (rparams->result->dtshape->dtype) {
                     case IARRAY_DATA_TYPE_DOUBLE:
@@ -416,6 +428,10 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                                 rparams->ufunc->reduction(dout, 0, ui8block, strides[rparams->axis],
                                                           vector_nelems, &user_data);
                                 break;
+                            case IARRAY_DATA_TYPE_BOOL:
+                                rparams->ufunc->reduction(dout, 0, boolblock, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
                         }
                         dout++;
                         break;
@@ -441,6 +457,10 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                                 break;
                             case IARRAY_DATA_TYPE_INT8:
                                 rparams->ufunc->reduction(i64out, 0, i8block, strides[rparams->axis],
+                                                          vector_nelems, &user_data);
+                                break;
+                            case IARRAY_DATA_TYPE_BOOL:
+                                rparams->ufunc->reduction(i64out, 0, boolblock, strides[rparams->axis],
                                                           vector_nelems, &user_data);
                                 break;
                         }
@@ -498,6 +518,11 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                                                   vector_nelems, &user_data);
                         ui8out++;
                         break;
+                    case IARRAY_DATA_TYPE_BOOL:
+                        rparams->ufunc->reduction(boolout, 0, boolblock, strides[rparams->axis],
+                                                  vector_nelems, &user_data);
+                        boolout++;
+                        break;
                     default:
                         IARRAY_TRACE1(iarray.error, "Invalid dtype");
                         return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
@@ -520,6 +545,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     ui32out = (uint32_t *) pparams->out;
     ui16out = (uint16_t *) pparams->out;
     ui8out = (uint8_t *) pparams->out;
+    boolout = (bool *) pparams->out;
     for (int64_t ind = 0; ind < pparams->out_size / pparams->out_typesize; ++ind) {
         // Compute index in dest
         int64_t elem_index_n[IARRAY_DIMENSION_MAX] = {0};
@@ -610,6 +636,14 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                     rparams->ufunc->finish(ui8out, &user_data);
                 }
                 ui8out++;
+                break;
+            case IARRAY_DATA_TYPE_BOOL:
+                if (padding) {
+                    *boolout = 0;
+                } else {
+                    rparams->ufunc->finish(boolout, &user_data);
+                }
+                boolout++;
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "Invalid dtype");
@@ -776,6 +810,10 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                     reduce_function = &UI8SUM;
                     dtype = IARRAY_DATA_TYPE_UINT64;
                     break;
+                case IARRAY_DATA_TYPE_BOOL:
+                    reduce_function = &BOOLSUM;
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
             }
             break;
         case IARRAY_REDUCE_PROD:
@@ -821,6 +859,10 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                     reduce_function = &UI8PROD;
                     dtype = IARRAY_DATA_TYPE_UINT64;
                     break;
+                case IARRAY_DATA_TYPE_BOOL:
+                    reduce_function = &BOOLPROD;
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
             }
             break;
         case IARRAY_REDUCE_MAX:
@@ -864,6 +906,10 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                 case IARRAY_DATA_TYPE_UINT8:
                     reduce_function = &UI8MAX;
                     dtype = IARRAY_DATA_TYPE_UINT8;
+                    break;
+                case IARRAY_DATA_TYPE_BOOL:
+                    reduce_function = &BOOLMAX;
+                    dtype = IARRAY_DATA_TYPE_BOOL;
                     break;
             }
             break;
@@ -909,6 +955,10 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                     reduce_function = &UI8MIN;
                     dtype = IARRAY_DATA_TYPE_UINT8;
                     break;
+                case IARRAY_DATA_TYPE_BOOL:
+                    reduce_function = &BOOLMIN;
+                    dtype = IARRAY_DATA_TYPE_BOOL;
+                    break;
             }
             break;
         case IARRAY_REDUCE_MEAN:
@@ -952,6 +1002,10 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                     break;
                 case IARRAY_DATA_TYPE_UINT8:
                     reduce_function = &UI8MEAN;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_BOOL:
+                    reduce_function = &BOOLMEAN;
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
             }
