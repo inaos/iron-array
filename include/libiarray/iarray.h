@@ -133,8 +133,8 @@ typedef enum iarray_random_dist_parameter_e {
 typedef enum iarray_data_type_e {
     IARRAY_DATA_TYPE_DOUBLE = 0,
     IARRAY_DATA_TYPE_FLOAT = 1,
-    IARRAY_DATA_TYPE_FLOAT16 = 2,
-    IARRAY_DATA_TYPE_FLOAT8 = 3,
+    // IARRAY_DATA_TYPE_FLOAT16 = 2, reserve this values for a future support
+    // IARRAY_DATA_TYPE_FLOAT8 = 3,
     IARRAY_DATA_TYPE_INT64 = 10,
     IARRAY_DATA_TYPE_INT32 = 11,
     IARRAY_DATA_TYPE_INT16 = 12,
