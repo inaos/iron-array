@@ -655,7 +655,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_container_resize(iarray_container_t *container, int64_t *new_shape) {
 
-    caterva_resize(container->catarr, new_shape);
+    IARRAY_ERR_CATERVA(caterva_resize(container->catarr, new_shape));
 
     // Update iarray params
     for (int i = 0; i < container->dtshape->ndim; ++i) {
