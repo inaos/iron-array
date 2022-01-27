@@ -15,35 +15,6 @@
 #include "iarray_constructor.h"
 
 
-static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype) {
-    INA_UNUSED(smeta_len);
-    INA_VERIFY_NOT_NULL(smeta);
-    INA_VERIFY_NOT_NULL(dtype);
-
-    uint8_t *pmeta = smeta;
-
-    //version
-    uint8_t version = *pmeta;
-    INA_USED_BY_ASSERT(version);
-    pmeta +=1;
-
-    // We only have an entry with the datatype (enumerated < 128)
-    *dtype = *pmeta;
-    pmeta += 1;
-
-   // Transpose byte
-    pmeta += 1;
-
-    assert(pmeta - smeta == smeta_len);
-
-    if (*dtype >= IARRAY_DATA_TYPE_MAX) {
-        IARRAY_TRACE1(iarray.error, "The data type is invalid");
-        return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-    }
-
-    return INA_SUCCESS;
-}
-
 INA_API(ina_rc_t) iarray_container_dtshape_equal(iarray_dtshape_t *a, iarray_dtshape_t *b)
 {
     if (a->dtype != b->dtype) {
