@@ -92,7 +92,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     }
 
     *c = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
-    *c = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
     if ((*c) == NULL) {
         IARRAY_TRACE1(iarray.error, "Error allocating the iarray container");
         return INA_ERROR(INA_ERR_FAILED);
