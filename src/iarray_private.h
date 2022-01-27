@@ -342,4 +342,64 @@ ina_rc_t iarray_container_new(iarray_context_t *ctx,
 
 
 ina_rc_t iarray_set_dtype_size(iarray_dtshape_t *dtshape);
+
+static int32_t serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
+{
+    if (smeta == NULL) {
+        return -1;
+    }
+    if (dtype > IARRAY_DATA_TYPE_MAX) {
+        return -1;
+    }
+    int32_t smeta_len = 4;  // the dtype should take less than 7-bit, so 1 byte is enough to store it
+    *smeta = malloc((size_t)smeta_len);
+
+    uint8_t *pmeta = *smeta;
+
+    *(*smeta + 0) = 0x93;  // [msgpack] fixarray of 3 elements
+
+    // version
+    *(*smeta + 1) = 0;
+
+    // dtype entry
+    *(*smeta + 2) = (uint8_t) dtype;  // positive fixnum (7-bit positive integer)
+
+    // flags (initialising all the entries to 0)
+    *(*smeta + 3) = 0;  // positive fixnum (7-bit for flags)
+
+    return smeta_len;
+}
+
+
+static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype) {
+    INA_UNUSED(smeta_len);
+    INA_VERIFY_NOT_NULL(smeta);
+    INA_VERIFY_NOT_NULL(dtype);
+
+    uint8_t *pmeta = smeta;
+    INA_ASSERT_EQUAL(*pmeta, 0x93);
+    pmeta += 1;
+
+    //version
+    uint8_t version = *pmeta;
+    INA_USED_BY_ASSERT(version);
+    pmeta +=1;
+
+    // We only have an entry with the datatype (enumerated < 128)
+    *dtype = *pmeta;
+    pmeta += 1;
+
+    // Transpose byte
+    pmeta += 1;
+
+    assert(pmeta - smeta == smeta_len);
+
+    if (*dtype >= IARRAY_DATA_TYPE_MAX) {
+        IARRAY_TRACE1(iarray.error, "The data type is invalid");
+        return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+    }
+
+    return INA_SUCCESS;
+}
+
 #endif
