@@ -26,16 +26,16 @@ def create_files(method, dtype, **kwargs):
     chunks = (100 * 1000,)
     blocks = (10 * 1000,)
 
-    with ia.config(clevel=5, codec=ia.Codecs.LZ4) as cfg:
+    with ia.config(clevel=5, codec=ia.Codec.LZ4, btune=False) as cfg:
         if kwargs:
             kwargs["size"] = size
             c = dtype(method(**kwargs))
         else:
             c = dtype(method(size))
 
-        store = ia.Store(chunks, blocks, create_urlpath(method, dtype, **kwargs))
+        urlpath=create_urlpath(method, dtype, **kwargs)
 
-        ia.numpy2iarray(c, store=store, cfg=cfg)
+        ia.numpy2iarray(c, chunks=chunks, blocks=blocks, urlpath=urlpath, cfg=cfg)
 
 
 # Rand
