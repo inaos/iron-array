@@ -1054,32 +1054,44 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
         ii++;
     }
 
+    if (a->view) {
+        iarray_storage_t view_storage = {0};
+        memcpy(&view_storage, a->storage, sizeof(iarray_storage_t));
+        if (a->storage->urlpath) {
+            view_storage.urlpath = "iarray_view.iarraytemp";
+            if (access(view_storage.urlpath, 0) == 0) {
+                IARRAY_TRACE1(iarray.tracing, "The temporary file already exists, delete it first");
+                return INA_ERROR(INA_ERR_INVALID);
+            }
+        }
+        iarray_copy(ctx, a, false, &view_storage, 0, &aa);
+    }
 
     // Start reductions
     iarray_container_t *c = NULL;
     iarray_storage_t storage_red;
     storage_red.contiguous = storage->contiguous;
-    storage_red.urlpath = storage->urlpath != NULL ? "iarray_red_temp.iarray" : NULL;
+    storage_red.urlpath = storage->urlpath != NULL ? "iarray_red.iarraytemp" : NULL;
     if (storage_red.urlpath != NULL && access(storage_red.urlpath, 0) == 0) {
         IARRAY_TRACE1(iarray.tracing, "The temporary file already exists, delete it first");
-        return INA_ERR_INVALID;
+        return INA_ERROR(INA_ERR_INVALID);
     }
     for (int i = 0; i < ii; ++i) {
         if (i > 0) {
             if (storage->urlpath != NULL) {
                 if (i > 1) {
-                    err_io = blosc2_remove_urlpath("iarray_red_temp2.iarray");
+                    err_io = blosc2_remove_urlpath("iarray_red_2.iarraytemp");
                     if (err_io != 0) {
                         IARRAY_TRACE1(iarray.tracing, "Invalid io");
                         return INA_ERROR(INA_ERR_OPERATION_INVALID);
                     }
                 }
-                err_io = blosc2_rename_urlpath("iarray_red_temp.iarray", "iarray_red_temp2.iarray");
+                err_io = blosc2_rename_urlpath("iarray_red.iarraytemp", "iarray_red_2.iarraytemp");
                 if (err_io != 0) {
                     IARRAY_TRACE1(iarray.tracing, "Invalid io");
                     return INA_ERROR(INA_ERR_OPERATION_INVALID);
                 }
-                IARRAY_RETURN_IF_FAILED(iarray_container_open(ctx, "iarray_red_temp2.iarray", &aa));
+                IARRAY_RETURN_IF_FAILED(iarray_container_open(ctx, "iarray_red_2.iarraytemp", &aa));
             } else {
                 aa = c;
             }
@@ -1124,13 +1136,13 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
         IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c, false, storage, 0, b));
         iarray_container_free(ctx, &c);
         if (storage->urlpath != NULL) {
-            err_io = blosc2_remove_urlpath("iarray_red_temp.iarray");
+            err_io = blosc2_remove_urlpath("iarray_red.iarraytemp");
             if (err_io != 0) {
                 IARRAY_TRACE1(iarray.tracing, "Invalid io");
                 return INA_ERROR(INA_ERR_OPERATION_INVALID);
             }
             if (ii > 1) {
-                err_io = blosc2_remove_urlpath("iarray_red_temp2.iarray");
+                err_io = blosc2_remove_urlpath("iarray_red_2.iarraytemp");
                 if (err_io != 0) {
                     IARRAY_TRACE1(iarray.tracing, "Invalid io");
                     return INA_ERROR(INA_ERR_OPERATION_INVALID);
@@ -1140,13 +1152,13 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     } else {
         if (storage->urlpath != NULL) {
             iarray_container_free(ctx, &c);
-            err_io = blosc2_rename_urlpath("iarray_red_temp.iarray", storage->urlpath);
+            err_io = blosc2_rename_urlpath("iarray_red.iarraytemp", storage->urlpath);
             if (err_io != 0) {
                 IARRAY_TRACE1(iarray.tracing, "Invalid io");
                 return INA_ERROR(INA_ERR_OPERATION_INVALID);
             }
             if (ii > 1) {
-                err_io = blosc2_remove_urlpath("iarray_red_temp2.iarray");
+                err_io = blosc2_remove_urlpath("iarray_red_2.iarraytemp");
                 if (err_io != 0) {
                     IARRAY_TRACE1(iarray.tracing, "Invalid io");
                     return INA_ERROR(INA_ERR_OPERATION_INVALID);
@@ -1158,8 +1170,11 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
         }
     }
     if (storage->urlpath != NULL) {
-        blosc2_remove_urlpath("iarray_red_temp.iarray");
-        blosc2_remove_urlpath("iarray_red_temp2.iarray");
+        blosc2_remove_urlpath("iarray_red.iarraytemp");
+        blosc2_remove_urlpath("iarray_red_2.iarraytemp");
+        if (a->view) {
+            blosc2_remove_urlpath("iarray_view.iarraytemp");
+        }
     }
 
 
