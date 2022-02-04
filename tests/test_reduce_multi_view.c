@@ -546,7 +546,6 @@ INA_TEST_FIXTURE(reduce_multi_view, min_2_ui_1) {
                                               dest_contiguous, dest_urlpath));
 }
 
-/*
 
 INA_TEST_FIXTURE(reduce_multi_view, max_3_s_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT16;
@@ -559,7 +558,7 @@ INA_TEST_FIXTURE(reduce_multi_view, max_3_s_2) {
     int8_t axis[] = {0, 1};
 
    int64_t view_start[IARRAY_DIMENSION_MAX] = {0};
-    int64_t view_stop[] = {};
+    int64_t view_stop[] = {10, 10, 10};
     
     int64_t dest_cshape[] = {6};
     int64_t dest_bshape[] = {3};
@@ -584,7 +583,7 @@ INA_TEST_FIXTURE(reduce_multi_view, min_4_ui_4) {
     int8_t axis[] = {3, 1, 2, 0};
 
    int64_t view_start[IARRAY_DIMENSION_MAX] = {0};
-    int64_t view_stop[] = {};
+    int64_t view_stop[] = {5, 10, 27, 10};
     
     int64_t dest_cshape[] = {1};
     int64_t dest_bshape[] = {1};
@@ -609,7 +608,7 @@ INA_TEST_FIXTURE(reduce_multi_view, max_8_ull_7) {
     int8_t axis[] = {1, 2, 7, 5, 3, 4, 0};
 
    int64_t view_start[IARRAY_DIMENSION_MAX] = {0};
-    int64_t view_stop[] = {};
+    int64_t view_stop[] = {4, 8, 2, 6, 6, 7, 5, 7};
     
     int64_t dest_cshape[] = {5};
     int64_t dest_bshape[] = {2};
@@ -634,7 +633,7 @@ INA_TEST_FIXTURE(reduce_multi_view, min_2_sc_2) {
     int8_t axis[] = {1, 0};
 
    int64_t view_start[IARRAY_DIMENSION_MAX] = {0};
-    int64_t view_stop[] = {};
+    int64_t view_stop[] = {10, 10};
     
     int64_t dest_cshape[] = {1};
     int64_t dest_bshape[] = {1};
@@ -658,8 +657,8 @@ INA_TEST_FIXTURE(reduce_multi_view, max_2_uc_1) {
     int8_t naxis = 1;
     int8_t axis[] = {0};
 
-   int64_t view_start[IARRAY_DIMENSION_MAX] = {0};
-    int64_t view_stop[] = {};
+   int64_t view_start[IARRAY_DIMENSION_MAX] = {1, 10};
+    int64_t view_stop[] = {3, 12};
     
     int64_t dest_cshape[] = {6};
     int64_t dest_bshape[] = {3};
@@ -684,7 +683,7 @@ INA_TEST_FIXTURE(reduce_multi_view, min_2_b_2) {
     int8_t axis[] = {0, 1};
 
    int64_t view_start[IARRAY_DIMENSION_MAX] = {0};
-    int64_t view_stop[] = {};
+    int64_t view_stop[] = {12, 12};
     
     int64_t dest_cshape[] = {1};
     int64_t dest_bshape[] = {1};
@@ -709,7 +708,7 @@ INA_TEST_FIXTURE(reduce_multi_view, mean_2_d_2) {
     int8_t axis[] = {1, 0};
 
    int64_t view_start[IARRAY_DIMENSION_MAX] = {0};
-    int64_t view_stop[] = {};
+    int64_t view_stop[] = {12, 22};
     
     int64_t dest_cshape[] = {1};
     int64_t dest_bshape[] = {1};
@@ -733,8 +732,8 @@ INA_TEST_FIXTURE(reduce_multi_view, mean_3_f_3) {
     int8_t naxis = 3;
     int8_t axis[] = {0, 2, 1};
 
-   int64_t view_start[IARRAY_DIMENSION_MAX] = {0};
-    int64_t view_stop[] = {};
+   int64_t view_start[IARRAY_DIMENSION_MAX] = {11, 11, 11};
+    int64_t view_stop[] = {12, 12, 12};
     
     int64_t dest_cshape[] = {1};  // {} not compile on Windows
     int64_t dest_bshape[] = {1};  // {} not compile on Windows
@@ -759,7 +758,7 @@ INA_TEST_FIXTURE(reduce_multi_view, mean_4_ll_2) {
     int8_t axis[] = {0, 3};
 
    int64_t view_start[IARRAY_DIMENSION_MAX] = {0};
-    int64_t view_stop[] = {};
+    int64_t view_stop[] = {6, 6, 6, 6};
     
     int64_t dest_cshape[] = {3, 1};
     int64_t dest_bshape[] = {3, 1};
@@ -784,7 +783,7 @@ INA_TEST_FIXTURE(reduce_multi_view, mean_2_ui_1) {
     int8_t axis[] = {0};
 
    int64_t view_start[IARRAY_DIMENSION_MAX] = {0};
-    int64_t view_stop[] = {};
+    int64_t view_stop[] = {5, 3};
     
     int64_t dest_cshape[] = {6};
     int64_t dest_bshape[] = {2};
@@ -809,7 +808,7 @@ INA_TEST_FIXTURE(reduce_multi_view, mean_3_s_2) {
     int8_t axis[] = {0, 1};
 
    int64_t view_start[IARRAY_DIMENSION_MAX] = {0};
-    int64_t view_stop[] = {};
+    int64_t view_stop[] = {12, 1, 12};
     
     int64_t dest_cshape[] = {6};
     int64_t dest_bshape[] = {3};
@@ -834,7 +833,7 @@ INA_TEST_FIXTURE(reduce_multi_view, mean_2_sc_2) {
     int8_t axis[] = {1, 0};
 
    int64_t view_start[IARRAY_DIMENSION_MAX] = {0};
-    int64_t view_stop[] = {};
+    int64_t view_stop[] = {10, 10};
     
     int64_t dest_cshape[] = {1};
     int64_t dest_bshape[] = {1};
@@ -859,7 +858,7 @@ INA_TEST_FIXTURE(reduce_multi_view, mean_2_b_1) {
     int8_t axis[] = {0};
 
    int64_t view_start[IARRAY_DIMENSION_MAX] = {0};
-    int64_t view_stop[] = {};
+    int64_t view_stop[] = {6, 9};
     
     int64_t dest_cshape[] = {6};
     int64_t dest_bshape[] = {3};
@@ -871,4 +870,3 @@ INA_TEST_FIXTURE(reduce_multi_view, mean_2_b_1) {
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
                                               dest_contiguous, dest_urlpath));
 }
-*/
