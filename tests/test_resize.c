@@ -83,7 +83,6 @@ static ina_rc_t _execute_iarray_resize(iarray_context_t *ctx, iarray_data_type_t
 
     INA_TEST_ASSERT_SUCCEED(iarray_get_slice_buffer(ctx, c_x, start_shape, shrink_shape, original_buffer, shrink_len * type_size));
 
-
     INA_TEST_ASSERT_SUCCEED(test_resize(ctx, c_x, new_shape));
 
     // Get the same slice after the resize
@@ -146,6 +145,9 @@ static ina_rc_t _execute_iarray_resize(iarray_context_t *ctx, iarray_data_type_t
                 INA_TEST_ASSERT(((bool *) shrink_buffer)[l] == ((bool *) original_buffer)[l]);
             }
             break;
+        default:
+            IARRAY_TRACE1(iarray.error, "Invalid dtype");
+            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
 
     if (!only_shrink) {
@@ -209,6 +211,9 @@ static ina_rc_t _execute_iarray_resize(iarray_context_t *ctx, iarray_data_type_t
                     INA_TEST_ASSERT(((bool *) extend_buffer)[l] == false);
                 }
                 break;
+            default:
+                IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
         }
         ina_mem_free(extend_buffer);
     }
