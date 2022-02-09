@@ -14,9 +14,9 @@
 #include <libiarray/iarray.h>
 #include <tests/iarray_test.h>
 
-static ina_rc_t test_resize(iarray_container_t *c_x, int64_t *new_shape) {
+static ina_rc_t test_resize(iarray_context_t *ctx, iarray_container_t *c_x, int64_t *new_shape) {
 
-    INA_TEST_ASSERT_SUCCEED(iarray_container_resize(c_x, new_shape));
+    INA_TEST_ASSERT_SUCCEED(iarray_container_resize(ctx, c_x, new_shape));
 
     return INA_SUCCESS;
 }
@@ -50,88 +50,174 @@ static ina_rc_t _execute_iarray_resize(iarray_context_t *ctx, iarray_data_type_t
         store.chunkshape[j] = cshape[j];
         store.blockshape[j] = bshape[j];
     }
-    int64_t buf_size = 1;
-
     blosc2_remove_urlpath(store.urlpath);
 
-    for (int k = 0; k < ndim; ++k) {
-        buf_size *= (new_shape[k] - shape[k]);
-
+    // Get shapes and buffer sizes from each part
+    int64_t shrink_shape[CATERVA_MAX_DIM] = {0};
+    int64_t shrink_len = 1;
+    int64_t start_extend_slice[CATERVA_MAX_DIM] = {0};
+    int64_t stop_extend_shape[CATERVA_MAX_DIM] = {0};
+    int64_t extend_len = 1;
+    bool only_shrink = true;
+    for (int i = 0; i < ndim; ++i) {
+        if (new_shape[i] <= shape[i]) {
+            shrink_shape[i] = new_shape[i];
+            start_extend_slice[i] = 0;
+            extend_len *= new_shape[i];
+        } else {
+            shrink_shape[i] = shape[i];
+            start_extend_slice[i] = shape[i];
+            extend_len *= (new_shape[i] - shape[i]);
+            only_shrink = false;
+        }
+        stop_extend_shape[i] = new_shape[i];
+        shrink_len *= shrink_shape[i];
     }
 
-    uint8_t *bufdes;
-    int64_t buflen = buf_size * type_size;
-    bufdes = ina_mem_alloc(buflen);
-
     iarray_container_t *c_x;
-
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buffer_x, buffer_x_len * type_size, &store, 0, &c_x));
-    INA_TEST_ASSERT_SUCCEED(test_resize(c_x, new_shape));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_get_slice_buffer(ctx, c_x, shape, new_shape, bufdes, buflen));
+    // Get original values in shrinked slice
+    uint8_t *original_buffer = ina_mem_alloc(shrink_len * type_size);
+    int64_t start_shape[CATERVA_MAX_DIM] = {0};
+
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice_buffer(ctx, c_x, start_shape, shrink_shape, original_buffer, shrink_len * type_size));
+
+
+    INA_TEST_ASSERT_SUCCEED(test_resize(ctx, c_x, new_shape));
+
+    // Get the same slice after the resize
+    uint8_t *shrink_buffer = ina_mem_alloc(shrink_len * type_size);
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice_buffer(ctx, c_x, start_shape, shrink_shape, shrink_buffer, shrink_len * type_size));
 
     switch (dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            for (int64_t l = 0; l < buf_size; ++l) {
-                INA_TEST_ASSERT_EQUAL_FLOATING(((double *) bufdes)[l], 0);
+            for (int64_t l = 0; l < shrink_len; ++l) {
+                INA_TEST_ASSERT_EQUAL_FLOATING(((double *) shrink_buffer)[l], ((double *) original_buffer)[l]);
             }
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            for (int64_t l = 0; l < buf_size; ++l) {
-                INA_TEST_ASSERT_EQUAL_FLOATING(((float *) bufdes)[l], 0);
+            for (int64_t l = 0; l < shrink_len; ++l) {
+                INA_TEST_ASSERT_EQUAL_FLOATING(((float *) shrink_buffer)[l], ((float *) original_buffer)[l]);
             }
             break;
         case IARRAY_DATA_TYPE_INT64:
-            for (int64_t l = 0; l < buf_size; ++l) {
-                INA_TEST_ASSERT_EQUAL_INT64(((int64_t *) bufdes)[l], 0);
+            for (int64_t l = 0; l < shrink_len; ++l) {
+                INA_TEST_ASSERT_EQUAL_INT64(((int64_t *) shrink_buffer)[l], ((int64_t *) original_buffer)[l]);
             }
             break;
         case IARRAY_DATA_TYPE_INT32:
-            for (int64_t l = 0; l < buf_size; ++l) {
-                INA_TEST_ASSERT_EQUAL_INT(((int32_t *) bufdes)[l], 0);
+            for (int64_t l = 0; l < shrink_len; ++l) {
+                INA_TEST_ASSERT_EQUAL_INT(((int32_t *) shrink_buffer)[l], ((int32_t *) original_buffer)[l]);
             }
             break;
         case IARRAY_DATA_TYPE_INT16:
-            for (int64_t l = 0; l < buf_size; ++l) {
-                INA_TEST_ASSERT_EQUAL_INT(((int16_t *) bufdes)[l], 0);
+            for (int64_t l = 0; l < shrink_len; ++l) {
+                INA_TEST_ASSERT_EQUAL_INT(((int16_t *) shrink_buffer)[l], ((int16_t *) original_buffer)[l]);
             }
             break;
         case IARRAY_DATA_TYPE_INT8:
-            for (int64_t l = 0; l < buf_size; ++l) {
-                INA_TEST_ASSERT_EQUAL_INT(((int8_t *) bufdes)[l], 0);
+            for (int64_t l = 0; l < shrink_len; ++l) {
+                INA_TEST_ASSERT_EQUAL_INT(((int8_t *) shrink_buffer)[l], ((int8_t *) original_buffer)[l]);
             }
             break;
         case IARRAY_DATA_TYPE_UINT64:
-            for (int64_t l = 0; l < buf_size; ++l) {
-                INA_TEST_ASSERT_EQUAL_UINT64(((uint64_t *) bufdes)[l], 0ULL);
+            for (int64_t l = 0; l < shrink_len; ++l) {
+                INA_TEST_ASSERT_EQUAL_UINT64(((uint64_t *) shrink_buffer)[l], ((uint64_t *) original_buffer)[l]);
             }
             break;
         case IARRAY_DATA_TYPE_UINT32:
-            for (int64_t l = 0; l < buf_size; ++l) {
-                INA_TEST_ASSERT_EQUAL_UINT(((uint32_t *) bufdes)[l], 0L);
+            for (int64_t l = 0; l < shrink_len; ++l) {
+                INA_TEST_ASSERT_EQUAL_UINT(((uint32_t *) shrink_buffer)[l], ((uint32_t *) original_buffer)[l]);
             }
             break;
         case IARRAY_DATA_TYPE_UINT16:
-            for (int64_t l = 0; l < buf_size; ++l) {
-                INA_TEST_ASSERT_EQUAL_UINT(((uint16_t *) bufdes)[l], 0);
+            for (int64_t l = 0; l < shrink_len; ++l) {
+                INA_TEST_ASSERT_EQUAL_UINT(((uint16_t *) shrink_buffer)[l], ((uint16_t *) original_buffer)[l]);
             }
             break;
         case IARRAY_DATA_TYPE_UINT8:
-            for (int64_t l = 0; l < buf_size; ++l) {
-                INA_TEST_ASSERT_EQUAL_UINT(((uint8_t *) bufdes)[l], 0);
+            for (int64_t l = 0; l < shrink_len; ++l) {
+                INA_TEST_ASSERT_EQUAL_UINT(((uint8_t *) shrink_buffer)[l], ((uint8_t *) original_buffer)[l]);
             }
             break;
         case IARRAY_DATA_TYPE_BOOL:
-            for (int64_t l = 0; l < buf_size; ++l) {
-                INA_TEST_ASSERT(((bool *) bufdes)[l] == false);
+            for (int64_t l = 0; l < shrink_len; ++l) {
+                INA_TEST_ASSERT(((bool *) shrink_buffer)[l] == ((bool *) original_buffer)[l]);
             }
             break;
+    }
+
+    if (!only_shrink) {
+        // Get the slice corresponding to the extended part
+        uint8_t *extend_buffer = ina_mem_alloc(extend_len * type_size);
+        INA_TEST_ASSERT_SUCCEED(iarray_get_slice_buffer(ctx, c_x, start_extend_slice, stop_extend_shape, extend_buffer, extend_len * type_size));
+
+        switch (dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                for (int64_t l = 0; l < extend_len; ++l) {
+                    INA_TEST_ASSERT_EQUAL_FLOATING(((double *) extend_buffer)[l], 0);
+                }
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                for (int64_t l = 0; l < extend_len; ++l) {
+                    INA_TEST_ASSERT_EQUAL_FLOATING(((float *) extend_buffer)[l], 0);
+                }
+                break;
+            case IARRAY_DATA_TYPE_INT64:
+                for (int64_t l = 0; l < extend_len; ++l) {
+                    INA_TEST_ASSERT_EQUAL_INT64(((int64_t *) extend_buffer)[l], 0);
+                }
+                break;
+            case IARRAY_DATA_TYPE_INT32:
+                for (int64_t l = 0; l < extend_len; ++l) {
+                    INA_TEST_ASSERT_EQUAL_INT(((int32_t *) extend_buffer)[l], 0);
+                }
+                break;
+            case IARRAY_DATA_TYPE_INT16:
+                for (int64_t l = 0; l < extend_len; ++l) {
+                    INA_TEST_ASSERT_EQUAL_INT(((int16_t *) extend_buffer)[l], 0);
+                }
+                break;
+            case IARRAY_DATA_TYPE_INT8:
+                for (int64_t l = 0; l < extend_len; ++l) {
+                    INA_TEST_ASSERT_EQUAL_INT(((int8_t *) extend_buffer)[l], 0);
+                }
+                break;
+            case IARRAY_DATA_TYPE_UINT64:
+                for (int64_t l = 0; l < extend_len; ++l) {
+                    INA_TEST_ASSERT_EQUAL_UINT64(((uint64_t *) extend_buffer)[l], 0ULL);
+                }
+                break;
+            case IARRAY_DATA_TYPE_UINT32:
+                for (int64_t l = 0; l < extend_len; ++l) {
+                    INA_TEST_ASSERT_EQUAL_UINT(((uint32_t *) extend_buffer)[l], 0L);
+                }
+                break;
+            case IARRAY_DATA_TYPE_UINT16:
+                for (int64_t l = 0; l < extend_len; ++l) {
+                    INA_TEST_ASSERT_EQUAL_UINT(((uint16_t *) extend_buffer)[l], 0);
+                }
+                break;
+            case IARRAY_DATA_TYPE_UINT8:
+                for (int64_t l = 0; l < extend_len; ++l) {
+                    INA_TEST_ASSERT_EQUAL_UINT(((uint8_t *) extend_buffer)[l], 0);
+                }
+                break;
+            case IARRAY_DATA_TYPE_BOOL:
+                for (int64_t l = 0; l < extend_len; ++l) {
+                    INA_TEST_ASSERT(((bool *) extend_buffer)[l] == false);
+                }
+                break;
+        }
+        ina_mem_free(extend_buffer);
     }
 
     iarray_container_free(ctx, &c_x);
 
     ina_mem_free(buffer_x);
-    ina_mem_free(bufdes);
+    ina_mem_free(original_buffer);
+    ina_mem_free(shrink_buffer);
     blosc2_remove_urlpath(store.urlpath);
 
     return INA_SUCCESS;
@@ -179,7 +265,7 @@ INA_TEST_FIXTURE(resize, 3_f) {
     int64_t shape[] = {10, 10, 10};
     int64_t cshape[] = {3, 5, 2};
     int64_t bshape[] = {3, 5, 2};
-    int64_t new_shape[] = {11, 15, 15};
+    int64_t new_shape[] = {11, 5, 15};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_resize(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, new_shape,
                                                   false, "arr.iarr"));
@@ -193,7 +279,7 @@ INA_TEST_FIXTURE(resize, 5_i) {
     int64_t shape[] = {10, 10, 10, 10, 10};
     int64_t cshape[] = {5, 5, 5, 5, 5};
     int64_t bshape[] = {2, 5, 1, 5, 2};
-    int64_t new_shape[] = {12, 15, 12, 15, 11};
+    int64_t new_shape[] = {5, 5, 6, 3, 4};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_resize(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, new_shape,
                                                   true, NULL));
@@ -207,7 +293,7 @@ INA_TEST_FIXTURE(resize, 5_s) {
     int64_t shape[] = {10, 10, 10, 10, 10};
     int64_t cshape[] = {10, 10, 10, 10, 10};
     int64_t bshape[] = {5, 5, 5, 5, 5};
-    int64_t new_shape[] = {15, 15, 15, 15, 15};
+    int64_t new_shape[] = {15, 15, 5, 10, 10};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_resize(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, new_shape,
                                                   true, "arr.iarr"));
@@ -221,7 +307,7 @@ INA_TEST_FIXTURE(resize, 4_ull) {
     int64_t shape[] = {10, 10, 10, 10};
     int64_t cshape[] = {7, 8, 8, 4};
     int64_t bshape[] = {3, 5, 2, 4};
-    int64_t new_shape[] = {11, 11, 11, 11};
+    int64_t new_shape[] = {5, 5, 11, 11};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_resize(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, new_shape,
                                                   false, NULL));
