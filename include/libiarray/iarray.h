@@ -561,7 +561,7 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_container_remove(char *urlpath);
 
-INA_API(ina_rc_t) iarray_container_resize(iarray_container_t *container,
+INA_API(ina_rc_t) iarray_container_resize(iarray_context_t *ctx, iarray_container_t *container,
                                           int64_t *new_shape);
 
 INA_API(ina_rc_t) iarray_squeeze_index(iarray_context_t *ctx,
