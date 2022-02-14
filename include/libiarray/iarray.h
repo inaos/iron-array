@@ -21,7 +21,10 @@
 #define IARRAY_DIMENSION_MAX 8  /* A fixed size simplifies the code and should be enough for most IronArray cases */
 
 #define IARRAY_EXPR_OPERANDS_MAX (128)
-// The maximum number of operands in expressions
+// The maximum number of input arrays in expressions
+
+#define IARRAY_EXPR_USER_PARAMS_MAX (128)
+// The maximum number of input user parameters in expressions
 
 #define IARRAY_ES_CONTAINER (INA_ES_USER_DEFINED + 1)
 #define IARRAY_ES_DTSHAPE (INA_ES_USER_DEFINED + 2)
@@ -307,6 +310,15 @@ typedef struct _iarray_jug_var_s {
 
 typedef struct jug_expression_s jug_expression_t;
 
+// Struct to be used as user parameter
+typedef union {
+    float f32;
+    double f64;
+    int32_t i32;
+    int64_t i64;
+    bool b;
+} iarray_user_param_t;
+
 typedef struct iarray_expression_s {
     iarray_context_t *ctx;
     ina_str_t expr;
@@ -320,6 +332,8 @@ typedef struct iarray_expression_s {
     iarray_storage_t *out_store_properties;
     iarray_container_t *out;
     _iarray_jug_var_t vars[IARRAY_EXPR_OPERANDS_MAX];
+    iarray_user_param_t user_params[IARRAY_EXPR_USER_PARAMS_MAX];  // the input user parameters
+    int nuser_params;
 } iarray_expression_t;
 
 INA_API(ina_rc_t) iarray_init(void);
@@ -724,6 +738,7 @@ INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e);
 
 INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val);
 INA_API(ina_rc_t) iarray_expr_bind_out_properties(iarray_expression_t *e, iarray_dtshape_t *dtshape, iarray_storage_t *store);
+INA_API(ina_rc_t) iarray_expr_bind_param(iarray_expression_t *e, iarray_user_param_t val);
 
 INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val);
 INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val);
