@@ -804,6 +804,102 @@ INA_API(ina_rc_t) iarray_is_view(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
+INA_API(ina_rc_t) iarray_vlmeta_exists(iarray_context_t *ctx,
+                                       iarray_container_t *c,
+                                       const char *name,
+                                       bool *exists)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(name);
+    INA_VERIFY_NOT_NULL(exists);
+
+    if (blosc2_vlmeta_exists(c->catarr->sc, name) < 0) {
+        *exists = false;
+    } else {
+        *exists = true;
+    }
+    return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_vlmeta_add(iarray_context_t *ctx,
+                                    iarray_container_t *c,
+                                    iarray_metalayer_t *meta)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(meta);
+
+    blosc2_cparams *cparams;
+    if (blosc2_schunk_get_cparams(c->catarr->sc, &cparams) < 0) {
+        IARRAY_TRACE1(iarray.error, "Blosc error");
+        return IARRAY_ERR_BLOSC_FAILED;
+    }
+    if (blosc2_vlmeta_add(c->catarr->sc, meta->name, meta->sdata, meta->size, cparams) < 0) {
+        return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+    }
+    meta->name = strdup(meta->name);
+
+    return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_vlmeta_update(iarray_context_t *ctx,
+                                       iarray_container_t *c,
+                                       iarray_metalayer_t *meta)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(meta);
+    INA_VERIFY_NOT_NULL(meta->name);
+    INA_VERIFY_NOT_NULL(meta->sdata);
+
+    if (meta->size < 0) {
+        IARRAY_TRACE1(iarray.error, "metalayer size must be greater than 0");
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
+
+    blosc2_cparams *cparams;
+    if (blosc2_schunk_get_cparams(c->catarr->sc, &cparams) < 0) {
+        IARRAY_TRACE1(iarray.error, "Blosc error");
+        return IARRAY_ERR_BLOSC_FAILED;
+    }
+    if (blosc2_vlmeta_update(c->catarr->sc, meta->name, meta->sdata, meta->size, cparams) < 0) {
+        return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+    }
+    return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_vlmeta_get(iarray_context_t *ctx,
+                                    iarray_container_t *c,
+                                    const char *name,
+                                    iarray_metalayer_t *meta)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(name);
+    INA_VERIFY_NOT_NULL(meta);
+
+    if (blosc2_vlmeta_get(c->catarr->sc, name, &meta->sdata, &meta->size) < 0) {
+        return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+    }
+    meta->name = strdup(name);
+    return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_vlmeta_delete(iarray_context_t *ctx,
+                                       iarray_container_t *c,
+                                       const char *name)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(c);
+    INA_VERIFY_NOT_NULL(name);
+
+    if (blosc2_vlmeta_delete(c->catarr->sc, name) < 0) {
+        return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+    }
+    return INA_SUCCESS;
+}
+
 INA_API(ina_rc_t) iarray_container_info(iarray_container_t *container, int64_t *nbytes, int64_t *cbytes)
 {
     INA_VERIFY_NOT_NULL(container);

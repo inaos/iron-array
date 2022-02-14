@@ -634,6 +634,21 @@ INA_API(ina_rc_t) iarray_container_equal(iarray_container_t *a, iarray_container
 INA_API(ina_rc_t) iarray_container_is_symmetric(iarray_container_t *a);
 INA_API(ina_rc_t) iarray_container_is_triangular(iarray_container_t *a);
 
+/* Metalayers */
+typedef struct {
+    char *name;
+    //!< The name of the metalayer
+    uint8_t *sdata;
+    //!< The serialized data to store
+    int32_t size;
+    //!< The size of the serialized data
+} iarray_metalayer_t;
+
+INA_API(ina_rc_t) iarray_vlmeta_exists(iarray_context_t *ctx, iarray_container_t *c, const char *name, bool *exists);
+INA_API(ina_rc_t) iarray_vlmeta_add(iarray_context_t *ctx, iarray_container_t *c, iarray_metalayer_t *meta);
+INA_API(ina_rc_t) iarray_vlmeta_update(iarray_context_t *ctx, iarray_container_t *c, iarray_metalayer_t *meta);
+INA_API(ina_rc_t) iarray_vlmeta_get(iarray_context_t *ctx, iarray_container_t *c, const char *name, iarray_metalayer_t *meta);
+INA_API(ina_rc_t) iarray_vlmeta_delete(iarray_context_t *ctx, iarray_container_t *c, const char *name);
 
 /* Reductions */
 typedef enum iarray_reduce_fun_e {
