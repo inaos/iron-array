@@ -333,7 +333,7 @@ typedef struct iarray_expression_s {
     iarray_container_t *out;
     _iarray_jug_var_t vars[IARRAY_EXPR_OPERANDS_MAX];
     iarray_user_param_t user_params[IARRAY_EXPR_USER_PARAMS_MAX];  // the input user parameters
-    int nuser_params;
+    unsigned int nuser_params;
 } iarray_expression_t;
 
 INA_API(ina_rc_t) iarray_init(void);
