@@ -104,6 +104,10 @@ INA_API(ina_rc_t) iarray_expr_bind_param(iarray_expression_t *e, iarray_user_par
 {
     INA_VERIFY_NOT_NULL(e);
 
+    if (e->nuser_params >= IARRAY_EXPR_USER_PARAMS_MAX) {
+        return INA_ERROR(INA_ERR_FULL);
+    }
+
     e->user_params[e->nuser_params] = val;
     e->nuser_params++;
     return INA_SUCCESS;
