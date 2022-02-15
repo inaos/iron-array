@@ -258,7 +258,7 @@ INA_TEST_FIXTURE(reduce_multi_view, sum_2_ui_1) {
     int8_t naxis = 1;
     int8_t axis[] = {0};
 
-    int64_t view_start[] = {10};
+    int64_t view_start[] = {10, 10};
     int64_t view_stop[] = {110, 300};
     
     int64_t dest_cshape[] = {210};
