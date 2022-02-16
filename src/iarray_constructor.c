@@ -46,6 +46,40 @@ INA_API(ina_rc_t) iarray_empty(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
+
+INA_API(ina_rc_t) iarray_uninit(iarray_context_t *ctx,
+                                iarray_dtshape_t *dtshape,
+                                iarray_storage_t *storage,
+                                int flags,
+                                iarray_container_t **container)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(storage);
+    INA_VERIFY_NOT_NULL(container);
+
+    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, storage, flags, container));
+
+    caterva_config_t cat_cfg = {0};
+    iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cat_cfg);
+    caterva_ctx_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_ctx_new(&cat_cfg, &cat_ctx));
+
+    caterva_params_t cat_params = {0};
+    iarray_create_caterva_params(dtshape, &cat_params);
+
+    caterva_storage_t cat_storage = {0};
+    iarray_create_caterva_storage(dtshape, storage, &cat_storage);
+    IARRAY_ERR_CATERVA(caterva_uninit(cat_ctx, &cat_params, &cat_storage, &(*container)->catarr));
+    free(cat_storage.metalayers[0].sdata);
+    free(cat_storage.metalayers[0].name);
+
+    IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
+
+    return INA_SUCCESS;
+}
+
+
 INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
                                 iarray_dtshape_t *dtshape,
                                 double start,
