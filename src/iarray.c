@@ -226,6 +226,27 @@ out2:
 }
 
 
+INA_API(ina_rc_t) iarray_get_L2_size(uint64_t *L2_size) {
+    // Warning: The L2 reported by Apple M1 is shared, and in the most energy-efficient cpu cluster (4 MB)
+
+    // Allocate, initialize, and perform topology detection
+    hwloc_topology_t topology;
+    hwloc_topology_init(&topology);
+    hwloc_topology_load(topology);
+
+    hwloc_obj_t L2_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L2CACHE, 0);
+    if (L2_obj == NULL) {
+        IARRAY_TRACE1(iarray.error, "Can not get the L2 cache size");
+        return INA_ERROR(IARRAY_ERR_GET_CACHE_SIZES);
+    }
+    *L2_size = L2_obj->attr->cache.size;
+
+    // ...and destroy topology
+    hwloc_topology_destroy(topology);
+    return INA_SUCCESS;
+}
+
+
 // Given a shape, offer advice on the partition shapes (chunkshape and blockshape)
 INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
                                           int64_t min_chunksize, int64_t max_chunksize,

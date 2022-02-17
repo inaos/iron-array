@@ -353,6 +353,11 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx);
 INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores);
 
 /*
+ *  Get the L2 size in the system.
+ */
+INA_API(ina_rc_t) iarray_get_L2_size(uint64_t *L2_size);
+
+/*
  *  Provide advice for the partition shape of a `dtshape`.
  *
  *  If success, storage->chunkshape and storage->blockshape will contain the advice.
