@@ -236,8 +236,8 @@ INA_API(ina_rc_t) iarray_get_L2_size(uint64_t *L2_size) {
 
     hwloc_obj_t L2_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L2CACHE, 0);
     if (L2_obj == NULL) {
-        IARRAY_TRACE1(iarray.error, "Can not get the L2 cache size");
-        return INA_ERROR(IARRAY_ERR_GET_CACHE_SIZES);
+        IARRAY_TRACE1(iarray.warning, "Can not get the L2 cache size. Assigning 256 * 1024");
+        *L2_size = 256 * 1024;
     }
     *L2_size = L2_obj->attr->cache.size;
 
