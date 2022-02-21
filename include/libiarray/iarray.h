@@ -779,7 +779,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
 
 /* Zarr proxy */
 
-typedef void (*zhandler_ptr) (char *, int64_t *, int64_t *, uint8_t *);
+typedef void (*zhandler_ptr) (char *zarr_urlpath, int64_t *slice_start, int64_t *slice_stop,
+                                       uint8_t *dest);
 
 INA_API(ina_rc_t) iarray_add_zproxy_postfilter(iarray_container_t *src, char *zarr_urlpath, zhandler_ptr zhandler);
 
