@@ -109,7 +109,7 @@ INA_API(ina_rc_t) iarray_add_zproxy_postfilter(iarray_container_t *src, char *za
     src->catarr->sc->dctx = dctx;
     src->catarr->sc->dctx->postfilter = dparams->postfilter;
 
-    fill_zproxy_udata(zarr_urlpath, src, zhandler);
+    IARRAY_RETURN_IF_FAILED(fill_zproxy_udata(zarr_urlpath, src, zhandler));
 
     free(dparams);
 
