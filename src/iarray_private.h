@@ -401,7 +401,4 @@ static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data
 
     return INA_SUCCESS;
 }
-
-static void index_unidim_to_multidim(int8_t ndim, int64_t *shape, int64_t i, int64_t *index);
-
 #endif
