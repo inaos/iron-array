@@ -10,10 +10,12 @@
  *
  */
 
+#include "iarray_private.h"
+#include "caterva_utils.h"
 #include <libiarray/iarray.h>
 
-void index_unidim_to_multidim(int8_t ndim, int64_t *shape, int64_t i, int64_t *index) {
-    int64_t strides[CATERVA_MAX_DIM];
+void _index_unidim_to_multidim(uint8_t ndim, int64_t const *shape, int64_t i, int64_t *index) {
+    int64_t strides[IARRAY_DIMENSION_MAX];
     if (ndim == 0) {
         return;
     }
@@ -47,37 +49,53 @@ typedef struct {
 ina_rc_t zproxy_postfilter(blosc2_postfilter_params *postparams)
 {
     zproxy_postparams_udata *udata = postparams->user_data;
-    int64_t *shape = udata->extshape;
-    int64_t *chunkshape = udata->extchunkshape;
+    int64_t *extshape = udata->extshape;
+    int64_t *extchunkshape = udata->extchunkshape;
     int32_t *blockshape = udata->blockshape;
     uint8_t ndim = udata->ndim;
 
     int64_t chunks_in_array[IARRAY_DIMENSION_MAX] = {0};
     for (int i = 0; i < ndim; ++i) {
-        chunks_in_array[i] = shape[i] / chunkshape[i];
+        chunks_in_array[i] = extshape[i] / extchunkshape[i];
     }
     int64_t blocks_in_chunk[IARRAY_DIMENSION_MAX] = {0};
     for (int i = 0; i < ndim; ++i) {
-        blocks_in_chunk[i] = chunkshape[i] / blockshape[i];
+        blocks_in_chunk[i] = extchunkshape[i] / blockshape[i];
     }
 
     // Get coordinates of chunk
     int64_t nchunk = postparams->nchunk;
     int64_t nchunk_ndim[IARRAY_DIMENSION_MAX] = {0};
-    index_unidim_to_multidim(ndim, chunks_in_array, nchunk, &nchunk_ndim);
+    _index_unidim_to_multidim(ndim, chunks_in_array, nchunk, nchunk_ndim);
     // Get coordinates of block
     int64_t nblock = postparams->nblock;
     int64_t nblock_ndim[IARRAY_DIMENSION_MAX] = {0};
-    index_unidim_to_multidim(ndim, blocks_in_chunk, nblock, &nblock_ndim);
+    _index_unidim_to_multidim(ndim, blocks_in_chunk, nblock, nblock_ndim);
     // Get start element coordinates from the corresponding block
-    int64_t *start_elem_ndim = malloc(IARRAY_DIMENSION_MAX * sizeof(int64_t));
+    int64_t start_elem_ndim[IARRAY_DIMENSION_MAX] = {0};
     int64_t stop_elem_ndim[IARRAY_DIMENSION_MAX] = {0};
+    int64_t slice_shape[IARRAY_DIMENSION_MAX] = {0};
     for (int i = 0; i < ndim; ++i) {
-        start_elem_ndim[i] = nchunk_ndim[i] * chunkshape[i] + nblock_ndim[i] * blockshape[i];
-        stop_elem_ndim[i] = nchunk_ndim[i] * chunkshape[i] + (nblock_ndim[i] + 1) * blockshape[i] + 1;
+        start_elem_ndim[i] = nchunk_ndim[i] * extchunkshape[i] + nblock_ndim[i] * blockshape[i];
+        stop_elem_ndim[i] = nchunk_ndim[i] * extchunkshape[i] + (nblock_ndim[i] + 1) * blockshape[i];
+        slice_shape[i] = stop_elem_ndim[i] - start_elem_ndim[i];
     }
 
     udata->zhandler(udata->zproxy_urlpath, start_elem_ndim, stop_elem_ndim, postparams->out);
+
+    // Realloc data since there may be padding between elements
+    uint8_t * aux = malloc(postparams->size);
+    memcpy(aux, postparams->out, postparams->size);
+    memset(postparams->out, 0, postparams->size);
+    int64_t slice_start[IARRAY_DIMENSION_MAX] = {0};
+    int64_t blockshape_i64[IARRAY_DIMENSION_MAX];
+    for (int i = 0; i < ndim; ++i) {
+        blockshape_i64[i] = blockshape[i];
+    }
+    caterva_copy_buffer(ndim, postparams->typesize,
+                        aux, slice_shape, slice_start, slice_shape,
+                        postparams->out, blockshape_i64, slice_start);
+    free(aux);
 
     return INA_SUCCESS;
 }

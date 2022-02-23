@@ -51,7 +51,7 @@ static ina_rc_t iarray_create_caterva_structs(iarray_context_t *ctx,
     }
 
     uint8_t *smeta;
-    int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
+    int32_t smeta_len = _iarray_serialize_meta(dtshape->dtype, &smeta);
     if (smeta_len < 0) {
         IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
         return INA_ERROR(INA_ERR_FAILED);

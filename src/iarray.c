@@ -502,7 +502,7 @@ ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage
         cat_storage->blockshape[i] = (int32_t) storage->blockshape[i];
     }
     uint8_t *smeta;
-    int32_t smeta_len = serialize_meta(dtshape->dtype, &smeta);
+    int32_t smeta_len = _iarray_serialize_meta(dtshape->dtype, &smeta);
     if (smeta_len < 0) {
         IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
         return INA_ERROR(INA_ERR_FAILED);
