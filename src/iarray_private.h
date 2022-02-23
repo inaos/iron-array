@@ -343,7 +343,7 @@ ina_rc_t iarray_container_new(iarray_context_t *ctx,
 
 ina_rc_t iarray_set_dtype_size(iarray_dtshape_t *dtshape);
 
-static int32_t serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
+static int32_t _iarray_serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
 {
     if (smeta == NULL) {
         return -1;
@@ -371,7 +371,7 @@ static int32_t serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
 }
 
 
-static ina_rc_t deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype) {
+static ina_rc_t _iarray_deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype) {
     INA_UNUSED(smeta_len);
     INA_VERIFY_NOT_NULL(smeta);
     INA_VERIFY_NOT_NULL(dtype);

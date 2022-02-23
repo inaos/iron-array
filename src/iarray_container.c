@@ -156,7 +156,7 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool conti
     }
     iarray_data_type_t dtype;
 
-    if (deserialize_meta(smeta, smeta_len, &dtype) != 0) {
+    if (_iarray_deserialize_meta(smeta, smeta_len, &dtype) != 0) {
         IARRAY_TRACE1(iarray.error, "Error deserializing a sframe");
         return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
     }
