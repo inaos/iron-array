@@ -13,30 +13,20 @@
 #include "iarray_private.h"
 #include "caterva_utils.h"
 #include <libiarray/iarray.h>
+#include <stdio.h>
 
-void _index_unidim_to_multidim(uint8_t ndim, int64_t const *shape, int64_t i, int64_t *index) {
-    int64_t strides[IARRAY_DIMENSION_MAX];
-    if (ndim == 0) {
-        return;
-    }
-    strides[ndim - 1] = 1;
-    for (int j = ndim - 2; j >= 0; --j) {
-        strides[j] = shape[j + 1] * strides[j + 1];
-    }
-
-    index[0] = i / strides[0];
-    for (int j = 1; j < ndim; ++j) {
-        index[j] = (i % strides[j - 1]) / strides[j];
-    }
-}
 
 typedef struct {
     char *zproxy_urlpath;
     //!< urlpath to zarr array with data.
-    int64_t extshape[IARRAY_DIMENSION_MAX];
+    int64_t shape[IARRAY_DIMENSION_MAX];
     //!< Shape of original data.
-    int64_t extchunkshape[IARRAY_DIMENSION_MAX];
+    int64_t extshape[IARRAY_DIMENSION_MAX];
+    //!< Extended shape of original data.
+    int64_t chunkshape[IARRAY_DIMENSION_MAX];
     //!< Shape of each chunk.
+    int64_t extchunkshape[IARRAY_DIMENSION_MAX];
+    //!< Extended shape of each chunk.
     int32_t blockshape[IARRAY_DIMENSION_MAX];
     //!< Shape of each block.
     uint8_t ndim;
@@ -66,11 +56,11 @@ ina_rc_t zproxy_postfilter(blosc2_postfilter_params *postparams)
     // Get coordinates of chunk
     int64_t nchunk = postparams->nchunk;
     int64_t nchunk_ndim[IARRAY_DIMENSION_MAX] = {0};
-    _index_unidim_to_multidim(ndim, chunks_in_array, nchunk, nchunk_ndim);
+    index_unidim_to_multidim(ndim, chunks_in_array, nchunk, nchunk_ndim);
     // Get coordinates of block
     int64_t nblock = postparams->nblock;
     int64_t nblock_ndim[IARRAY_DIMENSION_MAX] = {0};
-    _index_unidim_to_multidim(ndim, blocks_in_chunk, nblock, nblock_ndim);
+    index_unidim_to_multidim(ndim, blocks_in_chunk, nblock, nblock_ndim);
     // Get start element coordinates from the corresponding block
     int64_t start_elem_ndim[IARRAY_DIMENSION_MAX] = {0};
     int64_t stop_elem_ndim[IARRAY_DIMENSION_MAX] = {0};
@@ -78,7 +68,14 @@ ina_rc_t zproxy_postfilter(blosc2_postfilter_params *postparams)
     for (int i = 0; i < ndim; ++i) {
         start_elem_ndim[i] = nchunk_ndim[i] * extchunkshape[i] + nblock_ndim[i] * blockshape[i];
         stop_elem_ndim[i] = nchunk_ndim[i] * extchunkshape[i] + (nblock_ndim[i] + 1) * blockshape[i];
-        slice_shape[i] = stop_elem_ndim[i] - start_elem_ndim[i];
+        // The stop may include the padding due to the blockshape
+        if (nblock_ndim[i] == (blocks_in_chunk[i] - 1)) {
+            stop_elem_ndim[i] -= (extchunkshape[i] - udata->chunkshape[i]);
+        }
+        // The stop may include the padding due to the chunkshape
+        if (stop_elem_ndim[i] > udata->shape[i]) {
+            stop_elem_ndim[i] = udata->shape[i];
+        }
     }
 
     udata->zhandler(udata->zproxy_urlpath, start_elem_ndim, stop_elem_ndim, postparams->out);
@@ -90,6 +87,7 @@ ina_rc_t zproxy_postfilter(blosc2_postfilter_params *postparams)
     int64_t slice_start[IARRAY_DIMENSION_MAX] = {0};
     int64_t blockshape_i64[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ndim; ++i) {
+        slice_shape[i] = stop_elem_ndim[i] - start_elem_ndim[i];
         blockshape_i64[i] = blockshape[i];
     }
     caterva_copy_buffer(ndim, postparams->typesize,
@@ -108,18 +106,21 @@ INA_API(ina_rc_t) iarray_add_zproxy_postfilter(iarray_container_t *src, char *za
     // Create dparams
     blosc2_dparams *dparams;
     blosc2_schunk_get_dparams(src->catarr->sc, &dparams);
+
     dparams->postfilter = (blosc2_postfilter_fn)zproxy_postfilter;
 
     blosc2_postfilter_params *postparams = malloc(sizeof(blosc2_postfilter_params));
     zproxy_postparams_udata *zpostparams = malloc(sizeof(zproxy_postparams_udata));
 
-
     // Fill the user_data
     zpostparams->zproxy_urlpath = malloc(strlen(zarr_urlpath) + 1);
-    memcpy(zpostparams->zproxy_urlpath, zarr_urlpath, strlen(zarr_urlpath));
+    strcpy(zpostparams->zproxy_urlpath, zarr_urlpath);
+
     zpostparams->ndim = src->catarr->ndim;
     for (int i = 0; i < zpostparams->ndim; ++i) {
         zpostparams->extshape[i] = src->catarr->extshape[i];
+        zpostparams->shape[i] = src->catarr->shape[i];
+        zpostparams->chunkshape[i] = src->catarr->chunkshape[i];
         zpostparams->extchunkshape[i] = src->catarr->extchunkshape[i];
         zpostparams->blockshape[i] = src->catarr->blockshape[i];
     }
