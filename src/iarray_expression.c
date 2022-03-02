@@ -631,7 +631,8 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         // The external buffer is needed *inside* the write iterator because
         // this will end as a (realloc'ed) compressed chunk of a final container
         // (we do so in order to avoid copies as much as possible)
-        external_buffer = malloc(external_buffer_size);
+        // calloc to keep unwritten values as zeros
+        external_buffer = calloc(1, external_buffer_size);
 
         IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter_out, external_buffer, external_buffer_size));
 
