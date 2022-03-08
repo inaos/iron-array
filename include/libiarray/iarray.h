@@ -777,17 +777,17 @@ INA_API(ina_rc_t) iarray_expr_compile_udf(iarray_expression_t *e,
 
 INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **container);
 
+//FIXME: remove
+INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp);
+INA_API(ina_rc_t) iarray_expr_get_nthreads(iarray_expression_t *e, int *nthreads);
+
+
 /* Zarr proxy */
 
 typedef void (*zhandler_ptr) (char *zarr_urlpath, int64_t *slice_start, int64_t *slice_stop,
                                        uint8_t *dest);
 
 INA_API(ina_rc_t) iarray_add_zproxy_postfilter(iarray_container_t *src, char *zarr_urlpath, zhandler_ptr zhandler);
-
-//FIXME: remove
-INA_API(ina_rc_t) iarray_expr_get_mp(iarray_expression_t *e, ina_mempool_t **mp);
-INA_API(ina_rc_t) iarray_expr_get_nthreads(iarray_expression_t *e, int *nthreads);
-
 
 INA_API(ina_rc_t) iarray_opt_gemv(iarray_context_t *ctx,
                                   iarray_container_t *a,
