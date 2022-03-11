@@ -838,12 +838,16 @@ INA_TEST_FIXTURE(reduce_multi_view, mean_2_sc_2) {
     int64_t dest_cshape[] = {1};
     int64_t dest_bshape[] = {1};
     bool src_contiguous = true;
-    char *src_urlpath = NULL;
+    char *src_urlpath = "srcarr.iarr";
     bool dest_contiguous = false;
-    char *dest_urlpath = "destarr.iarr";
+    char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_view(data->ctx, dtype, ndim, IARRAY_REDUCE_MEAN, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
                                               dest_contiguous, dest_urlpath));
+    // Check that the temporary file is removed properly when the dest_urlpath = NULL and the view comes from disk
+    INA_TEST_ASSERT_SUCCEED(test_reduce_multi_view(data->ctx, dtype, ndim, IARRAY_REDUCE_MEAN, shape, cshape, bshape, view_start, view_stop,
+                                                   naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
+                                                   dest_contiguous, dest_urlpath));
 }
 
 

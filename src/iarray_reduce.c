@@ -1173,9 +1173,9 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     if (storage->urlpath != NULL) {
         blosc2_remove_urlpath("_iarray_red.iarr");
         blosc2_remove_urlpath("_iarray_red_2.iarr");
-        if (a->view) {
-            blosc2_remove_urlpath("_iarray_view.iarr");
-        }
+    }
+    if (a->view && a->storage->urlpath != NULL) {
+        blosc2_remove_urlpath("_iarray_view.iarr");
     }
 
 
