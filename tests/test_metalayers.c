@@ -44,7 +44,20 @@ static ina_rc_t test_metalayers(iarray_context_t *ctx, iarray_data_type_t dtype,
     vlmeta1.sdata = (uint8_t *) &sdata1;
     vlmeta1.size = sizeof(sdata1);
 
+    int16_t nvlmetalayers;
+    INA_TEST_ASSERT_SUCCEED(iarray_vlmeta_nitems(ctx, c, &nvlmetalayers));
+    INA_TEST_ASSERT(nvlmetalayers == 0);
+
     INA_TEST_ASSERT_SUCCEED(iarray_vlmeta_add(ctx, c, &vlmeta1));
+    INA_TEST_ASSERT_SUCCEED(iarray_vlmeta_nitems(ctx, c, &nvlmetalayers));
+    INA_TEST_ASSERT(nvlmetalayers == 1);
+
+    char names_[2][8] = {"vlmeta1", "vlmeta2"};
+    char **names = malloc(sizeof(char*) * nvlmetalayers);
+    INA_TEST_ASSERT_SUCCEED(iarray_vlmeta_get_names(ctx, c, names));
+    for (int i = 0; i < nvlmetalayers; ++i) {
+        INA_TEST_ASSERT(strcmp(names[i], names_[i]) == 0);
+    }
 
     bool exists;
     INA_TEST_ASSERT_SUCCEED(iarray_vlmeta_exists(ctx, c, "vlmeta2", &exists));
@@ -76,7 +89,15 @@ static ina_rc_t test_metalayers(iarray_context_t *ctx, iarray_data_type_t dtype,
     vlmeta2.sdata = (uint8_t *) &sdata1;
     vlmeta2.size = sizeof(sdata1);
     INA_TEST_ASSERT_SUCCEED(iarray_vlmeta_add(ctx, c, &vlmeta2));
+    INA_TEST_ASSERT_SUCCEED(iarray_vlmeta_nitems(ctx, c, &nvlmetalayers));
 
+    INA_TEST_ASSERT(nvlmetalayers == 2);
+    free(names);
+    names = malloc(sizeof(char*) * nvlmetalayers);
+    INA_TEST_ASSERT_SUCCEED(iarray_vlmeta_get_names(ctx, c, names));
+    for (int i = 0; i < nvlmetalayers; ++i) {
+        INA_TEST_ASSERT(strcmp(names[i], names_[i]) == 0);
+    }
     INA_TEST_ASSERT_SUCCEED(iarray_vlmeta_delete(ctx, c, vlmeta2.name));
     INA_TEST_ASSERT_SUCCEED(iarray_vlmeta_exists(ctx, c, "vlmeta2", &exists));
     INA_TEST_ASSERT(exists == false);
