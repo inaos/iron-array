@@ -660,6 +660,8 @@ INA_API(ina_rc_t) iarray_vlmeta_add(iarray_context_t *ctx, iarray_container_t *c
 INA_API(ina_rc_t) iarray_vlmeta_update(iarray_context_t *ctx, iarray_container_t *c, iarray_metalayer_t *meta);
 INA_API(ina_rc_t) iarray_vlmeta_get(iarray_context_t *ctx, iarray_container_t *c, const char *name, iarray_metalayer_t *meta);
 INA_API(ina_rc_t) iarray_vlmeta_delete(iarray_context_t *ctx, iarray_container_t *c, const char *name);
+INA_API(ina_rc_t) iarray_vlmeta_nitems(iarray_context_t *ctx, iarray_container_t *c, int16_t *nitems);
+INA_API(ina_rc_t) iarray_vlmeta_get_names(iarray_context_t *ctx, iarray_container_t *c, char **names);
 
 /* Reductions */
 typedef enum iarray_reduce_fun_e {

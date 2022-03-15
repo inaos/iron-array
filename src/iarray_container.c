@@ -900,6 +900,33 @@ INA_API(ina_rc_t) iarray_vlmeta_delete(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
+INA_API(ina_rc_t) iarray_vlmeta_nitems(iarray_context_t *ctx, iarray_container_t *c, int16_t *nitems)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(c);
+
+    *nitems = c->catarr->sc->nvlmetalayers;
+
+    return INA_SUCCESS;
+
+}
+
+INA_API(ina_rc_t) iarray_vlmeta_get_names(iarray_context_t *ctx,
+                                          iarray_container_t *c,
+                                          char **names)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(c);
+
+    *names = malloc(c->catarr->sc->nvlmetalayers * sizeof(blosc2_metalayer));
+
+    int16_t nvlmetalayers = c->catarr->sc->nvlmetalayers;
+    for (int i = 0; i < nvlmetalayers; ++i) {
+        names[i] = c->catarr->sc->vlmetalayers[i]->name;
+    }
+    return INA_SUCCESS;
+}
+
 INA_API(ina_rc_t) iarray_container_info(iarray_container_t *container, int64_t *nbytes, int64_t *cbytes)
 {
     INA_VERIFY_NOT_NULL(container);
