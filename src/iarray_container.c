@@ -900,6 +900,24 @@ INA_API(ina_rc_t) iarray_vlmeta_delete(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
+INA_API(int16_t) iarray_nvlmeta(iarray_context_t *ctx, iarray_container_t *c)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(c);
+
+    return c->catarr->sc->nvlmetalayers;
+
+}
+
+INA_API(iarray_metalayer_t **) iarray_vlmeta_list(iarray_context_t *ctx, iarray_container_t *c)
+{
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(c);
+
+    return c->catarr->sc->vlmetalayers;
+
+}
+
 INA_API(ina_rc_t) iarray_container_info(iarray_container_t *container, int64_t *nbytes, int64_t *cbytes)
 {
     INA_VERIFY_NOT_NULL(container);
