@@ -21,7 +21,7 @@ We use inac cmake build-system in combination with different libraries which can
 miniconda3.  In particular, one can install LLVM from the numba channel, and MKL and SVML from Intel
 channel in a cross-platform portable way with:
 
-    $ conda install -c numba 'llvmdev>=11'
+    $ conda install -c numba 'llvmdev>=12'
     $ conda install -c intel mkl-include
     $ conda install -c intel mkl-static
     $ conda install -c intel icc_rt    # SVML
