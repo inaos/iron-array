@@ -57,7 +57,7 @@ typedef struct iarray_eval_pparams_s {
 
 typedef int (*iarray_eval_fn)(iarray_eval_pparams_t *params);
 
-INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_expression_t **e) {
+INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_data_type_t data_type, iarray_expression_t **e) {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(e);
     *e = ina_mem_alloc(sizeof(iarray_expression_t));
@@ -71,7 +71,7 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_dtshape_t *dtsha
     ina_mem_set(&(*e)->vars, 0, sizeof(_iarray_jug_var_t) * IARRAY_EXPR_OPERANDS_MAX);
     // map dtype to JUG type
     jug_expression_dtype_t dtype;
-    switch (dtshape->dtype) {
+    switch (data_type) {
         case IARRAY_DATA_TYPE_BOOL:
             // how to support?
             dtype = JUG_EXPRESSION_DTYPE_SINT8;// is that accurate?
