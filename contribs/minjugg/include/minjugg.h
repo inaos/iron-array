@@ -78,7 +78,8 @@ typedef enum te_expr_type_e {
     EXPR_TYPE_TAN,
     EXPR_TYPE_TANH,
     EXPR_TYPE_FMOD,
-    EXPR_TYPE_CUSTOM
+    EXPR_TYPE_MIN,
+    EXPR_TYPE_MAX
 } te_expr_type_t;
 
 typedef struct jug_te_variable {

@@ -84,7 +84,7 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
         INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
     }
     else {
-        
+
     }
     iarray_storage_t outstore;
     outstore.contiguous = contiguous;
@@ -381,6 +381,44 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc_power_pi)
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr_pow_pi;
     data->expr_str = "power(x, 3.141592)";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {100, 40};
+    int64_t cshape[] = {50, 20};
+    int64_t bshape[] = {15, 20};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+}
+
+static double expr_min(const double x)
+{
+    return INA_MIN(x, 234.345);
+}
+
+INA_TEST_FIXTURE(expression_eval_double, iterblosc_min)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr_min;
+    data->expr_str = "min(x, 234.345)";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {100, 40};
+    int64_t cshape[] = {50, 20};
+    int64_t bshape[] = {15, 20};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+}
+
+static double expr_max(const double x)
+{
+    return INA_MAX(x, 4.345);
+}
+
+INA_TEST_FIXTURE(expression_eval_double, iterblosc_max)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr_max;
+    data->expr_str = "max(x, 4.345)";
 
     int8_t ndim = 2;
     int64_t shape[] = {100, 40};

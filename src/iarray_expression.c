@@ -272,6 +272,23 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
         case IARRAY_DATA_TYPE_FLOAT:
             e->typesize = sizeof(float);
             break;
+        case IARRAY_DATA_TYPE_BOOL:
+        case IARRAY_DATA_TYPE_INT8:
+        case IARRAY_DATA_TYPE_UINT8:
+            e->typesize = sizeof(int8_t);
+            break;
+        case IARRAY_DATA_TYPE_INT16:
+        case IARRAY_DATA_TYPE_UINT16:
+            e->typesize = sizeof(int16_t);
+            break;
+        case IARRAY_DATA_TYPE_INT32:
+        case IARRAY_DATA_TYPE_UINT32:
+            e->typesize = sizeof(int32_t);
+            break;
+        case IARRAY_DATA_TYPE_INT64:
+        case IARRAY_DATA_TYPE_UINT64:
+            e->typesize = sizeof(int64_t);
+            break;
         default:
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
