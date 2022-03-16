@@ -539,6 +539,8 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         // TODO: the overhead is only useful for the prefilter approach, so think if there is a better option.
         (*itr)->external_buffer = false;
         (*itr)->block = (uint8_t *) ina_mem_alloc((size_t) block_size + BLOSC_MAX_OVERHEAD);
+        // Keep unwritten values as zeros
+        memset((*itr)->block, 0 , block_size + BLOSC_MAX_OVERHEAD);
         (*itr)->block_pointer = (void **) &(*itr)->block;
     } else {
         (*itr)->external_buffer = true;

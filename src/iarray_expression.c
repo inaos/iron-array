@@ -52,6 +52,7 @@ typedef struct iarray_eval_pparams_s {
     int32_t *window_shape;  // the shape of the window for the input arrays (NULL if not available)
     int64_t *window_start; // the start coordinates for the window shape (NULL if not available)
     int32_t *window_strides; // the strides for the window shape (NULL if not available)
+    iarray_user_param_t user_params[IARRAY_EXPR_USER_PARAMS_MAX];  // the input user parameters
 } iarray_eval_pparams_t;
 
 typedef int (*iarray_eval_fn)(iarray_eval_pparams_t *params);
@@ -66,6 +67,7 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_dtshape_t *dtsha
     (*e)->expr = NULL;
     (*e)->nvars = 0;
     (*e)->max_out_len = 0;   // helper for leftovers
+    (*e)->nuser_params = 0;
     ina_mem_set(&(*e)->vars, 0, sizeof(_iarray_jug_var_t) * IARRAY_EXPR_OPERANDS_MAX);
     // map dtype to JUG type
     jug_expression_dtype_t dtype;
@@ -80,12 +82,12 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_dtshape_t *dtsha
         case IARRAY_DATA_TYPE_FLOAT:
             dtype = JUG_EXPRESSION_DTYPE_FLOAT;
             break;
-        case IARRAY_DATA_TYPE_FLOAT16:
-            // not supported yet
-            return INA_ERR_INVALID_ARGUMENT;
-        case IARRAY_DATA_TYPE_FLOAT8:
-            // not supported yet
-            return INA_ERR_INVALID_ARGUMENT;
+        // case IARRAY_DATA_TYPE_FLOAT16:
+        //     // not supported yet
+        //     return INA_ERR_INVALID_ARGUMENT;
+        // case IARRAY_DATA_TYPE_FLOAT8:
+        //     // not supported yet
+        //     return INA_ERR_INVALID_ARGUMENT;
         case IARRAY_DATA_TYPE_INT8:
             dtype = JUG_EXPRESSION_DTYPE_SINT8;
             break;
@@ -128,6 +130,19 @@ INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarr
     e->vars[e->nvars].var = strdup(var);   // yes, we want a copy here!
     e->vars[e->nvars].c = val;
     e->nvars++;
+    return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_expr_bind_param(iarray_expression_t *e, iarray_user_param_t val)
+{
+    INA_VERIFY_NOT_NULL(e);
+
+    if (e->nuser_params >= IARRAY_EXPR_USER_PARAMS_MAX) {
+        return INA_ERROR(INA_ERR_FULL);
+    }
+
+    e->user_params[e->nuser_params] = val;
+    e->nuser_params++;
     return INA_SUCCESS;
 }
 
@@ -429,6 +444,10 @@ int prefilter_func(blosc2_prefilter_params *pparams)
         }
     }
 
+    for (int i = 0; i < e->nuser_params; i++) {
+        eval_pparams.user_params[i] = e->user_params[i];
+    }
+
     // Eval the expression for this chunk
     int ret;
 
@@ -645,7 +664,8 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         // The external buffer is needed *inside* the write iterator because
         // this will end as a (realloc'ed) compressed chunk of a final container
         // (we do so in order to avoid copies as much as possible)
-        external_buffer = malloc(external_buffer_size);
+        // calloc to keep unwritten values as zeros
+        external_buffer = calloc(1, external_buffer_size);
 
         IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter_out, external_buffer, external_buffer_size));
 

@@ -21,7 +21,10 @@
 #define IARRAY_DIMENSION_MAX 8  /* A fixed size simplifies the code and should be enough for most IronArray cases */
 
 #define IARRAY_EXPR_OPERANDS_MAX (128)
-// The maximum number of operands in expressions
+// The maximum number of input arrays in expressions
+
+#define IARRAY_EXPR_USER_PARAMS_MAX (128)
+// The maximum number of input user parameters in expressions
 
 #define IARRAY_ES_CONTAINER (INA_ES_USER_DEFINED + 1)
 #define IARRAY_ES_DTSHAPE (INA_ES_USER_DEFINED + 2)
@@ -133,8 +136,8 @@ typedef enum iarray_random_dist_parameter_e {
 typedef enum iarray_data_type_e {
     IARRAY_DATA_TYPE_DOUBLE = 0,
     IARRAY_DATA_TYPE_FLOAT = 1,
-    IARRAY_DATA_TYPE_FLOAT16 = 2,
-    IARRAY_DATA_TYPE_FLOAT8 = 3,
+    // IARRAY_DATA_TYPE_FLOAT16 = 2, reserve this values for a future support
+    // IARRAY_DATA_TYPE_FLOAT8 = 3,
     IARRAY_DATA_TYPE_INT64 = 10,
     IARRAY_DATA_TYPE_INT32 = 11,
     IARRAY_DATA_TYPE_INT16 = 12,
@@ -307,6 +310,15 @@ typedef struct _iarray_jug_var_s {
 
 typedef struct jug_expression_s jug_expression_t;
 
+// Struct to be used as user parameter
+typedef union {
+    float f32;
+    double f64;
+    int32_t i32;
+    int64_t i64;
+    bool b;
+} iarray_user_param_t;
+
 typedef struct iarray_expression_s {
     iarray_context_t *ctx;
     ina_str_t expr;
@@ -320,6 +332,8 @@ typedef struct iarray_expression_s {
     iarray_storage_t *out_store_properties;
     iarray_container_t *out;
     _iarray_jug_var_t vars[IARRAY_EXPR_OPERANDS_MAX];
+    iarray_user_param_t user_params[IARRAY_EXPR_USER_PARAMS_MAX];  // the input user parameters
+    unsigned int nuser_params;
 } iarray_expression_t;
 
 INA_API(ina_rc_t) iarray_init(void);
@@ -337,6 +351,11 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx);
  *
  */
 INA_API(ina_rc_t) iarray_get_ncores(int *ncores, int64_t max_ncores);
+
+/*
+ *  Get the L2 size in the system.
+ */
+INA_API(ina_rc_t) iarray_get_L2_size(uint64_t *L2_size);
 
 /*
  *  Provide advice for the partition shape of a `dtshape`.
@@ -400,6 +419,12 @@ INA_API(ina_rc_t) iarray_empty(iarray_context_t *ctx,
                                iarray_storage_t *storage,
                                int flags,
                                iarray_container_t **container);
+
+INA_API(ina_rc_t) iarray_uninit(iarray_context_t *ctx,
+                         iarray_dtshape_t *dtshape,
+                         iarray_storage_t *storage,
+                         int flags,
+                         iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
                                 iarray_dtshape_t *dtshape,
@@ -561,6 +586,9 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_container_remove(char *urlpath);
 
+INA_API(ina_rc_t) iarray_container_resize(iarray_context_t *ctx, iarray_container_t *container,
+                                          int64_t *new_shape);
+
 INA_API(ina_rc_t) iarray_squeeze_index(iarray_context_t *ctx,
                                        iarray_container_t *container,
                                        bool *index);
@@ -617,6 +645,21 @@ INA_API(ina_rc_t) iarray_container_equal(iarray_container_t *a, iarray_container
 INA_API(ina_rc_t) iarray_container_is_symmetric(iarray_container_t *a);
 INA_API(ina_rc_t) iarray_container_is_triangular(iarray_container_t *a);
 
+/* Metalayers */
+typedef struct {
+    char *name;
+    //!< The name of the metalayer
+    uint8_t *sdata;
+    //!< The serialized data to store
+    int32_t size;
+    //!< The size of the serialized data
+} iarray_metalayer_t;
+
+INA_API(ina_rc_t) iarray_vlmeta_exists(iarray_context_t *ctx, iarray_container_t *c, const char *name, bool *exists);
+INA_API(ina_rc_t) iarray_vlmeta_add(iarray_context_t *ctx, iarray_container_t *c, iarray_metalayer_t *meta);
+INA_API(ina_rc_t) iarray_vlmeta_update(iarray_context_t *ctx, iarray_container_t *c, iarray_metalayer_t *meta);
+INA_API(ina_rc_t) iarray_vlmeta_get(iarray_context_t *ctx, iarray_container_t *c, const char *name, iarray_metalayer_t *meta);
+INA_API(ina_rc_t) iarray_vlmeta_delete(iarray_context_t *ctx, iarray_container_t *c, const char *name);
 
 /* Reductions */
 typedef enum iarray_reduce_fun_e {
@@ -721,6 +764,7 @@ INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e);
 
 INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val);
 INA_API(ina_rc_t) iarray_expr_bind_out_properties(iarray_expression_t *e, iarray_dtshape_t *dtshape, iarray_storage_t *store);
+INA_API(ina_rc_t) iarray_expr_bind_param(iarray_expression_t *e, iarray_user_param_t val);
 
 INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val);
 INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val);

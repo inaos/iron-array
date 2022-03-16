@@ -21,12 +21,12 @@ strategy:
       CC: clang  # use clang on Linux wich is faster to compile
       LD: ld.lld # use lld LLVM for linking too
     mac-debug:
-      imageName: 'macos-10.14'
+      imageName: 'macos-10.15'
       BUILD_CONFIGURATION: Debug
       MULTITHREADING: False
       DISABLE_LLVM_CONFIG: True
     mac-release:
-      imageName: 'macos-10.14'
+      imageName: 'macos-10.15'
       BUILD_CONFIGURATION: RelWithDebInfo
       MULTITHREADING: False
       DISABLE_LLVM_CONFIG: True

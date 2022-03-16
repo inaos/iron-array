@@ -226,6 +226,27 @@ out2:
 }
 
 
+INA_API(ina_rc_t) iarray_get_L2_size(uint64_t *L2_size) {
+    // Warning: The L2 reported by Apple M1 is shared, and in the most energy-efficient cpu cluster (4 MB)
+
+    // Allocate, initialize, and perform topology detection
+    hwloc_topology_t topology;
+    hwloc_topology_init(&topology);
+    hwloc_topology_load(topology);
+
+    hwloc_obj_t L2_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L2CACHE, 0);
+    if (L2_obj == NULL) {
+        IARRAY_TRACE1(iarray.warning, "Can not get the L2 cache size. Assigning 256 * 1024");
+        *L2_size = 256 * 1024;
+    }
+    *L2_size = L2_obj->attr->cache.size;
+
+    // ...and destroy topology
+    hwloc_topology_destroy(topology);
+    return INA_SUCCESS;
+}
+
+
 // Given a shape, offer advice on the partition shapes (chunkshape and blockshape)
 INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_t *dtshape, iarray_storage_t *storage,
                                           int64_t min_chunksize, int64_t max_chunksize,
@@ -470,30 +491,6 @@ ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_
         cat_params->shape[i] = dtshape->shape[i];
     }
     return INA_SUCCESS;
-}
-
-
-static int32_t serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
-{
-    if (smeta == NULL) {
-        return -1;
-    }
-    if (dtype > IARRAY_DATA_TYPE_MAX) {
-        return -1;
-    }
-    int32_t smeta_len = 3;  // the dtype should take less than 7-bit, so 1 byte is enough to store it
-    *smeta = malloc((size_t)smeta_len);
-
-    // version
-    **smeta = 0;
-
-    // dtype entry
-    *(*smeta + 1) = (uint8_t)dtype;  // positive fixnum (7-bit positive integer)
-
-    // flags (initialising all the entries to 0)
-    *(*smeta + 2) = 0;  // positive fixnum (7-bit for flags)
-
-    return smeta_len;
 }
 
 
