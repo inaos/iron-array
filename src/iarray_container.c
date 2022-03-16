@@ -909,12 +909,12 @@ INA_API(int16_t) iarray_nvlmeta(iarray_context_t *ctx, iarray_container_t *c)
 
 }
 
-INA_API(iarray_metalayer_t **) iarray_vlmeta_list(iarray_context_t *ctx, iarray_container_t *c)
+INA_API(iarray_metalayer_t *) iarray_vlmeta_get_byindex(iarray_context_t *ctx, iarray_container_t *c, int16_t index)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(c);
 
-    return c->catarr->sc->vlmetalayers;
+    return c->catarr->sc->vlmetalayers[index];
 
 }
 

@@ -661,7 +661,7 @@ INA_API(ina_rc_t) iarray_vlmeta_update(iarray_context_t *ctx, iarray_container_t
 INA_API(ina_rc_t) iarray_vlmeta_get(iarray_context_t *ctx, iarray_container_t *c, const char *name, iarray_metalayer_t *meta);
 INA_API(ina_rc_t) iarray_vlmeta_delete(iarray_context_t *ctx, iarray_container_t *c, const char *name);
 INA_API(int16_t) iarray_nvlmeta(iarray_context_t *ctx, iarray_container_t *c);
-INA_API(iarray_metalayer_t **) iarray_vlmeta_list(iarray_context_t *ctx, iarray_container_t *c);
+INA_API(iarray_metalayer_t *) iarray_vlmeta_get_byindex(iarray_context_t *ctx, iarray_container_t *c, int16_t index);
 
 /* Reductions */
 typedef enum iarray_reduce_fun_e {
