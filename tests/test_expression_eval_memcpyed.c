@@ -20,13 +20,13 @@ ina_rc_t ia_eval(iarray_context_t *ctx, iarray_container_t **c) {
     INA_TEST_ASSERT_SUCCEED(iarray_get_dtshape(ctx, c1, &dtshape));
 
     iarray_expression_t *expr;
-    INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &dtshape, &expr));
+    INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, dtshape.dtype, &expr));
 
     iarray_expr_bind(expr, "x", c1);
 
     iarray_storage_t storage;
     INA_TEST_ASSERT_SUCCEED(iarray_get_storage(ctx, c1, &storage));
-    
+
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind_out_properties(expr, &dtshape, &storage));
 
     INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(expr, "x - 1"));

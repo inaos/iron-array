@@ -79,7 +79,7 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
     blosc2_remove_urlpath(store.urlpath);
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void*)buffer_x, nelem * sizeof(double), &store, 0, &c_x));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &dtshape, &e));
+    INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, dtshape.dtype, &e));
     if (func != const_) {
         INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
     }

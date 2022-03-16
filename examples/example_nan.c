@@ -17,7 +17,7 @@ ina_rc_t ia_eval(iarray_context_t *ctx, iarray_dtshape_t *dtshape_in, iarray_con
     iarray_container_t *c2 = NULL;
 
     iarray_expression_t *expr;
-    IARRAY_RETURN_IF_FAILED(iarray_expr_new(ctx, dtshape_in, &expr));
+    IARRAY_RETURN_IF_FAILED(iarray_expr_new(ctx, dtshape_in->dtype, &expr));
 
     iarray_expr_bind(expr, "x", c1);
 
@@ -32,7 +32,7 @@ ina_rc_t ia_eval(iarray_context_t *ctx, iarray_dtshape_t *dtshape_in, iarray_con
     IARRAY_RETURN_IF_FAILED(iarray_eval(expr, &c2));
     iarray_container_free(ctx, &c1);
     *c = c2;
-    
+
     return INA_SUCCESS;
 }
 
@@ -43,44 +43,44 @@ void eval(int32_t nelem, double *buf) {
 }
 
 int main() {
-    
+
     iarray_init();
-    
+
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     iarray_context_t *ctx;
-    
+
     IARRAY_RETURN_IF_FAILED(iarray_context_new(&cfg, &ctx));
-    
+
     int8_t ndim = 2;
     int64_t shape[] = {10, 10};
     int32_t chunkshape[] = {4, 5};
     int32_t blockshape[] = {2, 2};
-    
+
     iarray_dtshape_t dtshape = {0};
     dtshape.ndim = ndim;
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     int8_t typesize = sizeof(double);
-    
+
     int64_t nelem = 1;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
         nelem *= shape[i];
     }
-    
+
     iarray_storage_t storage = {0};
     for (int i = 0; i < ndim; ++i) {
         storage.chunkshape[i] = chunkshape[i];
         storage.blockshape[i] = blockshape[i];
     }
-    
+
     iarray_random_ctx_t *rctx;
     IARRAY_RETURN_IF_FAILED(iarray_random_ctx_new(ctx, 0, IARRAY_RANDOM_RNG_MERSENNE_TWISTER, &rctx));
-    
+
     iarray_container_t *c;
     IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rctx, IARRAY_RANDOM_DIST_PARAM_A, -1));
     IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rctx, IARRAY_RANDOM_DIST_PARAM_B, 1));
     IARRAY_RETURN_IF_FAILED(iarray_random_uniform(ctx, &dtshape, rctx, &storage, 0, &c));
-    
+
     int64_t buf_nbytes = nelem * typesize;
     double *buf = malloc(buf_nbytes);
     IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c, buf, buf_nbytes));
@@ -98,8 +98,8 @@ int main() {
     iarray_container_free(ctx, &c);
     iarray_random_ctx_free(ctx, &rctx);
     iarray_context_free(&ctx);
-    
+
     iarray_destroy();
-    
+
     return 0;
 }
