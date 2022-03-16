@@ -112,7 +112,7 @@ static LLVMValueRef _jug_build_fun_call(jug_expression_t *e, const char *name, i
         }
         else if (e->dtype == JUG_EXPRESSION_DTYPE_DOUBLE) {
             fun_name = f->decl_name_f64;
-        } 
+        }
         else {
             switch (e->dtype) {
                 case JUG_EXPRESSION_DTYPE_SINT8:
@@ -354,42 +354,30 @@ static LLVMValueRef _jug_expr_compile_function(
     LLVMTypeRef int32Type = LLVMInt32Type();
 
     e->context = LLVMContextCreate();
-    
-    LLVMValueRef constant_zero;
-    LLVMValueRef constant_one;
+
+    LLVMValueRef constant_zero = LLVMConstInt(int32Type, 0, 1);
+    LLVMValueRef constant_one = LLVMConstInt(int32Type, 1, 1);
     switch (e->dtype) {
         case JUG_EXPRESSION_DTYPE_FLOAT:
-            constant_zero = LLVMConstInt(LLVMFloatType(), 0, 1);
-            constant_one = LLVMConstInt(LLVMFloatType(), 1, 1);
             e->expr_type = LLVMFloatType();
             break;
         case JUG_EXPRESSION_DTYPE_DOUBLE:
-            constant_zero = LLVMConstInt(LLVMDoubleType(), 0, 1);
-            constant_one = LLVMConstInt(LLVMDoubleType(), 1, 1);
             e->expr_type = LLVMDoubleType();
             break;
         case JUG_EXPRESSION_DTYPE_SINT8:
         case JUG_EXPRESSION_DTYPE_UINT8:
-            constant_zero = LLVMConstInt(LLVMInt8Type(), 0, 1);
-            constant_one = LLVMConstInt(LLVMInt8Type(), 1, 1);
             e->expr_type = LLVMInt8Type();
             break;
         case JUG_EXPRESSION_DTYPE_SINT16:
         case JUG_EXPRESSION_DTYPE_UINT16:
-            constant_zero = LLVMConstInt(LLVMInt16Type(), 0, 1);
-            constant_one = LLVMConstInt(LLVMInt16Type(), 1, 1);
             e->expr_type = LLVMInt16Type();
             break;
         case JUG_EXPRESSION_DTYPE_SINT32:
         case JUG_EXPRESSION_DTYPE_UINT32:
-            constant_zero = LLVMConstInt(LLVMInt32Type(), 0, 1);
-            constant_one = LLVMConstInt(LLVMInt32Type(), 1, 1);
             e->expr_type = LLVMInt32Type();
             break;
         case JUG_EXPRESSION_DTYPE_SINT64:
         case JUG_EXPRESSION_DTYPE_UINT64:
-            constant_zero = LLVMConstInt(LLVMInt64Type(), 0, 1);
-            constant_one = LLVMConstInt(LLVMInt64Type(), 1, 1);
             e->expr_type = LLVMInt64Type();
             break;
         default:
