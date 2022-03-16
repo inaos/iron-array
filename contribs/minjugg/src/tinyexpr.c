@@ -158,6 +158,8 @@ static const jug_te_variable functions[] = {
     {"floor", EXPR_TYPE_FLOOR,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"log", EXPR_TYPE_LOG,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"log10", EXPR_TYPE_LOG10,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"max", EXPR_TYPE_MAX,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"min", EXPR_TYPE_MIN,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"ncr", EXPR_TYPE_NCR,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"npr", EXPR_TYPE_NPR,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"pi", EXPR_TYPE_PI,        TE_FUNCTION0 | TE_FLAG_PURE, 0},
