@@ -6,30 +6,30 @@ variables:
 
 strategy:
   matrix:
-#    linux-debug:
-#      imageName: 'ubuntu-20.04'
-#      BUILD_CONFIGURATION: Debug
-#      MULTITHREADING: False
-#      DISABLE_LLVM_CONFIG: True
-#      CC: clang  # use clang on Linux wich is faster to compile
-#      LD: ld.lld # use lld LLVM for linking too
-#    linux-release:
-#      imageName: 'ubuntu-20.04'
-#      BUILD_CONFIGURATION: RelWithDebInfo
-#      MULTITHREADING: False
-#      DISABLE_LLVM_CONFIG: True
-#      CC: clang  # use clang on Linux wich is faster to compile
-#      LD: ld.lld # use lld LLVM for linking too
-#    mac-debug:
-#      imageName: 'macos-10.15'
-#      BUILD_CONFIGURATION: Debug
-#      MULTITHREADING: False
-#      DISABLE_LLVM_CONFIG: True
-#    mac-release:
-#      imageName: 'macos-10.15'
-#      BUILD_CONFIGURATION: RelWithDebInfo
-#      MULTITHREADING: False
-#      DISABLE_LLVM_CONFIG: True
+    linux-debug:
+      imageName: 'ubuntu-20.04'
+      BUILD_CONFIGURATION: Debug
+      MULTITHREADING: False
+      DISABLE_LLVM_CONFIG: True
+      CC: clang  # use clang on Linux wich is faster to compile
+      LD: ld.lld # use lld LLVM for linking too
+    linux-release:
+      imageName: 'ubuntu-20.04'
+      BUILD_CONFIGURATION: RelWithDebInfo
+      MULTITHREADING: False
+      DISABLE_LLVM_CONFIG: True
+      CC: clang  # use clang on Linux wich is faster to compile
+      LD: ld.lld # use lld LLVM for linking too
+    mac-debug:
+      imageName: 'macos-10.15'
+      BUILD_CONFIGURATION: Debug
+      MULTITHREADING: False
+      DISABLE_LLVM_CONFIG: True
+    mac-release:
+      imageName: 'macos-10.15'
+      BUILD_CONFIGURATION: RelWithDebInfo
+      MULTITHREADING: False
+      DISABLE_LLVM_CONFIG: True
     windows-debug:
       imageName: 'windows-2022'
       BUILD_CONFIGURATION: Debug
