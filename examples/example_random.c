@@ -41,7 +41,7 @@ int main(void) {
 //    int64_t xbshape[] = {250, 250};
     int64_t xshape[] = {8, 8};
     int64_t xcshape[] = {4, 4};
-    int64_t xbshape[] = {2, 2};
+    int64_t xbshape[] = {3, 3};
 
     int64_t size = 1;
     for (int i = 0; i < xndim; ++i) {
@@ -85,14 +85,18 @@ int main(void) {
     printf("Res: %d\n", res);
 
 
-//    int64_t bufsize = size * sizeof(double);
-//    for (int i = 0; i < size; ++i) {
-//        if (i % xshape[0] == 0) {
-//            printf("\n");
-//        }
-//        printf("%8.2f", buf[i]);
-//    }
-//    INA_MEM_FREE_SAFE(buf);
+    int64_t bufsize = size * sizeof(double);
+    double *buf = ina_mem_alloc(bufsize);
+
+    iarray_to_buffer(ctx, x, buf, bufsize);
+
+    for (int i = 0; i < size; ++i) {
+        if (i % xshape[0] == 0) {
+            printf("\n");
+        }
+        printf("%8.2f", buf[i]);
+    }
+    INA_MEM_FREE_SAFE(buf);
 
     iarray_container_free(ctx, &x);
     iarray_container_free(ctx, &y);

@@ -117,18 +117,27 @@ int random_generator_fn(uint8_t *dest,
     iarray_constructor_random_info *random_array_info = custom_array_info;
 
     iarray_container_t *a = array_info->a;
-    int64_t ncopies = 1;
-    for (int i = 0; i < array_info->ndim - 1; ++i) {
-        ncopies *= block_info->shape[i];
-    }
+
     uint8_t ndim = array_info->ndim;
     uint8_t itemsize = array_info->itemsize;
 
-    for (int i = 0; i < ncopies; ++i) {
-        memcpy(&dest[a->catarr->blockshape[ndim - 1] * i * itemsize],
-               &(random_array_info->buffers[block_info->tid])[a->catarr->blockshape[ndim - 1] * i * itemsize],
-               block_info->shape[ndim - 1] * itemsize);
+    int64_t src_start[CATERVA_MAX_DIM] = {0};
+    int64_t dst_start[CATERVA_MAX_DIM] = {0};
+    int64_t dst_shape[CATERVA_MAX_DIM] = {0};
+    for (int i = 0; i < ndim; ++i) {
+        dst_shape[i] = a->catarr->blockshape[i];
     }
+
+    caterva_copy_buffer(ndim,
+                        itemsize,
+                        random_array_info->buffers[block_info->tid],
+                        block_info->shape,
+                        src_start,
+                        block_info->shape,
+                        dest,
+                        dst_shape,
+                        dst_start
+                        );
 
     return 0;
 }
