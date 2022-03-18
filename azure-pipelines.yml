@@ -87,6 +87,7 @@ steps:
   displayName: Install clang/lld on Linux
 
 - bash: |
+    conda update --yes -n base -c defaults conda
     conda install -y -c intel mkl-include
     conda install -y -c intel mkl-static
     conda install -y -c intel icc_rt
@@ -122,8 +123,8 @@ steps:
     BUILD_CONFIGURATION: $(BUILD_CONFIGURATION)
     BUILD_ARCH: $(BUILD_ARCH)
     MULTITHREADING: $(MULTITHREADING)
-    MKLROOT: $(CONDA)
-    SVMLROOT: $(CONDA)/lib
+    MKLROOT: $(CONDA)/Library
+    SVMLROOT: $(CONDA)/Library/lib
   condition:
     eq( variables['Agent.OS'], 'Windows_NT' )
 
