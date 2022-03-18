@@ -918,9 +918,9 @@ INA_API(ina_rc_t) iarray_vlmeta_get_names(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(c);
 
-    *names = malloc(c->catarr->sc->nvlmetalayers * sizeof(blosc2_metalayer));
-
     int16_t nvlmetalayers = c->catarr->sc->nvlmetalayers;
+    *names = malloc(nvlmetalayers * sizeof(char*));
+
     for (int i = 0; i < nvlmetalayers; ++i) {
         names[i] = c->catarr->sc->vlmetalayers[i]->name;
     }
