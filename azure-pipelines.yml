@@ -6,13 +6,13 @@ variables:
 
 strategy:
   matrix:
-#    linux-debug:
-#      imageName: 'ubuntu-20.04'
-#      BUILD_CONFIGURATION: Debug
-#      MULTITHREADING: False
-#      DISABLE_LLVM_CONFIG: True
-#      CC: clang  # use clang on Linux wich is faster to compile
-#      LD: ld.lld # use lld LLVM for linking too
+    linux-debug:
+      imageName: 'ubuntu-20.04'
+      BUILD_CONFIGURATION: Debug
+      MULTITHREADING: False
+      DISABLE_LLVM_CONFIG: True
+      CC: clang  # use clang on Linux wich is faster to compile
+      LD: ld.lld # use lld LLVM for linking too
     linux-release:
       imageName: 'ubuntu-20.04'
       BUILD_CONFIGURATION: RelWithDebInfo
@@ -25,18 +25,18 @@ strategy:
 #      BUILD_CONFIGURATION: Debug
 #      MULTITHREADING: False
 #      DISABLE_LLVM_CONFIG: True
-#    mac-release:
-#      imageName: 'macos-10.15'
-#      BUILD_CONFIGURATION: RelWithDebInfo
-#      MULTITHREADING: False
-#      DISABLE_LLVM_CONFIG: True
-#    windows-debug:
-#      imageName: 'windows-2022'
-#      BUILD_CONFIGURATION: Debug
-#      MULTITHREADING: False
-#      BUILD_ARCH: x86_64
-#      VSINSTALL: "Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build"
-#      MSVC_PLATFORM: amd64
+    mac-release:
+      imageName: 'macos-10.15'
+      BUILD_CONFIGURATION: RelWithDebInfo
+      MULTITHREADING: False
+      DISABLE_LLVM_CONFIG: True
+    windows-debug:
+      imageName: 'windows-2022'
+      BUILD_CONFIGURATION: Debug
+      MULTITHREADING: False
+      BUILD_ARCH: x86_64
+      VSINSTALL: "Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build"
+      MSVC_PLATFORM: amd64
     windows-release:
       imageName: 'windows-2022'
       BUILD_CONFIGURATION: RelWithDebInfo
