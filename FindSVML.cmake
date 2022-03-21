@@ -15,13 +15,11 @@ find_path(SVML_ROOT_DIR
     ${SVML_LIB}
     PATHS
         $ENV{SVMLROOT}
-        $ENV{CONDA_PREFIX}/lib  # conda environments are accessible here (including base)
-        $ENV{CONDA}/Library/bin
-		$ENV{CONDA}/Library/lib
-		$ENV{CONDA}/envs/iArrayEnv/lib  # not sure why this would be needed (old conda on azure?)
-        $ENV{CONDA}/envs/iArrayEnv/Library/bin  # Win (very weird to me)
+        $ENV{CONDA_PREFIX}/lib   # conda environments are accessible here (including base)
+        $ENV{CONDA}/lib          # search for conda libs in Azure pipelines
+        $ENV{CONDA}/Library/bin  # same, but for Win (DLL here)
         /opt/intel/compilers_and_libraries/linux/lib/intel64_lin  # Intel ICC on Linux
-	    /opt/intel/compilers_and_libraries/mac/lib/intel64_lin  # Intel ICC on MacOS
+        /opt/intel/compilers_and_libraries/mac/lib/intel64_lin    # Intel ICC on MacOS
 )
 
 foreach (LIB ${SVML_LIB})
