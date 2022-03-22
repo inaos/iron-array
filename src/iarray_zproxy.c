@@ -41,12 +41,13 @@ ina_rc_t zproxy_postfilter(blosc2_postfilter_params *postparams)
     zproxy_postparams_udata *udata = postparams->user_data;
     int64_t *extshape = udata->extshape;
     int64_t *extchunkshape = udata->extchunkshape;
+    int64_t *chunkshape = udata->chunkshape;
     int32_t *blockshape = udata->blockshape;
     uint8_t ndim = udata->ndim;
 
     int64_t chunks_in_array[IARRAY_DIMENSION_MAX] = {0};
     for (int i = 0; i < ndim; ++i) {
-        chunks_in_array[i] = extshape[i] / extchunkshape[i];
+        chunks_in_array[i] = extshape[i] / chunkshape[i];
     }
     int64_t blocks_in_chunk[IARRAY_DIMENSION_MAX] = {0};
     for (int i = 0; i < ndim; ++i) {
@@ -65,9 +66,14 @@ ina_rc_t zproxy_postfilter(blosc2_postfilter_params *postparams)
     int64_t start_elem_ndim[IARRAY_DIMENSION_MAX] = {0};
     int64_t stop_elem_ndim[IARRAY_DIMENSION_MAX] = {0};
     int64_t slice_shape[IARRAY_DIMENSION_MAX] = {0};
+    int64_t size = postparams->typesize;
     for (int i = 0; i < ndim; ++i) {
-        start_elem_ndim[i] = nchunk_ndim[i] * extchunkshape[i] + nblock_ndim[i] * blockshape[i];
-        stop_elem_ndim[i] = nchunk_ndim[i] * extchunkshape[i] + (nblock_ndim[i] + 1) * blockshape[i];
+        start_elem_ndim[i] = nchunk_ndim[i] * chunkshape[i] + nblock_ndim[i] * blockshape[i];
+        if (start_elem_ndim[i] >= udata->shape[i]) {
+            // This block does not contain any data because of the padding
+            return INA_SUCCESS;
+        }
+        stop_elem_ndim[i] = nchunk_ndim[i] * chunkshape[i] + (nblock_ndim[i] + 1) * blockshape[i];
         // The stop may include the padding due to the blockshape
         if (nblock_ndim[i] == (blocks_in_chunk[i] - 1)) {
             stop_elem_ndim[i] -= (extchunkshape[i] - udata->chunkshape[i]);
@@ -76,18 +82,19 @@ ina_rc_t zproxy_postfilter(blosc2_postfilter_params *postparams)
         if (stop_elem_ndim[i] > udata->shape[i]) {
             stop_elem_ndim[i] = udata->shape[i];
         }
+        slice_shape[i] = stop_elem_ndim[i] - start_elem_ndim[i];
+        size *= slice_shape[i];
     }
 
     udata->zhandler(udata->zproxy_urlpath, start_elem_ndim, stop_elem_ndim, postparams->out);
 
     // Realloc data since there may be padding between elements
-    uint8_t * aux = malloc(postparams->size);
-    memcpy(aux, postparams->out, postparams->size);
+    uint8_t * aux = malloc(size);
+    memcpy(aux, postparams->out, size);
     memset(postparams->out, 0, postparams->size);
     int64_t slice_start[IARRAY_DIMENSION_MAX] = {0};
     int64_t blockshape_i64[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ndim; ++i) {
-        slice_shape[i] = stop_elem_ndim[i] - start_elem_ndim[i];
         blockshape_i64[i] = blockshape[i];
     }
     caterva_copy_buffer(ndim, postparams->typesize,
