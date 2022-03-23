@@ -763,6 +763,12 @@ INA_API(ina_rc_t) iarray_expr_bind_param(iarray_expression_t *e, iarray_user_par
 INA_API(ina_rc_t) iarray_expr_bind_scalar_float(iarray_expression_t *e, const char *var, float val);
 INA_API(ina_rc_t) iarray_expr_bind_scalar_double(iarray_expression_t *e, const char *var, double val);
 
+INA_API(ina_rc_t) iarray_expr_operands_parse(iarray_expression_t *e, 
+                                             const char *expr, 
+                                             int *num_operands, 
+                                             ina_str_t *operands);
+INA_API(void) iarray_expr_operands_free(iarray_expression_t *e, ina_str_t *operands);
+
 INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr);
 INA_API(ina_rc_t) iarray_expr_compile_udf(iarray_expression_t *e,
                                           int llvm_bc_len,
@@ -806,5 +812,23 @@ INA_API(ina_rc_t) iarray_opt_gemm_a(iarray_context_t *ctx,
                                     iarray_container_t *b,
                                     iarray_storage_t *storage,
                                     iarray_container_t **c);
+
+/* UDF (User defined functions) registry */
+
+INA_API(ina_rc_t) iarray_udf_registry_new(iarray_context_t *ctx,
+                                          iarray_udf_registry_t **udf_registry);
+
+INA_API(void) iarray_udf_registry_free(iarray_context_t *ctx,
+                                       iarray_udf_registry_t **udf_registry);
+
+INA_API(ina_rc_t) iarray_udf_library_new(registry, name);
+INA_API(ina_rc_t) iarray_udf_library_free(registry);
+
+INA_API(ina_rc_t) iarray_udf_library_compile(same as udf compile, plus a function name);
+
+// Can we create multiple modules? if module is the right abstraction, can we keep adding functions without sealing at the end, before using
+// need to test and investigate
+
+
 
 #endif
