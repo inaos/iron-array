@@ -287,7 +287,7 @@ INA_TEST_FIXTURE(expression_eval_double, default_superchunk2)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_AUTO;
     data->func = expr3;
-    data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
+    data->expr_str = "arcsin(x) + (arccos(x) - 1.35) - arctan(x + .2)";
 
     int8_t ndim = 4;
     int64_t shape[] = {20, 20, 15, 19};
@@ -359,11 +359,11 @@ static double expr_pow_pi(const double x)
     return pow(x, 3.141592);
 }
 
-INA_TEST_FIXTURE(expression_eval_double, iterblosc_pow_pi)
+INA_TEST_FIXTURE(expression_eval_double, iterblosc_power_pi)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr_pow_pi;
-    data->expr_str = "pow(x, 3.141592)";
+    data->expr_str = "power(x, 3.141592)";
 
     int8_t ndim = 2;
     int64_t shape[] = {100, 40};

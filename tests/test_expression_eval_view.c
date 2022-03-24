@@ -234,7 +234,7 @@ INA_TEST_FIXTURE(expression_eval_view, iterchunk_plainbuffer_5)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;
     data->func = expr5;
-    data->expr_str = "sqrt(x) + atan2(x, x) + pow(x, x)";
+    data->expr_str = "sqrt(x) + arctan2(x, x) + pow(x, x)";
 
     int8_t ndim = 3;
     int64_t shape[] = {120, 120, 120};
