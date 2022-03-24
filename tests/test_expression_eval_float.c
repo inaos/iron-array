@@ -228,3 +228,23 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk_4)
     INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape,
                                                  data->func, data->expr_str, false, NULL));
 }
+
+static float expr5(const float x)
+{
+    return powf(2.71828, x) / x * logf(x);
+}
+
+INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk_5)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr5;
+    data->expr_str = "2.71828**x / x * log(x)";
+
+    int8_t ndim = 3;
+    int64_t shape[] = {100, 230, 121};
+    int64_t cshape[] = {31, 32, 17};
+    int64_t bshape[] = {7, 7, 7};
+
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape,
+                                                 data->func, data->expr_str, false, NULL));
+}
