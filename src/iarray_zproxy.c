@@ -45,27 +45,27 @@ ina_rc_t zproxy_postfilter(blosc2_postfilter_params *postparams)
     int32_t *blockshape = udata->blockshape;
     uint8_t ndim = udata->ndim;
 
-    int64_t chunks_in_array[IARRAY_DIMENSION_MAX] = {0};
+    int64_t chunks_in_array[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ndim; ++i) {
         chunks_in_array[i] = extshape[i] / chunkshape[i];
     }
-    int64_t blocks_in_chunk[IARRAY_DIMENSION_MAX] = {0};
+    int64_t blocks_in_chunk[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ndim; ++i) {
         blocks_in_chunk[i] = extchunkshape[i] / blockshape[i];
     }
 
     // Get coordinates of chunk
     int64_t nchunk = postparams->nchunk;
-    int64_t nchunk_ndim[IARRAY_DIMENSION_MAX] = {0};
-    index_unidim_to_multidim(ndim, chunks_in_array, nchunk, nchunk_ndim);
+    int64_t nchunk_ndim[IARRAY_DIMENSION_MAX];
+    index_unidim_to_multidim((int8_t)ndim, chunks_in_array, nchunk, nchunk_ndim);
     // Get coordinates of block
     int64_t nblock = postparams->nblock;
-    int64_t nblock_ndim[IARRAY_DIMENSION_MAX] = {0};
-    index_unidim_to_multidim(ndim, blocks_in_chunk, nblock, nblock_ndim);
+    int64_t nblock_ndim[IARRAY_DIMENSION_MAX];
+    index_unidim_to_multidim((int8_t)ndim, blocks_in_chunk, nblock, nblock_ndim);
     // Get start element coordinates from the corresponding block
-    int64_t start_elem_ndim[IARRAY_DIMENSION_MAX] = {0};
-    int64_t stop_elem_ndim[IARRAY_DIMENSION_MAX] = {0};
-    int64_t slice_shape[IARRAY_DIMENSION_MAX] = {0};
+    int64_t start_elem_ndim[IARRAY_DIMENSION_MAX];
+    int64_t stop_elem_ndim[IARRAY_DIMENSION_MAX];
+    int64_t slice_shape[IARRAY_DIMENSION_MAX];
     int64_t size = postparams->typesize;
     for (int i = 0; i < ndim; ++i) {
         start_elem_ndim[i] = nchunk_ndim[i] * chunkshape[i] + nblock_ndim[i] * blockshape[i];
@@ -89,7 +89,7 @@ ina_rc_t zproxy_postfilter(blosc2_postfilter_params *postparams)
     udata->zhandler(udata->zproxy_urlpath, start_elem_ndim, stop_elem_ndim, postparams->out);
 
     // Realloc data since there may be padding between elements
-    uint8_t * aux = malloc(size);
+    uint8_t *aux = malloc(size);
     memcpy(aux, postparams->out, size);
     memset(postparams->out, 0, postparams->size);
     int64_t slice_start[IARRAY_DIMENSION_MAX] = {0};
@@ -97,7 +97,7 @@ ina_rc_t zproxy_postfilter(blosc2_postfilter_params *postparams)
     for (int i = 0; i < ndim; ++i) {
         blockshape_i64[i] = blockshape[i];
     }
-    caterva_copy_buffer(ndim, postparams->typesize,
+    caterva_copy_buffer(ndim, (uint8_t)postparams->typesize,
                         aux, slice_shape, slice_start, slice_shape,
                         postparams->out, blockshape_i64, slice_start);
     free(aux);
@@ -138,9 +138,8 @@ INA_API(ina_rc_t) iarray_add_zproxy_postfilter(iarray_container_t *src, char *za
     dparams->postparams = postparams;
 
     // Create new context since postparams is empty in the old one
-    blosc2_context *dctx = blosc2_create_dctx(*dparams);
-    free(src->catarr->sc->dctx);
-    src->catarr->sc->dctx = dctx;
+    blosc2_free_ctx(src->catarr->sc->dctx);
+    src->catarr->sc->dctx = blosc2_create_dctx(*dparams);
     free(dparams);
 
     return INA_SUCCESS;
