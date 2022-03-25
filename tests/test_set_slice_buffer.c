@@ -257,6 +257,23 @@ INA_TEST_FIXTURE(set_slice_buffer, 3_ui_blosc) {
     int32_t type_size = sizeof(uint32_t);
 
     const int8_t ndim = 3;
+    int64_t shape[] = {10, 12, 34};
+    int64_t cshape[] = {3, 1, 21};
+    int64_t bshape[] = {1, 1, 21};
+    int64_t start[] = {3, 1, 2};
+    int64_t stop[] = {5, 8, 7};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape,
+                                                      cshape, bshape,
+                                                      start, stop, true, "xarr.iarr"));
+}
+
+/* Avoid time consuming tests
+INA_TEST_FIXTURE(set_slice_buffer, 3_ui_blosc) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
+    int32_t type_size = sizeof(uint32_t);
+
+    const int8_t ndim = 3;
     int64_t shape[] = {100, 123, 234};
     int64_t cshape[] = {31, 1, 21};
     int64_t bshape[] = {13, 1, 21};
@@ -267,6 +284,7 @@ INA_TEST_FIXTURE(set_slice_buffer, 3_ui_blosc) {
                                                       cshape, bshape,
                                                       start, stop, true, "xarr.iarr"));
 }
+*/
 
 INA_TEST_FIXTURE(set_slice_buffer, 2_uc_blosc) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;

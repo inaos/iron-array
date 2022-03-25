@@ -243,6 +243,28 @@ INA_TEST_FIXTURE(get_slice, 4_d) {
                                                   cshape_dest, bshape_dest, start, stop, result, false, "arr.iarr", true, NULL));
 }
 
+INA_TEST_FIXTURE(get_slice, 2_ll) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
+    int32_t type_size = sizeof(int64_t);
+
+    const int8_t ndim = 2;
+    int64_t shape[] = {10, 10};
+    int64_t cshape[] = {4, 5};
+    int64_t bshape[] = {2, 2};
+    int64_t start[] = {5, 4};
+    int64_t stop[] = {8, 6};
+    int64_t cshape_dest[] = {2, 2};
+    int64_t bshape_dest[] = {2, 2};
+
+    int64_t result[] = {54, 55,
+                        64, 65,
+                        74, 75};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                  cshape_dest, bshape_dest, start, stop, result, true, NULL, true, NULL));
+}
+
+/* Avoid time consuming tests
 INA_TEST_FIXTURE(get_slice, 7_ll) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
     int32_t type_size = sizeof(int64_t);
@@ -278,6 +300,7 @@ INA_TEST_FIXTURE(get_slice, 7_ll) {
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   cshape_dest, bshape_dest, start, stop, result, true, NULL, true, NULL));
 }
+*/
 
 INA_TEST_FIXTURE(get_slice, 3_i_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
@@ -348,6 +371,31 @@ INA_TEST_FIXTURE(get_slice, 2_sc) {
                                                   cshape_dest, bshape_dest, start, stop, result, false, "arr.iarr", true, NULL));
 }
 
+INA_TEST_FIXTURE(get_slice, 3_ull) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
+    int32_t type_size = sizeof(uint64_t);
+
+    const int8_t ndim = 3;
+    int64_t shape[] = {10, 10, 10};
+    int64_t cshape[] = {4, 5, 1};
+    int64_t bshape[] = {2, 2, 1};
+    int64_t start[] = {5, 4, 3};
+    int64_t stop[] = {8, 6, 5};
+    int64_t cshape_dest[] = {2, 2, 1};
+    int64_t bshape_dest[] = {2, 2, 1};
+
+    uint64_t result[] = {543, 544,
+                         553, 554,
+                         643, 644,
+                         653, 654,
+                         743, 744,
+                         753, 754};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                  cshape_dest, bshape_dest, start, stop, result, true, NULL, true, NULL));
+}
+
+/* Avoid time consuming tests
 INA_TEST_FIXTURE(get_slice, 7_ull) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
     int32_t type_size = sizeof(uint64_t);
@@ -385,6 +433,7 @@ INA_TEST_FIXTURE(get_slice, 7_ull) {
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   cshape_dest, bshape_dest, start, stop, result, true, NULL, true, NULL));
 }
+*/
 
 INA_TEST_FIXTURE(get_slice, 3_ui_2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;

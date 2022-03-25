@@ -101,7 +101,20 @@ INA_TEST_FIXTURE(constructor_linspace, 2_d) {
     INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, false, NULL));
 }
 
+INA_TEST_FIXTURE(constructor_linspace, 3_f) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
+    int8_t ndim = 3;
+    int64_t shape[] = {5, 7, 8};
+    int64_t cshape[] = {3, 5, 3};
+    int64_t bshape[] = {2, 2, 2};
+    double start = 10;
+    double stop = 0;
+
+    INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, "arr.iarr"));
+}
+
+/* Avoid time consuming tests
 INA_TEST_FIXTURE(constructor_linspace, 7_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
@@ -114,3 +127,4 @@ INA_TEST_FIXTURE(constructor_linspace, 7_f) {
 
     INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, "arr.iarr"));
 }
+*/

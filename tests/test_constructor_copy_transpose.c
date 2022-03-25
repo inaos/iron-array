@@ -114,6 +114,21 @@ INA_TEST_FIXTURE(constructor_copy_transpose, 2_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 2;
+    int64_t shape[] = {50, 25};
+    int64_t cshape[] = {5, 10};
+    int64_t bshape[] = {5, 10};
+
+    double start = -5.3;
+    double stop = 1.1245;
+
+    INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, NULL, "arr2.iarr"));
+}
+
+/* Avoid time consuming tests
+INA_TEST_FIXTURE(constructor_copy_transpose, 2_f) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+
+    int8_t ndim = 2;
     int64_t shape[] = {3450, 2500};
     int64_t cshape[] = {5, 1000};
     int64_t bshape[] = {5, 1000};
@@ -123,3 +138,4 @@ INA_TEST_FIXTURE(constructor_copy_transpose, 2_f) {
 
     INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, NULL, "arr2.iarr"));
 }
+*/

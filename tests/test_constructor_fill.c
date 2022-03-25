@@ -205,6 +205,21 @@ INA_TEST_FIXTURE(constructor_fill, 2_d)
     INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &value, false, NULL));
 }
 
+INA_TEST_FIXTURE(constructor_fill, 3_f)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    size_t type_size = sizeof(float);
+
+    int8_t ndim = 3;
+    int64_t shape[] = {12, 11, 6};
+    int64_t cshape[] = {11, 3, 3};
+    int64_t bshape[] = {5, 2, 2};
+    float value = -116.f;
+
+    INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &value, true, "arr.iarr"));
+}
+
+/* Avoid time consuming tests
 INA_TEST_FIXTURE(constructor_fill, 7_f)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -218,6 +233,7 @@ INA_TEST_FIXTURE(constructor_fill, 7_f)
 
     INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &value, true, "arr.iarr"));
 }
+*/
 
 
 INA_TEST_FIXTURE(constructor_fill, 2_ll)
