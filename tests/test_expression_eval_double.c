@@ -184,12 +184,29 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc2_superchunk)
     data->expr_str = "(x - 2.3) * (x - 1.35) * (x + 4.2)";
 
     int8_t ndim = 3;
+    int64_t shape[] = {10, 23, 12};
+    int64_t cshape[] = {3, 3, 7};
+    int64_t bshape[] = {2, 1, 5};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, "arr.iarr"));
+}
+
+
+/* Avoid time consuming tests
+INA_TEST_FIXTURE(expression_eval_double, iterblosc2_superchunk)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr_;
+    data->expr_str = "(x - 2.3) * (x - 1.35) * (x + 4.2)";
+
+    int8_t ndim = 3;
     int64_t shape[] = {100, 230, 121};
     int64_t cshape[] = {31, 32, 17};
     int64_t bshape[] = {7, 12, 5};
 
     INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, "arr.iarr"));
 }
+*/
 
 static double expr0(const double x)
 {

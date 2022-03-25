@@ -162,7 +162,21 @@ INA_TEST_FIXTURE(constructor_copy, 3_d_v_n) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, true, false, "arr.iarr"));
 }
 
+INA_TEST_FIXTURE(constructor_copy, 3_ll_n_v) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
 
+    int8_t ndim = 3;
+    int64_t shape[] = {5, 7, 10};
+    int64_t cshape[] = {2, 1, 4};
+    int64_t bshape[] = {2, 1, 2};
+    int64_t stop_view[] = {4, 4, 5};
+    double start = -112;
+    double stop = (5 * 7 * 10 * 12 * 13 * 6 - 112 + 1) * 3;
+
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, true, "arr.iarr"));
+}
+
+/* Avoid long tests
 INA_TEST_FIXTURE(constructor_copy, 6_ll_n_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
 
@@ -176,6 +190,7 @@ INA_TEST_FIXTURE(constructor_copy, 6_ll_n_v) {
 
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, true, "arr.iarr"));
 }
+*/
 
 INA_TEST_FIXTURE(constructor_copy, 4_i_n_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
@@ -252,7 +267,21 @@ INA_TEST_FIXTURE(constructor_copy, 7_ui_v_n) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, true, false, "arr.iarr"));
 }
 
+INA_TEST_FIXTURE(constructor_copy, 2_us_n_v) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT16;
 
+    int8_t ndim = 2;
+    int64_t shape[] = {12, 13};
+    int64_t cshape[] = {5, 6};
+    int64_t bshape[] = {3, 2};
+    int64_t stop_view[] = {11, 12};
+    double start = 11;
+    double stop = 5 * 7 * 10 * 12 * 13 * 6 + 11;
+
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, true, "arr.iarr"));
+}
+
+/* Avoid long tests
 INA_TEST_FIXTURE(constructor_copy, 6_us_n_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT16;
 
@@ -266,6 +295,7 @@ INA_TEST_FIXTURE(constructor_copy, 6_us_n_v) {
 
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, true, "arr.iarr"));
 }
+*/
 
 INA_TEST_FIXTURE(constructor_copy, 1_uc_n_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;

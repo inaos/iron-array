@@ -201,6 +201,22 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
     data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
 
     int8_t ndim = 3;
+    int64_t shape[] = {10, 23, 21};
+    int64_t cshape[] = {5, 3, 17};
+    int64_t bshape[] = {3, 2, 7};
+
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape,
+                                                 data->func, data->expr_str, true, "arr.iarr"));
+}
+
+/* Avoid time consuming tests
+INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr3;
+    data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
+
+    int8_t ndim = 3;
     int64_t shape[] = {100, 230, 121};
     int64_t cshape[] = {31, 32, 17};
     int64_t bshape[] = {7, 7, 7};
@@ -208,6 +224,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
     INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape,
                                                  data->func, data->expr_str, true, "arr.iarr"));
 }
+*/
 
 static float expr4(const float x)
 {

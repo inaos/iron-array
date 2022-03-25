@@ -160,9 +160,24 @@ INA_TEST_FIXTURE(iterator_transpose, 2_d) {
     int32_t type_size = sizeof(double);
 
     int8_t ndim = 2;
+    int64_t shape[] = {200, 50};
+    int64_t cshape[] = {12, 20};
+    int64_t bshape[] = {12, 5};
+
+    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, false, "arr.iarr", false, "arr2.iarr"));
+}
+
+
+/* Avoid time consuming tests
+INA_TEST_FIXTURE(iterator_transpose, 2_d) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    int32_t type_size = sizeof(double);
+
+    int8_t ndim = 2;
     int64_t shape[] = {2000, 5033};
     int64_t cshape[] = {12, 2000};
     int64_t bshape[] = {12, 200};
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, false, "arr.iarr", false, "arr2.iarr"));
 }
+*/

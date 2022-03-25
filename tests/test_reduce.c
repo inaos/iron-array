@@ -266,7 +266,26 @@ INA_TEST_FIXTURE(reduce, sum_4_d_0) {
 }
 
 
+INA_TEST_FIXTURE(reduce, sum_6_ull_4) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
 
+    int8_t ndim = 6;
+    int64_t shape[] = {8, 8, 7, 7, 6, 7};
+    int64_t cshape[] = {4, 5, 2, 5, 3, 4};
+    int64_t bshape[] = {2, 2, 2, 3, 2, 1};
+    int8_t axis = 4;
+
+    int64_t dest_cshape[] = {4, 5, 2, 5, 3};
+    int64_t dest_bshape[] = {2, 2, 2, 3, 2};
+    bool dest_frame = false;
+    char *dest_urlpath = NULL;
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_SUM, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+}
+
+
+/* Avoid time consuming tests
 INA_TEST_FIXTURE(reduce, sum_8_ull_6) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
 
@@ -284,7 +303,7 @@ INA_TEST_FIXTURE(reduce, sum_8_ull_6) {
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_SUM, shape, cshape, bshape, axis,
                                         dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
-
+*/
 
 
 INA_TEST_FIXTURE(reduce, sum_2_ui_1) {
@@ -343,6 +362,25 @@ INA_TEST_FIXTURE(reduce, sum_4_us_0) {
 }
 
 
+INA_TEST_FIXTURE(reduce, sum_4_ll_2) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
+
+    int8_t ndim = 4;
+    int64_t shape[] = {8, 8, 7, 7};
+    int64_t cshape[] = {4, 5, 2, 5};
+    int64_t bshape[] = {2, 2, 2, 3};
+    int8_t axis = 2;
+
+    int64_t dest_cshape[] = {4, 5, 2};
+    int64_t dest_bshape[] = {2, 2, 2};
+    bool dest_frame = true;
+    char *dest_urlpath = "arr.iarr";
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_SUM, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+}
+
+
+/* Avoid time consuming tests
 INA_TEST_FIXTURE(reduce, sum_8_ll_6) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
 
@@ -359,6 +397,7 @@ INA_TEST_FIXTURE(reduce, sum_8_ll_6) {
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_SUM, shape, cshape, bshape, axis,
                                         dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
+*/
 
 
 INA_TEST_FIXTURE(reduce, sum_2_sc_0) {

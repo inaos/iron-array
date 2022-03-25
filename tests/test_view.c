@@ -226,6 +226,26 @@ INA_TEST_FIXTURE(view, 4_d_v) {
                                                   start, stop, result, false, NULL));
 }
 
+INA_TEST_FIXTURE(view, 2_ll_v) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
+    int32_t type_size = sizeof(int64_t);
+
+    const int8_t ndim = 2;
+    int64_t shape[] = {10, 10};
+    int64_t cshape[] = {4, 5};
+    int64_t bshape[] = {2, 2};
+    int64_t start[] = {5, 4};
+    int64_t stop[] = {8, 6};
+
+    int64_t result[] = {54, 55,
+                        64, 65,
+                        74, 75};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                  start, stop, result, false, "xarr.iarr"));
+}
+
+/* Avoid time consuming tests
 INA_TEST_FIXTURE(view, 7_ll_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
     int32_t type_size = sizeof(int64_t);
@@ -259,8 +279,26 @@ INA_TEST_FIXTURE(view, 7_ll_v) {
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   start, stop, result, false, "xarr.iarr"));
 }
+*/
 
+INA_TEST_FIXTURE(view, 3_i_v2) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
+    int32_t type_size = sizeof(int32_t);
 
+    const int8_t ndim = 3;
+    int64_t shape[] = {10, 10, 10};
+    int64_t cshape[] = {4, 5, 1};
+    int64_t bshape[] = {2, 2, 1};
+    int64_t start[] = {5, 4, 3};
+    int64_t stop[] = {8, 6, 3};
+
+    int32_t result[] = {0}; // Fix windows
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                  start, stop, result, false, NULL));
+}
+
+/* Avoid time consuming tests
 INA_TEST_FIXTURE(view, 7_i_v2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
     int32_t type_size = sizeof(int32_t);
@@ -277,6 +315,7 @@ INA_TEST_FIXTURE(view, 7_i_v2) {
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   start, stop, result, false, NULL));
 }
+*/
 
 INA_TEST_FIXTURE(view, 3_s_v2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT16;
@@ -336,6 +375,29 @@ INA_TEST_FIXTURE(view, 4_ull_v) {
                                                   start, stop, result, false, NULL));
 }
 
+INA_TEST_FIXTURE(view, 3_ui_v) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
+    int32_t type_size = sizeof(uint32_t);
+
+    const int8_t ndim = 3;
+    int64_t shape[] = {10, 10, 10};
+    int64_t cshape[] = {4, 5, 1};
+    int64_t bshape[] = {2, 2, 1};
+    int64_t start[] = {5, 4, 3};
+    int64_t stop[] = {8, 6, 5};
+
+    uint32_t result[] = {543, 544,
+                         553, 554,
+                         643, 644,
+                         653, 654,
+                         743, 744,
+                         753, 754};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                  start, stop, result, false, "xarr.iarr"));
+}
+
+/* Avoid time consuming tests
 INA_TEST_FIXTURE(view, 7_ui_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
     int32_t type_size = sizeof(uint32_t);
@@ -369,7 +431,7 @@ INA_TEST_FIXTURE(view, 7_ui_v) {
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   start, stop, result, false, "xarr.iarr"));
 }
-
+*/
 
 INA_TEST_FIXTURE(view, 3_us_v2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT16;
@@ -405,6 +467,26 @@ INA_TEST_FIXTURE(view, 3_uc_v2) {
                                                   start, stop, result, true, NULL));
 }
 
+INA_TEST_FIXTURE(view, 2_b_v) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
+    int32_t type_size = sizeof(bool);
+
+    const int8_t ndim = 2;
+    int64_t shape[] = {10, 10};
+    int64_t cshape[] = {4, 5};
+    int64_t bshape[] = {2, 2};
+    int64_t start[] = {5, 4};
+    int64_t stop[] = {8, 6};
+
+    bool result[] = {false, true,
+                     false, true,
+                     false, true};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                  start, stop, result, false, "xarr.iarr"));
+}
+
+/* Avoid time consuming tests
 INA_TEST_FIXTURE(view, 7_b_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
     int32_t type_size = sizeof(bool);
@@ -438,3 +520,4 @@ INA_TEST_FIXTURE(view, 7_b_v) {
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   start, stop, result, false, "xarr.iarr"));
 }
+*/
