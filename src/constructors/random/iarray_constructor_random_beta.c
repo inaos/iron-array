@@ -19,6 +19,7 @@ int iarray_random_beta_fn(iarray_random_ctx_t *random_ctx,
                             uint8_t itemsize,
                             int32_t blocksize,
                             uint8_t *buffer) {
+
     if (itemsize == 4) {
         float alpha = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
         float beta = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA];
@@ -44,6 +45,11 @@ INA_API(ina_rc_t) iarray_random_beta(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(random_ctx);
     INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(container);
+
+    if (dtshape->dtype != IARRAY_DATA_TYPE_FLOAT && dtshape->dtype != IARRAY_DATA_TYPE_DOUBLE) {
+        IARRAY_TRACE1(iarray.error, "Dtype is not supported");
+        return (INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+    }
 
     /* validate distribution parameters */
     if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {

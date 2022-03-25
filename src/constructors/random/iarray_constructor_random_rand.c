@@ -45,6 +45,11 @@ INA_API(ina_rc_t) iarray_random_rand(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(container);
 
+    if (dtshape->dtype != IARRAY_DATA_TYPE_FLOAT && dtshape->dtype != IARRAY_DATA_TYPE_DOUBLE) {
+        IARRAY_TRACE1(iarray.error, "Dtype is not supported");
+        return (INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
+    }
+
     /* validate distribution parameters */
     if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
         IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_float(random_ctx, IARRAY_RANDOM_DIST_PARAM_A, 0.0f));
