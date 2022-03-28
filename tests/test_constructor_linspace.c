@@ -114,7 +114,7 @@ INA_TEST_FIXTURE(constructor_linspace, 3_f) {
     INA_TEST_ASSERT_SUCCEED(test_linspace(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, "arr.iarr"));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(constructor_linspace, 7_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 

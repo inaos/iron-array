@@ -285,7 +285,7 @@ INA_TEST_FIXTURE(reduce, sum_6_ull_4) {
 }
 
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(reduce, sum_8_ull_6) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
 
@@ -380,7 +380,7 @@ INA_TEST_FIXTURE(reduce, sum_4_ll_2) {
 }
 
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(reduce, sum_8_ll_6) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
 

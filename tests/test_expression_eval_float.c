@@ -209,7 +209,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
                                                  data->func, data->expr_str, true, "arr.iarr"));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;

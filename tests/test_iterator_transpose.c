@@ -168,7 +168,7 @@ INA_TEST_FIXTURE(iterator_transpose, 2_d) {
 }
 
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(iterator_transpose, 2_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);

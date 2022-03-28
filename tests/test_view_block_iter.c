@@ -192,7 +192,7 @@ INA_TEST_FIXTURE(view_block_iter, 3_f_v) {
                                                   start, stop, false, NULL));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(view_block_iter, 7_f_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
@@ -255,7 +255,7 @@ INA_TEST_FIXTURE(view_block_iter, 2_ull_v) {
                                                   start, stop, false, NULL));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(view_block_iter, 7_ull_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
     int32_t type_size = sizeof(uint64_t);
@@ -318,7 +318,7 @@ INA_TEST_FIXTURE(view_block_iter, 2_ui_v) {
                                                   start, stop, false, NULL));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(view_block_iter, 7_ui_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
     int32_t type_size = sizeof(uint32_t);

@@ -245,7 +245,7 @@ INA_TEST_FIXTURE(view, 2_ll_v) {
                                                   start, stop, result, false, "xarr.iarr"));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(view, 7_ll_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
     int32_t type_size = sizeof(int64_t);
@@ -298,7 +298,7 @@ INA_TEST_FIXTURE(view, 3_i_v2) {
                                                   start, stop, result, false, NULL));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(view, 7_i_v2) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
     int32_t type_size = sizeof(int32_t);
@@ -397,7 +397,7 @@ INA_TEST_FIXTURE(view, 3_ui_v) {
                                                   start, stop, result, false, "xarr.iarr"));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(view, 7_ui_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
     int32_t type_size = sizeof(uint32_t);
@@ -486,7 +486,7 @@ INA_TEST_FIXTURE(view, 2_b_v) {
                                                   start, stop, result, false, "xarr.iarr"));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(view, 7_b_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
     int32_t type_size = sizeof(bool);

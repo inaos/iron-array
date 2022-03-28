@@ -124,7 +124,7 @@ INA_TEST_FIXTURE(constructor_copy_transpose, 2_f) {
     INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, NULL, "arr2.iarr"));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(constructor_copy_transpose, 2_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
