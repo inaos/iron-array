@@ -248,7 +248,7 @@ INA_TEST_FIXTURE(reduce_multi_view, prod_3_i_1) {
 }
 
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(reduce_multi_view, prod_8_i_1) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
 
@@ -374,7 +374,7 @@ INA_TEST_FIXTURE(reduce_multi_view, prod_3_ull_2) {
 }
 
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(reduce_multi_view, prod_8_ull_7) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
 
@@ -576,7 +576,7 @@ INA_TEST_FIXTURE(reduce_multi_view, max_5_i_1) {
 }
 
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(reduce_multi_view, max_8_i_1) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
 
@@ -703,7 +703,7 @@ INA_TEST_FIXTURE(reduce_multi_view, max_4_ull_3) {
 }
 
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(reduce_multi_view, max_8_ull_7) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
 

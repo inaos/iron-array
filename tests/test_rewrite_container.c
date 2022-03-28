@@ -178,7 +178,7 @@ INA_TEST_FIXTURE(rewrite_cont, 2_ll) {
                                               blockshape, false, "xarr.iarr"));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(rewrite_cont, 7_ll) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
     int32_t type_size = sizeof(int64_t);
@@ -236,7 +236,7 @@ INA_TEST_FIXTURE(rewrite_cont, 3_sc) {
                                               blockshape, false, "xarr.iarr"));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(rewrite_cont, 7_sc) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT8;
     int32_t type_size = sizeof(int8_t);
@@ -294,7 +294,7 @@ INA_TEST_FIXTURE(rewrite_cont, 2_us) {
                                               blockshape, false, "xarr.iarr"));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(rewrite_cont, 7_us) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT16;
     int32_t type_size = sizeof(uint16_t);

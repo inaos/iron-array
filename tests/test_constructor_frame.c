@@ -152,7 +152,7 @@ INA_TEST_FIXTURE(constructor_frame, 3_ll) {
     INA_TEST_ASSERT_SUCCEED(test_constructor_frame(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, "arr.iarr"));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(constructor_frame, 5_ll) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
 
@@ -180,7 +180,7 @@ INA_TEST_FIXTURE(constructor_frame, 1_i) {
     INA_TEST_ASSERT_SUCCEED(test_constructor_frame(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, NULL));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(constructor_frame, 7_i) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
 
@@ -234,7 +234,7 @@ INA_TEST_FIXTURE(constructor_frame, 2_ull) {
     INA_TEST_ASSERT_SUCCEED(test_constructor_frame(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, "arr.iarr"));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(constructor_frame, 5_ull) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
 
@@ -262,7 +262,7 @@ INA_TEST_FIXTURE(constructor_frame, 2_ui) {
     INA_TEST_ASSERT_SUCCEED(test_constructor_frame(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, NULL));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(constructor_frame, 7_ui) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
 

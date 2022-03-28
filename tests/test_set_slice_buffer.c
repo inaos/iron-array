@@ -268,7 +268,7 @@ INA_TEST_FIXTURE(set_slice_buffer, 3_ui_blosc) {
                                                       start, stop, true, "xarr.iarr"));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(set_slice_buffer, 3_ui_blosc) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
     int32_t type_size = sizeof(uint32_t);

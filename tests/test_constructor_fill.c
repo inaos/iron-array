@@ -219,7 +219,7 @@ INA_TEST_FIXTURE(constructor_fill, 3_f)
     INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &value, true, "arr.iarr"));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(constructor_fill, 7_f)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;

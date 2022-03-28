@@ -201,7 +201,7 @@ INA_TEST_FIXTURE(view_iter, 2_f_v) {
                                                   start, stop, result, true, NULL));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(view_iter, 7_f_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
@@ -309,7 +309,7 @@ INA_TEST_FIXTURE(view_iter, 3_ull_v) {
                                                   start, stop, result, true, NULL));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(view_iter, 7_ull_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
     int32_t type_size = sizeof(uint64_t);

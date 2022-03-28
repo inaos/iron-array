@@ -231,7 +231,7 @@ INA_TEST_FIXTURE(block_iterator, 3_ll) {
                                                 blockshape, true, "arr.iarr"));
 }
 
-/* Avoid long tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator, 7_ll) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
     int32_t type_size = sizeof(int64_t);
@@ -289,7 +289,7 @@ INA_TEST_FIXTURE(block_iterator, 2_sc) {
                                                 blockshape, true, "arr.iarr"));
 }
 
-/* Avoid long tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator, 7_sc) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT8;
     int32_t type_size = sizeof(int8_t);
@@ -347,7 +347,7 @@ INA_TEST_FIXTURE(block_iterator, 2_us) {
                                                 blockshape, true, "arr.iarr"));
 }
 
-/* Avoid long tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator, 7_us) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT16;
     int32_t type_size = sizeof(uint16_t);
@@ -617,7 +617,7 @@ INA_TEST_FIXTURE(block_iterator_ext_chunk, 2_d) {
                                                           blockshape, false, "arr.iarr"));
 }
 
-/* Avoid long tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator_ext_chunk, 4_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
@@ -647,7 +647,7 @@ INA_TEST_FIXTURE(block_iterator_ext_chunk, 1_ll) {
                                                           blockshape, false, NULL));
 }
 
-/* Avoid long tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator_ext_chunk, 7_ll) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
     int32_t type_size = sizeof(int64_t);
@@ -691,7 +691,7 @@ INA_TEST_FIXTURE(block_iterator_ext_chunk, 3_s) {
                                                           blockshape, false, "arr.iarr"));
 }
 
-/* Avoid long tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator_ext_chunk, 4_s) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT16;
     int32_t type_size = sizeof(int16_t);
@@ -749,7 +749,7 @@ INA_TEST_FIXTURE(block_iterator_ext_chunk, 2_ull) {
                                                           blockshape, false, "arr.iarr"));
 }
 
-/* Avoid long tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator_ext_chunk, 4_ull) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
     int32_t type_size = sizeof(uint64_t);
@@ -808,7 +808,7 @@ INA_TEST_FIXTURE(block_iterator_ext_chunk, 3_c) {
                                                           blockshape, false, "arr.iarr"));
 }
 
-/* Avoid long tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator_ext_chunk, 4_c) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;
     int32_t type_size = sizeof(uint8_t);

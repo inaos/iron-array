@@ -251,7 +251,7 @@ INA_TEST_FIXTURE(iterator, 3_ub) {
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, true, "arr.iarr"));
 }
 
-/* Avoid time consuming tests
+/* Avoid heavy tests
 INA_TEST_FIXTURE(iterator, 7_ub) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
     int32_t type_size = sizeof(bool);
