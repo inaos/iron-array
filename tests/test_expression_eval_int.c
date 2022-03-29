@@ -13,38 +13,311 @@
 #include <libiarray/iarray.h>
 #include <tests/iarray_test.h>
 #include <src/iarray_private.h>
-#include <math.h>
 
 
 #define NTHREADS 1
 
+typedef enum test_func {
+    CONST_INT64_ = -1,
+    EXPR_INT64_ = 1,
+    EXPR_MIN_INT64 = 2,
+    EXPR_ABS_INT64 = 3,
+    EXPR_MAX_INT64 = 4,
+    CONST_INT32_ = -2,
+    EXPR_INT32_ = 6,
+    EXPR_MIN_INT32 = 7,
+    EXPR_ABS_INT32 = 8,
+    EXPR_MAX_INT32 = 9,
+    CONST_INT16_ = -3,
+    EXPR_INT16_ = 11,
+    EXPR_MIN_INT16 = 12,
+    EXPR_ABS_INT16 = 13,
+    EXPR_MAX_INT16 = 14,
+    CONST_INT8_ = -4,
+    EXPR_INT8_ = 16,
+    EXPR_MIN_INT8 = 17,
+    EXPR_ABS_INT8 = 18,
+    EXPR_MAX_INT8 = 19,
+} test_func;
+
+/* INT64 functions */
 /* Special case for a constant function */
-static int32_t const_(const int32_t x)
+static int64_t const_int64_(const int64_t x)
+{
+    return (int64_t)(2 - (x - x));
+}
+
+static int64_t expr_int64_(const int64_t x)
+{
+    return (x - 3) * (x - 1) * (x + 4);
+}
+static int64_t expr_min_int64(const int64_t x)
+{
+    return (INA_MIN(x, 35));
+}
+
+static int64_t expr_abs_int64(const int64_t x)
+{
+    return (int64_t)(abs(x) - 35);
+}
+
+static int64_t expr_max_int64(const int64_t x)
+{
+    return (INA_MAX(x, 35));
+}
+
+/* INT32 functions */
+/* Special case for a constant function */
+static int32_t const_int32_(const int32_t x)
 {
     return 2 - (x - x);
 }
 
-
-/* Compute and fill X values in a buffer */
-static int fill_x(int32_t* x, int64_t nelem)
+static int32_t expr_int32_(const int32_t x)
 {
-    int32_t incx = 2 * nelem;
-    for (int i = 0; i < nelem; i++) {
-        x[i] = incx * i;
-    }
-    return 0;
+    return (x - 3) * (x - 1) * (x + 4);
 }
+
+static int32_t expr_min_int32(const int32_t x)
+{
+    return (INA_MIN(x, 35));
+}
+
+static int32_t expr_abs_int32(const int32_t x)
+{
+    return abs(x) - 35;
+}
+
+static int32_t expr_max_int32(const int32_t x)
+{
+    return (INA_MAX(x, 35));
+}
+
+/* INT16 functions */
+/* Special case for a constant function */
+static int16_t const_int16_(const int16_t x)
+{
+    return (int16_t)(2 - (x - x));
+}
+
+static int16_t expr_int16_(const int16_t x)
+{
+    return (int16_t)((x - 3) * (x - 1) * (x + 4));
+}
+
+static int16_t expr_min_int16(const int16_t x)
+{
+    return (int16_t)(INA_MIN(x, 35));
+}
+
+static int16_t expr_abs_int16(const int16_t x)
+{
+    return (int16_t)(abs(x) - 35);
+}
+
+static int16_t expr_max_int16(const int16_t x)
+{
+    return (int16_t)(INA_MAX(x, 35));
+}
+
+/* INT8 functions */
+/* Special case for a constant function */
+static int8_t const_int8_(const int8_t x)
+{
+    return (int8_t)(2 - (x - x));
+}
+
+static int8_t expr_int8_(const int8_t x)
+{
+    return (int8_t)((x - 3) * (x - 1) * (x + 4));
+}
+
+static int8_t expr_min_int8(const int8_t x)
+{
+    return (int8_t)(INA_MIN(x, 35));
+}
+
+static int8_t expr_abs_int8(const int8_t x)
+{
+    return (int8_t)(abs(x) - 35);
+}
+
+static int8_t expr_max_int8(const int8_t x)
+{
+    return (int8_t)(INA_MAX(x, 35));
+}
+
 
 /* Compute and fill Y values in a buffer */
-static void fill_y(const int32_t* x, int32_t* y, int64_t nelem, int32_t (func)(int32_t))
+static void fill_y(const void *x, void *y, int64_t nelem, enum test_func func)
 {
-    for (int i = 0; i < nelem; i++) {
-        y[i] = func(x[i]);
+    switch (func){
+        case CONST_INT64_: {
+            int64_t *x_ = (int64_t *) x;
+            int64_t *y_ = (int64_t *) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = const_int64_(x_[i]);
+            }
+            break;
+        }
+        case EXPR_INT64_: {
+            int64_t *x_ = (int64_t *) x;
+            int64_t *y_ = (int64_t *) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_int64_(x_[i]);
+            }
+            break;
+        }
+        case EXPR_MIN_INT64: {
+            int64_t *x_ = (int64_t *) x;
+            int64_t *y_ = (int64_t *) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_min_int64(x_[i]);
+            }
+            break;
+        }
+        case EXPR_ABS_INT64: {
+            int64_t *x_ = (int64_t *) x;
+            int64_t *y_ = (int64_t *) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_abs_int64(x_[i]);
+            }
+            break;
+        }
+        case EXPR_MAX_INT64: {
+            int64_t *x_ = (int64_t *) x;
+            int64_t *y_ = (int64_t *) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_max_int64(x_[i]);
+            }
+            break;
+        }
+        case CONST_INT32_: {
+            int32_t *x_ = (int32_t *) x;
+            int32_t *y_ = (int32_t *) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = const_int32_(x_[i]);
+            }
+            break;
+        }
+        case EXPR_INT32_: {
+            int32_t *x_ = (int32_t *) x;
+            int32_t *y_ = (int32_t *) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_int32_(x_[i]);
+            }
+            break;
+        }
+        case EXPR_MIN_INT32: {
+            int32_t *x_ = (int32_t *) x;
+            int32_t *y_ = (int32_t *) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_min_int32(x_[i]);
+            }
+            break;
+        }
+        case EXPR_ABS_INT32: {
+            int32_t *x_ = (int32_t *) x;
+            int32_t *y_ = (int32_t *) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_abs_int32(x_[i]);
+            }
+            break;
+        }
+        case EXPR_MAX_INT32: {
+            int32_t *x_ = (int32_t *) x;
+            int32_t *y_ = (int32_t *) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_max_int32(x_[i]);
+            }
+            break;
+        }
+        case CONST_INT16_: {
+            int16_t *x_ = (int16_t*) x;
+            int16_t *y_ = (int16_t*) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = const_int16_(x_[i]);
+            }
+            break;
+        }
+        case EXPR_INT16_: {
+            int16_t *x_ = (int16_t*) x;
+            int16_t *y_ = (int16_t*) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_int16_(x_[i]);
+            }
+            break;
+        }
+        case EXPR_MIN_INT16: {
+            int16_t *x_ = (int16_t*) x;
+            int16_t *y_ = (int16_t*) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_min_int16(x_[i]);
+            }
+            break;
+        }
+        case EXPR_ABS_INT16: {
+            int16_t *x_ = (int16_t*) x;
+            int16_t *y_ = (int16_t*) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_abs_int16(x_[i]);
+            }
+            break;
+        }
+        case EXPR_MAX_INT16: {
+            int16_t *x_ = (int16_t*) x;
+            int16_t *y_ = (int16_t*) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_max_int16(x_[i]);
+            }
+            break;
+        }
+        case CONST_INT8_: {
+            int8_t *x_ = (int8_t*) x;
+            int8_t *y_ = (int8_t*) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = const_int8_(x_[i]);
+            }
+            break;
+        }
+        case EXPR_INT8_: {
+            int8_t *x_ = (int8_t*) x;
+            int8_t *y_ = (int8_t*) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_int8_(x_[i]);
+            }
+            break;
+        }
+        case EXPR_MIN_INT8: {
+            int8_t *x_ = (int8_t*) x;
+            int8_t *y_ = (int8_t*) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_min_int8(x_[i]);
+            }
+            break;
+        }
+        case EXPR_ABS_INT8: {
+            int8_t *x_ = (int8_t*) x;
+            int8_t *y_ = (int8_t*) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_abs_int8(x_[i]);
+            }
+            break;
+        }
+        case EXPR_MAX_INT8: {
+            int8_t *x_ = (int8_t*) x;
+            int8_t *y_ = (int8_t*) y;
+            for (int i = 0; i < nelem; i++) {
+                y_[i] = expr_max_int8(x_[i]);
+            }
+            break;
+        }
     }
 }
 
+
 static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, const int64_t *cshape,
-                                    const int64_t *bshape, int32_t (func)(int32_t), char* expr_str, bool contiguous,
+                                    const int64_t *bshape, enum test_func func, char* expr_str, bool contiguous,
                                     char *urlpath)
 {
     iarray_context_t *ctx;
@@ -52,7 +325,40 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
     iarray_container_t* c_x;
     iarray_container_t* c_out;
     iarray_dtshape_t dtshape;
-    dtshape.dtype = IARRAY_DATA_TYPE_INT32;
+    switch (func) {
+        case CONST_INT64_:
+        case EXPR_INT64_:
+        case EXPR_MIN_INT64:
+        case EXPR_ABS_INT64:
+        case EXPR_MAX_INT64:
+            dtshape.dtype = IARRAY_DATA_TYPE_INT64;
+            dtshape.dtype_size = sizeof(int64_t);
+            break;
+        case CONST_INT32_:
+        case EXPR_INT32_:
+        case EXPR_MIN_INT32:
+        case EXPR_ABS_INT32:
+        case EXPR_MAX_INT32:
+            dtshape.dtype = IARRAY_DATA_TYPE_INT32;
+            dtshape.dtype_size = sizeof(int32_t);
+            break;
+        case CONST_INT16_:
+        case EXPR_INT16_:
+        case EXPR_MIN_INT16:
+        case EXPR_ABS_INT16:
+        case EXPR_MAX_INT16:
+            dtshape.dtype = IARRAY_DATA_TYPE_INT16;
+            dtshape.dtype_size = sizeof(int16_t);
+            break;
+        case CONST_INT8_:
+        case EXPR_INT8_:
+        case EXPR_MIN_INT8:
+        case EXPR_ABS_INT8:
+        case EXPR_MAX_INT8:
+            dtshape.dtype = IARRAY_DATA_TYPE_INT8;
+            dtshape.dtype_size = sizeof(int8_t);
+            break;
+    }
     dtshape.ndim = ndim;
     int64_t nelem = 1;
     for (int i = 0; i < ndim; ++i) {
@@ -68,18 +374,18 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
         store.blockshape[i] = bshape[i];
     }
 
-    int32_t *buffer_x = (int32_t *) ina_mem_alloc(nelem * sizeof(int32_t));
-    int32_t *buffer_y = (int32_t *) ina_mem_alloc(nelem * sizeof(int32_t));
+    void *buffer_x = ina_mem_alloc(nelem * dtshape.dtype_size);
+    void *buffer_y = ina_mem_alloc(nelem * dtshape.dtype_size);
 
-    fill_x(buffer_x, nelem);
+    fill_buf(dtshape.dtype, buffer_x, nelem);
     fill_y(buffer_x, buffer_y, nelem, func);
 
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
     blosc2_remove_urlpath(store.urlpath);
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void*)buffer_x, nelem * sizeof(int32_t), &store, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, buffer_x, nelem * dtshape.dtype_size, &store, 0, &c_x));
 
     INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, dtshape.dtype, &e));
-    if (func != const_) {
+    if (func >= 0) {
         INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
     }
     else {
@@ -103,7 +409,7 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
 
 
     // We use a quite low tolerance as MKL functions always differ from those in OS math libraries
-    INA_TEST_ASSERT_SUCCEED(test_double_buffer_cmp(ctx, c_out, buffer_y, nelem * sizeof(int32_t), 5e-15, 5e-14));
+    INA_TEST_ASSERT_SUCCEED(test_double_buffer_cmp(ctx, c_out, buffer_y, nelem * dtshape.dtype_size, 5e-15, 5e-14));
 
     iarray_expr_free(ctx, &e);
 
@@ -118,14 +424,14 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
     return INA_SUCCESS;
 }
 
-INA_TEST_DATA(expression_eval_int32)
+INA_TEST_DATA(expression_eval_int)
 {
     iarray_config_t cfg;
-    int32_t (*func)(int32_t);
+    enum test_func func;
     char *expr_str;
 };
 
-INA_TEST_SETUP(expression_eval_int32)
+INA_TEST_SETUP(expression_eval_int)
 {
     iarray_init();
 
@@ -135,21 +441,17 @@ INA_TEST_SETUP(expression_eval_int32)
     data->cfg.max_num_threads = NTHREADS;
 }
 
-INA_TEST_TEARDOWN(expression_eval_int32)
+INA_TEST_TEARDOWN(expression_eval_int)
 {
     INA_UNUSED(data);
     iarray_destroy();
 }
 
-static int32_t expr_(const int32_t x)
-{
-    return (x - 3) * (x - 1) * (x + 4);
-}
 
-INA_TEST_FIXTURE(expression_eval_int32, iterblosc_constant)
+INA_TEST_FIXTURE(expression_eval_int, int32_iterblosc_constant)
 {
 data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-data->func = const_;
+data->func = CONST_INT32_;
 data->expr_str = "2";
 
 int8_t ndim = 2;
@@ -161,10 +463,10 @@ INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bsh
 }
 
 
-INA_TEST_FIXTURE(expression_eval_int32, iterblosc_superchunk)
+INA_TEST_FIXTURE(expression_eval_int, int32_iterblosc_superchunk)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = expr_;
+    data->func = EXPR_INT32_;
     data->expr_str = "(x - 3) * (x - 1) * (x + 4)";
 
     int8_t ndim = 2;
@@ -176,10 +478,10 @@ INA_TEST_FIXTURE(expression_eval_int32, iterblosc_superchunk)
 }
 
 
-INA_TEST_FIXTURE(expression_eval_int32, iterblosc2_superchunk)
+INA_TEST_FIXTURE(expression_eval_int, int32_iterblosc2_superchunk)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = expr_;
+    data->func = EXPR_INT32_;
     data->expr_str = "(x - 3) * (x - 1) * (x + 4)";
 
     int8_t ndim = 3;
@@ -190,15 +492,11 @@ INA_TEST_FIXTURE(expression_eval_int32, iterblosc2_superchunk)
     INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, "arr.iarr"));
 }
 
-static int32_t expr_min(const int32_t x)
-{
-    return (INA_MIN(x, 35));
-}
 
-INA_TEST_FIXTURE(expression_eval_int32, iterblosc_superchunk_min)
+INA_TEST_FIXTURE(expression_eval_int, int32_iterblosc_superchunk_min)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = expr_min;
+    data->func = EXPR_MIN_INT32;
     data->expr_str = "min(x, 35)";
 
     int8_t ndim = 2;
@@ -209,15 +507,11 @@ INA_TEST_FIXTURE(expression_eval_int32, iterblosc_superchunk_min)
     INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
 }
 
-static int32_t expr_max(const int32_t x)
-{
-    return (INA_MAX(x, 35));
-}
 
-INA_TEST_FIXTURE(expression_eval_int32, iterblosc_superchunk_max)
+INA_TEST_FIXTURE(expression_eval_int, int32_iterblosc_superchunk_max)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = expr_max;
+    data->func = EXPR_MAX_INT32;
     data->expr_str = "max(x, 35)";
 
     int8_t ndim = 2;
@@ -228,21 +522,272 @@ INA_TEST_FIXTURE(expression_eval_int32, iterblosc_superchunk_max)
     INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
 }
 
-static int32_t expr_abs(const int32_t x)
-{
-    return abs(x) - 35;
-}
 
-INA_TEST_FIXTURE(expression_eval_int32, iterblosc_superchunk_abs)
+INA_TEST_FIXTURE(expression_eval_int, int32_iterblosc_superchunk_abs)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = expr_max;
+    data->func = EXPR_ABS_INT32;
     data->expr_str = "abs(x) - 35";
 
     int8_t ndim = 2;
     int64_t shape[] = {100, 100};
     int64_t cshape[] = {25, 25};
     int64_t bshape[] = {10, 10};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int16_iterblosc_constant)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = CONST_INT16_;
+    data->expr_str = "2";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {10, 40};
+    int64_t cshape[] = {5, 20};
+    int64_t bshape[] = {5, 20};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, false, NULL));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int16_iterblosc_superchunk)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = EXPR_INT16_;
+    data->expr_str = "(x - 3) * (x - 1) * (x + 4)";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {100, 4};
+    int64_t cshape[] = {50, 2};
+    int64_t bshape[] = {15, 2};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, false, "arr.iarr"));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int16_iterblosc2_superchunk)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = EXPR_INT16_;
+    data->expr_str = "(x - 3) * (x - 1) * (x + 4)";
+
+    int8_t ndim = 3;
+    int64_t shape[] = {10, 23, 121};
+    int64_t cshape[] = {10, 3, 17};
+    int64_t bshape[] = {7, 2, 5};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, "arr.iarr"));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int16_iterblosc_superchunk_min)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = EXPR_MIN_INT16;
+    data->expr_str = "min(x, 35)";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {10, 10};
+    int64_t cshape[] = {5, 5};
+    int64_t bshape[] = {3, 3};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int16_iterblosc_superchunk_max)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = EXPR_MAX_INT32;
+    data->expr_str = "max(x, 35)";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {50, 50};
+    int64_t cshape[] = {25, 25};
+    int64_t bshape[] = {10, 10};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int16_iterblosc_superchunk_abs)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = EXPR_ABS_INT16;
+    data->expr_str = "abs(x) - 35";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {50, 50};
+    int64_t cshape[] = {25, 25};
+    int64_t bshape[] = {10, 10};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int64_iterblosc_constant)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = CONST_INT64_;
+    data->expr_str = "2";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {30, 40};
+    int64_t cshape[] = {20, 20};
+    int64_t bshape[] = {15, 20};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, false, NULL));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int64_iterblosc_superchunk)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = EXPR_INT64_;
+    data->expr_str = "(x - 3) * (x - 1) * (x + 4)";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {40, 40};
+    int64_t cshape[] = {25, 20};
+    int64_t bshape[] = {15, 20};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, false, "arr.iarr"));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int64_iterblosc2_superchunk)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = EXPR_INT64_;
+    data->expr_str = "(x - 3) * (x - 1) * (x + 4)";
+
+    int8_t ndim = 3;
+    int64_t shape[] = {50, 23, 12};
+    int64_t cshape[] = {13, 3, 7};
+    int64_t bshape[] = {7, 2, 5};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, "arr.iarr"));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int64_iterblosc_superchunk_min)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = EXPR_MIN_INT64;
+    data->expr_str = "min(x, 35)";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {50, 40};
+    int64_t cshape[] = {25, 25};
+    int64_t bshape[] = {10, 10};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int64_iterblosc_superchunk_max)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = EXPR_MAX_INT64;
+    data->expr_str = "max(x, 35)";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {40, 40};
+    int64_t cshape[] = {25, 25};
+    int64_t bshape[] = {10, 10};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int64_iterblosc_superchunk_abs)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = EXPR_ABS_INT64;
+    data->expr_str = "abs(x) - 35";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {100, 100};
+    int64_t cshape[] = {25, 25};
+    int64_t bshape[] = {10, 10};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int8_iterblosc_constant)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = CONST_INT8_;
+    data->expr_str = "2";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {50, 2};
+    int64_t cshape[] = {25, 2};
+    int64_t bshape[] = {10, 2};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, false, NULL));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int8_iterblosc2_superchunk)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = EXPR_INT8_;
+    data->expr_str = "(x - 3) * (x - 1) * (x + 4)";
+
+    int8_t ndim = 3;
+    int64_t shape[] = {10, 5, 2};
+    int64_t cshape[] = {5, 3, 2};
+    int64_t bshape[] = {3, 3, 2};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, "arr.iarr"));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int8_iterblosc_superchunk_min)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = EXPR_MIN_INT8;
+    data->expr_str = "min(x, 35)";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {50, 2};
+    int64_t cshape[] = {25, 2};
+    int64_t bshape[] = {10, 2};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int8_iterblosc_superchunk_max)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = EXPR_MAX_INT8;
+    data->expr_str = "max(x, 35)";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {100, 10};
+    int64_t cshape[] = {25, 5};
+    int64_t bshape[] = {10, 2};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+}
+
+
+INA_TEST_FIXTURE(expression_eval_int, int8_iterblosc_superchunk_abs)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = EXPR_ABS_INT8;
+    data->expr_str = "abs(x) - 35";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {50, 2};
+    int64_t cshape[] = {25, 2};
+    int64_t bshape[] = {10, 2};
 
     INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
 }
