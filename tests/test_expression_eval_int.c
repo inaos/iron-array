@@ -406,6 +406,8 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
             dtshape.dtype = IARRAY_DATA_TYPE_BOOL;
             dtshape.dtype_size = sizeof(bool);
             break;
+        default:
+            return INA_ERR_EXCEEDED;
     }
     dtshape.ndim = ndim;
     int64_t nelem = 1;
@@ -436,9 +438,7 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
     if (func >= 0) {
         INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
     }
-    else {
 
-    }
     iarray_storage_t outstore;
     outstore.contiguous = contiguous;
     outstore.urlpath = NULL;
@@ -498,16 +498,16 @@ INA_TEST_TEARDOWN(expression_eval)
 
 INA_TEST_FIXTURE(expression_eval, int32_iterblosc_constant)
 {
-data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-data->func = CONST_INT32_;
-data->expr_str = "2";
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = CONST_INT32_;
+    data->expr_str = "2";
 
-int8_t ndim = 2;
-int64_t shape[] = {100, 40};
-int64_t cshape[] = {50, 20};
-int64_t bshape[] = {15, 20};
+    int8_t ndim = 2;
+    int64_t shape[] = {100, 40};
+    int64_t cshape[] = {50, 20};
+    int64_t bshape[] = {15, 20};
 
-INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, false, NULL));
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, false, NULL));
 }
 
 
@@ -538,51 +538,6 @@ INA_TEST_FIXTURE(expression_eval, int32_iterblosc2_superchunk)
     int64_t bshape[] = {7, 12, 5};
 
     INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, "arr.iarr"));
-}
-
-
-INA_TEST_FIXTURE(expression_eval, int32_iterblosc_superchunk_min)
-{
-    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = EXPR_MIN_INT32;
-    data->expr_str = "min(x, 35)";
-
-    int8_t ndim = 2;
-    int64_t shape[] = {100, 100};
-    int64_t cshape[] = {25, 25};
-    int64_t bshape[] = {10, 10};
-
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
-}
-
-
-INA_TEST_FIXTURE(expression_eval, int32_iterblosc_superchunk_max)
-{
-    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = EXPR_MAX_INT32;
-    data->expr_str = "max(x, 35)";
-
-    int8_t ndim = 2;
-    int64_t shape[] = {100, 100};
-    int64_t cshape[] = {25, 25};
-    int64_t bshape[] = {10, 10};
-
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
-}
-
-
-INA_TEST_FIXTURE(expression_eval, int32_iterblosc_superchunk_abs)
-{
-    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = EXPR_ABS_INT32;
-    data->expr_str = "abs(x) - 35";
-
-    int8_t ndim = 2;
-    int64_t shape[] = {100, 100};
-    int64_t cshape[] = {25, 25};
-    int64_t bshape[] = {10, 10};
-
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
 }
 
 
@@ -631,51 +586,6 @@ INA_TEST_FIXTURE(expression_eval, int16_iterblosc2_superchunk)
 }
 
 
-INA_TEST_FIXTURE(expression_eval, int16_iterblosc_superchunk_min)
-{
-    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = EXPR_MIN_INT16;
-    data->expr_str = "min(x, 35)";
-
-    int8_t ndim = 2;
-    int64_t shape[] = {10, 10};
-    int64_t cshape[] = {5, 5};
-    int64_t bshape[] = {3, 3};
-
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
-}
-
-
-INA_TEST_FIXTURE(expression_eval, int16_iterblosc_superchunk_max)
-{
-    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = EXPR_MAX_INT32;
-    data->expr_str = "max(x, 35)";
-
-    int8_t ndim = 2;
-    int64_t shape[] = {50, 50};
-    int64_t cshape[] = {25, 25};
-    int64_t bshape[] = {10, 10};
-
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
-}
-
-
-INA_TEST_FIXTURE(expression_eval, int16_iterblosc_superchunk_abs)
-{
-    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = EXPR_ABS_INT16;
-    data->expr_str = "abs(x) - 35";
-
-    int8_t ndim = 2;
-    int64_t shape[] = {50, 50};
-    int64_t cshape[] = {25, 25};
-    int64_t bshape[] = {10, 10};
-
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
-}
-
-
 INA_TEST_FIXTURE(expression_eval, int64_iterblosc_constant)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
@@ -721,51 +631,6 @@ INA_TEST_FIXTURE(expression_eval, int64_iterblosc2_superchunk)
 }
 
 
-INA_TEST_FIXTURE(expression_eval, int64_iterblosc_superchunk_min)
-{
-    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = EXPR_MIN_INT64;
-    data->expr_str = "min(x, 35)";
-
-    int8_t ndim = 2;
-    int64_t shape[] = {50, 40};
-    int64_t cshape[] = {25, 25};
-    int64_t bshape[] = {10, 10};
-
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
-}
-
-
-INA_TEST_FIXTURE(expression_eval, int64_iterblosc_superchunk_max)
-{
-    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = EXPR_MAX_INT64;
-    data->expr_str = "max(x, 35)";
-
-    int8_t ndim = 2;
-    int64_t shape[] = {40, 40};
-    int64_t cshape[] = {25, 25};
-    int64_t bshape[] = {10, 10};
-
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
-}
-
-
-INA_TEST_FIXTURE(expression_eval, int64_iterblosc_superchunk_abs)
-{
-    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = EXPR_ABS_INT64;
-    data->expr_str = "abs(x) - 35";
-
-    int8_t ndim = 2;
-    int64_t shape[] = {100, 100};
-    int64_t cshape[] = {25, 25};
-    int64_t bshape[] = {10, 10};
-
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
-}
-
-
 INA_TEST_FIXTURE(expression_eval, int8_iterblosc_constant)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
@@ -796,51 +661,6 @@ INA_TEST_FIXTURE(expression_eval, int8_iterblosc2_superchunk)
 }
 
 
-INA_TEST_FIXTURE(expression_eval, int8_iterblosc_superchunk_min)
-{
-    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = EXPR_MIN_INT8;
-    data->expr_str = "min(x, 35)";
-
-    int8_t ndim = 2;
-    int64_t shape[] = {50, 2};
-    int64_t cshape[] = {25, 2};
-    int64_t bshape[] = {10, 2};
-
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
-}
-
-
-INA_TEST_FIXTURE(expression_eval, int8_iterblosc_superchunk_max)
-{
-    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = EXPR_MAX_INT8;
-    data->expr_str = "max(x, 35)";
-
-    int8_t ndim = 2;
-    int64_t shape[] = {100, 10};
-    int64_t cshape[] = {25, 5};
-    int64_t bshape[] = {10, 2};
-
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
-}
-
-
-INA_TEST_FIXTURE(expression_eval, int8_iterblosc_superchunk_abs)
-{
-    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = EXPR_ABS_INT8;
-    data->expr_str = "abs(x) - 35";
-
-    int8_t ndim = 2;
-    int64_t shape[] = {50, 2};
-    int64_t cshape[] = {25, 2};
-    int64_t bshape[] = {10, 2};
-
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
-}
-
-
 INA_TEST_FIXTURE(expression_eval, bool_iterblosc_constant)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
@@ -856,31 +676,215 @@ INA_TEST_FIXTURE(expression_eval, bool_iterblosc_constant)
 }
 
 
-INA_TEST_FIXTURE(expression_eval, bool_iterblosc_superchunk_min)
-{
-    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = EXPR_MIN_BOOL;
-    data->expr_str = "min(x, 1)";
+#if defined(__WIN32__)
+    /* Temporaly avoid these tests since we cannot use LLVM13 with windows */
+#else
+    INA_TEST_FIXTURE(expression_eval, int32_iterblosc_superchunk_min)
+    {
+        data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+        data->func = EXPR_MIN_INT32;
+        data->expr_str = "min(x, 35)";
 
-    int8_t ndim = 2;
-    int64_t shape[] = {100, 100};
-    int64_t cshape[] = {25, 25};
-    int64_t bshape[] = {10, 10};
+        int8_t ndim = 2;
+        int64_t shape[] = {100, 100};
+        int64_t cshape[] = {25, 25};
+        int64_t bshape[] = {10, 10};
 
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
-}
+        INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+    }
 
 
-INA_TEST_FIXTURE(expression_eval, bool_iterblosc_superchunk_max)
-{
-    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
-    data->func = EXPR_MAX_BOOL;
-    data->expr_str = "max(x, 0)";
+    INA_TEST_FIXTURE(expression_eval, int32_iterblosc_superchunk_max)
+    {
+        data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+        data->func = EXPR_MAX_INT32;
+        data->expr_str = "max(x, 35)";
 
-    int8_t ndim = 2;
-    int64_t shape[] = {100, 100};
-    int64_t cshape[] = {25, 25};
-    int64_t bshape[] = {10, 10};
+        int8_t ndim = 2;
+        int64_t shape[] = {100, 100};
+        int64_t cshape[] = {25, 25};
+        int64_t bshape[] = {10, 10};
 
-    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
-}
+        INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+    }
+
+
+    INA_TEST_FIXTURE(expression_eval, int32_iterblosc_superchunk_abs)
+    {
+        data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+        data->func = EXPR_ABS_INT32;
+        data->expr_str = "abs(x) - 35";
+
+        int8_t ndim = 2;
+        int64_t shape[] = {100, 100};
+        int64_t cshape[] = {25, 25};
+        int64_t bshape[] = {10, 10};
+
+        INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+    }
+
+
+    INA_TEST_FIXTURE(expression_eval, int16_iterblosc_superchunk_min)
+    {
+        data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+        data->func = EXPR_MIN_INT16;
+        data->expr_str = "min(x, 35)";
+
+        int8_t ndim = 2;
+        int64_t shape[] = {10, 10};
+        int64_t cshape[] = {5, 5};
+        int64_t bshape[] = {3, 3};
+
+        INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+    }
+
+
+    INA_TEST_FIXTURE(expression_eval, int16_iterblosc_superchunk_max)
+    {
+        data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+        data->func = EXPR_MAX_INT32;
+        data->expr_str = "max(x, 35)";
+
+        int8_t ndim = 2;
+        int64_t shape[] = {50, 50};
+        int64_t cshape[] = {25, 25};
+        int64_t bshape[] = {10, 10};
+
+        INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+    }
+
+
+    INA_TEST_FIXTURE(expression_eval, int64_iterblosc_superchunk_min)
+    {
+        data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+        data->func = EXPR_MIN_INT64;
+        data->expr_str = "min(x, 35)";
+
+        int8_t ndim = 2;
+        int64_t shape[] = {50, 40};
+        int64_t cshape[] = {25, 25};
+        int64_t bshape[] = {10, 10};
+
+        INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+    }
+
+
+    INA_TEST_FIXTURE(expression_eval, int16_iterblosc_superchunk_abs)
+    {
+        data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+        data->func = EXPR_ABS_INT16;
+        data->expr_str = "abs(x) - 35";
+
+        int8_t ndim = 2;
+        int64_t shape[] = {50, 50};
+        int64_t cshape[] = {25, 25};
+        int64_t bshape[] = {10, 10};
+
+        INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+    }
+
+
+    INA_TEST_FIXTURE(expression_eval, int64_iterblosc_superchunk_max)
+    {
+        data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+        data->func = EXPR_MAX_INT64;
+        data->expr_str = "max(x, 35)";
+
+        int8_t ndim = 2;
+        int64_t shape[] = {40, 40};
+        int64_t cshape[] = {25, 25};
+        int64_t bshape[] = {10, 10};
+
+        INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+    }
+
+
+    INA_TEST_FIXTURE(expression_eval, int64_iterblosc_superchunk_abs)
+    {
+        data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+        data->func = EXPR_ABS_INT64;
+        data->expr_str = "abs(x) - 35";
+
+        int8_t ndim = 2;
+        int64_t shape[] = {100, 100};
+        int64_t cshape[] = {25, 25};
+        int64_t bshape[] = {10, 10};
+
+        INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+    }
+
+
+    INA_TEST_FIXTURE(expression_eval, int8_iterblosc_superchunk_min)
+    {
+        data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+        data->func = EXPR_MIN_INT8;
+        data->expr_str = "min(x, 35)";
+
+        int8_t ndim = 2;
+        int64_t shape[] = {50, 2};
+        int64_t cshape[] = {25, 2};
+        int64_t bshape[] = {10, 2};
+
+        INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+    }
+
+
+    INA_TEST_FIXTURE(expression_eval, int8_iterblosc_superchunk_max)
+    {
+        data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+        data->func = EXPR_MAX_INT8;
+        data->expr_str = "max(x, 35)";
+
+        int8_t ndim = 2;
+        int64_t shape[] = {100, 10};
+        int64_t cshape[] = {25, 5};
+        int64_t bshape[] = {10, 2};
+
+        INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+    }
+
+
+    INA_TEST_FIXTURE(expression_eval, int8_iterblosc_superchunk_abs)
+    {
+        data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+        data->func = EXPR_ABS_INT8;
+        data->expr_str = "abs(x) - 35";
+
+        int8_t ndim = 2;
+        int64_t shape[] = {50, 2};
+        int64_t cshape[] = {25, 2};
+        int64_t bshape[] = {10, 2};
+
+        INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+    }
+
+
+    INA_TEST_FIXTURE(expression_eval, bool_iterblosc_superchunk_min)
+    {
+        data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+        data->func = EXPR_MIN_BOOL;
+        data->expr_str = "min(x, 1)";
+
+        int8_t ndim = 2;
+        int64_t shape[] = {100, 100};
+        int64_t cshape[] = {25, 25};
+        int64_t bshape[] = {10, 10};
+
+        INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+    }
+
+
+    INA_TEST_FIXTURE(expression_eval, bool_iterblosc_superchunk_max)
+    {
+        data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+        data->func = EXPR_MAX_BOOL;
+        data->expr_str = "max(x, 0)";
+
+        int8_t ndim = 2;
+        int64_t shape[] = {100, 100};
+        int64_t cshape[] = {25, 25};
+        int64_t bshape[] = {10, 10};
+
+        INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+    }
+#endif

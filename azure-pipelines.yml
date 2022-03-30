@@ -11,14 +11,14 @@ strategy:
       BUILD_CONFIGURATION: Debug
       MULTITHREADING: False
       DISABLE_LLVM_CONFIG: True
-      CC: clang  # use clang on Linux wich is faster to compile
+      CC: clang  # use clang on Linux which is faster to compile
       LD: ld.lld # use lld LLVM for linking too
     linux-release:
       imageName: 'ubuntu-20.04'
       BUILD_CONFIGURATION: RelWithDebInfo
       MULTITHREADING: False
       DISABLE_LLVM_CONFIG: True
-      CC: clang  # use clang on Linux wich is faster to compile
+      CC: clang  # use clang on Linux which is faster to compile
       LD: ld.lld # use lld LLVM for linking too
 #    mac-debug:
 #      imageName: 'macos-10.15'
@@ -139,8 +139,8 @@ steps:
     cd cmake-build-$BUILD_CONFIGURATION
     ./tests
   displayName: Execute tests
-  condition:
-    eq( variables['BUILD_CONFIGURATION'], 'RelWithDebInfo' )
+#  condition:
+#    eq( variables['BUILD_CONFIGURATION'], 'RelWithDebInfo' )
   env:
     INAC_TRACE: ""
 
