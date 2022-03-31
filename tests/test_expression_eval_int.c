@@ -675,9 +675,8 @@ INA_TEST_FIXTURE(expression_eval, bool_iterblosc_constant)
 }
 
 
-#if defined(__WIN32__)
+#ifndef INA_OS_WINDOWS
     /* Temporaly avoid these tests since we cannot use LLVM13 with windows */
-#else
     INA_TEST_FIXTURE(expression_eval, int32_iterblosc_superchunk_min)
     {
         data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
