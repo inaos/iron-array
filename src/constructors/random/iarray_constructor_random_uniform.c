@@ -19,14 +19,13 @@ int iarray_random_uniform_fn(iarray_random_ctx_t *random_ctx,
                             uint8_t itemsize,
                             int32_t blocksize,
                             uint8_t *buffer) {
+    double a = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_A];
+    double b = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_B];
+
     if (itemsize == 4) {
-        float a = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_A];
-        float b = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_B];
         return vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream,
-                              (int) blocksize, (float *) buffer, a, b);
+                              (int) blocksize, (float *) buffer, (float) a, (float) b);
     } else {
-        double a = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_A];
-        double b = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_B];
         return vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream,
                             (int) blocksize, (double *) buffer, a, b);
     }
@@ -51,17 +50,9 @@ INA_API(ina_rc_t) iarray_random_uniform(iarray_context_t *ctx,
     }
 
     /* validate distribution parameters */
-    if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        if (random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_A] >= random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_B]) {
-            IARRAY_TRACE1(iarray.error, "The parameters for the uniform distribution are invalid");
-            return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
-        }
-    }
-    else {
-        if (random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_A] >= random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_B]) {
-            IARRAY_TRACE1(iarray.error, "The parameters for the uniform distribution are invalid");
-            return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
-        }
+    if (random_ctx->params[IARRAY_RANDOM_DIST_PARAM_A] >= random_ctx->params[IARRAY_RANDOM_DIST_PARAM_B]) {
+        IARRAY_TRACE1(iarray.error, "The parameters for the uniform distribution are invalid");
+        return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
     }
 
     return iarray_random_prefilter(ctx, dtshape, random_ctx, iarray_random_uniform_fn, storage, container);

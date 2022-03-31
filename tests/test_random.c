@@ -110,8 +110,8 @@ INA_TEST_FIXTURE(random_mt, randn_f) {
 INA_TEST_FIXTURE(random_mt, beta) {
 
 
-    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_ALPHA, 3.);
-    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 4.);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_ALPHA, 3.);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 4.);
 
     char* urlpath = "test_beta_float64_a3_b4.iarray";
 
@@ -121,8 +121,8 @@ INA_TEST_FIXTURE(random_mt, beta) {
 
 INA_TEST_FIXTURE(random_mt, beta_f) {
 
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_ALPHA, 0.1f);
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 5.0f);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_ALPHA, 0.1);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 5.0);
 
     char* urlpath = "test_beta_float32_a0.1_b5.iarray";
 
@@ -132,8 +132,8 @@ INA_TEST_FIXTURE(random_mt, beta_f) {
 
 INA_TEST_FIXTURE(random_mt, lognormal) {
 
-    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 3.);
-    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 4.);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 3.);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 4.);
 
     char* urlpath = "test_lognormal_float64_mean3_sigma4.iarray";
 
@@ -143,8 +143,8 @@ INA_TEST_FIXTURE(random_mt, lognormal) {
 
 INA_TEST_FIXTURE(random_mt, lognormal_f) {
 
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 0.1f);
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 5.f);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 0.1);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 5.);
 
     char* urlpath = "test_lognormal_float32_mean0.1_sigma5.iarray";
 
@@ -154,7 +154,7 @@ INA_TEST_FIXTURE(random_mt, lognormal_f) {
 
 INA_TEST_FIXTURE(random_mt, exponential) {
 
-    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 3.0f);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 3.0);
 
     char* urlpath = "test_exponential_float64_scale3.iarray";
 
@@ -164,7 +164,7 @@ INA_TEST_FIXTURE(random_mt, exponential) {
 
 INA_TEST_FIXTURE(random_mt, exponential_f) {
 
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 0.1f);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_BETA, 0.1);
 
     char* urlpath = "test_exponential_float32_scale0.1.iarray";
 
@@ -174,8 +174,8 @@ INA_TEST_FIXTURE(random_mt, exponential_f) {
 
 INA_TEST_FIXTURE(random_mt, uniform) {
 
-    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_A, -3.);
-    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_B, 5.);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_A, -3.);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_B, 5.);
 
     char* urlpath = "test_uniform_float64_low-3_high5.iarray";
 
@@ -185,8 +185,8 @@ INA_TEST_FIXTURE(random_mt, uniform) {
 
 INA_TEST_FIXTURE(random_mt, uniform_f) {
 
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_A, -0.1f);
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_B, 0.2f);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_A, -0.1);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_B, 0.2);
 
     char* urlpath = "test_uniform_float32_low-0.1_high0.2.iarray";
 
@@ -196,8 +196,8 @@ INA_TEST_FIXTURE(random_mt, uniform_f) {
 
 INA_TEST_FIXTURE(random_mt, normal) {
 
-    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 3.);
-    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 5.);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 3.);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 5.);
 
     char* urlpath = "test_normal_float64_loc3_scale5.iarray";
 
@@ -207,8 +207,8 @@ INA_TEST_FIXTURE(random_mt, normal) {
 
 INA_TEST_FIXTURE(random_mt, normal_f) {
 
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 0.1f);
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 0.2f);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 0.1);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 0.2);
 
     char* urlpath = "test_normal_float32_loc0.1_scale0.2.iarray";
 
@@ -218,67 +218,33 @@ INA_TEST_FIXTURE(random_mt, normal_f) {
 
 INA_TEST_FIXTURE(random_mt, binomial) {
 
-    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_M, 3.f);
-    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.7f);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_M, 3.);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.7);
 
-    char* urlpath = "test_binomial_float64_n3_p0.7.iarray";
+    char* urlpath = "test_binomial_int32_n3_p0.7.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, false, NULL, urlpath,
-                                      &iarray_random_binomial));
-}
-
-INA_TEST_FIXTURE(random_mt, binomial_f) {
-
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_M, 10.f);
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.01f);
-
-    char* urlpath = "test_binomial_float32_n10_p0.01.iarray";
-
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, true, "xarr.iarr", urlpath,
                                       &iarray_random_binomial));
 }
 
 
 INA_TEST_FIXTURE(random_mt, poisson) {
 
-    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_LAMBDA, 3.0f);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_LAMBDA, 3.0);
 
-    char* urlpath = "test_poisson_float64_lam3.iarray";
+    char* urlpath = "test_poisson_int32_lam3.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, false, "xarr.iarr", urlpath, &iarray_random_poisson));
 }
 
 
-INA_TEST_FIXTURE(random_mt, poisson_f) {
-
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_LAMBDA, 0.001f);
-
-    char* urlpath = "test_poisson_float32_lam0.001.iarray";
-
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, true, "xarr.iarr", urlpath, &iarray_random_poisson));
-}
-
-
 INA_TEST_FIXTURE(random_mt, bernouilli) {
 
-    iarray_random_dist_set_param_double(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.7f);
+    iarray_random_dist_set_param(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.7);
 
-    char* urlpath = "test_binomial_float64_n1_p0.7.iarray";
+    char* urlpath = "test_binomial_int32_n1_p0.7.iarray";
 
     INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, true, NULL, urlpath, &iarray_random_bernoulli));
 }
 
-
-INA_TEST_FIXTURE(random_mt, bernoulli_f) {
-
-    iarray_random_ctx_free(data->ctx, &data->rnd_ctx);
-
-    INA_TEST_ASSERT_SUCCEED(iarray_random_ctx_new(
-            data->ctx, 777, IARRAY_RANDOM_RNG_MRG32K3A, &data->rnd_ctx));
-    iarray_random_dist_set_param_float(data->rnd_ctx, IARRAY_RANDOM_DIST_PARAM_P, 0.01f);
-
-    char* urlpath = "test_binomial_float32_n1_p0.01.iarray";
-
-    INA_TEST_ASSERT_SUCCEED(test_rand(data->ctx, data->rnd_ctx, false, "xarr.iarr", urlpath, &iarray_random_bernoulli));
-}
 

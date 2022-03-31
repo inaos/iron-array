@@ -397,13 +397,9 @@ INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
 INA_API(void) iarray_random_ctx_free(iarray_context_t *ctx,
                                      iarray_random_ctx_t **rng_ctx);
 
-INA_API(ina_rc_t) iarray_random_dist_set_param_float(iarray_random_ctx_t *ctx,
-                                                     iarray_random_dist_parameter_t key,
-                                                     float value);
-
-INA_API(ina_rc_t) iarray_random_dist_set_param_double(iarray_random_ctx_t *ctx,
-                                                      iarray_random_dist_parameter_t key,
-                                                      double value);
+INA_API(ina_rc_t) iarray_random_dist_set_param(iarray_random_ctx_t *ctx,
+                                               iarray_random_dist_parameter_t key,
+                                               double value);
 
 INA_API(ina_rc_t) iarray_uninit(iarray_context_t *ctx,
                          iarray_dtshape_t *dtshape,

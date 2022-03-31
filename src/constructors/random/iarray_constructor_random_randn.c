@@ -19,14 +19,12 @@ int iarray_random_randn_fn(iarray_random_ctx_t *random_ctx,
                             uint8_t itemsize,
                             int32_t blocksize,
                             uint8_t *buffer) {
+    double mu = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_MU];
+    double sigma = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_SIGMA];
     if (itemsize == 4) {
-        float mu = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_MU];
-        float sigma = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_SIGMA];
         return vsRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, stream,
-                               (int) blocksize, (float *) buffer, mu, sigma);
+                               (int) blocksize, (float *) buffer, (float) mu, (float) sigma);
     } else {
-        double mu = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_MU];
-        double sigma = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_SIGMA];
         return vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, stream,
                              (int) blocksize, (double *) buffer, mu, sigma);
     }
@@ -51,14 +49,10 @@ INA_API(ina_rc_t) iarray_random_randn(iarray_context_t *ctx,
     }
 
     /* validate distribution parameters */
-    if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_float(random_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 0.0f));
-        IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_float(random_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 1.0f));
-    }
-    else {
-        IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 0.0));
-        IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 1.0));
-    }
+    IARRAY_RETURN_IF_FAILED(
+            iarray_random_dist_set_param(random_ctx, IARRAY_RANDOM_DIST_PARAM_MU, 0.0f));
+    IARRAY_RETURN_IF_FAILED(
+            iarray_random_dist_set_param(random_ctx, IARRAY_RANDOM_DIST_PARAM_SIGMA, 1.0f));
 
     return iarray_random_prefilter(ctx, dtshape, random_ctx, iarray_random_randn_fn, storage, container);
 }

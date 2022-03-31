@@ -19,14 +19,12 @@ int iarray_random_lognormal_fn(iarray_random_ctx_t *random_ctx,
                             uint8_t itemsize,
                             int32_t blocksize,
                             uint8_t *buffer) {
+    double mu = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_MU];
+    double sigma = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_SIGMA];
     if (itemsize == 4) {
-        float mu = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_MU];
-        float sigma = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_SIGMA];
         return vsRngLognormal(VSL_RNG_METHOD_LOGNORMAL_BOXMULLER2, stream,
-                              (int) blocksize, (float *) buffer, mu, sigma, 0, 1);
+                              (int) blocksize, (float *) buffer, (float) mu, (float) sigma, 0., 1.);
     } else {
-        double mu = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_MU];
-        double sigma = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_SIGMA];
         return vdRngLognormal(VSL_RNG_METHOD_LOGNORMAL_BOXMULLER2, stream,
                              (int) blocksize, (double *) buffer, mu, sigma, 0, 1);
     }
@@ -51,19 +49,10 @@ INA_API(ina_rc_t) iarray_random_lognormal(iarray_context_t *ctx,
     }
 
     /* validate distribution parameters */
-    if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        if (random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0) {
-            IARRAY_TRACE1(iarray.error, "The parameters for the lognormal distribution are invalid");
-            return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
-        }
+    if (random_ctx->params[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0) {
+        IARRAY_TRACE1(iarray.error, "The parameters for the lognormal distribution are invalid");
+        return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
     }
-    else {
-        if (random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0) {
-            IARRAY_TRACE1(iarray.error, "The parameters for the lognormal distribution are invalid");
-            return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
-        }
-    }
-
 
     return iarray_random_prefilter(ctx, dtshape, random_ctx, iarray_random_lognormal_fn, storage, container);
 }

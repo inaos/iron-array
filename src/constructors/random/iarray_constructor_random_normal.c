@@ -19,14 +19,13 @@ int iarray_random_normal_fn(iarray_random_ctx_t *random_ctx,
                             uint8_t itemsize,
                             int32_t blocksize,
                             uint8_t *buffer) {
+    double mu = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_MU];
+    double sigma = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_SIGMA];
+
     if (itemsize == 4) {
-        float mu = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_MU];
-        float sigma = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_SIGMA];
         return vsRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, stream,
-                              (int) blocksize, (float *) buffer, mu, sigma);
+                              (int) blocksize, (float *) buffer, (float) mu, (float) sigma);
     } else {
-        double mu = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_MU];
-        double sigma = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_SIGMA];
         return vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, stream,
                              (int) blocksize, (double *) buffer, mu, sigma);
     }
@@ -51,17 +50,9 @@ INA_API(ina_rc_t) iarray_random_normal(iarray_context_t *ctx,
     }
 
     /* validate distribution parameters */
-    if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        if (random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0) {
-            IARRAY_TRACE1(iarray.error, "The parameters for the normal distribution are invalid");
-            return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
-        }
-    }
-    else {
-        if (random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0) {
-            IARRAY_TRACE1(iarray.error, "The parameters for the normal distribution are invalid");
-            return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
-        }
+    if (random_ctx->params[IARRAY_RANDOM_DIST_PARAM_SIGMA] <= 0) {
+        IARRAY_TRACE1(iarray.error, "The parameters for the normal distribution are invalid");
+        return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
     }
 
     return iarray_random_prefilter(ctx, dtshape, random_ctx, iarray_random_normal_fn, storage, container);

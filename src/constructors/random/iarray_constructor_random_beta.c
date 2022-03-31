@@ -21,13 +21,13 @@ int iarray_random_beta_fn(iarray_random_ctx_t *random_ctx,
                             uint8_t *buffer) {
 
     if (itemsize == 4) {
-        float alpha = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
-        float beta = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA];
+        float alpha = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_ALPHA];
+        float beta = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_BETA];
         return vsRngBeta(VSL_RNG_METHOD_BETA_CJA, stream,
                                (int) blocksize, (float *) buffer, alpha, beta, 0, 1);
     } else {
-        double alpha = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_ALPHA];
-        double beta = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA];
+        double alpha = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_ALPHA];
+        double beta = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_BETA];
         return vdRngBeta(VSL_RNG_METHOD_BETA_CJA, stream,
                              (int) blocksize, (double *) buffer, alpha, beta, 0, 1);
     }
@@ -52,19 +52,10 @@ INA_API(ina_rc_t) iarray_random_beta(iarray_context_t *ctx,
     }
 
     /* validate distribution parameters */
-    if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        if (random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_ALPHA] <= 0 ||
-            random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0) {
-            IARRAY_TRACE1(iarray.error, "The parameters for the beta distribution are invalid");
-            return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
-        }
-    }
-    else {
-        if (random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_ALPHA] <= 0 ||
-            random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0) {
-            IARRAY_TRACE1(iarray.error, "The parameters for the beta distribution are invalid");
-            return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
-        }
+    if (random_ctx->params[IARRAY_RANDOM_DIST_PARAM_ALPHA] <= 0 ||
+        random_ctx->params[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0) {
+        IARRAY_TRACE1(iarray.error, "The parameters for the beta distribution are invalid");
+        return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
     }
 
     return iarray_random_prefilter(ctx, dtshape, random_ctx, iarray_random_beta_fn, storage, container);

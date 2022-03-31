@@ -19,26 +19,12 @@ int iarray_random_poisson_fn(iarray_random_ctx_t *random_ctx,
                             uint8_t itemsize,
                             int32_t blocksize,
                             uint8_t *buffer) {
+    INA_UNUSED(itemsize);
+    double lambda = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_LAMBDA];
 
-    int *tmp = ina_mem_alloc(blocksize * sizeof(int));
-
-    double lambda;
-    if (itemsize == 4) {
-        lambda = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_LAMBDA];
-    } else {
-        lambda = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_LAMBDA];
-    }
     int state = viRngPoisson(VSL_RNG_METHOD_POISSON_PTPE, stream,
-                         (int) blocksize, tmp, lambda);
+                         (int) blocksize, (int32_t *) buffer, lambda);
 
-    for (int i = 0; i < blocksize; ++i) {
-        if (itemsize == 4) {
-            ((float *) buffer)[i] = (float) tmp[i];
-        } else {
-            ((double *) buffer)[i] = (double) tmp[i];
-        }
-    }
-    INA_MEM_FREE_SAFE(tmp);
     return state;
 }
 
@@ -55,23 +41,15 @@ INA_API(ina_rc_t) iarray_random_poisson(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(container);
 
-    if (dtshape->dtype != IARRAY_DATA_TYPE_FLOAT && dtshape->dtype != IARRAY_DATA_TYPE_DOUBLE) {
+    if (dtshape->dtype != IARRAY_DATA_TYPE_INT32) {
         IARRAY_TRACE1(iarray.error, "Dtype is not supported");
         return (INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
 
     /* validate distribution parameters */
-    if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        if (random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_LAMBDA] <= 0) {
-            IARRAY_TRACE1(iarray.error, "The parameters for the poisson distribution are invalid");
-            return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
-        }
-    }
-    else {
-        if (random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_LAMBDA] <= 0) {
-            IARRAY_TRACE1(iarray.error, "The parameters for the poisson distribution are invalid");
-            return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
-        }
+    if (random_ctx->params[IARRAY_RANDOM_DIST_PARAM_LAMBDA] <= 0) {
+        IARRAY_TRACE1(iarray.error, "The parameters for the poisson distribution are invalid");
+        return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
     }
 
     return iarray_random_prefilter(ctx, dtshape, random_ctx, iarray_random_poisson_fn, storage, container);

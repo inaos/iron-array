@@ -26,14 +26,14 @@ def create_files(method, dtype, **kwargs):
     chunks = (100 * 1000,)
     blocks = (10 * 1000,)
 
-    with ia.config(clevel=5, codec=ia.Codec.LZ4, btune=False) as cfg:
+    with ia.config(clevel=5, codec=ia.Codec.LZ4, btune=False, mode="w") as cfg:
         if kwargs:
             kwargs["size"] = size
             c = dtype(method(**kwargs))
         else:
             c = dtype(method(size))
 
-        urlpath=create_urlpath(method, dtype, **kwargs)
+        urlpath = create_urlpath(method, dtype, **kwargs)
 
         ia.numpy2iarray(c, chunks=chunks, blocks=blocks, urlpath=urlpath, cfg=cfg)
 
@@ -67,13 +67,10 @@ create_files(np.random.normal, np.float64, loc=3, scale=5)
 create_files(np.random.normal, np.float32, loc=0.1, scale=0.2)
 
 # Binomial
-create_files(np.random.binomial, np.float64, n=3, p=0.7)
-create_files(np.random.binomial, np.float32, n=10, p=0.01)
+create_files(np.random.binomial, np.int32, n=3, p=0.7)
 
 # Poisson
-create_files(np.random.poisson, np.float64, lam=3)
-create_files(np.random.poisson, np.float32, lam=0.001)
+create_files(np.random.poisson, np.int32, lam=3)
 
 # Bernoulli
-create_files(np.random.binomial, np.float64, n=1, p=0.7)
-create_files(np.random.binomial, np.float32, n=1, p=0.01)
+create_files(np.random.binomial, np.int32, n=1, p=0.7)

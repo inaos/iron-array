@@ -278,9 +278,9 @@ typedef struct {
  * Example of use:
  * @code{.c}
  * blosc2_cparams cparams = BLOSC_CPARAMS_DEFAULTS;
- * blosc2_dparams dparams = BLOSC_DPARAMS_DEFAULTS;
+ * blosc2_dparams params = BLOSC_DPARAMS_DEFAULTS;
  * btune_config config = BTUNE_CONFIG_DEFAULTS;
- * blosc2_schunk * schunk = blosc2_new_schunk(cparams, dparams);
+ * blosc2_schunk * schunk = blosc2_new_schunk(cparams, params);
  * iabtune_init(&config, schunk->cctx, schunk->dctx);
  * @endcode
  * @param config The BTune configuration determines its behaviour and how will optimize.

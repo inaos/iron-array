@@ -19,14 +19,12 @@ int iarray_random_rand_fn(iarray_random_ctx_t *random_ctx,
                             uint8_t itemsize,
                             int32_t blocksize,
                             uint8_t *buffer) {
+    double a = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_A];
+    double b = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_B];
     if (itemsize == 4) {
-        float a = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_A];
-        float b = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_B];
         return vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream,
-                              (int) blocksize, (float *) buffer, a, b);
+                              (int) blocksize, (float *) buffer, (float) a, (float) b);
     } else {
-        double a = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_A];
-        double b = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_B];
         return vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream,
                             (int) blocksize, (double *) buffer, a, b);
     }
@@ -51,14 +49,10 @@ INA_API(ina_rc_t) iarray_random_rand(iarray_context_t *ctx,
     }
 
     /* validate distribution parameters */
-    if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_float(random_ctx, IARRAY_RANDOM_DIST_PARAM_A, 0.0f));
-        IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_float(random_ctx, IARRAY_RANDOM_DIST_PARAM_B, 1.0f));
-    }
-    else {
-        IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_A, 0.0));
-        IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(random_ctx, IARRAY_RANDOM_DIST_PARAM_B, 1.0));
-    }
+    IARRAY_RETURN_IF_FAILED(
+            iarray_random_dist_set_param(random_ctx, IARRAY_RANDOM_DIST_PARAM_A, 0.0f));
+    IARRAY_RETURN_IF_FAILED(
+            iarray_random_dist_set_param(random_ctx, IARRAY_RANDOM_DIST_PARAM_B, 1.0f));
 
     return iarray_random_prefilter(ctx, dtshape, random_ctx, iarray_random_rand_fn, storage, container);
 }

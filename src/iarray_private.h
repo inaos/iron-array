@@ -114,8 +114,7 @@ struct iarray_random_ctx_s {
     iarray_random_rng_t rng;
     uint32_t seed;
     VSLStreamStatePtr stream;
-    double dparams[IARRAY_RANDOM_DIST_PARAM_SENTINEL];
-    float fparams[IARRAY_RANDOM_DIST_PARAM_SENTINEL];
+    double params[IARRAY_RANDOM_DIST_PARAM_SENTINEL];
 };
 
 typedef int (* iarray_random_method_fn) (iarray_random_ctx_t *ctx,

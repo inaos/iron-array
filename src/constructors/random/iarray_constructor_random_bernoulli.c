@@ -20,25 +20,11 @@ int iarray_random_bernoulli_fn(iarray_random_ctx_t *random_ctx,
                             int32_t blocksize,
                             uint8_t *buffer) {
 
-    int *tmp = ina_mem_alloc(blocksize * sizeof(int));
+    double p = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_P];
 
-    double p;
-    if (itemsize == 4) {
-        p = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_P];
-    } else {
-        p = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_P];
-    }
     int state = viRngBernoulli(VSL_RNG_METHOD_BERNOULLI_ICDF, stream,
-                         (int) blocksize, tmp, p);
+                         (int) blocksize, (int32_t *) buffer, p);
 
-    for (int i = 0; i < blocksize; ++i) {
-        if (itemsize == 4) {
-            ((float *) buffer)[i] = (float) tmp[i];
-        } else {
-            ((double *) buffer)[i] = (double) tmp[i];
-        }
-    }
-    INA_MEM_FREE_SAFE(tmp);
     return state;
 }
 
@@ -55,25 +41,16 @@ INA_API(ina_rc_t) iarray_random_bernoulli(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(container);
 
-    if (dtshape->dtype != IARRAY_DATA_TYPE_FLOAT && dtshape->dtype != IARRAY_DATA_TYPE_DOUBLE) {
+    if (dtshape->dtype != IARRAY_DATA_TYPE_INT32) {
         IARRAY_TRACE1(iarray.error, "Dtype is not supported");
         return (INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
     }
 
     /* validate distribution parameters */
-    if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        if (random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_P] < 0 ||
-            random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_P] > 1) {
-            IARRAY_TRACE1(iarray.error, "The parameters for the bernoulli distribution are invalid");
-            return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
-        }
-    }
-    else {
-        if (random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_P] < 0 ||
-            random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_P] > 1) {
-            IARRAY_TRACE1(iarray.error, "The parameters for the bernoulli distribution are invalid");
-            return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
-        }
+    if (random_ctx->params[IARRAY_RANDOM_DIST_PARAM_P] < 0 ||
+        random_ctx->params[IARRAY_RANDOM_DIST_PARAM_P] > 1) {
+        IARRAY_TRACE1(iarray.error, "The parameters for the bernoulli distribution are invalid");
+        return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
     }
 
     return iarray_random_prefilter(ctx, dtshape, random_ctx, iarray_random_bernoulli_fn, storage, container);

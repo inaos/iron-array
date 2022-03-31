@@ -19,12 +19,11 @@ int iarray_random_exponential_fn(iarray_random_ctx_t *random_ctx,
                             uint8_t itemsize,
                             int32_t blocksize,
                             uint8_t *buffer) {
+    double beta = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_BETA];
     if (itemsize == 4) {
-        float beta = random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA];
         return vsRngExponential(VSL_RNG_METHOD_EXPONENTIAL_ICDF, stream,
-                                (int) blocksize, (float *) buffer, 0, beta);
+                                (int) blocksize, (float *) buffer, 0, (float) beta);
     } else {
-        double beta = random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA];
         return vdRngExponential(VSL_RNG_METHOD_EXPONENTIAL_ICDF, stream,
                              (int) blocksize, (double *) buffer, 0, beta);
     }
@@ -49,19 +48,10 @@ INA_API(ina_rc_t) iarray_random_exponential(iarray_context_t *ctx,
     }
 
     /* validate distribution parameters */
-    if (dtshape->dtype == IARRAY_DATA_TYPE_FLOAT) {
-        if (random_ctx->fparams[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0) {
-            IARRAY_TRACE1(iarray.error, "The parameters for the exponential distribution are invalid");
-            return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
-        }
+    if (random_ctx->params[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0) {
+        IARRAY_TRACE1(iarray.error, "The parameters for the exponential distribution are invalid");
+        return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
     }
-    else {
-        if (random_ctx->dparams[IARRAY_RANDOM_DIST_PARAM_BETA] <= 0) {
-            IARRAY_TRACE1(iarray.error, "The parameters for the exponential distribution are invalid");
-            return (INA_ERROR(IARRAY_ERR_INVALID_RAND_PARAM));
-        }
-    }
-
 
     return iarray_random_prefilter(ctx, dtshape, random_ctx, iarray_random_exponential_fn, storage, container);
 }

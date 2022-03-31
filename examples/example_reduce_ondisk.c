@@ -61,12 +61,12 @@ int main(void) {
     iarray_random_ctx_new(ctx, 0, IARRAY_RANDOM_RNG_MRG32K3A, &rnd_ctx);
 
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rnd_ctx,
-                                                                IARRAY_RANDOM_DIST_PARAM_MU,
-                                                                0));
-    IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rnd_ctx,
-                                                                IARRAY_RANDOM_DIST_PARAM_SIGMA,
-                                                                1));
+    IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param(rnd_ctx,
+                                                         IARRAY_RANDOM_DIST_PARAM_MU,
+                                                         0));
+    IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param(rnd_ctx,
+                                                         IARRAY_RANDOM_DIST_PARAM_SIGMA,
+                                                         1));
     IARRAY_RETURN_IF_FAILED(iarray_ones(ctx, &dtshape, &xstorage, &c_x));
 
 

@@ -58,8 +58,8 @@ int main(void) {
         nelem *= xshape[i];
     }
 
-    iarray_random_dist_set_param_double(rnd_ctx, IARRAY_RANDOM_DIST_PARAM_A, 2.);
-    iarray_random_dist_set_param_double(rnd_ctx, IARRAY_RANDOM_DIST_PARAM_B, 3.);
+    iarray_random_dist_set_param(rnd_ctx, IARRAY_RANDOM_DIST_PARAM_A, 2.);
+    iarray_random_dist_set_param(rnd_ctx, IARRAY_RANDOM_DIST_PARAM_B, 3.);
 
     iarray_container_t *c_x;
     INA_STOPWATCH_START(w);

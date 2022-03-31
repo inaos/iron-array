@@ -37,8 +37,7 @@ INA_API(ina_rc_t) iarray_random_ctx_new(iarray_context_t *ctx,
     }
 
     vslNewStream(&(*rng_ctx)->stream, mkl_rng, seed);
-    ina_mem_set((*rng_ctx)->dparams, 0, sizeof(double)*(IARRAY_RANDOM_DIST_PARAM_SENTINEL));
-    ina_mem_set((*rng_ctx)->fparams, 0, sizeof(float)*(IARRAY_RANDOM_DIST_PARAM_SENTINEL));
+    ina_mem_set((*rng_ctx)->params, 0, sizeof(double) * (IARRAY_RANDOM_DIST_PARAM_SENTINEL));
     return INA_SUCCESS;
 }
 
@@ -50,21 +49,13 @@ INA_API(void) iarray_random_ctx_free(iarray_context_t *ctx, iarray_random_ctx_t 
     INA_MEM_FREE_SAFE(*rng_ctx);
 }
 
-INA_API(ina_rc_t) iarray_random_dist_set_param_float(iarray_random_ctx_t *ctx,
-    iarray_random_dist_parameter_t key,
-    float value)
-{
-    INA_VERIFY_NOT_NULL(ctx);
-    ctx->fparams[key] = value;
-    return INA_SUCCESS;
-}
 
-INA_API(ina_rc_t) iarray_random_dist_set_param_double(iarray_random_ctx_t *ctx,
-    iarray_random_dist_parameter_t key,
-    double value)
+INA_API(ina_rc_t) iarray_random_dist_set_param(iarray_random_ctx_t *ctx,
+                                               iarray_random_dist_parameter_t key,
+                                               double value)
 {
     INA_VERIFY_NOT_NULL(ctx);
-    ctx->dparams[key] = value;
+    ctx->params[key] = value;
     return INA_SUCCESS;
 }
 
@@ -104,6 +95,9 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
             case IARRAY_DATA_TYPE_FLOAT:
                 data = ((float *) val.elem_pointer)[0];
                 break;
+            case IARRAY_DATA_TYPE_INT32:
+                data = ((int32_t *) val.elem_pointer)[0];
+                break;
             default:
                 IARRAY_TRACE1(iarray.error, "The data type is invalid");
                 return (INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
@@ -127,6 +121,9 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 data = ((float *) val.elem_pointer)[0];
+                break;
+            case IARRAY_DATA_TYPE_INT32:
+                data = ((int32_t *) val.elem_pointer)[0];
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "The data type is invalid");
@@ -158,6 +155,9 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
             case IARRAY_DATA_TYPE_FLOAT:
                 data = ((float *) val.elem_pointer)[0];
                 break;
+            case IARRAY_DATA_TYPE_INT32:
+                data = ((int32_t *) val.elem_pointer)[0];
+                break;
             default:
                 IARRAY_TRACE1(iarray.error, "The data type is invalid");
                 return (INA_ERROR(IARRAY_ERR_INVALID_DTYPE));
@@ -185,6 +185,9 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
                 break;
             case IARRAY_DATA_TYPE_FLOAT:
                 data = ((float *) val.elem_pointer)[0];
+                break;
+            case IARRAY_DATA_TYPE_INT32:
+                data = ((int32_t *) val.elem_pointer)[0];
                 break;
             default:
                 IARRAY_TRACE1(iarray.error, "The data type is invalid");

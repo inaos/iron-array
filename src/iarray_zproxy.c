@@ -110,7 +110,7 @@ INA_API(ina_rc_t) iarray_add_zproxy_postfilter(iarray_container_t *src, char *za
 {
     INA_VERIFY_NOT_NULL(src);
 
-    // Create dparams
+    // Create params
     blosc2_dparams *dparams;
     blosc2_schunk_get_dparams(src->catarr->sc, &dparams);
 
