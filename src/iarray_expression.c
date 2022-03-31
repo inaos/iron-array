@@ -163,20 +163,6 @@ INA_API(ina_rc_t) iarray_expr_bind_out_properties(iarray_expression_t *e, iarray
 }
 
 
-static void index_unidim_to_multidim(int8_t ndim, int64_t *shape, int64_t i, int64_t *index) {
-    int64_t strides[CATERVA_MAX_DIM];
-    strides[ndim - 1] = 1;
-    for (int j = ndim - 2; j >= 0; --j) {
-        strides[j] = shape[j + 1] * strides[j + 1];
-    }
-
-    index[0] = i / strides[0];
-    for (int j = 1; j < ndim; ++j) {
-        index[j] = (i % strides[j - 1]) / strides[j];
-    }
-}
-
-
 int caterva_blosc_array_repart_chunk(int8_t *rchunk, int64_t rchunksize, void *chunk,
                                      int64_t chunksize, caterva_array_t *array) {
     if (rchunksize != array->extchunknitems * array->itemsize) {
@@ -230,7 +216,7 @@ int caterva_blosc_array_repart_chunk(int8_t *rchunk, int64_t rchunksize, void *c
             ncopies *= actual_spsize[i];
         }
         for (int ncopy = 0; ncopy < ncopies; ++ncopy) {
-            index_unidim_to_multidim(CATERVA_MAX_DIM - 1, actual_spsize, ncopy, ii);
+            iarray_index_unidim_to_multidim_shape(CATERVA_MAX_DIM - 1, actual_spsize, ncopy, ii);
 
             int64_t d_a = d_spshape[7];
             int64_t d_coord_f = sci * array->blocknitems;
@@ -778,8 +764,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
     INA_VERIFY_NOT_NULL(e);
     INA_VERIFY_NOT_NULL(container);
 
-    int flags = e->out_store_properties->urlpath ? IARRAY_CONTAINER_PERSIST : 0;
-    IARRAY_RETURN_IF_FAILED(iarray_empty(e->ctx, e->out_dtshape, e->out_store_properties, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(e->ctx, e->out_dtshape, e->out_store_properties,
+                                         container));
     e->out = *container;
     iarray_container_t *ret = *container;
 

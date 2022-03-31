@@ -72,7 +72,8 @@ fexecute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, co
     ffill_y(buffer_x, buffer_y, nelem, func);
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void*)buffer_x, nelem * sizeof(float), &store, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void *) buffer_x,
+                                               nelem * sizeof(float), &store, &c_x));
 
     iarray_storage_t outstore;
     outstore.contiguous = contiguous;

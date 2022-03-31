@@ -39,7 +39,7 @@ static ina_rc_t test_cfg(iarray_context_t *ctx,
     // Empty array
     iarray_container_t *c_x;
     blosc2_remove_urlpath(xstore.urlpath);
-    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstore, &c_x));
 
 
     // Non-empty array
@@ -49,7 +49,7 @@ static ina_rc_t test_cfg(iarray_context_t *ctx,
         xstore.urlpath = "zarr.iarr";
         blosc2_remove_urlpath(xstore.urlpath);
     }
-    INA_TEST_ASSERT_SUCCEED(iarray_zeros(ctx, &xdtshape, &xstore, 0, &z_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_zeros(ctx, &xdtshape, &xstore, &z_x));
 
     if (iarray_is_empty(z_x)) {
         return INA_ERROR(INA_ERR_ERROR);

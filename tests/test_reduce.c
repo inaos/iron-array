@@ -39,7 +39,7 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
     }
 
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, &storage, 0, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, &storage, &c_x));
 
 
     iarray_iter_write_block_t *iter;
@@ -60,7 +60,7 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
     }
 
     iarray_container_t *c_y;
-    IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &storage, 0, &c_y));
+    IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &storage, &c_y));
 
     iarray_storage_t dest_storage = {0};
     dest_storage.contiguous = dest_frame;

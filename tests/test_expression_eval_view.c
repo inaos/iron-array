@@ -83,7 +83,8 @@ execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, con
 
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void*)buffer_x, nelem * sizeof(double), &store, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void *) buffer_x,
+                                               nelem * sizeof(double), &store, &c_x));
 
     int64_t start[IARRAY_DIMENSION_MAX];
     int64_t stop[IARRAY_DIMENSION_MAX];
@@ -92,7 +93,7 @@ execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, con
         stop[i] = shape[i] / 2 + 10;
     }
 
-    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, &store, 0, &c_x2));
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, &store, &c_x2));
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x2, buffer_x, nelem * sizeof(double)));
 
     fill_y(buffer_x, buffer_y, nelem2, func);

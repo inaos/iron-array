@@ -1060,8 +1060,8 @@ void iabtune_update(blosc2_context * context, double ctime) {
 //        (btune->config.perf_mode == BTUNE_PERF_BALANCED))) {
 //      blosc2_context * dctx;
 //      if (btune->dctx == NULL) {
-//        blosc2_dparams dparams = { btune->nthreads_decomp, NULL, NULL, NULL};
-//        dctx = blosc2_create_dctx(dparams);
+//        blosc2_dparams params = { btune->nthreads_decomp, NULL, NULL, NULL};
+//        dctx = blosc2_create_dctx(params);
 //      } else {
 //        dctx = btune->dctx;
 //      }

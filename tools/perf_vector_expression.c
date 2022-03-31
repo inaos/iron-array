@@ -168,8 +168,6 @@ int main(int argc, char** argv)
         .urlpath = mat_out_name
     };
 
-    int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
-
     INA_MUST_SUCCEED(iarray_init());
 
     iarray_config_t config = IARRAY_CONFIG_DEFAULTS;
@@ -265,7 +263,7 @@ int main(int argc, char** argv)
     else {
         if (INA_SUCCEED(ina_opt_isset("i"))) {
             INA_STOPWATCH_START(w);
-            iarray_container_new(ctx, &dtshape, &mat_x, flags, &con_x);
+            iarray_container_new(ctx, &dtshape, &mat_x, &con_x);
             iarray_iter_write_t *I;
             iarray_iter_write_value_t val;
             iarray_iter_write_new(ctx, &I, con_x, &val);
@@ -283,7 +281,7 @@ int main(int argc, char** argv)
         }
         else if (INA_SUCCEED(ina_opt_isset("I"))) {
             INA_STOPWATCH_START(w);
-            iarray_container_new(ctx, &dtshape, &mat_x, flags, &con_x);
+            iarray_container_new(ctx, &dtshape, &mat_x, &con_x);
             iarray_iter_write_block_t *I;
             iarray_iter_write_block_value_t val;
             INA_MUST_SUCCEED(iarray_iter_write_block_new(ctx, &I, con_x, NULL, &val, false));
@@ -312,7 +310,7 @@ int main(int argc, char** argv)
             printf("Time for computing and filling X values: %.3g s, %.1f MB/s\n",
                    elapsed_sec, buffer_len / (elapsed_sec * _IARRAY_SIZE_MB));
             INA_STOPWATCH_START(w);
-            INA_MUST_SUCCEED(iarray_from_buffer(ctx, &dtshape, x, buffer_len, &mat_x, flags, &con_x));
+            INA_MUST_SUCCEED(iarray_from_buffer(ctx, &dtshape, x, buffer_len, &mat_x, &con_x));
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf("Time for compressing and *storing* X values: %.3g s, %.1f MB/s\n",
@@ -337,7 +335,7 @@ int main(int argc, char** argv)
     else {
         if (INA_SUCCEED(ina_opt_isset("i"))) {
             INA_STOPWATCH_START(w);
-            iarray_container_new(ctx, &dtshape, &mat_y, flags, &con_y);
+            iarray_container_new(ctx, &dtshape, &mat_y, &con_y);
             iarray_iter_write_t *I;
             iarray_iter_write_value_t val;
             iarray_iter_write_new(ctx, &I, con_y, &val);
@@ -373,7 +371,7 @@ int main(int argc, char** argv)
         }
         else if (INA_SUCCEED(ina_opt_isset("I"))) {
             INA_STOPWATCH_START(w);
-            iarray_container_new(ctx, &dtshape, &mat_y, flags, &con_y);
+            iarray_container_new(ctx, &dtshape, &mat_y, &con_y);
             iarray_iter_write_block_t *I;
             iarray_iter_write_block_value_t val;
             iarray_iter_write_block_new(ctx, &I, con_y, mat_y.chunkshape, &val, false);
@@ -428,7 +426,7 @@ int main(int argc, char** argv)
             printf("Time for computing and filling Y values: %.3g s, %.1f MB/s\n",
                    elapsed_sec, buffer_len/(elapsed_sec*_IARRAY_SIZE_MB));
             INA_STOPWATCH_START(w);
-            INA_MUST_SUCCEED(iarray_from_buffer(ctx, &dtshape, y, buffer_len, &mat_y, flags, &con_y));
+            INA_MUST_SUCCEED(iarray_from_buffer(ctx, &dtshape, y, buffer_len, &mat_y, &con_y));
             INA_STOPWATCH_STOP(w);
             INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
             printf("Time for compressing and *storing* Y values: %.3g s, %.1f MB/s\n",

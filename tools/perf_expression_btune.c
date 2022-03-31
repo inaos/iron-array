@@ -79,7 +79,7 @@ int main(void) {
 
     iarray_container_t *c_x;
     INA_STOPWATCH_START(w);
-    iarray_linspace(ctx, &dtshape, 0, 1, &xstorage, 0, &c_x);
+    iarray_linspace(ctx, &dtshape, 0, 1, &xstorage, &c_x);
     INA_STOPWATCH_STOP(w);
     INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 

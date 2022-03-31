@@ -53,13 +53,13 @@ static ina_rc_t test_copy_transpose(iarray_context_t *ctx, iarray_data_type_t dt
     blosc2_remove_urlpath(ystore.urlpath);
 
 
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, 0, &c_trans));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, step, &store, &c_trans));
 
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_trans, &c_x));
 
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_x, false, &ystore, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_x, false, &ystore, &c_y));
 
     // Assert iterator reading it
     double tol;

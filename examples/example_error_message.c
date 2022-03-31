@@ -41,7 +41,7 @@ int main(void) {
     }
 
     iarray_container_t *container;
-    IARRAY_RETURN_IF_FAILED(iarray_linspace(ctx, &dtshape, 0, 1, &storage, 0, &container));
+    IARRAY_RETURN_IF_FAILED(iarray_linspace(ctx, &dtshape, 0, 1, &storage, &container));
 
     iarray_container_free(ctx, &container);
     iarray_context_free(&ctx);

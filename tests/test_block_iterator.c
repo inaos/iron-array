@@ -40,7 +40,7 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     iarray_container_t *c_x;
     blosc2_remove_urlpath(xstorage.urlpath);
 
-    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, &c_x));
 
     // Test write iterator
     iarray_iter_write_block_t *I;
@@ -71,7 +71,9 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
         xstorage.urlpath = "yarr.iarr";
         blosc2_remove_urlpath(xstorage.urlpath);
     }
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->nitems * type_size, &xstorage, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf,
+                                               (size_t) c_x->catarr->nitems * type_size, &xstorage,
+                                               &c_y));
 
     // Test read iterator
     iarray_iter_read_block_t *I2;
@@ -417,7 +419,7 @@ static ina_rc_t test_block_iterator_ext_chunk(iarray_context_t *ctx, iarray_data
     iarray_container_t *c_x;
     blosc2_remove_urlpath(xstore.urlpath);
 
-    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstore, &c_x));
 
     // Start Iterator
     iarray_iter_write_block_t *I;
@@ -461,7 +463,9 @@ static ina_rc_t test_block_iterator_ext_chunk(iarray_context_t *ctx, iarray_data
         xstore.urlpath = "yarr.iarr";
         blosc2_remove_urlpath(xstore.urlpath);
     }
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->nitems * type_size, &xstore, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf,
+                                               (size_t) c_x->catarr->nitems * type_size, &xstore,
+                                               &c_y));
 
     // Start Iterator
     iarray_iter_read_block_t *I2;
@@ -849,7 +853,7 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
 
     iarray_container_t *c_x;
     blosc2_remove_urlpath(xstore.urlpath);
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, (double) size, 1, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, 1, &xstore, &c_x));
 
     // Test write iterator
     iarray_iter_write_block_t *I;
@@ -880,7 +884,9 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
         xstore.urlpath = "yarr.iarr";
         blosc2_remove_urlpath(xstore.urlpath);
     }
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->nitems * type_size, &xstore, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf,
+                                               (size_t) c_x->catarr->nitems * type_size, &xstore,
+                                               &c_y));
 
     // Test read iterator
     iarray_iter_read_block_t *I2;

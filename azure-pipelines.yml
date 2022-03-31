@@ -158,7 +158,6 @@ steps:
   env:
     INAC_TRACE: ""
 
-
 - bash: |
    cd cmake-build-$BUILD_CONFIGURATION
    if [ "$AGENT_OS" != "Windows_NT" ]

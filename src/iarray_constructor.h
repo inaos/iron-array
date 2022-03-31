@@ -73,7 +73,6 @@ static ina_rc_t iarray_create_caterva_structs(iarray_context_t *ctx,
 static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
                                       iarray_dtshape_t *dtshape,
                                       iarray_storage_t *storage,
-                                      int flags,
                                       iarray_container_t **c)
 {
     INA_VERIFY_NOT_NULL(ctx);
@@ -85,10 +84,6 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     if (dtshape->ndim > CATERVA_MAX_DIM) {
         IARRAY_TRACE1(iarray.error, "The container dimension is larger than caterva maximum dimension");
         return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
-    }
-    if (flags & IARRAY_CONTAINER_PERSIST && storage->urlpath == NULL) {
-        IARRAY_TRACE1(iarray.error, "Error with persistency flags");
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     *c = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));

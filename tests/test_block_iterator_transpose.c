@@ -56,7 +56,7 @@ static ina_rc_t test_block_iterator_transpose(iarray_context_t *ctx, iarray_data
     blosc2_remove_urlpath(xstorage.urlpath);
     blosc2_remove_urlpath(ystorage.urlpath);
 
-    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, &c_x));
 
     // Test write iterator
     iarray_iter_write_block_t *I;
@@ -85,7 +85,7 @@ static ina_rc_t test_block_iterator_transpose(iarray_context_t *ctx, iarray_data
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, &c_trans));
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_trans, false, &ystorage, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_trans, false, &ystorage, &c_y));
 
     // Test read iterator
     iarray_iter_read_block_t *I2;
@@ -250,7 +250,7 @@ static ina_rc_t test_block_iterator_transpose_external(iarray_context_t *ctx,
     blosc2_remove_urlpath(xstorage.urlpath);
     blosc2_remove_urlpath(ystorage.urlpath);
 
-    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, &c_x));
 
     // Test write iterator
     iarray_iter_write_block_t *I;
@@ -277,7 +277,7 @@ static ina_rc_t test_block_iterator_transpose_external(iarray_context_t *ctx,
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, &c_trans));
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_trans, false, &ystorage, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_trans, false, &ystorage, &c_y));
 
     // Test read iterator
     iarray_iter_read_block_t *I2;

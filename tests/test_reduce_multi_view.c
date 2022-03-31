@@ -44,11 +44,11 @@ static ina_rc_t test_reduce_multi_view(iarray_context_t *ctx, iarray_data_type_t
     }
 
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_ones(ctx, &dtshape, &storage, 0, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_ones(ctx, &dtshape, &storage, &c_x));
 
 
     iarray_container_t *c_view;
-    iarray_get_slice(ctx, c_x, view_start, view_stop, true, NULL, 0, &c_view);
+    iarray_get_slice(ctx, c_x, view_start, view_stop, true, NULL, &c_view);
 
     iarray_storage_t dest_storage = {0};
     dest_storage.contiguous = dest_contiguous;

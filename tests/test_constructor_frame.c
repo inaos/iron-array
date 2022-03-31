@@ -42,7 +42,7 @@ static ina_rc_t test_constructor_frame(iarray_context_t *ctx, iarray_data_type_t
     iarray_container_t *c_x;
     blosc2_remove_urlpath(xstore.urlpath);
 
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, step, &xstore, &c_x));
 
     // Assert iterator reading it
 

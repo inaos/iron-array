@@ -36,7 +36,7 @@ static ina_rc_t test_metalayers(iarray_context_t *ctx, iarray_data_type_t dtype,
     iarray_container_t *c;
     blosc2_remove_urlpath(store.urlpath);
 
-    INA_TEST_ASSERT_SUCCEED(iarray_ones(ctx, &dtshape, &store, 0, &c));
+    INA_TEST_ASSERT_SUCCEED(iarray_ones(ctx, &dtshape, &store, &c));
 
     iarray_metalayer_t vlmeta1;
     uint64_t sdata1 = 56;
