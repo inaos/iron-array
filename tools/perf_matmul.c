@@ -33,7 +33,7 @@ static double *mat_y = NULL;
 static double *mat_out = NULL;
 static double *mat_res = NULL;
 
-static void ina_cleanup_handler(int error, int *exitcode)
+static void ina_cleanup_handler(int error, const int *exitcode)
 {
     INA_UNUSED(error);
     INA_UNUSED(exitcode);
@@ -50,8 +50,8 @@ int main(int argc, char** argv)
 
     int64_t nbytes = 0;
     int64_t cbytes = 0;
-    double nbytes_mb = 0;
-    double cbytes_mb = 0;
+    double nbytes_mb;
+    double cbytes_mb;
 
     int64_t shape_x[] = {4056, 3230};
     int64_t cshape_x[] = {675, 300};
@@ -82,7 +82,7 @@ int main(int argc, char** argv)
     if (!INA_SUCCEED(ina_app_init(argc, argv, opt))) {
         return EXIT_FAILURE;
     }
-    ina_set_cleanup_handler(ina_cleanup_handler);
+    ina_set_cleanup_handler((ina_cleanup_handler_t)ina_cleanup_handler);
 
     if (INA_SUCCEED(ina_opt_isset("p"))) {
         mat_x_name = "mat_x.b2frame";
@@ -131,7 +131,7 @@ int main(int argc, char** argv)
            (long)shape_y[0], (long)shape_y[1], (long)cshape_y[0], (long)cshape_y[1]);
 
     printf("\n");
-    printf("Working set for the 4 uncompressed matrices: %.1f MB\n", (size_x + size_y + size_out * 2) * sizeof(double) / (double)_IARRAY_SIZE_MB);
+    printf("Working set for the 4 uncompressed matrices: %.1f MB\n", (double)(size_x + size_y + size_out * 2) * sizeof(double) / (double)_IARRAY_SIZE_MB);
 
     INA_MUST_SUCCEED(iarray_init());
 
@@ -167,13 +167,13 @@ int main(int argc, char** argv)
         allocated = true;
 
         INA_STOPWATCH_START(w);
-        double incx = 10. / size_x;
+        double incx = 10. / (double)size_x;
         for (int64_t i = 0; i < size_x; i++) {
-            mat_x[i] = i * incx;
+            mat_x[i] = (double) i * incx;
         }
-        double incy = 10. / size_y;
+        double incy = 10. / (double)size_y;
         for (int64_t i = 0; i < size_y; i++) {
-            mat_y[i] = i * incy;
+            mat_y[i] = (double) i * incy;
         }
         INA_STOPWATCH_STOP(w);
 
@@ -209,7 +209,7 @@ int main(int argc, char** argv)
         nbytes_mb = ((double) nbytes / _IARRAY_SIZE_MB);
         cbytes_mb = ((double) cbytes / _IARRAY_SIZE_MB);
         printf("Compression for X iarray-container: %.1f MB -> %.1f MB (%.1fx)\n",
-               nbytes_mb, cbytes_mb, ((double) nbytes / cbytes));
+               nbytes_mb, cbytes_mb, ((double) nbytes / (double)cbytes));
     }
 
     if (allocated == false) {
@@ -229,7 +229,7 @@ int main(int argc, char** argv)
 
     printf("\n");
     printf("Time for multiplying two matrices (pure C): %.3g s, %.1f GFLOPs\n",
-           elapsed_sec, flops / (elapsed_sec * 10e9));
+           elapsed_sec, (double)flops / (elapsed_sec * 10e9));
 
 
     iarray_dtshape_t outdtshape;
@@ -249,12 +249,12 @@ int main(int argc, char** argv)
     iarray_container_info(con_out, &nbytes, &cbytes);
     printf("\n");
     printf("Time for multiplying two matrices (iarray):  %.3g s, %.1f GFLOPs\n",
-           elapsed_sec, flops / (elapsed_sec * 10e9));
+           elapsed_sec, (double)flops / (elapsed_sec * 10e9));
 
     nbytes_mb = ((double) nbytes / _IARRAY_SIZE_MB);
     cbytes_mb = ((double) cbytes / _IARRAY_SIZE_MB);
     printf("Compression for OUT values: %.1f MB -> %.1f MB (%.1fx)\n",
-           nbytes_mb, cbytes_mb, (1.*nbytes) / cbytes);
+           nbytes_mb, cbytes_mb, (1.*(double)nbytes) / (double)cbytes);
 
     /* Check that we are getting the same results than through manual computation */
     ina_mem_set(mat_out, 0, NELEM_BYTES(size_out));

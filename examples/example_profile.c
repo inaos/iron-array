@@ -77,7 +77,7 @@ int main(void) {
     IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
     printf("Time with prefilter: %.4f\n", elapsed_sec);
 
-    int64_t size = nelem * sizeof(double);
+    int64_t size = nelem * (int64_t)sizeof(double);
 
     double *buf_x = ina_mem_alloc(size);
     double *buf_y = ina_mem_alloc(size);

@@ -242,5 +242,5 @@ INA_TEST_FIXTURE(linalg_gemv, d_schunk_schunk) {
                                       xshape, xcshape, xbshape,
                                       yshape, ycshape, ybshape,
                                       zshape, zcshape, zbshape,
-                                      true, NULL, false, NULL, true, "zarr.iarr"));;
+                                      true, NULL, false, NULL, true, "zarr.iarr"));
 }

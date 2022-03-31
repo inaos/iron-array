@@ -39,10 +39,8 @@ int main(void) {
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     dtshape.ndim = ndim;
 
-    int64_t nelem = 1;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
-        nelem *= shape[i];
     }
 
     int32_t xchunkshape[] = {10, 20, 10, 14};
@@ -73,7 +71,7 @@ int main(void) {
     for (int i = 0; i < ndim; ++i) {
         buff_nitems *= shape[i];
     }
-    int64_t buff_size = buff_nitems * sizeof(double);
+    int64_t buff_size = (int64_t) (buff_nitems * sizeof(double));
 
     double *buff = malloc(buff_size);
 

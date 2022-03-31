@@ -10,15 +10,12 @@
  */
 
 #include <libiarray/iarray.h>
-#include <math.h>
-
 
 
 int main(void) {
     iarray_init();
     ina_stopwatch_t *w;
 
-    double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
 
 

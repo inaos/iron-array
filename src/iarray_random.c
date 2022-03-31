@@ -86,7 +86,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
     while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
         IARRAY_RETURN_IF_FAILED(iarray_iter_read_next(iter));
 
-        double data = 0.0;
+        double data;
         switch(container1->dtshape->dtype){
             case IARRAY_DATA_TYPE_DOUBLE:
                 data = ((double *) val.elem_pointer)[0];
@@ -113,7 +113,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
     while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
         IARRAY_RETURN_IF_FAILED(iarray_iter_read_next(iter));
 
-        double data = 0.0;
+        double data;
         switch(container1->dtshape->dtype){
             case IARRAY_DATA_TYPE_DOUBLE:
                 data = ((double *) val.elem_pointer)[0];
@@ -146,7 +146,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
     while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
         IARRAY_RETURN_IF_FAILED(iarray_iter_read_next(iter));
 
-        double data = 0;
+        double data;
         switch(container1->dtshape->dtype){
             case IARRAY_DATA_TYPE_DOUBLE:
                 data = ((double *) val.elem_pointer)[0];
@@ -177,7 +177,7 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
     while (INA_SUCCEED(iarray_iter_read_has_next(iter))) {
         IARRAY_RETURN_IF_FAILED(iarray_iter_read_next(iter));
 
-        double data = 0;
+        double data;
         switch(container1->dtshape->dtype){
             case IARRAY_DATA_TYPE_DOUBLE:
                 data = ((double *) val.elem_pointer)[0];
@@ -209,11 +209,11 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
 
     double max_dif = -INFINITY;
     for (int i = 0; i < nbins; ++i) {
-        max_dif = (fabs(hist1[i] - hist2[i]) / size > max_dif) ? fabs(hist1[i] - hist2[i]) / size : max_dif;
+        max_dif = (fabs(hist1[i] - hist2[i]) / (double) size > max_dif) ? fabs(hist1[i] - hist2[i]) / (double) size : max_dif;
     }
 
     double a = 0.001;
-    double threshold = sqrt(- log(a) / 2) * sqrt(2 * ((double) size) / (size * size));
+    double threshold = sqrt(- log(a) / 2) * sqrt(2 * ((double) size) / (double) (size * size));
 
     *res = (max_dif < threshold);
     return INA_SUCCESS;

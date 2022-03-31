@@ -84,6 +84,9 @@ inline static void fill_buf(iarray_data_type_t dtype, void *x, size_t nitems)
             }
             break;
         }
+        default:
+            INA_FAILED(IARRAY_ERR_INVALID_DTYPE);
+            break;
     }
 }
 
@@ -191,6 +194,9 @@ inline static void fill_block_iter(iarray_iter_write_block_value_t val, int64_t 
             for (int64_t i = 0; i < val.block_size; ++i) {
                 ((bool *) val.block_pointer)[i] = (bool) ((nelem  + i)%2);
             }
+            break;
+        default:
+            INA_FAILED(IARRAY_ERR_INVALID_DTYPE);
             break;
     }
 }

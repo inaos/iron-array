@@ -20,8 +20,8 @@ int iarray_random_beta_fn(iarray_random_ctx_t *random_ctx,
                             uint8_t *buffer) {
 
     if (itemsize == 4) {
-        float alpha = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_ALPHA];
-        float beta = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_BETA];
+        float alpha = (float) random_ctx->params[IARRAY_RANDOM_DIST_PARAM_ALPHA];
+        float beta = (float) random_ctx->params[IARRAY_RANDOM_DIST_PARAM_BETA];
         return vsRngBeta(VSL_RNG_METHOD_BETA_CJA, stream,
                                (int) blocksize, (float *) buffer, alpha, beta, 0, 1);
     } else {

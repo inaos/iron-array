@@ -15,7 +15,7 @@
 #include <libiarray/iarray.h>
 
 
-static bool chunk_is_zeros(uint8_t *chunk) {
+static bool chunk_is_zeros(const uint8_t *chunk) {
     uint8_t blosc2_flags = *(chunk + BLOSC2_CHUNK_BLOSC2_FLAGS);
     uint8_t special_value = (blosc2_flags >> 4) & BLOSC2_SPECIAL_MASK;
     if (special_value == BLOSC2_SPECIAL_ZERO) {
@@ -157,30 +157,28 @@ static int _gemm_b_prefilter(blosc2_prefilter_params *pparams) {
         int b_start = (int) b_nblock * b->catarr->blocknitems;
         uint8_t *b_block = &b_blocks[b_start * b->catarr->itemsize];
 
-        if (true) {
-            switch (a->dtshape->dtype) {
-                case IARRAY_DATA_TYPE_DOUBLE:
-                    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                                (int) a->catarr->blockshape[0],
-                                (int) b->catarr->blockshape[1],
-                                (int) a->catarr->blockshape[1],
-                                1.0, (double *) a_block, (int) a->catarr->blockshape[1],
-                                (double *) b_block, (int) b->catarr->blockshape[1],
-                                1.0, (double *) pparams->out, (int) b->catarr->blockshape[1]);
-                    break;
-                case IARRAY_DATA_TYPE_FLOAT:
-                    cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                                (int) a->catarr->blockshape[0],
-                                (int) b->catarr->blockshape[1],
-                                (int) a->catarr->blockshape[1],
-                                1.0f, (float *) a_block, (int) a->catarr->blockshape[1],
-                                (float *) b_block, (int) b->catarr->blockshape[1],
-                                1.0f, (float *) pparams->out, (int) b->catarr->blockshape[1]);
-                    break;
-                default:
-                    IARRAY_TRACE1(iarray.tracing, "dtype not supported");
-                    return -1;
-            }
+        switch (a->dtshape->dtype) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                            (int) a->catarr->blockshape[0],
+                            (int) b->catarr->blockshape[1],
+                            (int) a->catarr->blockshape[1],
+                            1.0, (double *) a_block, (int) a->catarr->blockshape[1],
+                            (double *) b_block, (int) b->catarr->blockshape[1],
+                            1.0, (double *) pparams->out, (int) b->catarr->blockshape[1]);
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                            (int) a->catarr->blockshape[0],
+                            (int) b->catarr->blockshape[1],
+                            (int) a->catarr->blockshape[1],
+                            1.0f, (float *) a_block, (int) a->catarr->blockshape[1],
+                            (float *) b_block, (int) b->catarr->blockshape[1],
+                            1.0f, (float *) pparams->out, (int) b->catarr->blockshape[1]);
+                break;
+            default:
+                IARRAY_TRACE1(iarray.tracing, "dtype not supported");
+                return -1;
         }
     }
 

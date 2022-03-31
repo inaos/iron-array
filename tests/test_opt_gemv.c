@@ -221,5 +221,5 @@ INA_TEST_FIXTURE(opt_gemv, d_schunk) {
                                       xshape, xcshape, xbshape,
                                       yshape, ycshape, ybshape,
                                       zshape, zcshape, zbshape,
-                                      false, "xarr.iarr", false, "yarr.iarr", false, "zarr.iarr"));
+                                      true, "xarr.iarr", false, "yarr.iarr", false, "zarr.iarr"));
 }

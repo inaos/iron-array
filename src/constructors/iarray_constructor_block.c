@@ -11,7 +11,6 @@
 
 #include <iarray_private.h>
 #include <libiarray/iarray.h>
-#include "iarray_constructor.h"
 
 
 typedef struct {
@@ -35,7 +34,6 @@ static int iarray_constructor_prefilter(blosc2_prefilter_params *pparams) {
 
     iarray_container_t *a = array_params->a;
     uint8_t ndim = array_params->ndim;
-    uint8_t itemsize = array_params->itemsize;
 
     // Compute block information
     iarray_constructor_block_info_t block_info;

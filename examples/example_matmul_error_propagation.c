@@ -35,8 +35,7 @@ int mult_mkl(const double *a, const double *b, double *c, const int I, const int
 }
 
 
-int mult_iarray(iarray_context_t *ctx, iarray_container_t *a, int64_t *bshape_a,
-    iarray_container_t *b, int64_t *bshape_b, iarray_storage_t *storage, iarray_container_t **c) {
+int mult_iarray(iarray_context_t *ctx, iarray_container_t *a, iarray_container_t *b, iarray_storage_t *storage, iarray_container_t **c) {
     iarray_linalg_matmul(ctx, a, b, storage, c);
     return 0;
 }
@@ -142,10 +141,7 @@ int main(void)
 
     mult_mkl(a, b, c_mkl, I, J, K);
 
-   int64_t bshape_a[] = {10, 10};
-   int64_t bshape_b[] = {10, 10};
-
-   mult_iarray(ctx, cont_a, bshape_a, cont_b, bshape_b, &store_z, &cont_c);
+   mult_iarray(ctx, cont_a, cont_b, &store_z, &cont_c);
 
    IARRAY_FAIL_IF_ERROR(iarray_to_buffer(ctx, cont_c, c_iarray, size_c * sizeof(double)));
 
@@ -156,7 +152,7 @@ int main(void)
     rc = INA_SUCCESS;
     goto cleanup;
     fail:
-        return ina_err_get_rc();
+        return (int)ina_err_get_rc();
     cleanup:
         iarray_container_free(ctx, &cont_a);
         iarray_container_free(ctx, &cont_b);
@@ -169,5 +165,5 @@ int main(void)
         iarray_context_free(&ctx);
         iarray_destroy();
 
-    return rc;
+    return (int)rc;
 }

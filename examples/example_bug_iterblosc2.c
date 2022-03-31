@@ -73,11 +73,11 @@ int main(void)
     // Print some values of the outcome
     size_t buf_len = sizeof(double) * nelem;
     double *buff_x = malloc(buf_len);
-    iarray_to_buffer(ctx, c_x, buff_x, buf_len);
+    iarray_to_buffer(ctx, c_x, buff_x, (int64_t) buf_len);
     double *buff_y = malloc(buf_len);
-    iarray_to_buffer(ctx, c_y, buff_y, buf_len);
+    iarray_to_buffer(ctx, c_y, buff_y, (int64_t) buf_len);
     double *buff_out = malloc(buf_len);
-    iarray_to_buffer(ctx, c_out, buff_out, buf_len);
+    iarray_to_buffer(ctx, c_out, buff_out, (int64_t) buf_len);
 
 
     bool success = true;

@@ -41,7 +41,7 @@ static ina_rc_t iarray_create_caterva_structs(iarray_context_t *ctx,
     }
     if (ctx->cfg->btune) {
         iabtune.btune_config = &iabtune_config;
-        iabtune.btune_init = iabtune_init;
+        iabtune.btune_init = (void (*)(void *, blosc2_context*, blosc2_context*)) iabtune_init;
         iabtune.btune_next_blocksize = iabtune_next_blocksize;
         iabtune.btune_next_cparams = iabtune_next_cparams;
         iabtune.btune_update = iabtune_update;
@@ -105,7 +105,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
         auxshape.chunkshape_wos[i] = storage->chunkshape[i];
         auxshape.blockshape_wos[i] = storage->blockshape[i];
         auxshape.offset[i] = 0;
-        auxshape.index[i] = (uint8_t) i;
+        auxshape.index[i] = (int8_t) i;
     }
     (*c)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
     if ((*c)->auxshape == NULL) {
@@ -166,7 +166,7 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
         auxshape.chunkshape_wos[i] = pred->storage->chunkshape[i];
         auxshape.blockshape_wos[i] = pred->storage->blockshape[i];
         auxshape.offset[i] = offset[i];
-        auxshape.index[i] = (uint8_t) i;
+        auxshape.index[i] = (int8_t) i;
     }
     (*c)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
     if ((*c)->auxshape == NULL) {

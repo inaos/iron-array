@@ -16,7 +16,7 @@
 static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, iarray_reduce_func_t func,
                                const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
                                int8_t naxis, int8_t *axis,
-                               int64_t *dest_cshape, int64_t *dest_bshape, bool src_contiguous, char *src_urlpath,
+                               const int64_t *dest_cshape, const int64_t *dest_bshape, bool src_contiguous, char *src_urlpath,
                                bool dest_contiguous, char* dest_urlpath)
 {
     blosc2_remove_urlpath(src_urlpath);
@@ -27,10 +27,8 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
 
     dtshape.dtype = dtype;
     dtshape.ndim = ndim;
-    int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
-        size *= shape[i];
     }
 
     iarray_storage_t storage = {0};
@@ -115,7 +113,7 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
             break;
         case IARRAY_REDUCE_SUM: {
             for (int i = 0; i < naxis; ++i) {
-                val *= shape[axis[i]];
+                val *= (double)shape[axis[i]];
             }
             for (int i = 0; i < buffer_nitems; ++i) {
                 // printf("%d: %f - %f\n", i, ((double *) buffer)[i], val);
@@ -139,6 +137,8 @@ static ina_rc_t test_reduce_multi(iarray_context_t *ctx, iarray_data_type_t dtyp
             }
             break;
         }
+        default:
+            return INA_ERR_EXCEEDED;
     }
 
     iarray_container_free(ctx, &c_z);

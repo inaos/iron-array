@@ -10,7 +10,6 @@
  */
 
 #include <libiarray/iarray.h>
-#include <math.h>
 #include "iarray_private.h"
 
 
@@ -63,7 +62,7 @@ int main(void) {
     IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
     printf("Time eye: %.4f\n", elapsed_sec);
 
-    int64_t size = nelem * sizeof(double);
+    int64_t size = nelem * (int64_t)sizeof(double);
 
     double *buf_x = ina_mem_alloc(size);
 

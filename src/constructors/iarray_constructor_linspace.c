@@ -11,7 +11,6 @@
 
 #include "iarray_private.h"
 #include <libiarray/iarray.h>
-#include "iarray_constructor.h"
 
 typedef struct {
     iarray_dtshape_t *dtshape;
@@ -40,7 +39,7 @@ ina_rc_t iarray_constructor_linspace_fn(iarray_constructor_array_info_t *array_i
     iarray_dtshape_t *dtshape = array_info->a->dtshape;
 
     // linspace operation
-    double val =  item_info->index_flat * step + start;
+    double val =  (double)item_info->index_flat * step + start;
 
     switch (dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE: {

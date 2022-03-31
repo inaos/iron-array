@@ -34,7 +34,7 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
         size *= shape[i];
     }
 
-    double step = (stop - start) / size;
+    double step = (stop - start) / (double) size;
     iarray_container_t *c_x;
 
     int flags = 0;

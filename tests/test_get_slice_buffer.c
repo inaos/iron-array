@@ -85,6 +85,8 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
         case IARRAY_DATA_TYPE_BOOL:
             buflen *= sizeof(bool);
             break;
+        default:
+            return INA_ERR_EXCEEDED;
     }
 
     bufdes = ina_mem_alloc(bufdes_size * sizeof(double));
@@ -153,6 +155,8 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
                 INA_TEST_ASSERT(((bool *) bufdes)[l] == ((bool *) result)[l]);
             }
             break;
+        default:
+            return INA_ERR_EXCEEDED;
     }
 
     iarray_container_free(ctx, &c_x);

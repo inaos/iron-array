@@ -34,7 +34,7 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
         store.chunkshape[i] = cshape[i];
         store.blockshape[i] = bshape[i];
     }
-    double step = (stop - start) / size;
+    double step = (stop - start) / (double) size;
 
     iarray_container_t *c_x;
     iarray_container_t *c_aux;
@@ -100,6 +100,8 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
         case IARRAY_DATA_TYPE_BOOL:
             INA_TEST_ASSERT_SUCCEED(iarray_container_equal(c_x, c_y));
             break;
+        default:
+            return INA_ERR_EXCEEDED;
     }
 
 

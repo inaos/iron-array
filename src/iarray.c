@@ -343,7 +343,7 @@ INA_API(ina_rc_t) iarray_partition_advice(iarray_context_t *ctx, iarray_dtshape_
     IARRAY_RETURN_IF_FAILED(boxed_optim_partition(ndim, shape, chunkshape, itemsize,
                                                      min_chunksize, max_chunksize, cfg->btune));
 
-    int32_t chunksize = itemsize;
+    int64_t chunksize = itemsize;
     for (int i = 0; i < ndim; i++) {
         chunksize *= chunkshape[i];
     }
@@ -408,11 +408,9 @@ ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams,
     if ((ctx->cfg->filter_flags & IARRAY_COMP_TRUNC_PREC)) {
         cparams->filters[blosc_filter_idx] = BLOSC_TRUNC_PREC;
         cparams->filters_meta[blosc_filter_idx] = ctx->cfg->fp_mantissa_bits;
-        blosc_filter_idx++;
     }
     if (ctx->cfg->filter_flags & IARRAY_COMP_DELTA) {
         cparams->filters[blosc_filter_idx] = BLOSC_DELTA;
-        blosc_filter_idx++;
     }
     if (ctx->cfg->filter_flags & IARRAY_COMP_BITSHUFFLE) {
         cparams->filters[BLOSC2_MAX_FILTERS - 1] = BLOSC_BITSHUFFLE;
@@ -470,7 +468,7 @@ ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t),
         }
         iabtune->btune_config = malloc(sizeof(btune_config));
         memcpy(iabtune->btune_config, &iabtune_config, sizeof(btune_config));
-        iabtune->btune_init = iabtune_init;
+        iabtune->btune_init = (void (*)(void *, blosc2_context*, blosc2_context*)) iabtune_init;
         iabtune->btune_next_blocksize = iabtune_next_blocksize;
         iabtune->btune_next_cparams = iabtune_next_cparams;
         iabtune->btune_update = iabtune_update;
@@ -494,7 +492,7 @@ ina_rc_t iarray_create_caterva_params(iarray_dtshape_t *dtshape, caterva_params_
 
 
 ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage_t *storage, caterva_storage_t *cat_storage) {
-    cat_storage->sequencial = storage->contiguous;
+    cat_storage->contiguous = storage->contiguous;
     cat_storage->urlpath = storage->urlpath;
     for (int i = 0; i < dtshape->ndim; ++i) {
         cat_storage->chunkshape[i] = (int32_t) storage->chunkshape[i];

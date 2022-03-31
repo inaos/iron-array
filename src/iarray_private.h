@@ -273,8 +273,8 @@ iarray_temporary_t* _iarray_op_divide(iarray_expression_t *expr, iarray_temporar
 
 // Iterators
 ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *container1,
-                                 iarray_container_t *container2, int64_t *ishape_a,
-                                 int64_t *ishape_b, iarray_iter_matmul_t **itr);
+                                 iarray_container_t *container2, const int64_t *ishape_a,
+                                 const int64_t *ishape_b, iarray_iter_matmul_t **itr);
 void _iarray_iter_matmul_free(iarray_iter_matmul_t **itr);
 void _iarray_iter_matmul_init(iarray_iter_matmul_t *itr);
 void _iarray_iter_matmul_next(iarray_iter_matmul_t *itr);
@@ -287,7 +287,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
                                   iarray_container_t *container,
                                   const int64_t *start,
                                   const int64_t *stop,
-                                  int64_t *chunkshape,
+                                  const int64_t *chunkshape,
                                   void *buffer,
                                   int64_t buflen);
 
@@ -363,8 +363,6 @@ static int32_t _iarray_serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
     int32_t smeta_len = 4;  // the dtype should take less than 7-bit, so 1 byte is enough to store it
     *smeta = malloc((size_t)smeta_len);
 
-    uint8_t *pmeta = *smeta;
-
     *(*smeta + 0) = 0x93;  // [msgpack] fixarray of 3 elements
 
     // version
@@ -417,7 +415,7 @@ ina_rc_t iarray_container_new(iarray_context_t *ctx, iarray_dtshape_t *dtshape,
 /* Constructor machinery */
 typedef struct {
     iarray_container_t *a;  //!< The container to be built
-    uint8_t ndim;  //!< The number of dimensions
+    int8_t ndim;  //!< The number of dimensions
     uint8_t itemsize;  //!< The size (in bytes) of each item
     int64_t strides[IARRAY_DIMENSION_MAX];  //!< The strides (for an item) inside the array
     int64_t chunk_strides[IARRAY_DIMENSION_MAX];  //!< The strides (for an item) inside a chunk
@@ -551,7 +549,7 @@ INA_API(ina_rc_t) iarray_random_prefilter(iarray_context_t *ctx,
                                           iarray_container_t **container);
 
 // Inline functions
-static inline void compute_strides(uint8_t ndim, int64_t *shape, int64_t *strides) {
+static inline void compute_strides(uint8_t ndim, const int64_t *shape, int64_t *strides) {
     if (ndim == 0) {
         return;
     }
@@ -561,14 +559,14 @@ static inline void compute_strides(uint8_t ndim, int64_t *shape, int64_t *stride
     }
 }
 
-static inline void iarray_index_multidim_to_unidim(uint8_t ndim, int64_t *strides, int64_t *index, int64_t *i) {
+static inline void iarray_index_multidim_to_unidim(uint8_t ndim, const int64_t *strides, const int64_t *index, int64_t *i) {
     *i = 0;
     for (int j = 0; j < ndim; ++j) {
         *i += index[j] * strides[j];
     }
 }
 
-static inline void iarray_index_unidim_to_multidim(uint8_t ndim, int64_t *strides, int64_t i, int64_t *index) {
+static inline void iarray_index_unidim_to_multidim(uint8_t ndim, const int64_t *strides, int64_t i, int64_t *index) {
     if (ndim == 0) {
         return;
     }

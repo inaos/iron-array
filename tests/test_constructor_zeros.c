@@ -127,6 +127,8 @@ static ina_rc_t test_zeros(iarray_context_t *ctx,
             }
             break;
         }
+        default:
+            return INA_ERR_EXCEEDED;
     }
 
     iarray_container_free(ctx, &c_x);
@@ -218,7 +220,7 @@ INA_TEST_FIXTURE(constructor_zeros, 5_s)
     int64_t cshape[] = {3, 4, 10, 3, 3};
     int64_t bshape[] = {2, 2, 3, 1, 3};
 
-    INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, true, NULL));
+    INA_TEST_ASSERT_SUCCEED(test_zeros(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, false, NULL));
 }
 
 INA_TEST_FIXTURE(constructor_zeros, 7_sc)

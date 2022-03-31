@@ -22,10 +22,8 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
     iarray_dtshape_t xdtshape;
     xdtshape.dtype = dtype;
     xdtshape.ndim = ndim;
-    int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        size *= shape[i];
     }
 
     iarray_storage_t xstore;
@@ -69,12 +67,6 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
     while (INA_SUCCEED(iarray_iter_write_block_has_next(I))) {
         INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_next(I, NULL, 0));
 
-        int64_t nelem = 0;
-        int64_t inc = 1;
-        for (int i = ndim - 1; i >= 0; --i) {
-            nelem += val.elem_index[i] * inc;
-            inc *= c_x->dtshape->shape[i];
-        }
         switch (dtype) {
             case IARRAY_DATA_TYPE_DOUBLE:
                 for (int64_t i = 0; i < val.block_size; ++i) {
@@ -91,6 +83,8 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
                     ((int64_t *) val.block_pointer)[i] = 0;
                 }
                 break;
+            default:
+                return INA_ERR_EXCEEDED;
         }
     }
 
@@ -111,6 +105,8 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
             case IARRAY_DATA_TYPE_INT64:
                 INA_TEST_ASSERT_EQUAL_INT64(((int64_t *) val.block_pointer)[0], 0);
                 break;
+            default:
+                return INA_ERR_EXCEEDED;
         }
     }
     blosc2_remove_urlpath(xstore.urlpath);

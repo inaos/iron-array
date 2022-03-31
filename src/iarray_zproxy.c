@@ -28,7 +28,7 @@ typedef struct {
     //!< Extended shape of each chunk.
     int32_t blockshape[IARRAY_DIMENSION_MAX];
     //!< Shape of each block.
-    uint8_t ndim;
+    int8_t ndim;
     //!< Data dimensions.
     zhandler_ptr zhandler;
     //!< Function pointer to zarr handler
@@ -42,7 +42,7 @@ ina_rc_t zproxy_postfilter(blosc2_postfilter_params *postparams)
     int64_t *extchunkshape = udata->extchunkshape;
     int64_t *chunkshape = udata->chunkshape;
     int32_t *blockshape = udata->blockshape;
-    uint8_t ndim = udata->ndim;
+    int8_t ndim = udata->ndim;
 
     int64_t chunks_in_array[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ndim; ++i) {
