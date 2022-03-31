@@ -560,8 +560,8 @@ INA_TEST_FIXTURE(reduce, min_3_f_1) {
     int64_t bshape[] = {3, 3, 3};
     int8_t axis = 1;
 
-    int64_t dest_cshape[] = {9};
-    int64_t dest_bshape[] = {3};
+    int64_t dest_cshape[] = {6, 6};
+    int64_t dest_bshape[] = {3, 3};
     bool dest_frame = false;
     char *dest_urlpath = "arr.iarr";
 
