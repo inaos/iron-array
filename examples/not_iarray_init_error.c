@@ -82,7 +82,7 @@ int main(void)
     iarray_container_free(ctx, &data);
     iarray_context_free(&ctx);
 
-    return rc;
+    return (int)rc;
 
 fail:
     printf("%s\n", ina_err_strerror(ina_err_get_rc()));

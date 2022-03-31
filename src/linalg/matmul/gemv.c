@@ -53,12 +53,12 @@ static void _gemv_prefilter_block_info(iarray_container_t *c,
         if (i != 0) {
             nblock_ndim[i] = (nblock % strides_block[i-1]) / strides_block[i];
         } else {
-            nblock_ndim[i] = (nblock % (c->catarr->extchunknitems / c->catarr->blocknitems)) / strides_block[i];
+            nblock_ndim[i] = (int32_t)(nblock % (c->catarr->extchunknitems / c->catarr->blocknitems)) / strides_block[i];
         }
     }
 
     // Position of the first element of the block (inside current chunk)
-    int64_t start_in_chunk[IARRAY_DIMENSION_MAX];
+    int32_t start_in_chunk[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < ndim; ++i) {
         start_in_chunk[i] = nblock_ndim[i] * c->catarr->blockshape[i];
     }
@@ -84,10 +84,10 @@ static int _gemv_prefilter(blosc2_prefilter_params *pparams) {
 
     int trans_a = CblasNoTrans;
 
-    int m = c->storage->blockshape[0];
-    int n = a->dtshape->shape[1];
+    int64_t m = c->storage->blockshape[0];
+    int64_t n = a->dtshape->shape[1];
 
-    int ld_a = n;
+    int64_t ld_a = n;
 
     if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
         cblas_dgemv(CblasRowMajor, trans_a, (int) m, (int) n,1.0, (double *) buffer_a, ld_a,
@@ -137,10 +137,6 @@ static ina_rc_t gemv_blosc(iarray_context_t *ctx,
 
     IARRAY_RETURN_IF_FAILED(_iarray_get_slice_buffer(ctx, b, start_b, stop_b, shape_b, cache_b, cache_size_b));
 
-    int64_t shape_a[2] = {0};
-    shape_a[0] = c->catarr->extchunkshape[0];
-    shape_a[1] = a->dtshape->shape[1];
-
     int64_t nchunk = 0;
     while (nchunk < c->catarr->extnitems / c->catarr->chunknitems) {
         int64_t elem_index = nchunk * c->catarr->chunkshape[0];
@@ -171,9 +167,9 @@ static ina_rc_t gemv_blosc(iarray_context_t *ctx,
         blosc2_context *cctx = blosc2_create_cctx(cparams);
         uint8_t *chunk = malloc(c->catarr->extchunknitems * c->catarr->itemsize +
                                 BLOSC_MAX_OVERHEAD);
-        int csize = blosc2_compress_ctx(cctx, NULL, c->catarr->extchunknitems * c->catarr->itemsize,
+        int csize = blosc2_compress_ctx(cctx, NULL, (int32_t)c->catarr->extchunknitems * c->catarr->itemsize,
                                         chunk,
-                                        c->catarr->extchunknitems * c->catarr->itemsize +
+                                        (int32_t)c->catarr->extchunknitems * c->catarr->itemsize +
                                         BLOSC_MAX_OVERHEAD);
         if (csize <= 0) {
             IARRAY_TRACE1(iarray.error, "Error compressing a blosc chunk");
@@ -214,10 +210,10 @@ static ina_rc_t gemv_plainbuffer(iarray_context_t *ctx,
         uint8_t *buffer_b = malloc(size_b);
         IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, b, buffer_b, size_b));
 
-        int m = a->dtshape->shape[0];
-        int n = a->dtshape->shape[1];
+        int64_t m = a->dtshape->shape[0];
+        int64_t n = a->dtshape->shape[1];
 
-        int ld_a = n;
+        int64_t ld_a = n;
 
         if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
             cblas_dgemv(CblasRowMajor, CblasNoTrans, (int) m, (int) n,

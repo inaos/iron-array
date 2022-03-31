@@ -22,7 +22,7 @@
 static int ffill_x(float* x, int64_t nelem)
 {
     /* Fill even values between 0. and 1. */
-    float incx = 1.f / nelem;
+    float incx = 1.f / (float) nelem;
     for (int i = 0; i < nelem; i++) {
         x[i] = incx * (float)i;
     }
@@ -248,7 +248,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk_4)
 
 static float expr5(const float x)
 {
-    return powf(2.71828, x) / x * logf(x);
+    return powf(2.71828f, x) / x * logf(x);
 }
 
 INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk_5)

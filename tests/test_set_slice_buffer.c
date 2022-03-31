@@ -30,7 +30,7 @@ static ina_rc_t test_set_slice_buffer(iarray_context_t *ctx,
 
 static ina_rc_t
 _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64_t type_size,
-                          int8_t ndim, const int64_t *shape, const int64_t *cshape, int64_t *bshape,
+                          int8_t ndim, const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
                           int64_t *start, int64_t *stop, bool xcontiguous, char *xurlpath) {
     void *buffer_x;
     size_t buffer_x_len;
@@ -108,6 +108,8 @@ _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64
             case IARRAY_DATA_TYPE_BOOL:
                 ((bool *) bufdes)[i] = (bool) i;
                 break;
+            default:
+                return INA_ERR_EXCEEDED;
         }
     }
 
@@ -174,6 +176,8 @@ _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64
                 INA_TEST_ASSERT(((bool *) bufdes)[l] == (bool) l);
             }
             break;
+        default:
+            return INA_ERR_EXCEEDED;
     }
 
     iarray_container_free(ctx, &c_x);

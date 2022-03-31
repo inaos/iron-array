@@ -15,7 +15,7 @@
 
 static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_x, int64_t *start,
                            int64_t *stop, iarray_storage_t *stores,
-                           int flags, iarray_container_t **c_out) {
+                           iarray_container_t **c_out) {
     INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, stores, c_out));
     INA_TEST_ASSERT_SUCCEED(iarray_squeeze(ctx, *c_out));
 
@@ -59,7 +59,7 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buffer_x, buffer_x_len * type_size,
                                                &xstore, &c_x));
 
-    INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, NULL, 0, &c_out));
+    INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, NULL, &c_out));
 
     int64_t blockshape[IARRAY_DIMENSION_MAX] = {2, 2, 2, 2, 2, 2, 2, 2};
     iarray_iter_read_block_t *iter;

@@ -101,6 +101,8 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
                 memcpy(val.elem_pointer, &value, type_size);
                 break;
             }
+            default:
+                return INA_ERR_EXCEEDED;
         }
     }
     iarray_iter_write_free(&I);
@@ -174,6 +176,8 @@ static ina_rc_t test_persistency(iarray_context_t *ctx, iarray_data_type_t dtype
                 INA_TEST_ASSERT(value == ((bool *) val2.elem_pointer)[0]);
                 break;
             }
+            default:
+                return INA_ERR_EXCEEDED;
         }
     }
     iarray_iter_read_free(&I2);

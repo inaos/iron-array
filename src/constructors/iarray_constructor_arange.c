@@ -111,7 +111,7 @@ INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
     arange_info.step = step;
 
     iarray_constructor_element_params_t elem_params = IARRAY_CONSTRUCTOR_ELEMENT_PARAMS_DEFAULT;
-    elem_params.item_fn = iarray_constructor_arange_fn;
+    elem_params.item_fn = (iarray_constructor_item_fn) iarray_constructor_arange_fn;
     elem_params.constructor_info = &arange_info;
     return iarray_constructor_element(ctx, dtshape, &elem_params, storage, container);
 }

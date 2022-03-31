@@ -14,7 +14,7 @@
 #include <tests/iarray_test.h>
 
 static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_x, int64_t *start,
-                           int64_t *stop, iarray_storage_t *stores, int flags, iarray_container_t **c_out) {
+                           int64_t *stop, iarray_storage_t *stores, iarray_container_t **c_out) {
     INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, false, stores, c_out));
     INA_TEST_ASSERT_SUCCEED(iarray_squeeze(ctx, *c_out));
 
@@ -68,14 +68,14 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     }
     blosc2_remove_urlpath(store_dest.urlpath);
 
-    INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, &store_dest, 0, &c_out));
+    INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, &store_dest, &c_out));
 
     int64_t bufdes_size = 1;
 
     for (int k = 0; k < ndim; ++k) {
         int64_t st = (start[k] + shape[k]) % shape[k];
         int64_t sp = (stop[k] + shape[k] - 1) % shape[k] + 1;
-        bufdes_size *= sp - st;;
+        bufdes_size *= sp - st;
     }
 
     uint8_t *bufdes;
@@ -158,6 +158,8 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
                 INA_TEST_ASSERT(((bool *) bufdes)[l] == ((bool *) result)[l]);
             }
             break;
+        default:
+            return INA_ERR_EXCEEDED;
     }
 
     iarray_container_free(ctx, &c_x);

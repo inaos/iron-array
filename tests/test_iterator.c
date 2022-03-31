@@ -102,6 +102,8 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
                 memcpy(val.elem_pointer, &value, type_size);
                 break;
             }
+            default:
+                return INA_ERR_EXCEEDED;
         }
     }
 
@@ -173,6 +175,8 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
                 INA_TEST_ASSERT(value == ((bool *) val2.elem_pointer)[0]);
                 break;
             }
+            default:
+                return INA_ERR_EXCEEDED;
         }
     }
 

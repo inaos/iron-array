@@ -83,5 +83,5 @@ int main(void)
     iarray_context_free(&ctx);
     iarray_destroy();
 
-    return rc;
+    return (int)rc;
 }

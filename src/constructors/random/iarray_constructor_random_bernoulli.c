@@ -18,6 +18,7 @@ int iarray_random_bernoulli_fn(iarray_random_ctx_t *random_ctx,
                             uint8_t itemsize,
                             int32_t blocksize,
                             uint8_t *buffer) {
+    INA_UNUSED(itemsize);
 
     double p = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_P];
 

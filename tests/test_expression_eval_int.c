@@ -60,7 +60,7 @@ static int64_t expr_min_int64(const int64_t x)
 
 static int64_t expr_abs_int64(const int64_t x)
 {
-    return (int64_t)(abs(x) - 35);
+    return (int64_t)(abs((int)x) - 35);
 }
 
 static int64_t expr_max_int64(const int64_t x)

@@ -41,18 +41,14 @@ int main(void)
 
     dtshape.dtype = dtype;
     dtshape.ndim = ndim;
-    int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
-        size *= shape[i];
     }
 
     iarray_storage_t storage = {0};
     for (int i = 0; i < ndim; ++i) {
-        if (cshape != NULL) {
-            storage.chunkshape[i] = i == axis ? shape[i] : 1;
-            storage.blockshape[i] = i == axis ? shape[i] : 1;
-        }
+        storage.chunkshape[i] = i == axis ? shape[i] : 1;
+        storage.blockshape[i] = i == axis ? shape[i] : 1;
     }
 
     iarray_container_t *c_x;
@@ -117,7 +113,7 @@ int main(void)
 
     IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_z, buffer, buffer_size));
 
-    double val = shape[axis] * (shape[axis] - 1.) / 2;
+    double val = (double) shape[axis] * ((double)shape[axis] - 1.) / 2;
     for (int i = 0; i < buffer_nitems; ++i) {
         // printf("%d: %f - %f\n", i, ((double *) buffer)[i], val);
         switch (c_z->dtshape->dtype) {

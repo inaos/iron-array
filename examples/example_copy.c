@@ -34,10 +34,8 @@ int main(void) {
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     dtshape.ndim = ndim;
 
-    int64_t nelem = 1;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
-        nelem *= shape[i];
     }
 
     int32_t xchunkshape[] = {500, 50, 10};

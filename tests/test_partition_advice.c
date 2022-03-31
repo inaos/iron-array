@@ -166,9 +166,9 @@ INA_TEST_FIXTURE(partition_advice, 4_d)
     INA_TEST_ASSERT_SUCCEED(test_partition_advice(data->cfg, dtype, ndim, shape, cshape, bshape, false, "arr.iarr"));
 }
 
-INA_TEST_FIXTURE(partition_advice, 4_d_automatic)
+INA_TEST_FIXTURE(partition_advice, 4_f_automatic)
 {
-    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int8_t ndim = 4;
     int64_t shape[] = {17 * 1000, 3 * 1000, 30 * 1000, 10 * 1000};
     int64_t cshape[] = {0, 0, 0, 0};

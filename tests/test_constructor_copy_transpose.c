@@ -44,7 +44,7 @@ static ina_rc_t test_copy_transpose(iarray_context_t *ctx, iarray_data_type_t dt
         ystore.blockshape[i] = bshape[ndim - 1 - i];
     }
 
-    double step = (stop - start) / size;
+    double step = (stop - start) / (double) size;
 
     iarray_container_t *c_x;
     iarray_container_t *c_trans;
@@ -106,7 +106,7 @@ INA_TEST_FIXTURE(constructor_copy_transpose, 2_d) {
     double start = -1000;
     double stop = 1;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, NULL, NULL));
+    INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, false, NULL, NULL));
 }
 
 INA_TEST_FIXTURE(constructor_copy_transpose, 2_f) {
@@ -120,7 +120,7 @@ INA_TEST_FIXTURE(constructor_copy_transpose, 2_f) {
     double start = -5.3;
     double stop = 1.1245;
 
-    INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, NULL, "arr2.iarr"));
+    INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, "arr1.iarr", "arr2.iarr"));
 }
 
 /* Avoid heavy tests

@@ -15,7 +15,7 @@
 static ina_rc_t
 test_btune_favor(iarray_config_t *cfg, iarray_data_type_t dtype, size_t type_size, int8_t ndim,
                  const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
-                 int32_t *prev_cbytes, bool contiguous, char *urlpath)
+                 const int32_t *prev_cbytes, bool contiguous, char *urlpath)
 {
 
     iarray_context_t *ctx;
@@ -113,6 +113,8 @@ test_btune_favor(iarray_config_t *cfg, iarray_data_type_t dtype, size_t type_siz
             }
             break;
         }
+        default:
+            return INA_ERR_EXCEEDED;
     }
 
     iarray_storage_t xstore = {.urlpath=urlpath, .contiguous=contiguous};
@@ -212,6 +214,8 @@ test_btune_favor(iarray_config_t *cfg, iarray_data_type_t dtype, size_t type_siz
             }
             break;
         }
+        default:
+            return INA_ERR_EXCEEDED;
     }
 
     free(buf_dest);

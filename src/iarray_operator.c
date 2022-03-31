@@ -27,11 +27,6 @@ static ina_rc_t _iarray_operator_elwise_a(
     INA_VERIFY_NOT_NULL(mkl_fun_s);
 
 
-    size_t chunksize = (size_t)a->catarr->sc->typesize;
-    for (int i = 0; i < a->catarr->ndim; ++i) {
-        chunksize *= a->catarr->chunkshape[i];
-    }
-
     iarray_iter_read_block_t *iter_read;
     iarray_iter_read_block_value_t val_read;
     IARRAY_RETURN_IF_FAILED(iarray_iter_read_block_new(ctx, &iter_read, a, result->storage->chunkshape, &val_read, false));
@@ -82,13 +77,11 @@ static ina_rc_t _iarray_operator_elwise_ab(
 
     IARRAY_RETURN_IF_FAILED(iarray_container_dtshape_equal(a->dtshape, b->dtshape));
 
-    size_t chunksize = (size_t)a->catarr->sc->typesize;
     for (int i = 0; i < a->catarr->ndim; ++i) {
         if (a->catarr->chunkshape[i] != b->catarr->chunkshape[i]) {
             IARRAY_TRACE1(iarray.error, "The chunkshapes must be equals");
             return (INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE));
         }
-        chunksize *= a->catarr->chunkshape[i];
     }
 
     iarray_iter_read_block_t *iter_read;

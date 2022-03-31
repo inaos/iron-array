@@ -47,7 +47,7 @@ static const cparams_btune cparams_btune_default = {
 
 // Get the codecs list for btune
 static codec_list * btune_get_codecs(btune_struct * btune) {
-  char * all_codecs = blosc_list_compressors();
+  const char * all_codecs = blosc_list_compressors();
   codec_list * codecs = malloc(sizeof(codec_list));
   codecs->list = malloc(MAX_CODECS * sizeof(int));
   int i = 0;
@@ -177,7 +177,7 @@ void init_without_hards(blosc2_context * ctx) {
   }
   switch (behaviour.repeat_mode) {
     case BTUNE_REPEAT_ALL:
-      if (behaviour.nhards_before_stop > minimum_hards) {
+      if (behaviour.nhards_before_stop > (uint32_t)minimum_hards) {
         init_hard(btune);
         break;
       }
@@ -557,9 +557,9 @@ static void set_btune_cparams(blosc2_context * context, cparams_btune * cparams)
     cparams->blocksize = context->blocksize;
   }
   context->typesize = cparams->shufflesize;  // TODO typesize -> shufflesize
-  context->new_nthreads = cparams->nthreads_comp;
+  context->new_nthreads = (int16_t) cparams->nthreads_comp;
   if (btune->dctx != NULL) {
-    btune->dctx->new_nthreads = cparams->nthreads_decomp;
+    btune->dctx->new_nthreads = (int16_t) cparams->nthreads_decomp;
   } else {
   btune->nthreads_decomp = cparams->nthreads_decomp;
   }
@@ -766,7 +766,7 @@ bool cparams_equals(cparams_btune * cp1, cparams_btune * cp2) {
 void process_waiting_state(blosc2_context * ctx) {
   btune_struct * btune = (btune_struct*) ctx->btune;
   btune_behaviour behaviour = btune->config.behaviour;
-  int minimum_hards = 0;
+  uint32_t minimum_hards = 0;
 
   if (!btune->config.cparams_hint) {
     minimum_hards++;
@@ -873,7 +873,7 @@ void process_waiting_state(blosc2_context * ctx) {
   }
   // Force soft step size on last hard
   if ((btune->readapt_from == HARD) &&
-      (btune->nhards == (behaviour.nhards_before_stop - 1))) {
+      (btune->nhards == (int)(behaviour.nhards_before_stop - 1))) {
     btune->step_size = SOFT_STEP_SIZE;
   }
 }
@@ -1041,9 +1041,8 @@ void update_aux(blosc2_context * ctx, bool improved) {
 void iabtune_update(blosc2_context * context, double ctime) {
   btune_struct * btune = (btune_struct*)(context->btune);
   if (btune->state != STOP) {
-    btune_behaviour behaviour = btune->config.behaviour;
     btune->steps_count++;
-    blosc_timestamp_t last, current;
+    // blosc_timestamp_t last, current;
     cparams_btune * cparams = btune->aux_cparams;
 
     // We come from blosc_compress_context(), so we can populate metrics now
@@ -1053,6 +1052,7 @@ void iabtune_update(blosc2_context * context, double ctime) {
     // When the source is NULL (eval with prefilters), decompression is not working.
     // Disabling this part for the time being.
 //    // Compute the decompression time if needed
+//    btune_behaviour behaviour = btune->config.behaviour;
 //    if (!((btune->state == WAITING) &&
 //        ((behaviour.nwaits_before_readapt == 0) ||
 //        (btune->nwaitings % behaviour.nwaits_before_readapt != 0))) &&
@@ -1077,7 +1077,7 @@ void iabtune_update(blosc2_context * context, double ctime) {
 
     double score = score_function(btune, ctime, cbytes, dtime);
     assert(score > 0);
-    double cratio = (double) context->sourcesize / cbytes;
+    double cratio = (double) context->sourcesize / (double) cbytes;
 
     cparams->score = score;
     cparams->cratio = cratio;

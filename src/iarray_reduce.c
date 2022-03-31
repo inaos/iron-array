@@ -25,8 +25,8 @@ typedef struct iarray_reduce_params_s {
 } iarray_reduce_params_t;
 
 
-static bool check_padding(int64_t *block_offset_n,
-                          int64_t *elem_index_n,
+static bool check_padding(const int64_t *block_offset_n,
+                          const int64_t *elem_index_n,
                           iarray_reduce_params_t *rparams) {
     int64_t elem_index_n2[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < rparams->result->catarr->ndim; ++i) {
@@ -45,7 +45,7 @@ static bool check_padding(int64_t *block_offset_n,
 static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
     user_data_t user_data = {0};
-    user_data.inv_nelem = 1. / rparams->input->dtshape->shape[rparams->axis];
+    user_data.inv_nelem = 1. / (double) rparams->input->dtshape->shape[rparams->axis];
 
     blosc2_dparams dparams = {.nthreads = 1, .schunk = rparams->input->catarr->sc};
     blosc2_context *dctx = blosc2_create_dctx(dparams);
@@ -225,7 +225,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
         }
         uint8_t *chunk;
         bool needs_free;
-        int csize = blosc2_schunk_get_lazychunk(rparams->input->catarr->sc, nchunk, &chunk,
+        int csize = blosc2_schunk_get_lazychunk(rparams->input->catarr->sc, (int) nchunk, &chunk,
                                                  &needs_free);
         if (csize < 0) {
             IARRAY_TRACE1(iarray.tracing, "Error getting lazy chunk");
@@ -243,7 +243,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
             int64_t start = nblock * rparams->input->catarr->blocknitems;
 
             // Compress data
-            int bsize = blosc2_getitem_ctx(dctx, chunk, csize, start,
+            int bsize = blosc2_getitem_ctx(dctx, chunk, csize, (int) start,
                                            rparams->input->catarr->blocknitems,
                                            block, rparams->input->catarr->blocknitems * rparams->input->catarr->itemsize);
             if (bsize < 0) {
@@ -415,6 +415,9 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                                 rparams->ufunc->reduction(dout, 0, boolblock, strides[rparams->axis],
                                                           vector_nelems, &user_data);
                                 break;
+                            default:
+                                IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
                         }
                         dout++;
                         break;
@@ -446,6 +449,9 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                                 rparams->ufunc->reduction(i64out, 0, boolblock, strides[rparams->axis],
                                                           vector_nelems, &user_data);
                                 break;
+                            default:
+                                IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
                         }
                         i64out++;
                         break;
@@ -483,6 +489,9 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                                 rparams->ufunc->reduction(ui64out, 0, ui8block, strides[rparams->axis],
                                                           vector_nelems, &user_data);
                                 break;
+                            default:
+                                IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
                         }
                         ui64out++;
                         break;
@@ -719,17 +728,17 @@ INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
         blosc2_context *cctx = blosc2_create_cctx(cparams);
         uint8_t *chunk = malloc(c->catarr->extchunknitems * c->catarr->itemsize +
                                 BLOSC_MAX_OVERHEAD);
-        int csize = blosc2_compress_ctx(cctx, NULL, c->catarr->extchunknitems * c->catarr->itemsize,
+        int csize = blosc2_compress_ctx(cctx, NULL, (int32_t) (c->catarr->extchunknitems * c->catarr->itemsize),
                                         chunk,
-                                        c->catarr->extchunknitems * c->catarr->itemsize +
-                                        BLOSC_MAX_OVERHEAD);
+                                        (int32_t) (c->catarr->extchunknitems * c->catarr->itemsize +
+                                        BLOSC_MAX_OVERHEAD));
         if (csize <= 0) {
             IARRAY_TRACE1(iarray.error, "Error compressing a blosc chunk");
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
         }
         blosc2_free_ctx(cctx);
 
-        blosc2_schunk_update_chunk(c->catarr->sc, nchunk, chunk, false);
+        blosc2_schunk_update_chunk(c->catarr->sc, (int) nchunk, chunk, false);
 
         nchunk++;
         iarray_index_unidim_to_multidim_shape(c->dtshape->ndim, shape_of_chunks, nchunk,
@@ -798,6 +807,9 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                     reduce_function = &BOOLSUM;
                     dtype = IARRAY_DATA_TYPE_INT64;
                     break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
             }
             break;
         case IARRAY_REDUCE_PROD:
@@ -847,6 +859,9 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                     reduce_function = &BOOLPROD;
                     dtype = IARRAY_DATA_TYPE_INT64;
                     break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
             }
             break;
         case IARRAY_REDUCE_MAX:
@@ -895,6 +910,9 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                     reduce_function = &BOOLMAX;
                     dtype = IARRAY_DATA_TYPE_BOOL;
                     break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
             }
             break;
         case IARRAY_REDUCE_MIN:
@@ -943,6 +961,9 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                     reduce_function = &BOOLMIN;
                     dtype = IARRAY_DATA_TYPE_BOOL;
                     break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
             }
             break;
         case IARRAY_REDUCE_MEAN:
@@ -992,8 +1013,14 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                     reduce_function = &BOOLMEAN;
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
             }
             break;
+        default:
+            IARRAY_TRACE1(iarray.error, "Invalid function");
+            return INA_ERROR(IARRAY_ERR_INVALID_EVAL_METHOD);
     }
 
     IARRAY_RETURN_IF_FAILED(_iarray_reduce_udf(ctx, a, reduce_function, axis, storage, b, dtype));
@@ -1006,7 +1033,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
                                       iarray_container_t *a,
                                       iarray_reduce_func_t func,
                                       int8_t naxis,
-                                      int8_t *axis,
+                                      const int8_t *axis,
                                       iarray_storage_t *storage,
                                       iarray_container_t **b) {
 

@@ -10,7 +10,6 @@
  */
 
 #include <libiarray/iarray.h>
-#include <math.h>
 #include "iarray_private.h"
 
 
@@ -84,7 +83,7 @@ int main(void) {
     printf("Res: %d\n", res);
 
 
-    int64_t bufsize = size * sizeof(double);
+    int64_t bufsize = size * (int64_t)sizeof(double);
     double *buf = ina_mem_alloc(bufsize);
 
     iarray_to_buffer(ctx, x, buf, bufsize);

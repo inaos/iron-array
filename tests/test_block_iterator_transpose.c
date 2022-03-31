@@ -22,10 +22,8 @@ static ina_rc_t test_block_iterator_transpose(iarray_context_t *ctx, iarray_data
     iarray_dtshape_t xdtshape;
     xdtshape.dtype = dtype;
     xdtshape.ndim = ndim;
-    int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        size *= shape[i];
     }
 
     iarray_dtshape_t ydtshape;
@@ -196,7 +194,6 @@ INA_TEST_FIXTURE(block_iterator_transpose, d_2) {
 
 static ina_rc_t test_block_iterator_transpose_external(iarray_context_t *ctx,
                                                        iarray_data_type_t dtype,
-                                                       int32_t type_size,
                                                        int8_t ndim,
                                                        const int64_t *shape,
                                                        const int64_t *cshape,
@@ -207,10 +204,8 @@ static ina_rc_t test_block_iterator_transpose_external(iarray_context_t *ctx,
     iarray_dtshape_t xdtshape;
     xdtshape.dtype = dtype;
     xdtshape.ndim = ndim;
-    int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        size *= shape[i];
     }
 
     iarray_storage_t xstorage;
@@ -327,7 +322,6 @@ INA_TEST_TEARDOWN(block_iterator_transpose_external) {
 
 INA_TEST_FIXTURE(block_iterator_transpose_external, f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int32_t type_size = sizeof(float);
 
     int8_t ndim = 2;
     int64_t shape[] = {1340, 654};
@@ -335,13 +329,12 @@ INA_TEST_FIXTURE(block_iterator_transpose_external, f) {
     int64_t bshape[] = {135, 4};
     int64_t *blockshape = cshape;
 
-    INA_TEST_ASSERT_SUCCEED(test_block_iterator_transpose_external(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+    INA_TEST_ASSERT_SUCCEED(test_block_iterator_transpose_external(data->ctx, dtype, ndim, shape, cshape, bshape,
                                                           blockshape, true, "xarr.iarr", false, "yarr.iarr"));
 }
 
 INA_TEST_FIXTURE(block_iterator_transpose_external, d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int32_t type_size = sizeof(double);
 
     int8_t ndim = 2;
     int64_t shape[] = {1000, 55};
@@ -349,6 +342,6 @@ INA_TEST_FIXTURE(block_iterator_transpose_external, d) {
     int64_t bshape[] = {50, 10};
     int64_t *blockshape = cshape;
 
-    INA_TEST_ASSERT_SUCCEED(test_block_iterator_transpose_external(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+    INA_TEST_ASSERT_SUCCEED(test_block_iterator_transpose_external(data->ctx, dtype, ndim, shape, cshape, bshape,
                                                           blockshape, false, NULL, true, "yarr.iarr"));
 }

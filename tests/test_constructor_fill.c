@@ -82,6 +82,8 @@ static ina_rc_t test_fill(iarray_context_t *ctx,
         case IARRAY_DATA_TYPE_BOOL:
             INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (bool *) value, &store, &c_x));
             break;
+        default:
+            return INA_ERR_EXCEEDED;
     }
 
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf_dest, (size_t)buf_size * type_size));
@@ -164,6 +166,8 @@ static ina_rc_t test_fill(iarray_context_t *ctx,
             }
             break;
         }
+        default:
+            return INA_ERR_EXCEEDED;
     }
 
     iarray_container_free(ctx, &c_x);
@@ -304,7 +308,7 @@ INA_TEST_FIXTURE(constructor_fill, 2_ull)
     int64_t shape[] = {100, 312};
     int64_t cshape[] = {35, 101};
     int64_t bshape[] = {12, 12};
-    uint64_t value = 12345678910111213140;
+    uint64_t value = 12345678910111213140ull;
 
     INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &value, false, NULL));
 }

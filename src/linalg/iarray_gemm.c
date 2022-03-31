@@ -15,7 +15,7 @@
 #include <libiarray/iarray.h>
 
 
-static bool chunk_is_zeros(uint8_t *chunk) {
+static bool chunk_is_zeros(const uint8_t *chunk) {
     uint8_t blosc2_flags = *(chunk + BLOSC2_CHUNK_BLOSC2_FLAGS);
     uint8_t special_value = (blosc2_flags >> 4) & BLOSC2_SPECIAL_MASK;
     if (special_value == BLOSC2_SPECIAL_ZERO) {
