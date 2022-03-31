@@ -61,7 +61,7 @@ int main(void)
     iarray_linspace(ctx, &dtshape, 0.1, .1, &store, 0, &c_y);
 
     iarray_expression_t* e;
-    iarray_expr_new(ctx, &e);
+    iarray_expr_new(ctx, dtshape.dtype, &e);
     iarray_expr_bind(e, "x", c_x);
     iarray_expr_bind(e, "y", c_y);
     iarray_expr_bind_out_properties(e, &dtshape, &store);

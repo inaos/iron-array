@@ -1,6 +1,6 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2019.
- * Copyright Francesc Alted, 2019.
+ * Copyright INAOS GmbH, Thalwil, 2019-2022.
+ * Copyright Francesc Alted, 2019-2022.
  *
  * All rights reserved.
  *
@@ -19,13 +19,26 @@
 typedef struct jug_context_s jug_context_t;
 typedef struct jug_udf_s jug_udf_t;
 
+typedef enum jug_expression_dtype_e {
+    JUG_EXPRESSION_DTYPE_DOUBLE = 1,
+    JUG_EXPRESSION_DTYPE_FLOAT = 2,
+    JUG_EXPRESSION_DTYPE_SINT8 = 3,
+    JUG_EXPRESSION_DTYPE_SINT16 = 4,
+    JUG_EXPRESSION_DTYPE_SINT32 = 5,
+    JUG_EXPRESSION_DTYPE_SINT64 = 6,
+    JUG_EXPRESSION_DTYPE_UINT8 = 7,
+    JUG_EXPRESSION_DTYPE_UINT16 = 8,
+    JUG_EXPRESSION_DTYPE_UINT32 = 9,
+    JUG_EXPRESSION_DTYPE_UINT64 = 10,
+} jug_expression_dtype_t;
+
 INA_API(ina_rc_t) jug_init(void);
 INA_API(void) jug_destroy(void);
 
-INA_API(ina_rc_t) jug_expression_new(jug_expression_t **expr);
+INA_API(ina_rc_t) jug_expression_new(jug_expression_t **expr, jug_expression_dtype_t dtype);
 INA_API(void) jug_expression_free(jug_expression_t **expr);
 INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
-    const char *expr, int num_vars, void *vars, int32_t typesize, uint64_t *function_addr);
+    const char *expr, int num_vars, void *vars, uint64_t *function_addr);
 
 INA_API(ina_rc_t) jug_udf_compile(jug_expression_t *e,
                                   int llvm_bc_len,
@@ -65,7 +78,8 @@ typedef enum te_expr_type_e {
     EXPR_TYPE_TAN,
     EXPR_TYPE_TANH,
     EXPR_TYPE_FMOD,
-    EXPR_TYPE_CUSTOM
+    EXPR_TYPE_MIN,
+    EXPR_TYPE_MAX
 } te_expr_type_t;
 
 typedef struct jug_te_variable {

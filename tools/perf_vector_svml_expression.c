@@ -343,7 +343,7 @@ int main(int argc, char** argv)
     iarray_container_t *con_out;
 
     iarray_expression_t *e;
-    iarray_expr_new(ctx, &e);
+    iarray_expr_new(ctx, dtshape.dtype, &e);
     iarray_expr_bind(e, "x", con_x);
     iarray_expr_bind_out_properties(e, &dtshape, &mat_out);
     //iarray_expr_compile(e, "(x - 1.35) * (x - 4.45) * (x - 8.5)");
