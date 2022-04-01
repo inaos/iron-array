@@ -1,3 +1,14 @@
+/*
+ * Copyright ironArray SL 2021.
+ *
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
+ * Information and shall use it only in accordance with the terms of the license agreement.
+ *
+ */
+
 #include <minjugg.h>
 
 #include <llvm-c/Core.h>

@@ -1,17 +1,15 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2019.
- * Copyright Francesc Alted, 2019.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
 
 #include <libiarray/iarray.h>
-#include <math.h>
 #include "iarray_private.h"
 
 

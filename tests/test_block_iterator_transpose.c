@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -193,22 +192,6 @@ INA_TEST_FIXTURE(block_iterator_transpose, d_2) {
     INA_TEST_ASSERT_SUCCEED(test_block_iterator_transpose(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                 blockshape, false, NULL, true, "yarr.iarr"));
 }
-
-
-/*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
- *
- * All rights reserved.
- *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
- * Information and shall use it only in accordance with the terms of the license agreement.
- *
- */
-
-#include <libiarray/iarray.h>
-#include <src/iarray_private.h>
 
 
 static ina_rc_t test_block_iterator_transpose_external(iarray_context_t *ctx,

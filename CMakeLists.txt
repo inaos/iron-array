@@ -1,12 +1,11 @@
 #
-# Copyright INAOS GmbH, Thalwil, 2018.
-# Copyright Francesc Alted, 2018.
+# Copyright ironArray SL 2021.
 #
-# All rights reserved
+# All rights reserved.
 #
-# This software is the confidential and proprietary information of INAOS GmbH
-# and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
-# Information and shall use it only in accordance with the terms of the license agreement.
+# This software is the confidential and proprietary information of ironArray SL
+# ("Confidential Information"). You shall not disclose such Confidential Information
+# and shall use it only in accordance with the terms of the license agreement.
 #
 cmake_minimum_required (VERSION 3.12)
 cmake_policy(SET CMP0048 NEW)
