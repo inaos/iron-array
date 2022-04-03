@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -39,7 +38,7 @@ static ina_rc_t test_rewrite_cont(iarray_context_t *ctx, iarray_data_type_t dtyp
     blosc2_remove_urlpath(xstore.urlpath);
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstore, &c_x));
 
     // Start Iterator
     iarray_iter_write_block_t *I;
@@ -164,6 +163,21 @@ INA_TEST_FIXTURE(rewrite_cont, 4_d) {
                                               blockshape, true, NULL));
 }
 
+INA_TEST_FIXTURE(rewrite_cont, 2_ll) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
+    int32_t type_size = sizeof(int64_t);
+
+    int8_t ndim = 2;
+    int64_t shape[] = {10, 8};
+    int64_t cshape[] = {2, 3};
+    int64_t bshape[] = {2, 3};
+    int64_t *blockshape = cshape;
+
+    INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                              blockshape, false, "xarr.iarr"));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(rewrite_cont, 7_ll) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
     int32_t type_size = sizeof(int64_t);
@@ -177,6 +191,7 @@ INA_TEST_FIXTURE(rewrite_cont, 7_ll) {
     INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                               blockshape, false, "xarr.iarr"));
 }
+*/
 
 INA_TEST_FIXTURE(rewrite_cont, 3_i) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
@@ -206,6 +221,21 @@ INA_TEST_FIXTURE(rewrite_cont, 4_s) {
                                               blockshape, true, NULL));
 }
 
+INA_TEST_FIXTURE(rewrite_cont, 3_sc) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT8;
+    int32_t type_size = sizeof(int8_t);
+
+    int8_t ndim = 3;
+    int64_t shape[] = {10, 8, 6};
+    int64_t cshape[] = {2, 3, 1};
+    int64_t bshape[] = {2, 3, 1};
+    int64_t *blockshape = cshape;
+
+    INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                              blockshape, false, "xarr.iarr"));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(rewrite_cont, 7_sc) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT8;
     int32_t type_size = sizeof(int8_t);
@@ -219,6 +249,7 @@ INA_TEST_FIXTURE(rewrite_cont, 7_sc) {
     INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                               blockshape, false, "xarr.iarr"));
 }
+*/
 
 INA_TEST_FIXTURE(rewrite_cont, 3_ull) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
@@ -248,6 +279,21 @@ INA_TEST_FIXTURE(rewrite_cont, 4_ui) {
                                               blockshape, true, NULL));
 }
 
+INA_TEST_FIXTURE(rewrite_cont, 2_us) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT16;
+    int32_t type_size = sizeof(uint16_t);
+
+    int8_t ndim = 2;
+    int64_t shape[] = {10, 8};
+    int64_t cshape[] = {2, 3};
+    int64_t bshape[] = {2, 3};
+    int64_t *blockshape = cshape;
+
+    INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                              blockshape, false, "xarr.iarr"));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(rewrite_cont, 7_us) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT16;
     int32_t type_size = sizeof(uint16_t);
@@ -261,6 +307,7 @@ INA_TEST_FIXTURE(rewrite_cont, 7_us) {
     INA_TEST_ASSERT_SUCCEED(test_rewrite_cont(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                               blockshape, false, "xarr.iarr"));
 }
+*/
 
 INA_TEST_FIXTURE(rewrite_cont, 3_uc) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;

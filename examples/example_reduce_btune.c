@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -57,7 +56,7 @@ int main(void)
     }
 
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, &storage, 0, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, &storage, &c_x));
 
 
     iarray_iter_write_block_t *iter;
@@ -89,7 +88,7 @@ int main(void)
     }
 
     iarray_container_t *c_y;
-    IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &storage, 0, &c_y));
+    IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &storage, &c_y));
 
     iarray_storage_t dest_storage = {0};
     dest_storage.contiguous = dest_frame;

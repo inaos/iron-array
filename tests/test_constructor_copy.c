@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -42,15 +41,16 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
     blosc2_remove_urlpath(store.urlpath);
 
     if (src_view) {
-        INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, 0, &c_aux));
+        INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, step, &store, &c_aux));
         int64_t start_view[IARRAY_DIMENSION_MAX];
         for (int i = 0; i < ndim; ++i) {
             start_view[i] = 0;
         }
-        INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_aux, start_view, stop_view, true, &store, 0, &c_x));
+        INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_aux, start_view, stop_view, true, &store,
+                                                 &c_x));
         INA_TEST_ASSERT_SUCCEED(iarray_squeeze(ctx, c_x));
     } else {
-        INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, 0, &c_x));
+        INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, step, &store, &c_x));
     }
 
     iarray_container_t *c_y;
@@ -59,7 +59,7 @@ static ina_rc_t test_copy(iarray_context_t *ctx, iarray_data_type_t dtype, int8_
         blosc2_remove_urlpath(store.urlpath);
     }
 
-    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_x, dest_view, &store, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_x, dest_view, &store, &c_y));
 
     // Assert iterator reading it
     switch (dtype) {
@@ -162,7 +162,21 @@ INA_TEST_FIXTURE(constructor_copy, 3_d_v_n) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, true, false, "arr.iarr"));
 }
 
+INA_TEST_FIXTURE(constructor_copy, 3_ll_n_v) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
 
+    int8_t ndim = 3;
+    int64_t shape[] = {5, 7, 10};
+    int64_t cshape[] = {2, 1, 4};
+    int64_t bshape[] = {2, 1, 2};
+    int64_t stop_view[] = {4, 4, 5};
+    double start = -112;
+    double stop = (5 * 7 * 10 * 12 * 13 * 6 - 112 + 1) * 3;
+
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, true, "arr.iarr"));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(constructor_copy, 6_ll_n_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
 
@@ -176,6 +190,7 @@ INA_TEST_FIXTURE(constructor_copy, 6_ll_n_v) {
 
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, true, "arr.iarr"));
 }
+*/
 
 INA_TEST_FIXTURE(constructor_copy, 4_i_n_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
@@ -252,7 +267,21 @@ INA_TEST_FIXTURE(constructor_copy, 7_ui_v_n) {
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, true, false, "arr.iarr"));
 }
 
+INA_TEST_FIXTURE(constructor_copy, 2_us_n_v) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT16;
 
+    int8_t ndim = 2;
+    int64_t shape[] = {12, 13};
+    int64_t cshape[] = {5, 6};
+    int64_t bshape[] = {3, 2};
+    int64_t stop_view[] = {11, 12};
+    double start = 11;
+    double stop = 5 * 7 * 10 * 12 * 13 * 6 + 11;
+
+    INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, true, "arr.iarr"));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(constructor_copy, 6_us_n_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT16;
 
@@ -266,6 +295,7 @@ INA_TEST_FIXTURE(constructor_copy, 6_us_n_v) {
 
     INA_TEST_ASSERT_SUCCEED(test_copy(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, stop_view, false, true, "arr.iarr"));
 }
+*/
 
 INA_TEST_FIXTURE(constructor_copy, 1_uc_n_n) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;

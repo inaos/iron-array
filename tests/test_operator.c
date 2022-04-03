@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -118,9 +117,10 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
     iarray_container_t *c_out;
     iarray_container_t *c_res;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_x, buffer_x_len, &xstore, 0, &c_x));
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_r, buffer_r_len, &rstore, 0, &c_res));
-    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &shape, &ostore, 0, &c_out));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_x, buffer_x_len, &xstore, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_r, buffer_r_len, &rstore,
+                                               &c_res));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &shape, &ostore, &c_out));
 
     INA_TEST_ASSERT_SUCCEED(_test_operator_x(ctx, c_x, c_out, c_res, test_fun, tol));
 
@@ -225,10 +225,11 @@ static ina_rc_t _execute_iarray_operator_xy(iarray_context_t *ctx,
     iarray_container_t *c_out;
     iarray_container_t *c_res;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_x, buffer_x_len, &xstore, 0, &c_x));
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_y, buffer_y_len, &ystore, 0, &c_y));
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_r, buffer_r_len, &rstore, 0, &c_res));
-    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &shape, &ostore, 0, &c_out));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_x, buffer_x_len, &xstore, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_y, buffer_y_len, &ystore, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &shape, buffer_r, buffer_r_len, &rstore,
+                                               &c_res));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &shape, &ostore, &c_out));
 
     INA_TEST_ASSERT_SUCCEED(_test_operator_xy(ctx, c_x, c_y, c_out, c_res, test_fun, tol));
 

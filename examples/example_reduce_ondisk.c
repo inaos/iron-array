@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2019.
- * Copyright Francesc Alted, 2019.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -58,16 +57,16 @@ int main(void) {
     }
 
     iarray_random_ctx_t *rnd_ctx;
-    iarray_random_ctx_new(ctx, 0, IARRAY_RANDOM_RNG_MERSENNE_TWISTER, &rnd_ctx);
+    iarray_random_ctx_new(ctx, 0, IARRAY_RANDOM_RNG_MRG32K3A, &rnd_ctx);
 
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rnd_ctx,
-                                                                IARRAY_RANDOM_DIST_PARAM_MU,
-                                                                0));
-    IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param_double(rnd_ctx,
-                                                                IARRAY_RANDOM_DIST_PARAM_SIGMA,
-                                                                1));
-    IARRAY_RETURN_IF_FAILED(iarray_ones(ctx, &dtshape, &xstorage, 0, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param(rnd_ctx,
+                                                         IARRAY_RANDOM_DIST_PARAM_MU,
+                                                         0));
+    IARRAY_RETURN_IF_FAILED(iarray_random_dist_set_param(rnd_ctx,
+                                                         IARRAY_RANDOM_DIST_PARAM_SIGMA,
+                                                         1));
+    IARRAY_RETURN_IF_FAILED(iarray_ones(ctx, &dtshape, &xstorage, &c_x));
 
 
     int64_t buff_nitems = 1;

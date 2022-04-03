@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -77,14 +76,15 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
 
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
     blosc2_remove_urlpath(store.urlpath);
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void*)buffer_x, nelem * sizeof(double), &store, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void *) buffer_x,
+                                               nelem * sizeof(double), &store, &c_x));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
+    INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, dtshape.dtype, &e));
     if (func != const_) {
         INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
     }
     else {
-        
+
     }
     iarray_storage_t outstore;
     outstore.contiguous = contiguous;
@@ -184,12 +184,29 @@ INA_TEST_FIXTURE(expression_eval_double, iterblosc2_superchunk)
     data->expr_str = "(x - 2.3) * (x - 1.35) * (x + 4.2)";
 
     int8_t ndim = 3;
+    int64_t shape[] = {10, 23, 12};
+    int64_t cshape[] = {3, 3, 7};
+    int64_t bshape[] = {2, 1, 5};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, "arr.iarr"));
+}
+
+
+/* Avoid heavy tests
+INA_TEST_FIXTURE(expression_eval_double, iterblosc2_superchunk)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr_;
+    data->expr_str = "(x - 2.3) * (x - 1.35) * (x + 4.2)";
+
+    int8_t ndim = 3;
     int64_t shape[] = {100, 230, 121};
     int64_t cshape[] = {31, 32, 17};
     int64_t bshape[] = {7, 12, 5};
 
     INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, "arr.iarr"));
 }
+*/
 
 static double expr0(const double x)
 {
@@ -287,7 +304,7 @@ INA_TEST_FIXTURE(expression_eval_double, default_superchunk2)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_AUTO;
     data->func = expr3;
-    data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
+    data->expr_str = "arcsin(x) + (arccos(x) - 1.35) - arctan(x + .2)";
 
     int8_t ndim = 4;
     int64_t shape[] = {20, 20, 15, 19};
@@ -359,11 +376,49 @@ static double expr_pow_pi(const double x)
     return pow(x, 3.141592);
 }
 
-INA_TEST_FIXTURE(expression_eval_double, iterblosc_pow_pi)
+INA_TEST_FIXTURE(expression_eval_double, iterblosc_power_pi)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr_pow_pi;
-    data->expr_str = "pow(x, 3.141592)";
+    data->expr_str = "power(x, 3.141592)";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {100, 40};
+    int64_t cshape[] = {50, 20};
+    int64_t bshape[] = {15, 20};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+}
+
+static double expr_min(const double x)
+{
+    return INA_MIN(x, 234.345);
+}
+
+INA_TEST_FIXTURE(expression_eval_double, iterblosc_min)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr_min;
+    data->expr_str = "min(x, 234.345)";
+
+    int8_t ndim = 2;
+    int64_t shape[] = {100, 40};
+    int64_t cshape[] = {50, 20};
+    int64_t bshape[] = {15, 20};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func, data->expr_str, true, NULL));
+}
+
+static double expr_max(const double x)
+{
+    return INA_MAX(x, 4.345);
+}
+
+INA_TEST_FIXTURE(expression_eval_double, iterblosc_max)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr_max;
+    data->expr_str = "max(x, 4.345)";
 
     int8_t ndim = 2;
     int64_t shape[] = {100, 40};

@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2019.
- * Copyright Francesc Alted, 2019.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -62,7 +61,7 @@ int main(void) {
     }
 
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_ones(ctx, &dtshape, &xstorage, 0, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_ones(ctx, &dtshape, &xstorage, &c_x));
 
     int32_t outchunkshape[] = {16};
     int32_t outblockshape[] = {16};

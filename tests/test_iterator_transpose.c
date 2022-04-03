@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -51,7 +50,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
 
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, &c_x));
 
     // Test write iterator
     iarray_iter_write_t *I;
@@ -82,7 +81,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, &c_trans));
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_trans, false, &ystorage, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_trans, false, &ystorage, &c_y));
 
     // Test read iterator
     iarray_iter_read_t *I2;
@@ -160,9 +159,24 @@ INA_TEST_FIXTURE(iterator_transpose, 2_d) {
     int32_t type_size = sizeof(double);
 
     int8_t ndim = 2;
+    int64_t shape[] = {200, 50};
+    int64_t cshape[] = {12, 20};
+    int64_t bshape[] = {12, 5};
+
+    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, false, "arr.iarr", false, "arr2.iarr"));
+}
+
+
+/* Avoid heavy tests
+INA_TEST_FIXTURE(iterator_transpose, 2_d) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    int32_t type_size = sizeof(double);
+
+    int8_t ndim = 2;
     int64_t shape[] = {2000, 5033};
     int64_t cshape[] = {12, 2000};
     int64_t bshape[] = {12, 200};
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, false, "arr.iarr", false, "arr2.iarr"));
 }
+*/

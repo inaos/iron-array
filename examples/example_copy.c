@@ -1,17 +1,15 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2019.
- * Copyright Francesc Alted, 2019.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
 
 #include <libiarray/iarray.h>
-#include <math.h>
 #include "iarray_private.h"
 
 
@@ -54,15 +52,15 @@ int main(void) {
     }
 
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_zeros(ctx, &dtshape, &xstorage, 0, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_zeros(ctx, &dtshape, &xstorage, &c_x));
 
     iarray_container_t *out;
-    IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &xstorage, 0, &out));
+    IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &xstorage, &out));
 
     cfg.compression_codec = 5;
 
     iarray_container_t *out2;
-    IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &xstorage, 0, &out2));
+    IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &xstorage, &out2));
 
     IARRAY_RETURN_IF_FAILED(iarray_container_almost_equal(out, out2, 1e-6));
     iarray_container_free(ctx, &c_x);

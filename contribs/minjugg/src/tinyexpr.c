@@ -145,7 +145,12 @@ void jug_te_free(jug_te_expr *n) {
 static const jug_te_variable functions[] = {
     /* must be in alphabetical order */
     {"abs", EXPR_TYPE_ABS,     TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"absolute", EXPR_TYPE_ABS,     TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"acos", EXPR_TYPE_ACOS,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"arccos", EXPR_TYPE_ACOS,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"arcsin", EXPR_TYPE_ASIN,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"arctan", EXPR_TYPE_ATAN,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"arctan2", EXPR_TYPE_ATAN2,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"asin", EXPR_TYPE_ASIN,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"atan", EXPR_TYPE_ATAN,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"atan2", EXPR_TYPE_ATAN2,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
@@ -158,10 +163,15 @@ static const jug_te_variable functions[] = {
     {"floor", EXPR_TYPE_FLOOR,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"log", EXPR_TYPE_LOG,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"log10", EXPR_TYPE_LOG10,  TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"max", EXPR_TYPE_MAX,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"min", EXPR_TYPE_MIN,  TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"ncr", EXPR_TYPE_NCR,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"negate", EXPR_TYPE_NEGATE,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
+    {"negative", EXPR_TYPE_NEGATE,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"npr", EXPR_TYPE_NPR,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"pi", EXPR_TYPE_PI,        TE_FUNCTION0 | TE_FLAG_PURE, 0},
     {"pow", EXPR_TYPE_POW,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
+    {"power", EXPR_TYPE_POW,      TE_FUNCTION2 | TE_FLAG_PURE, 0},
     {"sin", EXPR_TYPE_SIN,      TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"sinh", EXPR_TYPE_SINH,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
     {"sqrt", EXPR_TYPE_SQRT,    TE_FUNCTION1 | TE_FLAG_PURE, 0},
@@ -265,7 +275,17 @@ static void next_token(state *s) {
                 switch (s->next++[0]) {
                     case '+': s->type = TOK_INFIX; s->function = EXPR_TYPE_ADD; break;
                     case '-': s->type = TOK_INFIX; s->function = EXPR_TYPE_SUB; break;
-                    case '*': s->type = TOK_INFIX; s->function = EXPR_TYPE_MUL; break;
+                    case '*': {
+                        s->type = TOK_INFIX;
+                        if (s->next[0] == '*') {
+                            // pow can also be expressed as '**'
+                            s->next++;
+                            s->function = EXPR_TYPE_POW;
+                            break;
+                        }
+                        s->function = EXPR_TYPE_MUL;
+                        break;
+                    }
                     case '/': s->type = TOK_INFIX; s->function = EXPR_TYPE_DIVIDE; break;
                     case '^': s->type = TOK_INFIX; s->function = EXPR_TYPE_POW; break;
                     case '%': s->type = TOK_INFIX; s->function = EXPR_TYPE_FMOD; break;

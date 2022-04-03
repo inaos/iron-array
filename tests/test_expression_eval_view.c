@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -83,7 +82,8 @@ execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, con
 
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void*)buffer_x, nelem * sizeof(double), &store, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void *) buffer_x,
+                                               nelem * sizeof(double), &store, &c_x));
 
     int64_t start[IARRAY_DIMENSION_MAX];
     int64_t stop[IARRAY_DIMENSION_MAX];
@@ -92,7 +92,7 @@ execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, con
         stop[i] = shape[i] / 2 + 10;
     }
 
-    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, &store, 0, &c_x2));
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, &store, &c_x2));
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x2, buffer_x, nelem * sizeof(double)));
 
     fill_y(buffer_x, buffer_y, nelem2, func);
@@ -108,7 +108,7 @@ execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, con
         outstore.blockshape[i] = bshape[i];
     }
     blosc2_remove_urlpath(outstore.urlpath);
-    INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
+    INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, dtshape.dtype, &e));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x2));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind_out_properties(e, &dtshape2, &outstore));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, expr_str));
@@ -234,7 +234,7 @@ INA_TEST_FIXTURE(expression_eval_view, iterchunk_plainbuffer_5)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;
     data->func = expr5;
-    data->expr_str = "sqrt(x) + atan2(x, x) + pow(x, x)";
+    data->expr_str = "sqrt(x) + arctan2(x, x) + pow(x, x)";
 
     int8_t ndim = 3;
     int64_t shape[] = {120, 120, 120};

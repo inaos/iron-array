@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -17,7 +16,6 @@
 INA_API(ina_rc_t) iarray_empty(iarray_context_t *ctx,
                                 iarray_dtshape_t *dtshape,
                                 iarray_storage_t *storage,
-                                int flags,
                                 iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
@@ -25,7 +23,7 @@ INA_API(ina_rc_t) iarray_empty(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(container);
 
-    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, storage, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, storage, container));
 
     caterva_config_t cat_cfg = {0};
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cat_cfg);
@@ -46,11 +44,9 @@ INA_API(ina_rc_t) iarray_empty(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
-
 INA_API(ina_rc_t) iarray_uninit(iarray_context_t *ctx,
                                 iarray_dtshape_t *dtshape,
                                 iarray_storage_t *storage,
-                                int flags,
                                 iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
@@ -58,7 +54,7 @@ INA_API(ina_rc_t) iarray_uninit(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(container);
 
-    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, storage, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, storage, container));
 
     caterva_config_t cat_cfg = {0};
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cat_cfg);
@@ -79,177 +75,10 @@ INA_API(ina_rc_t) iarray_uninit(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
-
-INA_API(ina_rc_t) iarray_arange(iarray_context_t *ctx,
-                                iarray_dtshape_t *dtshape,
-                                double start,
-                                double stop,
-                                double step,
-                                iarray_storage_t *storage,
-                                int flags,
-                                iarray_container_t **container)
-{
-    INA_VERIFY_NOT_NULL(ctx);
-    INA_VERIFY_NOT_NULL(dtshape);
-    INA_VERIFY_NOT_NULL(storage);
-    INA_VERIFY_NOT_NULL(container);
-
-    double contsize = 1;
-    for (int i = 0; i < dtshape->ndim; ++i) {
-        contsize *= dtshape->shape[i];
-    }
-
-    double constant = (stop - start) / contsize;
-    if (constant != step) {
-        IARRAY_TRACE1(iarray.error, "The step parameter is invalid");
-        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
-    }
-
-    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, dtshape, storage, flags, container));
-
-    iarray_iter_write_t *I;
-    iarray_iter_write_value_t val;
-
-    IARRAY_RETURN_IF_FAILED(iarray_iter_write_new(ctx, &I, *container, &val));
-
-    while (INA_SUCCEED(iarray_iter_write_has_next(I))) {
-        IARRAY_RETURN_IF_FAILED(iarray_iter_write_next(I));
-
-        int64_t i = 0;
-        int64_t inc = 1;
-        for (int j = dtshape->ndim - 1; j >= 0; --j) {
-            i += val.elem_index[j] * inc;
-            inc *= dtshape->shape[j];
-        }
-
-        switch (dtshape->dtype) {
-            case IARRAY_DATA_TYPE_DOUBLE: {
-                double value = (double) i * step + start;
-                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
-                break;
-            }
-            case IARRAY_DATA_TYPE_FLOAT: {
-                float value = (float) (i * step + start);
-                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
-                break;
-            }
-            case IARRAY_DATA_TYPE_INT64: {
-                int64_t value = (int64_t) (i * step + start);
-                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
-                break;
-            }
-            case IARRAY_DATA_TYPE_INT32: {
-                int32_t value = (int32_t) (i * step + start);
-                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
-                break;
-            }
-            case IARRAY_DATA_TYPE_INT16: {
-                int16_t value = (int16_t) (i * step + start);
-                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
-                break;
-            }
-            case IARRAY_DATA_TYPE_INT8: {
-                int8_t value = (int8_t) (i * step + start);
-                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
-                break;
-            }
-            case IARRAY_DATA_TYPE_UINT64: {
-                uint64_t value = (uint64_t) (i * step + start);
-                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
-                break;
-            }
-            case IARRAY_DATA_TYPE_UINT32: {
-                uint32_t value = (uint32_t) (i * step + start);
-                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
-                break;
-            }
-            case IARRAY_DATA_TYPE_UINT16: {
-                uint16_t value = (uint16_t) (i * step + start);
-                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
-                break;
-            }
-            case IARRAY_DATA_TYPE_UINT8: {
-                uint8_t value = (uint8_t) (i * step + start);
-                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
-                break;
-            }
-            default:
-                INA_TRACE1(iarray.error, "The data type is invalid");
-                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-        }
-    }
-
-    IARRAY_ITER_FINISH();
-    iarray_iter_write_free(&I);
-
-    return INA_SUCCESS;
-}
-
-
-INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
-                                  iarray_dtshape_t *dtshape,
-                                  double start,
-                                  double stop,
-                                  iarray_storage_t *storage,
-                                  int flags,
-                                  iarray_container_t **container)
-{
-
-    INA_VERIFY_NOT_NULL(ctx);
-    INA_VERIFY_NOT_NULL(dtshape);
-    INA_VERIFY_NOT_NULL(storage);
-    INA_VERIFY_NOT_NULL(container);
-
-    double contsize = 1;
-    for (int i = 0; i < dtshape->ndim; ++i) {
-        contsize *= dtshape->shape[i];
-    }
-
-    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, dtshape, storage, flags, container));
-
-    iarray_iter_write_t *I;
-    iarray_iter_write_value_t val;
-
-    IARRAY_RETURN_IF_FAILED(iarray_iter_write_new(ctx, &I, *container, &val));
-
-    while (INA_SUCCEED(iarray_iter_write_has_next(I))) {
-        IARRAY_RETURN_IF_FAILED(iarray_iter_write_next(I));
-
-        int64_t i = 0;
-        int64_t inc = 1;
-        for (int j = dtshape->ndim - 1; j >= 0; --j) {
-            i += val.elem_index[j] * inc;
-            inc *= dtshape->shape[j];
-        }
-
-        switch (dtshape->dtype) {
-            case IARRAY_DATA_TYPE_DOUBLE: {
-                double value = (double) i * (stop - start) / (contsize - 1) + start;
-                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
-                break;
-            }
-            case IARRAY_DATA_TYPE_FLOAT: {
-                float value = (float) (i * (stop - start) / (contsize - 1) + start);
-                memcpy(val.elem_pointer, &value, dtshape->dtype_size);
-                break;
-            }
-            default:
-                INA_TRACE1(iarray.error, "The data type must be float or double");
-                return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-        }
-    }
-    IARRAY_ITER_FINISH();
-    iarray_iter_write_free(&I);
-
-    return INA_SUCCESS;
-}
-
-
 ina_rc_t iarray_fill(iarray_context_t *ctx,
                      iarray_dtshape_t *dtshape,
                      void *value,
                      iarray_storage_t *storage,
-                     int flags,
                      iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
@@ -257,7 +86,7 @@ ina_rc_t iarray_fill(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(container);
 
-    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, storage, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, storage, container));
 
     caterva_config_t cat_cfg = {0};
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cat_cfg);
@@ -283,7 +112,6 @@ ina_rc_t iarray_fill(iarray_context_t *ctx,
 INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
                                iarray_dtshape_t *dtshape,
                                iarray_storage_t *storage,
-                               int flags,
                                iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
@@ -291,7 +119,7 @@ INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(container);
 
-    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, storage, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, storage, container));
 
     caterva_config_t cat_cfg = {0};
     iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cat_cfg);
@@ -317,7 +145,6 @@ INA_API(ina_rc_t) iarray_zeros(iarray_context_t *ctx,
 INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
                               iarray_dtshape_t *dtshape,
                               iarray_storage_t *storage,
-                              int flags,
                               iarray_container_t **container)
 {
     INA_VERIFY_NOT_NULL(ctx);
@@ -328,64 +155,63 @@ INA_API(ina_rc_t) iarray_ones(iarray_context_t *ctx,
     switch (dtshape->dtype) {
         case IARRAY_DATA_TYPE_DOUBLE: {
             double value = 1;
-            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, container));
             break;
         }
         case IARRAY_DATA_TYPE_FLOAT: {
             float value = 1;
-            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, container));
             break;
         }
         case IARRAY_DATA_TYPE_INT64: {
             int64_t value = 1;
-            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, container));
             break;
         }
         case IARRAY_DATA_TYPE_INT32: {
             int32_t value = 1;
-            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, container));
             break;
         }
         case IARRAY_DATA_TYPE_INT16: {
             int16_t value = 1;
-            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, container));
             break;
         }
         case IARRAY_DATA_TYPE_INT8: {
             int8_t value = 1;
-            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, container));
             break;
         }
         case IARRAY_DATA_TYPE_UINT64: {
             uint64_t value = 1;
-            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, container));
             break;
         }
         case IARRAY_DATA_TYPE_UINT32: {
             uint32_t value = 1;
-            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, container));
             break;
         }
         case IARRAY_DATA_TYPE_UINT16: {
             uint16_t value = 1;
-            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, container));
             break;
         }
         case IARRAY_DATA_TYPE_UINT8: {
             uint8_t value = 1;
-            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, container));
             break;
         }
         case IARRAY_DATA_TYPE_BOOL: {
             bool value = true;
-            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, flags, container));
+            IARRAY_RETURN_IF_FAILED(iarray_fill(ctx, dtshape, &value, storage, container));
             break;
         }
         default:
             IARRAY_TRACE1(iarray.error, "The data type is invalid for this operation");
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
-
     return INA_SUCCESS;
 }
 
@@ -394,7 +220,6 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
                                      void *buffer,
                                      int64_t buflen,
                                      iarray_storage_t *storage,
-                                     int flags,
                                      iarray_container_t **container)
 {
 
@@ -404,7 +229,7 @@ INA_API(ina_rc_t) iarray_from_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(container);
 
-    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, storage, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, dtshape, storage, container));
 
     int64_t nitems = 1;
     for (int i = 0; i < dtshape->ndim; ++i) {
@@ -490,15 +315,12 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
                               iarray_container_t *src,
                               bool view,
                               iarray_storage_t *storage,
-                              int flags,
                               iarray_container_t **dest) {
 
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(src);
     INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(dest);
-
-    INA_UNUSED(flags);
 
     if (src->view && view) {
         IARRAY_TRACE1(iarray.error, "IArray can not copy a view into another view");
@@ -511,7 +333,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
         stop[i] = src->dtshape->shape[i];
     }
     if (src->view) {
-        IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, src->dtshape, storage, flags, dest));
+        IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, src->dtshape, storage, dest));
 
         int64_t nelem = 1;
         for (int i = 0; i < src->dtshape->ndim; ++i) {
@@ -546,7 +368,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
         iarray_iter_write_block_free(&iter_write);
 
     } else {
-        IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, src->dtshape, storage, 0, dest));
+        IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, src->dtshape, storage, dest));
 
         caterva_config_t cat_cfg = {0};
         iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cat_cfg);

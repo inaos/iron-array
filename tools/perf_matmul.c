@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -149,8 +148,6 @@ int main(int argc, char** argv)
     iarray_container_t *con_x;
     iarray_container_t *con_y;
 
-    int flags = INA_SUCCEED(ina_opt_isset("p"))? IARRAY_CONTAINER_PERSIST : 0;
-
     bool allocated = false;
 
     mat_x = (double *) ina_mem_alloc((sizeof(double) * size_x));
@@ -199,8 +196,10 @@ int main(int argc, char** argv)
         }
 
         INA_STOPWATCH_START(w);
-        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &xdtshape, mat_x, size_x * sizeof(double), &mat_x_prop, flags, &con_x));
-        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &ydtshape, mat_y, size_y * sizeof(double), &mat_y_prop, flags, &con_y));
+        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &xdtshape, mat_x, size_x * sizeof(double),
+                                            &mat_x_prop, &con_x));
+        INA_MUST_SUCCEED(iarray_from_buffer(ctx, &ydtshape, mat_y, size_y * sizeof(double),
+                                            &mat_y_prop, &con_y));
         INA_STOPWATCH_STOP(w);
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
 

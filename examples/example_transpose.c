@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2019.
- * Copyright Francesc Alted, 2019.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -59,7 +58,7 @@ int main(void) {
 
 
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_arange(ctx, &dtshape, 0, nelem, 1, &xstorage, 0, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_arange(ctx, &dtshape, 0, 1. / nelem, &xstorage, &c_x));
 
     iarray_container_t *c_out;
     IARRAY_RETURN_IF_FAILED(iarray_linalg_transpose(ctx, c_x, &c_out));

@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -114,7 +113,8 @@ _execute_iarray_set_slice(iarray_context_t *ctx, iarray_data_type_t dtype, int64
 
     iarray_container_t *c_x;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buffer_x, buffer_x_len * type_size, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buffer_x, buffer_x_len * type_size,
+                                               &xstore, &c_x));
 
     INA_TEST_ASSERT_SUCCEED(test_set_slice_buffer(ctx, c_x, start, stop, bufdes, buflen));
 
@@ -257,6 +257,23 @@ INA_TEST_FIXTURE(set_slice_buffer, 3_ui_blosc) {
     int32_t type_size = sizeof(uint32_t);
 
     const int8_t ndim = 3;
+    int64_t shape[] = {10, 12, 34};
+    int64_t cshape[] = {3, 1, 21};
+    int64_t bshape[] = {1, 1, 21};
+    int64_t start[] = {3, 1, 2};
+    int64_t stop[] = {5, 8, 7};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_set_slice(data->ctx, dtype, type_size, ndim, shape,
+                                                      cshape, bshape,
+                                                      start, stop, true, "xarr.iarr"));
+}
+
+/* Avoid heavy tests
+INA_TEST_FIXTURE(set_slice_buffer, 3_ui_blosc) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
+    int32_t type_size = sizeof(uint32_t);
+
+    const int8_t ndim = 3;
     int64_t shape[] = {100, 123, 234};
     int64_t cshape[] = {31, 1, 21};
     int64_t bshape[] = {13, 1, 21};
@@ -267,6 +284,7 @@ INA_TEST_FIXTURE(set_slice_buffer, 3_ui_blosc) {
                                                       cshape, bshape,
                                                       start, stop, true, "xarr.iarr"));
 }
+*/
 
 INA_TEST_FIXTURE(set_slice_buffer, 2_uc_blosc) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;

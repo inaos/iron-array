@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -37,7 +36,7 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
     blosc2_remove_urlpath(store.urlpath);
 
     iarray_container_t *c_x;
-    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &store, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &store, &c_x));
 
     // Start Iterator
     iarray_iter_write_t *I;
@@ -239,6 +238,19 @@ INA_TEST_FIXTURE(iterator, 6_ll) {
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, false, "arr.iarr"));
 }
 
+INA_TEST_FIXTURE(iterator, 3_ub) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
+    int32_t type_size = sizeof(bool);
+
+    int8_t ndim = 3;
+    int64_t shape[] = {5, 7, 8};
+    int64_t cshape[] = {2, 5, 3};
+    int64_t bshape[] = {2, 2, 1};
+
+    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, true, "arr.iarr"));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(iterator, 7_ub) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
     int32_t type_size = sizeof(bool);
@@ -250,6 +262,7 @@ INA_TEST_FIXTURE(iterator, 7_ub) {
 
     INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, true, "arr.iarr"));
 }
+*/
 
 INA_TEST_FIXTURE(iterator, 3_i) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;

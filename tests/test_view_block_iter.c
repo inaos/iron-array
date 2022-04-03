@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -17,7 +16,7 @@
 static ina_rc_t test_slice(iarray_context_t *ctx, iarray_container_t *c_x, int64_t *start,
                            int64_t *stop, iarray_storage_t *stores,
                            int flags, iarray_container_t **c_out) {
-    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, stores, flags, c_out));
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, stores, c_out));
     INA_TEST_ASSERT_SUCCEED(iarray_squeeze(ctx, *c_out));
 
     return INA_SUCCESS;
@@ -57,7 +56,8 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
     iarray_container_t *c_x;
     iarray_container_t *c_out;
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buffer_x, buffer_x_len * type_size, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buffer_x, buffer_x_len * type_size,
+                                               &xstore, &c_x));
 
     INA_TEST_ASSERT_SUCCEED(test_slice(ctx, c_x, start, stop, NULL, 0, &c_out));
 
@@ -177,6 +177,22 @@ INA_TEST_FIXTURE(view_block_iter, 4_d_v) {
                                                   start, stop, true, NULL));
 }
 
+INA_TEST_FIXTURE(view_block_iter, 3_f_v) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    int32_t type_size = sizeof(float);
+
+    const int8_t ndim = 3;
+    int64_t shape[] = {10, 10, 10};
+    int64_t cshape[] = {4, 5, 1};
+    int64_t bshape[] = {2, 3, 1};
+    int64_t start[] = {5, 4, 3};
+    int64_t stop[] = {8, 6, 5};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                  start, stop, false, NULL));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(view_block_iter, 7_f_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     int32_t type_size = sizeof(float);
@@ -191,6 +207,7 @@ INA_TEST_FIXTURE(view_block_iter, 7_f_v) {
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   start, stop, false, NULL));
 }
+*/
 
 INA_TEST_FIXTURE(view_block_iter, 3_ll_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
@@ -223,6 +240,22 @@ INA_TEST_FIXTURE(view_block_iter, 4_b_v) {
                                                   start, stop, true, NULL));
 }
 
+INA_TEST_FIXTURE(view_block_iter, 2_ull_v) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
+    int32_t type_size = sizeof(uint64_t);
+
+    const int8_t ndim = 2;
+    int64_t shape[] = {10, 10};
+    int64_t cshape[] = {4, 5};
+    int64_t bshape[] = {2, 3};
+    int64_t start[] = {5, 4};
+    int64_t stop[] = {8, 6};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                  start, stop, false, NULL));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(view_block_iter, 7_ull_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
     int32_t type_size = sizeof(uint64_t);
@@ -237,6 +270,7 @@ INA_TEST_FIXTURE(view_block_iter, 7_ull_v) {
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   start, stop, false, NULL));
 }
+*/
 
 INA_TEST_FIXTURE(view_block_iter, 3_i_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
@@ -269,6 +303,22 @@ INA_TEST_FIXTURE(view_block_iter, 4_us_v) {
                                                   start, stop, true, NULL));
 }
 
+INA_TEST_FIXTURE(view_block_iter, 2_ui_v) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
+    int32_t type_size = sizeof(uint32_t);
+
+    const int8_t ndim = 2;
+    int64_t shape[] = {10, 10};
+    int64_t cshape[] = {4, 5};
+    int64_t bshape[] = {2, 3};
+    int64_t start[] = {5, 4};
+    int64_t stop[] = {8, 6};
+
+    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                  start, stop, false, NULL));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(view_block_iter, 7_ui_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
     int32_t type_size = sizeof(uint32_t);
@@ -283,6 +333,7 @@ INA_TEST_FIXTURE(view_block_iter, 7_ui_v) {
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   start, stop, false, NULL));
 }
+*/
 
 INA_TEST_FIXTURE(view_block_iter, 2_uc_v) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;

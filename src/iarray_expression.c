@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -57,8 +56,7 @@ typedef struct iarray_eval_pparams_s {
 
 typedef int (*iarray_eval_fn)(iarray_eval_pparams_t *params);
 
-INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e)
-{
+INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_data_type_t data_type, iarray_expression_t **e) {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(e);
     *e = ina_mem_alloc(sizeof(iarray_expression_t));
@@ -68,9 +66,43 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_expression_t **e
     (*e)->expr = NULL;
     (*e)->nvars = 0;
     (*e)->max_out_len = 0;   // helper for leftovers
-    ina_mem_set(&(*e)->vars, 0, sizeof(_iarray_jug_var_t) * IARRAY_EXPR_OPERANDS_MAX);
     (*e)->nuser_params = 0;
-    jug_expression_new(&(*e)->jug_expr);
+    ina_mem_set(&(*e)->vars, 0, sizeof(_iarray_jug_var_t) * IARRAY_EXPR_OPERANDS_MAX);
+    // map dtype to JUG type
+    jug_expression_dtype_t dtype;
+    switch (data_type) {
+        case IARRAY_DATA_TYPE_BOOL:
+            // how to support?
+            dtype = JUG_EXPRESSION_DTYPE_SINT8;// is that accurate?
+            break;
+        case IARRAY_DATA_TYPE_DOUBLE:
+            dtype = JUG_EXPRESSION_DTYPE_DOUBLE;
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            dtype = JUG_EXPRESSION_DTYPE_FLOAT;
+            break;
+//      case IARRAY_DATA_TYPE_FLOAT16:
+//          // not supported yet
+//          return INA_ERR_INVALID_ARGUMENT;
+//      case IARRAY_DATA_TYPE_FLOAT8:
+//          // not supported yet
+//          return INA_ERR_INVALID_ARGUMENT;
+        case IARRAY_DATA_TYPE_INT8:
+            dtype = JUG_EXPRESSION_DTYPE_SINT8;
+            break;
+        case IARRAY_DATA_TYPE_INT16:
+            dtype = JUG_EXPRESSION_DTYPE_SINT16;
+            break;
+        case IARRAY_DATA_TYPE_INT32:
+            dtype = JUG_EXPRESSION_DTYPE_SINT32;
+            break;
+        case IARRAY_DATA_TYPE_INT64:
+            dtype = JUG_EXPRESSION_DTYPE_SINT64;
+            break;
+        default:
+            return INA_ERR_INVALID_ARGUMENT;
+    }
+    jug_expression_new(&(*e)->jug_expr, dtype);
     return INA_SUCCESS;
 }
 
@@ -130,20 +162,6 @@ INA_API(ina_rc_t) iarray_expr_bind_out_properties(iarray_expression_t *e, iarray
 }
 
 
-static void index_unidim_to_multidim(int8_t ndim, int64_t *shape, int64_t i, int64_t *index) {
-    int64_t strides[CATERVA_MAX_DIM];
-    strides[ndim - 1] = 1;
-    for (int j = ndim - 2; j >= 0; --j) {
-        strides[j] = shape[j + 1] * strides[j + 1];
-    }
-
-    index[0] = i / strides[0];
-    for (int j = 1; j < ndim; ++j) {
-        index[j] = (i % strides[j - 1]) / strides[j];
-    }
-}
-
-
 int caterva_blosc_array_repart_chunk(int8_t *rchunk, int64_t rchunksize, void *chunk,
                                      int64_t chunksize, caterva_array_t *array) {
     if (rchunksize != array->extchunknitems * array->itemsize) {
@@ -197,7 +215,7 @@ int caterva_blosc_array_repart_chunk(int8_t *rchunk, int64_t rchunksize, void *c
             ncopies *= actual_spsize[i];
         }
         for (int ncopy = 0; ncopy < ncopies; ++ncopy) {
-            index_unidim_to_multidim(CATERVA_MAX_DIM - 1, actual_spsize, ncopy, ii);
+            iarray_index_unidim_to_multidim_shape(CATERVA_MAX_DIM - 1, actual_spsize, ncopy, ii);
 
             int64_t d_a = d_spshape[7];
             int64_t d_coord_f = sci * array->blocknitems;
@@ -238,6 +256,23 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
             break;
         case IARRAY_DATA_TYPE_FLOAT:
             e->typesize = sizeof(float);
+            break;
+        case IARRAY_DATA_TYPE_BOOL:
+        case IARRAY_DATA_TYPE_INT8:
+        case IARRAY_DATA_TYPE_UINT8:
+            e->typesize = sizeof(int8_t);
+            break;
+        case IARRAY_DATA_TYPE_INT16:
+        case IARRAY_DATA_TYPE_UINT16:
+            e->typesize = sizeof(int16_t);
+            break;
+        case IARRAY_DATA_TYPE_INT32:
+        case IARRAY_DATA_TYPE_UINT32:
+            e->typesize = sizeof(int32_t);
+            break;
+        case IARRAY_DATA_TYPE_INT64:
+        case IARRAY_DATA_TYPE_UINT64:
+            e->typesize = sizeof(int64_t);
             break;
         default:
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
@@ -286,7 +321,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     }
 
     IARRAY_RETURN_IF_FAILED(jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars,
-                                                      jug_vars, e->typesize, &e->jug_expr_func));
+                                                   jug_vars, &e->jug_expr_func));
 
     return INA_SUCCESS;
 }
@@ -728,8 +763,8 @@ INA_API(ina_rc_t) iarray_eval(iarray_expression_t *e, iarray_container_t **conta
     INA_VERIFY_NOT_NULL(e);
     INA_VERIFY_NOT_NULL(container);
 
-    int flags = e->out_store_properties->urlpath ? IARRAY_CONTAINER_PERSIST : 0;
-    IARRAY_RETURN_IF_FAILED(iarray_empty(e->ctx, e->out_dtshape, e->out_store_properties, flags, container));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(e->ctx, e->out_dtshape, e->out_store_properties,
+                                         container));
     e->out = *container;
     iarray_container_t *ret = *container;
 

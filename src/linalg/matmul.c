@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -57,7 +56,7 @@ ina_rc_t iarray_linalg_matmul(iarray_context_t *ctx,
 
 
     // Create output array
-    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, storage, 0, c));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, storage, c));
 
     if (b->dtshape->ndim == 2) {
         IARRAY_RETURN_IF_FAILED(iarray_gemm(ctx, a, b, *c));

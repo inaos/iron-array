@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -53,13 +52,13 @@ static ina_rc_t test_copy_transpose(iarray_context_t *ctx, iarray_data_type_t dt
     blosc2_remove_urlpath(ystore.urlpath);
 
 
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, 0, &c_trans));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, step, &store, &c_trans));
 
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_trans, &c_x));
 
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_x, false, &ystore, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_x, false, &ystore, &c_y));
 
     // Assert iterator reading it
     double tol;
@@ -114,6 +113,21 @@ INA_TEST_FIXTURE(constructor_copy_transpose, 2_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 2;
+    int64_t shape[] = {50, 25};
+    int64_t cshape[] = {5, 10};
+    int64_t bshape[] = {5, 10};
+
+    double start = -5.3;
+    double stop = 1.1245;
+
+    INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, NULL, "arr2.iarr"));
+}
+
+/* Avoid heavy tests
+INA_TEST_FIXTURE(constructor_copy_transpose, 2_f) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+
+    int8_t ndim = 2;
     int64_t shape[] = {3450, 2500};
     int64_t cshape[] = {5, 1000};
     int64_t bshape[] = {5, 1000};
@@ -123,3 +137,4 @@ INA_TEST_FIXTURE(constructor_copy_transpose, 2_f) {
 
     INA_TEST_ASSERT_SUCCEED(test_copy_transpose(data->ctx, dtype, ndim, shape, cshape, bshape, start, stop, true, NULL, "arr2.iarr"));
 }
+*/

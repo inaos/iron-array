@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -55,7 +54,7 @@ int main(void)
     printf("\n");
 
     double val = 3.14;
-    IARRAY_FAIL_IF_ERROR(iarray_fill(ctx, &xdtshape, &val, &store, 0, &c_x));
+    IARRAY_FAIL_IF_ERROR(iarray_fill(ctx, &xdtshape, &val, &store, &c_x));
 
     // Create out container (empty)
     int8_t outndim = 3;
@@ -86,7 +85,7 @@ int main(void)
 
     // Slicing c_x into c_out
     printf("Slicing c_x into c_out container...\n");
-    IARRAY_FAIL_IF_ERROR(iarray_get_slice(ctx, c_x, start, stop, false, &store_out, 0, &c_out));
+    IARRAY_FAIL_IF_ERROR(iarray_get_slice(ctx, c_x, start, stop, false, &store_out, &c_out));
     iarray_dtshape_t out_dtshape;
     IARRAY_FAIL_IF_ERROR(iarray_get_dtshape(ctx, c_out, &out_dtshape));
 

@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -50,14 +49,14 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
 
     iarray_container_t *c_z;
     if (copy) {
-        INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, flags, &c_x));
+        INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, step, &store, &c_x));
         if (contiguous) {
             store.contiguous = true;
         }
         if (persistent) {
             store.urlpath = urlpath;
         }
-        INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_x, false, &store, 0, &c_z));
+        INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_x, false, &store, &c_z));
     } else {
         if (contiguous) {
             store.contiguous = true;
@@ -65,7 +64,7 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
         if (persistent) {
             store.urlpath = urlpath;
         }
-        INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, stop, step, &store, flags, &c_x));
+        INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, start, step, &store, &c_x));
         c_z = c_x;
     }
 

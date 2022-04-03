@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -38,7 +37,6 @@ inline static void fill_buf(iarray_data_type_t dtype, void *x, size_t nitems)
             break;
         }
         case IARRAY_DATA_TYPE_INT32: {
-            int32_t *aux = (int32_t *)x;
             for (size_t i = 0; i < nitems; i++) {
                 ((int32_t*)x)[i] = (int32_t) i;
             }

@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -39,7 +38,7 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
     }
 
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, &storage, 0, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, &dtshape, &storage, &c_x));
 
 
     iarray_iter_write_block_t *iter;
@@ -60,7 +59,7 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
     }
 
     iarray_container_t *c_y;
-    IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &storage, 0, &c_y));
+    IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, c_x, false, &storage, &c_y));
 
     iarray_storage_t dest_storage = {0};
     dest_storage.contiguous = dest_frame;
@@ -266,7 +265,26 @@ INA_TEST_FIXTURE(reduce, sum_4_d_0) {
 }
 
 
+INA_TEST_FIXTURE(reduce, sum_6_ull_4) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
 
+    int8_t ndim = 6;
+    int64_t shape[] = {8, 8, 7, 7, 6, 7};
+    int64_t cshape[] = {4, 5, 2, 5, 3, 4};
+    int64_t bshape[] = {2, 2, 2, 3, 2, 1};
+    int8_t axis = 4;
+
+    int64_t dest_cshape[] = {4, 5, 2, 5, 3};
+    int64_t dest_bshape[] = {2, 2, 2, 3, 2};
+    bool dest_frame = false;
+    char *dest_urlpath = NULL;
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_SUM, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+}
+
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(reduce, sum_8_ull_6) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
 
@@ -284,7 +302,7 @@ INA_TEST_FIXTURE(reduce, sum_8_ull_6) {
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_SUM, shape, cshape, bshape, axis,
                                         dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
-
+*/
 
 
 INA_TEST_FIXTURE(reduce, sum_2_ui_1) {
@@ -343,6 +361,25 @@ INA_TEST_FIXTURE(reduce, sum_4_us_0) {
 }
 
 
+INA_TEST_FIXTURE(reduce, sum_4_ll_2) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
+
+    int8_t ndim = 4;
+    int64_t shape[] = {8, 8, 7, 7};
+    int64_t cshape[] = {4, 5, 2, 5};
+    int64_t bshape[] = {2, 2, 2, 3};
+    int8_t axis = 2;
+
+    int64_t dest_cshape[] = {4, 5, 2};
+    int64_t dest_bshape[] = {2, 2, 2};
+    bool dest_frame = true;
+    char *dest_urlpath = "arr.iarr";
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_SUM, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+}
+
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(reduce, sum_8_ll_6) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
 
@@ -359,6 +396,7 @@ INA_TEST_FIXTURE(reduce, sum_8_ll_6) {
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_SUM, shape, cshape, bshape, axis,
                                         dest_cshape, dest_bshape, dest_frame, dest_urlpath));
 }
+*/
 
 
 INA_TEST_FIXTURE(reduce, sum_2_sc_0) {
@@ -521,8 +559,8 @@ INA_TEST_FIXTURE(reduce, min_3_f_1) {
     int64_t bshape[] = {3, 3, 3};
     int8_t axis = 1;
 
-    int64_t dest_cshape[] = {9};
-    int64_t dest_bshape[] = {3};
+    int64_t dest_cshape[] = {6, 6};
+    int64_t dest_bshape[] = {3, 3};
     bool dest_frame = false;
     char *dest_urlpath = "arr.iarr";
 

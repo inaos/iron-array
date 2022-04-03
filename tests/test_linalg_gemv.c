@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -41,7 +40,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     }
     blosc2_remove_urlpath(xstore.urlpath);
     iarray_container_t *c_x;
-    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &xdtshape, 0, 10, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &xdtshape, 0, 10, &xstore, &c_x));
 
     // iarray container x to buffer
     uint8_t *xbuffer = ina_mem_alloc(xsize * typesize);
@@ -66,7 +65,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
     }
     blosc2_remove_urlpath(ystore.urlpath);
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &ydtshape, 0, 10, &ystore, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &ydtshape, 0, 10, &ystore, &c_y));
 
     // iarray container y to buffer
     uint8_t *ybuffer = ina_mem_alloc(ysize * typesize);

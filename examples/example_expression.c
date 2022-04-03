@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2019.
- * Copyright Francesc Alted, 2019.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -98,13 +97,13 @@ int main(void) {
     iarray_container_t *c_y;
     iarray_container_t *c_z;
 
-    iarray_linspace(ctx, &dtshape, 0, 1, &xstorage, 0, &c_x);
-    iarray_linspace(ctx, &dtshape, 0, 1, &ystorage, 0, &c_y);
-    iarray_linspace(ctx, &dtshape, 0, 1, &zstorage, 0, &c_z);
+    iarray_linspace(ctx, &dtshape, 0, 1, &xstorage, &c_x);
+    iarray_linspace(ctx, &dtshape, 0, 1, &ystorage, &c_y);
+    iarray_linspace(ctx, &dtshape, 0, 1, &zstorage, &c_z);
 
 
     iarray_expression_t *e;
-    iarray_expr_new(ctx, &e);
+    iarray_expr_new(ctx, dtshape.dtype, &e);
     iarray_expr_bind(e, "x", c_x);
     iarray_expr_bind(e, "y", c_y);
     iarray_expr_bind(e, "z", c_z);

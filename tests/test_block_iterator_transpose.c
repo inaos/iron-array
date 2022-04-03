@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -56,7 +55,7 @@ static ina_rc_t test_block_iterator_transpose(iarray_context_t *ctx, iarray_data
     blosc2_remove_urlpath(xstorage.urlpath);
     blosc2_remove_urlpath(ystorage.urlpath);
 
-    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, &c_x));
 
     // Test write iterator
     iarray_iter_write_block_t *I;
@@ -85,7 +84,7 @@ static ina_rc_t test_block_iterator_transpose(iarray_context_t *ctx, iarray_data
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, &c_trans));
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_trans, false, &ystorage, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_trans, false, &ystorage, &c_y));
 
     // Test read iterator
     iarray_iter_read_block_t *I2;
@@ -195,22 +194,6 @@ INA_TEST_FIXTURE(block_iterator_transpose, d_2) {
 }
 
 
-/*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
- *
- * All rights reserved.
- *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
- * Information and shall use it only in accordance with the terms of the license agreement.
- *
- */
-
-#include <libiarray/iarray.h>
-#include <src/iarray_private.h>
-
-
 static ina_rc_t test_block_iterator_transpose_external(iarray_context_t *ctx,
                                                        iarray_data_type_t dtype,
                                                        int32_t type_size,
@@ -250,7 +233,7 @@ static ina_rc_t test_block_iterator_transpose_external(iarray_context_t *ctx,
     blosc2_remove_urlpath(xstorage.urlpath);
     blosc2_remove_urlpath(ystorage.urlpath);
 
-    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, &c_x));
 
     // Test write iterator
     iarray_iter_write_block_t *I;
@@ -277,7 +260,7 @@ static ina_rc_t test_block_iterator_transpose_external(iarray_context_t *ctx,
     INA_TEST_ASSERT_SUCCEED(iarray_linalg_transpose(ctx, c_x, &c_trans));
 
     iarray_container_t *c_y;
-    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_trans, false, &ystorage, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_copy(ctx, c_trans, false, &ystorage, &c_y));
 
     // Test read iterator
     iarray_iter_read_block_t *I2;

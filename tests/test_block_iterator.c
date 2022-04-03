@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -40,7 +39,7 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     iarray_container_t *c_x;
     blosc2_remove_urlpath(xstorage.urlpath);
 
-    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstorage, &c_x));
 
     // Test write iterator
     iarray_iter_write_block_t *I;
@@ -71,7 +70,9 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
         xstorage.urlpath = "yarr.iarr";
         blosc2_remove_urlpath(xstorage.urlpath);
     }
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->nitems * type_size, &xstorage, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf,
+                                               (size_t) c_x->catarr->nitems * type_size, &xstorage,
+                                               &c_y));
 
     // Test read iterator
     iarray_iter_read_block_t *I2;
@@ -217,6 +218,21 @@ INA_TEST_FIXTURE(block_iterator, 4_d) {
                                                 blockshape, true, NULL));
 }
 
+INA_TEST_FIXTURE(block_iterator, 3_ll) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
+    int32_t type_size = sizeof(int64_t);
+
+    int8_t ndim = 3;
+    int64_t shape[] = {10, 10, 6};
+    int64_t cshape[] = {2, 4, 2};
+    int64_t bshape[] = {1, 3, 2};
+    int64_t *blockshape = cshape;
+
+    INA_TEST_ASSERT_SUCCEED(test_block_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                blockshape, true, "arr.iarr"));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator, 7_ll) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
     int32_t type_size = sizeof(int64_t);
@@ -230,6 +246,7 @@ INA_TEST_FIXTURE(block_iterator, 7_ll) {
     INA_TEST_ASSERT_SUCCEED(test_block_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                 blockshape, true, "arr.iarr"));
 }
+*/
 
 INA_TEST_FIXTURE(block_iterator, 3_i) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
@@ -259,6 +276,21 @@ INA_TEST_FIXTURE(block_iterator, 4_s) {
                                                 blockshape, true, NULL));
 }
 
+INA_TEST_FIXTURE(block_iterator, 2_sc) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT8;
+    int32_t type_size = sizeof(int8_t);
+
+    int8_t ndim = 2;
+    int64_t shape[] = {10, 10};
+    int64_t cshape[] = {2, 4};
+    int64_t bshape[] = {1, 3};
+    int64_t *blockshape = cshape;
+
+    INA_TEST_ASSERT_SUCCEED(test_block_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                blockshape, true, "arr.iarr"));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator, 7_sc) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT8;
     int32_t type_size = sizeof(int8_t);
@@ -272,6 +304,7 @@ INA_TEST_FIXTURE(block_iterator, 7_sc) {
     INA_TEST_ASSERT_SUCCEED(test_block_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                 blockshape, true, "arr.iarr"));
 }
+*/
 
 INA_TEST_FIXTURE(block_iterator, 3_ull) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
@@ -301,6 +334,21 @@ INA_TEST_FIXTURE(block_iterator, 4_ui) {
                                                 blockshape, true, NULL));
 }
 
+INA_TEST_FIXTURE(block_iterator, 2_us) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT16;
+    int32_t type_size = sizeof(uint16_t);
+
+    int8_t ndim = 2;
+    int64_t shape[] = {13, 9};
+    int64_t cshape[] = {5, 4};
+    int64_t bshape[] = {4, 3};
+    int64_t *blockshape = cshape;
+
+    INA_TEST_ASSERT_SUCCEED(test_block_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                blockshape, true, "arr.iarr"));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator, 7_us) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT16;
     int32_t type_size = sizeof(uint16_t);
@@ -314,6 +362,7 @@ INA_TEST_FIXTURE(block_iterator, 7_us) {
     INA_TEST_ASSERT_SUCCEED(test_block_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                 blockshape, true, "arr.iarr"));
 }
+ */
 
 INA_TEST_FIXTURE(block_iterator, 3_uc) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;
@@ -369,7 +418,7 @@ static ina_rc_t test_block_iterator_ext_chunk(iarray_context_t *ctx, iarray_data
     iarray_container_t *c_x;
     blosc2_remove_urlpath(xstore.urlpath);
 
-    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_empty(ctx, &xdtshape, &xstore, &c_x));
 
     // Start Iterator
     iarray_iter_write_block_t *I;
@@ -413,7 +462,9 @@ static ina_rc_t test_block_iterator_ext_chunk(iarray_context_t *ctx, iarray_data
         xstore.urlpath = "yarr.iarr";
         blosc2_remove_urlpath(xstore.urlpath);
     }
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->nitems * type_size, &xstore, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf,
+                                               (size_t) c_x->catarr->nitems * type_size, &xstore,
+                                               &c_y));
 
     // Start Iterator
     iarray_iter_read_block_t *I2;
@@ -555,6 +606,21 @@ INA_TEST_FIXTURE(block_iterator_ext_chunk, 3_f) {
                                                          blockshape, true, NULL));
 }
 
+INA_TEST_FIXTURE(block_iterator_ext_chunk, 2_d) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+    int32_t type_size = sizeof(double);
+
+    int8_t ndim = 2;
+    int64_t shape[] = {50, 43};
+    int64_t cshape[] = {12, 21};
+    int64_t bshape[] = {5, 5};
+    int64_t *blockshape = cshape;
+
+    INA_TEST_ASSERT_SUCCEED(test_block_iterator_ext_chunk(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                          blockshape, false, "arr.iarr"));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator_ext_chunk, 4_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
     int32_t type_size = sizeof(double);
@@ -568,7 +634,23 @@ INA_TEST_FIXTURE(block_iterator_ext_chunk, 4_d) {
     INA_TEST_ASSERT_SUCCEED(test_block_iterator_ext_chunk(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                          blockshape, false, "arr.iarr"));
 }
+*/
 
+INA_TEST_FIXTURE(block_iterator_ext_chunk, 1_ll) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
+    int32_t type_size = sizeof(int64_t);
+
+    int8_t ndim = 1;
+    int64_t shape[] = {10};
+    int64_t cshape[] = {2};
+    int64_t bshape[] = {2};
+    int64_t *blockshape = cshape;
+
+    INA_TEST_ASSERT_SUCCEED(test_block_iterator_ext_chunk(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                          blockshape, false, NULL));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator_ext_chunk, 7_ll) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
     int32_t type_size = sizeof(int64_t);
@@ -582,6 +664,7 @@ INA_TEST_FIXTURE(block_iterator_ext_chunk, 7_ll) {
     INA_TEST_ASSERT_SUCCEED(test_block_iterator_ext_chunk(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                          blockshape, false, NULL));
 }
+*/
 
 INA_TEST_FIXTURE(block_iterator_ext_chunk, 3_i) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
@@ -597,6 +680,21 @@ INA_TEST_FIXTURE(block_iterator_ext_chunk, 3_i) {
                                                           blockshape, true, NULL));
 }
 
+INA_TEST_FIXTURE(block_iterator_ext_chunk, 3_s) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT16;
+    int32_t type_size = sizeof(int16_t);
+
+    int8_t ndim = 3;
+    int64_t shape[] = {64, 50, 43};
+    int64_t cshape[] = {8, 12, 21};
+    int64_t bshape[] = {5, 5, 5};
+    int64_t *blockshape = cshape;
+
+    INA_TEST_ASSERT_SUCCEED(test_block_iterator_ext_chunk(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                          blockshape, false, "arr.iarr"));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator_ext_chunk, 4_s) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT16;
     int32_t type_size = sizeof(int16_t);
@@ -610,6 +708,7 @@ INA_TEST_FIXTURE(block_iterator_ext_chunk, 4_s) {
     INA_TEST_ASSERT_SUCCEED(test_block_iterator_ext_chunk(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                           blockshape, false, "arr.iarr"));
 }
+*/
 
 INA_TEST_FIXTURE(block_iterator_ext_chunk, 7_sc) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT8;
@@ -639,6 +738,21 @@ INA_TEST_FIXTURE(block_iterator_ext_chunk, 3_b) {
                                                           blockshape, true, NULL));
 }
 
+INA_TEST_FIXTURE(block_iterator_ext_chunk, 2_ull) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
+    int32_t type_size = sizeof(uint64_t);
+
+    int8_t ndim = 2;
+    int64_t shape[] = {30, 64};
+    int64_t cshape[] = {11, 8};
+    int64_t bshape[] = {5, 5};
+    int64_t *blockshape = cshape;
+
+    INA_TEST_ASSERT_SUCCEED(test_block_iterator_ext_chunk(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                          blockshape, false, "arr.iarr"));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator_ext_chunk, 4_ull) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
     int32_t type_size = sizeof(uint64_t);
@@ -652,6 +766,7 @@ INA_TEST_FIXTURE(block_iterator_ext_chunk, 4_ull) {
     INA_TEST_ASSERT_SUCCEED(test_block_iterator_ext_chunk(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                           blockshape, false, "arr.iarr"));
 }
+*/
 
 INA_TEST_FIXTURE(block_iterator_ext_chunk, 7_ui) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
@@ -682,6 +797,21 @@ INA_TEST_FIXTURE(block_iterator_ext_chunk, 3_us) {
                                                           blockshape, true, NULL));
 }
 
+INA_TEST_FIXTURE(block_iterator_ext_chunk, 3_c) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;
+    int32_t type_size = sizeof(uint8_t);
+
+    int8_t ndim = 3;
+    int64_t shape[] = {30, 64, 43};
+    int64_t cshape[] = {11, 8, 21};
+    int64_t bshape[] = {5, 5, 5};
+    int64_t *blockshape = cshape;
+
+    INA_TEST_ASSERT_SUCCEED(test_block_iterator_ext_chunk(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+                                                          blockshape, false, "arr.iarr"));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(block_iterator_ext_chunk, 4_c) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;
     int32_t type_size = sizeof(uint8_t);
@@ -695,6 +825,7 @@ INA_TEST_FIXTURE(block_iterator_ext_chunk, 4_c) {
     INA_TEST_ASSERT_SUCCEED(test_block_iterator_ext_chunk(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                           blockshape, false, "arr.iarr"));
 }
+*/
 
 static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data_type_t dtype,
                                     int32_t type_size, int8_t ndim, const int64_t *shape,
@@ -721,7 +852,7 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
 
     iarray_container_t *c_x;
     blosc2_remove_urlpath(xstore.urlpath);
-    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, (double) size, 1, &xstore, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 0, 1, &xstore, &c_x));
 
     // Test write iterator
     iarray_iter_write_block_t *I;
@@ -752,7 +883,9 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
         xstore.urlpath = "yarr.iarr";
         blosc2_remove_urlpath(xstore.urlpath);
     }
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf, (size_t)c_x->catarr->nitems * type_size, &xstore, 0, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &xdtshape, buf,
+                                               (size_t) c_x->catarr->nitems * type_size, &xstore,
+                                               &c_y));
 
     // Test read iterator
     iarray_iter_read_block_t *I2;

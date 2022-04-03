@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -72,7 +71,8 @@ fexecute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, co
     ffill_y(buffer_x, buffer_y, nelem, func);
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(cfg, &ctx));
 
-    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void*)buffer_x, nelem * sizeof(float), &store, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_from_buffer(ctx, &dtshape, (void *) buffer_x,
+                                               nelem * sizeof(float), &store, &c_x));
 
     iarray_storage_t outstore;
     outstore.contiguous = contiguous;
@@ -85,7 +85,7 @@ fexecute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, co
         outstore.blockshape[i] = bshape[i];
     }
     blosc2_remove_urlpath(outstore.urlpath);
-    INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, &e));
+    INA_TEST_ASSERT_SUCCEED(iarray_expr_new(ctx, dtshape.dtype, &e));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind(e, "x", c_x));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind_out_properties(e, &dtshape, &outstore));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, expr_str));
@@ -201,6 +201,22 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
     data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
 
     int8_t ndim = 3;
+    int64_t shape[] = {10, 23, 21};
+    int64_t cshape[] = {5, 3, 17};
+    int64_t bshape[] = {3, 2, 7};
+
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape,
+                                                 data->func, data->expr_str, true, "arr.iarr"));
+}
+
+/* Avoid heavy tests
+INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr3;
+    data->expr_str = "asin(x) + (acos(x) - 1.35) - atan(x + .2)";
+
+    int8_t ndim = 3;
     int64_t shape[] = {100, 230, 121};
     int64_t cshape[] = {31, 32, 17};
     int64_t bshape[] = {7, 7, 7};
@@ -208,6 +224,7 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk)
     INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape,
                                                  data->func, data->expr_str, true, "arr.iarr"));
 }
+*/
 
 static float expr4(const float x)
 {
@@ -219,6 +236,26 @@ INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk_4)
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr4;
     data->expr_str = "exp(x) + (log(x) - 1.35) - log10(x + .2)";
+
+    int8_t ndim = 3;
+    int64_t shape[] = {100, 230, 121};
+    int64_t cshape[] = {31, 32, 17};
+    int64_t bshape[] = {7, 7, 7};
+
+    INA_TEST_ASSERT_SUCCEED(fexecute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape,
+                                                 data->func, data->expr_str, false, NULL));
+}
+
+static float expr5(const float x)
+{
+    return powf(2.71828, x) / x * logf(x);
+}
+
+INA_TEST_FIXTURE(expression_eval_float, iterblosc_superchunk_5)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr5;
+    data->expr_str = "2.71828**x / x * log(x)";
 
     int8_t ndim = 3;
     int64_t shape[] = {100, 230, 121};

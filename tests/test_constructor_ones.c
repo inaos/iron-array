@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -49,7 +48,7 @@ static ina_rc_t test_ones(iarray_context_t *ctx,
     iarray_container_t *c_x;
     blosc2_remove_urlpath(store.urlpath);
 
-    INA_TEST_ASSERT_SUCCEED(iarray_ones(ctx, &xdtshape, &store, 0, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_ones(ctx, &xdtshape, &store, &c_x));
 
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x, buf_dest, (size_t)buf_size * type_size));
 

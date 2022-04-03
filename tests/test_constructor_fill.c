@@ -1,11 +1,10 @@
 /*
- * Copyright INAOS GmbH, Thalwil, 2018.
- * Copyright Francesc Alted, 2018.
+ * Copyright ironArray SL 2021.
  *
  * All rights reserved.
  *
- * This software is the confidential and proprietary information of INAOS GmbH
- * and Francesc Alted ("Confidential Information"). You shall not disclose such Confidential
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
  * Information and shall use it only in accordance with the terms of the license agreement.
  *
  */
@@ -48,39 +47,40 @@ static ina_rc_t test_fill(iarray_context_t *ctx,
 
     iarray_container_t *c_x;
     blosc2_remove_urlpath(store.urlpath);
+
     switch (dtype) {
         case IARRAY_DATA_TYPE_DOUBLE:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (double *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (double *) value, &store,&c_x));
             break;
         case IARRAY_DATA_TYPE_FLOAT:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (float *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (float *) value, &store,&c_x));
             break;
         case IARRAY_DATA_TYPE_INT64:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int64_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int64_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_INT32:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int32_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int32_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_INT16:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int16_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int16_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_INT8:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int8_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (int8_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_UINT64:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint64_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint64_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_UINT32:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint32_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint32_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_UINT16:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint16_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint16_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_UINT8:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint8_t *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (uint8_t *) value, &store, &c_x));
             break;
         case IARRAY_DATA_TYPE_BOOL:
-            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (bool *) value, &store, 0, &c_x));
+            INA_TEST_ASSERT_SUCCEED(iarray_fill(ctx, &xdtshape, (bool *) value, &store, &c_x));
             break;
     }
 
@@ -205,6 +205,21 @@ INA_TEST_FIXTURE(constructor_fill, 2_d)
     INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &value, false, NULL));
 }
 
+INA_TEST_FIXTURE(constructor_fill, 3_f)
+{
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    size_t type_size = sizeof(float);
+
+    int8_t ndim = 3;
+    int64_t shape[] = {12, 11, 6};
+    int64_t cshape[] = {11, 3, 3};
+    int64_t bshape[] = {5, 2, 2};
+    float value = -116.f;
+
+    INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &value, true, "arr.iarr"));
+}
+
+/* Avoid heavy tests
 INA_TEST_FIXTURE(constructor_fill, 7_f)
 {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
@@ -218,6 +233,7 @@ INA_TEST_FIXTURE(constructor_fill, 7_f)
 
     INA_TEST_ASSERT_SUCCEED(test_fill(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, &value, true, "arr.iarr"));
 }
+*/
 
 
 INA_TEST_FIXTURE(constructor_fill, 2_ll)
