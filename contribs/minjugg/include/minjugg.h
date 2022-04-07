@@ -17,6 +17,8 @@
 
 typedef struct jug_context_s jug_context_t;
 typedef struct jug_udf_s jug_udf_t;
+typedef struct jug_udf_registry_s jug_udf_registry_t;
+typedef struct jug_udf_library_s jug_udf_library_t;
 
 typedef enum jug_expression_dtype_e {
     JUG_EXPRESSION_DTYPE_DOUBLE = 1,
@@ -36,14 +38,35 @@ INA_API(void) jug_destroy(void);
 
 INA_API(ina_rc_t) jug_expression_new(jug_expression_t **expr, jug_expression_dtype_t dtype);
 INA_API(void) jug_expression_free(jug_expression_t **expr);
+
+INA_API(ina_rc_t) jug_expression_operands_parse(jug_expression_t *e, 
+                                                const char *expr, 
+                                                int *num_operands, 
+                                                ina_str_t *operands);
+INA_API(void) jug_exression_operands_free(jug_expression_t *e, ina_str_t *operands);
+    
 INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
-    const char *expr, int num_vars, void *vars, uint64_t *function_addr);
+                                         const char *expr, 
+                                         int num_vars, 
+                                         void *vars, 
+                                         uint64_t *function_addr);
 
 INA_API(ina_rc_t) jug_udf_compile(jug_expression_t *e,
                                   int llvm_bc_len,
                                   const char *llvm_bc,
                                   const char *name,
                                   uint64_t *function_addr);
+
+INA_API(ina_rc_t) jug_udf_registry_new(jug_udf_registry_t **udf_registry);
+INA_API(void) jug_udf_registry_free(jug_udf_registry_t **udf_registry);
+
+INA_API(ina_rc_t) jug_udf_library_new(jug_udf_registry_t *registry, const char *name, jug_udf_library_t **udf_lib);
+INA_API(void) jug_udf_library_free(jug_udf_registry_t *registry, jug_udf_library_t **jug_lib);
+
+INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
+                                          const char *name,
+                                          int llvm_bc_len,
+                                          const char *llvm_bc);
 
 /* FIXME the below declarations actually do not belong here */
 typedef enum te_expr_type_e {

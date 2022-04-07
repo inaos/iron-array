@@ -31,6 +31,23 @@
 /* This is required to make sure Intel SVML is being linked and loaded properly */
 extern double *__svml_sin2(double *input);
 
+struct jug_udf_registry_s {
+    ina_hashtable_t *libs;
+};
+
+struct jug_udf_library_s {
+    ina_str_t name;
+    ina_hashtable_t *funcs;
+};
+
+typedef struct _jug_udf_function_s {
+    LLVMContextRef context;
+    LLVMModuleRef mod;
+    LLVMExecutionEngineRef engine;
+    ina_str_t name;
+    uint64_t function_ptr;
+} _jug_udf_function_t;
+
 struct jug_expression_s {
     LLVMContextRef context;
     LLVMModuleRef mod;
@@ -596,7 +613,7 @@ static LLVMValueRef _jug_expr_compile_function(
     return f;
 }
 
-static void _jug_apply_optimisation_passes(jug_expression_t *e)
+static void _jug_apply_optimisation_passes(LLVMModuleRef mod)
 {
     LLVMPassManagerBuilderRef pmb = LLVMPassManagerBuilderCreate();
     jug_utils_enable_loop_vectorize(pmb);
@@ -611,7 +628,7 @@ static void _jug_apply_optimisation_passes(jug_expression_t *e)
     LLVMAddSLPVectorizePass(pm);
 
     // Run
-    LLVMRunPassManager(pm, e->mod);
+    LLVMRunPassManager(pm, mod);
 
     // Dispose
     LLVMDisposePassManager(pm);
@@ -632,33 +649,35 @@ static void _jug_declare_printf(LLVMModuleRef mod)
  * Code common to jug_expression_compile and jug_udf_compile functions:
  * verifies module, optimizes, creates execution engine
  */
-static LLVMBool _jug_prepare_module(jug_expression_t *e, bool reload)
-{
+static LLVMBool _jug_prepare_module(LLVMModuleRef mod,
+                                    LLVMContextRef context,
+                                    bool reload,
+                                    LLVMExecutionEngineRef *engine) {
     LLVMBool error;
     char *message = NULL;
 
     // Verify the module
-    error = LLVMVerifyModule(e->mod, LLVMAbortProcessAction, &message);
+    error = LLVMVerifyModule(mod, LLVMAbortProcessAction, &message);
     if (error)
     {
         fprintf(stderr, "LLVM module verification error: '%s'\n", message);
         goto exit;
     }
 
-    LLVMSetModuleDataLayout(e->mod, _jug_data_ref);
-    LLVMSetTarget(e->mod, _jug_def_triple);
+    LLVMSetModuleDataLayout(mod, _jug_data_ref);
+    LLVMSetTarget(mod, _jug_def_triple);
 
     // Debug: write bitcode before otimization
 #ifdef _JUG_DEBUG_WRITE_BC_TO_FILE
-    if (LLVMWriteBitcodeToFile(e->mod, "expression.bc") != 0) {
+    if (LLVMWriteBitcodeToFile(mod, "expression.bc") != 0) {
         fprintf(stderr, "error writing bitcode to file, skipping\n");
     }
 #endif
 
     // Workaround
     if (reload) {
-        LLVMMemoryBufferRef buffer = LLVMWriteBitcodeToMemoryBuffer(e->mod);
-        error = LLVMParseIRInContext(e->context, buffer, &e->mod, &message);
+        LLVMMemoryBufferRef buffer = LLVMWriteBitcodeToMemoryBuffer(mod);
+        error = LLVMParseIRInContext(context, buffer, &mod, &message);
         if (error) {
             fprintf(stderr, "LLVM module parse error: '%s'\n", message);
             goto exit;
@@ -666,15 +685,15 @@ static LLVMBool _jug_prepare_module(jug_expression_t *e, bool reload)
     }
 
     // Optimze
-    _jug_apply_optimisation_passes(e);
+    _jug_apply_optimisation_passes(mod);
 #ifdef _JUG_DEBUG_WRITE_BC_TO_FILE
-    if (LLVMWriteBitcodeToFile(e->mod, "expression_opt.bc") != 0) {
+    if (LLVMWriteBitcodeToFile(mod, "expression_opt.bc") != 0) {
         fprintf(stderr, "error writing bitcode to file, skipping\n");
     }
 #endif
 
     // Create execution engine
-    error = jug_utils_create_execution_engine(e->mod, &e->engine);
+    error = jug_utils_create_execution_engine(mod, &engine);
     //error = LLVMCreateExecutionEngineForModule(&e->engine, e->mod, &message);
     if (error) {
         fprintf(stderr, "LLVM execution engine creation error: '%s'\n", message);
@@ -747,11 +766,12 @@ INA_API(ina_rc_t) jug_expression_new(jug_expression_t **expr, jug_expression_dty
     (*expr)->dtype = dtype;
     (*expr)->mod = LLVMModuleCreateWithName("expr_engine");
     m = (*expr)->mod;
-    INA_UNUSED(m);
     _jug_register_functions(*expr);
 
 #ifdef _JUG_DEBUG_DECLARE_PRINT_IN_IR
     _jug_declare_printf(m);
+#else
+    INA_UNUSED(m);
 #endif
 
     return INA_SUCCESS;
@@ -778,13 +798,97 @@ INA_API(void) jug_expression_free(jug_expression_t **expr)
     INA_MEM_FREE_SAFE(*expr);
 }
 
-INA_API(ina_rc_t) jug_udf_compile(
-    jug_expression_t *e,
-    int llvm_bc_len,
-    const char *llvm_bc,
-    const char *name,
-    uint64_t *function_addr)
+INA_API(ina_rc_t) jug_expression_operands_parse(jug_expression_t *e,
+                              const char *expr,
+                              int *num_operands,
+                              ina_str_t *operands)
 {
+    // regex to match all letters and words 
+    // regex? any simple C code
+    //
+    // check all the words for known key-words (built-in functions and registered udf's)
+    // .. -> everything that is not a key-word is an operand
+    // 
+    // build ina_str_t array 
+    // 
+    *num_operands = 0;
+    *operands = NULL;
+    return INA_SUCCESS;
+}
+
+INA_API(void) jug_exression_operands_free(jug_expression_t *e, ina_str_t *operands)
+{
+    INA_UNUSED(e);
+    *operands = NULL;
+}
+
+INA_API(ina_rc_t) jug_udf_registry_new(jug_udf_registry_t **udf_registry) 
+{
+    *udf_registry = (jug_udf_registry_t*)ina_mem_alloc(sizeof(jug_udf_registry_t));
+    ina_mem_set(*udf_registry, 0, sizeof(jug_udf_registry_t));
+
+    INA_FAIL_IF_ERROR(ina_hashtable_new(INA_HASHTABLE_STR_KEY,
+                      INA_HASH32_LOOKUP3,
+                      INA_HASHTABLE_TYPE_DEFAULT,
+                      INA_HASHTABLE_GROW_DEFAULT,
+                      INA_HASHTABLE_SHRINK_DEFAULT,
+                      INA_HASHTABLE_DEFAULT_CAPACITY,
+                      INA_HASHTABLE_CF_DEFAULT, &(*udf_registry)->libs));
+
+    return INA_SUCCESS;
+
+fail:
+    jug_udf_registry_free(udf_registry);
+    return ina_err_get_rc();
+}
+
+INA_API(void) jug_udf_registry_free(jug_udf_registry_t **udf_registry)
+{
+    INA_VERIFY_FREE(udf_registry);
+    ina_hashtable_free(&(*udf_registry)->libs);
+    INA_MEM_FREE_SAFE(*udf_registry);
+}
+
+INA_API(ina_rc_t) jug_udf_library_new(jug_udf_registry_t *registry, 
+                                      const char *name, 
+                                      jug_udf_library_t **udf_lib)
+{
+    *udf_lib = (jug_udf_library_t *) ina_mem_alloc(sizeof(jug_udf_registry_t));
+    (*udf_lib)->name = ina_str_new_fromcstr(name);
+    
+    INA_FAIL_IF_ERROR(ina_hashtable_new(INA_HASHTABLE_STR_KEY,
+                                        INA_HASH32_LOOKUP3,
+                                        INA_HASHTABLE_TYPE_DEFAULT,
+                                        INA_HASHTABLE_GROW_DEFAULT,
+                                        INA_HASHTABLE_SHRINK_DEFAULT,
+                                        INA_HASHTABLE_DEFAULT_CAPACITY,
+                                        INA_HASHTABLE_CF_DEFAULT, &(*udf_lib)->funcs));
+
+    ina_hashtable_set_str(registry->libs, name, *udf_lib);
+
+    return INA_SUCCESS;
+
+fail:
+    jug_udf_library_free(registry, udf_lib);
+    return ina_err_get_rc();
+}
+
+INA_API(void) jug_udf_library_free(jug_udf_registry_t *registry, jug_udf_library_t **jug_lib)
+{
+    INA_VERIFY_FREE(jug_lib);
+    ina_hashtable_remove_str(registry->libs, (*jug_lib)->name, jug_lib);
+    ina_str_free((*jug_lib)->name);
+    ina_hashtable_free(&(*jug_lib)->funcs);
+    INA_MEM_FREE_SAFE(*jug_lib);
+}
+
+static ina_rc_t _jug_udf_compile(LLVMModuleRef *mod,
+                                 LLVMExecutionEngineRef *engine,
+                                 int llvm_bc_len,
+                                 const char *llvm_bc,
+                                 const char *name,
+                                 LLVMContextRef *context,
+                                 uint64_t *function_addr) {
     char *message = NULL;
     LLVMMemoryBufferRef buffer;
     LLVMBool error;
@@ -794,8 +898,8 @@ INA_API(ina_rc_t) jug_udf_compile(
     buffer = LLVMCreateMemoryBufferWithMemoryRange(llvm_bc, llvm_bc_len, "udf", 0);
 
     // now create our module
-    e->context = LLVMContextCreate();
-    error = LLVMParseIRInContext(e->context, buffer, &e->mod, &message);
+    *context = LLVMContextCreate();
+    error = LLVMParseIRInContext(*context, buffer, mod, &message);
     if (error) {
 #ifdef _JUG_DEBUG_WRITE_ERROR_TO_STDERR
         fprintf(stderr, "Invalid IR detected! message: '%s'\n", message);
@@ -804,12 +908,12 @@ INA_API(ina_rc_t) jug_udf_compile(
         goto exit;
     }
 
-    if (_jug_prepare_module(e, false)) {
+    if (_jug_prepare_module(*mod, *context, false, engine)) {
         rc = INA_ERR_FAILED;
         goto exit;
     }
 
-    *function_addr = LLVMGetFunctionAddress(e->engine, name);
+    *function_addr = LLVMGetFunctionAddress(*engine, name);
 
 exit:
     LLVMDisposeMessage(message);
@@ -818,12 +922,41 @@ exit:
     return rc;
 }
 
-INA_API(ina_rc_t) jug_expression_compile(
-    jug_expression_t *e,
-    const char *expr_str,
-    int num_vars,
-    void *vars,
-    uint64_t *function_addr)
+INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
+                                          const char *name,
+                                          int llvm_bc_len,
+                                          const char *llvm_bc) 
+{
+    _jug_udf_function_t *udf_fun = (_jug_udf_function_t *) ina_mem_alloc(sizeof(_jug_udf_function_t));
+    ina_str_t fun_name = ina_str_sprintf("%s.%s", ina_str_cstr(lib->name), name);
+
+    udf_fun->mod = LLVMModuleCreateWithName(ina_str_cstr(fun_name));
+
+    if (INA_FAILED(_jug_udf_compile(&udf_fun->mod, &udf_fun->engine, llvm_bc_len, llvm_bc, ina_str_cstr(name), &udf_fun->context, &udf_fun->function_ptr))) {
+        return ina_err_get_rc();
+    }
+
+    INA_MUST_SUCCEED(ina_hashtable_set_str(lib->funcs, ina_str_cstr(name), udf_fun));
+
+    ina_str_free(fun_name);
+
+    return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) jug_udf_compile(jug_expression_t *e,
+                                  int llvm_bc_len,
+                                  const char *llvm_bc,
+                                  const char *name,
+                                  uint64_t *function_addr)
+{
+    return _jug_udf_compile(&e->mod, &e->engine, llvm_bc_len, llvm_bc, name, &e->context, function_addr);
+}
+
+INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
+                                         const char *expr_str,
+                                         int num_vars,
+                                         void *vars,
+                                         uint64_t *function_addr)
 {
     int parse_error = 0;
 
@@ -836,7 +969,7 @@ INA_API(ina_rc_t) jug_expression_compile(
     _jug_expr_compile_function(e, "expr_func", expression, num_vars, te_vars);
     jug_te_free(expression);
 
-    if (_jug_prepare_module(e, true)) {
+    if (_jug_prepare_module(e->mod, e->context, true, &e->engine)) {
         IARRAY_TRACE1(iarray.error, "Error preparing LLVM module");
         return INA_ERROR(INA_ERR_FAILED);
     }
