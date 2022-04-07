@@ -331,6 +331,9 @@ typedef struct iarray_expression_s {
     unsigned int nuser_params;
 } iarray_expression_t;
 
+typedef struct iarray_udf_registry_s iarray_udf_registry_t;
+typedef struct iarray_udf_library_s iarray_udf_library_t;
+
 INA_API(ina_rc_t) iarray_init(void);
 INA_API(void) iarray_destroy(void);
 
@@ -813,7 +816,7 @@ INA_API(ina_rc_t) iarray_opt_gemm_a(iarray_context_t *ctx,
                                     iarray_storage_t *storage,
                                     iarray_container_t **c);
 
-/* UDF (User defined functions) registry */
+/* UDF (User defined functions) registry and library functionality */
 
 INA_API(ina_rc_t) iarray_udf_registry_new(iarray_context_t *ctx,
                                           iarray_udf_registry_t **udf_registry);
@@ -821,14 +824,9 @@ INA_API(ina_rc_t) iarray_udf_registry_new(iarray_context_t *ctx,
 INA_API(void) iarray_udf_registry_free(iarray_context_t *ctx,
                                        iarray_udf_registry_t **udf_registry);
 
-INA_API(ina_rc_t) iarray_udf_library_new(registry, name);
-INA_API(ina_rc_t) iarray_udf_library_free(registry);
+INA_API(ina_rc_t) iarray_udf_library_new(iarray_udf_registry_t *registry, const char *name, iarray_udf_library_t **lib);
+INA_API(void) iarray_udf_library_free(iarray_udf_registry_t *registry, iarray_udf_library_t **lib);
 
-INA_API(ina_rc_t) iarray_udf_library_compile(same as udf compile, plus a function name);
-
-// Can we create multiple modules? if module is the right abstraction, can we keep adding functions without sealing at the end, before using
-// need to test and investigate
-
-
+INA_API(ina_rc_t) iarray_udf_library_compile(iarray_udf_library_t *lib, int llvm_bc_len, const char *llvm_bc, const char *name);
 
 #endif

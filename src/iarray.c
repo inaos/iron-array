@@ -21,10 +21,17 @@
 #include <sched.h>
 #endif
 
+struct iarray_udf_registry_s {
+    jug_udf_registry_t *registry;
+};
+
+struct iarray_udf_library_s {
+    jug_udf_library_t *lib;
+};
+
 static int _ina_inited = 0;
 static int _blosc_inited = 0;
 static int _jug_inited = 0;
-
 
 static const char* __get_err_getsubject(int id) {
     switch (id) {
@@ -579,4 +586,51 @@ ina_rc_t iarray_set_dtype_size(iarray_dtshape_t *dtshape)
             return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
     }
     return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_udf_registry_new(iarray_context_t *ctx,
+                                          iarray_udf_registry_t **udf_registry)
+{
+    *udf_registry = (iarray_udf_registry_t*)ina_mem_alloc(sizeof(iarray_udf_registry_t));
+    if (INA_FAILED(jug_udf_registry_new(&(*udf_registry)->registry))) {
+        return ina_err_get_rc();
+    }
+    ctx->udf_registry = *udf_registry;
+    return INA_SUCCESS;
+}
+
+INA_API(void) iarray_udf_registry_free(iarray_context_t *ctx,
+                                       iarray_udf_registry_t **udf_registry)
+{
+    INA_VERIFY_FREE(udf_registry);
+    jug_udf_registry_free(&(*udf_registry)->registry);
+    INA_MEM_FREE(*udf_registry);
+    ctx->udf_registry = NULL;
+}
+
+INA_API(ina_rc_t)iarray_udf_library_new(iarray_udf_registry_t *registry,
+                                        const char *name,
+                                        iarray_udf_library_t **lib)
+{
+    *lib = (iarray_udf_library_t *) ina_mem_alloc(sizeof(iarray_udf_library_t));
+    if (INA_FAILED(jug_udf_library_new(registry->registry, name, &(*lib)->lib))) {
+        return ina_err_get_rc();
+    }
+    return INA_SUCCESS;
+}
+
+INA_API(void) iarray_udf_library_free(iarray_udf_registry_t *registry, iarray_udf_library_t **lib)
+{
+    INA_VERIFY_FREE(lib);
+    jug_udf_library_free(registry->registry, &(*lib)->lib);
+    INA_MEM_FREE(*lib);
+    registry->registry = NULL;
+}
+
+INA_API(ina_rc_t) iarray_udf_library_compile(iarray_udf_library_t *lib,
+                                             int llvm_bc_len,
+                                             const char *llvm_bc,
+                                             const char *name)
+{
+    return jug_udf_library_compile(lib->lib, name, llvm_bc_len, llvm_bc);
 }
