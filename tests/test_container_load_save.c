@@ -37,7 +37,6 @@ test_load_save(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, con
     double step = (stop - start) / (double) size;
     iarray_container_t *c_x;
 
-    int flags = 0;
     iarray_storage_t store;
     store.urlpath = NULL;
     store.contiguous = contiguous;
