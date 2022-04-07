@@ -88,7 +88,7 @@ int main(void) {
     IARRAY_RETURN_IF_FAILED(iarray_container_info(c_x, &c_nbytes, &c_cbytes));
     printf("** input:\n");
     printf("-   compression level: %d\n", cfg.compression_level);
-    printf("-   nbytes: %lld\n", c_nbytes);
+    printf("-   nbytes: %lld\n", (long long)c_nbytes);
     printf("-   Ratio: %8.2f x\n", (double) c_nbytes / (double)c_cbytes);
     printf("Time for generating input: %.3g s, %.1f MB/s\n",
            elapsed_sec, (double)nbytes / (elapsed_sec * (1u << 20u)));
@@ -111,7 +111,7 @@ int main(void) {
 
     printf("** output:\n");
     IARRAY_RETURN_IF_FAILED(iarray_container_info(c_out, &c_nbytes, &c_cbytes));
-    printf("-   nbytes: %lld x\n", c_nbytes);
+    printf("-   nbytes: %lld x\n", (long long)c_nbytes);
     printf("-   Ratio: %8.2f x\n", (double) c_nbytes / (double)c_cbytes);
 
     printf("Time for eval expression: %.3g s, %.1f MB/s\n",

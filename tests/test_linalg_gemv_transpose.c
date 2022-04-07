@@ -140,7 +140,7 @@ static ina_rc_t test_gemv(iarray_context_t *ctx, iarray_data_type_t dtype, int t
             case IARRAY_DATA_TYPE_FLOAT:
                 res = (((float *) zbuffer)[i] - ((float *) obuffer)[i]) / ((float *) zbuffer)[i];
                 if (fabs(res) > 1e-5) {
-                    printf("%lld: %f - %f", i, ((float *) zbuffer)[i], ((float *) obuffer)[i]);
+                    printf("%lld: %f - %f", (long long)i, ((float *) zbuffer)[i], ((float *) obuffer)[i]);
                     return INA_ERROR(INA_ERR_INVALID_PATTERN);
                 }
                 break;

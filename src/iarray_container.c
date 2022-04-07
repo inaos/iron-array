@@ -1056,7 +1056,7 @@ INA_API(ina_rc_t) iarray_container_equal(iarray_container_t *a, iarray_container
                 for (int64_t i = 0; i < val_a.block_size; ++i) {
                     int64_t diff = ((int64_t *)val_a.block_pointer)[i] - ((int64_t *)val_b.block_pointer)[i];
                     if (diff != 0) {
-                        printf("%lld, %lld (diff: %lld)\n", ((int64_t *)val_a.block_pointer)[i], ((int64_t *)val_b.block_pointer)[i], diff);
+                        printf("%lld, %lld (diff: %lld)\n", ((long long *)val_a.block_pointer)[i], ((long long *)val_b.block_pointer)[i], diff);
                         IARRAY_TRACE1(iarray.error, "Values are different");
                         return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
                     }
@@ -1096,7 +1096,7 @@ INA_API(ina_rc_t) iarray_container_equal(iarray_container_t *a, iarray_container
                 for (int64_t i = 0; i < val_a.block_size; ++i) {
                     uint64_t diff = ((uint64_t *)val_a.block_pointer)[i] - ((uint64_t *)val_b.block_pointer)[i];
                     if (diff != 0) {
-                        printf("%llu, %llu (diff: %lld)\n", ((uint64_t *)val_a.block_pointer)[i], ((uint64_t *)val_b.block_pointer)[i], diff);
+                        printf("%llu, %llu (diff: %llu)\n", ((unsigned long long *)val_a.block_pointer)[i], ((unsigned long long *)val_b.block_pointer)[i], (unsigned long long)diff);
                         IARRAY_TRACE1(iarray.error, "Values are different");
                         return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
                     }
