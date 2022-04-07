@@ -26,6 +26,7 @@ find_path(MKL_ROOT_DIR
         $ENV{MKLROOT}
         "C:/IntelSWTools/compilers_and_libraries/windows/mkl/"
         "C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl"
+		"C:/Intel/oneAPI/mkl/latest"
         $ENV{CONDA_PREFIX}  # conda environments are accessible here (including base)
 	$ENV{CONDA}  # search for conda libs in Azure pipelines
 	$ENV{CONDA}/Library  # same, but for Win
