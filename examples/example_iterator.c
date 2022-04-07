@@ -52,7 +52,7 @@ int main(void)
     while (INA_SUCCEED(iarray_iter_write_has_next(iter_w))) {
         IARRAY_FAIL_IF_ERROR(iarray_iter_write_next(iter_w));
         ((double *) val_w.elem_pointer)[0] = (double) val_w.elem_flat_index;
-        printf("%.lld - ", val_w.elem_flat_index);
+        printf("%.lld - ", (long long)val_w.elem_flat_index);
     }
     printf("\n");
     iarray_iter_write_free(&iter_w);
