@@ -242,6 +242,7 @@ INA_TEST_SETUP(btune_favor)
 
 INA_TEST_TEARDOWN(btune_favor)
 {
+    INA_UNUSED(data);
     iarray_destroy();
 }
 

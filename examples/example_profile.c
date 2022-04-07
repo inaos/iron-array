@@ -62,7 +62,7 @@ int main(void) {
 
     iarray_container_t *c_x;
     INA_STOPWATCH_START(w);
-    // INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 1, 2, &xstore, &c_x));
+    INA_TEST_ASSERT_SUCCEED(iarray_arange(ctx, &xdtshape, 1, 2, &xstore, &c_x));
     // INA_TEST_ASSERT_SUCCEED(iarray_random_uniform(ctx, &xdtshape, rnd_ctx, &xstore, 0, &c_x));
 
     INA_STOPWATCH_STOP(w);
@@ -71,7 +71,7 @@ int main(void) {
 
     iarray_container_t *c_y;
     INA_STOPWATCH_START(w);
-    // INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &xdtshape, 1, 2, &xstore, &c_y));
+    INA_TEST_ASSERT_SUCCEED(iarray_linspace(ctx, &xdtshape, 1, 2, &xstore, &c_y));
     // INA_TEST_ASSERT_SUCCEED(iarray_random_uniform(ctx, &xdtshape, rnd_ctx, &xstore, &c_y));
     INA_STOPWATCH_STOP(w);
     IARRAY_RETURN_IF_FAILED(ina_stopwatch_duration(w, &elapsed_sec));
