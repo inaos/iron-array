@@ -1042,7 +1042,6 @@ void iabtune_update(blosc2_context * context, double ctime) {
   btune_struct * btune = (btune_struct*)(context->btune);
   if (btune->state != STOP) {
     btune->steps_count++;
-    // blosc_timestamp_t last, current;
     cparams_btune * cparams = btune->aux_cparams;
 
     // We come from blosc_compress_context(), so we can populate metrics now
