@@ -660,7 +660,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_chunkshape, &out_value, true));
 
     // Evaluate the expression for all the chunks in variables
-    int32_t nchunk = 0;
+    int64_t nchunk = 0;
     while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_out))) {
         // The external buffer is needed *inside* the write iterator because
         // this will end as a (realloc'ed) compressed chunk of a final container
