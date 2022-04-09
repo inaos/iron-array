@@ -40,13 +40,13 @@ struct jug_udf_library_s {
     ina_hashtable_t *funcs;
 };
 
-typedef struct _jug_udf_function_s {
+struct jug_udf_function_s {
     LLVMContextRef context;
     LLVMModuleRef mod;
     LLVMExecutionEngineRef engine;
     ina_str_t name;
     uint64_t function_ptr;
-} _jug_udf_function_t;
+};
 
 struct jug_expression_s {
     LLVMContextRef context;
@@ -366,6 +366,10 @@ static LLVMValueRef _jug_expr_compile_expression(jug_expression_t *e, jug_te_exp
             LLVMValueRef param;
             ina_hashtable_get_str(params, n->bound, (void**)&param);
             return param;
+        }
+        case TE_CUSTOM: {
+            // invoke UDF function
+
         }
         case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:
         case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:
@@ -930,7 +934,7 @@ INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
                                           int llvm_bc_len,
                                           const char *llvm_bc) 
 {
-    _jug_udf_function_t *udf_fun = (_jug_udf_function_t *) ina_mem_alloc(sizeof(_jug_udf_function_t));
+    jug_udf_function_t *udf_fun = (jug_udf_function_t *) ina_mem_alloc(sizeof(jug_udf_function_t));
     ina_str_t fun_name = ina_str_sprintf("%s.%s", ina_str_cstr(lib->name), name);
 
     udf_fun->mod = LLVMModuleCreateWithName(ina_str_cstr(fun_name));
@@ -946,6 +950,41 @@ INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
     return INA_SUCCESS;
 }
 
+INA_API(ina_rc_t) jug_udf_library_lookup_function(jug_udf_registry_t *registry, 
+                                                  const char *name, 
+                                                  jug_udf_function_t **function) 
+{
+    size_t part_cnt = 0;
+    ina_str_t *parts = ina_str_split(name, ".", &part_cnt);
+
+    if (part_cnt != 2) {
+        ina_str_split_free_tokens(parts);
+        return INA_ERR_INVALID_ARGUMENT;
+    }
+
+    jug_udf_library_t *library = NULL;
+    ina_hashtable_get_str(registry->libs, ina_str_cstr(parts[0]), &library);
+    if (library == NULL) {
+        *function = NULL;
+        ina_str_split_free_tokens(parts);
+        return INA_ERR_INVALID_ARGUMENT;
+    }
+
+    jug_udf_function_t *func;
+    ina_hashtable_get_str(library->funcs, ina_str_cstr(parts[1]), &func);
+    if (func == NULL) {
+        *function = NULL;
+        ina_str_split_free_tokens(parts);
+        return INA_ERR_INVALID_ARGUMENT;
+    }
+
+    *function = func;
+
+    ina_str_split_free_tokens(parts);
+
+    return INA_SUCCESS;
+}
+
 INA_API(ina_rc_t) jug_udf_compile(jug_expression_t *e,
                                   int llvm_bc_len,
                                   const char *llvm_bc,
@@ -956,6 +995,7 @@ INA_API(ina_rc_t) jug_udf_compile(jug_expression_t *e,
 }
 
 INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
+                                         jug_udf_registry_t *r,
                                          const char *expr_str,
                                          int num_vars,
                                          void *vars,
@@ -964,7 +1004,7 @@ INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
     int parse_error = 0;
 
     jug_te_variable *te_vars = (jug_te_variable*)vars;
-    jug_te_expr *expression = jug_te_compile(expr_str, te_vars, num_vars, &parse_error);
+    jug_te_expr *expression = jug_te_compile(r, expr_str, te_vars, num_vars, &parse_error);
     if (parse_error) {
         IARRAY_TRACE1(iarray.error, "Error parsing the expression with juggernaut");
         IARRAY_RETURN_IF_FAILED(INA_ERR_INVALID_ARGUMENT);

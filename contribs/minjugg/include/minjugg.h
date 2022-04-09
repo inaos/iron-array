@@ -19,6 +19,7 @@ typedef struct jug_context_s jug_context_t;
 typedef struct jug_udf_s jug_udf_t;
 typedef struct jug_udf_registry_s jug_udf_registry_t;
 typedef struct jug_udf_library_s jug_udf_library_t;
+typedef struct jug_udf_function_s jug_udf_function_t;
 
 typedef enum jug_expression_dtype_e {
     JUG_EXPRESSION_DTYPE_DOUBLE = 1,
@@ -46,6 +47,7 @@ INA_API(ina_rc_t) jug_expression_operands_parse(jug_expression_t *e,
 INA_API(void) jug_exression_operands_free(jug_expression_t *e, ina_str_t *operands);
     
 INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
+                                         jug_udf_registry_t *r,
                                          const char *expr, 
                                          int num_vars, 
                                          void *vars, 
@@ -67,6 +69,8 @@ INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
                                           const char *name,
                                           int llvm_bc_len,
                                           const char *llvm_bc);
+
+INA_API(ina_rc_t) jug_udf_library_lookup_function(jug_udf_registry_t *registry, const char *name, jug_udf_function_t **function);
 
 /* FIXME the below declarations actually do not belong here */
 typedef enum te_expr_type_e {
@@ -101,7 +105,8 @@ typedef enum te_expr_type_e {
     EXPR_TYPE_TANH,
     EXPR_TYPE_FMOD,
     EXPR_TYPE_MIN,
-    EXPR_TYPE_MAX
+    EXPR_TYPE_MAX,
+    EXPR_TYPE_CUSTOM
 } te_expr_type_t;
 
 typedef struct jug_te_variable {

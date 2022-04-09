@@ -63,6 +63,9 @@ typedef struct state {
 
     const jug_te_variable *lookup;
     int lookup_len;
+
+    jug_udf_registry_t *registry;
+    ina_list_t *var_free_list;
 } state;
 
 
@@ -214,7 +217,25 @@ static const jug_te_variable *find_lookup(const state *s, const char *name, int 
     return 0;
 }
 
+static const jug_te_variable* find_custom(const state *s, const char *name, int len) {
+    INA_UNUSED(len);
 
+    jug_udf_function_t *cf = NULL;
+
+    if (INA_FAILED(jug_udf_library_lookup_function(s->registry, name, &cf))) {
+        return 0;
+    }
+
+    jug_te_variable *v = (jug_te_variable*)ina_mem_alloc(sizeof(jug_te_variable));
+    v->name = name;
+    v->address = EXPR_TYPE_CUSTOM;
+    v->type = TE_CUSTOM;
+    v->context = cf;
+
+    ina_list_insert_tail(s->var_free_list, )
+
+    return v;
+}
 
 //static double add(double a, double b) {return a + b;}
 //static double sub(double a, double b) {return a - b;}
@@ -247,6 +268,7 @@ static void next_token(state *s) {
 
                 const jug_te_variable *var = find_lookup(s, start, (int) (s->next - start));
                 if (!var) var = find_builtin(start, (int) (s->next - start));
+                if (!var) var = find_custom(s, start, (int) (s->next - start));
 
                 if (!var) {
                     s->type = TOK_ERROR;
@@ -593,11 +615,12 @@ static jug_te_expr *list(state *s) {
 //    }
 //}
 
-jug_te_expr *jug_te_compile(const char *expression, const jug_te_variable *variables, int var_count, int *error) {
+jug_te_expr *jug_te_compile(jug_udf_registry_t *registry, const char *expression, const jug_te_variable *variables, int var_count, int *error) {
     state s;
     s.start = s.next = expression;
     s.lookup = variables;
     s.lookup_len = var_count;
+    s.registry = registry;
 
     next_token(&s);
     jug_te_expr *root = list(&s);
@@ -615,6 +638,7 @@ jug_te_expr *jug_te_compile(const char *expression, const jug_te_variable *varia
     } else {
         //optimize(root);
         if (error) *error = 0;
+        root->registry = registry;
         return root;
     }
 }
