@@ -34,6 +34,7 @@ typedef struct jug_te_expr {
     int type;
     union {double value; const char *bound; te_expr_type_t function;};
     void *parameters[1];
+    jug_udf_registry_t *registry;
 } jug_te_expr;
 
 
@@ -50,6 +51,8 @@ enum {
 };
 
 enum { TE_CONSTANT = 1 };
+
+enum { TE_CUSTOM = -1 };
 
 static const char te_function_map_str[][32] = {
     "EXPR_TYPE_ADD",
@@ -83,12 +86,13 @@ static const char te_function_map_str[][32] = {
     "EXPR_TYPE_TANH",
     "EXPR_TYPE_FMOD",
     "EXPR_TYPE_MIN",
-    "EXPR_TYPE_MAX"
+    "EXPR_TYPE_MAX",
+    "EXPR_TYPE_CUSTOM"
 };
 
 /* Parses the input expression and binds variables. */
 /* Returns NULL on error. */
-jug_te_expr *jug_te_compile(const char *expression, const jug_te_variable *variables, int var_count, int *error);
+jug_te_expr *jug_te_compile(jug_udf_registry_t *registry, const char *expression, const jug_te_variable *variables, int var_count, int *error);
 
 
 /* Frees the expression. */
