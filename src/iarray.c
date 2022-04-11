@@ -595,7 +595,13 @@ INA_API(void) iarray_udf_library_free(iarray_udf_registry_t *registry, iarray_ud
 INA_API(ina_rc_t) iarray_udf_library_compile(iarray_udf_library_t *lib,
                                              int llvm_bc_len,
                                              const char *llvm_bc,
+                                             iarray_data_type_t return_type,
+                                             int num_args,
+                                             iarray_data_type_t *arg_types,
                                              const char *name)
 {
-    return jug_udf_library_compile(lib->lib, name, llvm_bc_len, llvm_bc);
+    jug_expression_dtype_t jrt;
+    jug_expression_dtype_t *jarg_types;
+
+    return jug_udf_library_compile(lib->lib, name, jrt, num_args, jarg_types, llvm_bc_len, llvm_bc);
 }
