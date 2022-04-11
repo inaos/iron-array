@@ -92,7 +92,7 @@ static const char te_function_map_str[][32] = {
 
 /* Parses the input expression and binds variables. */
 /* Returns NULL on error. */
-jug_te_expr *jug_te_compile(jug_udf_registry_t *registry, const char *expression, const jug_te_variable *variables, int var_count, int *error);
+jug_te_expr *jug_te_compile(jug_udf_registry_t *registry, ina_mempool_t *variable_pool, const char *expression, const jug_te_variable *variables, int var_count, int *error);
 
 
 /* Frees the expression. */

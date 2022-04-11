@@ -65,7 +65,7 @@ typedef struct state {
     int lookup_len;
 
     jug_udf_registry_t *registry;
-    ina_list_t *var_free_list;
+    ina_mempool_t *variable_mem_pool;
 } state;
 
 
@@ -226,13 +226,11 @@ static const jug_te_variable* find_custom(const state *s, const char *name, int 
         return 0;
     }
 
-    jug_te_variable *v = (jug_te_variable*)ina_mem_alloc(sizeof(jug_te_variable));
+    jug_te_variable *v = (jug_te_variable *) ina_mempool_dalloc(s->variable_mem_pool, sizeof(jug_te_variable));
     v->name = name;
     v->address = EXPR_TYPE_CUSTOM;
     v->type = TE_CUSTOM;
     v->context = cf;
-
-    ina_list_insert_tail(s->var_free_list, )
 
     return v;
 }
@@ -273,23 +271,40 @@ static void next_token(state *s) {
                 if (!var) {
                     s->type = TOK_ERROR;
                 } else {
-                    switch(TYPE_MASK(var->type))
-                    {
-                        case TE_VARIABLE:
-                            s->type = TOK_VARIABLE;
-                            s->bound = var->name;
-                            break;
+                    if (var->type == TE_CUSTOM) {
+                        s->type = var->type;
+                        s->function = var->address;
+                        s->context = var->context;
+                    } 
+                    else {
+                        switch (TYPE_MASK(var->type)) {
+                            case TE_VARIABLE:
+                                s->type = TOK_VARIABLE;
+                                s->bound = var->name;
+                                break;
 
-                        case TE_CLOSURE0: case TE_CLOSURE1: case TE_CLOSURE2: case TE_CLOSURE3:         /* Falls through. */
-                        case TE_CLOSURE4: case TE_CLOSURE5: case TE_CLOSURE6: case TE_CLOSURE7:         /* Falls through. */
-                            s->context = var->context;                                                  /* Falls through. */
+                            case TE_CLOSURE0:
+                            case TE_CLOSURE1:
+                            case TE_CLOSURE2:
+                            case TE_CLOSURE3:
+                            case TE_CLOSURE4:
+                            case TE_CLOSURE5:
+                            case TE_CLOSURE6:
+                            case TE_CLOSURE7:
+                                s->context = var->context;
 
-                        case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:     /* Falls through. */
-                        case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:     /* Falls through. */
-                        case TE_CUSTOM:                                                                 /* Falls through. */
-                            s->type = var->type;
-                            s->function = var->address;
-                            break;
+                            case TE_FUNCTION0:
+                            case TE_FUNCTION1:
+                            case TE_FUNCTION2:
+                            case TE_FUNCTION3:
+                            case TE_FUNCTION4:
+                            case TE_FUNCTION5:
+                            case TE_FUNCTION6:
+                            case TE_FUNCTION7:
+                                s->type = var->type;
+                                s->function = var->address;
+                                break;
+                        }
                     }
                 }
 
@@ -616,12 +631,13 @@ static jug_te_expr *list(state *s) {
 //    }
 //}
 
-jug_te_expr *jug_te_compile(jug_udf_registry_t *registry, const char *expression, const jug_te_variable *variables, int var_count, int *error) {
+jug_te_expr *jug_te_compile(jug_udf_registry_t *registry, ina_mempool_t *variable_pool, const char *expression, const jug_te_variable *variables, int var_count, int *error) {
     state s;
     s.start = s.next = expression;
     s.lookup = variables;
     s.lookup_len = var_count;
     s.registry = registry;
+    s.variable_mem_pool = variable_pool;
 
     next_token(&s);
     jug_te_expr *root = list(&s);
