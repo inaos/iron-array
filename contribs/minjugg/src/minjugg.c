@@ -44,12 +44,11 @@ struct jug_udf_function_s {
     LLVMContextRef context;
     LLVMModuleRef mod;
     LLVMExecutionEngineRef engine;
-    int arity;
     ina_str_t name;
-    uint64_t function_ptr_f32;
-    uint64_t function_ptr_f64;
-    uint64_t function_ptr_sint;
-    uint64_t function_ptr_uint;
+    int num_args;
+    jug_expression_dtype_t *arg_types;
+    jug_expression_dtype_t return_type;
+    uint64_t function_ptr;
 };
 
 struct jug_expression_s {
@@ -63,6 +62,7 @@ struct jug_expression_s {
     LLVMBuilderRef builder;
     int32_t typesize;
     LLVMTypeRef expr_type;
+    ina_mempool_t *variable_mempool;
 };
 
 static char *_jug_def_triple = NULL;
@@ -376,7 +376,8 @@ static LLVMValueRef _jug_expr_compile_expression(jug_expression_t *e, jug_te_exp
             // - loop over arity to collect params with M(i) store LLVMRef's in array
             // - make sure declaration can happen 
             //for (int i = 0; i < )
-            return _jug_build_fun_call(e, );
+            LLVMValueRef custom_fun;
+            return custom_fun;
         }
         case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:
         case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:
@@ -788,6 +789,10 @@ INA_API(ina_rc_t) jug_expression_new(jug_expression_t **expr, jug_expression_dty
     INA_UNUSED(m);
 #endif
 
+    if (INA_FAILED(ina_mempool_new(1024 * 4, NULL, INA_MEM_DYNAMIC, &(*expr)->variable_mempool))) {
+        return ina_err_get_rc();
+    }
+
     return INA_SUCCESS;
 }
 
@@ -809,31 +814,10 @@ INA_API(void) jug_expression_free(jug_expression_t **expr)
     /*if ((*expr)->mod != NULL) {
         LLVMDisposeModule((*expr)->mod);
     }*/
+    if ((*expr)->variable_mempool != NULL) {
+        ina_mempool_free(&(*expr)->variable_mempool);
+    }
     INA_MEM_FREE_SAFE(*expr);
-}
-
-INA_API(ina_rc_t) jug_expression_operands_parse(jug_expression_t *e,
-                              const char *expr,
-                              int *num_operands,
-                              ina_str_t *operands)
-{
-    // regex to match all letters and words 
-    // regex? any simple C code
-    //
-    // check all the words for known key-words (built-in functions and registered udf's)
-    // .. -> everything that is not a key-word is an operand
-    // 
-    // build ina_str_t array 
-    // 
-    *num_operands = 0;
-    *operands = NULL;
-    return INA_SUCCESS;
-}
-
-INA_API(void) jug_exression_operands_free(jug_expression_t *e, ina_str_t *operands)
-{
-    INA_UNUSED(e);
-    *operands = NULL;
 }
 
 INA_API(ina_rc_t) jug_udf_registry_new(jug_udf_registry_t **udf_registry) 
@@ -938,6 +922,9 @@ exit:
 
 INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
                                           const char *name,
+                                          jug_expression_dtype_t return_type,
+                                          int num_args,
+                                          jug_expression_dtype_t *arg_types,
                                           int llvm_bc_len,
                                           const char *llvm_bc) 
 {
@@ -945,6 +932,10 @@ INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
     ina_str_t fun_name = ina_str_sprintf("%s.%s", ina_str_cstr(lib->name), name);
 
     udf_fun->mod = LLVMModuleCreateWithName(ina_str_cstr(fun_name));
+
+    udf_fun->num_args = num_args;
+    udf_fun->arg_types = arg_types;
+    udf_fun->return_type = return_type;
 
     if (INA_FAILED(_jug_udf_compile(&udf_fun->mod, &udf_fun->engine, llvm_bc_len, llvm_bc, ina_str_cstr(name), &udf_fun->context, &udf_fun->function_ptr))) {
         return ina_err_get_rc();
@@ -1011,7 +1002,7 @@ INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
     int parse_error = 0;
 
     jug_te_variable *te_vars = (jug_te_variable*)vars;
-    jug_te_expr *expression = jug_te_compile(r, expr_str, te_vars, num_vars, &parse_error);
+    jug_te_expr *expression = jug_te_compile(r, e->variable_mempool, expr_str, te_vars, num_vars, &parse_error);
     if (parse_error) {
         IARRAY_TRACE1(iarray.error, "Error parsing the expression with juggernaut");
         IARRAY_RETURN_IF_FAILED(INA_ERR_INVALID_ARGUMENT);

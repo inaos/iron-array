@@ -39,12 +39,6 @@ INA_API(void) jug_destroy(void);
 
 INA_API(ina_rc_t) jug_expression_new(jug_expression_t **expr, jug_expression_dtype_t dtype);
 INA_API(void) jug_expression_free(jug_expression_t **expr);
-
-INA_API(ina_rc_t) jug_expression_operands_parse(jug_expression_t *e, 
-                                                const char *expr, 
-                                                int *num_operands, 
-                                                ina_str_t *operands);
-INA_API(void) jug_exression_operands_free(jug_expression_t *e, ina_str_t *operands);
     
 INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
                                          jug_udf_registry_t *r,
@@ -67,6 +61,9 @@ INA_API(void) jug_udf_library_free(jug_udf_registry_t *registry, jug_udf_library
 
 INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
                                           const char *name,
+                                          jug_expression_dtype_t return_type,
+                                          int num_args,
+                                          jug_expression_dtype_t *arg_types,
                                           int llvm_bc_len,
                                           const char *llvm_bc);
 
