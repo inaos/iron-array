@@ -44,8 +44,12 @@ struct jug_udf_function_s {
     LLVMContextRef context;
     LLVMModuleRef mod;
     LLVMExecutionEngineRef engine;
+    int arity;
     ina_str_t name;
-    uint64_t function_ptr;
+    uint64_t function_ptr_f32;
+    uint64_t function_ptr_f64;
+    uint64_t function_ptr_sint;
+    uint64_t function_ptr_uint;
 };
 
 struct jug_expression_s {
@@ -365,8 +369,11 @@ static LLVMValueRef _jug_expr_compile_expression(jug_expression_t *e, jug_te_exp
             return param;
         }
         case TE_CUSTOM: {
-            // invoke UDF function
-
+            // - get handle to jug_udf_fun
+            // - loop over arity to collect params with M(i) store LLVMRef's in array
+            // - make sure declaration can happen 
+            //for (int i = 0; i < )
+            return _jug_build_fun_call(e, );
         }
         case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:
         case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:
