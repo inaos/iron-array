@@ -537,8 +537,8 @@ INA_API(ina_rc_t) iarray_random_kstest(iarray_context_t *ctx,
 
 INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    iarray_container_t *src,
-                                   int64_t *start,
-                                   int64_t *stop,
+                                   const int64_t *start,
+                                   const int64_t *stop,
                                    bool view,
                                    iarray_storage_t *storage,
                                    iarray_container_t **container);
@@ -676,7 +676,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
                                       iarray_container_t *a,
                                       iarray_reduce_func_t func,
                                       int8_t naxis,
-                                      int8_t *axis,
+                                      const int8_t *axis,
                                       iarray_storage_t *storage,
                                       iarray_container_t **b);
 

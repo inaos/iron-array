@@ -17,7 +17,7 @@
 static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim, iarray_reduce_func_t func,
                                const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
                                int8_t axis,
-                               int64_t *dest_cshape, int64_t *dest_bshape, bool dest_frame,
+                               const int64_t *dest_cshape, const int64_t *dest_bshape, bool dest_frame,
                                char *dest_urlpath) {
     blosc2_remove_urlpath(dest_urlpath);
     // Create dtshape
@@ -25,10 +25,8 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
 
     dtshape.dtype = dtype;
     dtshape.ndim = ndim;
-    int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
-        size *= shape[i];
     }
 
     iarray_storage_t storage = {0};
@@ -78,15 +76,15 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
 
     IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_z, buffer, buffer_size));
 
-    double val;
+    double val_;
     if (func == IARRAY_REDUCE_MAX) {
-        val = shape[axis] - 1;
+        val_ = (double) shape[axis] - 1;
         if (dtype == IARRAY_DATA_TYPE_BOOL) {
-            val = 1;
+            val_ = 1;
         }
 
     } else if (func == IARRAY_REDUCE_MIN) {
-        val = 0;
+        val_ = 0;
     }
     switch (func) {
         case IARRAY_REDUCE_MAX:
@@ -95,37 +93,37 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
                 // printf("%d: %f - %f\n", i, ((double *) buffer)[i], val);
                 switch (c_z->dtshape->dtype) {
                     case IARRAY_DATA_TYPE_DOUBLE:
-                        INA_TEST_ASSERT_EQUAL_FLOATING(((double *) buffer)[i], val);
+                        INA_TEST_ASSERT_EQUAL_FLOATING(((double *) buffer)[i], val_);
                         break;
                     case IARRAY_DATA_TYPE_FLOAT:
-                        INA_TEST_ASSERT_EQUAL_FLOATING(((float *) buffer)[i], val);
+                        INA_TEST_ASSERT_EQUAL_FLOATING(((float *) buffer)[i], val_);
                         break;
                     case IARRAY_DATA_TYPE_INT64:
-                        INA_TEST_ASSERT_EQUAL_INT64(((int64_t *) buffer)[i], val);
+                        INA_TEST_ASSERT_EQUAL_INT64(((int64_t *) buffer)[i], val_);
                         break;
                     case IARRAY_DATA_TYPE_INT32:
-                        INA_TEST_ASSERT_EQUAL_INT(((int32_t *) buffer)[i], val);
+                        INA_TEST_ASSERT_EQUAL_INT(((int32_t *) buffer)[i], val_);
                         break;
                     case IARRAY_DATA_TYPE_INT16:
-                        INA_TEST_ASSERT_EQUAL_INT(((int16_t *) buffer)[i], val);
+                        INA_TEST_ASSERT_EQUAL_INT(((int16_t *) buffer)[i], val_);
                         break;
                     case IARRAY_DATA_TYPE_INT8:
-                        INA_TEST_ASSERT_EQUAL_INT(((int8_t *) buffer)[i], val);
+                        INA_TEST_ASSERT_EQUAL_INT(((int8_t *) buffer)[i], val_);
                         break;
                     case IARRAY_DATA_TYPE_UINT64:
-                        INA_TEST_ASSERT_EQUAL_UINT64(((uint64_t *) buffer)[i], val);
+                        INA_TEST_ASSERT_EQUAL_UINT64(((uint64_t *) buffer)[i], val_);
                         break;
                     case IARRAY_DATA_TYPE_UINT32:
-                        INA_TEST_ASSERT_EQUAL_UINT(((uint32_t *) buffer)[i], val);
+                        INA_TEST_ASSERT_EQUAL_UINT(((uint32_t *) buffer)[i], val_);
                         break;
                     case IARRAY_DATA_TYPE_UINT16:
-                        INA_TEST_ASSERT_EQUAL_UINT(((uint16_t *) buffer)[i], val);
+                        INA_TEST_ASSERT_EQUAL_UINT(((uint16_t *) buffer)[i], val_);
                         break;
                     case IARRAY_DATA_TYPE_UINT8:
-                        INA_TEST_ASSERT_EQUAL_UINT(((uint8_t *) buffer)[i], val);
+                        INA_TEST_ASSERT_EQUAL_UINT(((uint8_t *) buffer)[i], val_);
                         break;
                     case IARRAY_DATA_TYPE_BOOL:
-                        INA_TEST_ASSERT(((bool *) buffer)[i] == val);
+                        INA_TEST_ASSERT(((bool *) buffer)[i] == val_);
                         break;
                     default:
                         IARRAY_TRACE1(iarray.error, "Invalid dtype");
@@ -134,7 +132,7 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
             }
             break;
         case IARRAY_REDUCE_SUM: {
-            double val = shape[axis] * (shape[axis] - 1.) / 2;
+            double val = (double)shape[axis] * ((double)shape[axis] - 1.) / 2;
             for (int i = 0; i < buffer_nitems; ++i) {
                 // printf("%d: %f - %f\n", i, ((double *) buffer)[i], val);
                 switch (c_z->dtshape->dtype) {
@@ -146,7 +144,7 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
                         break;
                     case IARRAY_DATA_TYPE_INT64:
                         if (dtype == IARRAY_DATA_TYPE_BOOL) {
-                            val = shape[axis] / 2;
+                            val = (double)shape[axis] / 2;
                         }
                         INA_TEST_ASSERT_EQUAL_INT64(((int64_t *) buffer)[i], val);
                         break;
@@ -161,7 +159,7 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
             break;
         }
         case IARRAY_REDUCE_MEAN: {
-            double val = shape[axis] * (shape[axis] - 1.) / 2 / shape[axis];
+            double val = (double)shape[axis] * ((double)shape[axis] - 1.) / 2 / (double)shape[axis];
             for (int i = 0; i < buffer_nitems; ++i) {
                 // printf("%d: %f - %f\n", i, ((double *) buffer)[i], val);
                 switch (c_z->dtshape->dtype) {
@@ -181,6 +179,8 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
             }
             break;
         }
+        default:
+            return INA_ERR_EXCEEDED;
     }
 
     free(buffer);

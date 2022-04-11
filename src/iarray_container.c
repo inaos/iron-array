@@ -105,7 +105,7 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool conti
     }
     if (ctx->cfg->btune) {
         iabtune.btune_config = &iabtune_config;
-        iabtune.btune_init = iabtune_init;
+        iabtune.btune_init = (void (*)(void *, blosc2_context*, blosc2_context*)) iabtune_init;
         iabtune.btune_next_blocksize = iabtune_next_blocksize;
         iabtune.btune_next_cparams = iabtune_next_cparams;
         iabtune.btune_update = iabtune_update;
@@ -129,7 +129,7 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool conti
 
     caterva_storage_t cat_storage = {0};
     cat_storage.urlpath = NULL;
-    cat_storage.sequencial = catarr_aux->sc->storage->contiguous;
+    cat_storage.contiguous = catarr_aux->sc->storage->contiguous;
     for (int i = 0; i < catarr_aux->ndim; ++i) {
         cat_storage.chunkshape[i] = catarr_aux->chunkshape[i];
         cat_storage.blockshape[i] = catarr_aux->blockshape[i];
@@ -146,7 +146,7 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool conti
     }
 
     uint8_t *smeta;
-    uint32_t smeta_len;
+    int32_t smeta_len;
     if (blosc2_meta_get(catarr->sc, "iarray", &smeta, &smeta_len) < 0) {
         IARRAY_TRACE1(iarray.error, "Error getting a blosc metalayer");
         return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
@@ -166,7 +166,7 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool conti
     iarray_dtshape_t* dtshape = (*container)->dtshape;
     dtshape->dtype = dtype;
     IARRAY_RETURN_IF_FAILED(iarray_set_dtype_size(dtshape));
-    dtshape->ndim = catarr->ndim;
+    dtshape->ndim = (int8_t)catarr->ndim;
     for (int i = 0; i < catarr->ndim; ++i) {
         dtshape->shape[i] = catarr->shape[i];
     }
@@ -174,7 +174,7 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool conti
     // Build the auxshape
     (*container)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
     iarray_auxshape_t* auxshape = (*container)->auxshape;
-    for (int8_t i = 0; i < catarr->ndim; ++i) {
+    for (int8_t i = 0; i < (int8_t)catarr->ndim; ++i) {
         auxshape->index[i] = i;
         auxshape->offset[i] = 0;
         auxshape->shape_wos[i] = catarr->shape[i];
@@ -228,8 +228,8 @@ INA_API(ina_rc_t) iarray_container_remove(char *urlpath)
 
 INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    iarray_container_t *src,
-                                   int64_t *start,
-                                   int64_t *stop,
+                                   const int64_t *start,
+                                   const int64_t *stop,
                                    bool view,
                                    iarray_storage_t *storage,
                                    iarray_container_t **container)
@@ -513,7 +513,7 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
                                   iarray_container_t *container,
                                   const int64_t *start,
                                   const int64_t *stop,
-                                  int64_t *chunkshape,
+                                  const int64_t *chunkshape,
                                   void *buffer,
                                   int64_t buflen)
 {
@@ -590,8 +590,8 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
                                                           chunksize * container->catarr->itemsize));
         char ordering = 'R';
         char trans = 'T';
-        int rows = chunkshape_[0];
-        int cols = chunkshape_[1];
+        int rows = (int)chunkshape_[0];
+        int cols = (int)chunkshape_[1];
         uint8_t *src = buffer_aux;
         int src_ld = cols;
         uint8_t *dst = buffer;
@@ -658,7 +658,7 @@ INA_API(ina_rc_t) iarray_squeeze_index(iarray_context_t *ctx,
 
         uint8_t inc = 0;
         if (container->dtshape->ndim != container->catarr->ndim) {
-            container->dtshape->ndim = (uint8_t) container->catarr->ndim;
+            container->dtshape->ndim = (int8_t) container->catarr->ndim;
             for (int i = 0; i < container->catarr->ndim; ++i) {
                 if (index[i]) {
                     inc ++;
@@ -673,13 +673,13 @@ INA_API(ina_rc_t) iarray_squeeze_index(iarray_context_t *ctx,
             }
         }
     } else {
-        uint8_t inc = 0;
+        int8_t inc = 0;
         for (int i = 0; i < container->dtshape->ndim; ++i) {
             if (index[i]) {
                 inc ++;
             } else {
                 container->dtshape->shape[i - inc] = container->dtshape->shape[i];
-                container->auxshape->index[i - inc] = (uint8_t) i;
+                container->auxshape->index[i - inc] = (int8_t) i;
             }
         }
         container->dtshape->ndim -= inc;
@@ -951,7 +951,7 @@ INA_API(ina_rc_t) iarray_container_almost_equal(iarray_container_t *a, iarray_co
     }
 
     int dtype = a->dtshape->dtype;
-    int ndim = a->dtshape->ndim;
+    int8_t ndim = a->dtshape->ndim;
 
     // For the blocksize, choose the maximum of the partition shapes
     int64_t blocksize[IARRAY_DIMENSION_MAX];
@@ -1029,7 +1029,7 @@ INA_API(ina_rc_t) iarray_container_equal(iarray_container_t *a, iarray_container
     }
 
     int dtype = a->dtshape->dtype;
-    int ndim = a->dtshape->ndim;
+    int8_t ndim = a->dtshape->ndim;
 
     // For the blocksize, choose the maximum of the partition shapes
     int64_t blocksize[IARRAY_DIMENSION_MAX];
@@ -1056,7 +1056,7 @@ INA_API(ina_rc_t) iarray_container_equal(iarray_container_t *a, iarray_container
                 for (int64_t i = 0; i < val_a.block_size; ++i) {
                     int64_t diff = ((int64_t *)val_a.block_pointer)[i] - ((int64_t *)val_b.block_pointer)[i];
                     if (diff != 0) {
-                        printf("%lld, %lld (diff: %lld)\n", ((int64_t *)val_a.block_pointer)[i], ((int64_t *)val_b.block_pointer)[i], diff);
+                        printf("%lld, %lld (diff: %lld)\n", ((long long *)val_a.block_pointer)[i], ((long long *)val_b.block_pointer)[i], (long long)diff);
                         IARRAY_TRACE1(iarray.error, "Values are different");
                         return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
                     }
@@ -1074,7 +1074,7 @@ INA_API(ina_rc_t) iarray_container_equal(iarray_container_t *a, iarray_container
                 break;
             case IARRAY_DATA_TYPE_INT16:
                 for (int64_t i = 0; i < val_a.block_size; ++i) {
-                    int16_t diff = ((int16_t *)val_a.block_pointer)[i] - ((int16_t *)val_b.block_pointer)[i];
+                    int16_t diff = (int16_t) (((int16_t *)val_a.block_pointer)[i] - ((int16_t *)val_b.block_pointer)[i]);
                     if (diff != 0) {
                         printf("%hd, %hd (diff: %d)\n", ((int16_t *)val_a.block_pointer)[i], ((int16_t *)val_b.block_pointer)[i], diff);
                         IARRAY_TRACE1(iarray.error, "Values are different");
@@ -1084,7 +1084,7 @@ INA_API(ina_rc_t) iarray_container_equal(iarray_container_t *a, iarray_container
                 break;
             case IARRAY_DATA_TYPE_INT8:
                 for (int64_t i = 0; i < val_a.block_size; ++i) {
-                    int8_t diff = ((int8_t *)val_a.block_pointer)[i] - ((int8_t *)val_b.block_pointer)[i];
+                    int8_t diff = (int8_t) (((int8_t *)val_a.block_pointer)[i] - ((int8_t *)val_b.block_pointer)[i]);
                     if (diff != 0) {
                         printf("%hhd, %hhd (diff: %d)\n", ((int8_t *)val_a.block_pointer)[i], ((int8_t *)val_b.block_pointer)[i], diff);
                         IARRAY_TRACE1(iarray.error, "Values are different");
@@ -1096,7 +1096,7 @@ INA_API(ina_rc_t) iarray_container_equal(iarray_container_t *a, iarray_container
                 for (int64_t i = 0; i < val_a.block_size; ++i) {
                     uint64_t diff = ((uint64_t *)val_a.block_pointer)[i] - ((uint64_t *)val_b.block_pointer)[i];
                     if (diff != 0) {
-                        printf("%llu, %llu (diff: %lld)\n", ((uint64_t *)val_a.block_pointer)[i], ((uint64_t *)val_b.block_pointer)[i], diff);
+                        printf("%llu, %llu (diff: %llu)\n", ((unsigned long long *)val_a.block_pointer)[i], ((unsigned long long *)val_b.block_pointer)[i], (unsigned long long)diff);
                         IARRAY_TRACE1(iarray.error, "Values are different");
                         return INA_ERROR(IARRAY_ERR_ASSERTION_FAILED);
                     }

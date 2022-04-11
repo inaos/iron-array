@@ -85,7 +85,7 @@ int main() {
     double *buf = malloc(buf_nbytes);
     IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c, buf, buf_nbytes));
     printf("%f\n", buf[0]);
-    eval(nelem, buf);
+    eval((int32_t)nelem, buf);
     IARRAY_RETURN_IF_FAILED(ia_eval(ctx, &dtshape, &c));
 
     double *buf2 = malloc(buf_nbytes);

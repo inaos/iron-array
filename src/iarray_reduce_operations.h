@@ -28,132 +28,132 @@ struct iarray_reduce_function_s {
 #define DPARAMS_I double *res, void *user_data
 
 #define DPARAMS_R double *data0, int64_t strides0, \
-                  double *data1, int64_t strides1, \
+                  const double *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 
 #define DPARAMS_F double *res, void *user_data
 
 #define FPARAMS_I float *res, void *user_data
 #define FPARAMS_R float *data0, int64_t strides0, \
-                  float *data1, int64_t strides1, \
+                  const float *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 #define FPARAMS_F float *res, void *user_data
 
 #define I64PARAMS_I int64_t *res, void *user_data
 #define I64PARAMS_R int64_t *data0, int64_t strides0, \
-                  int64_t *data1, int64_t strides1, \
+                  const int64_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as double
 #define I64_DPARAMS_R double *data0, int64_t strides0, \
-                  int64_t *data1, int64_t strides1, \
+                  const int64_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 #define I64PARAMS_F int64_t *res, void *user_data
 
 #define I32PARAMS_I int32_t *res, void *user_data
 #define I32PARAMS_R int32_t *data0, int64_t strides0, \
-                  int32_t *data1, int64_t strides1, \
+                  const int32_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as int64_t
 #define I32_64PARAMS_R int64_t *data0, int64_t strides0, \
-                  int32_t *data1, int64_t strides1, \
+                  const int32_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as double
 #define I32_DPARAMS_R double *data0, int64_t strides0, \
-                  int32_t *data1, int64_t strides1, \
+                  const int32_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 #define I32PARAMS_F int32_t *res, void *user_data
 
 #define I16PARAMS_I int16_t *res, void *user_data
 #define I16PARAMS_R int16_t *data0, int64_t strides0, \
-                  int16_t *data1, int64_t strides1, \
+                  const int16_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as int64_t
 #define I16_64PARAMS_R int64_t *data0, int64_t strides0, \
-                  int16_t *data1, int64_t strides1, \
+                  const int16_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as double
 #define I16_DPARAMS_R double *data0, int64_t strides0, \
-                  int16_t *data1, int64_t strides1, \
+                  const int16_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 #define I16PARAMS_F int16_t *res, void *user_data
 
 #define I8PARAMS_I int8_t *res, void *user_data
 #define I8PARAMS_R int8_t *data0, int64_t strides0, \
-                  int8_t *data1, int64_t strides1, \
+                  const int8_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as int64_t
 #define I8_64PARAMS_R int64_t *data0, int64_t strides0, \
-                  int8_t *data1, int64_t strides1, \
+                  const int8_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as double
 #define I8_DPARAMS_R double *data0, int64_t strides0, \
-                  int8_t *data1, int64_t strides1, \
+                  const int8_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 #define I8PARAMS_F int8_t *res, void *user_data
 
 #define UI64PARAMS_I uint64_t *res, void *user_data
 #define UI64PARAMS_R uint64_t *data0, int64_t strides0, \
-                  uint64_t *data1, int64_t strides1, \
+                  const uint64_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as double
 #define UI64_DPARAMS_R double *data0, int64_t strides0, \
-                  uint64_t *data1, int64_t strides1, \
+                  const uint64_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 #define UI64PARAMS_F uint64_t *res, void *user_data
 
 #define UI32PARAMS_I uint32_t *res, void *user_data
 #define UI32PARAMS_R uint32_t *data0, int64_t strides0, \
-                  uint32_t *data1, int64_t strides1, \
+                  const uint32_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as uint64_t
 #define UI32_64PARAMS_R uint64_t *data0, int64_t strides0, \
-                  uint32_t *data1, int64_t strides1, \
+                  const uint32_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as double
 #define UI32_DPARAMS_R double *data0, int64_t strides0, \
-                  uint32_t *data1, int64_t strides1, \
+                  const uint32_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 #define UI32PARAMS_F uint32_t *res, void *user_data
 
 #define UI16PARAMS_I uint16_t *res, void *user_data
 #define UI16PARAMS_R uint16_t *data0, int64_t strides0, \
-                  uint16_t *data1, int64_t strides1, \
+                  const uint16_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as uint64_t
 #define UI16_64PARAMS_R uint64_t *data0, int64_t strides0, \
-                  uint16_t *data1, int64_t strides1, \
+                  const uint16_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as double
 #define UI16_DPARAMS_R double *data0, int64_t strides0, \
-                  uint16_t *data1, int64_t strides1, \
+                  const uint16_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 #define UI16PARAMS_F uint16_t *res, void *user_data
 
 #define UI8PARAMS_I uint8_t *res, void *user_data
 #define UI8PARAMS_R uint8_t *data0, int64_t strides0, \
-                  uint8_t *data1, int64_t strides1, \
+                  const uint8_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as uint64_t
 #define UI8_64PARAMS_R uint64_t *data0, int64_t strides0, \
-                  uint8_t *data1, int64_t strides1, \
+                  const uint8_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as double
 #define UI8_DPARAMS_R double *data0, int64_t strides0, \
-                  uint8_t *data1, int64_t strides1, \
+                  const uint8_t *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 #define UI8PARAMS_F uint8_t *res, void *user_data
 
 #define BOOLPARAMS_I bool *res, void *user_data
 #define BOOLPARAMS_R bool *data0, int64_t strides0, \
-                  bool *data1, int64_t strides1, \
+                  const bool *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as int64_t
 #define BOOL_64PARAMS_R int64_t *data0, int64_t strides0, \
-                  bool *data1, int64_t strides1, \
+                  const bool *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 // Needed when we want the result as double
 #define BOOL_DPARAMS_R double *data0, int64_t strides0, \
-                  bool *data1, int64_t strides1, \
+                  const bool *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 #define BOOLPARAMS_F bool *res, void *user_data
 
@@ -165,6 +165,7 @@ struct iarray_reduce_function_s {
 
 #define SUM_R \
     INA_UNUSED(user_data); \
+    INA_UNUSED(strides0); \
     for (int i = 0; i < nelem; ++i) { \
         *data0 = *data0 + *data1; \
         data1 += strides1; \
@@ -172,6 +173,7 @@ struct iarray_reduce_function_s {
 
 #define SUM_F \
     INA_UNUSED(user_data); \
+    INA_UNUSED(res); \
     ;
 
 static void dsum_ini(DPARAMS_I) { SUM_I }
@@ -292,6 +294,7 @@ static iarray_reduce_function_t BOOLSUM = {
 
 #define PROD_R \
     INA_UNUSED(user_data); \
+    INA_UNUSED(strides0); \
     for (int i = 0; i < nelem; ++i) { \
         *data0 = *data0 * *data1; \
         data1 += strides1; \
@@ -299,6 +302,7 @@ static iarray_reduce_function_t BOOLSUM = {
 
 #define PROD_F \
     INA_UNUSED(user_data); \
+    INA_UNUSED(res); \
     ;
 
 static void dprod_ini(DPARAMS_I) { PROD_I }
@@ -447,6 +451,7 @@ static iarray_reduce_function_t BOOLPROD = {
 
 #define MAX_R \
     INA_UNUSED(user_data); \
+    INA_UNUSED(strides0); \
     for (int i = 0; i < nelem; ++i) { \
         if (*data1 > *data0) { \
             *data0 = *data1; \
@@ -456,6 +461,7 @@ static iarray_reduce_function_t BOOLPROD = {
 
 #define MAX_F \
     INA_UNUSED(user_data); \
+    INA_UNUSED(res); \
     ;
 
 static void dmax_ini(DPARAMS_I) { MAX_I }
@@ -603,6 +609,7 @@ static iarray_reduce_function_t BOOLMAX = {
 
 #define MIN_R \
     INA_UNUSED(user_data); \
+    INA_UNUSED(strides0); \
     for (int i = 0; i < nelem; ++i) { \
         if (*data1 < *data0) {    \
             *data0 = *data1; \
@@ -612,6 +619,7 @@ static iarray_reduce_function_t BOOLMAX = {
 
 #define MIN_F \
     INA_UNUSED(user_data); \
+    INA_UNUSED(res); \
     ;
 
 static void dmin_ini(DPARAMS_I) { MIN_I }
@@ -732,7 +740,8 @@ static iarray_reduce_function_t BOOLMIN = {
 
 #define MEAN_R \
     INA_UNUSED(user_data); \
-     for (int i = 0; i < nelem; ++i) { \
+    INA_UNUSED(strides0); \
+    for (int i = 0; i < nelem; ++i) { \
         *data0 = *data0 + *data1; \
         data1 += strides1; \
     }

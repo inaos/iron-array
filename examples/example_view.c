@@ -82,6 +82,6 @@ int main(void)
     iarray_context_free(&ctx);
     iarray_destroy();
 
-    return ina_err_get_rc();
+    return (int)ina_err_get_rc();
 
 }

@@ -28,7 +28,7 @@ static double const_(const double x)
 static int fill_x(double* x, int64_t nelem)
 {
     /* Fill even values between 0. and 1. */
-    double incx = 1. / nelem;
+    double incx = 1. / (double) nelem;
     for (int i = 0; i < nelem; i++) {
         x[i] = incx * i;
     }

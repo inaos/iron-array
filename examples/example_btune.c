@@ -33,7 +33,7 @@ int main(void)
         dtshape.shape[i] = shape[i];
         size *= shape[i];
     }
-    int64_t nbytes = size * sizeof(double);
+    int64_t nbytes = (int64_t) (size * sizeof(double));
 
     iarray_storage_t store;
     store.contiguous = false;
@@ -76,7 +76,7 @@ int main(void)
         int64_t c_nbytes;
         int64_t c_cbytes;
         IARRAY_RETURN_IF_FAILED(iarray_container_info(cont, &c_nbytes, &c_cbytes));
-        printf("- Ratio: %8.2f x\n", (double) c_nbytes / c_cbytes);
+        printf("- Ratio: %8.2f x\n", (double) c_nbytes / (double) c_cbytes);
 
         INA_MUST_SUCCEED(ina_stopwatch_duration(w, &elapsed_sec));
         printf("- Time: %9.2f s\n", elapsed_sec);

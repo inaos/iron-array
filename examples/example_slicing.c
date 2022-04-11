@@ -117,5 +117,5 @@ int main(void)
 
     printf("Destroying iarray...\n");
     iarray_destroy();
-    return rc;
+    return (int)rc;
 }

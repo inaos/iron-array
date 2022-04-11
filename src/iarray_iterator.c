@@ -71,7 +71,7 @@ int _iarray_iter_matmul_finished(iarray_iter_matmul_t *itr)
 }
 
 ina_rc_t _iarray_iter_matmul_new(iarray_context_t *ctx, iarray_container_t *c1, iarray_container_t *c2,
-                                 int64_t *ishape_a, int64_t *ishape_b, iarray_iter_matmul_t **itr)
+                                 const int64_t *ishape_a, const int64_t *ishape_b, iarray_iter_matmul_t **itr)
 {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(c1);
@@ -345,7 +345,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
     // Check if block is the first
     if (itr->nblock != 0) {
         if (itr->compressed_chunk_buffer) {
-            int err = blosc2_schunk_update_chunk(catarr->sc, itr->nblock - 1, itr->block, false);
+            int64_t err = blosc2_schunk_update_chunk(catarr->sc, itr->nblock - 1, itr->block, false);
             if (err < 0) {
                 IARRAY_TRACE1(iarray.error, "Error appending a chunk in a blosc schunk");
                 return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
@@ -419,11 +419,10 @@ INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *it
 {
     if ( itr->nblock == (itr->cont_esize / itr->block_shape_size)) {  // TODO: cannot it be itr->total_blocks ?
         caterva_array_t *catarr = itr->cont->catarr;
-        int8_t ndim = catarr->ndim;
         int64_t typesize = itr->cont->catarr->itemsize;
        // check if the chunk should be padded with 0s
         if (itr->compressed_chunk_buffer) {
-            int err = blosc2_schunk_update_chunk(catarr->sc, itr->nblock - 1, itr->block, false);
+            int64_t err = blosc2_schunk_update_chunk(catarr->sc, itr->nblock - 1, itr->block, false);
             if (err < 0) {
                 // TODO: if the next call is not zero, it can be interpreted as there are more elements
                 IARRAY_TRACE1(iarray.error, "Error appending a chunk to a blosc schunk");
@@ -513,15 +512,12 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
 
     (*itr)->cont_esize = 1;
     (*itr)->block_shape_size = 1;
-    int64_t size = typesize;
     for (int i = 0; i < (*itr)->cont->dtshape->ndim; ++i) {
         (*itr)->block_shape[i] = iter_blockshape[i];
-        size *= (*itr)->block_shape[i];
         if (cont->catarr->extshape[i] % iter_blockshape[i] == 0) {
             (*itr)->cont_eshape[i] = (cont->catarr->extshape[i] / iter_blockshape[i]) * iter_blockshape[i];
         } else {
             (*itr)->cont_eshape[i] = (cont->catarr->extshape[i] / iter_blockshape[i] + 1) * iter_blockshape[i];
-
         }
         (*itr)->cont_esize *= (*itr)->cont_eshape[i];
         (*itr)->block_shape_size *= (*itr)->block_shape[i];
@@ -608,7 +604,7 @@ INA_API(void) iarray_iter_write_block_free(iarray_iter_write_block_t **itr)
 
 INA_API(ina_rc_t) iarray_iter_read_next(iarray_iter_read_t *itr)
 {
-    int ndim = itr->cont->dtshape->ndim;
+    int8_t ndim = itr->cont->dtshape->ndim;
 
     int64_t typesize = itr->cont->catarr->itemsize;
 
@@ -782,7 +778,7 @@ INA_API(void) iarray_iter_read_free(iarray_iter_read_t **itr)
 INA_API(ina_rc_t) iarray_iter_write_next(iarray_iter_write_t *itr)
 {
     caterva_array_t *catarr = itr->container->catarr;
-    int ndim = catarr->ndim;
+    int8_t ndim = catarr->ndim;
     int64_t typesize = itr->container->catarr->itemsize;
 
     // check if a chunk is filled totally and append it

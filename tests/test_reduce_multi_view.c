@@ -17,7 +17,7 @@ static ina_rc_t test_reduce_multi_view(iarray_context_t *ctx, iarray_data_type_t
                                const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
                                const int64_t *view_start, const int64_t *view_stop,
                                int8_t naxis, int8_t *axis,
-                               int64_t *dest_cshape, int64_t *dest_bshape, bool src_contiguous, char *src_urlpath,
+                               const int64_t *dest_cshape, const int64_t *dest_bshape, bool src_contiguous, char *src_urlpath,
                                bool dest_contiguous, char* dest_urlpath)
 {
     blosc2_remove_urlpath(src_urlpath);
@@ -28,10 +28,8 @@ static ina_rc_t test_reduce_multi_view(iarray_context_t *ctx, iarray_data_type_t
 
     dtshape.dtype = dtype;
     dtshape.ndim = ndim;
-    int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
-        size *= shape[i];
     }
 
     iarray_storage_t storage = {0};
@@ -119,7 +117,7 @@ static ina_rc_t test_reduce_multi_view(iarray_context_t *ctx, iarray_data_type_t
             break;
         case IARRAY_REDUCE_SUM: {
             for (int i = 0; i < naxis; ++i) {
-                val *= c_view->dtshape->shape[axis[i]];
+                val *= (double)c_view->dtshape->shape[axis[i]];
             }
             for (int i = 0; i < buffer_nitems; ++i) {
                 // printf("%d: %f - %f\n", i, ((double *) buffer)[i], val);
@@ -143,6 +141,8 @@ static ina_rc_t test_reduce_multi_view(iarray_context_t *ctx, iarray_data_type_t
             }
             break;
         }
+        default:
+            return INA_ERR_EXCEEDED;
     }
 
     iarray_container_free(ctx, &c_z);

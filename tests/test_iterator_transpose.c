@@ -13,7 +13,7 @@
 #include <libiarray/iarray.h>
 
 
-static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, int32_t type_size, int8_t ndim,
+static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, int8_t ndim,
                               const int64_t *shape, const int64_t *cshape, const int64_t *bshape, bool xcontiguous,
                               char *xurlpath, bool ycontiguous, char *yurlpath) {
 
@@ -24,10 +24,8 @@ static ina_rc_t test_iterator(iarray_context_t *ctx, iarray_data_type_t dtype, i
     iarray_dtshape_t xdtshape;
     xdtshape.dtype = dtype;
     xdtshape.ndim = ndim;
-    int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        size *= shape[i];
     }
 
     iarray_storage_t xstorage;
@@ -143,27 +141,25 @@ INA_TEST_TEARDOWN(iterator_transpose) {
 
 INA_TEST_FIXTURE(iterator_transpose, 2_f) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
-    int32_t type_size = sizeof(float);
 
     int8_t ndim = 2;
     int64_t shape[] = {445, 321};
     int64_t cshape[] = {201, 17};
     int64_t bshape[] = {12, 8};
 
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, false, NULL, false, NULL));
+    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, ndim, shape, cshape, bshape, true, NULL, true, NULL));
 }
 
 
 INA_TEST_FIXTURE(iterator_transpose, 2_d) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
-    int32_t type_size = sizeof(double);
 
     int8_t ndim = 2;
     int64_t shape[] = {200, 50};
     int64_t cshape[] = {12, 20};
     int64_t bshape[] = {12, 5};
 
-    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, type_size, ndim, shape, cshape, bshape, false, "arr.iarr", false, "arr2.iarr"));
+    INA_TEST_ASSERT_SUCCEED(test_iterator(data->ctx, dtype, ndim, shape, cshape, bshape, false, "arr.iarr", false, "arr2.iarr"));
 }
 
 

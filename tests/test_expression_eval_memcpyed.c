@@ -84,7 +84,7 @@ INA_TEST(expression_eval_memcpyed, case1) {
     int64_t buf_nbytes = nelem * typesize;
     double *buf = malloc(buf_nbytes);
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c, buf, buf_nbytes));
-    eval(nelem, buf);
+    eval((int32_t)nelem, buf);
 
     iarray_context_free(&ctx);
     cfg.compression_codec = IARRAY_COMPRESSION_LZ4;

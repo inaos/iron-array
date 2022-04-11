@@ -126,7 +126,7 @@ int main(void) {
     int64_t nbytes = nelem * typesize;
 
     printf("Time for eval expression: %.3g s, %.1f MB/s\n",
-           elapsed_sec, nbytes * nrep / (elapsed_sec * (1u << 20u)));
+           elapsed_sec, (double) nbytes * nrep / (elapsed_sec * (1u << 20u)));
 
     uint64_t b_size = nelem * typesize;
     uint8_t *b_x = ina_mem_alloc(b_size);

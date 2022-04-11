@@ -120,7 +120,7 @@ static const _jug_fun_type_t _jug_function_map[] = {
     {"EXPR_TYPE_FMOD", 1, 0, 2, NULL, NULL, "fmodf", "fmod", 0, 0, {0}, {0}},
     {"EXPR_TYPE_MIN", 1, 0, 2, NULL, NULL, "fminf", "fmin", 0, 0, "llvm.smin.", "llvm.umin."},
     {"EXPR_TYPE_MAX", 1, 0, 2, NULL, NULL, "fmaxf", "fmax", 0, 0, "llvm.smax.", "llvm.umax."},
-    NULL
+    NULL, // MSVC does not allow the {} form, so express the sentinel as NULL
 };
 
 static LLVMValueRef _jug_build_fun_call(jug_expression_t *e, const char *name, int num_args, LLVMValueRef *args)
@@ -183,6 +183,9 @@ static LLVMValueRef _jug_build_fun_call(jug_expression_t *e, const char *name, i
                     fname = ina_str_new_fromcstr(f->decl_name_uint_pre);
                     fname = ina_str_catcstr(fname, "u64");
                     break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid data type");
+                    INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
             }
             fun_name = ina_str_cstr(fname);
         }

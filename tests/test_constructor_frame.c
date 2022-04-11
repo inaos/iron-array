@@ -29,7 +29,7 @@ static ina_rc_t test_constructor_frame(iarray_context_t *ctx, iarray_data_type_t
         size *= shape[i];
     }
 
-    double step = (stop - start) / size;
+    double step = (stop - start) / (double) size;
 
     iarray_storage_t xstore = {.urlpath=urlpath, .contiguous=contiguous};
 

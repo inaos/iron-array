@@ -176,7 +176,7 @@ int caterva_blosc_array_repart_chunk(int8_t *rchunk, int64_t rchunksize, void *c
     int32_t d_pshape[CATERVA_MAX_DIM];
     int64_t d_epshape[CATERVA_MAX_DIM];
     int32_t d_spshape[CATERVA_MAX_DIM];
-    int8_t d_ndim = array->ndim;
+    uint8_t d_ndim = array->ndim;
 
     for (int i = 0; i < CATERVA_MAX_DIM; ++i) {
         d_pshape[(CATERVA_MAX_DIM - d_ndim + i) % CATERVA_MAX_DIM] = array->chunkshape[i];
@@ -195,7 +195,7 @@ int caterva_blosc_array_repart_chunk(int8_t *rchunk, int64_t rchunksize, void *c
     int64_t actual_spsize[CATERVA_MAX_DIM];
     for (int32_t sci = 0; sci < array->extchunknitems / array->blocknitems; sci++) {
         /*Calculate the coord. of the block first element */
-        orig[7] = sci % (d_epshape[7] / d_spshape[7]) * d_spshape[7];
+        orig[7] = sci % ((int32_t)d_epshape[7] / d_spshape[7]) * d_spshape[7];
         for (int i = CATERVA_MAX_DIM - 2; i >= 0; i--) {
             orig[i] = (int32_t)(sci % (aux[i]) / (aux[i + 1]) * d_spshape[i]);
         }
@@ -207,7 +207,7 @@ int caterva_blosc_array_repart_chunk(int8_t *rchunk, int64_t rchunksize, void *c
                 actual_spsize[i] = d_spshape[i];
             }
         }
-        int32_t seq_copylen = actual_spsize[7] * array->itemsize;
+        int32_t seq_copylen = (int32_t) (actual_spsize[7] * array->itemsize);
         /* Reorder each line of data from src_b to chunk */
         int64_t ii[CATERVA_MAX_DIM];
         int64_t ncopies = 1;
@@ -280,7 +280,7 @@ static ina_rc_t _iarray_expr_prepare(iarray_expression_t *e)
 
     size_t size;
     IARRAY_RETURN_IF_FAILED(iarray_shape_size(e->out_dtshape, &size));
-    e->nbytes = size * e->typesize;
+    e->nbytes = (int64_t) size * e->typesize;
 
 
     return INA_SUCCESS;
@@ -368,7 +368,7 @@ int prefilter_func(blosc2_prefilter_params *pparams)
         if (i != 0) {
             nblock_ndim[i] = (nblock % strides_block[i-1]) / strides_block[i];
         } else {
-            nblock_ndim[i] = (nblock % (e->out->catarr->extchunknitems / e->out->catarr->blocknitems)) / strides_block[i];
+            nblock_ndim[i] = (nblock % ((int32_t)e->out->catarr->extchunknitems / e->out->catarr->blocknitems)) / strides_block[i];
         }
     }
 
@@ -446,7 +446,7 @@ int prefilter_func(blosc2_prefilter_params *pparams)
         }
     }
 
-    for (int i = 0; i < e->nuser_params; i++) {
+    for (unsigned int i = 0; i < e->nuser_params; i++) {
         eval_pparams.user_params[i] = e->user_params[i];
     }
 
@@ -545,7 +545,7 @@ INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container
         // Eval the expression for this chunk
         e->max_out_len = out_items;  // so as to prevent operating beyond the limits
         eval_pparams.out = out_value.block_pointer;
-        eval_pparams.out_size = out_value.block_size * e->typesize;
+        eval_pparams.out_size = (int32_t)out_value.block_size * e->typesize;
         expr_pparams.out_value = out_value;
 
         int32_t shape[IARRAY_DIMENSION_MAX];
@@ -554,7 +554,7 @@ INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container
 
         strides[ret->dtshape->ndim - 1] = 1;
         for (int i = ret->dtshape->ndim - 1; i >= 0; --i) {
-            shape[i] = out_value.block_shape[i];
+            shape[i] = (int32_t) out_value.block_shape[i];
             start[i] = out_value.elem_index[i];
             if (i != ret->dtshape->ndim - 1)
                 strides[i] = strides[i+1] * shape[i+1];
@@ -588,7 +588,6 @@ INA_API(ina_rc_t) iarray_eval_iterchunk(iarray_expression_t *e, iarray_container
 
 INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container_t *ret, int64_t *out_chunkshape)
 {
-    int64_t nitems_written = 0;
     int nvars = e->nvars;
 
     // Setup a new cparams with a prefilter
@@ -661,7 +660,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_chunkshape, &out_value, true));
 
     // Evaluate the expression for all the chunks in variables
-    int32_t nchunk = 0;
+    int64_t nchunk = 0;
     while (INA_SUCCEED(iarray_iter_write_block_has_next(iter_out))) {
         // The external buffer is needed *inside* the write iterator because
         // this will end as a (realloc'ed) compressed chunk of a final container
@@ -671,7 +670,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
 
         IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter_out, external_buffer, external_buffer_size));
 
-        int32_t out_items = (int32_t)(iter_out->cur_block_size);  // TODO: add a protection against cur_block_size > 2**31
+        // int32_t out_items = (int32_t)(iter_out->cur_block_size);  // TODO: add a protection against cur_block_size > 2**31
 
         // Get the chunk for each variable
         for (int nvar = 0; nvar < nvars; nvar++) {
@@ -712,9 +711,9 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         cctx->prefilter = ctx->prefilter_fn;
         cctx->preparams = ctx->prefilter_params;
         // Do the compression with prefilters
-        int csize = blosc2_compress_ctx(cctx, NULL, ret->catarr->extchunknitems * e->typesize,
+        int csize = blosc2_compress_ctx(cctx, NULL, (int32_t)ret->catarr->extchunknitems * e->typesize,
                                         out_value.block_pointer,
-                                        ret->catarr->extchunknitems * e->typesize + BLOSC_MAX_OVERHEAD);
+                                        (int32_t)ret->catarr->extchunknitems * e->typesize + BLOSC_MAX_OVERHEAD);
         // Reset prefilters to a possible previous value
         cctx->prefilter = old_prefilter;
         cctx->preparams = old_pparams;
@@ -733,7 +732,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         }
 
         iter_out->compressed_chunk_buffer = true;
-        nitems_written += out_items;
         nchunk += 1;
     }
 

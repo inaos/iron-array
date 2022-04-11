@@ -22,7 +22,7 @@ int iarray_random_lognormal_fn(iarray_random_ctx_t *random_ctx,
     double sigma = random_ctx->params[IARRAY_RANDOM_DIST_PARAM_SIGMA];
     if (itemsize == 4) {
         return vsRngLognormal(VSL_RNG_METHOD_LOGNORMAL_BOXMULLER2, stream,
-                              (int) blocksize, (float *) buffer, (float) mu, (float) sigma, 0., 1.);
+                              (int) blocksize, (float *) buffer, (float) mu, (float) sigma, 0.f, 1.f);
     } else {
         return vdRngLognormal(VSL_RNG_METHOD_LOGNORMAL_BOXMULLER2, stream,
                              (int) blocksize, (double *) buffer, mu, sigma, 0, 1);

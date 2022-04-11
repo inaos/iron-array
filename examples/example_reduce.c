@@ -10,7 +10,6 @@
  */
 
 #include <libiarray/iarray.h>
-#include <math.h>
 #include "iarray_private.h"
 
 
@@ -19,7 +18,6 @@ int main(void) {
     ina_stopwatch_t *w;
 
 
-    double elapsed_sec = 0;
     INA_STOPWATCH_NEW(-1, -1, &w);
 
 
@@ -43,10 +41,8 @@ int main(void) {
     dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     dtshape.ndim = ndim;
 
-    int64_t nelem = 1;
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
-        nelem *= shape[i];
     }
 
     int32_t xchunkshape[] = {16, 8, 8, 8};

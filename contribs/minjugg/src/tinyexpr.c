@@ -626,14 +626,12 @@ jug_te_expr *jug_te_compile(jug_udf_registry_t *registry, const char *expression
     next_token(&s);
     jug_te_expr *root = list(&s);
 
-    int padding;
-
     if (s.type != TOK_END) {
         jug_te_free(root);
         if (error) {
             *error = (int) (s.next - s.start);
             if (*error == 0) *error = 1;
-            padding = *error + (int) strlen("Error at ");
+            int padding = *error + (int) strlen("Error at ");
             IARRAY_TRACE1(iarray.error, "Error at %s\n%*s^\n%*s%s%*s", expression, padding - 1, "",
                           padding - 1, "", "Error happens here", 10, "");
         }

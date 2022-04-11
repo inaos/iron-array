@@ -22,10 +22,8 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     iarray_dtshape_t xdtshape;
     xdtshape.dtype = dtype;
     xdtshape.ndim = ndim;
-    int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        size *= shape[i];
     }
 
     iarray_storage_t xstorage;
@@ -402,10 +400,8 @@ static ina_rc_t test_block_iterator_ext_chunk(iarray_context_t *ctx, iarray_data
     iarray_dtshape_t xdtshape;
     xdtshape.dtype = dtype;
     xdtshape.ndim = ndim;
-    int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        size *= shape[i];
     }
 
     iarray_storage_t xstore;
@@ -836,10 +832,8 @@ static ina_rc_t test_block_iterator_not_empty(iarray_context_t *ctx, iarray_data
     iarray_dtshape_t xdtshape;
     xdtshape.dtype = dtype;
     xdtshape.ndim = ndim;
-    int64_t size = 1;
     for (int i = 0; i < ndim; ++i) {
         xdtshape.shape[i] = shape[i];
-        size *= shape[i];
     }
 
     iarray_storage_t xstore;

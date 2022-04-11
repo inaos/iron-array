@@ -30,7 +30,8 @@ typedef struct {
 
 int random_array_init_fn(iarray_constructor_array_info_t *array_info,
                          void **custom_array_info) {
-
+    INA_UNUSED(array_info);
+    INA_UNUSED(custom_array_info);
     return 0;
 }
 
@@ -117,7 +118,7 @@ int random_generator_fn(uint8_t *dest,
 
     iarray_container_t *a = array_info->a;
 
-    uint8_t ndim = array_info->ndim;
+    int8_t ndim = array_info->ndim;
     uint8_t itemsize = array_info->itemsize;
 
     int64_t src_start[CATERVA_MAX_DIM] = {0};
