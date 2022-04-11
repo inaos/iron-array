@@ -286,6 +286,7 @@ static void next_token(state *s) {
 
                         case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:     /* Falls through. */
                         case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:     /* Falls through. */
+                        case TE_CUSTOM:                                                                 /* Falls through. */
                             s->type = var->type;
                             s->function = var->address;
                             break;
