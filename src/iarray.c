@@ -21,14 +21,6 @@
 #include <sched.h>
 #endif
 
-struct iarray_udf_registry_s {
-    jug_udf_registry_t *registry;
-};
-
-struct iarray_udf_library_s {
-    jug_udf_library_t *lib;
-};
-
 static int _ina_inited = 0;
 static int _blosc_inited = 0;
 static int _jug_inited = 0;
@@ -718,7 +710,7 @@ INA_API(ina_rc_t) iarray_udf_library_compile(iarray_udf_library_t *lib,
                 INA_TRACE1(iarray.error, "The data type is invalid");
                 rc = INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
         }
-        INA_FAIL_IF_ERROR(rc); 
+        INA_FAIL_IF_ERROR(rc);
     }
 
     rc = jug_udf_library_compile(lib->lib, name, jrt, num_args, jarg_types, llvm_bc_len, llvm_bc);
