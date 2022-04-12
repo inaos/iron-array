@@ -263,7 +263,7 @@ static void next_token(state *s) {
             if (s->next[0] >= 'a' && s->next[0] <= 'z') {
                 const char *start;
                 start = s->next;
-                while ((s->next[0] >= 'a' && s->next[0] <= 'z') || (s->next[0] >= '0' && s->next[0] <= '9') || (s->next[0] == '_')) s->next++;
+                while ((s->next[0] >= 'a' && s->next[0] <= 'z') || (s->next[0] >= '0' && s->next[0] <= '9') || (s->next[0] == '_') || (s->next[0] == '.')) s->next++;
 
                 const jug_te_variable *var = find_lookup(s, start, (int) (s->next - start));
                 if (!var) var = find_builtin(start, (int) (s->next - start));
@@ -348,6 +348,35 @@ static jug_te_expr *base(state *s) {
     /* <base>      =    <constant> | <variable> | <function-0> {"(" ")"} | <function-1> <power> | <function-X> "(" <expr> {"," <expr>} ")" | "(" <list> ")" */
     jug_te_expr *ret;
     int arity;
+
+    if (s->type == TE_CUSTOM) {
+        jug_udf_function_t *udf_fun = (jug_udf_function_t*) s->context;
+        int arity = jug_udf_function_get_arity(udf_fun);
+
+        ret = new_expr(s->type, 0);
+        ret->function = s->function;
+        ret->parameters[0] = s->context;
+        next_token(s);
+
+        if (s->type != TOK_OPEN) {
+            s->type = TOK_ERROR;
+        } else {
+            int i;
+            for (i = 1; i < arity + 1; i++) {
+                next_token(s);
+                ret->parameters[i] = expr(s);
+                if (s->type != TOK_SEP) {
+                    break;
+                }
+            }
+            if (s->type != TOK_CLOSE || i != arity) {
+                s->type = TOK_ERROR;
+            } else {
+                next_token(s);
+            }
+        }
+        return ret;
+    }
 
     switch (TYPE_MASK(s->type)) {
         case TOK_NUMBER:

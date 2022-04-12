@@ -113,4 +113,7 @@ typedef struct jug_te_variable {
     void *context;
 } jug_te_variable;
 
+INA_API(int) jug_udf_function_get_arity(jug_udf_function_t *f);
+
+
 #endif
