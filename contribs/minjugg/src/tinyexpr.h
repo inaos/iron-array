@@ -34,7 +34,6 @@ typedef struct jug_te_expr {
     int type;
     union {double value; const char *bound; te_expr_type_t function;};
     void *parameters[1];
-    jug_udf_registry_t *registry;
 } jug_te_expr;
 
 

@@ -740,7 +740,7 @@ static LLVMBool _jug_prepare_module(LLVMModuleRef mod,
 #endif
 
     // Create execution engine
-    error = jug_utils_create_execution_engine(mod, &engine);
+    error = jug_utils_create_execution_engine(mod, engine);
     //error = LLVMCreateExecutionEngineForModule(&e->engine, e->mod, &message);
     if (error) {
         fprintf(stderr, "LLVM execution engine creation error: '%s'\n", message);
