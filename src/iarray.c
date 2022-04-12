@@ -600,8 +600,96 @@ INA_API(ina_rc_t) iarray_udf_library_compile(iarray_udf_library_t *lib,
                                              iarray_data_type_t *arg_types,
                                              const char *name)
 {
+    ina_rc_t rc;
     jug_expression_dtype_t jrt;
-    jug_expression_dtype_t *jarg_types;
+    jug_expression_dtype_t *jarg_types = ina_mem_alloc(sizeof(jug_expression_dtype_t)*num_args);
 
-    return jug_udf_library_compile(lib->lib, name, jrt, num_args, jarg_types, llvm_bc_len, llvm_bc);
+    switch (return_type) {
+        case IARRAY_DATA_TYPE_DOUBLE:
+            jrt = JUG_EXPRESSION_DTYPE_DOUBLE;
+            break;
+        case IARRAY_DATA_TYPE_INT64:
+            jrt = JUG_EXPRESSION_DTYPE_SINT64;
+            break;
+        case IARRAY_DATA_TYPE_UINT64:
+            jrt = JUG_EXPRESSION_DTYPE_UINT64;
+            break;
+        case IARRAY_DATA_TYPE_FLOAT:
+            jrt = JUG_EXPRESSION_DTYPE_FLOAT;
+            break;
+        case IARRAY_DATA_TYPE_INT32:
+            jrt = JUG_EXPRESSION_DTYPE_SINT32;
+            break;
+        case IARRAY_DATA_TYPE_UINT32:
+            jrt = JUG_EXPRESSION_DTYPE_UINT32;
+            break;
+        case IARRAY_DATA_TYPE_INT16:
+            jrt = JUG_EXPRESSION_DTYPE_SINT16;
+            break;
+        case IARRAY_DATA_TYPE_UINT16:
+            jrt = JUG_EXPRESSION_DTYPE_UINT16;
+            break;
+        case IARRAY_DATA_TYPE_INT8:
+            jrt = JUG_EXPRESSION_DTYPE_SINT8;
+            break;
+        case IARRAY_DATA_TYPE_UINT8:
+            jrt = JUG_EXPRESSION_DTYPE_UINT8;
+            break;
+        case IARRAY_DATA_TYPE_BOOL:
+            jrt = JUG_EXPRESSION_DTYPE_SINT8;
+            break;
+        default:
+            INA_TRACE1(iarray.error, "The data type is invalid");
+            rc = INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+    }
+    INA_FAIL_IF_ERROR(rc);
+
+    for (int i = 0; i < num_args; i++) {
+        switch (arg_types[i]) {
+            case IARRAY_DATA_TYPE_DOUBLE:
+                jarg_types[i] = JUG_EXPRESSION_DTYPE_DOUBLE;
+                break;
+            case IARRAY_DATA_TYPE_INT64:
+                jarg_types[i] = JUG_EXPRESSION_DTYPE_SINT64;
+                break;
+            case IARRAY_DATA_TYPE_UINT64:
+                jarg_types[i] = JUG_EXPRESSION_DTYPE_UINT64;
+                break;
+            case IARRAY_DATA_TYPE_FLOAT:
+                jarg_types[i] = JUG_EXPRESSION_DTYPE_FLOAT;
+                break;
+            case IARRAY_DATA_TYPE_INT32:
+                jarg_types[i] = JUG_EXPRESSION_DTYPE_SINT32;
+                break;
+            case IARRAY_DATA_TYPE_UINT32:
+                jarg_types[i] = JUG_EXPRESSION_DTYPE_UINT32;
+                break;
+            case IARRAY_DATA_TYPE_INT16:
+                jarg_types[i] = JUG_EXPRESSION_DTYPE_SINT16;
+                break;
+            case IARRAY_DATA_TYPE_UINT16:
+                jarg_types[i] = JUG_EXPRESSION_DTYPE_UINT16;
+                break;
+            case IARRAY_DATA_TYPE_INT8:
+                jarg_types[i] = JUG_EXPRESSION_DTYPE_SINT8;
+                break;
+            case IARRAY_DATA_TYPE_UINT8:
+                jarg_types[i] = JUG_EXPRESSION_DTYPE_UINT8;
+                break;
+            case IARRAY_DATA_TYPE_BOOL:
+                jarg_types[i] = JUG_EXPRESSION_DTYPE_SINT8;
+                break;
+            default:
+                INA_TRACE1(iarray.error, "The data type is invalid");
+                rc = INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+        }
+        INA_FAIL_IF_ERROR(rc); 
+    }
+
+    rc = jug_udf_library_compile(lib->lib, name, jrt, num_args, jarg_types, llvm_bc_len, llvm_bc);
+
+fail:
+    ina_mem_free(jarg_types);
+
+    return rc;
 }

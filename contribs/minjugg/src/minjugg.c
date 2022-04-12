@@ -331,83 +331,115 @@ typedef jug_expression_t* jug_expression_ptr_t;
 #define ARITY(TYPE) ( ((TYPE) & (TE_FUNCTION0 | TE_CLOSURE0)) ? ((TYPE) & 0x00000007) : 0 )
 static LLVMValueRef _jug_expr_compile_expression(jug_expression_t *e, jug_te_expr *n, ina_hashtable_t *params)
 {
-    switch (TYPE_MASK(n->type)) {
-        case TE_CONSTANT: {
-            LLVMValueRef constant;
-            switch (e->dtype) {
-                case JUG_EXPRESSION_DTYPE_DOUBLE:
-                case JUG_EXPRESSION_DTYPE_FLOAT:
-                    constant = LLVMConstReal(e->expr_type, n->value);
-                    break;
-                case JUG_EXPRESSION_DTYPE_UINT8:
-                    constant = LLVMConstInt(e->expr_type, (uint8_t)n->value, 0);
-                    break;
-                case JUG_EXPRESSION_DTYPE_UINT16:
-                    constant = LLVMConstInt(e->expr_type, (uint16_t)n->value, 0);
-                    break;
-                case JUG_EXPRESSION_DTYPE_UINT32:
-                    constant = LLVMConstInt(e->expr_type, (uint32_t)n->value, 0);
-                    break;
-                case JUG_EXPRESSION_DTYPE_UINT64:
-                    constant = LLVMConstInt(e->expr_type, (uint64_t)n->value, 0);
-                    break;
-                case JUG_EXPRESSION_DTYPE_SINT8:
-                    constant = LLVMConstInt(e->expr_type, (int8_t)n->value, 1);
-                    break;
-                case JUG_EXPRESSION_DTYPE_SINT16:
-                    constant = LLVMConstInt(e->expr_type, (int16_t)n->value, 1);
-                    break;
-                case JUG_EXPRESSION_DTYPE_SINT32:
-                    constant = LLVMConstInt(e->expr_type, (int32_t)n->value, 1);
-                    break;
-                case JUG_EXPRESSION_DTYPE_SINT64:
-                    constant = LLVMConstInt(e->expr_type, (int64_t)n->value, 1);
-                    break;
+    if (n->type == TE_CUSTOM) {
+        // - get handle to jug_udf_fun
+        // - loop over arity to collect params with M(i) store LLVMRef's in array
+        // - make sure declaration can happen
+        //for (int i = 0; i < )
+        LLVMValueRef custom_fun;
+        return custom_fun;
+    } else {
+        switch (TYPE_MASK(n->type)) {
+            case TE_CONSTANT: {
+                LLVMValueRef constant;
+                switch (e->dtype) {
+                    case JUG_EXPRESSION_DTYPE_DOUBLE:
+                    case JUG_EXPRESSION_DTYPE_FLOAT:
+                        constant = LLVMConstReal(e->expr_type, n->value);
+                        break;
+                    case JUG_EXPRESSION_DTYPE_UINT8:
+                        constant = LLVMConstInt(e->expr_type, (uint8_t) n->value, 0);
+                        break;
+                    case JUG_EXPRESSION_DTYPE_UINT16:
+                        constant = LLVMConstInt(e->expr_type, (uint16_t) n->value, 0);
+                        break;
+                    case JUG_EXPRESSION_DTYPE_UINT32:
+                        constant = LLVMConstInt(e->expr_type, (uint32_t) n->value, 0);
+                        break;
+                    case JUG_EXPRESSION_DTYPE_UINT64:
+                        constant = LLVMConstInt(e->expr_type, (uint64_t) n->value, 0);
+                        break;
+                    case JUG_EXPRESSION_DTYPE_SINT8:
+                        constant = LLVMConstInt(e->expr_type, (int8_t) n->value, 1);
+                        break;
+                    case JUG_EXPRESSION_DTYPE_SINT16:
+                        constant = LLVMConstInt(e->expr_type, (int16_t) n->value, 1);
+                        break;
+                    case JUG_EXPRESSION_DTYPE_SINT32:
+                        constant = LLVMConstInt(e->expr_type, (int32_t) n->value, 1);
+                        break;
+                    case JUG_EXPRESSION_DTYPE_SINT64:
+                        constant = LLVMConstInt(e->expr_type, (int64_t) n->value, 1);
+                        break;
+                }
+                return constant;
             }
-            return constant;
-        }
-        case TE_VARIABLE: {
-            LLVMValueRef param;
-            ina_hashtable_get_str(params, n->bound, (void**)&param);
-            return param;
-        }
-        case TE_CUSTOM: {
-            // - get handle to jug_udf_fun
-            // - loop over arity to collect params with M(i) store LLVMRef's in array
-            // - make sure declaration can happen 
-            //for (int i = 0; i < )
-            LLVMValueRef custom_fun;
-            return custom_fun;
-        }
-        case TE_FUNCTION0: case TE_FUNCTION1: case TE_FUNCTION2: case TE_FUNCTION3:
-        case TE_FUNCTION4: case TE_FUNCTION5: case TE_FUNCTION6: case TE_FUNCTION7:
-            switch (ARITY(n->type)) {
-            case 0: return TE_FUN(jug_expression_ptr_t, const char*)(e, te_function_map_str[n->function]);
-            case 1: return TE_FUN(jug_expression_ptr_t, LLVMValueRef, const char*)(e, M(0), te_function_map_str[n->function]);
-            case 2: return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, const char*)(e, M(0), M(1), te_function_map_str[n->function]);
-            case 3: return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(e, M(0), M(1), M(2), te_function_map_str[n->function]);
-            case 4: return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(e, M(0), M(1), M(2), M(3), te_function_map_str[n->function]);
-            case 5: return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(e, M(0), M(1), M(2), M(3), M(4), te_function_map_str[n->function]);
-            case 6: return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(e, M(0), M(1), M(2), M(3), M(4), M(5), te_function_map_str[n->function]);
-            case 7: return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(e, M(0), M(1), M(2), M(3), M(4), M(5), M(6), te_function_map_str[n->function]);
-            default: return NULL;
+            case TE_VARIABLE: {
+                LLVMValueRef param;
+                ina_hashtable_get_str(params, n->bound, (void **) &param);
+                return param;
             }
+            case TE_FUNCTION0:
+            case TE_FUNCTION1:
+            case TE_FUNCTION2:
+            case TE_FUNCTION3:
+            case TE_FUNCTION4:
+            case TE_FUNCTION5:
+            case TE_FUNCTION6:
+            case TE_FUNCTION7:
+                switch (ARITY(n->type)) {
+                    case 0:
+                        return TE_FUN(jug_expression_ptr_t, const char *)(e, te_function_map_str[n->function]);
+                    case 1:
+                        return TE_FUN(jug_expression_ptr_t, LLVMValueRef, const char *)(e, M(0), te_function_map_str[n->function]);
+                    case 2:
+                        return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, const char *)(e, M(0), M(1), te_function_map_str[n->function]);
+                    case 3:
+                        return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char *)(e, M(0), M(1), M(2), te_function_map_str[n->function]);
+                    case 4:
+                        return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char *)(e, M(0), M(1), M(2), M(3), te_function_map_str[n->function]);
+                    case 5:
+                        return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char *)(e, M(0), M(1), M(2), M(3), M(4), te_function_map_str[n->function]);
+                    case 6:
+                        return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char *)(e, M(0), M(1), M(2), M(3), M(4), M(5), te_function_map_str[n->function]);
+                    case 7:
+                        return TE_FUN(jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char *)(e, M(0), M(1), M(2), M(3), M(4), M(5), M(6), te_function_map_str[n->function]);
+                    default:
+                        return NULL;
+                }
 
-        case TE_CLOSURE0: case TE_CLOSURE1: case TE_CLOSURE2: case TE_CLOSURE3:
-        case TE_CLOSURE4: case TE_CLOSURE5: case TE_CLOSURE6: case TE_CLOSURE7:
-            switch (ARITY(n->type)) {
-            case 0: return TE_FUN(void*, jug_expression_ptr_t, const char*)(n->parameters[0], e, te_function_map_str[n->function]);
-            case 1: return TE_FUN(void*, jug_expression_ptr_t, LLVMValueRef, const char*)(n->parameters[1], e, M(0), te_function_map_str[n->function]);
-            case 2: return TE_FUN(void*, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[2], e, M(0), M(1), te_function_map_str[n->function]);
-            case 3: return TE_FUN(void*, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[3], e, M(0), M(1), M(2), te_function_map_str[n->function]);
-            case 4: return TE_FUN(void*, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[4], e, M(0), M(1), M(2), M(3), te_function_map_str[n->function]);
-            case 5: return TE_FUN(void*, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[5], e, M(0), M(1), M(2), M(3), M(4), te_function_map_str[n->function]);
-            case 6: return TE_FUN(void*, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[6], e, M(0), M(1), M(2), M(3), M(4), M(5), te_function_map_str[n->function]);
-            case 7: return TE_FUN(void*, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char*)(n->parameters[7], e, M(0), M(1), M(2), M(3), M(4), M(5), M(6), te_function_map_str[n->function]);
-            default: return NULL;
-            }
+            case TE_CLOSURE0:
+            case TE_CLOSURE1:
+            case TE_CLOSURE2:
+            case TE_CLOSURE3:
+            case TE_CLOSURE4:
+            case TE_CLOSURE5:
+            case TE_CLOSURE6:
+            case TE_CLOSURE7:
+                switch (ARITY(n->type)) {
+                    case 0:
+                        return TE_FUN(void *, jug_expression_ptr_t, const char *)(n->parameters[0], e, te_function_map_str[n->function]);
+                    case 1:
+                        return TE_FUN(void *, jug_expression_ptr_t, LLVMValueRef, const char *)(n->parameters[1], e, M(0), te_function_map_str[n->function]);
+                    case 2:
+                        return TE_FUN(void *, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, const char *)(n->parameters[2], e, M(0), M(1), te_function_map_str[n->function]);
+                    case 3:
+                        return TE_FUN(void *, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char *)(n->parameters[3], e, M(0), M(1), M(2), te_function_map_str[n->function]);
+                    case 4:
+                        return TE_FUN(void *, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char *)(n->parameters[4], e, M(0), M(1), M(2), M(3), te_function_map_str[n->function]);
+                    case 5:
+                        return TE_FUN(void *, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char *)(n->parameters[5], e, M(0), M(1), M(2), M(3), M(4), te_function_map_str[n->function]);
+                    case 6:
+                        return TE_FUN(void *, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char *)(n->parameters[6], e, M(0), M(1), M(2), M(3), M(4), M(5), te_function_map_str[n->function]);
+                    case 7:
+                        return TE_FUN(void *, jug_expression_ptr_t, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, LLVMValueRef, const char *)(n->parameters[7], e, M(0), M(1), M(2), M(3), M(4), M(5), M(6), te_function_map_str[n->function]);
+                    default:
+                        return NULL;
+                }
 
-        default: return NULL;
+            default:
+                return NULL;
+        }
     }
 }
 #undef TE_FUN

@@ -819,4 +819,7 @@ INA_API(void) iarray_udf_library_free(iarray_udf_registry_t *registry, iarray_ud
 INA_API(ina_rc_t) iarray_udf_library_compile(iarray_udf_library_t *lib, int llvm_bc_len, const char *llvm_bc, iarray_data_type_t return_type, 
     int num_args, iarray_data_type_t *arg_types, const char *name);
 
+// are the types required to define the decl?
+INA_API(ina_rc_t) iarray_udf_library_lookup(iarray_udf_library_t *lib, const char *name, uint64_t *function_ptr);
+
 #endif
