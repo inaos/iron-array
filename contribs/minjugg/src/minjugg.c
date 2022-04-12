@@ -346,10 +346,8 @@ static LLVMValueRef _jug_expr_compile_expression(jug_expression_t *e, jug_te_exp
         fn_type = LLVMFunctionType(e->expr_type, param_types, udf_fun->num_args, 0);
         LLVMTypeRef ptr_type = LLVMPointerType(fn_type, 0);
         LLVMValueRef ptr_value = LLVMConstInt(LLVMInt64Type(), udf_fun->function_ptr, 0);
-
+        
         LLVMValueRef fun_ptr = LLVMBuildIntToPtr(e->builder, ptr_value, ptr_type, "udf_fun_ptr");
-
-        // - loop over arity to collect params with M(i) store LLVMRef's in array
         LLVMValueRef *param_values = (LLVMValueRef *) ina_mem_alloc(sizeof(LLVMValueRef) * udf_fun->num_args);
         for (int i = 0; i < udf_fun->num_args; ++i) {
             param_values[i] = M(i + 1);
