@@ -118,7 +118,7 @@ INA_API(ina_rc_t) iarray_linspace(iarray_context_t *ctx,
 
     iarray_constructor_element_params_t elem_params = IARRAY_CONSTRUCTOR_ELEMENT_PARAMS_DEFAULT;
     elem_params.item_fn = iarray_constructor_linspace_fn;
-    elem_params.constructor_info =  &linspace_info;
+    elem_params.constructor_info = &linspace_info;
 
     return iarray_constructor_element(ctx, dtshape, &elem_params, storage, container);
 }
