@@ -332,13 +332,36 @@ typedef jug_expression_t* jug_expression_ptr_t;
 static LLVMValueRef _jug_expr_compile_expression(jug_expression_t *e, jug_te_expr *n, ina_hashtable_t *params)
 {
     if (n->type == TE_CUSTOM) {
-        // - get handle to jug_udf_fun
+        jug_udf_function_t *udf_fun = (jug_udf_function_t *) n->parameters[0];
+        
+        LLVMTypeRef fn_type = NULL;
+        LLVMTypeRef *param_types = NULL;
+        LLVMValueRef custom_fun = NULL;
+
+        param_types = (LLVMTypeRef *) ina_mem_alloc(sizeof(LLVMTypeRef) * udf_fun->num_args);
+        for (int i = 0; i < udf_fun->num_args; ++i) {
+            param_types[i] = e->expr_type;
+        }
+        
+        fn_type = LLVMFunctionType(e->expr_type, param_types, udf_fun->num_args, 0);
+        LLVMTypeRef ptr_type = LLVMPointerType(fn_type, 0);
+        LLVMValueRef ptr_value = LLVMConstInt(LLVMInt64Type(), udf_fun->function_ptr, 0);
+
+        LLVMValueRef fun_ptr = LLVMBuildIntToPtr(e->builder, ptr_value, ptr_type, "udf_fun_ptr");
+
         // - loop over arity to collect params with M(i) store LLVMRef's in array
-        // - make sure declaration can happen
-        //for (int i = 0; i < )
-        LLVMValueRef custom_fun;
+        LLVMValueRef *param_values = (LLVMValueRef *) ina_mem_alloc(sizeof(LLVMValueRef) * udf_fun->num_args);
+        for (int i = 0; i < udf_fun->num_args; ++i) {
+            param_values[i] = M(i + 1);
+        }
+        custom_fun = LLVMBuildCall(e->builder, fun_ptr, param_values, udf_fun->num_args, "call udf_fun_ptr");
+        
+        ina_mem_free(param_types);
+        ina_mem_free(param_values);
+
         return custom_fun;
-    } else {
+    } 
+    else {
         switch (TYPE_MASK(n->type)) {
             case TE_CONSTANT: {
                 LLVMValueRef constant;
@@ -925,7 +948,7 @@ static ina_rc_t _jug_udf_compile(LLVMModuleRef *mod,
     ina_rc_t rc = INA_SUCCESS;
 
     // Read the IR file into a buffer
-    buffer = LLVMCreateMemoryBufferWithMemoryRange(llvm_bc, llvm_bc_len, "udf", 0);
+    buffer = LLVMCreateMemoryBufferWithMemoryRange(llvm_bc, llvm_bc_len, name, 0);
 
     // now create our module
     *context = LLVMContextCreate();
@@ -968,12 +991,13 @@ INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
     udf_fun->num_args = num_args;
     udf_fun->arg_types = arg_types;
     udf_fun->return_type = return_type;
+    udf_fun->name = ina_str_new_fromcstr(name);
 
-    if (INA_FAILED(_jug_udf_compile(&udf_fun->mod, &udf_fun->engine, llvm_bc_len, llvm_bc, ina_str_cstr(name), &udf_fun->context, &udf_fun->function_ptr))) {
+    if (INA_FAILED(_jug_udf_compile(&udf_fun->mod, &udf_fun->engine, llvm_bc_len, llvm_bc, name, &udf_fun->context, &udf_fun->function_ptr))) {
         return ina_err_get_rc();
     }
 
-    INA_MUST_SUCCEED(ina_hashtable_set_str(lib->funcs, ina_str_cstr(name), udf_fun));
+    INA_MUST_SUCCEED(ina_hashtable_set_str(lib->funcs, name, udf_fun));
 
     ina_str_free(fun_name);
 
@@ -992,25 +1016,37 @@ INA_API(ina_rc_t) jug_udf_library_lookup_function(jug_udf_registry_t *registry,
         return INA_ERR_INVALID_ARGUMENT;
     }
 
+    size_t fdecl_cnt = 0;
+    ina_str_t *fdecl = ina_str_split(ina_str_cstr(parts[1]), "(", &fdecl_cnt);
+
+    if (fdecl_cnt != 2) {
+        ina_str_split_free_tokens(fdecl);
+        ina_str_split_free_tokens(parts);
+        return INA_ERR_INVALID_ARGUMENT;
+    }
+
     jug_udf_library_t *library = NULL;
     ina_hashtable_get_str(registry->libs, ina_str_cstr(parts[0]), &library);
     if (library == NULL) {
         *function = NULL;
         ina_str_split_free_tokens(parts);
+        ina_str_split_free_tokens(fdecl);
         return INA_ERR_INVALID_ARGUMENT;
     }
 
-    jug_udf_function_t *func;
-    ina_hashtable_get_str(library->funcs, ina_str_cstr(parts[1]), &func);
+    jug_udf_function_t *func = NULL;
+    ina_hashtable_get_str(library->funcs, ina_str_cstr(fdecl[0]), &func);
     if (func == NULL) {
         *function = NULL;
         ina_str_split_free_tokens(parts);
+        ina_str_split_free_tokens(fdecl);
         return INA_ERR_INVALID_ARGUMENT;
     }
 
     *function = func;
 
     ina_str_split_free_tokens(parts);
+    ina_str_split_free_tokens(fdecl);
 
     return INA_SUCCESS;
 }
@@ -1050,4 +1086,9 @@ INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
     *function_addr = LLVMGetFunctionAddress(e->engine, "expr_func");
 
     return INA_SUCCESS;
+}
+
+INA_API(int) jug_udf_function_get_arity(jug_udf_function_t *f)
+{
+    return f->num_args;
 }

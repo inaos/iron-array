@@ -593,7 +593,7 @@ INA_API(ina_rc_t) iarray_udf_library_compile(iarray_udf_library_t *lib,
                                              iarray_data_type_t *arg_types,
                                              const char *name)
 {
-    ina_rc_t rc;
+    ina_rc_t rc = INA_SUCCESS;
     jug_expression_dtype_t jrt;
     jug_expression_dtype_t *jarg_types = ina_mem_alloc(sizeof(jug_expression_dtype_t)*num_args);
 
