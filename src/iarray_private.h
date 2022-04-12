@@ -13,13 +13,14 @@
 #define _IARRAY_PRIVATE_H_
 
 #include <libiarray/iarray.h>
-#include "btune/iabtune.h"
 
 /* Dependencies */
 #include <blosc2.h>
 #include <caterva.h>
 #include <caterva_utils.h>
 #include <mkl.h>
+#include <minjugg.h>
+#include "btune/iabtune.h"
 
  /* Sizes */
 #define _IARRAY_SIZE_KB  (1024)
@@ -82,6 +83,14 @@ struct iarray_context_s {
     blosc2_prefilter_params *prefilter_params;
     /* FIXME: track expressions -> list */
     iarray_udf_registry_t *udf_registry;
+};
+
+struct iarray_udf_registry_s {
+    jug_udf_registry_t *registry;
+};
+
+struct iarray_udf_library_s {
+    jug_udf_library_t *lib;
 };
 
 typedef struct _iarray_container_store_s {

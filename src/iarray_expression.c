@@ -320,7 +320,11 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         jug_vars[nvar].name = e->vars[nvar].var;
     }
 
-    IARRAY_RETURN_IF_FAILED(jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars,
+    jug_udf_registry_t *registry = NULL;
+    if (e->ctx->udf_registry != NULL) {
+        registry = e->ctx->udf_registry->registry;
+    }
+    IARRAY_RETURN_IF_FAILED(jug_expression_compile(e->jug_expr, registry, ina_str_cstr(e->expr), e->nvars,
                                                    jug_vars, &e->jug_expr_func));
 
     return INA_SUCCESS;
