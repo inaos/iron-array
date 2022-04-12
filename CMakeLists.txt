@@ -30,6 +30,8 @@ if (MSVC)
     add_compile_options(/wd4201)  # TODO: gix this (warning C4201: nonstandard extension used: nameless struct/union)
     add_compile_options(/wd4232)  # TODO: fix this (warning C4232: nonstandard extension used)
     add_compile_options(/wd4127)  # TODO: fix this (warning C4127: conditional expression is constant)
+else()
+    add_compile_options(-Wall -Wextra)
 endif()
 
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/inac.cmake")
