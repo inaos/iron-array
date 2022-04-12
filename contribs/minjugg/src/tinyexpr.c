@@ -88,6 +88,7 @@ static jug_te_expr *new_expr(const int type, const jug_te_expr *parameters[]) {
     }
     ret->type = type;
     ret->bound = 0;
+
     return ret;
 }
 
@@ -655,7 +656,6 @@ jug_te_expr *jug_te_compile(jug_udf_registry_t *registry, ina_mempool_t *variabl
     } else {
         //optimize(root);
         if (error) *error = 0;
-        root->registry = registry;
         return root;
     }
 }
