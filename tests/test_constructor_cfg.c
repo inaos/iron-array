@@ -136,3 +136,19 @@ INA_TEST_FIXTURE(constructor_cfg, 5_ui)
 
     INA_TEST_ASSERT_SUCCEED(test_cfg(data->ctx, dtype, ndim, shape, cshape, bshape, false, NULL));
 }
+
+INA_TEST_FIXTURE(constructor_cfg, 2_f)
+{
+    iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
+    cfg.compression_codec = IARRAY_COMPRESSION_ZFP_FIXED_RATE;
+    cfg.meta = 50;
+    INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
+
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
+    int8_t ndim = 2;
+    int64_t shape[] = {15, 1112};
+    int64_t cshape[] = {4, 231};
+    int64_t bshape[] = {2, 53};
+
+    INA_TEST_ASSERT_SUCCEED(test_cfg(data->ctx, dtype, ndim, shape, cshape, bshape, true, NULL));
+}
