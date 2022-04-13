@@ -56,7 +56,7 @@ typedef struct iarray_eval_pparams_s {
 
 typedef int (*iarray_eval_fn)(iarray_eval_pparams_t *params);
 
-INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_data_type_t data_type, iarray_expression_t **e) {
+INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_udf_registry_t *registry, iarray_data_type_t data_type, iarray_expression_t **e) {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(e);
     *e = ina_mem_alloc(sizeof(iarray_expression_t));
@@ -102,6 +102,7 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_data_type_t data
         default:
             return INA_ERR_INVALID_ARGUMENT;
     }
+    ctx->udf_registry = registry; // FIXME: This is a temporary fix for the Python wrapper
     jug_expression_new(&(*e)->jug_expr, dtype);
     return INA_SUCCESS;
 }

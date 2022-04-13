@@ -751,7 +751,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr, v
 INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr);
 
 /* Expressions */
-INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_data_type_t dtype, iarray_expression_t **e);
+INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_udf_registry_t *registry, iarray_data_type_t dtype, iarray_expression_t **e);
 INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e);
 
 INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val);
