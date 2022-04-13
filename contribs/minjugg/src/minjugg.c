@@ -1001,6 +1001,10 @@ INA_API(ina_rc_t) jug_udf_library_lookup_function(jug_udf_registry_t *registry,
                                                   const char *name, 
                                                   jug_udf_function_t **function) 
 {
+    if (registry == NULL) {
+        return INA_ERR_INVALID_ARGUMENT;
+    }
+
     size_t part_cnt = 0;
     ina_str_t *parts = ina_str_split(name, ".", &part_cnt);
 
@@ -1066,7 +1070,7 @@ INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
     jug_te_expr *expression = jug_te_compile(r, e->variable_mempool, expr_str, te_vars, num_vars, &parse_error);
     if (parse_error) {
         IARRAY_TRACE1(iarray.error, "Error parsing the expression with juggernaut");
-        IARRAY_RETURN_IF_FAILED(INA_ERR_INVALID_ARGUMENT);
+        return INA_ERR_INVALID_ARGUMENT;
     }
     _jug_expr_compile_function(e, "expr_func", expression, num_vars, te_vars);
     jug_te_free(expression);
