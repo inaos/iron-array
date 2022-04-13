@@ -686,3 +686,16 @@ fail:
 
     return rc;
 }
+
+INA_API(ina_rc_t) iarray_udf_library_lookup(iarray_udf_registry_t *registry, const char *full_name, uint64_t *function_ptr)
+{
+    jug_udf_function_t *udf_fun;
+
+    if (INA_FAILED(jug_udf_library_lookup_function(registry, full_name, &udf_fun))) {
+        return ina_err_get_rc();
+    }
+
+    *function_ptr = jug_udf_function_get_function_ptr(udf_fun);
+
+    return INA_SUCCESS;
+}

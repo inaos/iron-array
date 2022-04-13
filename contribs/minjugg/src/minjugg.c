@@ -1090,3 +1090,8 @@ INA_API(int) jug_udf_function_get_arity(jug_udf_function_t *f)
 {
     return f->num_args;
 }
+
+INA_API(uint64_t) jug_udf_function_get_function_ptr(jug_udf_function_t *f)
+{
+    return f->function_ptr;
+}
