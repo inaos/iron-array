@@ -309,12 +309,12 @@ static jug_te_expr *base(state *s) {
     int arity;
 
     if (s->type == TE_CUSTOM) {
-        if (s->context == NULL) {
+        jug_udf_function_t *udf_fun = (jug_udf_function_t *) s->context;
+        if (udf_fun == NULL) {
             ret = new_expr(0, 0);
             s->type = TOK_ERROR;
-            ret->value = NAN;
+            return ret;
         }
-        jug_udf_function_t *udf_fun = (jug_udf_function_t*) s->context;
         int cust_arity = jug_udf_function_get_arity(udf_fun);
 
         ret = new_expr(s->type, 0);
