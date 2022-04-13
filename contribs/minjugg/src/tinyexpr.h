@@ -22,6 +22,19 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+/*
+ * MODIFICATIONS:
+ *
+ * Copyright ironArray SL 2021.
+ *
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information of ironArray SL
+ * ("Confidential Information"). You shall not disclose such Confidential
+ * Information and shall use it only in accordance with the terms of the license agreement.
+ *
+ */
+
 #ifndef __JUG_TINYEXPR_H__
 #define __JUG_TINYEXPR_H__
 
@@ -68,15 +81,10 @@ static const char te_function_map_str[][32] = {
     "EXPR_TYPE_CEIL",
     "EXPR_TYPE_COS",
     "EXPR_TYPE_COSH",
-    "EXPR_TYPE_E",
     "EXPR_TYPE_EXP",
-    "EXPR_TYPE_FAC",
     "EXPR_TYPE_FLOOR",
     "EXPR_TYPE_LOG",
     "EXPR_TYPE_LOG10",
-    "EXPR_TYPE_NCR",
-    "EXPR_TYPE_NPR",
-    "EXPR_TYPE_PI",
     "EXPR_TYPE_POW",
     "EXPR_TYPE_SIN",
     "EXPR_TYPE_SINH",
