@@ -772,6 +772,7 @@ INA_API(ina_rc_t) iarray_get_cfg(iarray_context_t *ctx,
 
     cfg->compression_level = c->catarr->sc->clevel;
     cfg->compression_codec = c->catarr->sc->compcode;
+    cfg->meta = c->catarr->sc->compcode_meta;
 
     cfg->use_dict = false;
     cfg->btune = ctx->cfg->btune;
