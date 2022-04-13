@@ -351,7 +351,7 @@ static jug_te_expr *base(state *s) {
 
     if (s->type == TE_CUSTOM) {
         jug_udf_function_t *udf_fun = (jug_udf_function_t*) s->context;
-        int arity = jug_udf_function_get_arity(udf_fun);
+        int cust_arity = jug_udf_function_get_arity(udf_fun);
 
         ret = new_expr(s->type, 0);
         ret->function = s->function;
@@ -362,14 +362,14 @@ static jug_te_expr *base(state *s) {
             s->type = TOK_ERROR;
         } else {
             int i;
-            for (i = 1; i < arity + 1; i++) {
+            for (i = 1; i < cust_arity + 1; i++) {
                 next_token(s);
                 ret->parameters[i] = expr(s);
                 if (s->type != TOK_SEP) {
                     break;
                 }
             }
-            if (s->type != TOK_CLOSE || i != arity) {
+            if (s->type != TOK_CLOSE || i != cust_arity) {
                 s->type = TOK_ERROR;
             } else {
                 next_token(s);
