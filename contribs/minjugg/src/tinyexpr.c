@@ -310,8 +310,9 @@ static jug_te_expr *base(state *s) {
 
     if (s->type == TE_CUSTOM) {
         if (s->context == NULL) {
+            ret = new_expr(0, 0);
             s->type = TOK_ERROR;
-            return ret;
+            ret->value = NAN;
         }
         jug_udf_function_t *udf_fun = (jug_udf_function_t*) s->context;
         int cust_arity = jug_udf_function_get_arity(udf_fun);
