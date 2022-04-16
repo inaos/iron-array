@@ -67,6 +67,7 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_data_type_t data
     (*e)->nvars = 0;
     (*e)->max_out_len = 0;   // helper for leftovers
     (*e)->nuser_params = 0;
+    (*e)->udf_registry = NULL;
     ina_mem_set(&(*e)->vars, 0, sizeof(_iarray_jug_var_t) * IARRAY_EXPR_OPERANDS_MAX);
     // map dtype to JUG type
     jug_expression_dtype_t dtype;
