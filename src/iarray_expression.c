@@ -56,7 +56,7 @@ typedef struct iarray_eval_pparams_s {
 
 typedef int (*iarray_eval_fn)(iarray_eval_pparams_t *params);
 
-INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_udf_registry_t *registry, iarray_data_type_t data_type, iarray_expression_t **e) {
+INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_data_type_t data_type, iarray_expression_t **e) {
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(e);
     *e = ina_mem_alloc(sizeof(iarray_expression_t));
@@ -102,7 +102,6 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_udf_registry_t *
         default:
             return INA_ERR_INVALID_ARGUMENT;
     }
-    ctx->udf_registry = registry; // FIXME: This is a temporary fix for the Python wrapper
     jug_expression_new(&(*e)->jug_expr, dtype);
     return INA_SUCCESS;
 }
@@ -322,8 +321,8 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
     }
 
     jug_udf_registry_t *registry = NULL;
-    if (e->ctx->udf_registry != NULL) {
-        registry = e->ctx->udf_registry->registry;
+    if (e->udf_registry != NULL) {
+        registry = ((iarray_udf_registry_t*)(e->udf_registry))->registry;
     }
     IARRAY_RETURN_IF_FAILED(jug_expression_compile(e->jug_expr, registry, ina_str_cstr(e->expr), e->nvars,
                                                    jug_vars, &e->jug_expr_func));

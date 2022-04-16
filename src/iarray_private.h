@@ -81,8 +81,6 @@ struct iarray_context_s {
     void *expr_vars;
     blosc2_prefilter_fn prefilter_fn;
     blosc2_prefilter_params *prefilter_params;
-    /* FIXME: track expressions -> list */
-    iarray_udf_registry_t *udf_registry;
 };
 
 struct iarray_udf_registry_s {
