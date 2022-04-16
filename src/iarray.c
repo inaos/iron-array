@@ -374,7 +374,6 @@ INA_API(ina_rc_t) iarray_context_new(iarray_config_t *cfg, iarray_context_t **ct
 
     (*ctx)->prefilter_fn = NULL;
     (*ctx)->prefilter_params = NULL;
-    (*ctx)->udf_registry = NULL;
 
     return INA_SUCCESS;
 }

@@ -324,6 +324,7 @@ typedef struct iarray_expression_s {
     _iarray_jug_var_t vars[IARRAY_EXPR_OPERANDS_MAX];
     iarray_user_param_t user_params[IARRAY_EXPR_USER_PARAMS_MAX];  // the input user parameters
     unsigned int nuser_params;
+    void *udf_registry;  // we want to keep this opaque
 } iarray_expression_t;
 
 typedef struct iarray_udf_registry_s iarray_udf_registry_t;
@@ -751,7 +752,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr, v
 INA_API(ina_rc_t) iarray_iter_write_block_has_next(iarray_iter_write_block_t *itr);
 
 /* Expressions */
-INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_udf_registry_t *registry, iarray_data_type_t dtype, iarray_expression_t **e);
+INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_data_type_t dtype, iarray_expression_t **e);
 INA_API(void) iarray_expr_free(iarray_context_t *ctx, iarray_expression_t **e);
 
 INA_API(ina_rc_t) iarray_expr_bind(iarray_expression_t *e, const char *var, iarray_container_t *val);
