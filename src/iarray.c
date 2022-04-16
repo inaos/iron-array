@@ -546,24 +546,20 @@ ina_rc_t iarray_set_dtype_size(iarray_dtshape_t *dtshape)
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) iarray_udf_registry_new(iarray_context_t *ctx,
-                                          iarray_udf_registry_t **udf_registry)
+INA_API(ina_rc_t) iarray_udf_registry_new(iarray_udf_registry_t **udf_registry)
 {
     *udf_registry = (iarray_udf_registry_t*)ina_mem_alloc(sizeof(iarray_udf_registry_t));
     if (INA_FAILED(jug_udf_registry_new(&(*udf_registry)->registry))) {
         return ina_err_get_rc();
     }
-    ctx->udf_registry = *udf_registry;
     return INA_SUCCESS;
 }
 
-INA_API(void) iarray_udf_registry_free(iarray_context_t *ctx,
-                                       iarray_udf_registry_t **udf_registry)
+INA_API(void) iarray_udf_registry_free(iarray_udf_registry_t **udf_registry)
 {
     INA_VERIFY_FREE(udf_registry);
     jug_udf_registry_free(&(*udf_registry)->registry);
     INA_MEM_FREE(*udf_registry);
-    ctx->udf_registry = NULL;
 }
 
 INA_API(ina_rc_t)iarray_udf_library_new(iarray_udf_registry_t *registry,
@@ -582,7 +578,8 @@ INA_API(void) iarray_udf_library_free(iarray_udf_registry_t *registry, iarray_ud
     INA_VERIFY_FREE(lib);
     jug_udf_library_free(registry->registry, &(*lib)->lib);
     INA_MEM_FREE(*lib);
-    registry->registry = NULL;
+    // @stoni: is this really necessary?
+    //registry->registry = NULL;
 }
 
 INA_API(ina_rc_t) iarray_udf_library_compile(iarray_udf_library_t *lib,
