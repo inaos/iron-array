@@ -69,6 +69,8 @@ static char *_jug_def_triple = NULL;
 static LLVMTargetDataRef _jug_data_ref = NULL;
 static LLVMTargetMachineRef _jug_tm_ref = NULL;
 
+static jug_udf_registry_t *udf_registry = NULL;
+
 typedef LLVMValueRef(*_jug_llvm_fun_p_one_arg_t)(LLVMBuilderRef builder, LLVMValueRef arg, const char *name);
 typedef LLVMValueRef(*_jug_llvm_fun_p_two_arg_t)(LLVMBuilderRef builder, LLVMValueRef lhs, LLVMValueRef rhs, const char *name);
 
@@ -328,7 +330,7 @@ static LLVMValueRef _jug_expr_compile_expression(jug_expression_t *e, jug_te_exp
 {
     if (n->type == TE_CUSTOM) {
         jug_udf_function_t *udf_fun = (jug_udf_function_t *) n->parameters[0];
-        
+
         LLVMTypeRef fn_type = NULL;
         LLVMTypeRef *param_types = NULL;
         LLVMValueRef custom_fun = NULL;
@@ -337,23 +339,23 @@ static LLVMValueRef _jug_expr_compile_expression(jug_expression_t *e, jug_te_exp
         for (int i = 0; i < udf_fun->num_args; ++i) {
             param_types[i] = e->expr_type;
         }
-        
+
         fn_type = LLVMFunctionType(e->expr_type, param_types, udf_fun->num_args, 0);
         LLVMTypeRef ptr_type = LLVMPointerType(fn_type, 0);
         LLVMValueRef ptr_value = LLVMConstInt(LLVMInt64Type(), udf_fun->function_ptr, 0);
-        
+
         LLVMValueRef fun_ptr = LLVMBuildIntToPtr(e->builder, ptr_value, ptr_type, "udf_fun_ptr");
         LLVMValueRef *param_values = (LLVMValueRef *) ina_mem_alloc(sizeof(LLVMValueRef) * udf_fun->num_args);
         for (int i = 0; i < udf_fun->num_args; ++i) {
             param_values[i] = M(i + 1);
         }
         custom_fun = LLVMBuildCall(e->builder, fun_ptr, param_values, udf_fun->num_args, "call udf_fun_ptr");
-        
+
         ina_mem_free(param_types);
         ina_mem_free(param_values);
 
         return custom_fun;
-    } 
+    }
     else {
         switch (TYPE_MASK(n->type)) {
             case TE_CONSTANT: {
@@ -768,6 +770,32 @@ exit:
     return error;
 }
 
+INA_API(ina_rc_t) jug_udf_registry_new(jug_udf_registry_t **udf_registry)
+{
+    *udf_registry = (jug_udf_registry_t*)ina_mem_alloc(sizeof(jug_udf_registry_t));
+    ina_mem_set(*udf_registry, 0, sizeof(jug_udf_registry_t));
+
+    INA_FAIL_IF_ERROR(ina_hashtable_new(INA_HASHTABLE_STR_KEY,
+                                        INA_HASH32_LOOKUP3,
+                                        INA_HASHTABLE_TYPE_DEFAULT,
+                                        INA_HASHTABLE_GROW_DEFAULT,
+                                        INA_HASHTABLE_SHRINK_DEFAULT,
+                                        INA_HASHTABLE_DEFAULT_CAPACITY,
+                                        INA_HASHTABLE_CF_DEFAULT, &(*udf_registry)->libs));
+
+    return INA_SUCCESS;
+
+fail:
+    jug_udf_registry_free(udf_registry);
+    return ina_err_get_rc();
+}
+
+INA_API(void) jug_udf_registry_free(jug_udf_registry_t **udf_registry)
+{
+    INA_VERIFY_FREE(udf_registry);
+    ina_hashtable_free(&(*udf_registry)->libs);
+    INA_MEM_FREE_SAFE(*udf_registry);
+}
 
 INA_API(ina_rc_t) jug_init()
 {
@@ -806,6 +834,11 @@ INA_API(ina_rc_t) jug_init()
             LLVMCodeModelJITDefault);
     _jug_data_ref = LLVMCreateTargetDataLayout(_jug_tm_ref);
 
+    udf_registry = (jug_udf_registry_t*)ina_mem_alloc(sizeof(jug_udf_registry_t));
+    if (INA_FAILED(jug_udf_registry_new(&udf_registry))) {
+        return ina_err_get_rc();
+    }
+
     /* This is required to make sure Intel SVML is being linked and loaded properly */
     double wrkarnd[2] = { 0.1, 0.2 };
     __svml_sin2(wrkarnd);
@@ -815,7 +848,10 @@ INA_API(ina_rc_t) jug_init()
 
 INA_API(void) jug_destroy()
 {
-// FIX: the code below makes some tests to fail.  Commenting this out for the time being.
+   // FIXME: Add code to clear the libraries (if still registered) as well
+   jug_udf_registry_free(&udf_registry);
+
+// FIXME: the code below makes some tests to fail.  Commenting this out for the time being.
 //    if (_jug_tm_ref != NULL) {
 //        LLVMDisposeTargetMachine(_jug_tm_ref);
 //        _jug_tm_ref = NULL;
@@ -868,40 +904,12 @@ INA_API(void) jug_expression_free(jug_expression_t **expr)
     INA_MEM_FREE_SAFE(*expr);
 }
 
-INA_API(ina_rc_t) jug_udf_registry_new(jug_udf_registry_t **udf_registry) 
-{
-    *udf_registry = (jug_udf_registry_t*)ina_mem_alloc(sizeof(jug_udf_registry_t));
-    ina_mem_set(*udf_registry, 0, sizeof(jug_udf_registry_t));
-
-    INA_FAIL_IF_ERROR(ina_hashtable_new(INA_HASHTABLE_STR_KEY,
-                      INA_HASH32_LOOKUP3,
-                      INA_HASHTABLE_TYPE_DEFAULT,
-                      INA_HASHTABLE_GROW_DEFAULT,
-                      INA_HASHTABLE_SHRINK_DEFAULT,
-                      INA_HASHTABLE_DEFAULT_CAPACITY,
-                      INA_HASHTABLE_CF_DEFAULT, &(*udf_registry)->libs));
-
-    return INA_SUCCESS;
-
-fail:
-    jug_udf_registry_free(udf_registry);
-    return ina_err_get_rc();
-}
-
-INA_API(void) jug_udf_registry_free(jug_udf_registry_t **udf_registry)
-{
-    INA_VERIFY_FREE(udf_registry);
-    ina_hashtable_free(&(*udf_registry)->libs);
-    INA_MEM_FREE_SAFE(*udf_registry);
-}
-
-INA_API(ina_rc_t) jug_udf_library_new(jug_udf_registry_t *registry, 
-                                      const char *name, 
+INA_API(ina_rc_t) jug_udf_library_new(const char *name,
                                       jug_udf_library_t **udf_lib)
 {
-    *udf_lib = (jug_udf_library_t *) ina_mem_alloc(sizeof(jug_udf_registry_t));
+    *udf_lib = (jug_udf_library_t *) ina_mem_alloc(sizeof(jug_udf_library_t));
     (*udf_lib)->name = ina_str_new_fromcstr(name);
-    
+
     INA_FAIL_IF_ERROR(ina_hashtable_new(INA_HASHTABLE_STR_KEY,
                                         INA_HASH32_LOOKUP3,
                                         INA_HASHTABLE_TYPE_DEFAULT,
@@ -909,20 +917,19 @@ INA_API(ina_rc_t) jug_udf_library_new(jug_udf_registry_t *registry,
                                         INA_HASHTABLE_SHRINK_DEFAULT,
                                         INA_HASHTABLE_DEFAULT_CAPACITY,
                                         INA_HASHTABLE_CF_DEFAULT, &(*udf_lib)->funcs));
-
-    ina_hashtable_set_str(registry->libs, name, *udf_lib);
+    INA_FAIL_IF_ERROR(ina_hashtable_set_str(udf_registry->libs, name, *udf_lib));
 
     return INA_SUCCESS;
 
 fail:
-    jug_udf_library_free(registry, udf_lib);
+    jug_udf_library_free(udf_lib);
     return ina_err_get_rc();
 }
 
-INA_API(void) jug_udf_library_free(jug_udf_registry_t *registry, jug_udf_library_t **jug_lib)
+INA_API(void) jug_udf_library_free(jug_udf_library_t **jug_lib)
 {
     INA_VERIFY_FREE(jug_lib);
-    ina_hashtable_remove_str(registry->libs, (*jug_lib)->name, jug_lib);
+    ina_hashtable_remove_str(udf_registry->libs, (*jug_lib)->name, jug_lib);
     ina_str_free((*jug_lib)->name);
     ina_hashtable_free(&(*jug_lib)->funcs);
     INA_MEM_FREE_SAFE(*jug_lib);
@@ -974,7 +981,7 @@ INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
                                           int num_args,
                                           jug_expression_dtype_t *arg_types,
                                           int llvm_bc_len,
-                                          const char *llvm_bc) 
+                                          const char *llvm_bc)
 {
     jug_udf_function_t *udf_fun = (jug_udf_function_t *) ina_mem_alloc(sizeof(jug_udf_function_t));
     ina_str_t fun_name = ina_str_sprintf("%s.%s", ina_str_cstr(lib->name), name);
@@ -997,11 +1004,10 @@ INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) jug_udf_library_lookup_function(jug_udf_registry_t *registry, 
-                                                  const char *name, 
-                                                  jug_udf_function_t **function) 
+INA_API(ina_rc_t) jug_udf_library_lookup_function(const char *name,
+                                                  jug_udf_function_t **function)
 {
-    if (registry == NULL) {
+    if (udf_registry == NULL) {
         return INA_ERR_INVALID_ARGUMENT;
     }
 
@@ -1023,7 +1029,7 @@ INA_API(ina_rc_t) jug_udf_library_lookup_function(jug_udf_registry_t *registry,
     }
 
     jug_udf_library_t *library = NULL;
-    ina_hashtable_get_str(registry->libs, ina_str_cstr(parts[0]), &library);
+    ina_hashtable_get_str(udf_registry->libs, ina_str_cstr(parts[0]), &library);
     if (library == NULL) {
         *function = NULL;
         ina_str_split_free_tokens(parts);
@@ -1058,7 +1064,6 @@ INA_API(ina_rc_t) jug_udf_compile(jug_expression_t *e,
 }
 
 INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
-                                         jug_udf_registry_t *r,
                                          const char *expr_str,
                                          int num_vars,
                                          void *vars,
@@ -1067,7 +1072,7 @@ INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
     int parse_error = 0;
 
     jug_te_variable *te_vars = (jug_te_variable*)vars;
-    jug_te_expr *expression = jug_te_compile(r, e->variable_mempool, expr_str, te_vars, num_vars, &parse_error);
+    jug_te_expr *expression = jug_te_compile(udf_registry, e->variable_mempool, expr_str, te_vars, num_vars, &parse_error);
     if (parse_error) {
         IARRAY_TRACE1(iarray.error, "Error parsing the expression with juggernaut");
         return INA_ERR_INVALID_ARGUMENT;

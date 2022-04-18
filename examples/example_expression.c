@@ -164,10 +164,9 @@ int main(void) {
     INA_MEM_FREE_SAFE(b_x);
     INA_MEM_FREE_SAFE(b_y);
     INA_MEM_FREE_SAFE(b_z);
-
     INA_MEM_FREE_SAFE(b_out);
-
     INA_STOPWATCH_FREE(&w);
 
+    iarray_destroy();
     return 0;
 }

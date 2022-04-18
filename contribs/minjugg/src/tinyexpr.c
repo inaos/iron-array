@@ -191,7 +191,7 @@ static const jug_te_variable* find_custom(const state *s, const char *name, int 
 
     jug_udf_function_t *cf = NULL;
 
-    if (INA_FAILED(jug_udf_library_lookup_function(s->registry, name, &cf))) {
+    if (INA_FAILED(jug_udf_library_lookup_function(name, &cf))) {
         return 0;
     }
 
@@ -236,7 +236,7 @@ static void next_token(state *s) {
                         s->type = var->type;
                         s->function = var->address;
                         s->context = var->context;
-                    } 
+                    }
                     else {
                         switch (TYPE_MASK(var->type)) {
                             case TE_VARIABLE:
@@ -535,4 +535,3 @@ jug_te_expr *jug_te_compile(jug_udf_registry_t *registry, ina_mempool_t *variabl
         return root;
     }
 }
-

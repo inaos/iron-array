@@ -67,7 +67,6 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_data_type_t data
     (*e)->nvars = 0;
     (*e)->max_out_len = 0;   // helper for leftovers
     (*e)->nuser_params = 0;
-    (*e)->udf_registry = NULL;
     ina_mem_set(&(*e)->vars, 0, sizeof(_iarray_jug_var_t) * IARRAY_EXPR_OPERANDS_MAX);
     // map dtype to JUG type
     jug_expression_dtype_t dtype;
@@ -321,11 +320,7 @@ INA_API(ina_rc_t) iarray_expr_compile(iarray_expression_t *e, const char *expr)
         jug_vars[nvar].name = e->vars[nvar].var;
     }
 
-    jug_udf_registry_t *registry = NULL;
-    if (e->udf_registry != NULL) {
-        registry = ((iarray_udf_registry_t*)(e->udf_registry))->registry;
-    }
-    IARRAY_RETURN_IF_FAILED(jug_expression_compile(e->jug_expr, registry, ina_str_cstr(e->expr), e->nvars,
+    IARRAY_RETURN_IF_FAILED(jug_expression_compile(e->jug_expr, ina_str_cstr(e->expr), e->nvars,
                                                    jug_vars, &e->jug_expr_func));
 
     return INA_SUCCESS;

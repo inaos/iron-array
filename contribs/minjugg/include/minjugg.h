@@ -39,12 +39,11 @@ INA_API(void) jug_destroy(void);
 
 INA_API(ina_rc_t) jug_expression_new(jug_expression_t **expr, jug_expression_dtype_t dtype);
 INA_API(void) jug_expression_free(jug_expression_t **expr);
-    
+
 INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
-                                         jug_udf_registry_t *r,
-                                         const char *expr, 
-                                         int num_vars, 
-                                         void *vars, 
+                                         const char *expr,
+                                         int num_vars,
+                                         void *vars,
                                          uint64_t *function_addr);
 
 INA_API(ina_rc_t) jug_udf_compile(jug_expression_t *e,
@@ -56,8 +55,8 @@ INA_API(ina_rc_t) jug_udf_compile(jug_expression_t *e,
 INA_API(ina_rc_t) jug_udf_registry_new(jug_udf_registry_t **udf_registry);
 INA_API(void) jug_udf_registry_free(jug_udf_registry_t **udf_registry);
 
-INA_API(ina_rc_t) jug_udf_library_new(jug_udf_registry_t *registry, const char *name, jug_udf_library_t **udf_lib);
-INA_API(void) jug_udf_library_free(jug_udf_registry_t *registry, jug_udf_library_t **jug_lib);
+INA_API(ina_rc_t) jug_udf_library_new(const char *name, jug_udf_library_t **udf_lib);
+INA_API(void) jug_udf_library_free(jug_udf_library_t **jug_lib);
 
 INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
                                           const char *name,
@@ -67,7 +66,7 @@ INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
                                           int llvm_bc_len,
                                           const char *llvm_bc);
 
-INA_API(ina_rc_t) jug_udf_library_lookup_function(jug_udf_registry_t *registry, const char *name, jug_udf_function_t **function);
+INA_API(ina_rc_t) jug_udf_library_lookup_function(const char *name, jug_udf_function_t **function);
 
 /* FIXME the below declarations actually do not belong here */
 typedef enum te_expr_type_e {
