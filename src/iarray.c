@@ -384,7 +384,6 @@ INA_API(void) iarray_context_free(iarray_context_t **ctx)
     INA_VERIFY_FREE(ctx);
     INA_MEM_FREE_SAFE((*ctx)->cfg);
     INA_MEM_FREE_SAFE(*ctx);
-    *ctx = NULL;
 }
 
 
@@ -558,27 +557,23 @@ INA_API(void) iarray_udf_registry_free(iarray_udf_registry_t **udf_registry)
 {
     INA_VERIFY_FREE(udf_registry);
     jug_udf_registry_free(&(*udf_registry)->registry);
-    INA_MEM_FREE(*udf_registry);
+    INA_MEM_FREE_SAFE(*udf_registry);
 }
 
-INA_API(ina_rc_t)iarray_udf_library_new(iarray_udf_registry_t *registry,
-                                        const char *name,
-                                        iarray_udf_library_t **lib)
+INA_API(ina_rc_t)iarray_udf_library_new(const char *name, iarray_udf_library_t **lib)
 {
     *lib = (iarray_udf_library_t *) ina_mem_alloc(sizeof(iarray_udf_library_t));
-    if (INA_FAILED(jug_udf_library_new(registry->registry, name, &(*lib)->lib))) {
+    if (INA_FAILED(jug_udf_library_new(name, &(*lib)->lib))) {
         return ina_err_get_rc();
     }
     return INA_SUCCESS;
 }
 
-INA_API(void) iarray_udf_library_free(iarray_udf_registry_t *registry, iarray_udf_library_t **lib)
+INA_API(void) iarray_udf_library_free(iarray_udf_library_t **lib)
 {
     INA_VERIFY_FREE(lib);
-    jug_udf_library_free(registry->registry, &(*lib)->lib);
-    INA_MEM_FREE(*lib);
-    // @stoni: is this really necessary?
-    //registry->registry = NULL;
+    jug_udf_library_free(&(*lib)->lib);
+    INA_MEM_FREE_SAFE(*lib);
 }
 
 INA_API(ina_rc_t) iarray_udf_library_compile(iarray_udf_library_t *lib,
@@ -683,11 +678,11 @@ fail:
     return rc;
 }
 
-INA_API(ina_rc_t) iarray_udf_library_lookup(iarray_udf_registry_t *registry, const char *full_name, uint64_t *function_ptr)
+INA_API(ina_rc_t) iarray_udf_library_lookup(const char *full_name, uint64_t *function_ptr)
 {
     jug_udf_function_t *udf_fun;
 
-    if (INA_FAILED(jug_udf_library_lookup_function(registry, full_name, &udf_fun))) {
+    if (INA_FAILED(jug_udf_library_lookup_function(full_name, &udf_fun))) {
         return ina_err_get_rc();
     }
 

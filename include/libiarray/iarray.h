@@ -324,7 +324,6 @@ typedef struct iarray_expression_s {
     _iarray_jug_var_t vars[IARRAY_EXPR_OPERANDS_MAX];
     iarray_user_param_t user_params[IARRAY_EXPR_USER_PARAMS_MAX];  // the input user parameters
     unsigned int nuser_params;
-    void *udf_registry;  // we want to keep this opaque
 } iarray_expression_t;
 
 typedef struct iarray_udf_registry_s iarray_udf_registry_t;
@@ -812,12 +811,17 @@ INA_API(ina_rc_t) iarray_udf_registry_new(iarray_udf_registry_t **udf_registry);
 
 INA_API(void) iarray_udf_registry_free(iarray_udf_registry_t **udf_registry);
 
-INA_API(ina_rc_t) iarray_udf_library_new(iarray_udf_registry_t *registry, const char *name, iarray_udf_library_t **lib);
-INA_API(void) iarray_udf_library_free(iarray_udf_registry_t *registry, iarray_udf_library_t **lib);
+INA_API(ina_rc_t) iarray_udf_library_new(const char *name, iarray_udf_library_t **lib);
+INA_API(void) iarray_udf_library_free(iarray_udf_library_t **lib);
 
-INA_API(ina_rc_t) iarray_udf_library_compile(iarray_udf_library_t *lib, int llvm_bc_len, const char *llvm_bc, iarray_data_type_t return_type,
-    int num_args, iarray_data_type_t *arg_types, const char *name);
+INA_API(ina_rc_t) iarray_udf_library_compile(iarray_udf_library_t *lib,
+                                             int llvm_bc_len,
+                                             const char *llvm_bc,
+                                             iarray_data_type_t return_type,
+                                             int num_args,
+                                             iarray_data_type_t *arg_types,
+                                             const char *name);
 
-INA_API(ina_rc_t) iarray_udf_library_lookup(iarray_udf_registry_t *registry, const char *full_name, uint64_t *function_ptr);
+INA_API(ina_rc_t) iarray_udf_library_lookup(const char *full_name, uint64_t *function_ptr);
 
 #endif
