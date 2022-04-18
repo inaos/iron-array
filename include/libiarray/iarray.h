@@ -819,14 +819,14 @@ INA_API(void) iarray_udf_registry_free(iarray_udf_registry_t **udf_registry);
 INA_API(ina_rc_t) iarray_udf_library_new(const char *name, iarray_udf_library_t **lib);
 INA_API(void) iarray_udf_library_free(iarray_udf_library_t **lib);
 
-INA_API(ina_rc_t) iarray_udf_library_compile(iarray_udf_library_t *lib,
-                                             int llvm_bc_len,
-                                             const char *llvm_bc,
-                                             iarray_data_type_t return_type,
-                                             int num_args,
-                                             iarray_data_type_t *arg_types,
-                                             const char *name);
+INA_API(ina_rc_t) iarray_udf_func_register(iarray_udf_library_t *lib,
+                                           int llvm_bc_len,
+                                           const char *llvm_bc,
+                                           iarray_data_type_t return_type,
+                                           int num_args,
+                                           iarray_data_type_t *arg_types,
+                                           const char *name);
 
-INA_API(ina_rc_t) iarray_udf_library_lookup(const char *full_name, uint64_t *function_ptr);
+INA_API(ina_rc_t) iarray_udf_func_lookup(const char *full_name, uint64_t *function_ptr);
 
 #endif

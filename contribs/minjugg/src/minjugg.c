@@ -975,14 +975,13 @@ exit:
     return rc;
 }
 
-INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
-                                          const char *name,
-                                          jug_expression_dtype_t return_type,
-                                          int num_args,
-                                          jug_expression_dtype_t *arg_types,
-                                          int llvm_bc_len,
-                                          const char *llvm_bc)
-{
+INA_API(ina_rc_t) jug_udf_func_register(jug_udf_library_t *lib,
+                                        const char *name,
+                                        jug_expression_dtype_t return_type,
+                                        int num_args,
+                                        jug_expression_dtype_t *arg_types,
+                                        int llvm_bc_len,
+                                        const char *llvm_bc) {
     jug_udf_function_t *udf_fun = (jug_udf_function_t *) ina_mem_alloc(sizeof(jug_udf_function_t));
     ina_str_t fun_name = ina_str_sprintf("%s.%s", ina_str_cstr(lib->name), name);
 
@@ -1004,9 +1003,8 @@ INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
     return INA_SUCCESS;
 }
 
-INA_API(ina_rc_t) jug_udf_library_lookup_function(const char *name,
-                                                  jug_udf_function_t **function)
-{
+
+INA_API(ina_rc_t) jug_udf_func_lookup(const char *name, jug_udf_function_t **function) {
     if (udf_registry == NULL) {
         return INA_ERR_INVALID_ARGUMENT;
     }
@@ -1090,12 +1088,10 @@ INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
     return INA_SUCCESS;
 }
 
-INA_API(int) jug_udf_function_get_arity(jug_udf_function_t *f)
-{
+INA_API(int) jug_udf_func_get_arity(jug_udf_function_t *f) {
     return f->num_args;
 }
 
-INA_API(uint64_t) jug_udf_function_get_function_ptr(jug_udf_function_t *f)
-{
+INA_API(uint64_t) jug_udf_func_get_ptr(jug_udf_function_t *f) {
     return f->function_ptr;
 }

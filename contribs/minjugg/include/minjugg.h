@@ -58,15 +58,15 @@ INA_API(void) jug_udf_registry_free(jug_udf_registry_t **udf_registry);
 INA_API(ina_rc_t) jug_udf_library_new(const char *name, jug_udf_library_t **udf_lib);
 INA_API(void) jug_udf_library_free(jug_udf_library_t **jug_lib);
 
-INA_API(ina_rc_t) jug_udf_library_compile(jug_udf_library_t *lib,
-                                          const char *name,
-                                          jug_expression_dtype_t return_type,
-                                          int num_args,
-                                          jug_expression_dtype_t *arg_types,
-                                          int llvm_bc_len,
-                                          const char *llvm_bc);
+INA_API(ina_rc_t) jug_udf_func_register(jug_udf_library_t *lib,
+                                        const char *name,
+                                        jug_expression_dtype_t return_type,
+                                        int num_args,
+                                        jug_expression_dtype_t *arg_types,
+                                        int llvm_bc_len,
+                                        const char *llvm_bc);
 
-INA_API(ina_rc_t) jug_udf_library_lookup_function(const char *name, jug_udf_function_t **function);
+INA_API(ina_rc_t) jug_udf_func_lookup(const char *name, jug_udf_function_t **function);
 
 /* FIXME the below declarations actually do not belong here */
 typedef enum te_expr_type_e {
@@ -107,9 +107,9 @@ typedef struct jug_te_variable {
     void *context;
 } jug_te_variable;
 
-INA_API(int) jug_udf_function_get_arity(jug_udf_function_t *f);
+INA_API(int) jug_udf_func_get_arity(jug_udf_function_t *f);
 
-INA_API(uint64_t) jug_udf_function_get_function_ptr(jug_udf_function_t *f);
+INA_API(uint64_t) jug_udf_func_get_ptr(jug_udf_function_t *f);
 
 
 #endif

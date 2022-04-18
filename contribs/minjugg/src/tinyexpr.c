@@ -191,7 +191,7 @@ static const jug_te_variable* find_custom(const state *s, const char *name, int 
 
     jug_udf_function_t *cf = NULL;
 
-    if (INA_FAILED(jug_udf_library_lookup_function(name, &cf))) {
+    if (INA_FAILED(jug_udf_func_lookup(name, &cf))) {
         return 0;
     }
 
@@ -315,7 +315,7 @@ static jug_te_expr *base(state *s) {
             s->type = TOK_ERROR;
             return ret;
         }
-        int cust_arity = jug_udf_function_get_arity(udf_fun);
+        int cust_arity = jug_udf_func_get_arity(udf_fun);
 
         ret = new_expr(s->type, 0);
         ret->function = s->function;
