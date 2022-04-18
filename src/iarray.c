@@ -576,13 +576,13 @@ INA_API(void) iarray_udf_library_free(iarray_udf_library_t **lib)
     INA_MEM_FREE_SAFE(*lib);
 }
 
-INA_API(ina_rc_t) iarray_udf_library_compile(iarray_udf_library_t *lib,
-                                             int llvm_bc_len,
-                                             const char *llvm_bc,
-                                             iarray_data_type_t return_type,
-                                             int num_args,
-                                             iarray_data_type_t *arg_types,
-                                             const char *name)
+INA_API(ina_rc_t) iarray_udf_func_register(iarray_udf_library_t *lib,
+                                           int llvm_bc_len,
+                                           const char *llvm_bc,
+                                           iarray_data_type_t return_type,
+                                           int num_args,
+                                           iarray_data_type_t *arg_types,
+                                           const char *name)
 {
     ina_rc_t rc = INA_SUCCESS;
     jug_expression_dtype_t jrt;
@@ -670,7 +670,7 @@ INA_API(ina_rc_t) iarray_udf_library_compile(iarray_udf_library_t *lib,
         INA_FAIL_IF_ERROR(rc);
     }
 
-    rc = jug_udf_library_compile(lib->lib, name, jrt, num_args, jarg_types, llvm_bc_len, llvm_bc);
+    rc = jug_udf_func_register(lib->lib, name, jrt, num_args, jarg_types, llvm_bc_len, llvm_bc);
 
 fail:
     ina_mem_free(jarg_types);
@@ -678,15 +678,15 @@ fail:
     return rc;
 }
 
-INA_API(ina_rc_t) iarray_udf_library_lookup(const char *full_name, uint64_t *function_ptr)
+INA_API(ina_rc_t) iarray_udf_func_lookup(const char *full_name, uint64_t *function_ptr)
 {
     jug_udf_function_t *udf_fun;
 
-    if (INA_FAILED(jug_udf_library_lookup_function(full_name, &udf_fun))) {
+    if (INA_FAILED(jug_udf_func_lookup(full_name, &udf_fun))) {
         return ina_err_get_rc();
     }
 
-    *function_ptr = jug_udf_function_get_function_ptr(udf_fun);
+    *function_ptr = jug_udf_func_get_ptr(udf_fun);
 
     return INA_SUCCESS;
 }
