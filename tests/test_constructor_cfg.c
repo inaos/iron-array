@@ -141,7 +141,7 @@ INA_TEST_FIXTURE(constructor_cfg, 2_f)
 {
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.compression_codec = IARRAY_COMPRESSION_ZFP_FIXED_RATE;
-    cfg.meta = 50;
+    cfg.compression_meta = 50;
     INA_TEST_ASSERT_SUCCEED(iarray_context_new(&cfg, &data->ctx));
 
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
