@@ -43,20 +43,18 @@ Following our guideline:
 
 ### Function and brackets
 
-* Open and closing brackets of functions are alwayls on the beginning of the line
+* Open and closing brackets of functions are always on the beginning of the line
 * The backet open or close is alwayls the only character on the line
 
 #### API Functions
 
-     INA_API(ina_rc_t) iarray_[module]_[function]_[op](...)
-     {
+     INA_API(ina_rc_t) iarray_[module]_[function]_[op](...) {
      ...
      }
      
 #### Private Functions
 
-     static ina_rc_t _iarray_[module]_[function]_[op](...)
-     {
+     static ina_rc_t _iarray_[module]_[function]_[op](...) {
      ...
      }
      
@@ -66,8 +64,7 @@ Following our guideline:
                               int arg2,
                               int arg3,
                               ...
-                              )
-     {
+                              ) {
      ...
      }
 
@@ -110,7 +107,7 @@ a `switch` for dealing with the different data types rather than an `if ... else
             type_size = sizeof(float);
             break;
         default:
-            return INA_ERR_EXCEEDED;
+            return INA_ERROR(INA_ERR_EXCEEDED);
     }
 
 Note that the 'default' statement is there mainly for avoiding compiler warnings.
