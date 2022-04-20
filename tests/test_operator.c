@@ -112,7 +112,7 @@ static ina_rc_t _execute_iarray_operator_x(iarray_context_t *ctx,
         ostore.blockshape[i] = bsize;
     }
     blosc2_remove_urlpath(ostore.urlpath);
-    
+
     iarray_container_t *c_x;
     iarray_container_t *c_out;
     iarray_container_t *c_res;
@@ -276,7 +276,7 @@ INA_TEST_FIXTURE(operator_element_wise, add_float_data)
     int64_t N = 387;
     int64_t P = 44;
     int64_t B = 22;
-    
+
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_operator_xy(data->ctx, iarray_operator_add, vdAdd, vsAdd, dtype, type_size, N, P, B,
                                                         false, NULL, false, NULL, false, NULL, false, NULL));
 }

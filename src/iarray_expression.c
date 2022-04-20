@@ -83,10 +83,10 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_data_type_t data
             break;
 //      case IARRAY_DATA_TYPE_FLOAT16:
 //          // not supported yet
-//          return INA_ERR_INVALID_ARGUMENT;
+//          return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
 //      case IARRAY_DATA_TYPE_FLOAT8:
 //          // not supported yet
-//          return INA_ERR_INVALID_ARGUMENT;
+//          return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
         case IARRAY_DATA_TYPE_INT8:
             dtype = JUG_EXPRESSION_DTYPE_SINT8;
             break;
@@ -100,7 +100,7 @@ INA_API(ina_rc_t) iarray_expr_new(iarray_context_t *ctx, iarray_data_type_t data
             dtype = JUG_EXPRESSION_DTYPE_SINT64;
             break;
         default:
-            return INA_ERR_INVALID_ARGUMENT;
+            return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
     jug_expression_new(&(*e)->jug_expr, dtype);
     return INA_SUCCESS;

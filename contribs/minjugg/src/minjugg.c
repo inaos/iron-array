@@ -652,6 +652,10 @@ static LLVMValueRef _jug_expr_compile_function(
 
         /* compute the expression */
         LLVMValueRef result = _jug_expr_compile_expression(e, expression, param_values);
+        if (result == NULL) {
+            INA_TRACE1(iarray.error, "Error compiling expression");
+            return NULL;
+        }
 
         /* store the result */
         LLVMValueRef local_out_ref = LLVMBuildLoad(e->builder, local_output, "local_output");
@@ -815,7 +819,7 @@ INA_API(ina_rc_t) jug_init()
         fprintf(stderr, "%s", error);
 #endif
         LLVMDisposeMessage(error);
-        return INA_ERR_FATAL;
+        return INA_ERROR(INA_ERR_FATAL);
     }
 
     if (!LLVMTargetHasJIT(target_ref)) {
@@ -823,7 +827,7 @@ INA_API(ina_rc_t) jug_init()
         fprintf(stderr, "Fatal error: Cannot do JIT on this platform");
 #endif
         LLVMDisposeMessage(error);
-        return INA_ERR_FATAL;
+        return INA_ERROR(INA_ERR_FATAL);
     }
 
     const char *cpu = jug_utils_get_cpu_string();
@@ -1005,25 +1009,20 @@ INA_API(ina_rc_t) jug_udf_func_register(jug_udf_library_t *lib,
 
 
 INA_API(ina_rc_t) jug_udf_func_lookup(const char *name, jug_udf_function_t **function) {
-    if (udf_registry == NULL) {
-        return INA_ERR_INVALID_ARGUMENT;
-    }
-
     size_t part_cnt = 0;
     ina_str_t *parts = ina_str_split(name, ".", &part_cnt);
 
     if (part_cnt != 2) {
+        IARRAY_TRACE1(iarray.error, "UDF function is not in `lib.func` form.");
         ina_str_split_free_tokens(parts);
-        return INA_ERR_INVALID_ARGUMENT;
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     size_t fdecl_cnt = 0;
     ina_str_t *fdecl = ina_str_split(ina_str_cstr(parts[1]), "(", &fdecl_cnt);
 
     if (fdecl_cnt != 2) {
-        ina_str_split_free_tokens(fdecl);
-        ina_str_split_free_tokens(parts);
-        return INA_ERR_INVALID_ARGUMENT;
+        IARRAY_TRACE1(iarray.error, "UDF function is not in `lib.func()` form, but we are still safe...");
     }
 
     jug_udf_library_t *library = NULL;
@@ -1032,7 +1031,7 @@ INA_API(ina_rc_t) jug_udf_func_lookup(const char *name, jug_udf_function_t **fun
         *function = NULL;
         ina_str_split_free_tokens(parts);
         ina_str_split_free_tokens(fdecl);
-        return INA_ERR_INVALID_ARGUMENT;
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     jug_udf_function_t *func = NULL;
@@ -1041,7 +1040,7 @@ INA_API(ina_rc_t) jug_udf_func_lookup(const char *name, jug_udf_function_t **fun
         *function = NULL;
         ina_str_split_free_tokens(parts);
         ina_str_split_free_tokens(fdecl);
-        return INA_ERR_INVALID_ARGUMENT;
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
 
     *function = func;
@@ -1073,7 +1072,7 @@ INA_API(ina_rc_t) jug_expression_compile(jug_expression_t *e,
     jug_te_expr *expression = jug_te_compile(udf_registry, e->variable_mempool, expr_str, te_vars, num_vars, &parse_error);
     if (parse_error) {
         IARRAY_TRACE1(iarray.error, "Error parsing the expression with juggernaut");
-        return INA_ERR_INVALID_ARGUMENT;
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
     }
     _jug_expr_compile_function(e, "expr_func", expression, num_vars, te_vars);
     jug_te_free(expression);
