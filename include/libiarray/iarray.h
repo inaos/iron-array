@@ -222,7 +222,7 @@ typedef struct iarray_config_s {
     int max_num_threads; /* Maximum number of threads to use */
     uint8_t fp_mantissa_bits; /* Only useful together with flag: IARRAY_COMP_TRUNC_PREC */
     bool btune;  /* Enable btune */
-    uint8_t meta; /* Only useful together with compression codecs: IARRAY_COMPRESSION_ZFP */
+    uint8_t compression_meta; /* Only useful together with compression codecs: IARRAY_COMPRESSION_ZFP */
 } iarray_config_t;
 
 typedef struct iarray_dtshape_s {
@@ -283,7 +283,7 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .max_num_threads = 1,
     .fp_mantissa_bits = 0,
     .btune = true,
-    .meta = 0,
+    .compression_meta = 0,
 };
 
 static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = {
