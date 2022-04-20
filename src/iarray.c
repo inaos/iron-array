@@ -431,6 +431,7 @@ ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams,
         case IARRAY_COMPRESSION_ZFP_FIXED_PRECISION:
             cparams->compcode = BLOSC_CODEC_ZFP_FIXED_PRECISION;
             cparams->compcode_meta = ctx->cfg->compression_meta;
+            break;
         default:
             cparams->compcode = ctx->cfg->compression_codec;
             break;
@@ -505,6 +506,7 @@ ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t),
         case IARRAY_COMPRESSION_ZFP_FIXED_PRECISION:
             cat_cfg->compcodec = BLOSC_CODEC_ZFP_FIXED_PRECISION;
             cat_cfg->compmeta = cfg->compression_meta;
+            break;
         default:
             cat_cfg->compcodec = cfg->compression_codec;
             break;
