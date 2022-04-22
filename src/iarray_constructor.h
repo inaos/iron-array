@@ -16,58 +16,6 @@
 #include <libiarray/iarray.h>
 
 
-static ina_rc_t iarray_create_caterva_structs(iarray_context_t *ctx,
-                                              iarray_dtshape_t *dtshape,
-                                              iarray_storage_t *storage,
-                                              caterva_ctx_t **cat_ctx,
-                                              caterva_params_t *cat_params,
-                                              caterva_storage_t *cat_storage) {
-
-    caterva_config_t cfg = {0};
-    IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
-
-    blosc2_btune iabtune = {0};
-    btune_config iabtune_config = {0};
-    memcpy(&iabtune_config, &BTUNE_CONFIG_DEFAULTS, sizeof(btune_config));
-    switch(ctx->cfg->compression_favor) {
-        case IARRAY_COMPRESSION_FAVOR_CRATIO:
-            iabtune_config.comp_mode = BTUNE_COMP_HCR;
-            break;
-        case IARRAY_COMPRESSION_FAVOR_SPEED:
-            iabtune_config.comp_mode = BTUNE_COMP_HSP;
-            break;
-        default:
-            iabtune_config.comp_mode = BTUNE_COMP_BALANCED;
-    }
-    if (ctx->cfg->btune) {
-        iabtune.btune_config = &iabtune_config;
-        iabtune.btune_init = (void (*)(void *, blosc2_context*, blosc2_context*)) iabtune_init;
-        iabtune.btune_next_blocksize = iabtune_next_blocksize;
-        iabtune.btune_next_cparams = iabtune_next_cparams;
-        iabtune.btune_update = iabtune_update;
-        iabtune.btune_free = iabtune_free;
-        cfg.udbtune = &iabtune;
-    }
-
-    uint8_t *smeta;
-    int32_t smeta_len = _iarray_serialize_meta(dtshape->dtype, &smeta);
-    if (smeta_len < 0) {
-        IARRAY_TRACE1(iarray.error, "Error serializing the meta-information");
-        return INA_ERROR(INA_ERR_FAILED);
-    }
-
-    IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, cat_ctx));
-    IARRAY_RETURN_IF_FAILED(iarray_create_caterva_params(dtshape, cat_params));
-    IARRAY_RETURN_IF_FAILED(iarray_create_caterva_storage(dtshape, storage, cat_storage));
-    cat_storage->nmetalayers = 1;
-    caterva_metalayer_t metalayer = cat_storage->metalayers[0];
-    metalayer.name = strdup("iarray");
-    metalayer.sdata = smeta;
-    metalayer.size = smeta_len;
-
-    return INA_SUCCESS;
-}
-
 // TODO: clang complains about unused function.  provide a test using this.
 static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
                                       iarray_dtshape_t *dtshape,

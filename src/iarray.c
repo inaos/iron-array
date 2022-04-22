@@ -10,6 +10,7 @@
  */
 
 #include "iarray_private.h"
+#include "contribs/caterva/contribs/c-blosc2/include/blosc2/codecs-registry.h"
 #include <libiarray/iarray.h>
 #include <stdlib.h>
 #include <hwloc.h>
@@ -416,6 +417,24 @@ ina_rc_t iarray_create_blosc_cparams(blosc2_cparams *cparams,
     if (ctx->cfg->filter_flags & IARRAY_COMP_SHUFFLE) {
         cparams->filters[BLOSC2_MAX_FILTERS - 1] = BLOSC_SHUFFLE;
     }
+    switch (ctx->cfg->compression_codec) {
+        case IARRAY_COMPRESSION_ZFP_FIXED_ACCURACY:
+            cparams->compcode = BLOSC_CODEC_ZFP_FIXED_ACCURACY;
+            cparams->compcode_meta = ctx->cfg->compression_meta;
+            break;
+        case IARRAY_COMPRESSION_ZFP_FIXED_RATE:
+            cparams->compcode = BLOSC_CODEC_ZFP_FIXED_RATE;
+            cparams->compcode_meta = ctx->cfg->compression_meta;
+            break;
+        case IARRAY_COMPRESSION_ZFP_FIXED_PRECISION:
+            cparams->compcode = BLOSC_CODEC_ZFP_FIXED_PRECISION;
+            cparams->compcode_meta = ctx->cfg->compression_meta;
+            break;
+        default:
+            cparams->compcode = ctx->cfg->compression_codec;
+            break;
+    }
+
     return INA_SUCCESS;
 }
 
@@ -429,7 +448,6 @@ ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t),
     cat_cfg->free = free;
 
     cat_cfg->nthreads = (int16_t)cfg->max_num_threads;
-    cat_cfg->compcodec = cfg->compression_codec;
     cat_cfg->complevel = cfg->compression_level;
     cat_cfg->usedict = cfg->use_dict;
     cat_cfg->prefilter = NULL;
@@ -474,6 +492,23 @@ ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t),
         cat_cfg->udbtune = iabtune;
     }
     // cat_cfg->udbtune = NULL;
+    switch (cfg->compression_codec) {
+        case IARRAY_COMPRESSION_ZFP_FIXED_ACCURACY:
+            cat_cfg->compcodec = BLOSC_CODEC_ZFP_FIXED_ACCURACY;
+            cat_cfg->compmeta = cfg->compression_meta;
+            break;
+        case IARRAY_COMPRESSION_ZFP_FIXED_RATE:
+            cat_cfg->compcodec = BLOSC_CODEC_ZFP_FIXED_RATE;
+            cat_cfg->compmeta = cfg->compression_meta;
+            break;
+        case IARRAY_COMPRESSION_ZFP_FIXED_PRECISION:
+            cat_cfg->compcodec = BLOSC_CODEC_ZFP_FIXED_PRECISION;
+            cat_cfg->compmeta = cfg->compression_meta;
+            break;
+        default:
+            cat_cfg->compcodec = cfg->compression_codec;
+            break;
+    }
 
     return INA_SUCCESS;
 }

@@ -180,7 +180,10 @@ typedef enum iarray_compression_codec_e {
     IARRAY_COMPRESSION_LZ4HC,
     IARRAY_COMPRESSION_SNAPPY,
     IARRAY_COMPRESSION_ZLIB,
-    IARRAY_COMPRESSION_ZSTD
+    IARRAY_COMPRESSION_ZSTD,
+    IARRAY_COMPRESSION_ZFP_FIXED_ACCURACY,
+    IARRAY_COMPRESSION_ZFP_FIXED_PRECISION,
+    IARRAY_COMPRESSION_ZFP_FIXED_RATE
 } iarray_compression_codec_t;
 
 typedef enum iarray_compression_favor_e {
@@ -219,6 +222,7 @@ typedef struct iarray_config_s {
     int max_num_threads; /* Maximum number of threads to use */
     uint8_t fp_mantissa_bits; /* Only useful together with flag: IARRAY_COMP_TRUNC_PREC */
     bool btune;  /* Enable btune */
+    uint8_t compression_meta; /* Only useful together with compression codecs: IARRAY_COMPRESSION_ZFP */
 } iarray_config_t;
 
 typedef struct iarray_dtshape_s {
@@ -275,10 +279,11 @@ static const iarray_config_t IARRAY_CONFIG_DEFAULTS = {
     .use_dict = 0,
     .splitmode = IARRAY_AUTO_SPLIT,
     .filter_flags = IARRAY_COMP_SHUFFLE,
-    .eval_method = IARRAY_EVAL_METHOD_ITERCHUNK,
+    .eval_method = IARRAY_EVAL_METHOD_ITERBLOSC,
     .max_num_threads = 1,
     .fp_mantissa_bits = 0,
     .btune = true,
+    .compression_meta = 0,
 };
 
 static const iarray_config_t IARRAY_CONFIG_NO_COMPRESSION = {
