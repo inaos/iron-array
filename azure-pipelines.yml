@@ -158,60 +158,62 @@ steps:
   env:
     INAC_TRACE: ""
 
-- bash: |
-   cd cmake-build-$BUILD_CONFIGURATION
-   if [ "$AGENT_OS" != "Windows_NT" ]
-     then
-       cpack
-       zip -d iarray*.zip */bin/perf*
-       zip -d iarray*.zip */doc/*
-       zip -d iarray*.zip */include/caterva.h
-       zip -d iarray*.zip */lib/*caterva*
-       cp iarray*.zip $IA_ARTIFACT_TARGET
-   fi
-  displayName: Create package
-  env:
-    IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
-
-- script: |
-    call "C:\Program Files\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
-    cd cmake-build-%BUILD_CONFIGURATION%
-    call "C:\Program Files\CMake\bin\cpack.exe"
-    FOR %%f IN (iarray*.zip) DO (
-      7z d %%f */bin/perf*
-      7z d %%f */doc/* -r
-      7z d %%f */include/caterva.h
-      7z d %%f */lib/*caterva*
-      copy %%f %IA_ARTIFACT_TARGET%
-    )
-  displayName: Create package
-  env:
-    IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
-  condition:
-    eq( variables['Agent.OS'], 'Windows_NT' )
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    artifactName: iarray-$(imageName)
-
-- bash: |
-    cd cmake-build-$BUILD_CONFIGURATION
-    src=`ls iarray*.zip`
-    artifact_name=`basename $src`
-    if [ "$AGENT_OS" == "Darwin" ]
-      then
-        artifact_version=`echo $artifact_name | grep -Eo '\d+\.\d+\.\d+'`
-    else
-        artifact_version=`echo $artifact_name | grep -Po '\d+\.\d+\.\d+'`
-    fi
-    target=inaos/iarray/$artifact_version/$artifact_name
-    url=$jfrog_repository_url/$target
-    curl "-u$jfrog_artifactory_uid:$jfrog_artifactory_pwd" "-T" $src $url
-  displayName: Upload to artifactory
-  env:
-    jfrog_artifactory_uid: $(jfrog_artifactory_uid)
-    jfrog_artifactory_pwd: $(jfrog_artifactory_pwd)
-    jfrog_repository_url: $(jfrog_repository_url)
-  condition:
-    eq( variables['upload_artifactory'], 'yes' )
+# Disable package creation because it takes precious time and blocks
+# other possible tasks in the queue
+#- bash: |
+#   cd cmake-build-$BUILD_CONFIGURATION
+#   if [ "$AGENT_OS" != "Windows_NT" ]
+#     then
+#       cpack
+#       zip -d iarray*.zip */bin/perf*
+#       zip -d iarray*.zip */doc/*
+#       zip -d iarray*.zip */include/caterva.h
+#       zip -d iarray*.zip */lib/*caterva*
+#       cp iarray*.zip $IA_ARTIFACT_TARGET
+#   fi
+#  displayName: Create package
+#  env:
+#    IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
+#
+#- script: |
+#    call "C:\Program Files\%VSINSTALL%\vcvarsall.bat" %MSVC_PLATFORM%
+#    cd cmake-build-%BUILD_CONFIGURATION%
+#    call "C:\Program Files\CMake\bin\cpack.exe"
+#    FOR %%f IN (iarray*.zip) DO (
+#      7z d %%f */bin/perf*
+#      7z d %%f */doc/* -r
+#      7z d %%f */include/caterva.h
+#      7z d %%f */lib/*caterva*
+#      copy %%f %IA_ARTIFACT_TARGET%
+#    )
+#  displayName: Create package
+#  env:
+#    IA_ARTIFACT_TARGET: $(Build.ArtifactStagingDirectory)
+#  condition:
+#    eq( variables['Agent.OS'], 'Windows_NT' )
+#
+#- task: PublishBuildArtifacts@1
+#  inputs:
+#    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+#    artifactName: iarray-$(imageName)
+#
+#- bash: |
+#    cd cmake-build-$BUILD_CONFIGURATION
+#    src=`ls iarray*.zip`
+#    artifact_name=`basename $src`
+#    if [ "$AGENT_OS" == "Darwin" ]
+#      then
+#        artifact_version=`echo $artifact_name | grep -Eo '\d+\.\d+\.\d+'`
+#    else
+#        artifact_version=`echo $artifact_name | grep -Po '\d+\.\d+\.\d+'`
+#    fi
+#    target=inaos/iarray/$artifact_version/$artifact_name
+#    url=$jfrog_repository_url/$target
+#    curl "-u$jfrog_artifactory_uid:$jfrog_artifactory_pwd" "-T" $src $url
+#  displayName: Upload to artifactory
+#  env:
+#    jfrog_artifactory_uid: $(jfrog_artifactory_uid)
+#    jfrog_artifactory_pwd: $(jfrog_artifactory_pwd)
+#    jfrog_repository_url: $(jfrog_repository_url)
+#  condition:
+#    eq( variables['upload_artifactory'], 'yes' )
