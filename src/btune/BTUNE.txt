@@ -7,4 +7,4 @@ This is proprietary software.  In no event shall the author be liable
 for any claim or damages.
 
 This is a special version meant for ironArray, and this project can
-use it without no limits beyond the stated above.
+use it without no limits except the stated above.

@@ -454,6 +454,11 @@ ina_rc_t iarray_create_caterva_cfg(iarray_config_t *cfg, void *(*alloc)(size_t),
     cat_cfg->pparams = NULL;
     cat_cfg->splitmode = cfg->splitmode;
 
+    if (cfg->compression_level == 0) {
+        INA_TRACE1(iarray.error, "Disabling BTune because compression_level == 0\n");
+        cfg->btune = false;
+    }
+
     int blosc_filter_idx = 0;
     if ((cfg->filter_flags & IARRAY_COMP_TRUNC_PREC)) {
         cat_cfg->filters[blosc_filter_idx] = BLOSC_TRUNC_PREC;

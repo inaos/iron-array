@@ -696,7 +696,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
                                                                     iter_value[nvar].block_pointer,
                                                                     ret->catarr->chunknitems * ret->catarr->itemsize,
                                                                     ret->catarr));
-
                 expr_pparams.inputs[nvar] = external_buffers[nvar];
             }
         }
@@ -722,7 +721,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
             IARRAY_TRACE1(iarray.error, "Error compressing a blosc chunk");
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
         }
-
 
         // Free temporary chunks
         for (int nvar = 0; nvar < e->nvars; nvar++) {
