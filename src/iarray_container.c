@@ -620,14 +620,17 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
 }
 
 
-INA_API(ina_rc_t) iarray_container_resize(iarray_context_t *ctx, iarray_container_t *container, int64_t *new_shape) {
+INA_API(ina_rc_t) iarray_container_resize(iarray_context_t *ctx,
+                                          iarray_container_t *container,
+                                          int64_t *new_shape,
+                                          int64_t *start) {
 
     caterva_config_t cfg = {0};
     IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
     caterva_ctx_t *cat_ctx;
     IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
 
-    IARRAY_ERR_CATERVA(caterva_resize(cat_ctx, container->catarr, new_shape));
+    IARRAY_ERR_CATERVA(caterva_resize(cat_ctx, container->catarr, new_shape, start));
 
     // Update iarray params
     for (int i = 0; i < container->dtshape->ndim; ++i) {
@@ -636,6 +639,81 @@ INA_API(ina_rc_t) iarray_container_resize(iarray_context_t *ctx, iarray_containe
 
     return INA_SUCCESS;
 
+}
+
+
+INA_API(ina_rc_t) iarray_container_insert(iarray_context_t *ctx,
+                                          iarray_container_t *container,
+                                          void *buffer,
+                                          int64_t buffersize,
+                                          const int8_t axis,
+                                          int64_t insert_start) {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(container);
+    INA_VERIFY_NOT_NULL(buffer);
+
+    caterva_config_t cfg = {0};
+    IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
+    caterva_ctx_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
+
+    IARRAY_ERR_CATERVA(caterva_insert(cat_ctx, container->catarr, buffer, buffersize, axis, insert_start));
+
+    // Update iarray params
+    for (int i = 0; i < container->dtshape->ndim; ++i) {
+        container->dtshape->shape[i] = container->catarr->shape[i];
+    }
+
+    return INA_SUCCESS;
+}
+
+
+INA_API(ina_rc_t) iarray_container_append(iarray_context_t *ctx,
+                                          iarray_container_t *container,
+                                          void *buffer,
+                                          int64_t buffersize,
+                                          const int8_t axis) {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(container);
+    INA_VERIFY_NOT_NULL(buffer);
+
+    caterva_config_t cfg = {0};
+    IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
+    caterva_ctx_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
+
+    IARRAY_ERR_CATERVA(caterva_append(cat_ctx, container->catarr, buffer, buffersize, axis));
+
+    // Update iarray params
+    for (int i = 0; i < container->dtshape->ndim; ++i) {
+        container->dtshape->shape[i] = container->catarr->shape[i];
+    }
+
+    return INA_SUCCESS;
+}
+
+
+INA_API(ina_rc_t) iarray_container_delete(iarray_context_t *ctx,
+                                          iarray_container_t *container,
+                                          const int8_t axis,
+                                          int64_t delete_start,
+                                          int64_t delete_len) {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(container);
+
+    caterva_config_t cfg = {0};
+    IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
+    caterva_ctx_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
+
+    IARRAY_ERR_CATERVA(caterva_delete(cat_ctx, container->catarr, axis, delete_start, delete_len));
+
+    // Update iarray params
+    for (int i = 0; i < container->dtshape->ndim; ++i) {
+        container->dtshape->shape[i] = container->catarr->shape[i];
+    }
+
+    return INA_SUCCESS;
 }
 
 
