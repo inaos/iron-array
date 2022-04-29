@@ -188,12 +188,14 @@ static const jug_te_variable *find_lookup(const state *s, const char *name, int 
 
 static const jug_te_variable* find_custom(const state *s, const char *name, int len) {
     INA_UNUSED(len);
-
     jug_udf_function_t *cf = NULL;
 
-    if (INA_FAILED(jug_udf_func_lookup(name, &cf))) {
+    ina_str_t lookup_key = ina_str_new_fromblk(name, len);
+    if (INA_FAILED(jug_udf_func_lookup(ina_str_cstr(lookup_key), &cf))) {
+         ina_str_free(lookup_key);
         return 0;
     }
+    ina_str_free(lookup_key);
 
     jug_te_variable *v = (jug_te_variable *) ina_mempool_dalloc(s->variable_mem_pool, sizeof(jug_te_variable));
     v->name = name;
