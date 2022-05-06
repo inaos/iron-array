@@ -848,4 +848,20 @@ INA_API(ina_rc_t) iarray_udf_func_register(iarray_udf_library_t *lib,
 
 INA_API(ina_rc_t) iarray_udf_func_lookup(const char *full_name, uint64_t *function_ptr);
 
+
+/* Indexing */
+
+INA_API(ina_rc_t) iarray_set_orthogonal_selection(iarray_context_t *ctx,
+                                                  iarray_container_t *c,
+                                                  int64_t **selection, int64_t *selection_size,
+                                                  void *buffer,
+                                                  int64_t *buffer_shape,
+                                                  int64_t buffer_size);
+
+INA_API(ina_rc_t) iarray_get_orthogonal_selection(iarray_context_t *ctx,
+                                                  iarray_container_t *c,
+                                                  int64_t **selection, int64_t *selection_size,
+                                                  void *buffer,
+                                                  int64_t *buffer_shape,
+                                                  int64_t buffer_size);
 #endif
