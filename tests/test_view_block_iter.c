@@ -204,7 +204,7 @@ INA_TEST_FIXTURE(view_block_iter, 7_f_v) {
     int64_t start[] = {5, 4, 3, -2, 4, 5, -9};
     int64_t stop[] = {8, 6, 5, 9, 7, 7, -7};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+    INA_TEST_ASSERT_SUCCEED(test_orthogonal_selection(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   start, stop, false, NULL));
 }
 */
@@ -267,7 +267,7 @@ INA_TEST_FIXTURE(view_block_iter, 7_ull_v) {
     int64_t start[] = {5, 4, 3, -2, 4, 5, -9};
     int64_t stop[] = {8, 6, 5, 9, 7, 7, -7};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+    INA_TEST_ASSERT_SUCCEED(test_orthogonal_selection(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   start, stop, false, NULL));
 }
 */
@@ -330,7 +330,7 @@ INA_TEST_FIXTURE(view_block_iter, 7_ui_v) {
     int64_t start[] = {5, 4, 3, -2, 4, 5, -9};
     int64_t stop[] = {8, 6, 5, 9, 7, 7, -7};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+    INA_TEST_ASSERT_SUCCEED(test_orthogonal_selection(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   start, stop, false, NULL));
 }
 */
