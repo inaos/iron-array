@@ -277,7 +277,7 @@ INA_TEST_FIXTURE(view, 7_ll_v) {
                       7538651, 7538652, 7538661, 7538662, 7548451, 7548452, 7548461, 7548462,
                       7548551, 7548552, 7548561, 7548562, 7548651, 7548652, 7548661, 7548662};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+    INA_TEST_ASSERT_SUCCEED(test_orthogonal_selection(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   start, stop, result, false, "xarr.iarr"));
 }
 */
@@ -313,7 +313,7 @@ INA_TEST_FIXTURE(view, 7_i_v2) {
 
     int32_t result[] = {0}; // Fix windows
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+    INA_TEST_ASSERT_SUCCEED(test_orthogonal_selection(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   start, stop, result, false, NULL));
 }
 */
@@ -429,7 +429,7 @@ INA_TEST_FIXTURE(view, 7_ui_v) {
                         7538651, 7538652, 7538661, 7538662, 7548451, 7548452, 7548461, 7548462,
                         7548551, 7548552, 7548561, 7548562, 7548651, 7548652, 7548661, 7548662};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+    INA_TEST_ASSERT_SUCCEED(test_orthogonal_selection(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   start, stop, result, false, "xarr.iarr"));
 }
 */
@@ -518,7 +518,7 @@ INA_TEST_FIXTURE(view, 7_b_v) {
                      true, false, true, false, true, false, true, false,
                      true, false, true, false, true, false, true, false};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+    INA_TEST_ASSERT_SUCCEED(test_orthogonal_selection(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   start, stop, result, false, "xarr.iarr"));
 }
 */
