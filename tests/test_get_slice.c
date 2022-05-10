@@ -299,7 +299,7 @@ INA_TEST_FIXTURE(get_slice, 7_ll) {
                       7538651, 7538652, 7538661, 7538662, 7548451, 7548452, 7548461, 7548462,
                       7548551, 7548552, 7548561, 7548562, 7548651, 7548652, 7548661, 7548662};
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_type_view(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   cshape_dest, bshape_dest, start, stop, result, true, NULL, true, NULL));
 }
 */
@@ -432,7 +432,7 @@ INA_TEST_FIXTURE(get_slice, 7_ull) {
                          7548551, 7548552, 7548561, 7548562, 7548651, 7548652, 7548661, 7548662};
 
 
-    INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_type_view(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
                                                   cshape_dest, bshape_dest, start, stop, result, true, NULL, true, NULL));
 }
 */

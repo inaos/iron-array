@@ -109,12 +109,12 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     ina_mem_cpy((*c)->dtshape, dtshape, sizeof(iarray_dtshape_t));
 
     iarray_auxshape_t auxshape;
-    for (int i = 0; i < dtshape->ndim; ++i) {
+    for (int8_t i = 0; i < dtshape->ndim; ++i) {
         auxshape.shape_wos[i] = dtshape->shape[i];
         auxshape.chunkshape_wos[i] = container_viewed->storage->chunkshape[i];
         auxshape.blockshape_wos[i] = container_viewed->storage->blockshape[i];
         auxshape.offset[i] = offset[i];
-        auxshape.index[i] = (int8_t) i;
+        auxshape.index[i] = i;
     }
     (*c)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
     if ((*c)->auxshape == NULL) {
@@ -126,8 +126,36 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     (*c)->container_viewed = container_viewed;
     (*c)->transposed = false;
 
-    (*c)->storage = container_viewed->storage;
-    (*c)->catarr = container_viewed->catarr;
+    iarray_storage_t *store = (iarray_storage_t*)ina_mem_alloc(sizeof(iarray_storage_t));
+    store->contiguous = container_viewed->storage->contiguous;
+    store->urlpath = NULL;
+    for (int i = 0; i < dtshape->ndim; ++i) {
+        store->chunkshape[i] = container_viewed->storage->chunkshape[i];
+        store->blockshape[i] = container_viewed->storage->blockshape[i];
+    }
+
+    (*c)->storage = store;
+
+    caterva_config_t cat_cfg = {0};
+    iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cat_cfg);
+    caterva_ctx_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_ctx_new(&cat_cfg, &cat_ctx));
+    // The catarr shape won't change
+    for (int8_t i = 0; i < dtshape->ndim; ++i) {
+        dtshape->shape[i] = container_viewed->catarr->shape[i];
+    }
+    caterva_params_t cat_params = {0};
+    iarray_create_caterva_params(dtshape, &cat_params);
+
+    caterva_storage_t cat_storage = {0};
+
+    iarray_create_caterva_storage(dtshape, (*c)->storage, &cat_storage);
+    IARRAY_ERR_CATERVA(caterva_empty(cat_ctx, &cat_params, &cat_storage, &(*c)->catarr));
+    free(cat_storage.metalayers[0].sdata);
+    free(cat_storage.metalayers[0].name);
+
+    IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
+    iarray_add_view_postfilter(*c);
 
     return INA_SUCCESS;
 }
