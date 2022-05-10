@@ -291,30 +291,16 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         }
     }
 
+    iarray_dtshape_t dtshape;
+    dtshape.ndim = src->dtshape->ndim;
+    dtshape.dtype = src->dtshape->dtype;
+    for (int i = 0; i < dtshape.ndim; ++i) {
+        dtshape.shape[i] = stop_[i] - start_[i];
+    }
     if (view) {
-        iarray_dtshape_t dtshape;
-        dtshape.ndim = src->dtshape->ndim;
-        dtshape.dtype = src->dtshape->dtype;
         IARRAY_RETURN_IF_FAILED(iarray_set_dtype_size(&dtshape));
-
-        for (int i = 0; i < dtshape.ndim; ++i) {
-            dtshape.shape[i] = stop_[i] - start_[i];
-        }
-        if (src->container_viewed != NULL) {
-            IARRAY_RETURN_IF_FAILED(_iarray_view_new(ctx, src->container_viewed, &dtshape, start_, container));
-        }
-        else {
-            IARRAY_RETURN_IF_FAILED(_iarray_view_new(ctx, src, &dtshape, start_, container));
-        }
+        IARRAY_RETURN_IF_FAILED(_iarray_view_new(ctx, src, &dtshape, start_, container));
     } else {
-        iarray_dtshape_t dtshape;
-
-        dtshape.ndim = src->dtshape->ndim;
-        dtshape.dtype = src->dtshape->dtype;
-
-        for (int i = 0; i < dtshape.ndim; ++i) {
-            dtshape.shape[i] = stop_[i] - start_[i];
-        }
         IARRAY_RETURN_IF_FAILED(iarray_container_new(ctx, &dtshape, storage, container));
 
         caterva_config_t cat_cfg = {0};
@@ -404,12 +390,12 @@ INA_API(ina_rc_t) iarray_get_slice_buffer(iarray_context_t *ctx,
         if (start[i] < 0) {
             start_[i] = start[i] + container->dtshape->shape[i];
         } else{
-            start_[i] = (int64_t) start[i];
+            start_[i] = start[i];
         }
         if (stop[i] < 0) {
             stop_[i] = stop[i] + container->dtshape->shape[i];
         } else {
-            stop_[i] = (int64_t) stop[i];
+            stop_[i] = stop[i];
         }
         shape_[i] = stop_[i] - start_[i];
     }
@@ -530,12 +516,12 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
         if (start[i] < 0) {
             start_[index[i]] += start[i] + container->dtshape->shape[i];
         } else{
-            start_[index[i]] += (int64_t) start[i];
+            start_[index[i]] += start[i];
         }
         if (stop[i] < 0) {
             stop_[index[i]] += stop[i] + container->dtshape->shape[i] - 1;
         } else {
-            stop_[index[i]] += (int64_t) stop[i] - 1;
+            stop_[index[i]] += stop[i] - 1;
         }
         chunkshape_[index[i]] += chunkshape[i] - 1;
     }
@@ -610,6 +596,32 @@ ina_rc_t _iarray_get_slice_buffer(iarray_context_t *ctx,
                                                         buffer, chunkshape_, buflen));
     }
     IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
+
+    return INA_SUCCESS;
+}
+
+
+INA_API(ina_rc_t) iarray_get_type_view(iarray_context_t *ctx,
+                     iarray_container_t *src,
+                     iarray_data_type_t view_dtype,
+                     iarray_container_t **container) {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(src);
+    INA_VERIFY_NOT_NULL(container);
+
+    int8_t ndim = src->dtshape->ndim;
+    int64_t *offset = src->auxshape->offset;
+    int8_t *index = src->auxshape->index;
+
+    iarray_dtshape_t dtshape;
+    dtshape.ndim = src->dtshape->ndim;
+    dtshape.dtype = view_dtype;
+    for (int i = 0; i < dtshape.ndim; ++i) {
+        dtshape.shape[i] = src->dtshape->shape[i];
+    }
+
+    IARRAY_RETURN_IF_FAILED(iarray_set_dtype_size(&dtshape));
+    IARRAY_RETURN_IF_FAILED(_iarray_view_new(ctx, src, &dtshape, offset, container));
 
     return INA_SUCCESS;
 }

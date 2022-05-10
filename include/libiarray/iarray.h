@@ -568,6 +568,11 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
                                           void *buffer,
                                           int64_t buflen);
 
+INA_API(ina_rc_t) iarray_get_type_view(iarray_context_t *ctx,
+                                        iarray_container_t *src,
+                                        iarray_data_type_t view_dtype,
+                                        iarray_container_t **container);
+
 INA_API(ina_rc_t) iarray_container_load(iarray_context_t *ctx,
                                         char *urlpath,
                                         iarray_container_t **container);

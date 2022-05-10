@@ -202,7 +202,7 @@ INA_TEST_FIXTURE(view, 3_f_v) {
                       563, 564, 565, 566, 567, 568, 569};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result, true, "xarr.iarr"));
+                                                      start, stop, result, true, "xarr.iarr"));
 }
 
 INA_TEST_FIXTURE(view, 4_d_v) {
@@ -224,7 +224,7 @@ INA_TEST_FIXTURE(view, 4_d_v) {
 
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result, false, NULL));
+                                                      start, stop, result, false, NULL));
 }
 
 INA_TEST_FIXTURE(view, 2_ll_v) {
@@ -243,7 +243,7 @@ INA_TEST_FIXTURE(view, 2_ll_v) {
                         74, 75};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result, false, "xarr.iarr"));
+                                                      start, stop, result, false, "xarr.iarr"));
 }
 
 /* Avoid heavy tests
@@ -296,7 +296,7 @@ INA_TEST_FIXTURE(view, 3_i_v2) {
     int32_t result[] = {0}; // Fix windows
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result, false, NULL));
+                                                      start, stop, result, false, NULL));
 }
 
 /* Avoid heavy tests
@@ -332,7 +332,7 @@ INA_TEST_FIXTURE(view, 3_s_v2) {
     int16_t result[] = {0}; // Fix windows
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result, true, NULL));
+                                                      start, stop, result, true, NULL));
 }
 
 INA_TEST_FIXTURE(view, 2_sc_v) {
@@ -351,7 +351,7 @@ INA_TEST_FIXTURE(view, 2_sc_v) {
                        50, 51, 52, 53, 54, 55, 56};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result, true, "xarr.iarr"));
+                                                      start, stop, result, true, "xarr.iarr"));
 }
 
 INA_TEST_FIXTURE(view, 4_ull_v) {
@@ -373,7 +373,7 @@ INA_TEST_FIXTURE(view, 4_ull_v) {
 
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result, false, NULL));
+                                                      start, stop, result, false, NULL));
 }
 
 INA_TEST_FIXTURE(view, 3_ui_v) {
@@ -395,7 +395,7 @@ INA_TEST_FIXTURE(view, 3_ui_v) {
                          753, 754};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result, false, "xarr.iarr"));
+                                                      start, stop, result, false, "xarr.iarr"));
 }
 
 /* Avoid heavy tests
@@ -448,7 +448,7 @@ INA_TEST_FIXTURE(view, 3_us_v2) {
     uint16_t result[] = {0}; // Fix windows
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result, false, NULL));
+                                                      start, stop, result, false, NULL));
 }
 
 INA_TEST_FIXTURE(view, 3_uc_v2) {
@@ -465,7 +465,7 @@ INA_TEST_FIXTURE(view, 3_uc_v2) {
     uint8_t result[] = {0}; // Fix windows
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result, true, NULL));
+                                                      start, stop, result, true, NULL));
 }
 
 INA_TEST_FIXTURE(view, 2_b_v) {
@@ -484,7 +484,7 @@ INA_TEST_FIXTURE(view, 2_b_v) {
                      false, true};
 
     INA_TEST_ASSERT_SUCCEED(_execute_iarray_slice(data->ctx, dtype, type_size, ndim, shape, cshape, bshape,
-                                                  start, stop, result, false, "xarr.iarr"));
+                                                      start, stop, result, false, "xarr.iarr"));
 }
 
 /* Avoid heavy tests
