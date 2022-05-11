@@ -465,7 +465,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(cont);
     INA_VERIFY_NOT_NULL(value);
 
-    if (cont->view) {
+    if (cont->container_viewed != NULL) {
         IARRAY_TRACE1(iarray.error, "A view can not be rewritten");
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
