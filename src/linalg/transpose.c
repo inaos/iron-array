@@ -20,7 +20,7 @@ iarray_linalg_transpose(iarray_context_t *ctx, iarray_container_t *a, iarray_con
     INA_VERIFY_NOT_NULL(a);
     INA_VERIFY_NOT_NULL(b);
 
-    if (a->view) {
+    if (a->container_viewed != NULL) {
         IARRAY_TRACE1(iarray.error, "Transposing views is not supported yet");
         return INA_ERROR(INA_ERR_NOT_SUPPORTED);
     }

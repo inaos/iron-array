@@ -41,7 +41,7 @@ INA_API(ina_rc_t) iarray_set_orthogonal_selection(iarray_context_t *ctx,
     INA_ASSERT_NOT_NULL(buffer);
     INA_ASSERT_NOT_NULL(buffer_shape);
 
-    if (c->view) {
+    if (c->container_viewed != NULL) {
         IARRAY_TRACE1(iarray.trace, "Views are not supported yet");
         IARRAY_RETURN_IF_FAILED(IARRAY_ERR_INVALID_STORAGE);
     }
@@ -72,7 +72,7 @@ INA_API(ina_rc_t) iarray_get_orthogonal_selection(iarray_context_t *ctx,
     INA_ASSERT_NOT_NULL(buffer);
     INA_ASSERT_NOT_NULL(buffer_shape);
 
-    if (c->view) {
+    if (c->container_viewed != NULL) {
         IARRAY_TRACE1(iarray.trace, "Views are not supported yet");
         IARRAY_RETURN_IF_FAILED(IARRAY_ERR_INVALID_STORAGE);
     }

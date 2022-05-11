@@ -70,7 +70,7 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
     ina_mem_cpy((*c)->storage, storage, sizeof(iarray_storage_t));
 
     (*c)->catarr = NULL;
-    (*c)->view = false;
+    (*c)->container_viewed = NULL;
     (*c)->transposed = false;
 
     return INA_SUCCESS;
@@ -123,7 +123,7 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     }
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
 
-    (*c)->view = true;
+    (*c)->container_viewed =pred;
     (*c)->transposed = false;
 
     (*c)->storage = pred->storage;

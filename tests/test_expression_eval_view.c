@@ -45,6 +45,7 @@ execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, con
     iarray_context_t *ctx;
     iarray_expression_t* e;
     iarray_container_t* c_x;
+    iarray_container_t* c_x1;
     iarray_container_t* c_x2;
     iarray_container_t* c_out;
 
@@ -57,14 +58,6 @@ execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, con
         nelem *= shape[i];
     }
 
-    iarray_dtshape_t dtshape2;
-    dtshape2.dtype = IARRAY_DATA_TYPE_DOUBLE;
-    dtshape2.ndim = ndim;
-    int64_t nelem2 = 1;
-    for (int i = 0; i < ndim; ++i) {
-        dtshape2.shape[i] = shape[i] / 2;
-        nelem2 *= dtshape2.shape[i];
-    }
 
     iarray_storage_t store;
     store.contiguous = contiguous;
@@ -92,8 +85,24 @@ execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, con
         stop[i] = shape[i] / 2 + 10;
     }
 
-    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, &store, &c_x2));
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x, start, stop, true, &store, &c_x1));
+    int64_t start_[IARRAY_DIMENSION_MAX];
+    int64_t stop_[IARRAY_DIMENSION_MAX];
+    for (int i = 0; i < ndim; ++i) {
+        start_[i] = 11;
+        stop_[i] = c_x1->dtshape->shape[i] - 13;
+    }
+    INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x1, start_, stop_, true, &store, &c_x2));
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x2, buffer_x, nelem * sizeof(double)));
+
+    iarray_dtshape_t dtshape2;
+    dtshape2.dtype = IARRAY_DATA_TYPE_DOUBLE;
+    dtshape2.ndim = ndim;
+    int64_t nelem2 = 1;
+    for (int i = 0; i < ndim; ++i) {
+        dtshape2.shape[i] = c_x2->dtshape->shape[i];
+        nelem2 *= dtshape2.shape[i];
+    }
 
     fill_y(buffer_x, buffer_y, nelem2, func);
 
@@ -123,6 +132,7 @@ execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, con
     ina_mem_free(buffer_y);
     iarray_container_free(ctx, &c_out);
     iarray_container_free(ctx, &c_x);
+    iarray_container_free(ctx, &c_x1);
     iarray_container_free(ctx, &c_x2);
     iarray_context_free(&ctx);
     blosc2_remove_urlpath(store.urlpath);

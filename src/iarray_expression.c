@@ -608,7 +608,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     for (int nvar = 0; nvar < nvars; ++nvar) {
         iarray_container_t *var = e->vars[nvar].c;
         bool eq = true;
-        if (var->view) {
+        if (var->container_viewed != NULL) {
             eq = false;
         }else {
             for (int i = 0; i < var->dtshape->ndim; ++i) {

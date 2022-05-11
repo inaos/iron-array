@@ -1065,7 +1065,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
         ii++;
     }
 
-    if (a->view) {
+    if (a->container_viewed != NULL) {
         iarray_storage_t view_storage = {0};
         memcpy(&view_storage, a->storage, sizeof(iarray_storage_t));
         if (a->storage->urlpath) {
@@ -1185,7 +1185,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
         blosc2_remove_urlpath("_iarray_red.iarr");
         blosc2_remove_urlpath("_iarray_red_2.iarr");
     }
-    if (a->view && a->storage->urlpath != NULL) {
+    if (a->container_viewed != NULL && a->storage->urlpath != NULL) {
         blosc2_remove_urlpath("_iarray_view.iarr");
     }
 

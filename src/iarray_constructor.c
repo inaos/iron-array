@@ -284,7 +284,7 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
         return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
     }
 
-    if (container->view) {
+    if (container->container_viewed != NULL) {
         int64_t start[IARRAY_DIMENSION_MAX];
         int64_t stop[IARRAY_DIMENSION_MAX];
         for (int i = 0; i < container->dtshape->ndim; ++i) {
@@ -322,7 +322,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(storage);
     INA_VERIFY_NOT_NULL(dest);
 
-    if (src->view && view) {
+    if (src->container_viewed != NULL && view) {
         IARRAY_TRACE1(iarray.error, "IArray can not copy a view into another view");
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
@@ -332,7 +332,7 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
         start[i] = 0;
         stop[i] = src->dtshape->shape[i];
     }
-    if (src->view) {
+    if (src->container_viewed != NULL) {
         IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, src->dtshape, storage, dest));
 
         int64_t nelem = 1;

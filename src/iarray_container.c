@@ -54,7 +54,7 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(container);
     INA_VERIFY_NOT_NULL(urlpath);
 
-    if (container->view ||
+    if (container->container_viewed != NULL ||
         container->transposed) {
         IARRAY_TRACE1(iarray.error, "Container must be stored on a blosc schunk and must not be a "
                                     "view");
@@ -174,7 +174,7 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool conti
     // Build the auxshape
     (*container)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
     iarray_auxshape_t* auxshape = (*container)->auxshape;
-    for (int8_t i = 0; i < (int8_t)catarr->ndim; ++i) {
+    for (int8_t i = 0; i < catarr->ndim; ++i) {
         auxshape->index[i] = i;
         auxshape->offset[i] = 0;
         auxshape->shape_wos[i] = catarr->shape[i];
@@ -194,7 +194,7 @@ ina_rc_t _iarray_container_load(iarray_context_t *ctx, char *urlpath, bool conti
         (*container)->storage->blockshape[i] = catarr->blockshape[i];
     }
 
-    (*container)->view = false;
+    (*container)->container_viewed = NULL;
     (*container)->transposed = false;
 
     free(smeta);
@@ -239,11 +239,6 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(start);
     INA_VERIFY_NOT_NULL(stop);
     INA_VERIFY_NOT_NULL(container);
-
-    if (src->view) {
-        IARRAY_TRACE1(iarray.error, "Slicing a view into another is not supported");
-        return INA_ERROR(INA_ERR_NOT_SUPPORTED);
-    }
 
     int8_t ndim = src->dtshape->ndim;
     int64_t *offset = src->auxshape->offset;
@@ -297,7 +292,6 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
     }
 
     if (view) {
-
         iarray_dtshape_t dtshape;
         dtshape.ndim = src->dtshape->ndim;
         dtshape.dtype = src->dtshape->dtype;
@@ -308,9 +302,6 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         }
 
         IARRAY_RETURN_IF_FAILED(_iarray_view_new(ctx, src, &dtshape, start_, container));
-
-        (*container)->view = true;
-
     } else {
         iarray_dtshape_t dtshape;
 
@@ -440,7 +431,7 @@ INA_API(ina_rc_t) iarray_set_slice_buffer(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(stop);
     INA_VERIFY_NOT_NULL(buffer);
 
-    if (container->view) {
+    if (container->container_viewed != NULL) {
         IARRAY_TRACE1(iarray.error, "Can not set data in a view");
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
     }
@@ -725,7 +716,7 @@ INA_API(ina_rc_t) iarray_squeeze_index(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(container);
 
 
-    if (!container->view) {
+    if (container->container_viewed == NULL) {
         caterva_config_t cfg = {0};
         iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
         caterva_ctx_t *cat_ctx;
@@ -871,7 +862,7 @@ INA_API(ina_rc_t) iarray_is_view(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(c);
     INA_VERIFY_NOT_NULL(view);
 
-    if (c->view) {
+    if (c->container_viewed != NULL) {
         *view = true;
     } else {
         *view = false;
@@ -1243,7 +1234,7 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
     INA_UNUSED(ctx);
     INA_VERIFY_FREE(container);
 
-    if (!(*container)->view) {
+    if ((*container)->container_viewed == NULL) {
         if ((*container)->catarr != NULL) {
             // It can happen in some automatic garbage collection environments (e.g. Python)
             // that context objects are collected prior to containers.  These situations
