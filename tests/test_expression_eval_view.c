@@ -215,6 +215,21 @@ INA_TEST_FIXTURE(expression_eval_view, iterchunk_superchunk_3)
                                                 data->expr_str, false, "arr.iarr"));
 }
 
+INA_TEST_FIXTURE(expression_eval_view, iterchunk_superchunk_3_2)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;
+    data->func = expr3;
+    data->expr_str = "asin(x + 2) + (acos(x) - 1.35) - atan(x + .2)";
+
+    int8_t ndim = 3;
+    int64_t shape[] = {100, 100, 100};
+    int64_t cshape[] = {30, 30, 30};
+    int64_t bshape[] = {9, 9, 9};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func,
+                                                data->expr_str, false, "arr.iarr"));
+}
+
 static double expr4(const double x)
 {
     return exp(x) + (log(x) - 1.35) - log10(x + .2);
@@ -235,6 +250,21 @@ INA_TEST_FIXTURE(expression_eval_view, iterchunk_superchunk_4)
                                                 data->expr_str, true, NULL));
 }
 
+INA_TEST_FIXTURE(expression_eval_view, iterblosc_superchunk_4)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
+    data->func = expr4;
+    data->expr_str = "exp(x) + (log(x) - 1.35) - log10(x + .2)";
+
+    int8_t ndim = 3;
+    int64_t shape[] = {121, 121, 123};
+    int64_t cshape[] = {30, 30, 30};
+    int64_t bshape[] = {10, 10, 10};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func,
+                                                data->expr_str, true, NULL));
+}
+
 static double expr5(const double x)
 {
     return sqrt(x) + atan2(x, x) + pow(x, x);
@@ -243,6 +273,21 @@ static double expr5(const double x)
 INA_TEST_FIXTURE(expression_eval_view, iterchunk_plainbuffer_5)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERCHUNK;
+    data->func = expr5;
+    data->expr_str = "sqrt(x) + arctan2(x, x) + pow(x, x)";
+
+    int8_t ndim = 3;
+    int64_t shape[] = {120, 120, 120};
+    int64_t cshape[] = {20, 20, 20};
+    int64_t bshape[] = {10, 10, 10};
+
+    INA_TEST_ASSERT_SUCCEED(execute_iarray_eval(&data->cfg, ndim, shape, cshape, bshape, data->func,
+                                                data->expr_str, true, "arr.iarr"));
+}
+
+INA_TEST_FIXTURE(expression_eval_view, iterblosc_plainbuffer_5)
+{
+    data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr5;
     data->expr_str = "sqrt(x) + arctan2(x, x) + pow(x, x)";
 
