@@ -684,6 +684,9 @@ typedef enum iarray_reduce_fun_e {
     IARRAY_REDUCE_SUM,
     IARRAY_REDUCE_PROD,
     IARRAY_REDUCE_MEAN,
+    IARRAY_REDUCE_VAR,
+    IARRAY_REDUCE_STD,
+    IARRAY_REDUCE_MEDIAN,
 } iarray_reduce_func_t;
 
 typedef struct iarray_reduce_function_s iarray_reduce_function_t;

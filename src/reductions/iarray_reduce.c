@@ -41,6 +41,11 @@ static bool check_padding(const int64_t *block_offset_n,
     return false;
 }
 
+int _reduce_non_optimized_prefilter(blosc2_prefilter_params *pparams) {
+    // TODO: Decompress block
+    // TODO: Apply reduction through full block
+    return 0;
+}
 
 static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
@@ -651,12 +656,15 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
 }
 
 
-INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
-                                     iarray_container_t *a,
-                                     iarray_reduce_function_t *ufunc,
-                                     int8_t axis,
-                                     iarray_storage_t *storage,
-                                     iarray_container_t **b, iarray_data_type_t res_dtype) {
+ina_rc_t _iarray_reduce_udf(iarray_context_t *ctx,
+                            iarray_container_t *a,
+                            iarray_reduce_function_t *ufunc,
+                            int8_t axis,
+                            iarray_storage_t *storage,
+                            iarray_container_t **b,
+                            iarray_data_type_t res_dtype,
+                            bool optimized
+                            ) {
 
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(a);
@@ -682,7 +690,11 @@ INA_API(ina_rc_t) _iarray_reduce_udf(iarray_context_t *ctx,
     // Set up prefilter
     iarray_context_t *prefilter_ctx;
     iarray_context_new(ctx->cfg, &prefilter_ctx);
-    prefilter_ctx->prefilter_fn = (blosc2_prefilter_fn) _reduce_prefilter;
+    if (optimized) {
+        prefilter_ctx->prefilter_fn = (blosc2_prefilter_fn) _reduce_prefilter;
+    } else {
+        prefilter_ctx->prefilter_fn = (blosc2_prefilter_fn) _reduce_non_optimized_prefilter;
+    }
     iarray_reduce_params_t reduce_params = {0};
     blosc2_prefilter_params pparams = {0};
     pparams.user_data = &reduce_params;
@@ -760,6 +772,11 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
     // res data type
     iarray_data_type_t dtype;
     switch (func) {
+        case IARRAY_REDUCE_MEDIAN:
+        case IARRAY_REDUCE_STD:
+        case IARRAY_REDUCE_VAR:
+            // Call non optimized path
+            break;
         case IARRAY_REDUCE_SUM:
             // If the input is of type integer or unsigned int the result will be of type int64_t or uint64_t respectively
             switch (a->dtshape->dtype) {
@@ -1023,7 +1040,26 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
             return INA_ERROR(IARRAY_ERR_INVALID_EVAL_METHOD);
     }
 
-    IARRAY_RETURN_IF_FAILED(_iarray_reduce_udf(ctx, a, reduce_function, axis, storage, b, dtype));
+    switch (func) {
+        case IARRAY_REDUCE_MEDIAN:
+        case IARRAY_REDUCE_STD:
+        case IARRAY_REDUCE_VAR:
+            // TODO: rechunk the reduced axis to a single chunk
+            IARRAY_RETURN_IF_FAILED(
+                    _iarray_reduce_udf(ctx, a, reduce_function, axis, storage, b, dtype, false));
+            break;
+        case IARRAY_REDUCE_MAX:
+        case IARRAY_REDUCE_MIN:
+        case IARRAY_REDUCE_SUM:
+        case IARRAY_REDUCE_PROD:
+        case IARRAY_REDUCE_MEAN:
+            IARRAY_RETURN_IF_FAILED(
+                    _iarray_reduce_udf(ctx, a, reduce_function, axis, storage, b, dtype, true));
+            break;
+        default:
+            IARRAY_TRACE1(iarray.error, "Invalid function");
+            return INA_ERROR(IARRAY_ERR_INVALID_EVAL_METHOD);
+    }
 
     return INA_SUCCESS;
 }
@@ -1118,7 +1154,6 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
                 storage_red.blockshape[j] = aa->storage->blockshape[j + 1];
             }
         }
-
         IARRAY_RETURN_IF_FAILED(_iarray_reduce(ctx, aa, func, axis_new[i], &storage_red, &c));
         if (i != 0) {
             iarray_container_free(ctx, &aa);
