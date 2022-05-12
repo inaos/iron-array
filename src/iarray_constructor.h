@@ -123,7 +123,7 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     }
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
 
-    (*c)->container_viewed =pred;
+    (*c)->container_viewed = pred;
     (*c)->transposed = false;
 
     (*c)->storage = pred->storage;
