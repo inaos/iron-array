@@ -92,6 +92,7 @@ execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int64_t *shape, con
         start_[i] = 11;
         stop_[i] = c_x1->dtshape->shape[i] - 13;
     }
+    // Testing views of views
     INA_TEST_ASSERT_SUCCEED(iarray_get_slice(ctx, c_x1, start_, stop_, true, &store, &c_x2));
     INA_TEST_ASSERT_SUCCEED(iarray_to_buffer(ctx, c_x2, buffer_x, nelem * sizeof(double)));
 
