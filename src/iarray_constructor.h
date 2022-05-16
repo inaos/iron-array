@@ -78,13 +78,13 @@ static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
 
 // TODO: clang complains about unused function.  provide a test using this.
 inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
-                                        iarray_container_t *pred,
+                                        iarray_container_t *container_viewed,
                                         iarray_dtshape_t *dtshape,
                                         const int64_t *offset,
                                         iarray_container_t **c)
 {
     INA_VERIFY_NOT_NULL(ctx);
-    INA_VERIFY_NOT_NULL(pred);
+    INA_VERIFY_NOT_NULL(container_viewed);
     INA_VERIFY_NOT_NULL(dtshape);
     INA_VERIFY_NOT_NULL(offset);
     INA_VERIFY_NOT_NULL(c);
@@ -111,8 +111,8 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     iarray_auxshape_t auxshape;
     for (int i = 0; i < dtshape->ndim; ++i) {
         auxshape.shape_wos[i] = dtshape->shape[i];
-        auxshape.chunkshape_wos[i] = pred->storage->chunkshape[i];
-        auxshape.blockshape_wos[i] = pred->storage->blockshape[i];
+        auxshape.chunkshape_wos[i] = container_viewed->storage->chunkshape[i];
+        auxshape.blockshape_wos[i] = container_viewed->storage->blockshape[i];
         auxshape.offset[i] = offset[i];
         auxshape.index[i] = (int8_t) i;
     }
@@ -123,11 +123,11 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     }
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
 
-    (*c)->container_viewed = pred;
+    (*c)->container_viewed = container_viewed;
     (*c)->transposed = false;
 
-    (*c)->storage = pred->storage;
-    (*c)->catarr = pred->catarr;
+    (*c)->storage = container_viewed->storage;
+    (*c)->catarr = container_viewed->catarr;
 
     return INA_SUCCESS;
 }

@@ -300,8 +300,12 @@ INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
         for (int i = 0; i < dtshape.ndim; ++i) {
             dtshape.shape[i] = stop_[i] - start_[i];
         }
-
-        IARRAY_RETURN_IF_FAILED(_iarray_view_new(ctx, src, &dtshape, start_, container));
+        if (src->container_viewed != NULL) {
+            IARRAY_RETURN_IF_FAILED(_iarray_view_new(ctx, src->container_viewed, &dtshape, start_, container));
+        }
+        else {
+            IARRAY_RETURN_IF_FAILED(_iarray_view_new(ctx, src, &dtshape, start_, container));
+        }
     } else {
         iarray_dtshape_t dtshape;
 
