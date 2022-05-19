@@ -31,22 +31,21 @@ int main(void) {
     iarray_context_new(&cfg, &ctx);
 
 
-    int64_t shape[] = {20, 20, 10, 14};
-    int8_t ndim = 4;
+    int64_t shape[] = {11, 11, 20};
+    int8_t ndim = 3;
     int8_t naxis = 3;
-    int8_t axis[] = {2, 3, 1};
-    iarray_reduce_func_t func = IARRAY_REDUCE_SUM;
-
+    int8_t axis[] = {2, 1, 0};
+    iarray_reduce_func_t func = IARRAY_REDUCE_MEDIAN;
     iarray_dtshape_t dtshape;
-    dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
+    dtshape.dtype = IARRAY_DATA_TYPE_UINT16;
     dtshape.ndim = ndim;
 
     for (int i = 0; i < ndim; ++i) {
         dtshape.shape[i] = shape[i];
     }
 
-    int32_t xchunkshape[] = {16, 8, 8, 8};
-    int32_t xblockshape[] = {16, 8, 8, 8};
+    int32_t xchunkshape[] = {5, 5, 5};
+    int32_t xblockshape[] = {2, 2, 2};
 
     iarray_storage_t xstorage;
     xstorage.contiguous = false;
@@ -57,7 +56,7 @@ int main(void) {
     }
 
     iarray_container_t *c_x;
-    IARRAY_RETURN_IF_FAILED(iarray_ones(ctx, &dtshape, &xstorage, &c_x));
+    IARRAY_RETURN_IF_FAILED(iarray_arange(ctx, &dtshape, 0, 1, &xstorage, &c_x));
 
     int32_t outchunkshape[] = {16};
     int32_t outblockshape[] = {16};
@@ -72,25 +71,24 @@ int main(void) {
 
     blosc_timestamp_t t0, t1;
     iarray_container_t *c_out;
-    double *buff;
 
     blosc_set_timestamp(&t0);
     IARRAY_RETURN_IF_FAILED(iarray_reduce_multi(ctx, c_x, func, naxis, axis, &outstorage, &c_out));
 
     blosc_set_timestamp(&t1);
     printf("time 1: %f \n", blosc_elapsed_secs(t0, t1));
-    buff = (double *) malloc(c_out->catarr->nitems * c_out->catarr->itemsize);
+
+    double *buff = (double *) malloc(c_out->catarr->nitems * c_out->catarr->itemsize);
     IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_out, buff, c_out->catarr->nitems * c_out->catarr->itemsize));
+
     for (int i = 0; i < c_out->catarr->nitems; ++i) {
-        printf(" %f ", buff[i]);
+        printf(" %.10f ", buff[i]);
     }
     printf("\n");
     free(buff);
+
     iarray_container_free(ctx, &c_out);
-
-
     iarray_container_free(ctx, &c_x);
-
     iarray_context_free(&ctx);
 
     INA_STOPWATCH_FREE(&w);
