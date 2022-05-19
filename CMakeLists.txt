@@ -101,6 +101,7 @@ file(GLOB src
         ${SRC_DIR}/*.c
         ${SRC_DIR}/linalg/*.c
         ${SRC_DIR}/reductions/*.c
+        ${SRC_DIR}/reductions/operations/*.c
         ${SRC_DIR}/constructors/*.c
         ${SRC_DIR}/constructors/random/*.c
         ${SRC_DIR}/linalg/matmul/*.c
