@@ -197,8 +197,8 @@ ina_rc_t prop1_view_postfilter(blosc2_postfilter_params *postparams)
     }
 
     blosc2_dparams dparams = {.schunk = udata->viewed_schunk,
-                              .postfilter=udata->viewed_schunk->dctx->postfilter,
-                              .postparams=udata->viewed_schunk->dctx->postparams};
+                              .postfilter = udata->viewed_schunk->dctx->postfilter,
+                              .postparams = udata->viewed_schunk->dctx->postparams};
     blosc2_context *dctx = blosc2_create_dctx(dparams);
 
     int block_nitems = postparams->size / postparams->typesize;
@@ -236,8 +236,8 @@ ina_rc_t prop2_view_postfilter(blosc2_postfilter_params *postparams)
     }
 
     blosc2_dparams dparams = {.schunk = udata->viewed_schunk,
-                              .postfilter=udata->viewed_schunk->dctx->postfilter,
-                              .postparams=udata->viewed_schunk->dctx->postparams};
+                              .postfilter = udata->viewed_schunk->dctx->postfilter,
+                              .postparams = udata->viewed_schunk->dctx->postparams};
     blosc2_context *dctx = blosc2_create_dctx(dparams);
 
     int block_nitems = postparams->size / postparams->typesize;
@@ -275,8 +275,8 @@ ina_rc_t prop4_view_postfilter(blosc2_postfilter_params *postparams)
     }
 
     blosc2_dparams dparams = {.schunk = udata->viewed_schunk,
-                              .postfilter=udata->viewed_schunk->dctx->postfilter,
-                              .postparams=udata->viewed_schunk->dctx->postparams};
+                              .postfilter = udata->viewed_schunk->dctx->postfilter,
+                              .postparams = udata->viewed_schunk->dctx->postparams};
     blosc2_context *dctx = blosc2_create_dctx(dparams);
 
     int block_nitems = postparams->size / postparams->typesize;
@@ -314,8 +314,8 @@ ina_rc_t prop8_view_postfilter(blosc2_postfilter_params *postparams)
     }
 
     blosc2_dparams dparams = {.schunk = udata->viewed_schunk,
-                              .postfilter=udata->viewed_schunk->dctx->postfilter,
-                              .postparams=udata->viewed_schunk->dctx->postparams};
+                              .postfilter = udata->viewed_schunk->dctx->postfilter,
+                              .postparams = udata->viewed_schunk->dctx->postparams};
     blosc2_context *dctx = blosc2_create_dctx(dparams);
 
     int block_nitems = postparams->size / postparams->typesize;
@@ -353,8 +353,8 @@ ina_rc_t slice_view_postfilter(blosc2_postfilter_params *postparams)
     }
 
     blosc2_dparams dparams = {.schunk = udata->viewed_schunk,
-                              .postfilter=udata->viewed_schunk->dctx->postfilter,
-                              .postparams=udata->viewed_schunk->dctx->postparams};
+                              .postfilter = udata->viewed_schunk->dctx->postfilter,
+                              .postparams = udata->viewed_schunk->dctx->postparams};
     blosc2_context *dctx = blosc2_create_dctx(dparams);
 
     int block_nitems = udata->viewed_schunk->blocksize / postparams->typesize;
