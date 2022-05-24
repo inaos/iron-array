@@ -1372,14 +1372,6 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     if (a->container_viewed != NULL) {
         iarray_storage_t view_storage = {0};
         memcpy(&view_storage, a->storage, sizeof(iarray_storage_t));
-        if (a->storage->urlpath) {
-            view_storage.urlpath = "_iarray_view.iarr";
-            if (access(view_storage.urlpath, 0) == 0) {
-                IARRAY_TRACE1(iarray.tracing, "The temporary file %s already exists, delete it first",
-                              view_storage.urlpath);
-                return INA_ERROR(INA_ERR_INVALID);
-            }
-        }
         iarray_copy(ctx, a, false, &view_storage, &aa);
     }
 
