@@ -10,9 +10,6 @@
  */
 
 #include "iarray_private.h"
-#include "caterva_utils.h"
-#include <libiarray/iarray.h>
-#include <stdio.h>
 
 
 typedef struct {
