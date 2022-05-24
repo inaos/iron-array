@@ -10,16 +10,13 @@
  */
 
 #include "iarray_private.h"
-#include "caterva_utils.h"
-#include <libiarray/iarray.h>
-#include <stdio.h>
 
 
 typedef struct {
     void (*cast)(void *, void *, int32_t);
     //!< Cast function.
     blosc2_schunk *viewed_schunk;
-    //!< Predecessor schunk
+    //!< Predecessor's schunk
 } view_postparams_udata;
 
 
