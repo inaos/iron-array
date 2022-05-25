@@ -167,7 +167,7 @@ INA_TEST_SETUP(expression_eval_transpose)
     data->cfg = IARRAY_CONFIG_DEFAULTS;
     data->cfg.compression_codec = IARRAY_COMPRESSION_LZ4;
     data->cfg.compression_level = 9;
-    data->cfg.max_num_threads = 1;
+    data->cfg.max_num_threads = NTHREADS;
 }
 
 INA_TEST_TEARDOWN(expression_eval_transpose)

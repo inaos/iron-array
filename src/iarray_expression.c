@@ -12,6 +12,7 @@
 #include "iarray_private.h"
 #include <libiarray/iarray.h>
 #include <minjugg.h>
+#include <caterva.h>
 
 #if defined(_OPENMP)
 #include <omp.h>

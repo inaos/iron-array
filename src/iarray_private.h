@@ -15,6 +15,7 @@
 #include <libiarray/iarray.h>
 
 /* Dependencies */
+#include <blosc2.h>
 #include <caterva.h>
 #include <caterva_utils.h>
 #include <mkl.h>
