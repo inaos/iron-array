@@ -381,6 +381,7 @@ ina_rc_t slice_view_postfilter(blosc2_postfilter_params *postparams)
 INA_API(ina_rc_t) iarray_add_view_postfilter(iarray_container_t *view)
 {
     INA_VERIFY_NOT_NULL(view);
+
     // Create params
     blosc2_dparams *dparams;
     blosc2_schunk_get_dparams(view->catarr->sc, &dparams);
