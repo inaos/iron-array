@@ -66,7 +66,7 @@ steps:
 
 - bash: |
     rename 's/\.c\./\./' src/*
-    gcovr -v -r src/ --xml -o coverage.xml
+    gcovr --gcov-ignore-parse-errors -v -r src/ --xml -o coverage.xml
   displayName: Create coverage report
 
 - task: PublishCodeCoverageResults@1
