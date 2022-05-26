@@ -675,8 +675,10 @@ INA_TEST_FIXTURE(expression_eval, bool_iterblosc_constant)
 }
 
 
-#ifndef INA_OS_WINDOWS
-    /* Temporaly avoid these tests since we cannot use LLVM13 with windows */
+//#ifndef INA_OS_WINDOWS
+// Temporaly avoid these tests since we cannot use LLVM13 (either with windows or unix)
+// See https://github.com/inaos/iron-array/issues/565
+#if 0
     INA_TEST_FIXTURE(expression_eval, int32_iterblosc_superchunk_min)
     {
         data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
