@@ -123,7 +123,12 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     }
     ina_mem_cpy((*c)->auxshape, &auxshape, sizeof(iarray_auxshape_t));
 
-    (*c)->container_viewed = container_viewed;
+    if (container_viewed->container_viewed != NULL) {
+        (*c)->container_viewed = container_viewed->container_viewed;
+    }
+    else {
+        (*c)->container_viewed = container_viewed;
+    }
     (*c)->transposed = false;
 
     iarray_storage_t *store = (iarray_storage_t*)ina_mem_alloc(sizeof(iarray_storage_t));
@@ -155,6 +160,7 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
     free(cat_storage.metalayers[0].name);
 
     IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
+
     iarray_add_view_postfilter(*c);
 
     return INA_SUCCESS;

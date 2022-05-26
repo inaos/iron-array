@@ -54,8 +54,7 @@ INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(container);
     INA_VERIFY_NOT_NULL(urlpath);
 
-    if (container->container_viewed != NULL ||
-        container->transposed) {
+    if (container->container_viewed != NULL) {
         IARRAY_TRACE1(iarray.error, "Container must be stored on a blosc schunk and must not be a "
                                     "view");
         return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
@@ -631,7 +630,12 @@ INA_API(ina_rc_t) iarray_container_resize(iarray_context_t *ctx,
                                           iarray_container_t *container,
                                           int64_t *new_shape,
                                           int64_t *start) {
-
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(container);
+    if (container->container_viewed != NULL) {
+        IARRAY_TRACE1(iarray.error, "Can not resize a view");
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+    }
     caterva_config_t cfg = {0};
     IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
     caterva_ctx_t *cat_ctx;
@@ -659,6 +663,10 @@ INA_API(ina_rc_t) iarray_container_insert(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(container);
     INA_VERIFY_NOT_NULL(buffer);
 
+    if (container->container_viewed != NULL) {
+        IARRAY_TRACE1(iarray.error, "Can not insert data in a view");
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+    }
     caterva_config_t cfg = {0};
     IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
     caterva_ctx_t *cat_ctx;
@@ -684,6 +692,10 @@ INA_API(ina_rc_t) iarray_container_append(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(container);
     INA_VERIFY_NOT_NULL(buffer);
 
+    if (container->container_viewed != NULL) {
+        IARRAY_TRACE1(iarray.error, "Can not append data in a view");
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+    }
     caterva_config_t cfg = {0};
     IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
     caterva_ctx_t *cat_ctx;
@@ -708,6 +720,10 @@ INA_API(ina_rc_t) iarray_container_delete(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(container);
 
+    if (container->container_viewed != NULL) {
+        IARRAY_TRACE1(iarray.error, "Can not delete data in a view");
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+    }
     caterva_config_t cfg = {0};
     IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
     caterva_ctx_t *cat_ctx;
@@ -896,7 +912,15 @@ INA_API(ina_rc_t) iarray_vlmeta_exists(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(name);
     INA_VERIFY_NOT_NULL(exists);
 
-    if (blosc2_vlmeta_exists(c->catarr->sc, name) < 0) {
+    blosc2_schunk *sc;
+    if (c->container_viewed != NULL) {
+        sc = c->container_viewed->catarr->sc;
+    }
+    else {
+        sc = c->catarr->sc;
+    }
+
+    if (blosc2_vlmeta_exists(sc, name) < 0) {
         *exists = false;
     } else {
         *exists = true;
@@ -912,6 +936,10 @@ INA_API(ina_rc_t) iarray_vlmeta_add(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(c);
     INA_VERIFY_NOT_NULL(meta);
 
+    if (c->container_viewed != NULL) {
+        IARRAY_TRACE1(iarray.error, "Can not add vlmetalayers in a view");
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+    }
     blosc2_cparams *cparams;
     if (blosc2_schunk_get_cparams(c->catarr->sc, &cparams) < 0) {
         IARRAY_TRACE1(iarray.error, "Blosc error");
@@ -935,6 +963,10 @@ INA_API(ina_rc_t) iarray_vlmeta_update(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(meta->name);
     INA_VERIFY_NOT_NULL(meta->sdata);
 
+    if (c->container_viewed != NULL) {
+        IARRAY_TRACE1(iarray.error, "Can not update vlmetalayers in a view");
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+    }
     if (meta->size < 0) {
         IARRAY_TRACE1(iarray.error, "metalayer size must be greater than 0");
         return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
@@ -961,7 +993,14 @@ INA_API(ina_rc_t) iarray_vlmeta_get(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(name);
     INA_VERIFY_NOT_NULL(meta);
 
-    if (blosc2_vlmeta_get(c->catarr->sc, name, &meta->sdata, &meta->size) < 0) {
+    blosc2_schunk *sc;
+    if (c->container_viewed != NULL) {
+        sc = c->container_viewed->catarr->sc;
+    }
+    else {
+        sc = c->catarr->sc;
+    }
+    if (blosc2_vlmeta_get(sc, name, &meta->sdata, &meta->size) < 0) {
         return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
     }
     meta->name = strdup(name);
@@ -976,6 +1015,10 @@ INA_API(ina_rc_t) iarray_vlmeta_delete(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(c);
     INA_VERIFY_NOT_NULL(name);
 
+    if (c->container_viewed != NULL) {
+        IARRAY_TRACE1(iarray.error, "Can not delete vlmetalayers in a view");
+        return INA_ERROR(IARRAY_ERR_INVALID_STORAGE);
+    }
     if (blosc2_vlmeta_delete(c->catarr->sc, name) < 0) {
         return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
     }
@@ -987,7 +1030,13 @@ INA_API(ina_rc_t) iarray_vlmeta_nitems(iarray_context_t *ctx, iarray_container_t
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(c);
 
-    *nitems = c->catarr->sc->nvlmetalayers;
+    blosc2_schunk *sc;
+    if (c->container_viewed != NULL) {
+        *nitems = c->container_viewed->catarr->sc->nvlmetalayers;
+    }
+    else {
+        *nitems = c->catarr->sc->nvlmetalayers;
+    }
 
     return INA_SUCCESS;
 
@@ -1000,7 +1049,14 @@ INA_API(ina_rc_t) iarray_vlmeta_get_names(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(c);
 
-    if(blosc2_vlmeta_get_names(c->catarr->sc, names) < 0) {
+    blosc2_schunk *sc;
+    if (c->container_viewed != NULL) {
+        sc = c->container_viewed->catarr->sc;
+    }
+    else {
+        sc = c->catarr->sc;
+    }
+    if(blosc2_vlmeta_get_names(sc, names) < 0) {
         IARRAY_TRACE1(iarray.error, "Error while getting the names from the vlmetalayers");
         return IARRAY_ERR_BLOSC_FAILED;
     }
