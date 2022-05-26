@@ -91,13 +91,12 @@ steps:
     conda install -y -c intel mkl-include
     conda install -y -c intel mkl-static
     conda install -y -c intel icc_rt
-    if [ "$AGENT_OS" == "Windows_NT" ]
-      then
-        conda install -y -c numba 'llvmdev'
-    else
-        # LLVM 13 is necessary for calling int intrinsics
-        conda install -y -c conda-forge 'llvmdev>=13'
-    fi
+    # LLVM 13 is necessary for calling int intrinsics, but:
+    # 1) LLVM 13 from conda-forge is not working for windows yet
+    # 2) It is not compatible enough with llvmlite
+    # conda install -y -c conda-forge 'llvmdev>=13'
+    # So, let's keep using llvmdev in the numba channel, as they maintain compatible versions
+    conda install -y -c numba 'llvmdev'
 
   displayName: Download dependencies
   env:
