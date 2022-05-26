@@ -15,7 +15,7 @@
 #include <math.h>
 
 
-#define NTHREADS 1
+#define NTHREADS 4
 
 /* Special case for a constant function */
 static double const_(const double x)
@@ -102,7 +102,6 @@ static ina_rc_t execute_iarray_eval(iarray_config_t *cfg, int8_t ndim, const int
     INA_TEST_ASSERT_SUCCEED(iarray_expr_bind_out_properties(e, &dtshape, &outstore));
     INA_TEST_ASSERT_SUCCEED(iarray_expr_compile(e, expr_str));
     INA_TEST_ASSERT_SUCCEED(iarray_eval(e, &c_out));
-
 
     // We use a quite low tolerance as MKL functions always differ from those in OS math libraries
     INA_TEST_ASSERT_SUCCEED(test_double_buffer_cmp(ctx, c_out, buffer_y, nelem * sizeof(double), 5e-15, 5e-14));
@@ -222,7 +221,6 @@ INA_TEST_FIXTURE(expression_eval_type, iterblosc_superchunk1)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr1;
-    // eval of constants is not supported with the interpreter engine
     data->expr_str = "(x - 1.35) + sin(.45)";
 
     int8_t ndim = 2;
@@ -237,7 +235,6 @@ INA_TEST_FIXTURE(expression_eval_type, iterblosc_superchunk_memcpy)
 {
     data->cfg.eval_method = IARRAY_EVAL_METHOD_ITERBLOSC;
     data->func = expr1;
-    // eval of constants is not supported with the interpreter engine
     data->expr_str = "(x - 1.35) + sin(.45)";
 
     int8_t ndim = 1;
