@@ -161,7 +161,7 @@ inline static ina_rc_t _iarray_view_new(iarray_context_t *ctx,
 
     IARRAY_ERR_CATERVA(caterva_ctx_free(&cat_ctx));
 
-    iarray_add_view_postfilter(*c);
+    iarray_add_view_postfilter(*c, container_viewed);
 
     return INA_SUCCESS;
 }

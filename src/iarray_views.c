@@ -378,7 +378,7 @@ ina_rc_t slice_view_postfilter(blosc2_postfilter_params *postparams)
 }
 
 
-INA_API(ina_rc_t) iarray_add_view_postfilter(iarray_container_t *view)
+INA_API(ina_rc_t) iarray_add_view_postfilter(iarray_container_t *view, iarray_container_t *view_pred)
 {
     INA_VERIFY_NOT_NULL(view);
 
@@ -389,14 +389,14 @@ INA_API(ina_rc_t) iarray_add_view_postfilter(iarray_container_t *view)
     blosc2_postfilter_params *postparams = malloc(sizeof(blosc2_postfilter_params));
     view_postparams_udata *view_postparams = malloc(sizeof(view_postparams_udata));
 
-    view_postparams->viewed_schunk = view->container_viewed->catarr->sc;
+    view_postparams->viewed_schunk = view_pred->catarr->sc;
 
-    if (view->dtshape->dtype == view->container_viewed->dtshape->dtype) {
+    if (view->dtshape->dtype == view_pred->dtshape->dtype) {
         dparams->postfilter = (blosc2_postfilter_fn) slice_view_postfilter;
         view_postparams->cast = NULL;
     }
     else {
-        int prop = view->dtshape->dtype_size / view->container_viewed->dtshape->dtype_size;
+        int prop = view->dtshape->dtype_size / view_pred->dtshape->dtype_size;
 
         switch (prop) {
             case 1:
