@@ -305,7 +305,7 @@ INA_API(ina_rc_t) _iarray_get_slice_buffer_no_copy(iarray_context_t *ctx,
                                                    int64_t *stop,
                                                    void **buffer,
                                                    int64_t buflen);
-INA_API(ina_rc_t) iarray_add_view_postfilter(iarray_container_t *view);
+INA_API(ina_rc_t) iarray_add_view_postfilter(iarray_container_t *view, iarray_container_t *view_pred);
 
 
 /* Logical operators -> not supported yet as we only support float and double and return would be int8 */
