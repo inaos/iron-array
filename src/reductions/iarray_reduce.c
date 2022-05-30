@@ -152,6 +152,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
     user_data_t user_data = {0};
     user_data.inv_nelem = 1. / (double) rparams->input->dtshape->shape[rparams->axis];
+    user_data.aux_nelem = rparams->input->dtshape->shape[rparams->axis];
     user_data.input_itemsize = rparams->input->dtshape->dtype_size;
 
     blosc2_dparams dparams = {.nthreads = 1, .schunk = rparams->input->catarr->sc, .postfilter = NULL};
@@ -929,6 +930,21 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                     return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
             }
             break;
+        case IARRAY_REDUCE_NAN_MEDIAN:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &NAN_DMEDIAN;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &NAN_FMEDIAN;
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
         case IARRAY_REDUCE_VAR:
             // If the input is of type integer or unsigned int the result will be of type double
             switch (a->dtshape->dtype) {
@@ -975,6 +991,21 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                 case IARRAY_DATA_TYPE_BOOL:
                     reduce_function = &BOOLVAR;
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
+        case IARRAY_REDUCE_NAN_VAR:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &NAN_DVAR;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &NAN_FVAR;
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
                     break;
                 default:
                     IARRAY_TRACE1(iarray.error, "Invalid dtype");
@@ -1033,6 +1064,21 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                     return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
             }
             break;
+        case IARRAY_REDUCE_NAN_STD:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &NAN_DSTD;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &NAN_FSTD;
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
         case IARRAY_REDUCE_SUM:
             // If the input is of type integer or unsigned int the result will be of type int64_t or uint64_t respectively
             switch (a->dtshape->dtype) {
@@ -1079,6 +1125,21 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                 case IARRAY_DATA_TYPE_BOOL:
                     reduce_function = &BOOLSUM;
                     dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
+        case IARRAY_REDUCE_NAN_SUM:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &NAN_DSUM;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &NAN_FSUM;
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
                     break;
                 default:
                     IARRAY_TRACE1(iarray.error, "Invalid dtype");
@@ -1137,6 +1198,21 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                     return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
             }
             break;
+        case IARRAY_REDUCE_NAN_PROD:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &NAN_DPROD;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &NAN_FPROD;
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
         case IARRAY_REDUCE_MAX:
             switch (a->dtshape->dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
@@ -1188,6 +1264,21 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                     return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
             }
             break;
+        case IARRAY_REDUCE_NAN_MAX:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &NAN_DMAX;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &NAN_FMAX;
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
         case IARRAY_REDUCE_MIN:
             switch (a->dtshape->dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
@@ -1233,6 +1324,21 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                 case IARRAY_DATA_TYPE_BOOL:
                     reduce_function = &BOOLMIN;
                     dtype = IARRAY_DATA_TYPE_BOOL;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
+        case IARRAY_REDUCE_NAN_MIN:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &NAN_DMIN;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &NAN_FMIN;
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
                     break;
                 default:
                     IARRAY_TRACE1(iarray.error, "Invalid dtype");
@@ -1291,6 +1397,21 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                     return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
             }
             break;
+        case IARRAY_REDUCE_NAN_MEAN:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &NAN_DMEAN;
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &NAN_FMEAN;
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
         default:
             IARRAY_TRACE1(iarray.error, "Invalid function");
             return INA_ERROR(IARRAY_ERR_INVALID_EVAL_METHOD);
@@ -1306,8 +1427,11 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
     }
     switch (func) {
         case IARRAY_REDUCE_MEDIAN:
+        case IARRAY_REDUCE_NAN_MEDIAN:
         case IARRAY_REDUCE_STD:
+        case IARRAY_REDUCE_NAN_STD:
         case IARRAY_REDUCE_VAR:
+        case IARRAY_REDUCE_NAN_VAR:
             IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, a, false, &storage_rechunk, &a_rechunk));
             IARRAY_RETURN_IF_FAILED(
                     _iarray_reduce_udf(ctx, a_rechunk, reduce_function, axis, storage, b, dtype, false));
@@ -1317,10 +1441,15 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
             }
             break;
         case IARRAY_REDUCE_MAX:
+        case IARRAY_REDUCE_NAN_MAX:
         case IARRAY_REDUCE_MIN:
+        case IARRAY_REDUCE_NAN_MIN:
         case IARRAY_REDUCE_SUM:
+        case IARRAY_REDUCE_NAN_SUM:
         case IARRAY_REDUCE_PROD:
+        case IARRAY_REDUCE_NAN_PROD:
         case IARRAY_REDUCE_MEAN:
+        case IARRAY_REDUCE_NAN_MEAN:
             IARRAY_RETURN_IF_FAILED(
                     _iarray_reduce_udf(ctx, a, reduce_function, axis, storage, b, dtype, true));
             break;

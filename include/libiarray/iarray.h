@@ -685,13 +685,21 @@ INA_API(ina_rc_t) iarray_vlmeta_get_names(iarray_context_t *ctx, iarray_containe
 /* Reductions */
 typedef enum iarray_reduce_fun_e {
     IARRAY_REDUCE_MAX,
+    IARRAY_REDUCE_NAN_MAX,
     IARRAY_REDUCE_MIN,
+    IARRAY_REDUCE_NAN_MIN,
     IARRAY_REDUCE_SUM,
+    IARRAY_REDUCE_NAN_SUM,
     IARRAY_REDUCE_PROD,
+    IARRAY_REDUCE_NAN_PROD,
     IARRAY_REDUCE_MEAN,
+    IARRAY_REDUCE_NAN_MEAN,
     IARRAY_REDUCE_VAR,
+    IARRAY_REDUCE_NAN_VAR,
     IARRAY_REDUCE_STD,
+    IARRAY_REDUCE_NAN_STD,
     IARRAY_REDUCE_MEDIAN,
+    IARRAY_REDUCE_NAN_MEDIAN,
 } iarray_reduce_func_t;
 
 typedef struct iarray_reduce_function_s iarray_reduce_function_t;

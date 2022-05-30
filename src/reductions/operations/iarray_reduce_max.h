@@ -18,6 +18,9 @@
 #define MAX_I \
     INA_UNUSED(user_data); \
     *res = -INFINITY;
+#define NAN_MAX_I \
+    INA_UNUSED(user_data); \
+    *res = NAN;
 #define MAX_I_I64 \
     INA_UNUSED(user_data); \
     *res = LLONG_MIN;
@@ -56,13 +59,37 @@
         data1 += strides1; \
     }
 
+#define DF_MAX_R \
+    INA_UNUSED(user_data); \
+    INA_UNUSED(strides0); \
+    for (int i = 0; i < nelem; ++i) { \
+        if(isnan(*data1)) {\
+            *data0 = NAN;  \
+            break;      \
+        }\
+        if (*data1 > *data0) { \
+            *data0 = *data1; \
+        } \
+        data1 += strides1; \
+    }
+
+#define NAN_MAX_R \
+    INA_UNUSED(user_data); \
+    INA_UNUSED(strides0); \
+    for (int i = 0; i < nelem; ++i) { \
+        if (!isnan(*data1) && (*data1 > *data0 || isnan(*data0))) {    \
+            *data0 = *data1; \
+        } \
+        data1 += strides1; \
+    }
+
 #define MAX_F \
     INA_UNUSED(user_data); \
     INA_UNUSED(res); \
     ;
 
 static void dmax_ini(DPARAMS_I) { MAX_I }
-static void dmax_red(DPARAMS_R) { MAX_R }
+static void dmax_red(DPARAMS_R) { DF_MAX_R }
 static void dmax_fin(DPARAMS_F) { MAX_F }
 
 static iarray_reduce_function_t DMAX = {
@@ -71,14 +98,32 @@ static iarray_reduce_function_t DMAX = {
         .finish = CAST_F dmax_fin
 };
 
+static void nan_dmax_ini(DPARAMS_I) { NAN_MAX_I }
+static void nan_dmax_red(DPARAMS_R) { NAN_MAX_R }
+
+static iarray_reduce_function_t NAN_DMAX = {
+    .init = CAST_I nan_dmax_ini,
+    .reduction = CAST_R nan_dmax_red,
+    .finish = CAST_F dmax_fin
+};
+
 static void fmax_ini(FPARAMS_I) { MAX_I }
-static void fmax_red(FPARAMS_R) { MAX_R }
+static void fmax_red(FPARAMS_R) { DF_MAX_R }
 static void fmax_fin(FPARAMS_F) { MAX_F }
 
 static iarray_reduce_function_t FMAX = {
         .init = CAST_I fmax_ini,
         .reduction = CAST_R fmax_red,
         .finish = CAST_F fmax_fin
+};
+
+static void nan_fmax_ini(FPARAMS_I) { NAN_MAX_I }
+static void nan_fmax_red(FPARAMS_R) { NAN_MAX_R }
+
+static iarray_reduce_function_t NAN_FMAX = {
+    .init = CAST_I nan_fmax_ini,
+    .reduction = CAST_R nan_fmax_red,
+    .finish = CAST_F fmax_fin
 };
 
 static void i64max_ini(I64PARAMS_I) { MAX_I_I64 }

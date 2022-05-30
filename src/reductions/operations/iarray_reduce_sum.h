@@ -18,11 +18,30 @@
         INA_UNUSED(user_data); \
         *res = 0;
 
+#define NAN_SUM_I \
+        INA_UNUSED(user_data); \
+        *res = NAN;
+
 #define SUM_R \
     INA_UNUSED(user_data); \
     INA_UNUSED(strides0); \
     for (int i = 0; i < nelem; ++i) { \
         *data0 = *data0 + *data1; \
+        data1 += strides1; \
+    }
+
+#define NAN_SUM_R \
+    INA_UNUSED(user_data); \
+    INA_UNUSED(strides0); \
+    for (int i = 0; i < nelem; ++i) { \
+        if (!isnan(*data1)) {         \
+            if (isnan(*data0)) {      \
+                  *data0 = *data1;\
+            }      \
+            else {\
+                *data0 = *data0 + *data1; \
+            }         \
+        }\
         data1 += strides1; \
     }
 
@@ -41,6 +60,15 @@ static iarray_reduce_function_t DSUM = {
         .finish = CAST_F dsum_fin
 };
 
+static void nan_dsum_ini(DPARAMS_I) { NAN_SUM_I }
+static void nan_dsum_red(DPARAMS_R) { NAN_SUM_R }
+
+static iarray_reduce_function_t NAN_DSUM = {
+    .init = CAST_I nan_dsum_ini,
+    .reduction = CAST_R nan_dsum_red,
+    .finish = CAST_F dsum_fin
+};
+
 static void fsum_ini(FPARAMS_I) { SUM_I }
 static void fsum_red(FPARAMS_R) { SUM_R }
 static void fsum_fin(FPARAMS_F) { SUM_F }
@@ -49,6 +77,15 @@ static iarray_reduce_function_t FSUM = {
         .init = CAST_I fsum_ini,
         .reduction = CAST_R fsum_red,
         .finish = CAST_F fsum_fin
+};
+
+static void nan_fsum_ini(FPARAMS_I) { NAN_SUM_I }
+static void nan_fsum_red(FPARAMS_R) { NAN_SUM_R }
+
+static iarray_reduce_function_t NAN_FSUM = {
+    .init = CAST_I nan_fsum_ini,
+    .reduction = CAST_R nan_fsum_red,
+    .finish = CAST_F fsum_fin
 };
 
 static void i64sum_ini(I64PARAMS_I) { SUM_I }

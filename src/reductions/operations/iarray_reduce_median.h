@@ -32,6 +32,59 @@
     }\
     free(cdata1);
 
+#define DMEDIAN_R \
+    INA_UNUSED(strides0);  \
+    user_data_t *u_data = (user_data_t *) user_data; \
+    *data0 = 0; \
+    cdata1 = malloc(u_data->input_itemsize * nelem);             \
+    for (int i = 0; i < nelem; ++i) { \
+        if(isnan(*data1)) {\
+            *data0 = NAN;  \
+            break;      \
+        }\
+        cdata1[i] = *data1; \
+        data1 += strides1; \
+    }            \
+    if (!isnan(*data0)) {  \
+        qsort(cdata1, nelem, u_data->input_itemsize, compare);       \
+        if (nelem % 2 == 0) {      \
+            *data0 = (double) ((cdata1[(int64_t) (nelem / 2 - 1)] + cdata1[(int64_t) (nelem / 2)]) * 0.5);            \
+        } else {     \
+            *data0 = (double) cdata1[(int64_t) (nelem / 2)];             \
+        }\
+    } \
+    free(cdata1);
+
+#define NAN_MEDIAN_R \
+    INA_UNUSED(strides0);  \
+    user_data_t *u_data = (user_data_t *) user_data; \
+    *data0 = 0;      \
+    cdata1 = malloc(u_data->input_itemsize * nelem); \
+    int64_t nnans = 0;                 \
+    for (int i = 0; i < nelem; ++i) { \
+        if (isnan(*data1)) {                         \
+            nnans++; \
+        }            \
+        else {       \
+            cdata1[i - nnans] = *data1;                \
+        }             \
+        data1 += strides1; \
+    }                \
+    nelem -= nnans;  \
+    if (nelem != 0) {\
+        qsort(cdata1, nelem, u_data->input_itemsize, compare); \
+        if (nelem % 2 == 0) {      \
+            *data0 = (double) ((cdata1[(int64_t) (nelem / 2 - 1)] + cdata1[(int64_t) (nelem / 2)]) * 0.5);            \
+        } else {     \
+            *data0 = (double) cdata1[(int64_t) (nelem / 2)];             \
+        }            \
+    }                \
+    else {         \
+        *data0 = NAN;                    \
+    }                   \
+    free(cdata1);    \
+
+
 
 #define COMPARE_RETURN return *a > *b ? 1 : (*a < *b ? -1 : 0);
 static int iarray_dmedian_compare(const double *a, const double *b) {
@@ -40,13 +93,25 @@ static int iarray_dmedian_compare(const double *a, const double *b) {
 static void dmedian_red(DPARAMS_R) {
     double *cdata1;
     int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_dmedian_compare;
-    MEDIAN_R
+    DMEDIAN_R
 }
 
 static iarray_reduce_function_t DMEDIAN = {
         .init = NULL,
         .reduction = CAST_R dmedian_red,
         .finish = NULL,
+};
+
+static void nan_dmedian_red(DPARAMS_R) {
+    double *cdata1;
+    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_dmedian_compare;
+    NAN_MEDIAN_R
+}
+
+static iarray_reduce_function_t NAN_DMEDIAN = {
+    .init = NULL,
+    .reduction = CAST_R nan_dmedian_red,
+    .finish = NULL,
 };
 
 #define FMEDIAN_R \
@@ -56,16 +121,52 @@ static iarray_reduce_function_t DMEDIAN = {
     *data0 = 0; \
     cdata1 = malloc(u_data->input_itemsize * nelem);             \
     for (int i = 0; i < nelem; ++i) { \
+        if(isnan(*data1)) {\
+            *data0 = NAN;  \
+            break;      \
+        }\
         cdata1[i] = *data1; \
         data1 += strides1; \
-    }            \
-    qsort(cdata1, nelem, u_data->input_itemsize, compare);       \
-    if (nelem % 2 == 0) {      \
-        *data0 = (float) ((cdata1[(int64_t) (nelem / 2 - 1)] + cdata1[(int64_t) (nelem / 2)]) * 0.5f);            \
-    } else {     \
-        *data0 = (float) cdata1[(int64_t) (nelem / 2)];             \
-    }\
+    }             \
+    if (!isnan(*data0)) {  \
+        qsort(cdata1, nelem, u_data->input_itemsize, compare);       \
+        if (nelem % 2 == 0) {      \
+            *data0 = (float) ((cdata1[(int64_t) (nelem / 2 - 1)] + cdata1[(int64_t) (nelem / 2)]) * 0.5f);            \
+        } else {     \
+            *data0 = (float) cdata1[(int64_t) (nelem / 2)];             \
+        }         \
+    }              \
     free(cdata1);
+
+#define NAN_FMEDIAN_R \
+    INA_UNUSED(user_data); \
+    INA_UNUSED(strides0);  \
+    user_data_t *u_data = (user_data_t *) user_data; \
+    *data0 = 0; \
+    cdata1 = malloc(u_data->input_itemsize * nelem); \
+    int64_t nnans = 0;                 \
+    for (int i = 0; i < nelem; ++i) { \
+        if (isnan(*data1)) {\
+            nnans++;                      \
+        }             \
+        else {        \
+            cdata1[i-nnans] = *data1;                      \
+        }              \
+        data1 += strides1; \
+    }                 \
+    nelem -= nnans;   \
+    if (nelem != 0) { \
+        qsort(cdata1, nelem, u_data->input_itemsize, compare);       \
+        if (nelem % 2 == 0) { \
+            *data0 = (float) ((cdata1[(int64_t) (nelem / 2 - 1)] + cdata1[(int64_t) (nelem / 2)]) * 0.5f);            \
+        } else {     \
+            *data0 = (float) cdata1[(int64_t) (nelem / 2)];             \
+        }             \
+    }                 \
+    else {         \
+        *data0 = NAN;                    \
+    }               \
+    free(cdata1);\
 
 static int iarray_fmedian_compare(const float *a, const float *b) {
     COMPARE_RETURN
@@ -80,6 +181,18 @@ static iarray_reduce_function_t FMEDIAN = {
         .init = NULL,
         .reduction = CAST_R fmedian_red,
         .finish = NULL,
+};
+
+static void nan_fmedian_red(FPARAMS_R) {
+    float *cdata1;
+    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_fmedian_compare;
+    NAN_FMEDIAN_R
+}
+
+static iarray_reduce_function_t NAN_FMEDIAN = {
+    .init = NULL,
+    .reduction = CAST_R nan_fmedian_red,
+    .finish = NULL,
 };
 
 static int iarray_i64median_compare(const int64_t *a, const int64_t *b) {
