@@ -112,11 +112,6 @@ INA_API(ina_rc_t) iarray_add_zproxy_postfilter(iarray_container_t *src, char *za
     // Create params
     blosc2_dparams *dparams;
     blosc2_schunk_get_dparams(src->catarr->sc, &dparams);
-    if (zarr_urlpath == NULL && zhandler == NULL) {
-        zproxy_postparams_udata *src_userdata = (zproxy_postparams_udata*) src->container_viewed->catarr->sc->dctx->postparams->user_data;
-        zarr_urlpath = src_userdata->zproxy_urlpath;
-        zhandler = src_userdata->zhandler;
-    }
 
     dparams->postfilter = (blosc2_postfilter_fn)zproxy_postfilter;
 
