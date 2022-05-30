@@ -32,6 +32,33 @@
     *data0 /= nelem;       \
     *data0 = sqrt(*data0);
 
+#define NAN_STD_R \
+    INA_UNUSED(user_data); \
+    INA_UNUSED(strides0);  \
+    *data0 = 0;          \
+    double mean = 0;       \
+    int64_t nnans = 0;              \
+    for (int i = 0; i < nelem; ++i) { \
+        if (isnan(*data1)) {          \
+            nnans++;  \
+        }         \
+        else {    \
+            mean += *data1;    \
+        }\
+        data1 += strides1;          \
+    }             \
+    mean /= (nelem - nnans);          \
+    data1 = data1_p;\
+    for (int i = 0; i < nelem; ++i) { \
+        if (!isnan(*data1)) {        \
+            *data0 += pow(fabs(*data1 - mean), 2); \
+        }         \
+        data1 += strides1;      \
+    }             \
+    *data0 /= (nelem - nnans);       \
+    *data0 = sqrt(*data0);      \
+
+
 static void dstd_red(DPARAMS_R) {
     const double *data1_p = data1; \
     STD_R
@@ -41,6 +68,17 @@ static iarray_reduce_function_t DSTD = {
         .init = NULL,
         .reduction = CAST_R dstd_red,
         .finish = NULL,
+};
+
+static void nan_dstd_red(DPARAMS_R) {
+    const double *data1_p = data1; \
+    NAN_STD_R
+}
+
+static iarray_reduce_function_t NAN_DSTD = {
+    .init = NULL,
+    .reduction = CAST_R nan_dstd_red,
+    .finish = NULL,
 };
 
 // Only used for float output
@@ -62,6 +100,32 @@ static iarray_reduce_function_t DSTD = {
     *data0 /= nelem;       \
     *data0 = sqrtf(*data0);
 
+#define NAN_FSTD_R \
+    INA_UNUSED(user_data); \
+    INA_UNUSED(strides0);  \
+    *data0 = 0;          \
+    float mean = 0;\
+    int64_t nnans = 0;              \
+    for (int i = 0; i < nelem; ++i) { \
+        if (isnan(*data1)) {          \
+            nnans++;  \
+        } else {   \
+            mean += *data1;    \
+        }     \
+        data1 += strides1;          \
+    }         \
+    mean /= (nelem - nnans);          \
+    data1 = data1_p;       \
+    for (int i = 0; i < nelem; ++i) { \
+        if (!isnan(*data1)) {        \
+            *data0 += pow(fabs(*data1 - mean), 2); \
+        }\
+        data1 += strides1; \
+    }         \
+    *data0 /= (nelem - nnans);       \
+    *data0 = sqrtf(*data0);\
+
+
 static void fstd_red(FPARAMS_R) {
     const float *data1_p = data1; \
     FSTD_R
@@ -71,6 +135,17 @@ static iarray_reduce_function_t FSTD = {
         .init = NULL,
         .reduction = CAST_R fstd_red,
         .finish = NULL,
+};
+
+static void nan_fstd_red(FPARAMS_R) {
+    const float *data1_p = data1; \
+    NAN_FSTD_R
+}
+
+static iarray_reduce_function_t NAN_FSTD = {
+    .init = NULL,
+    .reduction = CAST_R nan_fstd_red,
+    .finish = NULL,
 };
 
 static void i64std_red(I64_DPARAMS_R) {

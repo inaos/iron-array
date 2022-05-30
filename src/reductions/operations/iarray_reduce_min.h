@@ -18,6 +18,9 @@
 #define MIN_I \
     INA_UNUSED(user_data); \
     *res = INFINITY;
+#define NAN_MIN_I \
+    INA_UNUSED(user_data); \
+    *res = NAN;
 #define MIN_I_I64 \
     INA_UNUSED(user_data); \
     *res = LLONG_MAX;
@@ -56,13 +59,37 @@
         data1 += strides1; \
     }
 
+#define DF_MIN_R \
+    INA_UNUSED(user_data); \
+    INA_UNUSED(strides0); \
+    for (int i = 0; i < nelem; ++i) { \
+        if(isnan(*data1)) {\
+            *data0 = NAN;  \
+            break;      \
+        }\
+        if (*data1 < *data0) {    \
+            *data0 = *data1; \
+        } \
+        data1 += strides1; \
+    }
+
+#define NAN_MIN_R \
+    INA_UNUSED(user_data); \
+    INA_UNUSED(strides0); \
+    for (int i = 0; i < nelem; ++i) { \
+        if (!isnan(*data1) && (isnan(*data0) || *data1 < *data0)) {    \
+            *data0 = *data1; \
+        } \
+        data1 += strides1; \
+    }
+
 #define MIN_F \
     INA_UNUSED(user_data); \
     INA_UNUSED(res); \
     ;
 
 static void dmin_ini(DPARAMS_I) { MIN_I }
-static void dmin_red(DPARAMS_R) { MIN_R }
+static void dmin_red(DPARAMS_R) { DF_MIN_R }
 static void dmin_fin(DPARAMS_F) { MIN_F }
 
 static iarray_reduce_function_t DMIN = {
@@ -71,14 +98,32 @@ static iarray_reduce_function_t DMIN = {
         .finish = CAST_F dmin_fin
 };
 
+static void nan_dmin_ini(DPARAMS_I) { NAN_MIN_I }
+static void nan_dmin_red(DPARAMS_R) { NAN_MIN_R }
+
+static iarray_reduce_function_t NAN_DMIN = {
+    .init = CAST_I nan_dmin_ini,
+    .reduction = CAST_R nan_dmin_red,
+    .finish = CAST_F dmin_fin
+};
+
 static void fmin_ini(FPARAMS_I) { MIN_I }
-static void fmin_red(FPARAMS_R) { MIN_R }
+static void fmin_red(FPARAMS_R) { DF_MIN_R }
 static void fmin_fin(FPARAMS_F) { MIN_F }
 
 static iarray_reduce_function_t FMIN = {
         .init = CAST_I fmin_ini,
         .reduction =  CAST_R fmin_red,
         .finish = CAST_F fmin_fin
+};
+
+static void nan_fmin_ini(FPARAMS_I) { NAN_MIN_I }
+static void nan_fmin_red(FPARAMS_R) { NAN_MIN_R }
+
+static iarray_reduce_function_t NAN_FMIN = {
+    .init = CAST_I nan_fmin_ini,
+    .reduction = CAST_R nan_fmin_red,
+    .finish = CAST_F fmin_fin
 };
 
 static void i64min_ini(I64PARAMS_I) { MIN_I_I64 }
