@@ -720,6 +720,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
                                       iarray_storage_t *storage,
                                       iarray_container_t **b);
 
+
 /* linear algebra */
 INA_API(ina_rc_t) iarray_linalg_matmul(iarray_context_t *ctx,
                                        iarray_container_t *a,

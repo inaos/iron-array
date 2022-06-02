@@ -27,7 +27,9 @@ struct iarray_reduce_function_s {
 typedef struct user_data_s {
     double inv_nelem;
     uint8_t input_itemsize;
+    int64_t *not_nan_nelems;
     int64_t *not_nan_nelem;
+    uint8_t *mean;
 } user_data_t;
 
 
@@ -166,5 +168,14 @@ typedef struct user_data_s {
                   const bool *data1, int64_t strides1, \
                   int64_t nelem, void *user_data
 #define BOOLPARAMS_F bool *res, void *user_data
+
+ina_rc_t _iarray_reduce_oneshot(iarray_context_t *ctx,
+                                iarray_container_t *a,
+                                iarray_reduce_func_t func,
+                                int8_t naxis,
+                                const int8_t *axis,
+                                iarray_storage_t *storage,
+                                iarray_container_t **b);
+
 
 #endif //IARRAY_IARRAY_REDUCE_PRIVATE_H
