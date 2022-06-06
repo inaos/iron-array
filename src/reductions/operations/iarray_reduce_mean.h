@@ -30,16 +30,13 @@
 #define NAN_MEAN_R \
     INA_UNUSED(strides0); \
     user_data_t *u_data = (user_data_t *) user_data; \
-    /* In a NAN_MEAN u_data->aux_nelem is the not NAN nelems */        \
     for (int i = 0; i < nelem; ++i) { \
-        if (isnan(*data1)) {          \
-            u_data->aux_nelem--;       \
-        }\
-        else {     \
+        if (!isnan(*data1)) {          \
+           (*u_data->not_nan_nelem)++;             \
             *data0 = *data0 + *data1; \
-        }           \
-        data1 += strides1; \
-    }\
+        }          \
+        data1 += strides1;\
+    }              \
 
 #define MEAN_F \
     user_data_t *u_data = (user_data_t *) user_data; \
@@ -47,7 +44,7 @@
 
 #define NAN_MEAN_F \
     user_data_t *u_data = (user_data_t *) user_data; \
-    *res = *res / u_data->aux_nelem;
+    *res = *res / *u_data->not_nan_nelem;                 \
 
 static void dmean_ini(DPARAMS_I) { MEAN_I }
 static void dmean_red(DPARAMS_R) { MEAN_R }

@@ -152,7 +152,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
     user_data_t user_data = {0};
     user_data.inv_nelem = 1. / (double) rparams->input->dtshape->shape[rparams->axis];
-    user_data.aux_nelem = rparams->input->dtshape->shape[rparams->axis];
+    int64_t *not_nan_nelems = malloc((pparams->out_size / pparams->out_typesize) * sizeof(int64_t));
     user_data.input_itemsize = rparams->input->dtshape->dtype_size;
 
     blosc2_dparams dparams = {.nthreads = 1, .schunk = rparams->input->catarr->sc, .postfilter = NULL};
@@ -241,6 +241,9 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
 
             bool empty = check_padding(block_offset_n, elem_index_n, rparams);
 
+            // Initialize user_data
+            user_data.not_nan_nelem = &not_nan_nelems[ind];
+            *user_data.not_nan_nelem = 0;
             if (!empty) {
                 switch (rparams->result->dtshape->dtype) {
                     case IARRAY_DATA_TYPE_DOUBLE:
@@ -407,6 +410,8 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                                                       ind,
                                                       elem_index_n);
 
+                // Update user_data
+                user_data.not_nan_nelem = &not_nan_nelems[ind];
                 if (check_padding(block_offset_n, elem_index_n, rparams)) {
                     switch (rparams->result->dtshape->dtype) {
                         case IARRAY_DATA_TYPE_DOUBLE:
@@ -658,6 +663,8 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                                                   elem_index_n);
 
             bool padding = check_padding(block_offset_n, elem_index_n, rparams);
+            // Update user_data
+            user_data.not_nan_nelem = &not_nan_nelems[ind];
 
             switch (rparams->result->dtshape->dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
@@ -757,6 +764,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     blosc2_free_ctx(dctx);
 
     free(block);
+    free(not_nan_nelems);
 
     return 0;
 }
