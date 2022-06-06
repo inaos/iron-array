@@ -27,7 +27,7 @@ struct iarray_reduce_function_s {
 typedef struct user_data_s {
     double inv_nelem;
     uint8_t input_itemsize;
-    int64_t aux_nelem;
+    int64_t *not_nan_nelem;
 } user_data_t;
 
 

@@ -39,12 +39,12 @@
     double mean = 0;       \
     int64_t nnans = 0;              \
     for (int i = 0; i < nelem; ++i) { \
-        if (isnan(*data1)) {                         \
-            nnans++;   \
+        if (!isnan(*data1)) {                         \
+            mean += *data1;\
         }          \
         else {     \
-            mean += *data1;\
-        }           \
+            nnans++;       \
+         }\
         data1 += strides1;          \
     }         \
     mean /= (nelem - nnans);          \
@@ -55,7 +55,7 @@
         }          \
         data1 += strides1;                       \
     }             \
-    *data0 /= (u_data->aux_nelem - nnans); \
+    *data0 /= (nelem - nnans); \
 
 
 static void dvar_red(DPARAMS_R) {
@@ -104,14 +104,14 @@ static iarray_reduce_function_t NAN_DVAR = {
     user_data_t *u_data = (user_data_t *) user_data; \
     *data0 = 0;          \
     float mean = 0;\
-    int64_t nnans = 0;              \
+    int64_t nnans = 0;               \
     for (int i = 0; i < nelem; ++i) { \
-        if (isnan(*data1)) {                         \
-            nnans++;   \
-        }          \
-        else {     \
+        if (!isnan(*data1)) {                         \
             mean += *data1;\
         }          \
+        else{      \
+            nnans++;           \
+        }           \
         data1 += strides1;          \
     }         \
     mean /= (nelem - nnans);          \
@@ -121,8 +121,8 @@ static iarray_reduce_function_t NAN_DVAR = {
             *data0 += pow(fabs(*data1 - mean), 2); \
         }          \
         data1 += strides1;                       \
-    }             \
-    *data0 /= (u_data->aux_nelem - nnans);            \
+    }              \
+    *data0 /= (nelem -nnans);                        \
 
 static void fvar_red(FPARAMS_R) {
     const float *data1_p = data1; \

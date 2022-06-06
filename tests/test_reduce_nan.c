@@ -32,8 +32,8 @@ static ina_rc_t test_reduce_nan(iarray_context_t *ctx, iarray_data_type_t dtype,
 
     iarray_storage_t storage = {0};
     for (int i = 0; i < ndim; ++i) {
-        storage.chunkshape[i] = i == axis ? shape[i] : 1;
-        storage.blockshape[i] = i == axis ? shape[i] : 1;
+        storage.chunkshape[i] = cshape[i];
+        storage.blockshape[i] = bshape[i];
     }
 
     iarray_container_t *c_x;
@@ -589,11 +589,11 @@ INA_TEST_FIXTURE(reduce_nan, mean_2_d_0) {
     int8_t ndim = 2;
     int64_t shape[] = {10, 10};
     int64_t cshape[] = {5, 5};
-    int64_t bshape[] = {2, 2};
+    int64_t bshape[] = {4, 4};
     int8_t axis = 0;
 
-    int64_t dest_cshape[] = {5};
-    int64_t dest_bshape[] = {1};
+    int64_t dest_cshape[] = {8};
+    int64_t dest_bshape[] = {8};
     bool dest_frame = true;
     char *dest_urlpath = "arr.iarr";
 
