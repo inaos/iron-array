@@ -10,7 +10,6 @@
  */
 
 #include "iarray_private.h"
-#include "caterva_utils.h"
 #include <libiarray/iarray.h>
 #include <stdio.h>
 
@@ -56,11 +55,11 @@ ina_rc_t zproxy_postfilter(blosc2_postfilter_params *postparams)
     // Get coordinates of chunk
     int64_t nchunk = postparams->nchunk;
     int64_t nchunk_ndim[IARRAY_DIMENSION_MAX];
-    index_unidim_to_multidim((int8_t)ndim, chunks_in_array, nchunk, nchunk_ndim);
+    blosc2_unidim_to_multidim((int8_t)ndim, chunks_in_array, nchunk, nchunk_ndim);
     // Get coordinates of block
     int64_t nblock = postparams->nblock;
     int64_t nblock_ndim[IARRAY_DIMENSION_MAX];
-    index_unidim_to_multidim((int8_t)ndim, blocks_in_chunk, nblock, nblock_ndim);
+    blosc2_unidim_to_multidim((int8_t)ndim, blocks_in_chunk, nblock, nblock_ndim);
     // Get start element coordinates from the corresponding block
     int64_t start_elem_ndim[IARRAY_DIMENSION_MAX];
     int64_t stop_elem_ndim[IARRAY_DIMENSION_MAX];
