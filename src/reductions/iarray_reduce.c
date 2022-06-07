@@ -1517,10 +1517,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     iarray_storage_t storage_red;
     storage_red.contiguous = storage->contiguous;
     storage_red.urlpath = storage->urlpath != NULL ? "_iarray_red.iarr" : NULL;
-    if (storage_red.urlpath != NULL && access(storage_red.urlpath, 0) == 0) {
-        IARRAY_TRACE1(iarray.tracing, "The temporary file %s already exists, delete it first", storage_red.urlpath);
-        return INA_ERROR(INA_ERR_INVALID);
-    }
+    blosc2_remove_urlpath(storage_red.urlpath);
     for (int i = 0; i < ii; ++i) {
         if (i > 0) {
             if (storage->urlpath != NULL) {

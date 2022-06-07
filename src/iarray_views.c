@@ -186,7 +186,7 @@ static void b_ui16_cast(B_UI16_PARAMS) { VIEW_CAST }
 static void b_ui8_cast(B_UI8_PARAMS) { VIEW_CAST }
 
 
-ina_rc_t prop1_view_postfilter(blosc2_postfilter_params *postparams)
+ina_rc_t type_view_postfilter(blosc2_postfilter_params *postparams)
 {
     view_postparams_udata *udata = postparams->user_data;
 
@@ -201,14 +201,16 @@ ina_rc_t prop1_view_postfilter(blosc2_postfilter_params *postparams)
 
     blosc2_dparams dparams = {.schunk = udata->viewed_schunk,
                               .postfilter = udata->viewed_schunk->dctx->postfilter,
-                              .postparams = udata->viewed_schunk->dctx->postparams};
+                              .postparams = udata->viewed_schunk->dctx->postparams,
+                              .nthreads = 1};
     blosc2_context *dctx = blosc2_create_dctx(dparams);
 
     int block_nitems = postparams->size / postparams->typesize;
-    uint8_t *aux = malloc(postparams->size  / 1);
+    int32_t prop = postparams->typesize / udata->viewed_schunk->typesize;
+    uint8_t *aux = malloc(postparams->size  / prop);
     int bsize = blosc2_getitem_ctx(dctx, chunk, csize,
                                    postparams->nblock * block_nitems,
-                                   block_nitems, aux, postparams->size / 1);
+                                   block_nitems, aux, postparams->size / prop);
     if (needs_free) {
         free(chunk);
     }
@@ -225,122 +227,6 @@ ina_rc_t prop1_view_postfilter(blosc2_postfilter_params *postparams)
     return INA_SUCCESS;
 }
 
-ina_rc_t prop2_view_postfilter(blosc2_postfilter_params *postparams)
-{
-    view_postparams_udata *udata = postparams->user_data;
-
-    uint8_t *chunk;
-    bool needs_free;
-    int csize = blosc2_schunk_get_lazychunk(udata->viewed_schunk, postparams->nchunk, &chunk,
-                                            &needs_free);
-    if (csize < 0) {
-        IARRAY_TRACE1(iarray.tracing, "Error getting lazy chunk");
-        return IARRAY_ERR_BLOSC_FAILED;
-    }
-
-    blosc2_dparams dparams = {.schunk = udata->viewed_schunk,
-                              .postfilter = udata->viewed_schunk->dctx->postfilter,
-                              .postparams = udata->viewed_schunk->dctx->postparams};
-    blosc2_context *dctx = blosc2_create_dctx(dparams);
-
-    int block_nitems = postparams->size / postparams->typesize;
-    uint8_t *aux = malloc(postparams->size  / 2);
-    int bsize = blosc2_getitem_ctx(dctx, chunk, csize,
-                                   postparams->nblock * block_nitems,
-                                   block_nitems, aux, postparams->size / 2);
-    if (needs_free) {
-        free(chunk);
-    }
-    if (bsize < 0) {
-        blosc2_free_ctx(dctx);
-        IARRAY_TRACE1(iarray.tracing, "Error getting block");
-        return IARRAY_ERR_BLOSC_FAILED;
-    }
-    udata->cast(aux, postparams->out, block_nitems);
-
-    free(aux);
-    blosc2_free_ctx(dctx);
-
-    return INA_SUCCESS;
-}
-
-ina_rc_t prop4_view_postfilter(blosc2_postfilter_params *postparams)
-{
-    view_postparams_udata *udata = postparams->user_data;
-
-    uint8_t *chunk;
-    bool needs_free;
-    int csize = blosc2_schunk_get_lazychunk(udata->viewed_schunk, postparams->nchunk, &chunk,
-                                            &needs_free);
-    if (csize < 0) {
-        IARRAY_TRACE1(iarray.tracing, "Error getting lazy chunk");
-        return IARRAY_ERR_BLOSC_FAILED;
-    }
-
-    blosc2_dparams dparams = {.schunk = udata->viewed_schunk,
-                              .postfilter = udata->viewed_schunk->dctx->postfilter,
-                              .postparams = udata->viewed_schunk->dctx->postparams};
-    blosc2_context *dctx = blosc2_create_dctx(dparams);
-
-    int block_nitems = postparams->size / postparams->typesize;
-    uint8_t *aux = malloc(postparams->size  / 4);
-    int bsize = blosc2_getitem_ctx(dctx, chunk, csize,
-                                   postparams->nblock * block_nitems,
-                                   block_nitems, aux, postparams->size / 4);
-    if (needs_free) {
-        free(chunk);
-    }
-    if (bsize < 0) {
-        blosc2_free_ctx(dctx);
-        IARRAY_TRACE1(iarray.tracing, "Error getting block");
-        return IARRAY_ERR_BLOSC_FAILED;
-    }
-    udata->cast(aux, postparams->out, block_nitems);
-
-    free(aux);
-    blosc2_free_ctx(dctx);
-
-    return INA_SUCCESS;
-}
-
-ina_rc_t prop8_view_postfilter(blosc2_postfilter_params *postparams)
-{
-    view_postparams_udata *udata = postparams->user_data;
-
-    uint8_t *chunk;
-    bool needs_free;
-    int csize = blosc2_schunk_get_lazychunk(udata->viewed_schunk, postparams->nchunk, &chunk,
-                                            &needs_free);
-    if (csize < 0) {
-        IARRAY_TRACE1(iarray.tracing, "Error getting lazy chunk");
-        return IARRAY_ERR_BLOSC_FAILED;
-    }
-
-    blosc2_dparams dparams = {.schunk = udata->viewed_schunk,
-                              .postfilter = udata->viewed_schunk->dctx->postfilter,
-                              .postparams = udata->viewed_schunk->dctx->postparams};
-    blosc2_context *dctx = blosc2_create_dctx(dparams);
-
-    int block_nitems = postparams->size / postparams->typesize;
-    uint8_t *aux = malloc(postparams->size  / 8);
-    int bsize = blosc2_getitem_ctx(dctx, chunk, csize,
-                                   postparams->nblock * block_nitems,
-                                   block_nitems, aux, postparams->size / 8);
-    if (needs_free) {
-        free(chunk);
-    }
-    if (bsize < 0) {
-        blosc2_free_ctx(dctx);
-        IARRAY_TRACE1(iarray.tracing, "Error getting block");
-        return IARRAY_ERR_BLOSC_FAILED;
-    }
-    udata->cast(aux, postparams->out, block_nitems);
-
-    free(aux);
-    blosc2_free_ctx(dctx);
-
-    return INA_SUCCESS;
-}
 
 ina_rc_t slice_view_postfilter(blosc2_postfilter_params *postparams)
 {
@@ -357,7 +243,8 @@ ina_rc_t slice_view_postfilter(blosc2_postfilter_params *postparams)
 
     blosc2_dparams dparams = {.schunk = udata->viewed_schunk,
                               .postfilter = udata->viewed_schunk->dctx->postfilter,
-                              .postparams = udata->viewed_schunk->dctx->postparams};
+                              .postparams = udata->viewed_schunk->dctx->postparams,
+                              .nthreads = 1};
     blosc2_context *dctx = blosc2_create_dctx(dparams);
 
     int block_nitems = udata->viewed_schunk->blocksize / postparams->typesize;
@@ -396,24 +283,7 @@ INA_API(ina_rc_t) iarray_add_view_postfilter(iarray_container_t *view, iarray_co
         view_postparams->cast = NULL;
     }
     else {
-        int prop = view->dtshape->dtype_size / view_pred->dtshape->dtype_size;
-
-        switch (prop) {
-            case 1:
-                dparams->postfilter = (blosc2_postfilter_fn) prop1_view_postfilter;
-                break;
-            case 2:
-                dparams->postfilter = (blosc2_postfilter_fn) prop2_view_postfilter;
-                break;
-            case 4:
-                dparams->postfilter = (blosc2_postfilter_fn) prop4_view_postfilter;
-                break;
-            case 8:
-                dparams->postfilter = (blosc2_postfilter_fn) prop8_view_postfilter;
-                break;
-            default:
-                return IARRAY_ERR_INVALID_DTYPE;
-        }
+        dparams->postfilter = (blosc2_postfilter_fn) type_view_postfilter;
         switch (view->container_viewed->dtshape->dtype) {
             case IARRAY_DATA_TYPE_DOUBLE: {
                 switch (view->dtshape->dtype) {
