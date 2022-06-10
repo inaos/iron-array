@@ -624,6 +624,9 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
                     }
                 }
             }
+            // The above is still creating multi-threading issues, so disable ITERBLOSC temporarily
+            // See https://github.com/inaos/iron-array/issues/586
+            eq = false;
         }
         else {
             for (int i = 0; i < var->dtshape->ndim; ++i) {
