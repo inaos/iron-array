@@ -933,7 +933,7 @@ fail:
 INA_API(void) jug_udf_library_free(jug_udf_library_t **jug_lib)
 {
     INA_VERIFY_FREE(jug_lib);
-    ina_hashtable_remove_str(udf_registry->libs, (*jug_lib)->name, jug_lib);
+    ina_hashtable_remove_str(udf_registry->libs, (*jug_lib)->name, (void **)jug_lib);
     ina_str_free((*jug_lib)->name);
     ina_hashtable_free(&(*jug_lib)->funcs);
     INA_MEM_FREE_SAFE(*jug_lib);
@@ -1026,7 +1026,7 @@ INA_API(ina_rc_t) jug_udf_func_lookup(const char *name, jug_udf_function_t **fun
     }
 
     jug_udf_library_t *library = NULL;
-    ina_hashtable_get_str(udf_registry->libs, ina_str_cstr(parts[0]), &library);
+    ina_hashtable_get_str(udf_registry->libs, ina_str_cstr(parts[0]), (void **)&library);
     if (library == NULL) {
         *function = NULL;
         ina_str_split_free_tokens(parts);
@@ -1035,7 +1035,7 @@ INA_API(ina_rc_t) jug_udf_func_lookup(const char *name, jug_udf_function_t **fun
     }
 
     jug_udf_function_t *func = NULL;
-    ina_hashtable_get_str(library->funcs, ina_str_cstr(fdecl[0]), &func);
+    ina_hashtable_get_str(library->funcs, ina_str_cstr(fdecl[0]), (void **)&func);
     if (func == NULL) {
         *function = NULL;
         ina_str_split_free_tokens(parts);

@@ -13,8 +13,6 @@
 
 int main(void)
 {
-    ina_rc_t rc;
-
     printf("Starting iarray...\n");
     iarray_init();
 

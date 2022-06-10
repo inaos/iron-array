@@ -111,6 +111,8 @@ static ina_rc_t _execute_iarray_slice(iarray_context_t *ctx, iarray_data_type_t 
                 case IARRAY_DATA_TYPE_BOOL:
                     INA_TEST_ASSERT(((bool *) val.block_pointer)[j] == ((bool *) block_buffer)[j]);
                     break;
+                default:
+                    return INA_ERR_EXCEEDED;
             }
         }
         free(block_buffer);

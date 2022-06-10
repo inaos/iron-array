@@ -189,49 +189,6 @@ static ina_rc_t gemv_blosc(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
-static ina_rc_t gemv_plainbuffer(iarray_context_t *ctx,
-                                 iarray_container_t *a,
-                                 iarray_container_t *b,
-                                 iarray_container_t *c) {
-
-    // Write array using an iterator
-    iarray_iter_write_block_t *iter;
-    iarray_iter_write_block_value_t iter_value;
-    IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter, c, c->dtshape->shape, &iter_value, false));
-
-    // Only one iteration is done
-    while (INA_SUCCEED(iarray_iter_write_block_has_next(iter))) {
-        IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_next(iter, NULL, 0));
-
-        size_t size_a = a->catarr->nitems * a->catarr->itemsize;
-        uint8_t *buffer_a = malloc(size_a);
-        IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, a, buffer_a, size_a));
-        size_t size_b = b->catarr->nitems * b->catarr->itemsize;
-        uint8_t *buffer_b = malloc(size_b);
-        IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, b, buffer_b, size_b));
-
-        int64_t m = a->dtshape->shape[0];
-        int64_t n = a->dtshape->shape[1];
-
-        int64_t ld_a = n;
-
-        if (c->dtshape->dtype == IARRAY_DATA_TYPE_DOUBLE) {
-            cblas_dgemv(CblasRowMajor, CblasNoTrans, (int) m, (int) n,
-                        1.0, (double *) buffer_a, ld_a, (double *) buffer_b, 1, 0.0,
-                        (double *) iter_value.block_pointer,1);
-        } else {
-            cblas_sgemv(CblasRowMajor, CblasNoTrans, (int) m, (int) n,
-                        1.0f, (float *) buffer_a, ld_a, (float *) buffer_b, 1, 0.0f,
-                        (float *) iter_value.block_pointer,1);
-        }
-
-    }
-    IARRAY_ITER_FINISH();
-    iarray_iter_write_block_free(&iter);
-
-    return INA_SUCCESS;
-}
-
 
 INA_API(ina_rc_t) iarray_gemv(iarray_context_t *ctx,
                               iarray_container_t *a,

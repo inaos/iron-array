@@ -22,6 +22,8 @@
 #define VAR_R \
     INA_UNUSED(user_data); \
     INA_UNUSED(strides0);  \
+    INA_UNUSED(strides1);  \
+    INA_UNUSED(nelem);  \
     user_data_t *u_data = (user_data_t *) user_data; \
     const double *mean = (double *) u_data->mean;    \
     *data0 += pow(*data1 - *mean, 2.);
@@ -48,6 +50,8 @@ static iarray_reduce_function_t DVAR = {
 #define NANVAR_R \
     INA_UNUSED(user_data); \
     INA_UNUSED(strides0);  \
+    INA_UNUSED(strides1);  \
+    INA_UNUSED(nelem);  \
     user_data_t *u_data = (user_data_t *) user_data; \
     const double *mean = (double *) u_data->mean;    \
     if (!isnan(*data1)) {  \
@@ -58,7 +62,7 @@ static iarray_reduce_function_t DVAR = {
 #define NANVAR_F \
     INA_UNUSED(user_data); \
     user_data_t *u_data = (user_data_t *) user_data; \
-    *res = *res / *u_data->not_nan_nelem;
+    *res = *res / *u_data->not_nan_nelem;\
 
 static void dnanvar_red(DPARAMS_R) { NANVAR_R }
 static void dnanvar_init(DPARAMS_I) { NANVAR_I }
@@ -74,6 +78,8 @@ static iarray_reduce_function_t DNANVAR = {
 #define FVAR_R \
     INA_UNUSED(user_data); \
     INA_UNUSED(strides0);  \
+    INA_UNUSED(strides1);  \
+    INA_UNUSED(nelem);  \
     user_data_t *u_data = (user_data_t *) user_data; \
     const float *mean = (float *) u_data->mean; \
     *data0 += powf((float) *data1 - *mean, 2.f);
@@ -100,6 +106,8 @@ static iarray_reduce_function_t FVAR = {
 #define FNANVAR_R \
     INA_UNUSED(user_data); \
     INA_UNUSED(strides0);  \
+    INA_UNUSED(strides1);  \
+    INA_UNUSED(nelem);  \
     user_data_t *u_data = (user_data_t *) user_data; \
     const float *mean = (float *) u_data->mean;    \
     if (!isnan(*data1)) {   \
@@ -171,8 +179,8 @@ static iarray_reduce_function_t UI64VAR = {
 };
 
 static void ui32var_red(UI32_DPARAMS_R) { VAR_R }
-static void u32var_ini(DPARAMS_I) { VAR_I }
-static void u32var_fin(DPARAMS_F) { VAR_F }
+// static void u32var_ini(DPARAMS_I) { VAR_I }
+// static void u32var_fin(DPARAMS_F) { VAR_F }
 
 static iarray_reduce_function_t UI32VAR = {
         .init = CAST_I ui64var_ini,
