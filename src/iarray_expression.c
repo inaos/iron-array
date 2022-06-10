@@ -611,14 +611,19 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     iarray_container_t *out = e->out;
     for (int nvar = 0; nvar < nvars; ++nvar) {
         iarray_container_t *var = e->vars[nvar].c;
-        int64_t off_sum = 0;
-        for (int j = 0; j < var->dtshape->ndim; j++) {
-            off_sum += var->auxshape->offset[j];
-        }
         bool eq = true;
-        if ((var->container_viewed != NULL) && (off_sum != 0)) {
+        if (var->container_viewed != NULL) {
             // Slice views are not yet supported properly (we tried, but turned out more complex than expected)
-            eq = false;
+            if (var->container_viewed->dtshape->ndim != var->dtshape->ndim) {
+                eq = false;
+            }
+            else {
+                for (int j = 0; j < var->dtshape->ndim; j++) {
+                    if (var->dtshape->shape[j] != var->container_viewed->dtshape->shape[j]) {
+                        eq = false;
+                    }
+                }
+            }
         }
         else {
             for (int i = 0; i < var->dtshape->ndim; ++i) {
