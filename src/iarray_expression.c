@@ -427,7 +427,11 @@ int prefilter_func(blosc2_prefilter_params *pparams)
                 inputs_malloced[i] = true;
                 int64_t nitems = blocksize / typesize;
                 int64_t offset_index = pparams->out_offset / typesize;
-                blosc2_dparams dparams = {.nthreads = 1, .schunk = e->vars[i].c->catarr->sc};
+                blosc2_dparams dparams = {.nthreads = 1,
+                                          .schunk = e->vars[i].c->catarr->sc,
+                                          .postfilter = e->vars[i].c->catarr->sc->dctx->postfilter,
+                                          .postparams = e->vars[i].c->catarr->sc->dctx->postparams,
+                };
                 blosc2_context *dctx = blosc2_create_dctx(dparams);
                 int64_t rbytes = blosc2_getitem_ctx(dctx, expr_pparams->inputs[i], expr_pparams->input_csizes[i],
                                                     (int) offset_index, (int) nitems,
@@ -607,10 +611,16 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     iarray_container_t *out = e->out;
     for (int nvar = 0; nvar < nvars; ++nvar) {
         iarray_container_t *var = e->vars[nvar].c;
+        int64_t off_sum = 0;
+        for (int j = 0; j < var->dtshape->ndim; j++) {
+            off_sum += var->auxshape->offset[j];
+        }
         bool eq = true;
-        if (var->container_viewed != NULL) {
+        if ((var->container_viewed != NULL) && (off_sum != 0)) {
+            // Slice views are not yet supported properly (we tried, but turned out more complex than expected)
             eq = false;
-        }else {
+        }
+        else {
             for (int i = 0; i < var->dtshape->ndim; ++i) {
                 if (out->storage->chunkshape[i] != var->storage->chunkshape[i]) {
                     eq = false;
@@ -624,7 +634,8 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         }
         if (eq == false) {
             expr_pparams.input_class[nvar] = IARRAY_EXPR_NEQ;
-        } else {
+        }
+        else {
             expr_pparams.input_class[nvar] = IARRAY_EXPR_EQ;
         }
     }
