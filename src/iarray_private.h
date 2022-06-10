@@ -361,7 +361,7 @@ ina_rc_t iarray_create_caterva_storage(iarray_dtshape_t *dtshape, iarray_storage
 
 ina_rc_t iarray_set_dtype_size(iarray_dtshape_t *dtshape);
 
-static int32_t _iarray_serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
+static inline int32_t _iarray_serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
 {
     if (smeta == NULL) {
         return -1;
@@ -387,7 +387,7 @@ static int32_t _iarray_serialize_meta(iarray_data_type_t dtype, uint8_t **smeta)
 }
 
 
-static ina_rc_t _iarray_deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype) {
+static inline ina_rc_t _iarray_deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iarray_data_type_t *dtype) {
     INA_UNUSED(smeta_len);
     INA_VERIFY_NOT_NULL(smeta);
     INA_VERIFY_NOT_NULL(dtype);
@@ -398,7 +398,7 @@ static ina_rc_t _iarray_deserialize_meta(uint8_t *smeta, uint32_t smeta_len, iar
 
     //version
     uint8_t version = *pmeta;
-    INA_USED_BY_ASSERT(version);
+    INA_UNUSED(version);
     pmeta +=1;
 
     // We only have an entry with the datatype (enumerated < 128)

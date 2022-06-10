@@ -69,9 +69,6 @@ int _reduce_non_optimized_prefilter(blosc2_prefilter_params *pparams) {
         strides[i] = rparams->input->storage->blockshape[i + 1] * strides[i + 1];
     }
 
-    int64_t nblocks = rparams->input->catarr->extchunkshape[rparams->axis] /
-                      rparams->input->catarr->blockshape[rparams->axis];
-
     // Get chunk
     uint8_t *chunk;
     bool needs_free;

@@ -44,7 +44,7 @@ void eval(int32_t nelem, double *buf) {
 }
 
 INA_TEST(expression_eval_memcpyed, case1) {
-
+    INA_UNUSED(data);
     iarray_init();
 
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;

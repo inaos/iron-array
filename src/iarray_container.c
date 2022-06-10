@@ -610,10 +610,9 @@ INA_API(ina_rc_t) iarray_get_type_view(iarray_context_t *ctx,
 
     int8_t ndim = src->dtshape->ndim;
     int64_t *offset = src->auxshape->offset;
-    int8_t *index = src->auxshape->index;
 
     iarray_dtshape_t dtshape;
-    dtshape.ndim = src->dtshape->ndim;
+    dtshape.ndim = ndim;
     dtshape.dtype = view_dtype;
     for (int i = 0; i < dtshape.ndim; ++i) {
         dtshape.shape[i] = src->dtshape->shape[i];
@@ -1030,7 +1029,6 @@ INA_API(ina_rc_t) iarray_vlmeta_nitems(iarray_context_t *ctx, iarray_container_t
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(c);
 
-    blosc2_schunk *sc;
     if (c->container_viewed != NULL) {
         *nitems = c->container_viewed->catarr->sc->nvlmetalayers;
     }

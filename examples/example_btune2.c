@@ -1,5 +1,5 @@
 #include <libiarray/iarray.h>
-#include <math.h>
+#include <inttypes.h>
 
 #define SHAPE (100 * 1000 * 1000)
 #define CHUNK_SHAPE (2 * 1000 * 1000)
@@ -68,7 +68,7 @@ int main(void) {
     IARRAY_RETURN_IF_FAILED(iarray_container_info(c_x, &c_nbytes, &c_cbytes));
     printf("** input:\n");
     printf("-   compression level: %d\n", cfg.compression_level);
-    printf("-   nbytes: %lld x\n", c_nbytes);
+    printf("-   nbytes: %" PRId64 " x\n", c_nbytes);
     printf("-   Ratio: %8.2f x\n", (double) c_nbytes / (double)c_cbytes);
 
     iarray_expression_t *e;
@@ -89,7 +89,7 @@ int main(void) {
 
     printf("** output:\n");
     IARRAY_RETURN_IF_FAILED(iarray_container_info(c_out, &c_nbytes, &c_cbytes));
-    printf("-   nbytes: %lld x\n", c_nbytes);
+    printf("-   nbytes: %" PRId64 " x\n", c_nbytes);
     printf("-   Ratio: %8.2f x\n", (double) c_nbytes / (double)c_cbytes);
 
     int64_t nbytes = nelem * typesize;

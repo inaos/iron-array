@@ -148,8 +148,8 @@ static iarray_reduce_function_t UI64STD = {
 };
 
 static void ui32std_red(UI32_DPARAMS_R) { STD_R }
-static void u32std_ini(DPARAMS_I) { STD_I }
-static void u32std_fin(DPARAMS_F) { STD_F }
+// static void u32std_ini(DPARAMS_I) { STD_I }
+// static void u32std_fin(DPARAMS_F) { STD_F }
 
 static iarray_reduce_function_t UI32STD = {
         .init = CAST_I ui64std_ini,

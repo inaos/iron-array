@@ -17,7 +17,7 @@
 
 
 // TODO: clang complains about unused function.  provide a test using this.
-static ina_rc_t _iarray_container_new(iarray_context_t *ctx,
+static inline ina_rc_t _iarray_container_new(iarray_context_t *ctx,
                                       iarray_dtshape_t *dtshape,
                                       iarray_storage_t *storage,
                                       iarray_container_t **c)
