@@ -24,7 +24,7 @@ int main(void) {
     iarray_config_t cfg = IARRAY_CONFIG_DEFAULTS;
     cfg.compression_level = 5;
     cfg.compression_codec = IARRAY_COMPRESSION_BLOSCLZ;
-
+    cfg.btune = false;
     cfg.max_num_threads = 1;
     iarray_context_new(&cfg, &ctx);
 
