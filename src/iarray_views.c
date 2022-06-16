@@ -566,12 +566,13 @@ INA_API(ina_rc_t) iarray_add_view_postfilter(iarray_container_t *view, iarray_co
     postparams->user_data = (void*)view_postparams;
     dparams->postparams = postparams;
 
-    // Disable multithreading on views.  This is currently creating race conditions,
+    // Disable multithreading on views from views.  This is currently creating race conditions,
     // probably accessing parts of the super-chunk (but could be totally unrelated).
     // We still need to check how this might affect performance when views are used in
     // expressions, but disabling multithreading is a safer option for the time being.
-    dparams->nthreads = 1;
-
+    if (view_pred->container_viewed != NULL) {
+        dparams->nthreads = 1;
+    }
     // Create new context since postparams is empty in the old one
     blosc2_free_ctx(view->catarr->sc->dctx);
     view->catarr->sc->dctx = blosc2_create_dctx(*dparams);
