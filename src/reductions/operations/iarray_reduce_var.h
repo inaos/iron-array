@@ -26,7 +26,8 @@
     INA_UNUSED(nelem);  \
     user_data_t *u_data = (user_data_t *) user_data; \
     const double *mean = (double *) u_data->mean;    \
-    *data0 += pow(*data1 - *mean, 2.);
+    double dif = (double) *data1 - *mean;          \
+    *data0 += dif * dif;
 
 #define VAR_F \
     INA_UNUSED(user_data); \
@@ -55,7 +56,8 @@ static iarray_reduce_function_t DVAR = {
     user_data_t *u_data = (user_data_t *) user_data; \
     const double *mean = (double *) u_data->mean;    \
     if (!isnan(*data1)) {  \
-        *data0 += pow((double) *data1 - *mean, 2.);         \
+        double dif = (double) *data1 - *mean;          \
+        *data0 += dif * dif;         \
         (*u_data->not_nan_nelem)++; \
     }
 
@@ -81,8 +83,9 @@ static iarray_reduce_function_t DNANVAR = {
     INA_UNUSED(strides1);  \
     INA_UNUSED(nelem);  \
     user_data_t *u_data = (user_data_t *) user_data; \
-    const float *mean = (float *) u_data->mean; \
-    *data0 += powf((float) *data1 - *mean, 2.f);
+    const float *mean = (float *) u_data->mean;      \
+    float dif = (float) *data1 - *mean;          \
+    *data0 += dif * dif;         \
 
 #define FVAR_I \
     VAR_I
@@ -110,8 +113,9 @@ static iarray_reduce_function_t FVAR = {
     INA_UNUSED(nelem);  \
     user_data_t *u_data = (user_data_t *) user_data; \
     const float *mean = (float *) u_data->mean;    \
-    if (!isnan(*data1)) {   \
-        *data0 += powf((float) *data1 - *mean, 2.f);         \
+    if (!isnan(*data1)) {  \
+        float dif = (float) *data1 - *mean;          \
+        *data0 += dif * dif;         \
         (*u_data->not_nan_nelem)++; \
     }
 
