@@ -14,17 +14,6 @@
 #include "operations/iarray_reduce_operations.h"
 #include <libiarray/iarray.h>
 
-
-typedef struct iarray_reduce_params_s {
-    iarray_reduce_function_t *ufunc;
-    iarray_container_t *input;
-    iarray_container_t *result;
-    int8_t axis;
-    int64_t *out_chunkshape;
-    int64_t nchunk;
-} iarray_reduce_params_t;
-
-
 static bool check_padding(const int64_t *block_offset_n,
                           const int64_t *elem_index_n,
                           iarray_reduce_params_t *rparams) {
@@ -883,73 +872,6 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
     // res data type
     iarray_data_type_t dtype;
     switch (func) {
-        case IARRAY_REDUCE_MEDIAN:
-            // If the input is of type integer or unsigned int the result will be of type double
-            switch (a->dtshape->dtype) {
-                case IARRAY_DATA_TYPE_DOUBLE:
-                    reduce_function = &DMEDIAN;
-                    dtype = IARRAY_DATA_TYPE_DOUBLE;
-                    break;
-                case IARRAY_DATA_TYPE_FLOAT:
-                    reduce_function = &FMEDIAN;
-                    dtype = IARRAY_DATA_TYPE_FLOAT;
-                    break;
-                case IARRAY_DATA_TYPE_INT64:
-                    reduce_function = &I64MEDIAN;
-                    dtype = IARRAY_DATA_TYPE_DOUBLE;
-                    break;
-                case IARRAY_DATA_TYPE_INT32:
-                    reduce_function = &I32MEDIAN;
-                    dtype = IARRAY_DATA_TYPE_DOUBLE;
-                    break;
-                case IARRAY_DATA_TYPE_INT16:
-                    reduce_function = &I16MEDIAN;
-                    dtype = IARRAY_DATA_TYPE_DOUBLE;
-                    break;
-                case IARRAY_DATA_TYPE_INT8:
-                    reduce_function = &I8MEDIAN;
-                    dtype = IARRAY_DATA_TYPE_DOUBLE;
-                    break;
-                case IARRAY_DATA_TYPE_UINT64:
-                    reduce_function = &UI64MEDIAN;
-                    dtype = IARRAY_DATA_TYPE_DOUBLE;
-                    break;
-                case IARRAY_DATA_TYPE_UINT32:
-                    reduce_function = &UI32MEDIAN;
-                    dtype = IARRAY_DATA_TYPE_DOUBLE;
-                    break;
-                case IARRAY_DATA_TYPE_UINT16:
-                    reduce_function = &UI16MEDIAN;
-                    dtype = IARRAY_DATA_TYPE_DOUBLE;
-                    break;
-                case IARRAY_DATA_TYPE_UINT8:
-                    reduce_function = &UI8MEDIAN;
-                    dtype = IARRAY_DATA_TYPE_DOUBLE;
-                    break;
-                case IARRAY_DATA_TYPE_BOOL:
-                    reduce_function = &BOOLMEDIAN;
-                    dtype = IARRAY_DATA_TYPE_DOUBLE;
-                    break;
-                default:
-                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
-                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-            }
-            break;
-        case IARRAY_REDUCE_NAN_MEDIAN:
-            switch (a->dtshape->dtype) {
-                case IARRAY_DATA_TYPE_DOUBLE:
-                    reduce_function = &NAN_DMEDIAN;
-                    dtype = IARRAY_DATA_TYPE_DOUBLE;
-                    break;
-                case IARRAY_DATA_TYPE_FLOAT:
-                    reduce_function = &NAN_FMEDIAN;
-                    dtype = IARRAY_DATA_TYPE_FLOAT;
-                    break;
-                default:
-                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
-                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-            }
-            break;
         case IARRAY_REDUCE_SUM:
             // If the input is of type integer or unsigned int the result will be of type int64_t or uint64_t respectively
             switch (a->dtshape->dtype) {
@@ -1297,16 +1219,6 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
         storage_rechunk.urlpath = "_iarray_red_temp.iarr";
     }
     switch (func) {
-        case IARRAY_REDUCE_MEDIAN:
-        case IARRAY_REDUCE_NAN_MEDIAN:
-            IARRAY_RETURN_IF_FAILED(iarray_copy(ctx, a, false, &storage_rechunk, &a_rechunk));
-            IARRAY_RETURN_IF_FAILED(
-                    _iarray_reduce_udf(ctx, a_rechunk, reduce_function, axis, storage, b, dtype, false));
-            iarray_container_free(ctx, &a_rechunk);
-            if (storage_rechunk.urlpath) {
-                iarray_container_remove("_iarray_red_temp.iarr");
-            }
-            break;
         case IARRAY_REDUCE_MAX:
         case IARRAY_REDUCE_NAN_MAX:
         case IARRAY_REDUCE_MIN:
@@ -1345,7 +1257,8 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     int err_io;
 
     if (func == IARRAY_REDUCE_VAR || func == IARRAY_REDUCE_STD ||
-        func == IARRAY_REDUCE_NAN_VAR || func == IARRAY_REDUCE_NAN_STD) {
+        func == IARRAY_REDUCE_NAN_VAR || func == IARRAY_REDUCE_NAN_STD ||
+        func == IARRAY_REDUCE_MEDIAN || func == IARRAY_REDUCE_NAN_MEDIAN) {
         return _iarray_reduce_oneshot(ctx, a, func, naxis, axis, storage, b);
     }
 

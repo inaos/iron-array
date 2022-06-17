@@ -33,9 +33,9 @@ int main(void) {
     int8_t ndim = 2;
     int8_t naxis = 1;
     int8_t axis[] = {1,0};
-    iarray_reduce_func_t func = IARRAY_REDUCE_NAN_VAR;
+    iarray_reduce_func_t func = IARRAY_REDUCE_MEDIAN;
     iarray_dtshape_t dtshape;
-    dtshape.dtype = IARRAY_DATA_TYPE_FLOAT;
+    dtshape.dtype = IARRAY_DATA_TYPE_DOUBLE;
     dtshape.ndim = ndim;
 
     for (int i = 0; i < ndim; ++i) {
@@ -81,7 +81,7 @@ int main(void) {
     IARRAY_RETURN_IF_FAILED(iarray_to_buffer(ctx, c_out, buff, c_out->catarr->nitems * c_out->catarr->itemsize));
 
     for (int i = 0; i < c_out->catarr->nitems; ++i) {
-        printf(" %.10f ", ((float *) buff)[i]);
+        printf(" %.10f ", ((double *) buff)[i]);
     }
     printf("\n");
     free(buff);
