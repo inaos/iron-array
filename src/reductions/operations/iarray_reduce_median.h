@@ -14,325 +14,93 @@
 
 #include "iarray_reduce_private.h"
 
-#define MEDIAN_R \
+
+#define COMPARE(type, nan) \
+    static int iarray_##type##_##nan##_median_compare(const type *a, const type *b) { \
+        return *a > *b ? 1 : (*a < *b ? -1 : 0); \
+    }
+
+#define MEDIAN_I(itype, otype, nan) \
+    user_data_os_t *u_data = (user_data_os_t *) user_data; \
+    u_data->medians[u_data->i] = malloc(u_data->reduced_items * u_data->pparams->out_typesize); \
+    u_data->not_nan_nelems[u_data->i] = 0;
+
+
+#define MEDIAN_R(itype, otype, nan) \
     INA_UNUSED(user_data); \
     INA_UNUSED(strides0);  \
-    user_data_t *u_data = (user_data_t *) user_data; \
-    *data0 = 0; \
-    cdata1 = malloc(u_data->input_itemsize * nelem);             \
-    for (int i = 0; i < nelem; ++i) { \
-        cdata1[i] = *data1; \
-        data1 += strides1; \
-    }            \
-    qsort(cdata1, nelem, u_data->input_itemsize, compare);       \
-    if (nelem % 2 == 0) {      \
-        *data0 = (double) ((cdata1[(int64_t) (nelem / 2 - 1)] + cdata1[(int64_t) (nelem / 2)]) * 0.5);            \
-    } else {     \
-        *data0 = (double) cdata1[(int64_t) (nelem / 2)];             \
-    }\
-    free(cdata1);
+    user_data_os_t *u_data = (user_data_os_t *) user_data; \
+    *((itype *) u_data->median) = *((itype *) data1);       \
+    u_data->median += u_data->rparams->input->catarr->itemsize; \
+    u_data->median_nelems[u_data->i]++; \
+    u_data->not_nan_nelems[u_data->i]++;
 
-#define DMEDIAN_R \
-    INA_UNUSED(strides0);  \
-    user_data_t *u_data = (user_data_t *) user_data; \
-    *data0 = 0; \
-    cdata1 = malloc(u_data->input_itemsize * nelem);             \
-    for (int i = 0; i < nelem; ++i) { \
-        if(isnan(*data1)) {\
-            *data0 = NAN;  \
-            break;      \
-        }\
-        cdata1[i] = *data1; \
-        data1 += strides1; \
-    }            \
-    if (!isnan(*data0)) {  \
-        qsort(cdata1, nelem, u_data->input_itemsize, compare);       \
+
+#define MEDIAN_F(itype, otype, nan) \
+    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_##itype##_##nan##_median_compare; \
+    user_data_os_t *u_data = (user_data_os_t *) user_data;                                                             \
+    int64_t nelem = u_data->not_nan_nelems[u_data->i];                                                                         \
+    if(nelem != 0) {                        \
+        qsort(u_data->medians[u_data->i], nelem, u_data->input_itemsize, compare);                                                     \
         if (nelem % 2 == 0) {      \
-            *data0 = (double) ((cdata1[(int64_t) (nelem / 2 - 1)] + cdata1[(int64_t) (nelem / 2)]) * 0.5);            \
+            *res = (otype) ((((itype *) u_data->medians[u_data->i])[(int64_t) (nelem / 2 - 1)] + \
+                              ((itype *) u_data->medians[u_data->i])[(int64_t) (nelem / 2)]) * 0.5); \
         } else {     \
-            *data0 = (double) cdata1[(int64_t) (nelem / 2)];             \
-        }\
+            *res = (otype) ((itype *) u_data->medians[u_data->i])[(int64_t) (nelem / 2)];             \
+    }                       \
+    } else {                \
+        *res = NAN;                        \
+    }                       \
+    free(u_data->medians[u_data->i]); \
+
+#define nanMEDIAN_I(itype, otype, nan) \
+    MEDIAN_I(itype, otype, nan)
+
+#define nanMEDIAN_R(itype, otype, nan) \
+    INA_UNUSED(user_data); \
+    INA_UNUSED(user_data); \
+    INA_UNUSED(strides0);  \
+    user_data_os_t *u_data = (user_data_os_t *) user_data; \
+    itype d1 = *((itype *) data1);                \
+    if(!isnan(d1)) {                           \
+        *((itype *) u_data->median) = d1;       \
+        u_data->median += u_data->rparams->input->catarr->itemsize; \
+        u_data->median_nelems[u_data->i]++; \
+        u_data->not_nan_nelems[u_data->i]++;                   \
+    }
+#define nanMEDIAN_F(itype, otype, nan) \
+    MEDIAN_F(itype, otype, nan)
+
+
+#define MEDIAN(itype, otype, nan) \
+    COMPARE(itype, nan) \
+    static void itype##_##nan##_median_ini(PARAMS_O_I(itype, otype)) { \
+        nan##MEDIAN_I(itype, otype, nan) \
     } \
-    free(cdata1);
+    static void itype##_##nan##_median_red(PARAMS_O_R(itype, otype)) { \
+        nan##MEDIAN_R(itype, otype, nan) \
+    } \
+    static void itype##_##nan##_median_fin(PARAMS_O_F(itype, otype)) { \
+        nan##MEDIAN_F(itype, otype, nan) \
+    } \
+    static iarray_reduce_function_t itype##nan##_MEDIAN = { \
+            .init = CAST_I itype##_##nan##_median_ini, \
+            .reduction = CAST_R itype##_##nan##_median_red, \
+            .finish = CAST_F itype##_##nan##_median_fin, \
+    };
 
-#define NAN_MEDIAN_R \
-    INA_UNUSED(strides0);  \
-    user_data_t *u_data = (user_data_t *) user_data; \
-    *data0 = 0;      \
-    cdata1 = malloc(u_data->input_itemsize * nelem); \
-    int64_t nnans = 0;                 \
-    for (int i = 0; i < nelem; ++i) { \
-        if (isnan(*data1)) {                         \
-            nnans++; \
-        }            \
-        else {       \
-            cdata1[i - nnans] = *data1;                \
-        }             \
-        data1 += strides1; \
-    }                \
-    nelem -= nnans;  \
-    if (nelem != 0) {\
-        qsort(cdata1, nelem, u_data->input_itemsize, compare); \
-        if (nelem % 2 == 0) {      \
-            *data0 = (double) ((cdata1[(int64_t) (nelem / 2 - 1)] + cdata1[(int64_t) (nelem / 2)]) * 0.5);            \
-        } else {     \
-            *data0 = (double) cdata1[(int64_t) (nelem / 2)];             \
-        }            \
-    }                \
-    else {         \
-        *data0 = NAN;                    \
-    }                   \
-    free(cdata1);    \
-
-
-
-#define COMPARE_RETURN return *a > *b ? 1 : (*a < *b ? -1 : 0);
-static int iarray_dmedian_compare(const double *a, const double *b) {
-    COMPARE_RETURN
-}
-static void dmedian_red(DPARAMS_R) {
-    double *cdata1;
-    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_dmedian_compare;
-    DMEDIAN_R
-}
-
-static iarray_reduce_function_t DMEDIAN = {
-        .init = NULL,
-        .reduction = CAST_R dmedian_red,
-        .finish = NULL,
-};
-
-static void nan_dmedian_red(DPARAMS_R) {
-    double *cdata1;
-    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_dmedian_compare;
-    NAN_MEDIAN_R
-}
-
-static iarray_reduce_function_t NAN_DMEDIAN = {
-    .init = NULL,
-    .reduction = CAST_R nan_dmedian_red,
-    .finish = NULL,
-};
-
-#define FMEDIAN_R \
-    INA_UNUSED(user_data); \
-    INA_UNUSED(strides0);  \
-    user_data_t *u_data = (user_data_t *) user_data; \
-    *data0 = 0; \
-    cdata1 = malloc(u_data->input_itemsize * nelem);             \
-    for (int i = 0; i < nelem; ++i) { \
-        if(isnan(*data1)) {\
-            *data0 = NAN;  \
-            break;      \
-        }\
-        cdata1[i] = *data1; \
-        data1 += strides1; \
-    }             \
-    if (!isnan(*data0)) {  \
-        qsort(cdata1, nelem, u_data->input_itemsize, compare);       \
-        if (nelem % 2 == 0) {      \
-            *data0 = (float) ((cdata1[(int64_t) (nelem / 2 - 1)] + cdata1[(int64_t) (nelem / 2)]) * 0.5f);            \
-        } else {     \
-            *data0 = (float) cdata1[(int64_t) (nelem / 2)];             \
-        }         \
-    }              \
-    free(cdata1);
-
-#define NAN_FMEDIAN_R \
-    INA_UNUSED(user_data); \
-    INA_UNUSED(strides0);  \
-    user_data_t *u_data = (user_data_t *) user_data; \
-    *data0 = 0; \
-    cdata1 = malloc(u_data->input_itemsize * nelem); \
-    int64_t nnans = 0;                 \
-    for (int i = 0; i < nelem; ++i) { \
-        if (isnan(*data1)) {\
-            nnans++;                      \
-        }             \
-        else {        \
-            cdata1[i-nnans] = *data1;                      \
-        }              \
-        data1 += strides1; \
-    }                 \
-    nelem -= nnans;   \
-    if (nelem != 0) { \
-        qsort(cdata1, nelem, u_data->input_itemsize, compare);       \
-        if (nelem % 2 == 0) { \
-            *data0 = (float) ((cdata1[(int64_t) (nelem / 2 - 1)] + cdata1[(int64_t) (nelem / 2)]) * 0.5f);            \
-        } else {     \
-            *data0 = (float) cdata1[(int64_t) (nelem / 2)];             \
-        }             \
-    }                 \
-    else {         \
-        *data0 = NAN;                    \
-    }               \
-    free(cdata1);\
-
-static int iarray_fmedian_compare(const float *a, const float *b) {
-    COMPARE_RETURN
-}
-static void fmedian_red(FPARAMS_R) {
-    float *cdata1;
-    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_fmedian_compare;
-    FMEDIAN_R
-}
-
-static iarray_reduce_function_t FMEDIAN = {
-        .init = NULL,
-        .reduction = CAST_R fmedian_red,
-        .finish = NULL,
-};
-
-static void nan_fmedian_red(FPARAMS_R) {
-    float *cdata1;
-    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_fmedian_compare;
-    NAN_FMEDIAN_R
-}
-
-static iarray_reduce_function_t NAN_FMEDIAN = {
-    .init = NULL,
-    .reduction = CAST_R nan_fmedian_red,
-    .finish = NULL,
-};
-
-static int iarray_i64median_compare(const int64_t *a, const int64_t *b) {
-    COMPARE_RETURN
-}
-
-static void i64median_red(I64_DPARAMS_R) {
-    int64_t *cdata1;
-    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_i64median_compare;
-    MEDIAN_R
-}
-
-static iarray_reduce_function_t I64MEDIAN = {
-        .init = NULL,
-        .reduction = CAST_R i64median_red,
-        .finish = NULL,
-};
-
-static int iarray_i32median_compare(const int32_t *a, const int32_t *b) {
-    COMPARE_RETURN
-}
-static void i32median_red(I32_DPARAMS_R) {
-    int32_t *cdata1;
-    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_i32median_compare;
-    MEDIAN_R
-}
-
-static iarray_reduce_function_t I32MEDIAN = {
-        .init = NULL,
-        .reduction = CAST_R i32median_red,
-        .finish = NULL,
-};
-
-static int iarray_i16median_compare(const int16_t *a, const int16_t *b) {
-    COMPARE_RETURN
-}
-static void i16median_red(I16_DPARAMS_R) {
-    int16_t *cdata1;
-    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_i16median_compare;
-    MEDIAN_R
-}
-
-static iarray_reduce_function_t I16MEDIAN = {
-        .init = NULL,
-        .reduction = CAST_R i16median_red,
-        .finish = NULL,
-};
-
-static int iarray_i8median_compare(const int8_t *a, const int8_t *b) {
-    COMPARE_RETURN
-}
-
-static void i8median_red(I8_DPARAMS_R) {
-    int8_t *cdata1;
-    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_i8median_compare;
-    MEDIAN_R
-}
-
-static iarray_reduce_function_t I8MEDIAN = {
-        .init = NULL,
-        .reduction = CAST_R i8median_red,
-        .finish = NULL,
-};
-
-
-static int iarray_ui64median_compare(const uint64_t *a, const uint64_t *b) {
-    COMPARE_RETURN
-}
-
-static void ui64median_red(UI64_DPARAMS_R) {
-    uint64_t *cdata1;
-    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_ui64median_compare;
-    MEDIAN_R
-}
-
-static iarray_reduce_function_t UI64MEDIAN = {
-        .init = NULL,
-        .reduction = CAST_R ui64median_red,
-        .finish = NULL,
-};
-
-
-static int iarray_ui32median_compare(const uint32_t *a, const uint32_t *b) {
-    COMPARE_RETURN
-}
-static void ui32median_red(UI32_DPARAMS_R) {
-    uint32_t *cdata1;
-    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_ui32median_compare;
-    MEDIAN_R
-}
-
-static iarray_reduce_function_t UI32MEDIAN = {
-        .init = NULL,
-        .reduction = CAST_R ui32median_red,
-        .finish = NULL,
-};
-
-static int iarray_ui16median_compare(const uint16_t *a, const uint16_t *b) {
-    COMPARE_RETURN
-}
-static void ui16median_red(UI16_DPARAMS_R) {
-    uint16_t *cdata1;
-    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_ui16median_compare;
-    MEDIAN_R
-}
-
-static iarray_reduce_function_t UI16MEDIAN = {
-        .init = NULL,
-        .reduction = CAST_R ui16median_red,
-        .finish = NULL,
-};
-
-static int iarray_ui8median_compare(const uint8_t *a, const uint8_t *b) {
-    COMPARE_RETURN
-}
-static void ui8median_red(UI8_DPARAMS_R) {
-    uint8_t *cdata1;
-    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_ui8median_compare;
-    MEDIAN_R
-}
-
-static iarray_reduce_function_t UI8MEDIAN = {
-        .init = NULL,
-        .reduction = CAST_R ui8median_red,
-        .finish = NULL,
-};
-
-static int iarray_boolmedian_compare(const bool *a, const bool *b) {
-    COMPARE_RETURN
-}
-static void boolmedian_red(BOOL_DPARAMS_R) {
-    bool *cdata1;
-    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_boolmedian_compare;
-    MEDIAN_R
-}
-
-static iarray_reduce_function_t BOOLMEDIAN = {
-        .init = NULL,
-        .reduction = CAST_R boolmedian_red,
-        .finish = NULL,
-};
+MEDIAN(double, double,)
+MEDIAN(double, double, nan)
+MEDIAN(float,float, )
+MEDIAN(float, float, nan)
+MEDIAN(int64_t, double,)
+MEDIAN(int32_t, double,)
+MEDIAN(int16_t, double,)
+MEDIAN(int8_t, double,)
+MEDIAN(uint64_t, double,)
+MEDIAN(uint32_t, double,)
+MEDIAN(uint16_t, double,)
+MEDIAN(uint8_t, double,)
+MEDIAN(bool, double,)
 
 #endif //IARRAY_IARRAY_REDUCE_MEDIAN_H

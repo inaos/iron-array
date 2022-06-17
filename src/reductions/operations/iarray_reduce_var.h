@@ -15,23 +15,23 @@
 #include "iarray_reduce_private.h"
 
 #define VAR_I \
-    user_data_t *u_data = (user_data_t *) user_data; \
+    user_data_os_t *u_data = (user_data_os_t *) user_data; \
     *res = 0; \
-    *u_data->not_nan_nelem = 0;
+    u_data->not_nan_nelems[u_data->i] = 0;
 
 #define VAR_R \
     INA_UNUSED(user_data); \
     INA_UNUSED(strides0);  \
     INA_UNUSED(strides1);  \
     INA_UNUSED(nelem);  \
-    user_data_t *u_data = (user_data_t *) user_data; \
+    user_data_os_t *u_data = (user_data_os_t *) user_data; \
     const double *mean = (double *) u_data->mean;    \
     double dif = (double) *data1 - *mean;          \
     *data0 += dif * dif;
 
 #define VAR_F \
     INA_UNUSED(user_data); \
-    user_data_t *u_data = (user_data_t *) user_data; \
+    user_data_os_t *u_data = (user_data_os_t *) user_data; \
     *res = *res * u_data->inv_nelem;
 
 
@@ -53,18 +53,18 @@ static iarray_reduce_function_t DVAR = {
     INA_UNUSED(strides0);  \
     INA_UNUSED(strides1);  \
     INA_UNUSED(nelem);  \
-    user_data_t *u_data = (user_data_t *) user_data; \
+    user_data_os_t *u_data = (user_data_os_t *) user_data; \
     const double *mean = (double *) u_data->mean;    \
     if (!isnan(*data1)) {  \
         double dif = (double) *data1 - *mean;          \
         *data0 += dif * dif;         \
-        (*u_data->not_nan_nelem)++; \
+        u_data->not_nan_nelems[u_data->i]++; \
     }
 
 #define NANVAR_F \
     INA_UNUSED(user_data); \
-    user_data_t *u_data = (user_data_t *) user_data; \
-    *res = *res / *u_data->not_nan_nelem;\
+    user_data_os_t *u_data = (user_data_os_t *) user_data; \
+    *res = *res / u_data->not_nan_nelems[u_data->i];\
 
 static void dnanvar_red(DPARAMS_R) { NANVAR_R }
 static void dnanvar_init(DPARAMS_I) { NANVAR_I }
@@ -82,7 +82,7 @@ static iarray_reduce_function_t DNANVAR = {
     INA_UNUSED(strides0);  \
     INA_UNUSED(strides1);  \
     INA_UNUSED(nelem);  \
-    user_data_t *u_data = (user_data_t *) user_data; \
+    user_data_os_t *u_data = (user_data_os_t *) user_data; \
     const float *mean = (float *) u_data->mean;      \
     float dif = (float) *data1 - *mean;          \
     *data0 += dif * dif;         \
@@ -111,12 +111,12 @@ static iarray_reduce_function_t FVAR = {
     INA_UNUSED(strides0);  \
     INA_UNUSED(strides1);  \
     INA_UNUSED(nelem);  \
-    user_data_t *u_data = (user_data_t *) user_data; \
+    user_data_os_t *u_data = (user_data_os_t *) user_data; \
     const float *mean = (float *) u_data->mean;    \
     if (!isnan(*data1)) {  \
         float dif = (float) *data1 - *mean;          \
         *data0 += dif * dif;         \
-        (*u_data->not_nan_nelem)++; \
+        u_data->not_nan_nelems[u_data->i]++; \
     }
 
 #define FNANVAR_F \

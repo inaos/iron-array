@@ -34,26 +34,13 @@
 #include <libiarray/iarray.h>
 
 
-typedef struct iarray_reduce_params_s {
-    iarray_reduce_function_t *ufunc;
-    iarray_container_t *input;
-    iarray_container_t *result;
-    int8_t naxis;
-    const int8_t *axis;
-    int64_t *out_chunkshape;
-    int64_t nchunk;
-    uint8_t *aux_chunk;
-    int32_t aux_csize;
-    iarray_container_t *aux;
-} iarray_reduce_params_t;
-
-
 int64_t iarray_reduce_init(blosc2_prefilter_params *pparams,
-                           iarray_reduce_params_t *rparams,
-                           user_data_t *user_data) {
+                           iarray_reduce_os_params_t *rparams,
+                           user_data_os_t *user_data) {
     uint8_t *out = pparams->out;
     for (int i = 0; i < pparams->out_size / pparams->out_typesize; ++i) {
-        user_data->not_nan_nelem = &user_data->not_nan_nelems[i];
+        user_data->median_nelems[i] = 0;
+        user_data->i = i;
         rparams->ufunc->init(out, user_data);
         out+= pparams->out_typesize;
     }
@@ -62,11 +49,11 @@ int64_t iarray_reduce_init(blosc2_prefilter_params *pparams,
 
 
 int64_t iarray_reduce_finish(blosc2_prefilter_params *pparams,
-                           iarray_reduce_params_t *rparams,
-                           user_data_t *user_data) {
+                           iarray_reduce_os_params_t *rparams,
+                           user_data_os_t *user_data) {
     uint8_t *out = pparams->out;
     for (int i = 0; i < pparams->out_size / pparams->out_typesize; ++i) {
-        user_data->not_nan_nelem = &user_data->not_nan_nelems[i];
+        user_data->i = i;
         rparams->ufunc->finish(out, user_data);
         out += pparams->out_typesize;
     }
@@ -76,7 +63,7 @@ int64_t iarray_reduce_finish(blosc2_prefilter_params *pparams,
 
 static bool _iarray_check_output_padding(const int64_t *block_index,
                                          const int64_t *item_index,
-                                         iarray_reduce_params_t *rparams) {
+                                         iarray_reduce_os_params_t *rparams) {
     int64_t elem_index_n2[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < rparams->result->catarr->ndim; ++i) {
         elem_index_n2[i] = item_index[i] + block_index[i] *
@@ -94,7 +81,7 @@ static bool _iarray_check_output_padding(const int64_t *block_index,
 static bool _iarray_check_input_padding(const int64_t *block_index,
                                          const int64_t *item_index,
                                          const int64_t *input_chunkshape,
-                                         iarray_reduce_params_t *rparams) {
+                                         iarray_reduce_os_params_t *rparams) {
     int64_t elem_index_n2[IARRAY_DIMENSION_MAX];
     for (int i = 0; i < rparams->input->catarr->ndim; ++i) {
         elem_index_n2[i] = item_index[i] + block_index[i] *
@@ -110,8 +97,8 @@ static bool _iarray_check_input_padding(const int64_t *block_index,
 
 
 int64_t iarray_reduce_item_iter(blosc2_prefilter_params *pparams,
-                                iarray_reduce_params_t *rparams,
-                                user_data_t *user_data, int8_t ndim, uint8_t *chunk, uint8_t *block, uint8_t *aux_block, uint8_t *out,
+                                iarray_reduce_os_params_t *rparams,
+                                user_data_os_t *user_data, int8_t ndim, uint8_t *chunk, uint8_t *block, uint8_t *aux_block, uint8_t *out,
                                 int64_t *input_chunkshape,
                                 int64_t *block_index,
                                 int64_t *item_index, int64_t *item_start, int64_t *item_stop, int64_t *item_strides) {
@@ -144,7 +131,7 @@ int64_t iarray_reduce_item_iter(blosc2_prefilter_params *pparams,
 
 
 int64_t iarray_reduce_block_iter(blosc2_prefilter_params *pparams,
-                                 iarray_reduce_params_t *rparams, user_data_t *user_data, int8_t ndim,
+                                 iarray_reduce_os_params_t *rparams, user_data_os_t *user_data, int8_t ndim,
                                  bool *reduced_axis, uint8_t *chunk, int32_t csize, uint8_t *block, uint8_t *aux_block,
                                  int64_t *input_chunkshape,
                                  int64_t *block_index, int64_t *block_start, int64_t *block_stop, int64_t *block_strides, bool *is_padding,
@@ -180,7 +167,9 @@ int64_t iarray_reduce_block_iter(blosc2_prefilter_params *pparams,
 
             for (int out_item_offset_u = 0; out_item_offset_u < pparams->out_size / pparams->out_typesize; ++out_item_offset_u) {
 
-                user_data->not_nan_nelem = &user_data->not_nan_nelems[out_item_offset_u];
+                user_data->i = out_item_offset_u;
+                user_data->median = &user_data->medians[out_item_offset_u][user_data->median_nelems[out_item_offset_u] * rparams->input->catarr->itemsize];
+
                 if (is_padding[out_item_offset_u]) {
                     continue;
                 }
@@ -199,7 +188,7 @@ int64_t iarray_reduce_block_iter(blosc2_prefilter_params *pparams,
 
 
 int64_t iarray_reduce_chunk_iter(blosc2_prefilter_params *pparams,
-                                 iarray_reduce_params_t *rparams, user_data_t *user_data, int8_t ndim,
+                                 iarray_reduce_os_params_t *rparams, user_data_os_t *user_data, int8_t ndim,
                                  bool *reduced_axis, uint8_t *block, uint8_t *aux_block,
                                  int64_t *chunk_index, int64_t *chunk_start, int64_t *chunk_stop, int64_t *chunk_strides,
                                  int64_t *block_start, int64_t *block_stop, int64_t *block_strides, bool *is_padding,
@@ -260,14 +249,20 @@ int64_t iarray_reduce_chunk_iter(blosc2_prefilter_params *pparams,
 
 
 static int _reduce_general_prefilter(blosc2_prefilter_params *pparams) {
-    iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
-    user_data_t user_data = {0};
+    iarray_reduce_os_params_t *rparams = (iarray_reduce_os_params_t *) pparams->user_data;
+    user_data_os_t user_data = {0};
     user_data.inv_nelem = 1.;
     for (int i = 0; i < rparams->naxis; ++i) {
         user_data.inv_nelem /= (double) rparams->input->dtshape->shape[rparams->axis[i]];
     }
     user_data.input_itemsize = rparams->input->dtshape->dtype_size;
-    user_data.not_nan_nelems = malloc((pparams->out_size / pparams->out_typesize) * sizeof(int64_t));
+    user_data.not_nan_nelems = malloc(
+            (pparams->out_size / pparams->out_typesize) * sizeof(int64_t));
+    user_data.rparams = rparams;
+    user_data.pparams = pparams;
+    user_data.medians = malloc((pparams->out_size / pparams->out_typesize) * sizeof(uint8_t *)); \
+    user_data.median_nelems = malloc(
+            (pparams->out_size / pparams->out_typesize) * sizeof(int64_t));
 
     int8_t in_ndim = rparams->input->dtshape->ndim;
 
@@ -275,20 +270,30 @@ static int _reduce_general_prefilter(blosc2_prefilter_params *pparams) {
     for (int i = 0; i < rparams->naxis; ++i) {
         reduced_axis[rparams->axis[i]] = true;
     }
-
-    int64_t aux_start = pparams->nblock * rparams->aux->catarr->blocknitems;
-    int32_t aux_blocksize = rparams->aux->catarr->blocknitems * rparams->aux->catarr->itemsize;
-    uint8_t *aux_block = malloc(aux_blocksize);
-    blosc2_dparams dparams = {.nthreads = 1, .schunk = rparams->aux->catarr->sc, .postfilter = NULL};
-    blosc2_context *dctx = blosc2_create_dctx(dparams);
-    int bsize = blosc2_getitem_ctx(dctx, rparams->aux_chunk, rparams->aux_csize, (int) aux_start,
-                                   rparams->aux->catarr->blocknitems,
-                                   aux_block, aux_blocksize);
-    if (bsize < 0) {
-        IARRAY_TRACE1(iarray.tracing, "Error getting aux block");
-        return -1;
+    user_data.reduced_items = 1; \
+    for (int i = 0; i < rparams->input->catarr->ndim; ++i) {
+        if (reduced_axis[i]) {
+            user_data.reduced_items *= rparams->input->catarr->shape[i];
+        }
     }
-    blosc2_free_ctx(dctx);
+
+    uint8_t *aux_block;
+    if (rparams->func == IARRAY_REDUCE_VAR || rparams->func == IARRAY_REDUCE_NAN_VAR ||
+        rparams->func == IARRAY_REDUCE_STD || rparams->func == IARRAY_REDUCE_NAN_STD) {
+        int64_t aux_start = pparams->nblock * rparams->aux->catarr->blocknitems;
+        int32_t aux_blocksize = rparams->aux->catarr->blocknitems * rparams->aux->catarr->itemsize;
+        aux_block = malloc(aux_blocksize);
+        blosc2_dparams dparams = {.nthreads = 1, .schunk = rparams->aux->catarr->sc, .postfilter = NULL};
+        blosc2_context *dctx = blosc2_create_dctx(dparams);
+        int bsize = blosc2_getitem_ctx(dctx, rparams->aux_chunk, rparams->aux_csize, (int) aux_start,
+                                       rparams->aux->catarr->blocknitems,
+                                       aux_block, aux_blocksize);
+        if (bsize < 0) {
+            IARRAY_TRACE1(iarray.tracing, "Error getting aux block");
+            return -1;
+        }
+        blosc2_free_ctx(dctx);
+    }
 
     // Compute chunk-related variables
     int64_t out_chunk_offset_u = rparams->nchunk;
@@ -474,14 +479,21 @@ static int _reduce_general_prefilter(blosc2_prefilter_params *pparams) {
     free(in_item_start);
     free(in_item_stop);
     free(is_padding);
-    free(aux_block);
+    if (rparams->func == IARRAY_REDUCE_VAR || rparams->func == IARRAY_REDUCE_NAN_VAR ||
+        rparams->func == IARRAY_REDUCE_STD || rparams->func == IARRAY_REDUCE_NAN_STD) {
+        free(aux_block);
+    }
     free(user_data.not_nan_nelems);
+    free(user_data.median_nelems);
+    free(user_data.medians);
+
     return 0;
 }
 
 
 ina_rc_t
 _iarray_reduce2_udf(iarray_context_t *ctx, iarray_container_t *a, iarray_reduce_function_t *ufunc,
+                    iarray_reduce_func_t func,
                     int8_t naxis, const int8_t *axis, iarray_storage_t *storage,
                     iarray_container_t **b, iarray_data_type_t res_dtype, iarray_container_t *aux) {
 
@@ -519,7 +531,7 @@ _iarray_reduce2_udf(iarray_context_t *ctx, iarray_container_t *a, iarray_reduce_
     iarray_context_t *prefilter_ctx;
     iarray_context_new(ctx->cfg, &prefilter_ctx);
     prefilter_ctx->prefilter_fn = (blosc2_prefilter_fn) _reduce_general_prefilter;
-    iarray_reduce_params_t reduce_params = {0};
+    iarray_reduce_os_params_t reduce_params = {0};
     blosc2_prefilter_params pparams = {0};
     pparams.user_data = &reduce_params;
     prefilter_ctx->prefilter_params = &pparams;
@@ -530,6 +542,7 @@ _iarray_reduce2_udf(iarray_context_t *ctx, iarray_container_t *a, iarray_reduce_
     reduce_params.naxis = naxis;
     reduce_params.axis = axis;
     reduce_params.ufunc = ufunc;
+    reduce_params.func = func;
     reduce_params.aux = aux;
     // Compute the amount of chunks in each dimension
     int64_t shape_of_chunks[IARRAY_DIMENSION_MAX]={0};
@@ -556,14 +569,21 @@ _iarray_reduce2_udf(iarray_context_t *ctx, iarray_container_t *a, iarray_reduce_
         }
         reduce_params.out_chunkshape = chunk_shape;
         reduce_params.nchunk = nchunk;
-        uint8_t *aux_chunk;
+        uint8_t *aux_chunk = NULL;
         bool aux_needs_free;
-        reduce_params.aux_csize = blosc2_schunk_get_lazychunk(aux->catarr->sc, nchunk, &aux_chunk, &aux_needs_free);
-        if (reduce_params.aux_csize < 0) {
-            IARRAY_TRACE1(iarray.tracing, "Error getting lazy chunk");
-            return -1;
+        if (func == IARRAY_REDUCE_VAR ||
+            func == IARRAY_REDUCE_NAN_VAR ||
+            func == IARRAY_REDUCE_STD ||
+            func == IARRAY_REDUCE_NAN_STD ) {
+            reduce_params.aux_csize = blosc2_schunk_get_lazychunk(aux->catarr->sc, nchunk, &aux_chunk,
+                                                                  &aux_needs_free);
+            if (reduce_params.aux_csize < 0) {
+                IARRAY_TRACE1(iarray.tracing, "Error getting lazy chunk");
+                return -1;
+            }
+            reduce_params.aux_chunk = aux_chunk;
         }
-        reduce_params.aux_chunk = aux_chunk;
+
         // Compress data
         blosc2_cparams cparams = BLOSC2_CPARAMS_DEFAULTS;
         IARRAY_RETURN_IF_FAILED(iarray_create_blosc_cparams(&cparams, prefilter_ctx, c->catarr->itemsize,
@@ -587,8 +607,13 @@ _iarray_reduce2_udf(iarray_context_t *ctx, iarray_container_t *a, iarray_reduce_
         nchunk++;
         iarray_index_unidim_to_multidim_shape(c->dtshape->ndim, shape_of_chunks, nchunk,
                                               chunk_index);
-        if (aux_needs_free) {
-            free(aux_chunk);
+        if (func == IARRAY_REDUCE_VAR ||
+            func == IARRAY_REDUCE_NAN_VAR ||
+            func == IARRAY_REDUCE_STD ||
+            func == IARRAY_REDUCE_NAN_STD ) {
+            if (aux_needs_free) {
+                free(aux_chunk);
+            }
         }
     }
 
@@ -744,12 +769,79 @@ ina_rc_t _iarray_reduce2(iarray_context_t *ctx,
                     return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
             }
             break;
+        case IARRAY_REDUCE_MEDIAN:
+            // If the input is of type integer or unsigned int the result will be of type double
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &REDUCTION(MEDIAN, double);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &REDUCTION(MEDIAN, float);
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                case IARRAY_DATA_TYPE_INT64:
+                    reduce_function = &REDUCTION(MEDIAN, int64_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_INT32:
+                    reduce_function = &REDUCTION(MEDIAN, int32_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_INT16:
+                    reduce_function = &REDUCTION(MEDIAN, int16_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_INT8:
+                    reduce_function = &REDUCTION(MEDIAN, int8_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_UINT64:
+                    reduce_function = &REDUCTION(MEDIAN, uint64_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_UINT32:
+                    reduce_function = &REDUCTION(MEDIAN, uint32_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_UINT16:
+                    reduce_function = &REDUCTION(MEDIAN, uint16_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_UINT8:
+                    reduce_function = &REDUCTION(MEDIAN, uint8_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_BOOL:
+                    reduce_function = &REDUCTION(MEDIAN, bool);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
+        case IARRAY_REDUCE_NAN_MEDIAN:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &NANREDUCTION(MEDIAN, double);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &NANREDUCTION(MEDIAN, float);
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
         default:
             IARRAY_TRACE1(iarray.error, "Invalid function");
             return INA_ERROR(IARRAY_ERR_INVALID_EVAL_METHOD);
     }
 
-    iarray_container_t *mean;
+    iarray_container_t *mean = NULL;
     iarray_storage_t mean_storage;
     memcpy(&mean_storage, storage, sizeof(iarray_storage_t));
     mean_storage.urlpath = storage->urlpath ? "_iarray_mean_reduce.iarray" : NULL;
@@ -766,15 +858,23 @@ ina_rc_t _iarray_reduce2(iarray_context_t *ctx,
                     iarray_reduce_multi(ctx, a, IARRAY_REDUCE_NAN_MEAN, naxis, axis, &mean_storage, &mean));
             break;
         default:
-            IARRAY_TRACE1(iarray.error, "Invalid function");
-            return INA_ERROR(IARRAY_ERR_INVALID_EVAL_METHOD);
+            ;
     }
 
     IARRAY_RETURN_IF_FAILED(
-            _iarray_reduce2_udf(ctx, a, reduce_function, naxis, axis, storage, b, dtype,
+            _iarray_reduce2_udf(ctx, a, reduce_function, func, naxis, axis, storage, b, dtype,
                                 mean));
-    iarray_container_free(ctx, &mean);
-    iarray_container_remove(mean_storage.urlpath);
+    switch (func) {
+        case IARRAY_REDUCE_STD:
+        case IARRAY_REDUCE_VAR:
+        case IARRAY_REDUCE_NAN_STD:
+        case IARRAY_REDUCE_NAN_VAR:
+            iarray_container_free(ctx, &mean);
+            iarray_container_remove(mean_storage.urlpath);
+            break;
+        default:
+            ;
+    }
 
     return INA_SUCCESS;
 }
