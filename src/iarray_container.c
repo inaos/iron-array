@@ -1304,22 +1304,20 @@ INA_API(void) iarray_container_free(iarray_context_t *ctx, iarray_container_t **
     INA_UNUSED(ctx);
     INA_VERIFY_FREE(container);
 
-    if ((*container)->container_viewed == NULL) {
-        if ((*container)->catarr != NULL) {
-            // It can happen in some automatic garbage collection environments (e.g. Python)
-            // that context objects are collected prior to containers.  These situations
-            // typically happen during exceptions, so even if we are leaving leaks, there
-            // is little we can do.
-            if (ctx == NULL) return;
-            caterva_config_t cfg = {0};
-            iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
-            caterva_ctx_t *cat_ctx;
-            caterva_ctx_new(&cfg, &cat_ctx);
-            caterva_free(cat_ctx, &(*container)->catarr);
-            caterva_ctx_free(&cat_ctx);
-        }
-        INA_MEM_FREE_SAFE((*container)->storage);
+    if ((*container)->catarr != NULL) {
+        // It can happen in some automatic garbage collection environments (e.g. Python)
+        // that context objects are collected prior to containers.  These situations
+        // typically happen during exceptions, so even if we are leaving leaks, there
+        // is little we can do.
+        if (ctx == NULL) return;
+        caterva_config_t cfg = {0};
+        iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg);
+        caterva_ctx_t *cat_ctx;
+        caterva_ctx_new(&cfg, &cat_ctx);
+        caterva_free(cat_ctx, &(*container)->catarr);
+        caterva_ctx_free(&cat_ctx);
     }
+    INA_MEM_FREE_SAFE((*container)->storage);
     INA_MEM_FREE_SAFE((*container)->dtshape);
     INA_MEM_FREE_SAFE((*container)->auxshape);
 
