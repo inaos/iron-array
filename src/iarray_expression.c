@@ -609,10 +609,14 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
 
     // Determine the class of each container
     iarray_container_t *out = e->out;
+    char *name = "zproxy_urlpath";
+    bool is_zproxy;
     for (int nvar = 0; nvar < nvars; ++nvar) {
         iarray_container_t *var = e->vars[nvar].c;
         bool eq = true;
-        if (var->container_viewed != NULL) {
+        // If it is a zproxy, it must be treated like a view
+        IARRAY_RETURN_IF_FAILED(iarray_vlmeta_exists(e->ctx, e->vars[nvar].c, name, &is_zproxy));
+        if (var->container_viewed != NULL || is_zproxy) {
             // Slice views are not yet supported properly (we tried, but turned out more complex than expected)
             if (var->container_viewed->dtshape->ndim != var->dtshape->ndim) {
                 eq = false;
