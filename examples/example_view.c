@@ -79,6 +79,7 @@ int main(void)
     iarray_iter_write_free(&iter_w);
     iarray_iter_read_free(&iter);
     iarray_container_free(ctx, &cont);
+    iarray_container_free(ctx, &cout);
     iarray_context_free(&ctx);
     iarray_destroy();
 

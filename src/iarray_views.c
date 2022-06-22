@@ -20,6 +20,8 @@ typedef struct {
     //!< Cast function.
     blosc2_schunk *viewed_schunk;
     //!< Predecessor's schunk
+    blosc2_schunk *first_schunk;
+    //!< View's schunk
 } view_postparams_udata;
 
 
@@ -192,8 +194,15 @@ ina_rc_t type_view_postfilter(blosc2_postfilter_params *postparams)
 
     uint8_t *chunk;
     bool needs_free;
+
+    if (udata->first_schunk->dctx->threads_started > 1) {
+        pthread_mutex_lock(&udata->first_schunk->dctx->nchunk_mutex);
+    }
     int csize = blosc2_schunk_get_lazychunk(udata->viewed_schunk, postparams->nchunk, &chunk,
                                             &needs_free);
+    if (udata->first_schunk->dctx->threads_started > 1) {
+        pthread_mutex_unlock(&udata->first_schunk->dctx->nchunk_mutex);
+    }
     if (csize < 0) {
         IARRAY_TRACE1(iarray.tracing, "Error getting lazy chunk");
         return IARRAY_ERR_BLOSC_FAILED;
@@ -234,8 +243,15 @@ ina_rc_t slice_view_postfilter(blosc2_postfilter_params *postparams)
 
     uint8_t *chunk;
     bool needs_free;
+
+    if (udata->first_schunk->dctx->threads_started > 1) {
+        pthread_mutex_lock(&udata->first_schunk->dctx->nchunk_mutex);
+    }
     int csize = blosc2_schunk_get_lazychunk(udata->viewed_schunk, postparams->nchunk, &chunk,
                                             &needs_free);
+    if (udata->first_schunk->dctx->threads_started > 1) {
+        pthread_mutex_unlock(&udata->first_schunk->dctx->nchunk_mutex);
+    }
     if (csize < 0) {
         IARRAY_TRACE1(iarray.tracing, "Error getting lazy chunk");
         return IARRAY_ERR_BLOSC_FAILED;
@@ -563,6 +579,7 @@ INA_API(ina_rc_t) iarray_add_view_postfilter(iarray_container_t *view, iarray_co
         }
     }
 
+    view_postparams->first_schunk = view->catarr->sc;
     postparams->user_data = (void*)view_postparams;
     dparams->postparams = postparams;
 
