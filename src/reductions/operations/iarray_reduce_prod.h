@@ -17,9 +17,6 @@
 #define PROD_I \
     INA_UNUSED(user_data); \
     *res = 1;
-#define NAN_PROD_I \
-    INA_UNUSED(user_data); \
-    *res = NAN;
 
 #define PROD_R \
     INA_UNUSED(user_data); \
@@ -34,11 +31,7 @@
     INA_UNUSED(strides0); \
     for (int i = 0; i < nelem; ++i) { \
         if (!isnan(*data1)) {          \
-            if (isnan(*data0)) {      \
-                *data0 = *data1;       \
-            } else {     \
-                *data0 = *data0 * *data1; \
-            }    \
+            *data0 = *data0 * *data1; \
         }\
         data1 += strides1; \
     }
@@ -58,11 +51,10 @@ static iarray_reduce_function_t DPROD = {
         .finish = CAST_F dprod_fin
 };
 
-static void nan_dprod_ini(DPARAMS_I) { NAN_PROD_I }
 static void nan_dprod_red(DPARAMS_R) { NAN_PROD_R }
 
 static iarray_reduce_function_t NAN_DPROD = {
-    .init = CAST_I nan_dprod_ini,
+    .init = CAST_I dprod_ini,
     .reduction = CAST_R nan_dprod_red,
     .finish = CAST_F dprod_fin
 };
@@ -77,11 +69,10 @@ static iarray_reduce_function_t FPROD = {
         .finish = CAST_F fprod_fin
 };
 
-static void nan_fprod_ini(FPARAMS_I) { NAN_PROD_I }
 static void nan_fprod_red(FPARAMS_R) { NAN_PROD_R }
 
 static iarray_reduce_function_t NAN_FPROD = {
-    .init = CAST_I nan_fprod_ini,
+    .init = CAST_I fprod_ini,
     .reduction = CAST_R nan_fprod_red,
     .finish = CAST_F fprod_fin
 };

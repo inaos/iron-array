@@ -92,7 +92,6 @@ static ina_rc_t test_reduce_nan(iarray_context_t *ctx, iarray_data_type_t dtype,
         case IARRAY_REDUCE_NAN_MAX:
         case IARRAY_REDUCE_NAN_MIN:
         case IARRAY_REDUCE_NAN_MEDIAN:
-        case IARRAY_REDUCE_NAN_PROD:
         case IARRAY_REDUCE_NAN_MEAN:
             for (int i = 0; i < buffer_nitems; ++i) {
                 switch (c_z->dtshape->dtype) {
@@ -127,14 +126,14 @@ static ina_rc_t test_reduce_nan(iarray_context_t *ctx, iarray_data_type_t dtype,
                 switch (c_z->dtshape->dtype) {
                     case IARRAY_DATA_TYPE_DOUBLE:
                         if (i == 0 && nnans == shape[axis]) {
-                            INA_TEST_ASSERT(isnan(((double *) buffer)[i]));
+                            INA_TEST_ASSERT_EQUAL_FLOATING(((double *) buffer)[i], 0.);
                         } else {
                             INA_TEST_ASSERT_EQUAL_FLOATING(((double *) buffer)[i], val_);
                         }
                         break;
                     case IARRAY_DATA_TYPE_FLOAT:
                         if (i == 0 && nnans == shape[axis]) {
-                            INA_TEST_ASSERT(isnan(((float *) buffer)[i]));
+                            INA_TEST_ASSERT_EQUAL_FLOATING(((float *) buffer)[i], 0.);
                         } else {
                             INA_TEST_ASSERT_EQUAL_FLOATING(((float *) buffer)[i], val_);
                         }
@@ -146,6 +145,29 @@ static ina_rc_t test_reduce_nan(iarray_context_t *ctx, iarray_data_type_t dtype,
             }
             break;
         }
+        case IARRAY_REDUCE_NAN_PROD:
+            for (int i = 0; i < buffer_nitems; ++i) {
+                switch (c_z->dtshape->dtype) {
+                    case IARRAY_DATA_TYPE_DOUBLE:
+                        if (i == 0 && nnans == shape[axis]) {
+                            INA_TEST_ASSERT_EQUAL_FLOATING(((double *) buffer)[i], 1.);
+                        } else {
+                            INA_TEST_ASSERT_EQUAL_FLOATING(((double *) buffer)[i], val_);
+                        }
+                        break;
+                    case IARRAY_DATA_TYPE_FLOAT:
+                        if (i == 0 && nnans == shape[axis]) {
+                            INA_TEST_ASSERT_EQUAL_FLOATING(((float *) buffer)[i], 1.);
+                        } else {
+                            INA_TEST_ASSERT_EQUAL_FLOATING(((float *) buffer)[i], val_);
+                        }
+                        break;
+                    default:
+                        IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                        return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+                }
+            }
+            break;
         case IARRAY_REDUCE_MAX:
         case IARRAY_REDUCE_MIN:
         case IARRAY_REDUCE_MEDIAN:
