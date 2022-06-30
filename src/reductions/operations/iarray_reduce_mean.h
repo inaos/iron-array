@@ -17,7 +17,9 @@
 
 #define MEAN_I \
     INA_UNUSED(user_data); \
-    *res = 0;
+    user_data_os_t *u_data = (user_data_os_t *) user_data; \
+    *res = 0; \
+    u_data->not_nan_nelems[u_data->i] = 0;
 
 #define MEAN_R \
     INA_UNUSED(user_data); \
@@ -27,24 +29,10 @@
         data1 += strides1; \
     }
 
-#define NAN_MEAN_R \
-    INA_UNUSED(strides0); \
-    user_data_t *u_data = (user_data_t *) user_data; \
-    for (int i = 0; i < nelem; ++i) { \
-        if (!isnan(*data1)) {          \
-           (*u_data->not_nan_nelem)++;             \
-            *data0 = *data0 + *data1; \
-        }          \
-        data1 += strides1;\
-    }              \
-
 #define MEAN_F \
-    user_data_t *u_data = (user_data_t *) user_data; \
+    user_data_os_t *u_data = (user_data_os_t *) user_data; \
     *res = *res * u_data->inv_nelem;
 
-#define NAN_MEAN_F \
-    user_data_t *u_data = (user_data_t *) user_data; \
-    *res = *res / *u_data->not_nan_nelem;                 \
 
 static void dmean_ini(DPARAMS_I) { MEAN_I }
 static void dmean_red(DPARAMS_R) { MEAN_R }
@@ -56,15 +44,6 @@ static iarray_reduce_function_t DMEAN = {
         .finish = CAST_F dmean_fin
 };
 
-static void nan_dmean_red(DPARAMS_R) { NAN_MEAN_R }
-static void nan_dmean_fin(DPARAMS_F) { NAN_MEAN_F }
-
-static iarray_reduce_function_t NAN_DMEAN = {
-    .init = CAST_I dmean_ini,
-    .reduction = CAST_R nan_dmean_red,
-    .finish = CAST_F nan_dmean_fin
-};
-
 static void fmean_ini(FPARAMS_I) { MEAN_I }
 static void fmean_red(FPARAMS_R) { MEAN_R }
 static void fmean_fin(FPARAMS_F) { MEAN_F }
@@ -73,15 +52,6 @@ static iarray_reduce_function_t FMEAN = {
         .init = CAST_I fmean_ini,
         .reduction = CAST_R fmean_red,
         .finish = CAST_F fmean_fin
-};
-
-static void nan_fmean_red(FPARAMS_R) { NAN_MEAN_R }
-static void nan_fmean_fin(FPARAMS_F) { NAN_MEAN_F }
-
-static iarray_reduce_function_t NAN_FMEAN = {
-    .init = CAST_I fmean_ini,
-    .reduction = CAST_R nan_fmean_red,
-    .finish = CAST_F nan_fmean_fin
 };
 
 static void i64mean_ini(DPARAMS_I) { MEAN_I }

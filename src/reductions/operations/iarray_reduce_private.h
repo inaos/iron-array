@@ -61,15 +61,6 @@ typedef struct user_data_os_s {
     int64_t *median_nelems;
 } user_data_os_t;
 
-typedef struct user_data_s {
-    int64_t reduced_items;
-    double inv_nelem;
-    uint8_t input_itemsize;
-    int64_t *not_nan_nelems;
-    int64_t *not_nan_nelem;
-    uint8_t *mean;
-    uint8_t **medians;
-} user_data_t;
 
 #define REDUCTION(name, type) \
     type##_##name
