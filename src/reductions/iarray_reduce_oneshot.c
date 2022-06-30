@@ -836,6 +836,21 @@ ina_rc_t _iarray_reduce2(iarray_context_t *ctx,
                     return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
             }
             break;
+        case IARRAY_REDUCE_NAN_MEAN:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &REDUCTION(NANMEAN, double);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &REDUCTION(NANMEAN, float);
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
         default:
             IARRAY_TRACE1(iarray.error, "Invalid function");
             return INA_ERROR(IARRAY_ERR_INVALID_EVAL_METHOD);

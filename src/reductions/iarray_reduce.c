@@ -136,9 +136,9 @@ int _reduce_non_optimized_prefilter(blosc2_prefilter_params *pparams) {
 
 static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     iarray_reduce_params_t *rparams = (iarray_reduce_params_t *) pparams->user_data;
-    user_data_t user_data = {0};
+    user_data_os_t user_data = {0};
     user_data.inv_nelem = 1. / (double) rparams->input->dtshape->shape[rparams->axis];
-    int64_t *not_nan_nelems = malloc((pparams->out_size / pparams->out_typesize) * sizeof(int64_t));
+    user_data.not_nan_nelems = malloc((pparams->out_size / pparams->out_typesize) * sizeof(int64_t));
     user_data.input_itemsize = rparams->input->dtshape->dtype_size;
 
     blosc2_dparams dparams = {.nthreads = 1, .schunk = rparams->input->catarr->sc, .postfilter = NULL};
@@ -228,8 +228,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
             bool empty = check_padding(block_offset_n, elem_index_n, rparams);
 
             // Initialize user_data
-            user_data.not_nan_nelem = &not_nan_nelems[ind];
-            *user_data.not_nan_nelem = 0;
+            user_data.i = ind;
             if (!empty) {
                 switch (rparams->result->dtshape->dtype) {
                     case IARRAY_DATA_TYPE_DOUBLE:
@@ -397,7 +396,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
                                                       elem_index_n);
 
                 // Update user_data
-                user_data.not_nan_nelem = &not_nan_nelems[ind];
+                user_data.i = ind;
                 if (check_padding(block_offset_n, elem_index_n, rparams)) {
                     switch (rparams->result->dtshape->dtype) {
                         case IARRAY_DATA_TYPE_DOUBLE:
@@ -650,8 +649,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
 
             bool padding = check_padding(block_offset_n, elem_index_n, rparams);
             // Update user_data
-            user_data.not_nan_nelem = &not_nan_nelems[ind];
-
+            user_data.i = ind;
             switch (rparams->result->dtshape->dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
                     if (padding) {
@@ -750,7 +748,7 @@ static int _reduce_prefilter(blosc2_prefilter_params *pparams) {
     blosc2_free_ctx(dctx);
 
     free(block);
-    free(not_nan_nelems);
+    free(user_data.not_nan_nelems);
 
     return 0;
 }
@@ -1190,21 +1188,6 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
                     return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
             }
             break;
-        case IARRAY_REDUCE_NAN_MEAN:
-            switch (a->dtshape->dtype) {
-                case IARRAY_DATA_TYPE_DOUBLE:
-                    reduce_function = &NAN_DMEAN;
-                    dtype = IARRAY_DATA_TYPE_DOUBLE;
-                    break;
-                case IARRAY_DATA_TYPE_FLOAT:
-                    reduce_function = &NAN_FMEAN;
-                    dtype = IARRAY_DATA_TYPE_FLOAT;
-                    break;
-                default:
-                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
-                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
-            }
-            break;
         default:
             IARRAY_TRACE1(iarray.error, "Invalid function");
             return INA_ERROR(IARRAY_ERR_INVALID_EVAL_METHOD);
@@ -1228,7 +1211,6 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
         case IARRAY_REDUCE_PROD:
         case IARRAY_REDUCE_NAN_PROD:
         case IARRAY_REDUCE_MEAN:
-        case IARRAY_REDUCE_NAN_MEAN:
             IARRAY_RETURN_IF_FAILED(
                     _iarray_reduce_udf(ctx, a, reduce_function, axis, storage, b, dtype, true));
             break;
@@ -1258,7 +1240,8 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
 
     if (func == IARRAY_REDUCE_VAR || func == IARRAY_REDUCE_STD ||
         func == IARRAY_REDUCE_NAN_VAR || func == IARRAY_REDUCE_NAN_STD ||
-        func == IARRAY_REDUCE_MEDIAN || func == IARRAY_REDUCE_NAN_MEDIAN) {
+        func == IARRAY_REDUCE_MEDIAN || func == IARRAY_REDUCE_NAN_MEDIAN ||
+        func == IARRAY_REDUCE_NAN_MEAN) {
         return _iarray_reduce_oneshot(ctx, a, func, naxis, axis, storage, b);
     }
 
