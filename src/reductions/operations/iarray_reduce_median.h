@@ -14,6 +14,8 @@
 
 #include "iarray_reduce_private.h"
 
+#define IARRAY_DTYPE_IS_FLOAT(dtype) \
+    ((dtype) == IARRAY_DATA_TYPE_FLOAT || (dtype) == IARRAY_DATA_TYPE_DOUBLE)
 
 #define COMPARE(type, nan) \
     static int iarray_##type##_##nan##_median_compare(const type *a, const type *b) { \
@@ -23,7 +25,8 @@
 #define MEDIAN_I(itype, otype, nan) \
     user_data_os_t *u_data = (user_data_os_t *) user_data; \
     u_data->medians[u_data->i] = malloc(u_data->reduced_items * u_data->pparams->out_typesize); \
-    u_data->not_nan_nelems[u_data->i] = 0;
+    u_data->not_nan_nelems[u_data->i] = 0; \
+    u_data->nan_nelems[u_data->i] = 0;
 
 
 #define MEDIAN_R(itype, otype, nan) \
@@ -32,11 +35,52 @@
     user_data_os_t *u_data = (user_data_os_t *) user_data; \
     *((itype *) u_data->median) = *((itype *) data1);       \
     u_data->median += u_data->rparams->input->catarr->itemsize; \
-    u_data->median_nelems[u_data->i]++; \
-    u_data->not_nan_nelems[u_data->i]++;
+    itype d1 = *((itype *) data1);                              \
+    if (isnan((double) d1)) { \
+        u_data->nan_nelems[u_data->i]++; \
+    } else {               \
+        u_data->not_nan_nelems[u_data->i]++; \
+    } \
+    u_data->median_nelems[u_data->i]++;
+
 
 
 #define MEDIAN_F(itype, otype, nan) \
+    int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_##itype##_##nan##_median_compare; \
+    user_data_os_t *u_data = (user_data_os_t *) user_data;                                                             \
+    int64_t nelem = u_data->not_nan_nelems[u_data->i];                                                                         \
+    if(u_data->nan_nelems[u_data->i] == 0) {                                                                                        \
+        qsort(u_data->medians[u_data->i], nelem, u_data->input_itemsize, compare);                                                     \
+        if (nelem % 2 == 0) {      \
+            *res = (otype) ((((itype *) u_data->medians[u_data->i])[(int64_t) (nelem / 2 - 1)] + \
+                              ((itype *) u_data->medians[u_data->i])[(int64_t) (nelem / 2)]) * 0.5); \
+        } else {     \
+            *res = (otype) ((itype *) u_data->medians[u_data->i])[(int64_t) (nelem / 2)];             \
+    }                       \
+    } else {                        \
+        *res = NAN;                        \
+    }                       \
+    free(u_data->medians[u_data->i]); \
+
+#define nanMEDIAN_I(itype, otype, nan) \
+    MEDIAN_I(itype, otype, nan)
+
+#define nanMEDIAN_R(itype, otype, nan) \
+    INA_UNUSED(user_data); \
+    INA_UNUSED(user_data); \
+    INA_UNUSED(strides0);  \
+    user_data_os_t *u_data = (user_data_os_t *) user_data; \
+    itype d1 = *((itype *) data1);                \
+    if(isnan(d1)) {                    \
+        u_data->nan_nelems[u_data->i]++;                   \
+    } else { \
+        *((itype *) u_data->median) = d1;       \
+        u_data->median += u_data->rparams->input->catarr->itemsize; \
+        u_data->median_nelems[u_data->i]++; \
+        u_data->not_nan_nelems[u_data->i]++;                   \
+    }                       \
+
+#define nanMEDIAN_F(itype, otype, nan) \
     int (*compare)(const void *a, const void *b) = (int(*)(const void *, const void*)) iarray_##itype##_##nan##_median_compare; \
     user_data_os_t *u_data = (user_data_os_t *) user_data;                                                             \
     int64_t nelem = u_data->not_nan_nelems[u_data->i];                                                                         \
@@ -53,23 +97,6 @@
     }                       \
     free(u_data->medians[u_data->i]); \
 
-#define nanMEDIAN_I(itype, otype, nan) \
-    MEDIAN_I(itype, otype, nan)
-
-#define nanMEDIAN_R(itype, otype, nan) \
-    INA_UNUSED(user_data); \
-    INA_UNUSED(user_data); \
-    INA_UNUSED(strides0);  \
-    user_data_os_t *u_data = (user_data_os_t *) user_data; \
-    itype d1 = *((itype *) data1);                \
-    if(!isnan(d1)) {                           \
-        *((itype *) u_data->median) = d1;       \
-        u_data->median += u_data->rparams->input->catarr->itemsize; \
-        u_data->median_nelems[u_data->i]++; \
-        u_data->not_nan_nelems[u_data->i]++;                   \
-    }
-#define nanMEDIAN_F(itype, otype, nan) \
-    MEDIAN_F(itype, otype, nan)
 
 
 #define MEDIAN(itype, otype, nan) \

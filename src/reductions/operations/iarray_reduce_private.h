@@ -55,6 +55,7 @@ typedef struct user_data_os_s {
     double inv_nelem;
     uint8_t input_itemsize;
     int64_t *not_nan_nelems;
+    int64_t *nan_nelems;
     uint8_t *mean;
     uint8_t **medians;
     uint8_t *median;

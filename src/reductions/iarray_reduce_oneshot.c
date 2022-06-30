@@ -258,6 +258,8 @@ static int _reduce_general_prefilter(blosc2_prefilter_params *pparams) {
     user_data.input_itemsize = rparams->input->dtshape->dtype_size;
     user_data.not_nan_nelems = malloc(
             (pparams->out_size / pparams->out_typesize) * sizeof(int64_t));
+    user_data.nan_nelems = malloc(
+            (pparams->out_size / pparams->out_typesize) * sizeof(int64_t));
     user_data.rparams = rparams;
     user_data.pparams = pparams;
     user_data.medians = malloc((pparams->out_size / pparams->out_typesize) * sizeof(uint8_t *)); \
@@ -484,6 +486,7 @@ static int _reduce_general_prefilter(blosc2_prefilter_params *pparams) {
         free(aux_block);
     }
     free(user_data.not_nan_nelems);
+    free(user_data.nan_nelems);
     free(user_data.median_nelems);
     free(user_data.medians);
 
