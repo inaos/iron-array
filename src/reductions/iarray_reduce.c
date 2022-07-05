@@ -1193,7 +1193,6 @@ ina_rc_t _iarray_reduce(iarray_context_t *ctx,
             return INA_ERROR(IARRAY_ERR_INVALID_EVAL_METHOD);
     }
 
-    iarray_container_t *a_rechunk;
     iarray_storage_t storage_rechunk = {0};
     memcpy(&storage_rechunk, a->storage, sizeof(iarray_storage_t));
     storage_rechunk.chunkshape[axis] = a->dtshape->shape[axis];

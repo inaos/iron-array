@@ -279,7 +279,7 @@ static int _reduce_general_prefilter(blosc2_prefilter_params *pparams) {
         }
     }
 
-    uint8_t *aux_block;
+    uint8_t *aux_block = NULL;
     if (rparams->func == IARRAY_REDUCE_VAR || rparams->func == IARRAY_REDUCE_NAN_VAR ||
         rparams->func == IARRAY_REDUCE_STD || rparams->func == IARRAY_REDUCE_NAN_STD) {
         int64_t aux_start = pparams->nblock * rparams->aux->catarr->blocknitems;
@@ -514,6 +514,11 @@ _iarray_reduce2_udf(iarray_context_t *ctx, iarray_container_t *a, iarray_reduce_
     dtshape.dtype = res_dtype;
     dtshape.ndim = (int8_t) (a->dtshape->ndim - naxis);
 
+    // Initialize values
+    for (int i = 0; i < a->dtshape->ndim; ++i) {
+        dtshape.shape[i] = 0;
+    }
+
     for (int i = 0; i < naxis; ++i) {
         dtshape.shape[axis[i]] = -1;
     }
@@ -573,7 +578,7 @@ _iarray_reduce2_udf(iarray_context_t *ctx, iarray_container_t *a, iarray_reduce_
         reduce_params.out_chunkshape = chunk_shape;
         reduce_params.nchunk = nchunk;
         uint8_t *aux_chunk = NULL;
-        bool aux_needs_free;
+        bool aux_needs_free = false;
         if (func == IARRAY_REDUCE_VAR ||
             func == IARRAY_REDUCE_NAN_VAR ||
             func == IARRAY_REDUCE_STD ||
