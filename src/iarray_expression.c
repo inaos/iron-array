@@ -615,7 +615,6 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
     for (int nvar = 0; nvar < nvars; ++nvar) {
         iterblosc_allowed = true;
         iarray_container_t *var = e->vars[nvar].c;
-        bool eq = true;
         IARRAY_RETURN_IF_FAILED(iarray_vlmeta_exists(e->ctx, e->vars[nvar].c, name, &is_zproxy));
         if (is_zproxy || var->transposed) {
             // If it is a zproxy or transposed, iterblosc cannot be used
@@ -624,6 +623,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         else {
             if (var->container_viewed != NULL) {
                 // If shape is not the same we cannot use iterblosc
+                // See https://github.com/inaos/iron-array/issues/581
                 for (int i = 0; i < var->container_viewed->dtshape->ndim; ++i) {
                     if (var->dtshape->shape[i] != var->container_viewed->dtshape->shape[i]) {
                         iterblosc_allowed = false;
@@ -632,35 +632,19 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
                 }
             }
         }
-        if (!iterblosc_allowed) {
-            // Slice views are not yet supported properly (we tried, but turned out more complex than expected)
-            /* if (var->container_viewed->dtshape->ndim != var->dtshape->ndim) {
-                eq = false;
-            }
-            else {
-                for (int j = 0; j < var->dtshape->ndim; j++) {
-                    if (var->dtshape->shape[j] != var->container_viewed->dtshape->shape[j]) {
-                        eq = false;
-                    }
-                }
-            }*/
-            // The above is still creating multi-threading issues, so disable ITERBLOSC temporarily
-            // See https://github.com/inaos/iron-array/issues/586
-            eq = false;
-        }
-        else {
+        if (iterblosc_allowed) {
             for (int i = 0; i < var->dtshape->ndim; ++i) {
                 if (out->storage->chunkshape[i] != var->storage->chunkshape[i]) {
-                    eq = false;
+                    iterblosc_allowed = false;
                     break;
                 }
                 if (out->storage->blockshape[i] != var->storage->blockshape[i]) {
-                    eq = false;
+                    iterblosc_allowed = false;
                     break;
                 }
             }
         }
-        if (eq == false) {
+        if (iterblosc_allowed == false) {
             expr_pparams.input_class[nvar] = IARRAY_EXPR_NEQ;
         }
         else {
