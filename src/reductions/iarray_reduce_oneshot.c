@@ -645,47 +645,47 @@ ina_rc_t _iarray_reduce2(iarray_context_t *ctx,
             // If the input is of type integer or unsigned int the result will be of type double
             switch (a->dtshape->dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
-                    reduce_function = &DVAR;
+                    reduce_function = &REDUCTION(VAR, double);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_FLOAT:
-                    reduce_function = &FVAR;
+                    reduce_function = &REDUCTION(VAR, float);
                     dtype = IARRAY_DATA_TYPE_FLOAT;
                     break;
                 case IARRAY_DATA_TYPE_INT64:
-                    reduce_function = &I64VAR;
+                    reduce_function = &REDUCTION(VAR, int64_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_INT32:
-                    reduce_function = &I32VAR;
+                    reduce_function = &REDUCTION(VAR, int32_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_INT16:
-                    reduce_function = &I16VAR;
+                    reduce_function = &REDUCTION(VAR, int16_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_INT8:
-                    reduce_function = &I8VAR;
+                    reduce_function = &REDUCTION(VAR, int8_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_UINT64:
-                    reduce_function = &UI64VAR;
+                    reduce_function = &REDUCTION(VAR, uint64_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_UINT32:
-                    reduce_function = &UI32VAR;
+                    reduce_function = &REDUCTION(VAR, uint32_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_UINT16:
-                    reduce_function = &UI16VAR;
+                    reduce_function = &REDUCTION(VAR, uint16_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_UINT8:
-                    reduce_function = &UI8VAR;
+                    reduce_function = &REDUCTION(VAR, uint8_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_BOOL:
-                    reduce_function = &BOOLVAR;
+                    reduce_function = &REDUCTION(VAR, bool);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 default:
@@ -697,11 +697,11 @@ ina_rc_t _iarray_reduce2(iarray_context_t *ctx,
             // If the input is of type integer or unsigned int the result will be of type double
             switch (a->dtshape->dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
-                    reduce_function = &DNANVAR;
+                    reduce_function = &NANREDUCTION(VAR, double);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_FLOAT:
-                    reduce_function = &FNANVAR;
+                    reduce_function = &NANREDUCTION(VAR, float);
                     dtype = IARRAY_DATA_TYPE_FLOAT;
                     break;
                 default:
@@ -713,11 +713,11 @@ ina_rc_t _iarray_reduce2(iarray_context_t *ctx,
             // If the input is of type integer or unsigned int the result will be of type double
             switch (a->dtshape->dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
-                    reduce_function = &DNANSTD;
+                    reduce_function = &NANREDUCTION(STD, double);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_FLOAT:
-                    reduce_function = &FNANSTD;
+                    reduce_function = &NANREDUCTION(STD, float);
                     dtype = IARRAY_DATA_TYPE_FLOAT;
                     break;
                 default:
@@ -729,47 +729,47 @@ ina_rc_t _iarray_reduce2(iarray_context_t *ctx,
             // If the input is of type integer or unsigned int the result will be of type double
             switch (a->dtshape->dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
-                    reduce_function = &DSTD;
+                    reduce_function = &REDUCTION(STD, double);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_FLOAT:
-                    reduce_function = &FSTD;
+                    reduce_function = &REDUCTION(STD, float);
                     dtype = IARRAY_DATA_TYPE_FLOAT;
                     break;
                 case IARRAY_DATA_TYPE_INT64:
-                    reduce_function = &I64STD;
+                    reduce_function = &REDUCTION(STD, int64_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_INT32:
-                    reduce_function = &I32STD;
+                    reduce_function = &REDUCTION(STD, int32_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_INT16:
-                    reduce_function = &I16STD;
+                    reduce_function = &REDUCTION(STD, int16_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_INT8:
-                    reduce_function = &I8STD;
+                    reduce_function = &REDUCTION(STD, int8_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_UINT64:
-                    reduce_function = &UI64STD;
+                    reduce_function = &REDUCTION(STD, uint64_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_UINT32:
-                    reduce_function = &UI32STD;
+                    reduce_function = &REDUCTION(STD, uint32_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_UINT16:
-                    reduce_function = &UI16STD;
+                    reduce_function = &REDUCTION(STD, uint16_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_UINT8:
-                    reduce_function = &UI8STD;
+                    reduce_function = &REDUCTION(STD, uint8_t);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_BOOL:
-                    reduce_function = &BOOLSTD;
+                    reduce_function = &REDUCTION(STD, bool);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 default:
@@ -847,11 +847,11 @@ ina_rc_t _iarray_reduce2(iarray_context_t *ctx,
         case IARRAY_REDUCE_NAN_MEAN:
             switch (a->dtshape->dtype) {
                 case IARRAY_DATA_TYPE_DOUBLE:
-                    reduce_function = &REDUCTION(NANMEAN, double);
+                    reduce_function = &NANREDUCTION(MEAN, double);
                     dtype = IARRAY_DATA_TYPE_DOUBLE;
                     break;
                 case IARRAY_DATA_TYPE_FLOAT:
-                    reduce_function = &REDUCTION(NANMEAN, float);
+                    reduce_function = &NANREDUCTION(MEAN, float);
                     dtype = IARRAY_DATA_TYPE_FLOAT;
                     break;
                 default:
