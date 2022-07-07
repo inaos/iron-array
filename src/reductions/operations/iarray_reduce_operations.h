@@ -36,7 +36,6 @@
 /* MEAN REDUCTION */
 
 #include "iarray_reduce_mean.h"
-#include "iarray_reduce_nanmean.h"
 
 /* VAR REDUCTION */
 

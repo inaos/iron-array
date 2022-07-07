@@ -28,7 +28,6 @@
     u_data->not_nan_nelems[u_data->i] = 0; \
     u_data->nan_nelems[u_data->i] = 0;
 
-
 #define MEDIAN_R(itype, otype, nan) \
     INA_UNUSED(user_data); \
     INA_UNUSED(strides0);  \
@@ -42,7 +41,6 @@
         u_data->not_nan_nelems[u_data->i]++; \
     } \
     u_data->median_nelems[u_data->i]++;
-
 
 
 #define MEDIAN_F(itype, otype, nan) \
@@ -95,8 +93,7 @@
     } else {                \
         *res = NAN;                        \
     }                       \
-    free(u_data->medians[u_data->i]); \
-
+    free(u_data->medians[u_data->i]);
 
 
 #define MEDIAN(itype, otype, nan) \
