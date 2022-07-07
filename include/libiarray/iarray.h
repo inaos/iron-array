@@ -710,7 +710,8 @@ INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
                                 iarray_reduce_func_t func,
                                 int8_t axis,
                                 iarray_storage_t *storage,
-                                iarray_container_t **b);
+                                iarray_container_t **b,
+                                bool oneshot);
 
 INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
                                       iarray_container_t *a,
@@ -718,7 +719,8 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
                                       int8_t naxis,
                                       const int8_t *axis,
                                       iarray_storage_t *storage,
-                                      iarray_container_t **b);
+                                      iarray_container_t **b,
+                                      bool oneshot);
 
 
 /* linear algebra */

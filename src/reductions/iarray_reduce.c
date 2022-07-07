@@ -1228,7 +1228,8 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
                                       int8_t naxis,
                                       const int8_t *axis,
                                       iarray_storage_t *storage,
-                                      iarray_container_t **b) {
+                                      iarray_container_t **b,
+                                      bool oneshot) {
 
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(a);
@@ -1240,7 +1241,11 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     if (func == IARRAY_REDUCE_VAR || func == IARRAY_REDUCE_STD ||
         func == IARRAY_REDUCE_NAN_VAR || func == IARRAY_REDUCE_NAN_STD ||
         func == IARRAY_REDUCE_MEDIAN || func == IARRAY_REDUCE_NAN_MEDIAN ||
-        func == IARRAY_REDUCE_NAN_MEAN) {
+        func == IARRAY_REDUCE_NAN_MEAN || oneshot) {
+        if (!oneshot) {
+            IARRAY_TRACE1(iarray.tracing, " Cannot use normal reduce algorithm with this reduction");
+            return INA_ERROR(INA_ERR_OPERATION_INVALID);
+        }
         return _iarray_reduce_oneshot(ctx, a, func, naxis, axis, storage, b);
     }
 
@@ -1387,11 +1392,12 @@ INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
                                 iarray_reduce_func_t func,
                                 int8_t axis,
                                 iarray_storage_t *storage,
-                                iarray_container_t **b) {
+                                iarray_container_t **b,
+                                bool oneshot) {
 
     int8_t axis_[] = {0};
     axis_[0] = axis;
 
-    IARRAY_RETURN_IF_FAILED(iarray_reduce_multi(ctx, a, func, 1, axis_, storage, b));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce_multi(ctx, a, func, 1, axis_, storage, b, oneshot));
     return INA_SUCCESS;
 }
