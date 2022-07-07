@@ -18,7 +18,7 @@ static ina_rc_t test_reduce_multi_type(iarray_context_t *ctx, iarray_data_type_t
                                const int64_t *view_start, const int64_t *view_stop,
                                int8_t naxis, int8_t *axis,
                                const int64_t *dest_cshape, const int64_t *dest_bshape, bool src_contiguous, char *src_urlpath,
-                               bool dest_contiguous, char* dest_urlpath)
+                               bool dest_contiguous, char* dest_urlpath, bool oneshot)
 {
     blosc2_remove_urlpath(src_urlpath);
     blosc2_remove_urlpath(dest_urlpath);
@@ -59,7 +59,7 @@ static ina_rc_t test_reduce_multi_type(iarray_context_t *ctx, iarray_data_type_t
 
     iarray_container_t *c_z;
     IARRAY_RETURN_IF_FAILED(iarray_reduce_multi(ctx, c_slice, func, naxis, axis,
-                                                &dest_storage, &c_z));
+                                                &dest_storage, &c_z, oneshot));
 
     int64_t buffer_nitems = c_z->catarr->nitems;
     int64_t buffer_size = buffer_nitems * c_z->catarr->itemsize;
@@ -224,7 +224,7 @@ INA_TEST_FIXTURE(reduce_multi_type, sum_4_ll_d_2) {
     char *dest_urlpath = "iarray_reduce.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_SUM, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, false));
 }
 
 
@@ -250,11 +250,11 @@ INA_TEST_FIXTURE(reduce_multi_type, prod_3_i_f_1) {
     char *dest_urlpath = "destarr.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_PROD, shape, cshape, bshape, view_start, view_stop,
                                                    naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                                   dest_contiguous, dest_urlpath));
+                                                   dest_contiguous, dest_urlpath, false));
 }
 
 
-INA_TEST_FIXTURE(reduce_multi_type, sum_2_ui_ll_1) {
+INA_TEST_FIXTURE(reduce_multi_type, sum_2_ui_ll_1_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
     iarray_data_type_t view_dtype = IARRAY_DATA_TYPE_INT64;
 
@@ -276,11 +276,11 @@ INA_TEST_FIXTURE(reduce_multi_type, sum_2_ui_ll_1) {
     char *dest_urlpath = "destarr.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_SUM, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, true));
 }
 
 
-INA_TEST_FIXTURE(reduce_multi_type, prod_3_s_f_2) {
+INA_TEST_FIXTURE(reduce_multi_type, prod_3_s_f_2_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT16;
     iarray_data_type_t view_dtype = IARRAY_DATA_TYPE_FLOAT;
 
@@ -302,7 +302,7 @@ INA_TEST_FIXTURE(reduce_multi_type, prod_3_s_f_2) {
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_PROD, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, true));
 }
 
 INA_TEST_FIXTURE(reduce_multi_type, sum_4_ui_ull_1) {
@@ -327,7 +327,7 @@ INA_TEST_FIXTURE(reduce_multi_type, sum_4_ui_ull_1) {
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_SUM, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, false));
 }
 
 
@@ -353,11 +353,11 @@ INA_TEST_FIXTURE(reduce_multi_type, prod_3_ull_ll_2) {
     char *dest_urlpath = "iarray_reduce.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_PROD, shape, cshape, bshape, view_start, view_stop,
                                                    naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                                   dest_contiguous, dest_urlpath));
+                                                   dest_contiguous, dest_urlpath, false));
 }
 
 
-INA_TEST_FIXTURE(reduce_multi_type, sum_2_sc_b_1) {
+INA_TEST_FIXTURE(reduce_multi_type, sum_2_sc_b_1_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT8;
     iarray_data_type_t view_dtype = IARRAY_DATA_TYPE_BOOL;
 
@@ -379,11 +379,11 @@ INA_TEST_FIXTURE(reduce_multi_type, sum_2_sc_b_1) {
     char *dest_urlpath = "destarr.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_SUM, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, true));
 }
 
 
-INA_TEST_FIXTURE(reduce_multi_type, prod_2_uc_d_1) {
+INA_TEST_FIXTURE(reduce_multi_type, prod_2_uc_d_1_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;
     iarray_data_type_t view_dtype = IARRAY_DATA_TYPE_DOUBLE;
 
@@ -405,7 +405,7 @@ INA_TEST_FIXTURE(reduce_multi_type, prod_2_uc_d_1) {
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_PROD, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, true));
 }
 
 
@@ -431,7 +431,7 @@ INA_TEST_FIXTURE(reduce_multi_type, sum_2_b_i_1) {
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_SUM, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, false));
 }
 
 
@@ -457,7 +457,7 @@ INA_TEST_FIXTURE(reduce_multi_type, min_2_d_ull_2) {
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MIN, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, false));
 }
 
 
@@ -483,11 +483,11 @@ INA_TEST_FIXTURE(reduce_multi_type, max_3_f_d_3) {
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MAX, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, false));
 }
 
 
-INA_TEST_FIXTURE(reduce_multi_type, min_4_ll_d_2) {
+INA_TEST_FIXTURE(reduce_multi_type, min_4_ll_d_2_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
     iarray_data_type_t view_dtype = IARRAY_DATA_TYPE_DOUBLE;
 
@@ -509,11 +509,11 @@ INA_TEST_FIXTURE(reduce_multi_type, min_4_ll_d_2) {
     char *dest_urlpath = "iarray_reduce.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MIN, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, true));
 }
 
 
-INA_TEST_FIXTURE(reduce_multi_type, max_5_i_ui_1) {
+INA_TEST_FIXTURE(reduce_multi_type, max_5_i_ui_1_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT32;
     iarray_data_type_t view_dtype = IARRAY_DATA_TYPE_UINT32;
 
@@ -535,7 +535,7 @@ INA_TEST_FIXTURE(reduce_multi_type, max_5_i_ui_1) {
     char *dest_urlpath = "destarr.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MAX, shape, cshape, bshape, view_start, view_stop,
                                                    naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                                   dest_contiguous, dest_urlpath));
+                                                   dest_contiguous, dest_urlpath, true));
 }
 
 
@@ -561,7 +561,7 @@ INA_TEST_FIXTURE(reduce_multi_type, min_2_ui_f_1) {
     char *dest_urlpath = "destarr.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MIN, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, false));
 }
 
 
@@ -587,11 +587,11 @@ INA_TEST_FIXTURE(reduce_multi_type, max_3_s_ll_2) {
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MAX, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, false));
 }
 
 
-INA_TEST_FIXTURE(reduce_multi_type, min_4_ui_i_4) {
+INA_TEST_FIXTURE(reduce_multi_type, min_4_ui_i_4_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
     iarray_data_type_t view_dtype = IARRAY_DATA_TYPE_INT32;
 
@@ -613,11 +613,11 @@ INA_TEST_FIXTURE(reduce_multi_type, min_4_ui_i_4) {
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MIN, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, true));
 }
 
 
-INA_TEST_FIXTURE(reduce_multi_type, max_4_ull_d_3) {
+INA_TEST_FIXTURE(reduce_multi_type, max_4_ull_d_3_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT64;
     iarray_data_type_t view_dtype = IARRAY_DATA_TYPE_DOUBLE;
 
@@ -639,7 +639,7 @@ INA_TEST_FIXTURE(reduce_multi_type, max_4_ull_d_3) {
     char *dest_urlpath = "iarray_reduce.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MAX, shape, cshape, bshape, view_start, view_stop,
                                                    naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                                   dest_contiguous, dest_urlpath));
+                                                   dest_contiguous, dest_urlpath, true));
 }
 
 
@@ -665,7 +665,7 @@ INA_TEST_FIXTURE(reduce_multi_type, min_2_sc_ui_2) {
     char *dest_urlpath = "destarr.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MIN, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, false));
 }
 
 
@@ -691,11 +691,11 @@ INA_TEST_FIXTURE(reduce_multi_type, max_2_uc_f_1) {
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MAX, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, false));
 }
 
 
-INA_TEST_FIXTURE(reduce_multi_type, min_2_b_f_2) {
+INA_TEST_FIXTURE(reduce_multi_type, min_2_b_f_2_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
     iarray_data_type_t view_dtype = IARRAY_DATA_TYPE_FLOAT;
 
@@ -717,7 +717,7 @@ INA_TEST_FIXTURE(reduce_multi_type, min_2_b_f_2) {
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MIN, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, true));
 }
 
 
@@ -743,11 +743,11 @@ INA_TEST_FIXTURE(reduce_multi_type, mean_2_d_ll_2) {
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MEAN, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, false));
 }
 
 
-INA_TEST_FIXTURE(reduce_multi_type, mean_3_f_ll_3) {
+INA_TEST_FIXTURE(reduce_multi_type, mean_3_f_ll_3_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
     iarray_data_type_t view_dtype = IARRAY_DATA_TYPE_INT64;
 
@@ -769,7 +769,7 @@ INA_TEST_FIXTURE(reduce_multi_type, mean_3_f_ll_3) {
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MEAN, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, true));
 }
 
 
@@ -795,11 +795,11 @@ INA_TEST_FIXTURE(reduce_multi_type, mean_4_ll_d_2) {
     char *dest_urlpath = "iarray_reduce.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MEAN, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, false));
 }
 
 
-INA_TEST_FIXTURE(reduce_multi_type, mean_2_ui_ull_1) {
+INA_TEST_FIXTURE(reduce_multi_type, mean_2_ui_ull_1_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
     iarray_data_type_t view_dtype = IARRAY_DATA_TYPE_UINT64;
 
@@ -821,7 +821,7 @@ INA_TEST_FIXTURE(reduce_multi_type, mean_2_ui_ull_1) {
     char *dest_urlpath = "destarr.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MEAN, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, true));
 }
 
 
@@ -847,7 +847,7 @@ INA_TEST_FIXTURE(reduce_multi_type, mean_3_s_f_2) {
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MEAN, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, false));
 }
 
 
@@ -873,11 +873,11 @@ INA_TEST_FIXTURE(reduce_multi_type, mean_2_sc_d_2) {
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MEAN, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, false));
     // Check that the temporary file is removed properly when the dest_urlpath = NULL and the view comes from disk
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MEAN, shape, cshape, bshape, view_start, view_stop,
                                                    naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                                   dest_contiguous, dest_urlpath));
+                                                   dest_contiguous, dest_urlpath, false));
 }
 
 
@@ -903,5 +903,5 @@ INA_TEST_FIXTURE(reduce_multi_type, mean_2_b_uc_1) {
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_multi_type(data->ctx, dtype, view_dtype, ndim, IARRAY_REDUCE_MEAN, shape, cshape, bshape, view_start, view_stop,
                                               naxis, axis, dest_cshape, dest_bshape, src_contiguous, src_urlpath,
-                                              dest_contiguous, dest_urlpath));
+                                              dest_contiguous, dest_urlpath, false));
 }

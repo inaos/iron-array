@@ -859,6 +859,321 @@ ina_rc_t _iarray_reduce2(iarray_context_t *ctx,
                     return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
             }
             break;
+        case IARRAY_REDUCE_MAX:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &ONESHOTREDUCTION(MAX, double);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &ONESHOTREDUCTION(MAX, float);
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                case IARRAY_DATA_TYPE_INT64:
+                    reduce_function = &ONESHOTREDUCTION(MAX, int64_t);
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT32:
+                    reduce_function = &ONESHOTREDUCTION(MAX, int32_t);
+                    dtype = IARRAY_DATA_TYPE_INT32;
+                    break;
+                case IARRAY_DATA_TYPE_INT16:
+                    reduce_function = &ONESHOTREDUCTION(MAX, int16_t);
+                    dtype = IARRAY_DATA_TYPE_INT16;
+                    break;
+                case IARRAY_DATA_TYPE_INT8:
+                    reduce_function = &ONESHOTREDUCTION(MAX, int8_t);
+                    dtype = IARRAY_DATA_TYPE_INT8;
+                    break;
+                case IARRAY_DATA_TYPE_UINT64:
+                    reduce_function = &ONESHOTREDUCTION(MAX, uint64_t);
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT32:
+                    reduce_function = &ONESHOTREDUCTION(MAX, uint32_t);
+                    dtype = IARRAY_DATA_TYPE_UINT32;
+                    break;
+                case IARRAY_DATA_TYPE_UINT16:
+                    reduce_function = &ONESHOTREDUCTION(MAX, uint16_t);
+                    dtype = IARRAY_DATA_TYPE_UINT16;
+                    break;
+                case IARRAY_DATA_TYPE_UINT8:
+                    reduce_function = &ONESHOTREDUCTION(MAX, uint8_t);
+                    dtype = IARRAY_DATA_TYPE_UINT8;
+                    break;
+                case IARRAY_DATA_TYPE_BOOL:
+                    reduce_function = &ONESHOTREDUCTION(MAX, bool);
+                    dtype = IARRAY_DATA_TYPE_BOOL;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
+        case IARRAY_REDUCE_NAN_MAX:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &ONESHOTNANREDUCTION(MAX, double);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &ONESHOTNANREDUCTION(MAX, float);
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
+        case IARRAY_REDUCE_MIN:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &ONESHOTREDUCTION(MIN, double);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &ONESHOTREDUCTION(MIN, float);
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                case IARRAY_DATA_TYPE_INT64:
+                    reduce_function = &ONESHOTREDUCTION(MIN, int64_t);
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT32:
+                    reduce_function = &ONESHOTREDUCTION(MIN, int32_t);
+                    dtype = IARRAY_DATA_TYPE_INT32;
+                    break;
+                case IARRAY_DATA_TYPE_INT16:
+                    reduce_function = &ONESHOTREDUCTION(MIN, int16_t);
+                    dtype = IARRAY_DATA_TYPE_INT16;
+                    break;
+                case IARRAY_DATA_TYPE_INT8:
+                    reduce_function = &ONESHOTREDUCTION(MIN, int8_t);
+                    dtype = IARRAY_DATA_TYPE_INT8;
+                    break;
+                case IARRAY_DATA_TYPE_UINT64:
+                    reduce_function = &ONESHOTREDUCTION(MIN, uint64_t);
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT32:
+                    reduce_function = &ONESHOTREDUCTION(MIN, uint32_t);
+                    dtype = IARRAY_DATA_TYPE_UINT32;
+                    break;
+                case IARRAY_DATA_TYPE_UINT16:
+                    reduce_function = &ONESHOTREDUCTION(MIN, uint16_t);
+                    dtype = IARRAY_DATA_TYPE_UINT16;
+                    break;
+                case IARRAY_DATA_TYPE_UINT8:
+                    reduce_function = &ONESHOTREDUCTION(MIN, uint8_t);
+                    dtype = IARRAY_DATA_TYPE_UINT8;
+                    break;
+                case IARRAY_DATA_TYPE_BOOL:
+                    reduce_function = &ONESHOTREDUCTION(MIN, bool);
+                    dtype = IARRAY_DATA_TYPE_BOOL;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
+        case IARRAY_REDUCE_NAN_MIN:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &ONESHOTNANREDUCTION(MIN, double);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &ONESHOTNANREDUCTION(MIN, float);
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
+        case IARRAY_REDUCE_SUM:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &ONESHOTREDUCTION(SUM, double);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &ONESHOTREDUCTION(SUM, float);
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                case IARRAY_DATA_TYPE_INT64:
+                    reduce_function = &ONESHOTREDUCTION(SUM, int64_t);
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT32:
+                    reduce_function = &ONESHOTREDUCTION(SUM, int32_t);
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT16:
+                    reduce_function = &ONESHOTREDUCTION(SUM, int16_t);
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT8:
+                    reduce_function = &ONESHOTREDUCTION(SUM, int8_t);
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT64:
+                    reduce_function = &ONESHOTREDUCTION(SUM, uint64_t);
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT32:
+                    reduce_function = &ONESHOTREDUCTION(SUM, uint32_t);
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT16:
+                    reduce_function = &ONESHOTREDUCTION(SUM, uint16_t);
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT8:
+                    reduce_function = &ONESHOTREDUCTION(SUM, uint8_t);
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_BOOL:
+                    reduce_function = &ONESHOTREDUCTION(SUM, bool);
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
+        case IARRAY_REDUCE_NAN_SUM:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &ONESHOTNANREDUCTION(SUM, double);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &ONESHOTNANREDUCTION(SUM, float);
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
+        case IARRAY_REDUCE_PROD:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &ONESHOTREDUCTION(PROD, double);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &ONESHOTREDUCTION(PROD, float);
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                case IARRAY_DATA_TYPE_INT64:
+                    reduce_function = &ONESHOTREDUCTION(PROD, int64_t);
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT32:
+                    reduce_function = &ONESHOTREDUCTION(PROD, int32_t);
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT16:
+                    reduce_function = &ONESHOTREDUCTION(PROD, int16_t);
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_INT8:
+                    reduce_function = &ONESHOTREDUCTION(PROD, int8_t);
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT64:
+                    reduce_function = &ONESHOTREDUCTION(PROD, uint64_t);
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT32:
+                    reduce_function = &ONESHOTREDUCTION(PROD, uint32_t);
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT16:
+                    reduce_function = &ONESHOTREDUCTION(PROD, uint16_t);
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_UINT8:
+                    reduce_function = &ONESHOTREDUCTION(PROD, uint8_t);
+                    dtype = IARRAY_DATA_TYPE_UINT64;
+                    break;
+                case IARRAY_DATA_TYPE_BOOL:
+                    reduce_function = &ONESHOTREDUCTION(PROD, bool);
+                    dtype = IARRAY_DATA_TYPE_INT64;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
+        case IARRAY_REDUCE_NAN_PROD:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &ONESHOTNANREDUCTION(PROD, double);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &ONESHOTNANREDUCTION(PROD, float);
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
+        case IARRAY_REDUCE_MEAN:
+            switch (a->dtshape->dtype) {
+                case IARRAY_DATA_TYPE_DOUBLE:
+                    reduce_function = &ONESHOTREDUCTION(MEAN, double);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_FLOAT:
+                    reduce_function = &ONESHOTREDUCTION(MEAN, float);
+                    dtype = IARRAY_DATA_TYPE_FLOAT;
+                    break;
+                case IARRAY_DATA_TYPE_INT64:
+                    reduce_function = &ONESHOTREDUCTION(MEAN, int64_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_INT32:
+                    reduce_function = &ONESHOTREDUCTION(MEAN, int32_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_INT16:
+                    reduce_function = &ONESHOTREDUCTION(MEAN, int16_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_INT8:
+                    reduce_function = &ONESHOTREDUCTION(MEAN, int8_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_UINT64:
+                    reduce_function = &ONESHOTREDUCTION(MEAN, uint64_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_UINT32:
+                    reduce_function = &ONESHOTREDUCTION(MEAN, uint32_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_UINT16:
+                    reduce_function = &ONESHOTREDUCTION(MEAN, uint16_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_UINT8:
+                    reduce_function = &ONESHOTREDUCTION(MEAN, uint8_t);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                case IARRAY_DATA_TYPE_BOOL:
+                    reduce_function = &ONESHOTREDUCTION(MEAN, bool);
+                    dtype = IARRAY_DATA_TYPE_DOUBLE;
+                    break;
+                default:
+                    IARRAY_TRACE1(iarray.error, "Invalid dtype");
+                    return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+            }
+            break;
         default:
             IARRAY_TRACE1(iarray.error, "Invalid function");
             return INA_ERROR(IARRAY_ERR_INVALID_EVAL_METHOD);
@@ -873,12 +1188,12 @@ ina_rc_t _iarray_reduce2(iarray_context_t *ctx,
         case IARRAY_REDUCE_STD:
         case IARRAY_REDUCE_VAR:
             IARRAY_RETURN_IF_FAILED(
-                    iarray_reduce_multi(ctx, a, IARRAY_REDUCE_MEAN, naxis, axis, &mean_storage, &mean));
+                    iarray_reduce_multi(ctx, a, IARRAY_REDUCE_MEAN, naxis, axis, &mean_storage, &mean, true));
             break;
         case IARRAY_REDUCE_NAN_STD:
         case IARRAY_REDUCE_NAN_VAR:
             IARRAY_RETURN_IF_FAILED(
-                    iarray_reduce_multi(ctx, a, IARRAY_REDUCE_NAN_MEAN, naxis, axis, &mean_storage, &mean));
+                    iarray_reduce_multi(ctx, a, IARRAY_REDUCE_NAN_MEAN, naxis, axis, &mean_storage, &mean, true));
             break;
         default:
             ;

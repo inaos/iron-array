@@ -19,7 +19,7 @@ static ina_rc_t test_reduce_nan(iarray_context_t *ctx, iarray_data_type_t dtype,
                                const int64_t *shape, const int64_t *cshape, const int64_t *bshape,
                                int8_t axis,
                                const int64_t *dest_cshape, const int64_t *dest_bshape, bool dest_frame,
-                               char *dest_urlpath) {
+                               char *dest_urlpath, bool oneshot) {
     blosc2_remove_urlpath(dest_urlpath);
     // Create dtshape
     iarray_dtshape_t dtshape;
@@ -79,7 +79,7 @@ static ina_rc_t test_reduce_nan(iarray_context_t *ctx, iarray_data_type_t dtype,
     }
 
     iarray_container_t *c_z;
-    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, func, axis, &dest_storage, &c_z));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_x, func, axis, &dest_storage, &c_z, oneshot));
 
     int64_t buffer_nitems = c_z->catarr->nitems;
     int64_t buffer_size = buffer_nitems * c_z->catarr->itemsize;
@@ -263,11 +263,11 @@ INA_TEST_FIXTURE(reduce_nan, sum_2_f_1) {
     bool dest_frame = false;
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_SUM, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, false));
 }
 
 
-INA_TEST_FIXTURE(reduce_nan, sum_2_d_0) {
+INA_TEST_FIXTURE(reduce_nan, sum_2_d_0_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
@@ -282,7 +282,7 @@ INA_TEST_FIXTURE(reduce_nan, sum_2_d_0) {
     char *dest_urlpath = "arr.iarr";
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_SUM, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 
@@ -300,11 +300,11 @@ INA_TEST_FIXTURE(reduce_nan, max_2_d_1) {
     bool dest_frame = false;
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_MAX, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, false));
 }
 
 
-INA_TEST_FIXTURE(reduce_nan, max_2_f_0) {
+INA_TEST_FIXTURE(reduce_nan, max_2_f_0_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 2;
@@ -319,7 +319,7 @@ INA_TEST_FIXTURE(reduce_nan, max_2_f_0) {
     char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_MAX, shape, cshape, bshape, axis,
-                                            dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                            dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 
@@ -338,11 +338,11 @@ INA_TEST_FIXTURE(reduce_nan, min_3_f_1) {
     char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_MIN, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, false));
 }
 
 
-INA_TEST_FIXTURE(reduce_nan, min_3_d_2) {
+INA_TEST_FIXTURE(reduce_nan, min_3_d_2_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 3;
@@ -356,7 +356,7 @@ INA_TEST_FIXTURE(reduce_nan, min_3_d_2) {
     bool dest_frame = true;
     char *dest_urlpath = "arr.iarr";
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_MIN, shape, cshape, bshape, axis,
-                                            dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                            dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 
@@ -375,7 +375,7 @@ INA_TEST_FIXTURE(reduce_nan, mean_3_d_1) {
     char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_MEAN, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 
@@ -394,7 +394,7 @@ INA_TEST_FIXTURE(reduce_nan, mean_2_f_0) {
     char *dest_urlpath = "arr.iarr";
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_MEAN, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 
@@ -413,7 +413,7 @@ INA_TEST_FIXTURE(reduce_nan, var_2_f_0) {
     char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_VAR, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 
@@ -432,7 +432,7 @@ INA_TEST_FIXTURE(reduce_nan, var_3_d_1) {
     char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_VAR, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 
@@ -451,7 +451,7 @@ INA_TEST_FIXTURE(reduce_nan, std_2_d_0) {
     char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_STD, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 
@@ -470,7 +470,7 @@ INA_TEST_FIXTURE(reduce_nan, std_3_f_1) {
     char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_STD, shape, cshape, bshape, axis,
-                                            dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                            dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 
@@ -489,7 +489,7 @@ INA_TEST_FIXTURE(reduce_nan, median_3_f_1) {
     char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_MEDIAN, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 INA_TEST_FIXTURE(reduce_nan, median_2_d_0) {
@@ -507,7 +507,7 @@ INA_TEST_FIXTURE(reduce_nan, median_2_d_0) {
     char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_MEDIAN, shape, cshape, bshape, axis,
-                                            dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                            dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 
@@ -526,11 +526,11 @@ INA_TEST_FIXTURE(reduce_nan, prod_2_d_0) {
     char *dest_urlpath = "arr.iarr";
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_PROD, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, false));
 }
 
 
-INA_TEST_FIXTURE(reduce_nan, prod_2_f_0) {
+INA_TEST_FIXTURE(reduce_nan, prod_2_f_0_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_FLOAT;
 
     int8_t ndim = 2;
@@ -545,7 +545,7 @@ INA_TEST_FIXTURE(reduce_nan, prod_2_f_0) {
     char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_NAN_PROD, shape, cshape, bshape, axis,
-                                            dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                            dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 INA_TEST_FIXTURE(reduce_nan, sum_3_f_2) {
@@ -563,11 +563,11 @@ INA_TEST_FIXTURE(reduce_nan, sum_3_f_2) {
     char *dest_urlpath = "arr.iarr";
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_SUM, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, false));
 }
 
 
-INA_TEST_FIXTURE(reduce_nan, max_2_d_0) {
+INA_TEST_FIXTURE(reduce_nan, max_2_d_0_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 2;
@@ -582,7 +582,7 @@ INA_TEST_FIXTURE(reduce_nan, max_2_d_0) {
     char *dest_urlpath = "arr.iarr";
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_MAX, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 
@@ -601,7 +601,7 @@ INA_TEST_FIXTURE(reduce_nan, min_d_f_1) {
     char *dest_urlpath = "arr.iarr";
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_MIN, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, false));
 }
 
 
@@ -620,7 +620,7 @@ INA_TEST_FIXTURE(reduce_nan, mean_2_d_0) {
     char *dest_urlpath = "arr.iarr";
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_MEAN, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, false));
 }
 
 
@@ -638,7 +638,7 @@ INA_TEST_FIXTURE(reduce_nan, var_2_f_1) {
     bool dest_frame = false;
     char *dest_urlpath = NULL;
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_VAR, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 
@@ -657,7 +657,7 @@ INA_TEST_FIXTURE(reduce_nan, std_3_f_2) {
     char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_STD, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 
@@ -676,11 +676,11 @@ INA_TEST_FIXTURE(reduce_nan, median_4_d_0) {
     char *dest_urlpath = "arr.iarr";
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_MEDIAN, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }
 
 
-INA_TEST_FIXTURE(reduce_nan, prod_3_d_2) {
+INA_TEST_FIXTURE(reduce_nan, prod_3_d_2_oneshot) {
     iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
 
     int8_t ndim = 3;
@@ -695,5 +695,5 @@ INA_TEST_FIXTURE(reduce_nan, prod_3_d_2) {
     char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce_nan(data->ctx, dtype, ndim, IARRAY_REDUCE_PROD, shape, cshape, bshape, axis,
-                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath));
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }

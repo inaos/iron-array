@@ -65,8 +65,12 @@ typedef struct user_data_os_s {
 
 #define REDUCTION(name, type) \
     type##_##name
+#define ONESHOTREDUCTION(name, type) \
+    type##oneshot_##name
 #define NANREDUCTION(name, type) \
     type##nan_##name
+#define ONESHOTNANREDUCTION(name, type) \
+    type##oneshotnan_##name
 
 #define CAST_I (void (*)(void *, void *))
 #define CAST_R (void (*)(void *, int64_t, void *, int64_t, int64_t, void *))
