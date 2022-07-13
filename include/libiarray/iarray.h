@@ -883,4 +883,26 @@ INA_API(ina_rc_t) iarray_get_orthogonal_selection(iarray_context_t *ctx,
                                                   void *buffer,
                                                   int64_t *buffer_shape,
                                                   int64_t buffer_size);
+
+// SPLIT CONCATENATE
+
+typedef struct iarray_split_container_s {
+    iarray_dtshape_t *dtshape;  // Dtshape of the original array
+    int64_t n_splits_n[IARRAY_DIMENSION_MAX];  // Number of splits (multi-dimensional)
+    int64_t n_splits;  // Number of splits
+    iarray_container_t **splits;  // List of splits (arrays with one chunk)
+} iarray_split_container_t;
+
+INA_API(ina_rc_t) iarray_split_new(iarray_context_t *ctx,
+                                   iarray_container_t *a,
+                                   iarray_split_container_t **b);
+
+
+INA_API(void) iarray_split_free(iarray_context_t *ctx,
+                                iarray_split_container_t **a);
+
+INA_API(ina_rc_t) iarray_concatenate(iarray_context_t *ctx,
+                                     iarray_split_container_t *b,
+                                     iarray_storage_t *storage,
+                                     iarray_container_t **a);
 #endif
