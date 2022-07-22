@@ -824,6 +824,16 @@ typedef void (*zhandler_ptr) (char *zarr_urlpath, int64_t *slice_start, int64_t 
 
 INA_API(ina_rc_t) iarray_add_zproxy_postfilter(iarray_container_t *src, char *zarr_urlpath, zhandler_ptr zhandler);
 
+/* server accessor */
+typedef int32_t (*rhandler_ptr) (char *server_urlpath, char *array_urlpath, int64_t nchunk,
+                             int32_t start, int32_t nitems, int32_t destsize, uint8_t *cblock);
+INA_API(ina_rc_t) iarray_add_request_postfilter(iarray_container_t *src, char *server_urlpath, char *urlpath,
+                                                rhandler_ptr request_handler);
+
+INA_API(ina_rc_t) iarray_server_job(iarray_context_t *ctx, iarray_container_t *a, int64_t nchunk,
+                           int32_t start, int32_t nitems, int32_t size, uint8_t *dest, int32_t *block_size);
+
+
 INA_API(ina_rc_t) iarray_opt_gemv(iarray_context_t *ctx,
                                   iarray_container_t *a,
                                   iarray_container_t *b,
