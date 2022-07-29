@@ -31,7 +31,7 @@ ina_rc_t request_postfilter(blosc2_postfilter_params *postparams)
     request_postparams_udata *udata = postparams->user_data;
 
     int block_nitems = udata->blocksize / postparams->typesize;
-    uint8_t* cblock = malloc(postparams->size + BLOSC_MAX_OVERHEAD);
+    uint8_t* cblock = ina_mem_alloc(postparams->size + BLOSC_MAX_OVERHEAD);
     int32_t csize = udata->request_handler(udata->server_urlpath, udata->urlpath, postparams->nchunk,
                                                postparams->nblock * block_nitems,
                                                block_nitems, postparams->size, cblock);
@@ -44,7 +44,7 @@ ina_rc_t request_postfilter(blosc2_postfilter_params *postparams)
     blosc2_context *dctx = blosc2_create_dctx(dparams);
     int rc = blosc2_decompress_ctx(dctx, cblock, csize, postparams->out, postparams->size);
     blosc2_free_ctx(dctx);
-    free(cblock);
+    ina_mem_free(cblock);
     if (rc != postparams->size) {
         IARRAY_TRACE1(iarray.tracing, "Error decompressing block");
         return IARRAY_ERR_BLOSC_FAILED;
