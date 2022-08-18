@@ -329,11 +329,11 @@ INA_API(ina_rc_t) iarray_opt_gemm_b(iarray_context_t *ctx,
         cparams.schunk = a->catarr->sc;
         blosc2_context *cctx = blosc2_create_cctx(cparams);
         uint8_t *chunk = malloc(cc->catarr->extchunknitems * cc->catarr->itemsize +
-                                BLOSC_MAX_OVERHEAD);
+                                BLOSC2_MAX_OVERHEAD);
         int csize = blosc2_compress_ctx(cctx, NULL, (int32_t) cc->catarr->extchunknitems * cc->catarr->itemsize,
                                         chunk,
                                         (int32_t) cc->catarr->extchunknitems * cc->catarr->itemsize +
-                                        BLOSC_MAX_OVERHEAD);
+                                        BLOSC2_MAX_OVERHEAD);
         if (csize <= 0) {
             IARRAY_TRACE1(iarray.error, "Error compressing a blosc chunk");
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);

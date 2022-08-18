@@ -678,7 +678,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
 
     iarray_iter_write_block_t *iter_out;
     iarray_iter_write_block_value_t out_value;
-    int32_t external_buffer_size = (int32_t) (ret->catarr->extchunknitems * ret->catarr->sc->typesize + BLOSC_MAX_OVERHEAD);
+    int32_t external_buffer_size = (int32_t) (ret->catarr->extchunknitems * ret->catarr->sc->typesize + BLOSC2_MAX_OVERHEAD);
     void *external_buffer = NULL;  // to inform the iterator that we are passing an external buffer
     IARRAY_RETURN_IF_FAILED(iarray_iter_write_block_new(ctx, &iter_out, ret, out_chunkshape, &out_value, true));
 
@@ -735,7 +735,7 @@ INA_API(ina_rc_t) iarray_eval_iterblosc(iarray_expression_t *e, iarray_container
         // Do the compression with prefilters
         int csize = blosc2_compress_ctx(cctx, NULL, (int32_t)ret->catarr->extchunknitems * e->typesize,
                                         out_value.block_pointer,
-                                        (int32_t)ret->catarr->extchunknitems * e->typesize + BLOSC_MAX_OVERHEAD);
+                                        (int32_t)ret->catarr->extchunknitems * e->typesize + BLOSC2_MAX_OVERHEAD);
         // Reset prefilters to a possible previous value
         cctx->prefilter = old_prefilter;
         cctx->preparams = old_pparams;

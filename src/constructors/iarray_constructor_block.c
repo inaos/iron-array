@@ -174,11 +174,11 @@ ina_rc_t iarray_constructor_block(iarray_context_t *ctx,
 
         // Compress data using the prefilter
         uint8_t *chunk = malloc(c->catarr->extchunknitems * c->catarr->itemsize +
-                                BLOSC_MAX_OVERHEAD);
+                                BLOSC2_MAX_OVERHEAD);
         int csize = blosc2_compress_ctx(cctx, NULL, (int32_t) c->catarr->extchunknitems * c->catarr->itemsize,
                                         chunk,
                                         (int32_t) c->catarr->extchunknitems * c->catarr->itemsize +
-                                        BLOSC_MAX_OVERHEAD);
+                                        BLOSC2_MAX_OVERHEAD);
         if (csize <= 0) {
             IARRAY_TRACE1(iarray.error, "Error compressing a blosc index");
             return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);

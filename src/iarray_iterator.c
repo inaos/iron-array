@@ -152,7 +152,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_next(iarray_iter_read_block_t *itr, voi
 
     // Check if a external buffer is passed
     if (itr->external_buffer) {
-        if (bufsize < itr->block_shape_size * typesize + BLOSC_MAX_OVERHEAD) {
+        if (bufsize < itr->block_shape_size * typesize + BLOSC2_MAX_OVERHEAD) {
             IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
             return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
         }
@@ -272,7 +272,7 @@ INA_API(ina_rc_t) iarray_iter_read_block_new(iarray_context_t *ctx,
     // Check if to alloc a block is needed
     if (!external_buffer) {
         (*itr)->external_buffer = false;
-        (*itr)->block = (uint8_t *) ina_mem_alloc((size_t) block_size + BLOSC_MAX_OVERHEAD);
+        (*itr)->block = (uint8_t *) ina_mem_alloc((size_t) block_size + BLOSC2_MAX_OVERHEAD);
         (*itr)->block_pointer = (void **) &(*itr)->block;
     } else {
         (*itr)->external_buffer = true;
@@ -371,7 +371,7 @@ INA_API(ina_rc_t) iarray_iter_write_block_next(iarray_iter_write_block_t *itr,
 
     // Check if a external buffer is needed
     if (itr->external_buffer) {
-        if (bufsize < itr->block_shape_size * typesize + BLOSC_MAX_OVERHEAD) {
+        if (bufsize < itr->block_shape_size * typesize + BLOSC2_MAX_OVERHEAD) {
             IARRAY_TRACE1(iarray.error, "The buffer size is not enough");
             return INA_ERROR(IARRAY_ERR_TOO_SMALL_BUFFER);
         }
@@ -533,9 +533,9 @@ INA_API(ina_rc_t) iarray_iter_write_block_new(iarray_context_t *ctx,
         // We may want to use the output chunk for hosting a compressed buffer, so we need space for the overhead.
         // TODO: the overhead is only useful for the prefilter approach, so think if there is a better option.
         (*itr)->external_buffer = false;
-        (*itr)->block = (uint8_t *) ina_mem_alloc((size_t) block_size + BLOSC_MAX_OVERHEAD);
+        (*itr)->block = (uint8_t *) ina_mem_alloc((size_t) block_size + BLOSC2_MAX_OVERHEAD);
         // Keep unwritten values as zeros
-        memset((*itr)->block, 0 , block_size + BLOSC_MAX_OVERHEAD);
+        memset((*itr)->block, 0 , block_size + BLOSC2_MAX_OVERHEAD);
         (*itr)->block_pointer = (void **) &(*itr)->block;
     } else {
         (*itr)->external_buffer = true;

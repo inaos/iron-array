@@ -47,7 +47,7 @@ static const cparams_btune cparams_btune_default = {
 
 // Get the codecs list for btune
 static codec_list * btune_get_codecs(btune_struct * btune) {
-  const char * all_codecs = blosc_list_compressors();
+  const char * all_codecs = blosc2_list_compressors();
   codec_list * codecs = malloc(sizeof(codec_list));
   codecs->list = malloc(MAX_CODECS * sizeof(int));
   int i = 0;
@@ -1103,7 +1103,7 @@ void iabtune_update(blosc2_context * context, double ctime) {
       }
       char winner = '-';
       // If the chunk is made of special values, it cannot never improve scoring
-      if (cbytes <= (BLOSC_MAX_OVERHEAD + (size_t)context->typesize)) {
+      if (cbytes <= (BLOSC2_MAX_OVERHEAD + (size_t)context->typesize)) {
         improved = false;
         winner = 'S';
       }
@@ -1116,7 +1116,7 @@ void iabtune_update(blosc2_context * context, double ctime) {
         if (envvar != NULL) {
           int split = (cparams->splitmode == BLOSC_ALWAYS_SPLIT) ? 1 : 0;
           const char *compname;
-          blosc_compcode_to_compname(cparams->compcode, &compname);
+          blosc2_compcode_to_compname(cparams->compcode, &compname);
           printf("| %10s | %6d | %5d | %7d | %9d | %11d | %9d | %9d | %9.3g | %9.3gx | %15s | %7s | %c\n",
                  compname, cparams->filter, split, cparams->clevel,
                  (int) cparams->blocksize / BTUNE_KB, (int) cparams->shufflesize,

@@ -57,7 +57,7 @@ static ina_rc_t test_block_iterator(iarray_context_t *ctx, iarray_data_type_t dt
     }
 
     iarray_iter_write_block_free(&I);
-    
+
     INA_TEST_ASSERT(ina_err_get_rc() == INA_RC_PACK(IARRAY_ERR_END_ITER, 0));
 
     uint8_t *buf = ina_mem_alloc((size_t)c_x->catarr->nitems * type_size);
@@ -426,7 +426,7 @@ static ina_rc_t test_block_iterator_ext_chunk(iarray_context_t *ctx, iarray_data
         csize_x *= (int32_t) c_x->storage->chunkshape[i];
     }
 
-    csize_x += BLOSC_MAX_OVERHEAD;
+    csize_x += BLOSC2_MAX_OVERHEAD;
 
 
     INA_TEST_ASSERT_SUCCEED(iarray_iter_write_block_new(ctx, &I, c_x, blockshape, &val, true));
@@ -473,7 +473,7 @@ static ina_rc_t test_block_iterator_ext_chunk(iarray_context_t *ctx, iarray_data
 
     int32_t csize_y = c_y->catarr->chunknitems * type_size;
 
-    csize_y += BLOSC_MAX_OVERHEAD;
+    csize_y += BLOSC2_MAX_OVERHEAD;
 
     uint8_t *chunk_y1 = (uint8_t *) malloc(csize_y);
     uint8_t *chunk_y2 = (uint8_t *) malloc(csize_y);

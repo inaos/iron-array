@@ -81,7 +81,7 @@ INA_API(ina_rc_t) iarray_init()
         _ina_inited = 1;
     }
     if (!_blosc_inited) {
-        blosc_init();
+        blosc2_init();
         _blosc_inited = 1;
     }
     if (!_jug_inited) {
@@ -107,7 +107,7 @@ INA_API(ina_rc_t) iarray_init()
 INA_API(void) iarray_destroy()
 {
     jug_destroy();
-    blosc_destroy();
+    blosc2_destroy();
     _blosc_inited = 0;
 }
 
