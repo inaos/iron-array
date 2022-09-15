@@ -159,3 +159,12 @@ INA_API(ina_rc_t) iarray_concatenate(iarray_context_t *ctx,
     }
     return INA_SUCCESS;
 }
+
+typedef enum iarray_operaton_s {
+    IARRAY_OP_REDUCTION,
+    IARRAY_OP_EXPRESSION,
+    IARRAY_OP_MATMUL,
+} iarray_operation_t;
+
+
+INA_API(ina_rc_t) iarray_slice_
