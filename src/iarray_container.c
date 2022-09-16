@@ -225,6 +225,142 @@ INA_API(ina_rc_t) iarray_container_remove(char *urlpath)
 }
 
 
+INA_API(ina_rc_t) iarray_to_cframe(iarray_context_t *ctx,
+                                   iarray_container_t *src,
+                                   uint8_t **frame,
+                                   int64_t *frame_len,
+                                   bool *needs_free) {
+
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(frame);
+    INA_VERIFY_NOT_NULL(frame_len);
+    INA_VERIFY_NOT_NULL(src);
+    INA_VERIFY_NOT_NULL(needs_free);
+
+    *frame_len = blosc2_schunk_to_buffer(src->catarr->sc, frame, needs_free);
+    if (*frame_len <= 0) {
+        IARRAY_TRACE1(iarray.error, "iarray array can not be serialized");
+        return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+    }
+
+    return INA_SUCCESS;
+}
+
+
+INA_API(ina_rc_t) iarray_from_cframe(iarray_context_t *ctx,
+                                     uint8_t *frame,
+                                     int64_t frame_len,
+                                     bool copy,
+                                     iarray_container_t **container) {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(frame);
+    INA_VERIFY_NOT_NULL(container);
+
+    caterva_config_t cfg = {0};
+    IARRAY_RETURN_IF_FAILED(iarray_create_caterva_cfg(ctx->cfg, ina_mem_alloc, ina_mem_free, &cfg));
+    blosc2_btune iabtune = {0};
+    btune_config iabtune_config = {0};
+    memcpy(&iabtune_config, &BTUNE_CONFIG_DEFAULTS, sizeof(btune_config));
+    switch(ctx->cfg->compression_favor) {
+        case IARRAY_COMPRESSION_FAVOR_CRATIO:
+            iabtune_config.comp_mode = BTUNE_COMP_HCR;
+            break;
+        case IARRAY_COMPRESSION_FAVOR_SPEED:
+            iabtune_config.comp_mode = BTUNE_COMP_HSP;
+            break;
+        default:
+            iabtune_config.comp_mode = BTUNE_COMP_BALANCED;
+    }
+    if (ctx->cfg->btune) {
+        iabtune.btune_config = &iabtune_config;
+        iabtune.btune_init = (void (*)(void *, blosc2_context*, blosc2_context*)) iabtune_init;
+        iabtune.btune_next_blocksize = iabtune_next_blocksize;
+        iabtune.btune_next_cparams = iabtune_next_cparams;
+        iabtune.btune_update = iabtune_update;
+        iabtune.btune_free = iabtune_free;
+        cfg.udbtune = &iabtune;
+    }
+    caterva_ctx_t *cat_ctx;
+    IARRAY_ERR_CATERVA(caterva_ctx_new(&cfg, &cat_ctx));
+    if (cat_ctx == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error allocating the caterva context");
+        return INA_ERROR(IARRAY_ERR_CATERVA_FAILED);
+    }
+    caterva_array_t *catarr;
+    IARRAY_ERR_CATERVA(caterva_from_cframe(cat_ctx, frame, frame_len, copy, &catarr));
+
+    caterva_storage_t cat_storage = {0};
+    cat_storage.urlpath = NULL;
+    cat_storage.contiguous = catarr->sc->storage->contiguous;
+    for (int i = 0; i < catarr->ndim; ++i) {
+        cat_storage.chunkshape[i] = catarr->chunkshape[i];
+        cat_storage.blockshape[i] = catarr->blockshape[i];
+    }
+
+    if (catarr == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error creating the caterva array from a file");
+        return INA_ERROR(IARRAY_ERR_CATERVA_FAILED);
+    }
+
+    uint8_t *smeta;
+    int32_t smeta_len;
+    if (blosc2_meta_get(catarr->sc, "iarray", &smeta, &smeta_len) < 0) {
+        IARRAY_TRACE1(iarray.error, "Error getting a blosc metalayer");
+        return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+    }
+    iarray_data_type_t dtype;
+
+    if (_iarray_deserialize_meta(smeta, smeta_len, &dtype) != 0) {
+        IARRAY_TRACE1(iarray.error, "Error deserializing a sframe");
+        return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+    }
+
+    *container = (iarray_container_t*)ina_mem_alloc(sizeof(iarray_container_t));
+    (*container)->catarr = catarr;
+
+    // Build the dtshape
+    (*container)->dtshape = (iarray_dtshape_t*)ina_mem_alloc(sizeof(iarray_dtshape_t));
+    iarray_dtshape_t* dtshape = (*container)->dtshape;
+    dtshape->dtype = dtype;
+    IARRAY_RETURN_IF_FAILED(iarray_set_dtype_size(dtshape));
+    dtshape->ndim = (int8_t)catarr->ndim;
+    for (int i = 0; i < catarr->ndim; ++i) {
+        dtshape->shape[i] = catarr->shape[i];
+    }
+
+    // Build the auxshape
+    (*container)->auxshape = (iarray_auxshape_t*)ina_mem_alloc(sizeof(iarray_auxshape_t));
+    iarray_auxshape_t* auxshape = (*container)->auxshape;
+    for (int8_t i = 0; i < catarr->ndim; ++i) {
+        auxshape->index[i] = i;
+        auxshape->offset[i] = 0;
+        auxshape->shape_wos[i] = catarr->shape[i];
+        auxshape->chunkshape_wos[i] = catarr->chunkshape[i];
+        auxshape->blockshape_wos[i] = catarr->blockshape[i];
+    }
+
+    (*container)->storage = ina_mem_alloc(sizeof(iarray_storage_t));
+    if ((*container)->storage == NULL) {
+        IARRAY_TRACE1(iarray.error, "Error allocating the store parameter");
+        return INA_ERROR(INA_ERR_FAILED);
+    }
+    (*container)->storage->urlpath = NULL;
+    (*container)->storage->contiguous = catarr->sc->storage->contiguous;
+    for (int i = 0; i < catarr->ndim; ++i) {
+        (*container)->storage->chunkshape[i] = catarr->chunkshape[i];
+        (*container)->storage->blockshape[i] = catarr->blockshape[i];
+    }
+
+    (*container)->container_viewed = NULL;
+    (*container)->transposed = false;
+
+    free(smeta);
+    caterva_ctx_free(&cat_ctx);
+
+    return INA_SUCCESS;
+}
+
+
 INA_API(ina_rc_t) iarray_get_slice(iarray_context_t *ctx,
                                    iarray_container_t *src,
                                    const int64_t *start,

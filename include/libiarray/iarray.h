@@ -475,6 +475,23 @@ INA_API(ina_rc_t) iarray_copy(iarray_context_t *ctx,
                               iarray_storage_t *storage,
                               iarray_container_t **dest);
 
+INA_API(ina_rc_t) iarray_split(iarray_context_t *ctx,
+                               iarray_container_t *src,
+                               iarray_container_t **dest);
+
+INA_API(ina_rc_t) iarray_from_chunk_index(iarray_context_t *ctx,
+                                          iarray_container_t *src,
+                                          int64_t *shape,
+                                          int64_t *chunk_indexes,
+                                          int64_t chunk_indexes_len,
+                                          iarray_container_t **dest);
+
+INA_API(ina_rc_t) iarray_concatenate(iarray_context_t *ctx,
+                                     iarray_container_t **src,
+                                     iarray_dtshape_t *dtshape,
+                                     iarray_storage_t *storage,
+                                     iarray_container_t **dest);
+
 INA_API(ina_rc_t) iarray_random_uniform(iarray_context_t *ctx,
                                         iarray_dtshape_t *dtshape,
                                         iarray_random_ctx_t *random_ctx,
@@ -584,6 +601,18 @@ INA_API(ina_rc_t) iarray_container_open(iarray_context_t *ctx,
 INA_API(ina_rc_t) iarray_container_save(iarray_context_t *ctx,
                                         iarray_container_t *container,
                                         char *urlpath);
+
+INA_API(ina_rc_t) iarray_to_cframe(iarray_context_t *ctx,
+                                   iarray_container_t *src,
+                                   uint8_t **frame,
+                                   int64_t *frame_len,
+                                   bool *needs_free);
+
+INA_API(ina_rc_t) iarray_from_cframe(iarray_context_t *ctx,
+                                     uint8_t *frame,
+                                     int64_t frame_len,
+                                     bool copy,
+                                     iarray_container_t **container);
 
 INA_API(ina_rc_t) iarray_container_remove(char *urlpath);
 

@@ -304,6 +304,146 @@ INA_API(ina_rc_t) iarray_to_buffer(iarray_context_t *ctx,
     return INA_SUCCESS;
 }
 
+INA_API(ina_rc_t) iarray_split(iarray_context_t *ctx,
+                               iarray_container_t *src,
+                               iarray_container_t **dest) {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(src);
+    INA_VERIFY_NOT_NULL(dest);
+
+    uint8_t *chunk;
+    bool needs_free;
+    iarray_dtshape_t dtshape = {0};
+    dtshape.ndim = src->dtshape->ndim;
+    dtshape.dtype = src->dtshape->dtype;
+    dtshape.dtype_size = src->dtshape->dtype_size;
+    for (int i = 0; i < dtshape.ndim; ++i) {
+        dtshape.shape[i] = src->catarr->extchunkshape[i];
+    }
+
+    iarray_storage_t storage = {0};
+    storage.contiguous = true;
+    storage.urlpath = NULL;
+    for (int i = 0; i < dtshape.ndim; ++i) {
+        storage.chunkshape[i] = src->catarr->chunkshape[i];
+        storage.blockshape[i] = src->catarr->blockshape[i];
+    }
+
+    for (int i = 0; i < src->catarr->nchunks; ++i) {
+        int csize = blosc2_schunk_get_chunk(src->catarr->sc, i, &chunk, &needs_free);
+        if (csize <= 0) {
+            return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+        }
+
+        iarray_empty(ctx, &dtshape, &storage, &dest[i]);
+        blosc2_schunk_update_chunk(dest[i]->catarr->sc, 0, chunk, !needs_free);
+    }
+
+    return INA_SUCCESS;
+}
+
+
+INA_API(ina_rc_t) iarray_concatenate(iarray_context_t *ctx,
+                                     iarray_container_t **src,
+                                     iarray_dtshape_t *dtshape,
+                                     iarray_storage_t *storage,
+                                     iarray_container_t **dest) {
+
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(src);
+    INA_VERIFY_NOT_NULL(dtshape);
+    INA_VERIFY_NOT_NULL(storage);
+    INA_VERIFY_NOT_NULL(dest);
+
+    for (int i = 0; i < dtshape->ndim; ++i) {
+        if (storage->chunkshape[i] != src[0]->storage->chunkshape[i]) {
+            return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
+        }
+        if (storage->blockshape[i] != src[0]->storage->blockshape[i]) {
+            return INA_ERROR(IARRAY_ERR_INVALID_BLOCKSHAPE);
+        }
+        if (dtshape->ndim != src[0]->dtshape->ndim) {
+            return INA_ERROR(IARRAY_ERR_INVALID_NDIM);
+        }
+        if (dtshape->dtype != src[0]->dtshape->dtype) {
+            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+        }
+        if (dtshape->dtype_size != src[0]->dtshape->dtype_size) {
+            return INA_ERROR(IARRAY_ERR_INVALID_DTYPE);
+        }
+    }
+
+    int64_t src_len = 1;
+    for (int i = 0; i < dtshape->ndim; ++i) {
+        src_len *= dtshape->shape[i] % storage->chunkshape[i] == 0 ?
+                   dtshape->shape[i] / storage->chunkshape[i] :
+                   dtshape->shape[i] / storage->chunkshape[i] + 1;
+
+    }
+
+    IARRAY_RETURN_IF_FAILED(iarray_empty(ctx, dtshape, storage, dest));
+
+    uint8_t *chunk;
+    bool needs_free;
+    for (int i = 0; i < src_len; ++i) {
+        iarray_container_t *c = src[i];
+        int csize = blosc2_schunk_get_chunk(c->catarr->sc, 0, &chunk, &needs_free);
+        if (csize <= 0) {
+            return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+        }
+        blosc2_schunk_update_chunk((*dest)->catarr->sc, i, chunk, !needs_free);
+    }
+
+    return INA_SUCCESS;
+}
+
+INA_API(ina_rc_t) iarray_from_chunk_index(iarray_context_t *ctx,
+                                          iarray_container_t *src,
+                                          int64_t *shape,
+                                          int64_t *chunk_indexes,
+                                          int64_t chunk_indexes_len,
+                                          iarray_container_t **dest) {
+    INA_VERIFY_NOT_NULL(ctx);
+    INA_VERIFY_NOT_NULL(src);
+    INA_VERIFY_NOT_NULL(shape);
+    INA_VERIFY_NOT_NULL(chunk_indexes);
+    INA_VERIFY_NOT_NULL(dest);
+
+    iarray_dtshape_t dtshape = {0};
+    dtshape.ndim = src->dtshape->ndim;
+    dtshape.dtype = src->dtshape->dtype;
+    dtshape.dtype_size = src->dtshape->dtype_size;
+
+    for (int i = 0; i < dtshape.ndim; ++i) {
+        dtshape.shape[i] = shape[i];
+    }
+
+    iarray_storage_t storage = {0};
+    storage.urlpath = NULL;
+    storage.contiguous = true;
+    for (int i = 0; i < dtshape.ndim; ++i) {
+        storage.chunkshape[i] = src->storage->chunkshape[i];
+        storage.blockshape[i] = src->storage->blockshape[i];
+    }
+
+    iarray_empty(ctx, &dtshape, &storage, dest);
+
+    if (chunk_indexes_len != (*dest)->catarr->nchunks) {
+        return INA_ERROR(IARRAY_ERR_INVALID_CHUNKSHAPE);
+    }
+
+    uint8_t *chunk;
+    bool needs_free;
+    for (int i = 0; i < (*dest)->catarr->nchunks; ++i) {
+        int csize = blosc2_schunk_get_chunk(src->catarr->sc, chunk_indexes[i], &chunk, &needs_free);
+        if (csize <= 0) {
+            return INA_ERROR(IARRAY_ERR_BLOSC_FAILED);
+        }
+        blosc2_schunk_update_chunk((*dest)->catarr->sc, i, chunk, !needs_free);
+    }
+    return INA_SUCCESS;
+}
+
 
 INA_API(bool) iarray_is_empty(iarray_container_t *container) {
     INA_VERIFY_NOT_NULL(container);
