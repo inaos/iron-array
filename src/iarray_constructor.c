@@ -318,7 +318,7 @@ INA_API(ina_rc_t) iarray_split(iarray_context_t *ctx,
     dtshape.dtype = src->dtshape->dtype;
     dtshape.dtype_size = src->dtshape->dtype_size;
     for (int i = 0; i < dtshape.ndim; ++i) {
-        dtshape.shape[i] = src->catarr->extchunkshape[i];
+        dtshape.shape[i] = src->catarr->chunkshape[i];
     }
 
     iarray_storage_t storage = {0};

@@ -44,7 +44,7 @@ static ina_rc_t test_split(iarray_context_t *ctx,
 
     INA_TEST_ASSERT_SUCCEED(iarray_ones(ctx, &xdtshape, &store, &src));
 
-    iarray_container_t **dest = ina_mem_alloc(src->catarr->chunknitems * sizeof(iarray_container_t *));
+    iarray_container_t **dest = ina_mem_alloc(src->catarr->nchunks * sizeof(iarray_container_t *));
     INA_TEST_ASSERT_SUCCEED(iarray_split(ctx, src, dest));
     iarray_container_t *src2;
     INA_TEST_ASSERT_SUCCEED(iarray_concatenate(ctx, dest, src->dtshape, src->storage, &src2));
