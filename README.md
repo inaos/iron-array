@@ -26,6 +26,15 @@ channel in a cross-platform portable way with:
     $ conda install -c intel mkl-static
     $ conda install -c intel icc_rt    # SVML
 
+Note: it looks like recent versions of conda (when using MacOSX at least) have dependency issues
+when installing the provious packages.  You can find a workaround by using mamba instead.
+You can install mamba with:
+
+    $ conda install mamba -n base -c conda-forge
+
+It is worth noting that conda-forge channel should only be used for installing mamba.  In particular,
+I have detected issues when using the llvmdev package in conda-forge!
+
 Beware: currently ironArray only supports LLVM 11.  Also, we strongly suggest to use the numba
 channel with conda/mamba for installing the LLVM package.   In particular, we discourage the use
 of native LLVM libraries in the system (either using `apt`, `brew` or any other packager), even
