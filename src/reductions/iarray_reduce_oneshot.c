@@ -253,7 +253,7 @@ static int _reduce_general_prefilter(blosc2_prefilter_params *pparams) {
     user_data_os_t user_data = {0};
     user_data.inv_nelem = 1.;
     for (int i = 0; i < rparams->naxis; ++i) {
-        user_data.inv_nelem /= (double) rparams->input->dtshape->shape[rparams->axis[i]];
+        user_data.inv_nelem /= ((double) rparams->input->dtshape->shape[rparams->axis[i]] - rparams->correction);
     }
     user_data.input_itemsize = rparams->input->dtshape->dtype_size;
     user_data.not_nan_nelems = malloc(
@@ -498,7 +498,7 @@ ina_rc_t
 _iarray_reduce2_udf(iarray_context_t *ctx, iarray_container_t *a, iarray_reduce_function_t *ufunc,
                     iarray_reduce_func_t func,
                     int8_t naxis, const int8_t *axis, iarray_storage_t *storage,
-                    iarray_container_t **b, iarray_data_type_t res_dtype, iarray_container_t *aux) {
+                    iarray_container_t **b, iarray_data_type_t res_dtype, iarray_container_t *aux, double correction) {
 
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(a);
@@ -549,6 +549,7 @@ _iarray_reduce2_udf(iarray_context_t *ctx, iarray_container_t *a, iarray_reduce_
     reduce_params.result = c;
     reduce_params.naxis = naxis;
     reduce_params.axis = axis;
+    reduce_params.correction = correction;
     reduce_params.ufunc = ufunc;
     reduce_params.func = func;
     reduce_params.aux = aux;
@@ -633,10 +634,11 @@ _iarray_reduce2_udf(iarray_context_t *ctx, iarray_container_t *a, iarray_reduce_
 ina_rc_t _iarray_reduce2(iarray_context_t *ctx,
                         iarray_container_t *a,
                         iarray_reduce_func_t func,
-                         int8_t naxis,
-                         const int8_t *axis,
+                        int8_t naxis,
+                        const int8_t *axis,
                         iarray_storage_t *storage,
-                        iarray_container_t **b) {
+                        iarray_container_t **b,
+                        double correction) {
     void *reduce_function = NULL;
     // res data type
     iarray_data_type_t dtype;
@@ -1188,12 +1190,12 @@ ina_rc_t _iarray_reduce2(iarray_context_t *ctx,
         case IARRAY_REDUCE_STD:
         case IARRAY_REDUCE_VAR:
             IARRAY_RETURN_IF_FAILED(
-                    iarray_reduce_multi(ctx, a, IARRAY_REDUCE_MEAN, naxis, axis, &mean_storage, &mean, true));
+                    iarray_reduce_multi(ctx, a, IARRAY_REDUCE_MEAN, naxis, axis, &mean_storage, &mean, true, 0.0));
             break;
         case IARRAY_REDUCE_NAN_STD:
         case IARRAY_REDUCE_NAN_VAR:
             IARRAY_RETURN_IF_FAILED(
-                    iarray_reduce_multi(ctx, a, IARRAY_REDUCE_NAN_MEAN, naxis, axis, &mean_storage, &mean, true));
+                    iarray_reduce_multi(ctx, a, IARRAY_REDUCE_NAN_MEAN, naxis, axis, &mean_storage, &mean, true, 0.0));
             break;
         default:
             ;
@@ -1201,7 +1203,7 @@ ina_rc_t _iarray_reduce2(iarray_context_t *ctx,
 
     IARRAY_RETURN_IF_FAILED(
             _iarray_reduce2_udf(ctx, a, reduce_function, func, naxis, axis, storage, b, dtype,
-                                mean));
+                                mean, correction));
     switch (func) {
         case IARRAY_REDUCE_STD:
         case IARRAY_REDUCE_VAR:
@@ -1223,7 +1225,8 @@ ina_rc_t _iarray_reduce_oneshot(iarray_context_t *ctx,
                                 int8_t naxis,
                                 const int8_t *axis,
                                 iarray_storage_t *storage,
-                                iarray_container_t **b) {
+                                iarray_container_t **b,
+                                double correction) {
 
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(a);
@@ -1291,7 +1294,7 @@ ina_rc_t _iarray_reduce_oneshot(iarray_context_t *ctx,
         }
     }
 
-    IARRAY_RETURN_IF_FAILED(_iarray_reduce2(ctx, aa, func, naxis, axis, &storage_red, &c));
+    IARRAY_RETURN_IF_FAILED(_iarray_reduce2(ctx, aa, func, naxis, axis, &storage_red, &c, correction));
 
 
     // Check if a copy is needed

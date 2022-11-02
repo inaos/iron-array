@@ -17,7 +17,7 @@
 #define VAR_I(itype, otype, nan) \
     user_data_os_t *u_data = (user_data_os_t *) user_data; \
     *res = 0; \
-    u_data->not_nan_nelems[u_data->i] = 0;
+    u_data->not_nan_nelems[u_data->i] = 0 - u_data->rparams->correction;
 
 #define nanVAR_I(itype, otype, nan) \
     VAR_I(itype, otype, nan)
