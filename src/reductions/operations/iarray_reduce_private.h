@@ -40,6 +40,7 @@ typedef struct iarray_reduce_os_params_s {
     iarray_container_t *result;
     int8_t naxis;
     const int8_t *axis;
+    double correction; // Only used for std and var
     int64_t *out_chunkshape;
     int64_t nchunk;
     uint8_t *aux_chunk;
@@ -97,7 +98,8 @@ ina_rc_t _iarray_reduce_oneshot(iarray_context_t *ctx,
                                 int8_t naxis,
                                 const int8_t *axis,
                                 iarray_storage_t *storage,
-                                iarray_container_t **b);
+                                iarray_container_t **b,
+                                double correction);
 
 
 #endif //IARRAY_IARRAY_REDUCE_PRIVATE_H

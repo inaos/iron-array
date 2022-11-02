@@ -1229,7 +1229,8 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
                                       const int8_t *axis,
                                       iarray_storage_t *storage,
                                       iarray_container_t **b,
-                                      bool oneshot) {
+                                      bool oneshot,
+                                      double correction) {
 
     INA_VERIFY_NOT_NULL(ctx);
     INA_VERIFY_NOT_NULL(a);
@@ -1237,6 +1238,16 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
     INA_VERIFY_NOT_NULL(b);
 
     int err_io;
+
+    bool correction_allowed = false;
+    if (func == IARRAY_REDUCE_VAR || func == IARRAY_REDUCE_STD ||
+        func == IARRAY_REDUCE_NAN_VAR || func == IARRAY_REDUCE_NAN_STD) {
+        correction_allowed = true;
+    }
+    if (!correction_allowed && correction != 0.0) {
+        IARRAY_TRACE1(iarray.tracing, " Correction != 0 only for nanvar, nanstd, var and std");
+        return INA_ERROR(INA_ERR_INVALID_ARGUMENT);
+    }
 
     if (func == IARRAY_REDUCE_VAR || func == IARRAY_REDUCE_STD ||
         func == IARRAY_REDUCE_NAN_VAR || func == IARRAY_REDUCE_NAN_STD ||
@@ -1246,7 +1257,7 @@ INA_API(ina_rc_t) iarray_reduce_multi(iarray_context_t *ctx,
             IARRAY_TRACE1(iarray.tracing, " Cannot use normal reduce algorithm with this reduction");
             return INA_ERROR(INA_ERR_OPERATION_INVALID);
         }
-        return _iarray_reduce_oneshot(ctx, a, func, naxis, axis, storage, b);
+        return _iarray_reduce_oneshot(ctx, a, func, naxis, axis, storage, b, correction);
     }
 
     iarray_container_t *aa = a;
@@ -1393,11 +1404,12 @@ INA_API(ina_rc_t) iarray_reduce(iarray_context_t *ctx,
                                 int8_t axis,
                                 iarray_storage_t *storage,
                                 iarray_container_t **b,
-                                bool oneshot) {
+                                bool oneshot,
+                                double correction) {
 
     int8_t axis_[] = {0};
     axis_[0] = axis;
 
-    IARRAY_RETURN_IF_FAILED(iarray_reduce_multi(ctx, a, func, 1, axis_, storage, b, oneshot));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce_multi(ctx, a, func, 1, axis_, storage, b, oneshot, correction));
     return INA_SUCCESS;
 }

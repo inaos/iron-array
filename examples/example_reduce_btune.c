@@ -95,7 +95,7 @@ int main(void)
     }
 
     iarray_container_t *c_z;
-    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_y, IARRAY_REDUCE_SUM, axis, &dest_storage, &c_z, false));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_y, IARRAY_REDUCE_SUM, axis, &dest_storage, &c_z, false, 0.0));
 
     int64_t buffer_nitems = c_z->catarr->nitems;
     int64_t buffer_size = buffer_nitems * c_z->catarr->itemsize;

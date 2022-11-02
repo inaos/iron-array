@@ -58,7 +58,7 @@ static ina_rc_t test_reduce_multi_view(iarray_context_t *ctx, iarray_data_type_t
     iarray_container_t *c_z;
 
     IARRAY_RETURN_IF_FAILED(iarray_reduce_multi(ctx, c_view, func, naxis, axis,
-                                                &dest_storage, &c_z, oneshot));
+                                                &dest_storage, &c_z, oneshot, 0.0));
 
     int64_t buffer_nitems = c_z->catarr->nitems;
     int64_t buffer_size = buffer_nitems * c_z->catarr->itemsize;

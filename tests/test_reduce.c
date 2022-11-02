@@ -69,7 +69,7 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
     }
 
     iarray_container_t *c_z;
-    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_y, func, axis, &dest_storage, &c_z, oneshot));
+    IARRAY_RETURN_IF_FAILED(iarray_reduce(ctx, c_y, func, axis, &dest_storage, &c_z, oneshot, 0.0));
 
     int64_t buffer_nitems = c_z->catarr->nitems;
     int64_t buffer_size = buffer_nitems * c_z->catarr->itemsize;
