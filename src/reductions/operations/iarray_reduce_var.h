@@ -17,7 +17,7 @@
 #define VAR_I(itype, otype, nan) \
     user_data_os_t *u_data = (user_data_os_t *) user_data; \
     *res = 0; \
-    u_data->not_nan_nelems[u_data->i] = 0 - u_data->rparams->correction;
+    u_data->not_nan_nelems[u_data->i] = 0;
 
 #define nanVAR_I(itype, otype, nan) \
     VAR_I(itype, otype, nan)
@@ -53,7 +53,12 @@
 #define nanVAR_F(itype, otype, nan) \
     INA_UNUSED(user_data); \
     user_data_os_t *u_data = (user_data_os_t *) user_data; \
-    *res = *res / u_data->not_nan_nelems[u_data->i];
+    if (u_data->not_nan_nelems[u_data->i] - u_data->rparams->correction < 0){\
+        *res = *res / u_data->not_nan_nelems[u_data->i];\
+    }\
+    else {\
+        *res = *res / (u_data->not_nan_nelems[u_data->i] - u_data->rparams->correction);\
+    }\
 
 // Only used for float output
 #define FVAR_I(itype, otype, nan) \
