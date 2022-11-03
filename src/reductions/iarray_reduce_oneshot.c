@@ -253,7 +253,12 @@ static int _reduce_general_prefilter(blosc2_prefilter_params *pparams) {
     user_data_os_t user_data = {0};
     user_data.inv_nelem = 1.;
     for (int i = 0; i < rparams->naxis; ++i) {
-        user_data.inv_nelem /= ((double) rparams->input->dtshape->shape[rparams->axis[i]] - rparams->correction);
+        if (rparams->input->dtshape->shape[rparams->axis[i]] - rparams->correction < 0) {
+            user_data.inv_nelem /= 0;
+        }
+        else{
+            user_data.inv_nelem /= ((double) rparams->input->dtshape->shape[rparams->axis[i]] - rparams->correction);
+        }
     }
     user_data.input_itemsize = rparams->input->dtshape->dtype_size;
     user_data.not_nan_nelems = malloc(
