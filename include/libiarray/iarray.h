@@ -729,6 +729,8 @@ typedef enum iarray_reduce_fun_e {
     IARRAY_REDUCE_NAN_STD,
     IARRAY_REDUCE_MEDIAN,
     IARRAY_REDUCE_NAN_MEDIAN,
+    IARRAY_REDUCE_ALL,
+    IARRAY_REDUCE_ANY,
 } iarray_reduce_func_t;
 
 typedef struct iarray_reduce_function_s iarray_reduce_function_t;
