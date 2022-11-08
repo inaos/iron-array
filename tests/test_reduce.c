@@ -88,6 +88,16 @@ static ina_rc_t test_reduce(iarray_context_t *ctx, iarray_data_type_t dtype, int
         val_ = 0;
     }
     switch (func) {
+        case IARRAY_REDUCE_ALL:
+            for (int i = 0; i < buffer_nitems; ++i) {
+                INA_TEST_ASSERT(((bool *) buffer)[i] == 0);
+            }
+            break;
+        case IARRAY_REDUCE_ANY:
+            for (int i = 0; i < buffer_nitems; ++i) {
+                INA_TEST_ASSERT(((bool *) buffer)[i] == 1);
+            }
+            break;
         case IARRAY_REDUCE_MAX:
         case IARRAY_REDUCE_MIN:
             for (int i = 0; i < buffer_nitems; ++i) {
@@ -770,5 +780,219 @@ INA_TEST_FIXTURE(reduce, mean_2_b_0_oneshot) {
     char *dest_urlpath = NULL;
 
     INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_MEAN, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
+}
+
+INA_TEST_FIXTURE(reduce, all_3_s_1) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT16;
+
+    int8_t ndim = 3;
+    int64_t shape[] = {12, 12, 12};
+    int64_t cshape[] = {6, 9, 6};
+    int64_t bshape[] = {3, 3, 3};
+    int8_t axis = 1;
+
+    int64_t dest_cshape[] = {6, 6};
+    int64_t dest_bshape[] = {3, 3};
+    bool dest_frame = false;
+    char *dest_urlpath = NULL;
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_ALL, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, false));
+}
+
+INA_TEST_FIXTURE(reduce, all_2_d_0_oneshot) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+
+    int8_t ndim = 2;
+    int64_t shape[] = {10, 10};
+    int64_t cshape[] = {5, 5};
+    int64_t bshape[] = {2, 2};
+    int8_t axis = 0;
+
+    int64_t dest_cshape[] = {5};
+    int64_t dest_bshape[] = {1};
+    bool dest_frame = true;
+    char *dest_urlpath = "arr.iarr";
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_ALL, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
+}
+
+INA_TEST_FIXTURE(reduce, all_2_ui_0) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
+
+    int8_t ndim = 2;
+    int64_t shape[] = {12, 100};
+    int64_t cshape[] = {6, 21};
+    int64_t bshape[] = {3, 2};
+    int8_t axis = 0;
+
+    int64_t dest_cshape[] = {6};
+    int64_t dest_bshape[] = {3};
+    bool dest_frame = true;
+    char *dest_urlpath = NULL;
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_ALL, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, false));
+}
+
+INA_TEST_FIXTURE(reduce, all_3_ll_2_oneshot) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
+
+    int8_t ndim = 3;
+    int64_t shape[] = {7, 6, 7};
+    int64_t cshape[] = {5, 3, 5};
+    int64_t bshape[] = {3, 2, 2};
+    int8_t axis = 2;
+
+    int64_t dest_cshape[] = {5, 3};
+    int64_t dest_bshape[] = {3, 2};
+    bool dest_frame = true;
+    char *dest_urlpath = "arr.iarr";
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_ALL, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
+}
+
+INA_TEST_FIXTURE(reduce, all_3_uc_1) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;
+
+    int8_t ndim = 3;
+    int64_t shape[] = {4, 5, 5};
+    int64_t cshape[] = {4, 5, 5};
+    int64_t bshape[] = {2, 2, 2};
+    int8_t axis = 1;
+
+    int64_t dest_cshape[] = {4, 5};
+    int64_t dest_bshape[] = {2, 2};
+    bool dest_frame = false;
+    char *dest_urlpath = NULL;
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_ALL, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, false));
+}
+
+INA_TEST_FIXTURE(reduce, all_2_b_0_oneshot) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
+
+    int8_t ndim = 2;
+    int64_t shape[] = {4, 4};
+    int64_t cshape[] = {4, 4};
+    int64_t bshape[] = {2, 2};
+    int8_t axis = 0;
+
+    int64_t dest_cshape[] = {4};
+    int64_t dest_bshape[] = {2};
+    bool dest_frame = false;
+    char *dest_urlpath = NULL;
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_ALL, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
+}
+
+INA_TEST_FIXTURE(reduce, any_3_s_1) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT16;
+
+    int8_t ndim = 3;
+    int64_t shape[] = {12, 12, 12};
+    int64_t cshape[] = {6, 9, 6};
+    int64_t bshape[] = {3, 3, 3};
+    int8_t axis = 1;
+
+    int64_t dest_cshape[] = {6, 6};
+    int64_t dest_bshape[] = {3, 3};
+    bool dest_frame = false;
+    char *dest_urlpath = NULL;
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_ANY, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, false));
+}
+
+INA_TEST_FIXTURE(reduce, any_2_d_0_oneshot) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_DOUBLE;
+
+    int8_t ndim = 2;
+    int64_t shape[] = {10, 10};
+    int64_t cshape[] = {5, 5};
+    int64_t bshape[] = {2, 2};
+    int8_t axis = 0;
+
+    int64_t dest_cshape[] = {5};
+    int64_t dest_bshape[] = {1};
+    bool dest_frame = true;
+    char *dest_urlpath = "arr.iarr";
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_ANY, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
+}
+
+INA_TEST_FIXTURE(reduce, any_2_ui_0) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT32;
+
+    int8_t ndim = 2;
+    int64_t shape[] = {12, 100};
+    int64_t cshape[] = {6, 21};
+    int64_t bshape[] = {3, 2};
+    int8_t axis = 0;
+
+    int64_t dest_cshape[] = {6};
+    int64_t dest_bshape[] = {3};
+    bool dest_frame = true;
+    char *dest_urlpath = NULL;
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_ANY, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, false));
+}
+
+INA_TEST_FIXTURE(reduce, any_3_ll_2_oneshot) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_INT64;
+
+    int8_t ndim = 3;
+    int64_t shape[] = {7, 6, 7};
+    int64_t cshape[] = {5, 3, 5};
+    int64_t bshape[] = {3, 2, 2};
+    int8_t axis = 2;
+
+    int64_t dest_cshape[] = {5, 3};
+    int64_t dest_bshape[] = {3, 2};
+    bool dest_frame = true;
+    char *dest_urlpath = "arr.iarr";
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_ANY, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
+}
+
+INA_TEST_FIXTURE(reduce, any_3_uc_1) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_UINT8;
+
+    int8_t ndim = 3;
+    int64_t shape[] = {4, 5, 5};
+    int64_t cshape[] = {4, 5, 5};
+    int64_t bshape[] = {2, 2, 2};
+    int8_t axis = 1;
+
+    int64_t dest_cshape[] = {4, 5};
+    int64_t dest_bshape[] = {2, 2};
+    bool dest_frame = false;
+    char *dest_urlpath = NULL;
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_ANY, shape, cshape, bshape, axis,
+                                        dest_cshape, dest_bshape, dest_frame, dest_urlpath, false));
+}
+
+INA_TEST_FIXTURE(reduce, any_2_b_0_oneshot) {
+    iarray_data_type_t dtype = IARRAY_DATA_TYPE_BOOL;
+
+    int8_t ndim = 2;
+    int64_t shape[] = {4, 4};
+    int64_t cshape[] = {4, 4};
+    int64_t bshape[] = {2, 2};
+    int8_t axis = 0;
+
+    int64_t dest_cshape[] = {4};
+    int64_t dest_bshape[] = {2};
+    bool dest_frame = false;
+    char *dest_urlpath = NULL;
+
+    INA_TEST_ASSERT_SUCCEED(test_reduce(data->ctx, dtype, ndim, IARRAY_REDUCE_ANY, shape, cshape, bshape, axis,
                                         dest_cshape, dest_bshape, dest_frame, dest_urlpath, true));
 }

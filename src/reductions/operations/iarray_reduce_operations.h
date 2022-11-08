@@ -49,4 +49,12 @@
 
 #include "iarray_reduce_median.h"
 
+/* ALL REDUCTION */
+
+#include "iarray_reduce_all.h"
+
+/* ANY REDUCTION */
+
+#include "iarray_reduce_any.h"
+
 #endif //IARRAY_IARRAY_REDUCE_OPERATIONS_H
